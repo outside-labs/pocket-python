@@ -75,7 +75,7 @@ def read_bundle(directory: str | Path) -> SourceBundle:
             raise ArtifactError("Distribution license material is missing.")
         if not isinstance(metadata, str) or not metadata.startswith("LICENSES/") or metadata not in files:
             raise ArtifactError("Distribution metadata is missing.")
-    if any(item.get("distribution") is not None and item["distribution"] not in identities for item in sources):
+    if any(item.get("distribution") is not None and (not isinstance(item["distribution"], str) or item["distribution"] not in identities) for item in sources):
         raise ArtifactError("Source refers to missing distribution provenance.")
     files["SHIMIFY-MANIFEST.json"] = raw
     return SourceBundle(root, manifest, files)

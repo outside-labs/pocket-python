@@ -6,8 +6,9 @@ from pathlib import Path
 import sys
 
 from pocket_python import __version__
-from pocket_python.assets import ArtifactError, json_bytes, runtime_lock
+from pocket_python.assets import ArtifactError, json_bytes, read_runtime, runtime_lock
 from pocket_python.bundles import read_bundle
+from pocket_python.web import build_web
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -23,6 +24,12 @@ def main(argv: list[str] | None = None) -> int:
     lock.add_argument("--output", type=Path, required=True)
     inspect = commands.add_parser("inspect", help="Validate and describe a Shimify source bundle.")
     inspect.add_argument("bundle", type=Path)
+    web = commands.add_parser("web", help="Build a local-asset MicroPython PWA in a new directory.")
+    web.add_argument("bundle", type=Path)
+    web.add_argument("--runtime", type=Path, required=True)
+    web.add_argument("--runtime-lock", type=Path, required=True)
+    web.add_argument("--output", type=Path, required=True)
+    web.add_argument("--title", default="Pocket Python")
     args = parser.parse_args(argv)
     try:
         if args.command == "lock-runtime":
@@ -31,6 +38,10 @@ def main(argv: list[str] | None = None) -> int:
             with args.output.open("xb") as stream:
                 stream.write(json_bytes(result))
             print(f"Created {args.output.resolve()}")
+        elif args.command == "web":
+            manifest = build_web(read_bundle(args.bundle), read_runtime(args.runtime, args.runtime_lock), args.output, title=args.title)
+            print(f"Created {args.output.resolve()} ({manifest['size']['artifact_bytes']} bytes)")
+            print("Serve over HTTPS or localhost; test this application against MicroPython.")
         else:
             print(json.dumps(read_bundle(args.bundle).report(), indent=2, sort_keys=True))
     except ArtifactError as error:
