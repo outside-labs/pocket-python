@@ -87,6 +87,8 @@ def json_bytes(value: dict) -> bytes:
 def runtime_lock(root: str | Path, *, version: str, source_url: str, files: list[str], license_files: list[str]) -> dict:
     if not isinstance(version, str) or not version.strip():
         raise ArtifactError("Runtime version must be nonempty.")
+    if not isinstance(source_url, str):
+        raise ArtifactError("Runtime source must be an HTTPS URL.")
     source = urlparse(source_url)
     if source.scheme != "https" or not source.netloc or source.username or source.password:
         raise ArtifactError("Runtime source must be an HTTPS URL without credentials.")
