@@ -1,0 +1,68 @@
+name: Publish pocket-python to PyPI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pocket-python-pypi-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and verify distribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      POCKET_PYTHON_RUNTIME: ${{ github.workspace }}/build/runtime
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.19"
+          enable-cache: true
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          uv run --no-project --python 3.14 python - <<'PY'
+          import os, tomllib
+          from pathlib import Path
+          project = tomllib.loads(Path('pyproject.toml').read_text())['project']
+          assert project['name'] == 'pocket-python'
+          assert os.environ['RELEASE_TAG'] == 'v' + project['version'], 'Tag must match the package version'
+          PY
+      - run: uv sync --locked
+      - run: uv run --no-sync python scripts/prepare_runtime.py
+      - run: uv run --no-sync python -m unittest discover -s tests -v
+      - run: uv build
+      - run: uvx --from twine twine check --strict dist/*
+      - run: uv run --no-sync python scripts/check_distributions.py
+      - uses: actions/upload-artifact@v5
+        with:
+          name: pocket-python-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish distribution to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/pocket-python/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          name: pocket-python-distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

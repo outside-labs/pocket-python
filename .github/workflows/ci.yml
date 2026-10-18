@@ -28,6 +28,7 @@ jobs:
       - run: uv run --no-sync python scripts/prepare_runtime.py
       - run: uv run --no-sync python -m unittest discover -s tests -v
       - run: uv build
+      - run: uv run --no-sync python scripts/check_distributions.py
 
   browser:
     runs-on: ubuntu-latest
