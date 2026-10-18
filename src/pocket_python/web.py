@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 
 from pocket_python import __version__
-from pocket_python.assets import ArtifactError, RuntimeAssets, check_names, file_record, json_bytes
+from pocket_python.assets import ArtifactError, RuntimeAssets, check_names, file_record, json_bytes, json_object
 from pocket_python.bundles import SourceBundle
 from pocket_python.templates import APP, ICON, PAGE, SERVICE_WORKER, WORKER
 
@@ -50,6 +50,17 @@ def _publish(destination: Path, files: dict[str, bytes]):
 
 
 def build_web(bundle: SourceBundle, runtime: RuntimeAssets, output: str | Path, *, title: str = "Pocket Python") -> dict:
+    if json_object(bundle.files["SHIMIFY-MANIFEST.json"]) != bundle.manifest:
+        raise ArtifactError("Source manifest snapshot changed after validation.")
+    for records, snapshot, extra in [
+        (bundle.manifest["files"], bundle.files, {"SHIMIFY-MANIFEST.json"}),
+        (runtime.lock["files"], runtime.files, set()),
+    ]:
+        if set(snapshot) != {record["path"] for record in records} | extra:
+            raise ArtifactError("Snapshot files changed after validation.")
+        for record in records:
+            if file_record(record["path"], snapshot[record["path"]]) != {key: record[key] for key in ["path", "sha256", "size_bytes"]}:
+                raise ArtifactError("Snapshot hash or size changed after validation.")
     requested = Path(output).absolute()
     if requested.exists() or requested.is_symlink():
         raise ArtifactError("Output already exists; choose a new directory.")
