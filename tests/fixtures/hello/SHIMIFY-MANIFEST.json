@@ -1,0 +1,68 @@
+{
+  "distributions": [],
+  "edges": [
+    {
+      "importer": "__main__",
+      "line": 1,
+      "reason": "from import",
+      "target": "helper"
+    }
+  ],
+  "entrypoint": "_sources/app.py",
+  "files": [
+    {
+      "path": "LICENSES/local-1/LICENSE",
+      "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+      "size_bytes": 1066
+    },
+    {
+      "path": "_sources/app.py",
+      "sha256": "8f5d0f4db7967f97529b796bde2256568b748f47437670c6a68704e309ba8993",
+      "size_bytes": 55
+    },
+    {
+      "path": "_sources/helper.py",
+      "sha256": "2f6e407b2154dae86d19d23f2592b2c9f4c42aea61418ac59740cf1b34e109e8",
+      "size_bytes": 47
+    },
+    {
+      "path": "run.py",
+      "sha256": "08359fbabd22df389518d5d924cdcfeea85875b354029871e8f6ff8972856e82",
+      "size_bytes": 302
+    }
+  ],
+  "launcher": "run.py",
+  "limitations": [
+    "Conservative static imports; arbitrary runtime behavior is not proven.",
+    "License material is preserved; redistribution compliance is not certified."
+  ],
+  "mode": "modules",
+  "python": {
+    "build_version": "3.14.7",
+    "implementation": "cpython",
+    "requires": ">=3.14"
+  },
+  "schema_version": 1,
+  "shimify_version": "0.2.0",
+  "sources": [
+    {
+      "distribution": null,
+      "module": "__main__",
+      "origin": "local",
+      "output": "_sources/app.py",
+      "sha256": "8f5d0f4db7967f97529b796bde2256568b748f47437670c6a68704e309ba8993",
+      "size_bytes": 55,
+      "source": "app.py"
+    },
+    {
+      "distribution": null,
+      "module": "helper",
+      "origin": "local",
+      "output": "_sources/helper.py",
+      "sha256": "2f6e407b2154dae86d19d23f2592b2c9f4c42aea61418ac59740cf1b34e109e8",
+      "size_bytes": 47,
+      "source": "helper.py"
+    }
+  ],
+  "stdlib_modules": []
+}
