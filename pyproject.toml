@@ -16,6 +16,9 @@ classifiers = [
 ]
 dependencies = []
 
+[project.scripts]
+pocket-python = "pocket_python.cli:main"
+
 [project.urls]
 Repository = "https://github.com/outside-labs/pocket-python"
 Issues = "https://github.com/outside-labs/pocket-python/issues"
