@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from pocket_python.assets import ArtifactError, read_runtime
+from pocket_python.assets import ArtifactError, json_bytes, read_runtime, runtime_lock
 from pocket_python.bundles import read_bundle
 from pocket_python.web import build_web
 from tests.helpers import make_bundle, make_runtime
@@ -40,7 +40,11 @@ class WebTests(unittest.TestCase):
         first = build_web(self.bundle, self.runtime, self.output)
         second = build_web(self.bundle, self.runtime, self.root / "second")
         self.assertEqual(first, second)
-        self.runtime.files["micropython.wasm"] += b"changed fixture snapshot"
+        (self.runtime.root / "micropython.wasm").write_bytes(b"changed fixture snapshot")
+        lock = runtime_lock(self.runtime.root, version="test-2", source_url="https://example.test/runtime", files=["micropython.mjs", "micropython.wasm"], license_files=["LICENSE"])
+        lock_path = self.root / "runtime-lock.json"
+        lock_path.write_bytes(json_bytes(lock))
+        self.runtime = read_runtime(self.runtime.root, lock_path)
         third = build_web(self.bundle, self.runtime, self.root / "third")
         self.assertNotEqual(first["cache_version"], third["cache_version"])
 
@@ -49,6 +53,12 @@ class WebTests(unittest.TestCase):
         (self.bundle.root / "_sources/app.py").write_bytes(b"changed after validation")
         build_web(self.bundle, self.runtime, self.output)
         self.assertEqual((self.output / "application/_sources/app.py").read_bytes(), original)
+
+    def test_in_process_snapshot_mutation_is_refused(self):
+        self.runtime.files["micropython.wasm"] = b"tampered"
+        with self.assertRaisesRegex(ArtifactError, "Snapshot hash"):
+            build_web(self.bundle, self.runtime, self.output)
+        self.assertFalse(self.output.exists())
 
     def test_existing_overlap_and_publication_failure_are_safe(self):
         for output in [self.bundle.root / "new", self.runtime.root / "new"]:

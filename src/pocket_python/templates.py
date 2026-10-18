@@ -110,7 +110,7 @@ self.onmessage = async ({data}) => {
     }
     if (entry === undefined) throw new Error("Application entrypoint is missing.");
     mp.globals.set("__file__", "/app/" + config.entrypoint);
-    mp.runPython("import sys\\nsys.path.insert(0, '/app')\\nsys.argv = [__file__]\\n");
+    mp.runPython("import sys\\nsys.path.insert(0, '/app')\\n");
     mp.runPython(entry);
     postMessage({type: "stdout", text: stdout.decode()});
     postMessage({type: "stderr", text: stderr.decode()});
