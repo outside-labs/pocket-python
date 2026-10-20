@@ -52,7 +52,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, should
       else if (operation === "equal") value = left === right;
       else if (operation === "less") value = left < right;
       else {
-        if (right === 0n) error("ZERO_DIVISION", "ZeroDivisionError", "integer division or modulo by zero", at);
+        if (right === 0n) error("ZERO_DIVISION", "ZeroDivisionError",
+          operation === "floor-divide" ? "division by zero" : "integer modulo by zero", at);
         let quotient = left / right;
         if (left % right !== 0n && (left < 0n) !== (right < 0n)) quotient -= 1n;
         value = operation === "floor-divide" ? quotient : left - quotient * right;

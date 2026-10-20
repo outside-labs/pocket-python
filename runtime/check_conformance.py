@@ -163,6 +163,8 @@ def check(engine_name, target, channel=None):
             passed = actual["ok"] and actual["result"] == expected["result"]
         else:
             passed = not actual["ok"] and actual["error"].get("type") == expected["error"]["type"]
+            if "message" in case:
+                passed = passed and actual["error"].get("message") == expected["error"]["message"]
         records.append({**record, "status": "pass" if passed else "fail", "expected": expected, "actual": actual})
     for case in negative:
         actual = results[case["id"]]
