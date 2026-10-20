@@ -31,3 +31,9 @@ build-backend = "uv_build"
 browser-tests = [
     "playwright==1.64.0",
 ]
+compiled-build = [
+    "python-javascript",
+]
+
+[tool.uv.sources]
+python-javascript = { git = "https://github.com/outside-labs/Python-JavaScript", rev = "35fbe6eb399f5d94e05e850eb36dbdf695e6d15a" }

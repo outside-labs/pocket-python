@@ -329,3 +329,20 @@ publication blocker; never claim an unpublished package is available.
 - [PyPI Trusted Publishers](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
 
 The independent engine now has [INT-05 lifetime and resource control](docs/interpreter-memory.md): explicit roots, cyclic-graph accounting, retained session values and owned host handles. New-source browser execution remains staged behind the parser and host-integration milestones.
+
+
+WEB-03 implements compiled-javascript/1 offline assembly with an explicit hashed
+client source allowlist and optional existing compiler artifact. Pinned compiler
+source verification and deterministic recompilation establish the local module,
+worker/helper, source-map and notice closure before publication. The schema-2
+receipt records client-only identities, capabilities, exact assets/imports and
+separate physical payload costs. The text-input/1 UI runs in a worker with
+Run/Stop/Restart; real-browser acceptance covers CPython computation parity,
+offline reload/rerun, errors without maps, busy-worker termination, subdirectory
+hosting and cache updates preserving neighbor scopes. Installed sessions keep
+their version while an update waits; closing the app's tabs/windows activates
+the new complete asset set. Existing MicroPython
+regressions remain. The [compiled application guide](docs/compiled-applications.md)
+describes the adopted UI/capability/input limits. The compiler is optional pinned
+build tooling; runtime dependencies stay empty. New-source interpretation remains
+INT-08/INT-WEB-01. No release or deployment was published.
