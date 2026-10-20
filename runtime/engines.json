@@ -4,7 +4,30 @@
     "backend": "javascript-vm",
     "module": "prototype.mjs",
     "worker": "worker.mjs",
-    "features": ["int.literal", "int.add", "int.subtract"],
+    "features": [
+      "int.literal",
+      "int.add",
+      "int.subtract"
+    ],
+    "input_mode": "bytecode-fixture",
+    "source_execution": false
+  },
+  "vm1": {
+    "identity": "pocket-python-bytecode/1",
+    "backend": "javascript-vm",
+    "module": "vm.mjs",
+    "worker": "vm-worker.mjs",
+    "features": [
+      "int.literal",
+      "int.add",
+      "int.subtract",
+      "int.multiply",
+      "int.floor-divide",
+      "int.modulo",
+      "int.compare",
+      "control.branch",
+      "exception.zero-division"
+    ],
     "input_mode": "bytecode-fixture",
     "source_execution": false
   }

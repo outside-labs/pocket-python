@@ -32,6 +32,36 @@
               "return"
             ]
           ]
+        },
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "1"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "add"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -126,7 +156,40 @@
       "features": [
         "int.floor-divide",
         "exception.zero-division"
-      ]
+      ],
+      "expression": "1 // 0",
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "1"
+            },
+            {
+              "type": "int",
+              "value": "0"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
     },
     {
       "id": "integer-subtract",
@@ -153,6 +216,1386 @@
             ],
             [
               "subtract"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "2"
+            },
+            {
+              "type": "int",
+              "value": "5"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "subtract"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "floor-divide--7-3",
+      "stage": "A",
+      "source": "print(-7 // 3)",
+      "stdout": "-3\n",
+      "expression": "-7 // 3",
+      "features": [
+        "int.literal",
+        "int.floor-divide"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "modulo--7-3",
+      "stage": "A",
+      "source": "print(-7 % 3)",
+      "stdout": "2\n",
+      "expression": "-7 % 3",
+      "features": [
+        "int.literal",
+        "int.modulo"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "multiply--7-3",
+      "stage": "A",
+      "source": "print(-7 * 3)",
+      "stdout": "-21\n",
+      "expression": "-7 * 3",
+      "features": [
+        "int.literal",
+        "int.multiply"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "less--7-3",
+      "stage": "A",
+      "source": "print(-7 < 3)",
+      "stdout": "True\n",
+      "expression": "-7 < 3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "equal--7-3",
+      "stage": "A",
+      "source": "print(-7 == 3)",
+      "stdout": "False\n",
+      "expression": "-7 == 3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "floor-divide-7--3",
+      "stage": "A",
+      "source": "print(7 // -3)",
+      "stdout": "-3\n",
+      "expression": "7 // -3",
+      "features": [
+        "int.literal",
+        "int.floor-divide"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "modulo-7--3",
+      "stage": "A",
+      "source": "print(7 % -3)",
+      "stdout": "-2\n",
+      "expression": "7 % -3",
+      "features": [
+        "int.literal",
+        "int.modulo"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "multiply-7--3",
+      "stage": "A",
+      "source": "print(7 * -3)",
+      "stdout": "-21\n",
+      "expression": "7 * -3",
+      "features": [
+        "int.literal",
+        "int.multiply"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "less-7--3",
+      "stage": "A",
+      "source": "print(7 < -3)",
+      "stdout": "False\n",
+      "expression": "7 < -3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "equal-7--3",
+      "stage": "A",
+      "source": "print(7 == -3)",
+      "stdout": "False\n",
+      "expression": "7 == -3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "floor-divide--7--3",
+      "stage": "A",
+      "source": "print(-7 // -3)",
+      "stdout": "2\n",
+      "expression": "-7 // -3",
+      "features": [
+        "int.literal",
+        "int.floor-divide"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "modulo--7--3",
+      "stage": "A",
+      "source": "print(-7 % -3)",
+      "stdout": "-1\n",
+      "expression": "-7 % -3",
+      "features": [
+        "int.literal",
+        "int.modulo"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "multiply--7--3",
+      "stage": "A",
+      "source": "print(-7 * -3)",
+      "stdout": "21\n",
+      "expression": "-7 * -3",
+      "features": [
+        "int.literal",
+        "int.multiply"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "less--7--3",
+      "stage": "A",
+      "source": "print(-7 < -3)",
+      "stdout": "True\n",
+      "expression": "-7 < -3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "equal--7--3",
+      "stage": "A",
+      "source": "print(-7 == -3)",
+      "stdout": "False\n",
+      "expression": "-7 == -3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "floor-divide-0-3",
+      "stage": "A",
+      "source": "print(0 // 3)",
+      "stdout": "0\n",
+      "expression": "0 // 3",
+      "features": [
+        "int.literal",
+        "int.floor-divide"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "modulo-0-3",
+      "stage": "A",
+      "source": "print(0 % 3)",
+      "stdout": "0\n",
+      "expression": "0 % 3",
+      "features": [
+        "int.literal",
+        "int.modulo"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "multiply-0-3",
+      "stage": "A",
+      "source": "print(0 * 3)",
+      "stdout": "0\n",
+      "expression": "0 * 3",
+      "features": [
+        "int.literal",
+        "int.multiply"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "less-0-3",
+      "stage": "A",
+      "source": "print(0 < 3)",
+      "stdout": "True\n",
+      "expression": "0 < 3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "equal-0-3",
+      "stage": "A",
+      "source": "print(0 == 3)",
+      "stdout": "False\n",
+      "expression": "0 == 3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "floor-divide-6--3",
+      "stage": "A",
+      "source": "print(6 // -3)",
+      "stdout": "-2\n",
+      "expression": "6 // -3",
+      "features": [
+        "int.literal",
+        "int.floor-divide"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "modulo-6--3",
+      "stage": "A",
+      "source": "print(6 % -3)",
+      "stdout": "0\n",
+      "expression": "6 % -3",
+      "features": [
+        "int.literal",
+        "int.modulo"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "multiply-6--3",
+      "stage": "A",
+      "source": "print(6 * -3)",
+      "stdout": "-18\n",
+      "expression": "6 * -3",
+      "features": [
+        "int.literal",
+        "int.multiply"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "less-6--3",
+      "stage": "A",
+      "source": "print(6 < -3)",
+      "stdout": "False\n",
+      "expression": "6 < -3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "equal-6--3",
+      "stage": "A",
+      "source": "print(6 == -3)",
+      "stdout": "False\n",
+      "expression": "6 == -3",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "floor-divide-9007199254740993-2",
+      "stage": "A",
+      "source": "print(9007199254740993 // 2)",
+      "stdout": "4503599627370496\n",
+      "expression": "9007199254740993 // 2",
+      "features": [
+        "int.literal",
+        "int.floor-divide"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "modulo-9007199254740993-2",
+      "stage": "A",
+      "source": "print(9007199254740993 % 2)",
+      "stdout": "1\n",
+      "expression": "9007199254740993 % 2",
+      "features": [
+        "int.literal",
+        "int.modulo"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "multiply-9007199254740993-2",
+      "stage": "A",
+      "source": "print(9007199254740993 * 2)",
+      "stdout": "18014398509481986\n",
+      "expression": "9007199254740993 * 2",
+      "features": [
+        "int.literal",
+        "int.multiply"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "less-9007199254740993-2",
+      "stage": "A",
+      "source": "print(9007199254740993 < 2)",
+      "stdout": "False\n",
+      "expression": "9007199254740993 < 2",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "equal-9007199254740993-2",
+      "stage": "A",
+      "source": "print(9007199254740993 == 2)",
+      "stdout": "False\n",
+      "expression": "9007199254740993 == 2",
+      "features": [
+        "int.literal",
+        "int.compare"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "conditional-branch",
+      "stage": "A",
+      "source": "print(3 if -7 < 3 else -7)",
+      "stdout": "3\n",
+      "expression": "3 if -7 < 3 else -7",
+      "features": [
+        "int.literal",
+        "int.compare",
+        "control.branch"
+      ],
+      "programs": {
+        "vm1": {
+          "format": "pocket-python-bytecode",
+          "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "jump-if-false",
+              6
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "jump",
+              7
+            ],
+            [
+              "const",
+              0
             ],
             [
               "return"

@@ -63,6 +63,9 @@ reference corpus define the first semantic decisions. The corpus is reference
 evidence, not an already implemented engine. The adopted
 [conformance harness](docs/interpreter-conformance.md) runs feature-tagged engine
 fixtures in Node and browser workers with explicit unsupported-case reporting.
+The first [verified bytecode core](docs/interpreter-bytecode.md) implements
+bounded integer/boolean arithmetic and branches; source parsing and the remaining
+language/object stages stay explicit dependencies.
 
 ## Staged compatibility
 
