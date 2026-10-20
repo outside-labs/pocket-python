@@ -4,14 +4,68 @@
 
 Package a Python application with a small, explicit interpreter/runtime payload.
 Support a native application route and a client-side browser/PWA route without
-requiring an end user to install Python. Start with existing interpreters and
-auditable assembly rather than designing a new Python implementation.
+requiring an end user to install Python. The released baseline assembles existing
+interpreters. The forward program adds our compiler-produced JavaScript profile
+and a separately staged independent interpreter.
 
 Distribution name: `pocket-python`. Python import: `pocket_python`. CLI:
 `pocket-python`. Local project: `Projects/pocket_python`. The outside-labs
 repository and its GitHub Project track the canonical issue queue. Requires
 Python 3.14+ to build artifacts; browser application syntax must independently
 match the chosen interpreter. No runtime dependencies in the packaging tool.
+
+## Coordinated program adopted 2026-10-20
+
+Three parts have separate implementation and compatibility contracts. Open
+issues and plans do not mean those features have shipped.
+
+1. **Smaller source artifacts:** Shimify owns module reachability, bounded
+   cross-module symbol extraction, resources, provenance and measurements.
+2. **Our compiler and browser applications:** Python-JavaScript owns validated
+   Python-to-JavaScript compilation and browser adapters. Pocket-python owns
+   verified profiles, application assembly and offline delivery. Approved shared
+   logic runs under CPython on the server and compiled code on the client;
+   entrypoints and platform adapters remain explicit.
+3. **Our independent interpreter:** pocket-python initially owns the plan and
+   queue for a new engine that executes newly entered Python source locally.
+   The separate interpreter plan defines language stages, architecture decisions,
+   native/browser delivery, conformance and resource limits.
+
+The compiler and independent interpreter must work without MicroPython or
+Pyodide. An optional upstream CPython WebAssembly build is an existing-engine
+distribution, not the independent interpreter. MicroPython, Pyodide and PyScript
+remain separate optional compatibility routes. No silent fallback or arbitrary
+package compatibility is implied.
+
+Related plans:
+
+- [Source reduction](https://github.com/outside-labs/shimify/blob/main/IMPLEMENTATION_PLAN03.md)
+- [Compiler/browser target](https://github.com/outside-labs/Python-JavaScript/blob/main/IMPLEMENTATION_PLAN.md)
+- [Application assembly](https://github.com/outside-labs/pocket-python/blob/main/IMPLEMENTATION_PLAN.md)
+- [Independent interpreter](https://github.com/outside-labs/pocket-python/blob/main/IMPLEMENTATION_PLAN_INTERPRETER.md)
+
+The compiler repository remains private. Cross-project links do not change its
+visibility or authorize copying its source into public artifacts.
+
+## Common acceptance application
+
+Use a small text_metrics application: shared Python computation counts
+characters, words and lines; a local pure-Python helper and immutable constants
+establish module boundaries, with an unused utility for reduction. Start the
+compiler with a single-module equivalent, then add local imports. Adopt results
+for empty strings, Unicode/astral characters, whitespace, invalid arguments and
+numeric boundaries through the source-language contract.
+
+Run shared logic through a CPython 3.14 CLI and local standard-library HTTP test
+endpoint. The browser has a text area, a button and visible results; computation
+runs offline. The interpreter later accepts this source as new input after
+deployment. Keep server-only adapters/data outside client allowlists. No new
+framework or external service is needed for this acceptance application.
+
+Retain packaging==25.0 as Shimify's independent real-package module regression.
+For resource work, extend the local fixture with one named UTF-8 stop-word file.
+The new compiler/interpreter need not support the whole packaging library to
+meet their first milestones.
 
 ## Feasibility and product boundary
 
@@ -130,7 +184,7 @@ files (excluding its own self-hash) and records provenance, selected runtime,
 source/runtime/total byte counts and the intentionally limited compatibility
 claim. Actual compression, startup and memory are not inferred from source size.
 
-## Ordered queue and acceptance gates
+## Delivered 0.1 queue and existing-runtime proposals
 
 | Task | Deliverable | Dependency | Acceptance |
 | --- | --- | --- | --- |
@@ -148,7 +202,76 @@ The first four tasks form a focused rolling PR batch; dependent work stacks.
 Squash passing PRs oldest first, preserve open dependency bases, reconcile and
 retarget descendants, require fresh checks, then verify final main. Publication
 is explicitly requested for this initial version, conditional on these gates.
-Later milestones remain open proposals with concrete fixture-selection gates.
+Existing-runtime proposals remain optional and target-specific, without gating
+compiler/interpreter delivery. TRACE-01 now tracks native runtime evidence;
+MEASURE-01 owns cross-profile footprint reporting.
+
+## Forward application queue
+
+| Task | Scope | Depends on | Readiness |
+| --- | --- | --- | --- |
+| [pocket/PROFILE-01](https://github.com/outside-labs/pocket-python/issues/16) | Define versioned compiled and interpreter application profiles | Released foundation | Ready |
+| [pocket/HOST-01](https://github.com/outside-labs/pocket-python/issues/17) | Specify the browser host and worker bridge | [pocket/PROFILE-01](https://github.com/outside-labs/pocket-python/issues/16), [js/PARSE-01](https://github.com/outside-labs/Python-JavaScript/issues/11) | Blocked |
+| [pocket/WEB-03](https://github.com/outside-labs/pocket-python/issues/18) | Assemble compiler-produced offline browser applications | [pocket/PROFILE-01](https://github.com/outside-labs/pocket-python/issues/16), [pocket/HOST-01](https://github.com/outside-labs/pocket-python/issues/17), [js/QA-03](https://github.com/outside-labs/Python-JavaScript/issues/25) | Blocked |
+| [pocket/E2E-01](https://github.com/outside-labs/pocket-python/issues/19) | Verify shared server and client Python application logic | [pocket/WEB-03](https://github.com/outside-labs/pocket-python/issues/18), [js/QA-03](https://github.com/outside-labs/Python-JavaScript/issues/25) | Blocked |
+| [pocket/MEASURE-01](https://github.com/outside-labs/pocket-python/issues/20) | Report comparable source, compiler and interpreter footprints | [pocket/E2E-01](https://github.com/outside-labs/pocket-python/issues/19), [js/PERF-01](https://github.com/outside-labs/Python-JavaScript/issues/26) | Blocked |
+| [pocket/CPY-WASM-01](https://github.com/outside-labs/pocket-python/issues/21) | Evaluate an independently built upstream CPython browser profile | [pocket/PROFILE-01](https://github.com/outside-labs/pocket-python/issues/16) | Triage |
+| [pocket/NATIVE-01](https://github.com/outside-labs/pocket-python/issues/5) | Select and assemble a supplied relocatable CPython runtime | Released foundation | Triage |
+| [pocket/TRIM-01](https://github.com/outside-labs/pocket-python/issues/6) | Prove bounded optional-runtime trimming | [pocket/NATIVE-01](https://github.com/outside-labs/pocket-python/issues/5) | Triage |
+| [pocket/PYODIDE-01](https://github.com/outside-labs/pocket-python/issues/7) | Define an optional broader CPython browser profile | Released foundation | Triage |
+| [pocket/PYSCRIPT-01](https://github.com/outside-labs/pocket-python/issues/8) | Define an optional PyScript integration profile | [pocket/HOST-01](https://github.com/outside-labs/pocket-python/issues/17) | Triage |
+| [pocket/TRACE-01](https://github.com/outside-labs/pocket-python/issues/22) | Collect native runtime evidence and budgets | [pocket/NATIVE-01](https://github.com/outside-labs/pocket-python/issues/5) | Triage |
+
+PROFILE-01 and the interpreter language contract INT-01 are Ready design tasks.
+HOST-01 follows PROFILE-01 and the compiler language contract. Compiled artifacts
+identify ES modules, helpers, static imports, source maps, notices and profile
+versions; they are not MicroPython asset locks. Preserve schema-1 behavior and
+version incompatible contracts explicitly.
+
+WEB-03 adds compiled offline assembly after compiler/browser conformance.
+E2E-01 proves shared CPython/server and client logic with separate entrypoints.
+MEASURE-01 delivers compiler reporting first and accepts interpreter measurements
+when INT-WEB-01 exists. Native/trim/Pyodide/PyScript/upstream CPython WASM lanes
+remain optional with explicit target/fixture decisions.
+
+## Part 3: independent interpreter
+
+[IMPLEMENTATION_PLAN_INTERPRETER.md](IMPLEMENTATION_PLAN_INTERPRETER.md) specifies
+language stages, toolchain/ownership decisions, bytecode/VM, values and memory,
+functions/exceptions/imports, independent source parsing, an offline browser
+console, classes/async, measurement and alpha-candidate gates.
+
+The interpreter must execute newly entered source on the device. Packaging
+CPython or invoking the ahead-of-time JavaScript compiler does not satisfy it.
+The native/CLI harness and browser worker use adopted engine semantics through
+explicit platform adapters. Interpreter delivery does not depend on completing
+the ahead-of-time compiler or native CPython packaging.
+
+## Delivery, readiness and measurement
+
+Issues and Projects hold current state; plans describe architecture/acceptance.
+Ready means adopted scope and finished dependencies; Blocked means unfinished
+dependencies; Triage means an optional or unselected extension. A contract or
+architecture task may be Ready while later implementation awaits its decisions.
+Do not mark a feature Done for documenting it. Update dependent readiness after
+merges; Task, Order, Dependencies, Target and Readiness make the queue explicit.
+
+Use rolling batches of 3-5 focused PRs. Start CI, continue independent work or
+stack dependent changes, squash passing changes in dependency order and verify
+final main. Preserve parent branches while open dependents target them;
+reconcile, retarget and recheck descendants before deleting dependency bases.
+
+Compare supported behavior before footprints. Separate source bytes, generated
+code/helpers, interpreter assets, data/notices, source maps, complete uncompressed
+bytes and compressed transfer. Record tool/engine/host versions, cold/warm
+startup and memory method. No fixed size/performance/compatibility claim follows
+from this roadmap. Incomplete import reports and unobserved dependencies never
+authorize removal.
+
+Keep releases/tags immutable. New runtime dependencies, services, engine
+repository/package identity, release uploads and deployment retain their explicit
+scope/decision requirements. This planning update changes no runtime dependencies
+and publishes no package.
 
 ## Testing and release policy
 
