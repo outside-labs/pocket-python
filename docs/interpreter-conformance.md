@@ -15,11 +15,13 @@ the harness. CPython evaluates only committed reference expressions, in an
 isolated subprocess with a five-second timeout. It never substitutes for an
 engine run. Node and browser execute the same engine module and bytecode fixtures.
 
-The prototype currently compares arbitrary-precision addition/subtraction, with
-14 further negative checks for invalid operands, unreachable unknown operations,
-integer input/growth limits, bounded loops and seeded unknown-op mutations.
-Its input is bytecode, not Python source. Nine remaining semantic cases and four
-malformed-source cases are reported as unsupported. This proves neither parsing
+The prototype compares arbitrary-precision addition/subtraction; vm1 additionally
+compares multiplication, signed floor division/modulo, comparison, branching and
+division errors. Negative checks cover invalid operands, unreachable unknown
+operations, integer input/growth limits, bounded loops and seeded mutations.
+Select vm1 with `--engine vm1` on either target. Their input is bytecode, not
+Python source. Remaining semantic and malformed-source cases are reported as
+unsupported. This proves neither parsing
 nor full Python compatibility. Source adapters, side effects, exceptions,
 container mutation, memory ownership and language fuzzing must grow with their
 implementation stages. Accounted integer-size limits do not measure host RSS.
