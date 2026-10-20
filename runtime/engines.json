@@ -1,0 +1,11 @@
+{
+  "prototype": {
+    "identity": "pocket-python-prototype/0",
+    "backend": "javascript-vm",
+    "module": "prototype.mjs",
+    "worker": "worker.mjs",
+    "features": ["int.literal", "int.add", "int.subtract"],
+    "input_mode": "bytecode-fixture",
+    "source_execution": false
+  }
+}

@@ -60,7 +60,9 @@ meet their first milestones.
 
 [The adopted language contract](docs/interpreter-language.md) and its CPython
 reference corpus define the first semantic decisions. The corpus is reference
-evidence, not an already implemented engine.
+evidence, not an already implemented engine. The adopted
+[conformance harness](docs/interpreter-conformance.md) runs feature-tagged engine
+fixtures in Node and browser workers with explicit unsupported-case reporting.
 
 ## Staged compatibility
 

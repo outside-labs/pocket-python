@@ -32,6 +32,8 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
+    env:
+      UV_PYTHON: '3.14.7'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
@@ -44,6 +46,13 @@ jobs:
       - run: uv run --no-sync python -m playwright install --with-deps chromium
       - run: uv run --no-sync python scripts/browser_smoke.py
       - run: uv run --no-sync python runtime/browser_smoke.py
+      - run: uv run --no-sync python runtime/check_conformance.py --target browser --report build/interpreter-browser-report.json
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: interpreter-browser-report
+          path: build/interpreter-browser-report.json
+          if-no-files-found: error
 
   interpreter-prototype:
     runs-on: ubuntu-latest
@@ -52,4 +61,14 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24.19.0'
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.14.7'
       - run: node --test runtime/prototype.test.mjs
+      - run: python runtime/check_conformance.py --report build/interpreter-node-report.json
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: interpreter-node-report
+          path: build/interpreter-node-report.json
+          if-no-files-found: error
