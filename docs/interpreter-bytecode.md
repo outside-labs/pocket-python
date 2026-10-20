@@ -59,3 +59,7 @@ The shared corpus compares precision, all sign combinations of division/modulo,
 numeric comparisons, a conditional branch and ZeroDivisionError with CPython.
 Seeded invalid indices, unknown versions, unreachable opcodes, stack joins,
 fallthrough, digit limits and bounded loops exercise the verifier and budgets.
+
+[Bytecode version 2](interpreter-values.md) extends this verifier with explicit
+core values, container construction/mutation, indexing/slicing and iteration.
+Version 1 retains the integer-only format described above.

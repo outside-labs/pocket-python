@@ -88,3 +88,9 @@ input fuzzing before VM implementation broadens. Later PRs add numeric/Unicode,
 mutation/aliasing, scope/default, argument, exception, import, GC/handle and budget
 cases as features land. INT-WEB-01 must run source entered after deployment and
 after offline reload, including errors, interrupting an infinite loop and restart.
+
+INT-04 implements [core values and staged containers](interpreter-values.md)
+under bytecode version 2. Source parsing, functions/closures, exception unwinding,
+live-memory accounting and host handles remain subsequent milestones. Pure-int
+true division and equal-size dictionary key mutation during iteration are
+explicitly deferred. The published 0.1.0 package predates this development engine.

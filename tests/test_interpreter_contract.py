@@ -12,6 +12,7 @@ CORPUS = Path(__file__).parent / "fixtures" / "interpreter" / "language.json"
 class InterpreterContractTests(unittest.TestCase):
     def test_adopted_reference_cases_and_boundaries(self):
         corpus = json.loads(CORPUS.read_text(encoding="utf-8"))
+        corpus["cases"].extend(json.loads(CORPUS.with_name("values.json").read_text(encoding="utf-8"))["cases"])
         cases = corpus["cases"] + corpus["boundaries"] + corpus.get("malformed_source", [])
         self.assertEqual(len({case["id"] for case in cases}), len(cases))
         for case in corpus["cases"]:
@@ -22,7 +23,8 @@ class InterpreterContractTests(unittest.TestCase):
                 )
                 if "exception" in case:
                     self.assertNotEqual(process.returncode, 0)
-                    self.assertIn(case["exception"] + ": " + case["message"], process.stderr)
+                    expected = case["exception"] + (": " + case["message"] if case["message"] else "")
+                    self.assertEqual(process.stderr.splitlines()[-1], expected)
                 else:
                     self.assertEqual(process.returncode, 0, process.stderr)
                     self.assertEqual(process.stdout.replace("\r\n", "\n"), case["stdout"])

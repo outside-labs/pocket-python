@@ -113,3 +113,8 @@ See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md),
 [GitHub Project](https://github.com/orgs/outside-labs/projects/13).
 Runtime and dependency licenses remain applicable; preserve and review their
 upstream notices before distributing generated applications.
+
+The development [independent VM value model](docs/interpreter-values.md) executes
+our own versioned bytecode in Node and browser workers. It covers staged Python
+scalars, containers and iteration; browser-side parsing of new source remains a
+subsequent milestone. It is not included in the published 0.1.0 package.

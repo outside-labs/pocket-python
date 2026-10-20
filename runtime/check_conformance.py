@@ -21,11 +21,18 @@ CORPUS = ROOT.parent / "tests/fixtures/interpreter/language.json"
 def oracle(expression):
     # Only expressions in the committed acceptance corpus reach this test oracle.
     source = (
-        "import json\ntry:\n    value = (" + expression + ")\n"
-        "    kind = 'bool' if type(value) is bool else 'int' if type(value) is int else None\n"
-        "    if kind is None: raise TypeError('No adopted reference encoding')\n"
-        "    print(json.dumps({'ok': True, 'result': {'type': kind, 'value': value if kind == 'bool' else str(value)}}))\n"
-        "except Exception as error:\n    print(json.dumps({'ok': False, 'error': {'type': type(error).__name__, 'message': str(error)}}))\n"
+        "import json,math,struct\ndef encode(value):\n"
+        "    if value is None: return {'type':'none'}\n"
+        "    if type(value) is bool: return {'type':'bool','value':value}\n"
+        "    if type(value) is int: return {'type':'int','value':str(value)}\n"
+        "    if type(value) is float: return {'type':'float','bits':'7ff8000000000000' if math.isnan(value) else struct.pack('>d',value).hex()}\n"
+        "    if type(value) is str: return {'type':'str','codepoints':list(map(ord,value))}\n"
+        "    if type(value) in (list,tuple): return {'type':type(value).__name__,'items':[encode(item) for item in value]}\n"
+        "    if type(value) is dict: return {'type':'dict','entries':[[encode(key),encode(item)] for key,item in value.items()]}\n"
+        "    raise TypeError('No adopted reference encoding')\n"
+        "try:\n    value = (" + expression + ")\n"
+        "    print(json.dumps({'ok':True,'result':encode(value)}))\n"
+        "except Exception as error:\n    print(json.dumps({'ok':False,'error':{'type':type(error).__name__,'message':str(error)}}))\n"
     )
     result = subprocess.run([sys.executable, "-I", "-X", "utf8", "-S", "-c", source],
                             check=True, capture_output=True, text=True, encoding="utf-8", timeout=5)
@@ -84,9 +91,9 @@ def run_browser(engine, requests, channel):
 
 
 def validation_requests(engine_name):
-    if engine_name == "vm1":
+    if engine_name in {"vm1", "vm2"}:
         def program(instructions, values=("1",)):
-            return {"format": "pocket-python-bytecode", "version": 1,
+            return {"format": "pocket-python-bytecode", "version": 2 if engine_name == "vm2" else 1,
                     "constants": [{"type": "int", "value": value} for value in values], "instructions": instructions}
         invalid = [
             ("budget-loop", program([["jump", 0]]), "BUDGET"),
@@ -99,6 +106,24 @@ def validation_requests(engine_name):
             ("fallthrough", program([["const", 0]]), "BYTECODE"),
             ("version", {**program([["jump", 0]]), "version": 99}, "BYTECODE"),
         ]
+        if engine_name == "vm2":
+            def typed(instructions, constants):
+                return {**program(instructions), "constants": constants}
+            deep = {"type": "none"}
+            for _ in range(34):
+                deep = {"type": "tuple", "items": [deep]}
+            invalid.extend([
+                ("unknown-value-tag", typed([["const", 0], ["return"]], [{"type": "constructor"}]), "BYTECODE"),
+                ("mutable-constant", typed([["const", 0], ["return"]], [{"type": "list", "items": []}]), "BYTECODE"),
+                ("unicode-outside", typed([["const", 0], ["return"]], [{"type": "str", "codepoints": [0x110000]}]), "BYTECODE"),
+                ("constant-depth", typed([["const", 0], ["return"]], [deep]), "BYTECODE"),
+                ("construction-underflow", typed([["build-dict", 1], ["return"]], []), "BYTECODE"),
+                ("integer-true-division-deferred", program([["const", 0], ["const", 0], ["divide"], ["return"]]), "UNSUPPORTED"),
+                ("integer-identity-deferred", program([["const", 0], ["const", 0], ["is"], ["return"]]), "UNSUPPORTED"),
+                ("sequence-repetition-deferred", program([["build-list", 0], ["const", 0], ["multiply"], ["return"]]), "UNSUPPORTED"),
+                ("string-growth-limit", typed([["const", 0], ["const", 0], ["add"], ["return"]],
+                    [{"type": "str", "codepoints": [65] * 65536}]), "BUDGET"),
+            ])
         randomizer = random.Random(20261020)
         for index in range(8):
             invalid.append(("malformed-" + str(index), program([["const", randomizer.randrange(2, 1000)], ["return"]]), "BYTECODE"))
@@ -128,6 +153,13 @@ def check(engine_name, target, channel=None):
     engines = json.loads((ROOT / "engines.json").read_text(encoding="utf-8"))
     engine = engines[engine_name]
     corpus = json.loads(CORPUS.read_text(encoding="utf-8"))
+    extension = CORPUS.with_name("values.json")
+    corpus["cases"].extend(json.loads(extension.read_text(encoding="utf-8"))["cases"])
+    digest = hashlib.sha256()
+    for path in (CORPUS, extension):
+        raw = path.read_bytes()
+        digest.update(len(raw).to_bytes(8, "big"))
+        digest.update(raw)
     supported, records = [], []
     for case in corpus["cases"]:
         missing = sorted(set(case["features"]) - set(engine["features"]))
@@ -171,7 +203,7 @@ def check(engine_name, target, channel=None):
         passed = not actual["ok"] and actual["error"].get("code") == case["expected_code"]
         records.append({"id": case["id"], "kind": "validation", "status": "pass" if passed else "fail", "actual": actual})
     return {"schema_version": 1, "engine": engine["identity"], "backend": engine["backend"],
-            "corpus_sha256": hashlib.sha256(CORPUS.read_bytes()).hexdigest(),
+            "corpus_sha256": digest.hexdigest(),
             "input_mode": engine["input_mode"], "source_execution": engine["source_execution"],
             "features": engine["features"], "target": target, "host_version": host,
             "oracle": {"implementation": platform.python_implementation(), "version": platform.python_version()},

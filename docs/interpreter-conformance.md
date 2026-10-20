@@ -7,7 +7,9 @@ declared browser-tests group and Chromium, then run
 An installed Chrome can be selected with `--channel chrome`. CI pins the oracle
 to CPython 3.14.7 and retains both reports. Local reports record actual versions.
 
-The versioned corpus is tests/fixtures/interpreter/language.json. Each semantic
+The versioned corpus combines tests/fixtures/interpreter/language.json with its
+compact values.json extension. The report hashes their length-prefixed bytes in
+that order. Each semantic
 case has feature tags. runtime/engines.json declares an engine's identity,
 backend, supported tags, input mode and entry points. Every supported case must
 have an explicit engine fixture and reference expression; missing fixtures fail
@@ -23,7 +25,7 @@ Select vm1 with `--engine vm1` on either target. Their input is bytecode, not
 Python source. Remaining semantic and malformed-source cases are reported as
 unsupported. This proves neither parsing
 nor full Python compatibility. Source adapters, side effects, exceptions,
-container mutation, memory ownership and language fuzzing must grow with their
+further container behavior, memory ownership and language fuzzing must grow with their
 implementation stages. Accounted integer-size limits do not measure host RSS.
 
 Each schema-1 report records corpus/source SHA-256, engine/backend, exact host
@@ -39,3 +41,9 @@ Every subsequent interpreter change must extend the corpus and run both targets
 for its new features. Unsupported source tests remain visible until an independent
 source parser can execute them. An engine declaring source execution without a
 source adapter fails the harness instead of receiving credit for oracle results.
+
+Select `--engine vm2` for [bytecode-2 values](interpreter-values.md), including
+None, float/Unicode, tuples/lists/dicts and iteration. Both targets use tagged
+values with float bits, code-point arrays and ordered dictionary entries. NaN
+arithmetic is compared with a canonical payload; retained input NaN bits have
+separate round-trip tests. Function/parser cases remain unsupported.

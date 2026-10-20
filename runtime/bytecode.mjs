@@ -1,7 +1,11 @@
 // This format is independent of CPython bytecode and the application compiler IR.
+import {ValueRuntime} from "./values.mjs";
 export const LIMITS = Object.freeze({instructions: 1024, constants: 256, stack: 256, digits: 4096});
 const BINARY = new Set(["add", "subtract", "multiply", "floor-divide", "modulo", "equal", "less"]);
 const SIMPLE = new Set([...BINARY, "dup", "pop", "return"]);
+const VALUE_BINARY = new Set([...BINARY, "divide", "not-equal", "less-equal", "greater", "greater-equal", "is", "contains", "getitem", "append", "dict-delete"]);
+const VALUE_UNARY = new Set(["truth", "not", "len", "negative", "positive", "iter", "next"]);
+const CONSTRUCT = new Set(["build-list", "build-tuple", "build-dict"]);
 
 export class BytecodeError extends Error {
   constructor(message, instruction = null) {
@@ -38,13 +42,18 @@ function sourceInfo(source, count) {
 }
 
 export function verify(program) {
-  if (!object(program) || program.format !== "pocket-python-bytecode" || program.version !== 1) {
-    fail("Expected pocket-python-bytecode version 1.");
+  if (!object(program) || program.format !== "pocket-python-bytecode" || ![1, 2].includes(program.version)) {
+    fail("Expected pocket-python-bytecode version 1 or 2.");
   }
   if (!Array.isArray(program.constants) || program.constants.length > LIMITS.constants) {
     fail("Constant pool exceeds its bounded array format.");
   }
+  let inputWork = 0;
+  const values = new ValueRuntime({charge: amount => {
+    if ((inputWork += amount) > 1_000_000) fail("Constant decoding work exceeds one million units.");
+  }, fail: (name, message) => fail(message)});
   const constants = Array.from(program.constants, constant => {
+    if (program.version === 2) return values.decode(constant, {immutable: true});
     if (!object(constant)) fail("A constant must have a type and value.");
     if (constant.type === "bool" && typeof constant.value === "boolean") return constant.value;
     if (constant.type !== "int" || typeof constant.value !== "string" ||
@@ -58,6 +67,7 @@ export function verify(program) {
   if (!Array.isArray(input) || !integer(input.length, 1, LIMITS.instructions)) {
     fail("Instruction count must be between 1 and 1024.");
   }
+  const binary = program.version === 2 ? VALUE_BINARY : BINARY;
   const instructions = Array.from(input, (instruction, index) => {
     if (!Array.isArray(instruction)) fail("An instruction must be an array.", index);
     const [operation, operand] = instruction;
@@ -69,7 +79,10 @@ export function verify(program) {
       if (instruction.length !== 2 || !integer(operand, 0, input.length - 1)) {
         fail("Jump target is outside the instruction list.", index);
       }
-    } else if (!SIMPLE.has(operation) || instruction.length !== 1) {
+    } else if (program.version === 2 && CONSTRUCT.has(operation)) {
+      if (instruction.length !== 2 || !integer(operand, 0, 1024)) fail("Construction requires a bounded item count.", index);
+    } else if (!(SIMPLE.has(operation) || (program.version === 2 &&
+               (VALUE_BINARY.has(operation) || VALUE_UNARY.has(operation) || ["setitem", "slice", "swap"].includes(operation)))) || instruction.length !== 1) {
       fail("Unknown operation or unexpected operands.", index);
     }
     return Object.freeze([...instruction]);
@@ -83,14 +96,17 @@ export function verify(program) {
     const position = pending[cursor];
     const [operation, operand] = instructions[position];
     const before = heights.get(position);
-    const needs = BINARY.has(operation) ? 2 : ["pop", "dup", "jump-if-false", "return"].includes(operation) ? 1 : 0;
+    const needs = binary.has(operation) || operation === "swap" ? 2 : operation === "setitem" ? 3 : operation === "slice" ? 4 :
+      CONSTRUCT.has(operation) ? operand * (operation === "build-dict" ? 2 : 1) :
+      VALUE_UNARY.has(operation) || ["pop", "dup", "jump-if-false", "return"].includes(operation) ? 1 : 0;
     if (before < needs) fail("Reachable stack underflow.", position);
     if (operation === "return") {
       if (before !== 1) fail("Return requires exactly one stack value.", position);
       continue;
     }
     const after = before + (operation === "const" || operation === "dup" ? 1 :
-      BINARY.has(operation) || operation === "pop" || operation === "jump-if-false" ? -1 : 0);
+      binary.has(operation) || operation === "setitem" || operation === "slice" || CONSTRUCT.has(operation) ? 1 - needs :
+      operation === "pop" || operation === "jump-if-false" ? -1 : 0);
     if (after > LIMITS.stack) fail("Verified stack exceeds 256 values.", position);
     const successors = operation === "jump" ? [operand] :
       operation === "jump-if-false" ? [operand, position + 1] : [position + 1];
@@ -104,7 +120,7 @@ export function verify(program) {
       }
     }
   }
-  return Object.freeze({format: program.format, version: 1,
+  return Object.freeze({format: program.format, version: program.version,
     constants: Object.freeze(constants), instructions: Object.freeze(instructions), source,
     maxStack: Math.max(...heights.values())});
 }
