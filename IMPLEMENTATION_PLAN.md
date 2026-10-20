@@ -44,8 +44,8 @@ Related plans:
 - [Application assembly](https://github.com/outside-labs/pocket-python/blob/main/IMPLEMENTATION_PLAN.md)
 - [Independent interpreter](https://github.com/outside-labs/pocket-python/blob/main/IMPLEMENTATION_PLAN_INTERPRETER.md)
 
-The compiler repository remains private. Cross-project links do not change its
-visibility or authorize copying its source into public artifacts.
+The compiler repository became public on 2026-10-20. Project visibility remains
+separate; application artifacts still include only explicitly selected files.
 
 ## Common acceptance application
 
@@ -205,6 +205,10 @@ is explicitly requested for this initial version, conditional on these gates.
 Existing-runtime proposals remain optional and target-specific, without gating
 compiler/interpreter delivery. TRACE-01 now tracks native runtime evidence;
 MEASURE-01 owns cross-profile footprint reporting.
+
+The adopted [application profile contract](docs/application-profiles.md) specifies
+profile/version identities, manifest fields, verified compiler assets and the
+server/client boundary. Its schema is a future implementation contract.
 
 ## Forward application queue
 
