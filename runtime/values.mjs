@@ -39,30 +39,33 @@ const bitsOf = value => {
 };
 
 export class ValueRuntime {
-  constructor({charge = () => {}, fail = null} = {}) {
+  constructor({charge = () => {}, fail = null, memory = null} = {}) {
+    this.memory = memory;
     this.charge = charge;
     this.fail = fail || ((name, message, code = "PYTHON") => {
       const error = new Error(message); error.name = name; error.code = code; throw error;
     });
     this.nanIds = new WeakMap(); this.nextNan = 1;
   }
+  make(bytes, children, create) { return this.memory ? this.memory.allocate(bytes, children, create) : create(); }
+  resize(value, bytes, children) { this.memory?.resize(value, bytes, children); }
   limit(condition, message) {
     if (!condition) this.fail("ExecutionLimitError", message, "BUDGET");
   }
   depth(depth) { this.limit(depth <= VALUE_LIMITS.depth, "Value nesting exceeds 32."); }
   int(value) {
     this.limit(value.toString().replace(/^-/, "").length <= VALUE_LIMITS.digits, "Integer digit budget exceeded.");
-    return value;
+    return this.memory ? this.memory.primitive(value) : value;
   }
-  float(value) { return new FloatValue(bitsOf(value)); }
+  float(value) { return this.make(64, [], () => new FloatValue(bitsOf(value))); }
   string(points) {
     this.limit(points.length <= VALUE_LIMITS.text, "String length budget exceeded.");
-    this.charge(points.length + 1); return new StringValue(points);
+    this.charge(points.length + 1); return this.make(64 + 4 * points.length, [], () => new StringValue(points));
   }
-  list(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return new ListValue(items); }
-  tuple(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return new TupleValue(items); }
+  list(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new ListValue(items)); }
+  tuple(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new TupleValue(items)); }
   dict(pairs) {
-    const result = new DictValue(); this.charge(1);
+    const result = this.make(96, [], () => new DictValue()); this.charge(1);
     for (const [key, value] of pairs) this.set(result, key, value);
     return result;
   }
@@ -79,7 +82,7 @@ export class ValueRuntime {
         record.value.length <= VALUE_LIMITS.digits + 1 && /^(0|[1-9][0-9]*|-[1-9][0-9]*)$/.test(record.value)) {
       this.charge(record.value.length); return this.int(BigInt(record.value));
     }
-    if (record.type === "float" && typeof record.bits === "string" && /^[0-9a-f]{16}$/.test(record.bits)) return new FloatValue(record.bits);
+    if (record.type === "float" && typeof record.bits === "string" && /^[0-9a-f]{16}$/.test(record.bits)) return this.make(64, [], () => new FloatValue(record.bits));
     if (record.type === "str" && Array.isArray(record.codepoints) && record.codepoints.length <= VALUE_LIMITS.text &&
         Array.from(record.codepoints).every(point => Number.isInteger(point) && point >= 0 && point <= 0x10ffff)) return this.string(record.codepoints);
     if (["tuple", "list"].includes(record.type) && Array.isArray(record.items) && record.items.length <= VALUE_LIMITS.items) {
@@ -230,10 +233,17 @@ export class ValueRuntime {
   set(value, key, item) {
     if (value instanceof DictValue) {
       const hash = this.hash(key), found = this.find(value, key);
-      if (found >= 0) value.entries[found].value = item;
+      if (found >= 0) {
+        const children = value.entries.flatMap((entry, index) => [entry.key, index === found ? item : entry.value]);
+        this.resize(value, valueLayout(value).bytes, children);
+        value.entries[found].value = item;
+      }
       else {
         this.limit(value.entries.length < VALUE_LIMITS.items, "Container length budget exceeded.");
-        this.charge(1); value.entries.push({hash, key, value: item}); value.version++;
+        this.charge(1);
+        this.resize(value, valueLayout(value).bytes + 48 + 2 * hash.length,
+          [...value.entries.flatMap(entry => [entry.key, entry.value]), key, item]);
+        value.entries.push({hash, key, value: item}); value.version++;
       }
       return null;
     }
@@ -242,12 +252,16 @@ export class ValueRuntime {
     if (typeof key !== "bigint") this.fail("TypeError", "List indices must be integers.");
     if (key < 0n) key += BigInt(value.items.length);
     if (key < 0n || key >= BigInt(value.items.length)) this.fail("IndexError", "list assignment index out of range");
-    this.charge(1); value.items[Number(key)] = item; return null;
+    this.charge(1);
+    this.resize(value, 64 + 8 * value.items.length, value.items.map((original, index) => index === Number(key) ? item : original));
+    value.items[Number(key)] = item; return null;
   }
   append(value, item) {
     if (!(value instanceof ListValue)) this.fail("TypeError", "append requires a list.");
     this.limit(value.items.length < VALUE_LIMITS.items, "Container length budget exceeded.");
-    this.charge(1); value.items.push(item); return null;
+    this.charge(1);
+    this.resize(value, 64 + 8 * (value.items.length + 1), [...value.items, item]);
+    value.items.push(item); return null;
   }
   remove(value, key) {
     if (!(value instanceof DictValue)) this.fail("TypeError", "Dictionary deletion requires a dict.");
@@ -277,7 +291,7 @@ export class ValueRuntime {
   iterator(value) {
     if (value instanceof IteratorValue) return value;
     if (!sequence(value) && !(value instanceof DictValue)) this.fail("TypeError", "Value is not iterable in this stage.");
-    this.charge(1); return new IteratorValue(value);
+    this.charge(1); return this.make(64, [value], () => new IteratorValue(value));
   }
   next(iterator) {
     if (!(iterator instanceof IteratorValue)) this.fail("TypeError", "next requires an iterator.");
@@ -387,4 +401,21 @@ export function encodeValue(value) {
       const error = new Error("By-value encoding work budget exceeded."); error.name = "ExecutionLimitError"; error.code = "BUDGET"; throw error;
     }
   }}).encode(value);
+}
+
+// Logical byte costs and explicit edges for the lifetime/accounting layer.
+// Primitive BigInts are conservatively counted per root/edge; object aliases once.
+export function valueLayout(value) {
+  if (value === null || typeof value === "boolean") return {bytes: 8, children: []};
+  if (typeof value === "bigint") {
+    const digits = value.toString().replace(/^-/, "").length;
+    return {bytes: 24 + 2 * digits, children: [], work: digits};
+  }
+  if (value instanceof FloatValue) return {bytes: 64, children: []};
+  if (value instanceof StringValue) return {bytes: 64 + 4 * value.points.length, children: []};
+  if (value instanceof TupleValue || value instanceof ListValue) return {bytes: 64 + 8 * value.items.length, children: value.items};
+  if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
+    children: value.entries.flatMap(entry => [entry.key, entry.value])};
+  if (value instanceof IteratorValue) return {bytes: 64, children: [value.value]};
+  throw new TypeError("Only adopted VM values have an allocation layout.");
 }

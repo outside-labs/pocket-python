@@ -118,3 +118,5 @@ The development [independent VM value model](docs/interpreter-values.md) execute
 our own versioned bytecode in Node and browser workers. It covers staged Python
 scalars, containers and iteration; browser-side parsing of new source remains a
 subsequent milestone. It is not included in the published 0.1.0 package.
+
+Development sessions now have [explicit roots, allocation limits and owned host handles](docs/interpreter-memory.md), with shared Node/browser lifetime checks. New Python source still requires the planned independent parser.

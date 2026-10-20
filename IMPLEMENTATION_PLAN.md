@@ -327,3 +327,5 @@ publication blocker; never claim an unpublished package is available.
 - [PyScript offline assets](https://docs.pyscript.net/2026.7.3/user-guide/offline/)
 - [Service worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
 - [PyPI Trusted Publishers](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
+
+The independent engine now has [INT-05 lifetime and resource control](docs/interpreter-memory.md): explicit roots, cyclic-graph accounting, retained session values and owned host handles. New-source browser execution remains staged behind the parser and host-integration milestones.

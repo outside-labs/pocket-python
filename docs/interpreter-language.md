@@ -90,7 +90,8 @@ cases as features land. INT-WEB-01 must run source entered after deployment and
 after offline reload, including errors, interrupting an infinite loop and restart.
 
 INT-04 implements [core values and staged containers](interpreter-values.md)
-under bytecode version 2. Source parsing, functions/closures, exception unwinding,
-live-memory accounting and host handles remain subsequent milestones. Pure-int
+under bytecode version 2. Functions/closures, exception unwinding
+and source parsing remain subsequent milestones. INT-05 adds
+[rooted allocation accounting and explicit host handles](interpreter-memory.md). Pure-int
 true division and equal-size dictionary key mutation during iteration are
 explicitly deferred. The published 0.1.0 package predates this development engine.
