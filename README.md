@@ -99,10 +99,14 @@ APIs, resources and dynamic imports need explicit adapters or a different
 runtime profile. The initial console has no interactive stdin or DOM bridge.
 Browser cache persistence and PWA installation affordances vary by platform.
 
-The first small-runtime route is MicroPython WebAssembly. Native relocatable
-CPython assembly and subsequent bootstrap-aware trimming are planned separately;
-0.1 does not trim/rebuild CPython. Broader CPython browser compatibility through
-Pyodide and optional PyScript integration are later profiles.
+The delivered small-runtime route is MicroPython WebAssembly. The forward
+program adds our compiler-produced JavaScript application profile and a
+separately staged [independent interpreter](IMPLEMENTATION_PLAN_INTERPRETER.md)
+for newly supplied Python source in the browser. These engines are planned, not
+included in 0.1.0. Shimify owns source reduction, Python-JavaScript owns
+compilation, and pocket-python owns assembly and the interpreter queue. Native
+CPython assembly/trimming, an upstream CPython WebAssembly build, Pyodide and
+PyScript remain optional profiles with separate compatibility/test gates.
 
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md),
 [release notes](docs/release-0.1.0.md), and the
