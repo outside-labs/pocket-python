@@ -50,6 +50,24 @@ wheels = [
 ]
 
 [[package]]
+name = "javascript-fetch-api"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/48/10ff71084c91abe71951a1ec2d5e0609828f93dd2b715da1ce969181b71a/javascript_fetch_api-0.2.0.tar.gz", hash = "sha256:3af21b723fd570d94beb91c9e1080fa50fed6c3fdc4c9cee3c85dca04fc93d76", size = 11907, upload-time = "2026-10-16T19:45:57.098Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ca/50/6255cbb902d7b4ec20c42e7a2bb13c81de87bd0572ac44abb286dd6638c1/javascript_fetch_api-0.2.0-py3-none-any.whl", hash = "sha256:b8a4965645b37928bb3348706994d22de72d0599ed81e9ed3baf1c519c6f60d1", size = 13654, upload-time = "2026-10-16T19:45:55.663Z" },
+]
+
+[[package]]
+name = "javascript-json"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/92/d542ba9ae59528359389ad2afcc5dbd3283755ed9ffc95e7c173a98f74b9/javascript_json-0.1.0.tar.gz", hash = "sha256:19ce727971b44f39fd2a2a59b18ea774fb1c4f7421599964ad42a4aedceb4d4b", size = 4173, upload-time = "2026-10-16T19:08:54.745Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0e/a6/7c057df3ddd6799e7f6381da326917903ba52babb972a109702e1077b4b6/javascript_json-0.1.0-py3-none-any.whl", hash = "sha256:e119be47ba76924bb1757af6a55c0b7cd53e0d08b55f8157fc0081fc65052bef", size = 5047, upload-time = "2026-10-16T19:08:53.384Z" },
+]
+
+[[package]]
 name = "playwright"
 version = "1.64.0"
 source = { registry = "https://pypi.org/simple" }
@@ -77,11 +95,15 @@ source = { editable = "." }
 browser-tests = [
     { name = "playwright" },
 ]
+compiled-build = [
+    { name = "python-javascript" },
+]
 
 [package.metadata]
 
 [package.metadata.requires-dev]
 browser-tests = [{ name = "playwright", specifier = "==1.64.0" }]
+compiled-build = [{ name = "python-javascript", git = "https://github.com/outside-labs/Python-JavaScript?rev=35fbe6eb399f5d94e05e850eb36dbdf695e6d15a" }]
 
 [[package]]
 name = "pyee"
@@ -93,6 +115,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1d/f1/fdedc2c75c3e31a330659c85e5793bb18b3397981fbf0844c6dee5b18926/pyee-14.0.0.tar.gz", hash = "sha256:76dd0f4314ecd27f02dc73589dea7fd3853f9b6176d8ef9b122860657e3602de", size = 98760, upload-time = "2026-08-13T04:26:11.021Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/81/12/5347938b1f9a6453f0dbdfcc3e2388a1320ef9b9ec17fbefbc4ab647ea98/pyee-14.0.0-py3-none-any.whl", hash = "sha256:3ac2d3229a9677f7de2c33d7f52fe25b638a46b19c413fea2edc8c6d0a644e4d", size = 15553, upload-time = "2026-08-13T04:26:09.916Z" },
+]
+
+[[package]]
+name = "python-javascript"
+version = "0.1.0"
+source = { git = "https://github.com/outside-labs/Python-JavaScript?rev=35fbe6eb399f5d94e05e850eb36dbdf695e6d15a#35fbe6eb399f5d94e05e850eb36dbdf695e6d15a" }
+dependencies = [
+    { name = "javascript-fetch-api" },
+    { name = "javascript-json" },
 ]
 
 [[package]]

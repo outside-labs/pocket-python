@@ -2,7 +2,9 @@
 
 Adopted for PROFILE-01. The released schema-1 MicroPython runtime lock and
 source-bundle commands remain unchanged. This document defines future profile
-implementation; the current CLI does not accept the new manifest yet.
+implementation. WEB-03 now implements the compiled schema-2 output through
+[compiled-web and its verified client-source input](compiled-applications.md);
+independent-interpreter profile ingestion remains a later milestone.
 
 ## Identity and compatibility
 

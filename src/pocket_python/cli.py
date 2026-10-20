@@ -30,6 +30,12 @@ def main(argv: list[str] | None = None) -> int:
     web.add_argument("--runtime-lock", type=Path, required=True)
     web.add_argument("--output", type=Path, required=True)
     web.add_argument("--title", default="Pocket Python")
+    compiled = commands.add_parser("compiled-web", help="Build a verified compiler-produced PWA from an explicit client allowlist.")
+    compiled.add_argument("client", type=Path, help="Client-source JSON manifest.")
+    compiled.add_argument("--compiled", type=Path, help="Optional existing compiler output to verify against recompilation.")
+    compiled.add_argument("--output", type=Path, required=True)
+    compiled.add_argument("--title", default="Pocket Python")
+    compiled.add_argument("--omit-source-maps", action="store_true")
     args = parser.parse_args(argv)
     try:
         if args.command == "lock-runtime":
@@ -38,6 +44,13 @@ def main(argv: list[str] | None = None) -> int:
             with args.output.open("xb") as stream:
                 stream.write(json_bytes(result))
             print(f"Created {args.output.resolve()}")
+        elif args.command == "compiled-web":
+            from pocket_python.compiled import build_compiled, read_client, read_compiled
+            client = read_client(args.client)
+            compiled = read_compiled(args.compiled, client) if args.compiled else None
+            receipt = build_compiled(client, args.output, compiled=compiled, title=args.title, omit_source_maps=args.omit_source_maps)
+            print(f"Created {args.output.resolve()} ({receipt['size']['artifact_bytes']} bytes)")
+            print("Serve over HTTPS or localhost; offline use follows the first successful installation.")
         elif args.command == "web":
             manifest = build_web(read_bundle(args.bundle), read_runtime(args.runtime, args.runtime_lock), args.output, title=args.title)
             print(f"Created {args.output.resolve()} ({manifest['size']['artifact_bytes']} bytes)")

@@ -25,7 +25,7 @@ def relative_path(value: str) -> str:
     return value
 
 
-def read_asset(root: Path, name: str) -> bytes:
+def read_asset(root: Path, name: str, *, max_bytes: int | None = None) -> bytes:
     relative_path(name)
     current = root
     if root.is_symlink() or not root.is_dir():
@@ -36,7 +36,15 @@ def read_asset(root: Path, name: str) -> bytes:
             raise ArtifactError(f"Symlink asset is unsupported: {name}")
     if not current.is_file() or not current.resolve().is_relative_to(root.resolve()):
         raise ArtifactError(f"Asset is missing or escapes its root: {name}")
-    return current.read_bytes()
+    if max_bytes is None:
+        return current.read_bytes()
+    if type(max_bytes) is not int or max_bytes < 0:
+        raise ArtifactError("Asset read limit must be a nonnegative integer.")
+    with current.open("rb") as stream:
+        data = stream.read(max_bytes + 1)
+    if len(data) > max_bytes:
+        raise ArtifactError(f"Asset exceeds its read limit: {name}")
+    return data
 
 
 def file_record(name: str, content: bytes) -> dict:
