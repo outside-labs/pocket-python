@@ -213,3 +213,15 @@ and publishes no package.
 - [Python 3.14 language reference](https://docs.python.org/3.14/reference/)
 - [Python 3.14 data model](https://docs.python.org/3.14/reference/datamodel.html)
 - [Python WebAssembly availability](https://docs.python.org/3.14/library/intro.html#webassembly-platforms)
+
+## Development checkpoint: 2026-10-20
+
+INT-01, INT-02, INT-QA-01 and INT-03 are merged. The development checkout now
+implements [INT-04 values and staged containers](docs/interpreter-values.md)
+with tagged None/bool/int/float/str, tuples/lists/dicts, aliases, indexing/slicing,
+key equality and iteration. Bytecode version 2 has Node/browser differential
+fixtures and explicit rejection of unimplemented operations. INT-05 follows with
+lifetime, allocation budgets and host handles; source parsing remains INT-08.
+The JavaScript VM remains first, with the later C/Rust WebAssembly route retained.
+Published 0.1.0 artifacts are unchanged; live delivery status is in the Issues
+and Project, while the table above preserves the adopted dependency sequence.

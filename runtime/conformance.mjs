@@ -1,4 +1,5 @@
 import {readFile} from "node:fs/promises";
+import {encodeValue} from "./values.mjs";
 
 const engines = JSON.parse(await readFile(new URL("./engines.json", import.meta.url), "utf8"));
 const engine = engines[process.argv[2]];
@@ -14,10 +15,7 @@ const requests = JSON.parse(input);
 const results = requests.map(request => {
   try {
     const value = execute(request.program, {maxSteps: request.maxSteps});
-    let result;
-    if (typeof value === "bigint") result = {type: "int", value: value.toString()};
-    else if (typeof value === "boolean") result = {type: "bool", value};
-    else throw new Error("Engine result has no adopted conformance encoding.");
+    const result = encodeValue(value);
     return {id: request.id, ok: true, result};
   } catch (error) {
     return {id: request.id, ok: false, error: {

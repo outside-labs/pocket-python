@@ -30,5 +30,41 @@
     ],
     "input_mode": "bytecode-fixture",
     "source_execution": false
+  },
+  "vm2": {
+    "identity": "pocket-python-bytecode/2",
+    "backend": "javascript-vm",
+    "module": "vm.mjs",
+    "worker": "vm-worker.mjs",
+    "features": [
+      "int.literal",
+      "int.add",
+      "int.subtract",
+      "int.multiply",
+      "int.floor-divide",
+      "int.modulo",
+      "int.compare",
+      "control.branch",
+      "exception.zero-division",
+      "tuple.value",
+      "value.truthiness",
+      "container.value",
+      "str.unicode",
+      "str.index",
+      "builtin.len",
+      "float.value",
+      "container.mutation",
+      "value.identity",
+      "float.compare",
+      "float.arithmetic",
+      "str.slice",
+      "dict.keys",
+      "container.equality",
+      "container.iteration",
+      "container.slice",
+      "value.errors"
+    ],
+    "input_mode": "bytecode-fixture",
+    "source_execution": false
   }
 }

@@ -62,6 +62,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "1"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "add"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -75,7 +105,55 @@
         "int.floor-divide",
         "int.modulo",
         "tuple.value"
-      ]
+      ],
+      "expression": "(-7//3,-7%3)",
+      "programs": {
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "build-tuple",
+              2
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
     },
     {
       "id": "empty-truthiness",
@@ -85,18 +163,141 @@
       "features": [
         "value.truthiness",
         "container.value"
-      ]
+      ],
+      "expression": "(bool([]),bool(()),bool(''),bool(0),bool(None))",
+      "programs": {
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "tuple",
+              "items": []
+            },
+            {
+              "type": "str",
+              "codepoints": []
+            },
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "none"
+            }
+          ],
+          "instructions": [
+            [
+              "build-list",
+              0
+            ],
+            [
+              "truth"
+            ],
+            [
+              "const",
+              0
+            ],
+            [
+              "truth"
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "truth"
+            ],
+            [
+              "const",
+              2
+            ],
+            [
+              "truth"
+            ],
+            [
+              "const",
+              3
+            ],
+            [
+              "truth"
+            ],
+            [
+              "build-tuple",
+              5
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
     },
     {
       "id": "unicode-codepoints",
       "stage": "A",
-      "source": "print(len('A😀é'), '😀'[0])",
-      "stdout": "4 😀\n",
+      "source": "print(len('A\ud83d\ude00e\u0301'), '\ud83d\ude00'[0])",
+      "stdout": "4 \ud83d\ude00\n",
       "features": [
         "str.unicode",
         "str.index",
         "builtin.len"
-      ]
+      ],
+      "expression": "(len('A\ud83d\ude00e\u0301'),'\ud83d\ude00'[0])",
+      "programs": {
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "str",
+              "codepoints": [
+                65,
+                128512,
+                101,
+                769
+              ]
+            },
+            {
+              "type": "str",
+              "codepoints": [
+                128512
+              ]
+            },
+            {
+              "type": "int",
+              "value": "0"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "len"
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "const",
+              2
+            ],
+            [
+              "getitem"
+            ],
+            [
+              "build-tuple",
+              2
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
     },
     {
       "id": "signed-zero",
@@ -105,7 +306,29 @@
       "stdout": "-0.0\n",
       "features": [
         "float.value"
-      ]
+      ],
+      "expression": "-0.0",
+      "programs": {
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "float",
+              "bits": "8000000000000000"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
     },
     {
       "id": "container-alias",
@@ -116,7 +339,63 @@
         "container.value",
         "container.mutation",
         "value.identity"
-      ]
+      ],
+      "expression": "(lambda a:(a.append(2),(a,a is a))[1])([1])",
+      "programs": {
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "1"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "build-list",
+              1
+            ],
+            [
+              "dup"
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "append"
+            ],
+            [
+              "pop"
+            ],
+            [
+              "dup"
+            ],
+            [
+              "dup"
+            ],
+            [
+              "is"
+            ],
+            [
+              "build-tuple",
+              2
+            ],
+            [
+              "return"
+            ]
+          ]
+        }
+      }
     },
     {
       "id": "closure",
@@ -162,6 +441,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "1"
+            },
+            {
+              "type": "int",
+              "value": "0"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -251,6 +560,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "2"
+            },
+            {
+              "type": "int",
+              "value": "5"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "subtract"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -268,6 +607,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -337,6 +706,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -354,6 +753,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -423,6 +852,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -440,6 +899,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -509,6 +998,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -526,6 +1045,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -595,6 +1144,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -612,6 +1191,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -681,6 +1290,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -698,6 +1337,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -767,6 +1436,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -784,6 +1483,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -853,6 +1582,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -870,6 +1629,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -939,6 +1728,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -956,6 +1775,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -1025,6 +1874,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -1042,6 +1921,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -1111,6 +2020,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "0"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -1128,6 +2067,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -1197,6 +2166,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -1214,6 +2213,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -1283,6 +2312,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -1300,6 +2359,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "6"
+            },
+            {
+              "type": "int",
+              "value": "-3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -1369,6 +2458,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "floor-divide"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -1386,6 +2505,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "modulo"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -1455,6 +2604,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "multiply"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -1472,6 +2651,36 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
@@ -1541,6 +2750,36 @@
               "return"
             ]
           ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
+          "constants": [
+            {
+              "type": "int",
+              "value": "9007199254740993"
+            },
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "equal"
+            ],
+            [
+              "return"
+            ]
+          ]
         }
       }
     },
@@ -1559,6 +2798,52 @@
         "vm1": {
           "format": "pocket-python-bytecode",
           "version": 1,
+          "constants": [
+            {
+              "type": "int",
+              "value": "-7"
+            },
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ],
+          "instructions": [
+            [
+              "const",
+              0
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "less"
+            ],
+            [
+              "jump-if-false",
+              6
+            ],
+            [
+              "const",
+              1
+            ],
+            [
+              "jump",
+              7
+            ],
+            [
+              "const",
+              0
+            ],
+            [
+              "return"
+            ]
+          ]
+        },
+        "vm2": {
+          "format": "pocket-python-bytecode",
+          "version": 2,
           "constants": [
             {
               "type": "int",
