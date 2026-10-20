@@ -91,3 +91,8 @@ host GC is portable. A C/Rust backend needs its own Python integer, Unicode,
 allocation/GC, exception and host-handle implementation and conformance evidence.
 Engine manifests name the backend/version explicitly. Never silently switch
 backends to work around an unsupported operation.
+
+INT-05 implements the [explicit lifetime and allocation account](interpreter-memory.md)
+for the current bytecode engine. Host GC reclaims physical storage; root scopes,
+leases and handle tables define logical ownership. This foundation retains the
+same language corpus and does not choose the later native/Wasm toolchain.

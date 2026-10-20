@@ -96,7 +96,7 @@ Runtime errors retain the original instruction/source span.
 
 `encodeValue` emits tagged acyclic by-value results. It preserves type and ordered
 entries, but transport copies do not preserve aliases. Cycles fail with ValueError;
-handles are later work. Iterators and unknown native values cannot be serialized.
+retained session handles can own such graphs without serializing them. Iterators and unknown native values cannot be serialized.
 There is no implicit JavaScript object/array or HTML conversion.
 
 ## Limits and verification
@@ -110,9 +110,9 @@ numeric, character, lookup, comparison, traversal and construction work against
 mutations check lengths before changing the target. Native arithmetic can still
 have a bounded temporary result, such as an 8192-digit multiplication.
 
-These are deterministic work/size limits, not live-memory/RSS accounting or a
-collector implementation. JavaScript retains objects; INT-05 owns allocation
-lifetime, roots, cycles and host-handle accounting. Worker termination remains
+These deterministic work/size limits operate alongside the
+[INT-05 root/lifetime and allocation account](interpreter-memory.md). JavaScript
+GC reclaims physical memory after roots and accounting records are released. Worker termination remains
 necessary to interrupt a busy synchronous operation from the main thread.
 
 Run `node --test runtime/values.test.mjs` and

@@ -220,8 +220,22 @@ INT-01, INT-02, INT-QA-01 and INT-03 are merged. The development checkout now
 implements [INT-04 values and staged containers](docs/interpreter-values.md)
 with tagged None/bool/int/float/str, tuples/lists/dicts, aliases, indexing/slicing,
 key equality and iteration. Bytecode version 2 has Node/browser differential
-fixtures and explicit rejection of unimplemented operations. INT-05 follows with
-lifetime, allocation budgets and host handles; source parsing remains INT-08.
+fixtures and explicit rejection of unimplemented operations. INT-05 adds
+[rooted lifetime, allocation budgets and host handles](docs/interpreter-memory.md);
+source parsing remains INT-08.
 The JavaScript VM remains first, with the later C/Rust WebAssembly route retained.
 Published 0.1.0 artifacts are unchanged; live delivery status is in the Issues
 and Project, while the table above preserves the adopted dependency sequence.
+
+
+INT-05 uses host JavaScript GC with explicit VM roots and iterative cyclic-graph
+accounting at safe points. Supported object allocations, mutable growth, scalar
+root/edge costs, active scopes, work and handles have deterministic limits.
+Retained session results and declared host callback captures use owned leases;
+stale/foreign handles and failed allocations are explicit. Teardown releases
+all entries and attempts every native disposer. Shared interpreter-memory/1
+checks run in Node and browser workers alongside the existing language corpus.
+Python calls/closure cells and exception handlers remain INT-06; this milestone
+provides and tests their root/scope ownership primitives. Accounting describes
+defined logical byte costs, not process RSS or actual host collection timing.
+No runtime dependency, package release or backend/toolchain choice changed.

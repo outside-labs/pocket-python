@@ -44,8 +44,9 @@ one million arithmetic-work units. Steps are bounded to 1–1,000,000 and work t
 multiply/divide/modulo charge their digit-count product before the primitive.
 Results exceeding 4096 digits fail with BUDGET. Primitive inputs are already
 bounded; multiplication can transiently allocate an 8192-digit result. These
-limits bound this numeric core and do not account for host RSS or future object
-graphs; allocation lifetime and collection are INT-05 work.
+limits bound this numeric core. The [INT-05 memory layer](interpreter-memory.md)
+adds rooted object graphs and deterministic allocation accounting to execution;
+neither layer claims a hard host RSS limit.
 
 Cancellation polls the supplied callback before instructions and arithmetic
 primitives. A synchronous worker loop cannot process a queued stop message;
