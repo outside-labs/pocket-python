@@ -3,7 +3,9 @@
 INT-01 adopts Python 3.14 as the initial reference grammar and behavior oracle.
 This is a staged implementation contract, not a claim that an interpreter is
 already available. The executable reference cases live in
-tests/fixtures/interpreter/language.json; the current test runs CPython only.
+tests/fixtures/interpreter/language.json. The [conformance harness](interpreter-conformance.md)
+compares implemented bytecode fixtures with CPython and reports the remaining
+source/language cases as unsupported.
 
 ## Stages and feature decisions
 
