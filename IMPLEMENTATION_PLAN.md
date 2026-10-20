@@ -245,6 +245,10 @@ language stages, toolchain/ownership decisions, bytecode/VM, values and memory,
 functions/exceptions/imports, independent source parsing, an offline browser
 console, classes/async, measurement and alpha-candidate gates.
 
+The first backend is the owner-selected JavaScript VM. A later C/Rust-to-
+WebAssembly backend remains in INT-WASM-01 through INT-WASM-03, with explicit
+toolchain, implementation and cross-backend integration gates.
+
 The interpreter must execute newly entered source on the device. Packaging
 CPython or invoking the ahead-of-time JavaScript compiler does not satisfy it.
 The native/CLI harness and browser worker use adopted engine semantics through

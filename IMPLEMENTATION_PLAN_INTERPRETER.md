@@ -16,8 +16,10 @@ JavaScript application compiler or a server. Build/test tools may use pinned
 CPython as an oracle. The browser source-execution milestone includes an
 independent tokenizer, parser, binding/compiler passes and VM on the client.
 
-INT-02 selects implementation language/toolchain, engine location and package/
-repository ownership before scaffolding. Keep engine/build inputs isolated from
+The selected first implementation is a JavaScript VM under runtime/ in this
+repository. Node hosts CLI/tests and the same engine runs in a browser worker.
+[Architecture and prototype evidence](docs/interpreter-architecture.md) record
+the decision. A later C/Rust-to-WebAssembly backend remains planned separately. Keep engine/build inputs isolated from
 the dependency-free Python packaging CLI. Do not implicitly create a repository,
 change visibility or choose a distribution identity. Third-party implementation
 code needs recorded ownership, notices and licenses; rebranding an existing
@@ -80,9 +82,9 @@ Select version numbers and publication separately from this roadmap.
 
 ## Architecture decisions and invariants
 
-- Compare C/Rust-to-WebAssembly and JavaScript VM prototypes for native/CLI
-  availability, browser embedding, allocation/lifetime control, contributor
-  tooling and footprint. Record one choice before building out the engine.
+- Start with the selected JavaScript VM and preserve the same Python semantic
+  corpus for a later C/Rust-to-WebAssembly backend. Select C versus Rust and its
+  toolchain after a measured JavaScript baseline, not by assuming equivalence.
 - Separate tokenizer/indentation/grammar, bindings/scopes, compiler, verified
   bytecode and VM. Early VM fixtures may use build-time CPython ast; stage C
   parses new source independently on the device.
@@ -113,7 +115,7 @@ Select version numbers and publication separately from this roadmap.
 | Task | Scope | Depends on | Readiness |
 | --- | --- | --- | --- |
 | [pocket/INT-01](https://github.com/outside-labs/pocket-python/issues/23) | Specify independent interpreter language stages and compatibility | Released foundation | Ready |
-| [pocket/INT-02](https://github.com/outside-labs/pocket-python/issues/24) | Select interpreter architecture, toolchain and ownership | [pocket/INT-01](https://github.com/outside-labs/pocket-python/issues/23) | Blocked |
+| [pocket/INT-02](https://github.com/outside-labs/pocket-python/issues/24) | Establish the selected JavaScript VM architecture and prototype | [pocket/INT-01](https://github.com/outside-labs/pocket-python/issues/23) | Blocked |
 | [pocket/INT-QA-01](https://github.com/outside-labs/pocket-python/issues/25) | Establish interpreter differential and negative conformance | [pocket/INT-02](https://github.com/outside-labs/pocket-python/issues/24) | Blocked |
 | [pocket/INT-03](https://github.com/outside-labs/pocket-python/issues/26) | Implement versioned bytecode, validation and the execution loop | [pocket/INT-QA-01](https://github.com/outside-labs/pocket-python/issues/25) | Blocked |
 | [pocket/INT-04](https://github.com/outside-labs/pocket-python/issues/27) | Implement core Python values and container semantics | [pocket/INT-03](https://github.com/outside-labs/pocket-python/issues/26) | Blocked |
@@ -132,6 +134,21 @@ the harness before VM implementation and grows with every feature. INT-WEB-01
 requires the independent parser and HOST-01, not the completed ahead-of-time
 compiler. Classes, async and measurement follow the console milestone along
 their own dependencies; the alpha candidate requires their recorded evidence.
+
+## Later C/Rust WebAssembly implementation
+
+The first engine is the JavaScript VM. The second route remains explicit planned
+work, with separate toolchain/ABI, implementation and integration gates:
+
+| Task | Deliverable | Depends on |
+| --- | --- | --- |
+| [INT-WASM-01](https://github.com/outside-labs/pocket-python/issues/40) | Specify the later C/Rust WebAssembly backend | pocket/INT-11 |
+| [INT-WASM-02](https://github.com/outside-labs/pocket-python/issues/41) | Implement the C/Rust native and WebAssembly engine | pocket/INT-WASM-01 |
+| [INT-WASM-03](https://github.com/outside-labs/pocket-python/issues/42) | Integrate and compare JavaScript and WebAssembly interpreter backends | pocket/INT-WASM-02, pocket/MEASURE-01 |
+
+Both backends use the adopted Python corpus and host protocol; bytecode/ABI
+compatibility needs explicit proof or versioned translation. C/Rust owns its
+allocation/GC and value behavior, with no automatic engine fallback.
 
 ## Verification and candidate gates
 

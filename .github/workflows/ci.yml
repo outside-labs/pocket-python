@@ -43,3 +43,13 @@ jobs:
       - run: uv run --no-sync python scripts/prepare_runtime.py
       - run: uv run --no-sync python -m playwright install --with-deps chromium
       - run: uv run --no-sync python scripts/browser_smoke.py
+      - run: uv run --no-sync python runtime/browser_smoke.py
+
+  interpreter-prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.19.0'
+      - run: node --test runtime/prototype.test.mjs
