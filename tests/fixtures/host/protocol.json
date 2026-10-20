@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "protocol": "pocket-python-host",
+  "version": 1,
+  "values": [
+    {
+      "type": "none"
+    },
+    {
+      "type": "bool",
+      "value": false
+    },
+    {
+      "type": "int",
+      "value": "9007199254740993"
+    },
+    {
+      "type": "float",
+      "bits": "8000000000000000"
+    },
+    {
+      "type": "float",
+      "bits": "7ff0000000000000"
+    },
+    {
+      "type": "float",
+      "bits": "7ff8000000000000"
+    },
+    {
+      "type": "str",
+      "codepoints": [
+        65,
+        128512,
+        101,
+        769
+      ]
+    },
+    {
+      "type": "str",
+      "codepoints": [
+        55296
+      ]
+    },
+    {
+      "type": "str",
+      "codepoints": [
+        55357,
+        56832
+      ]
+    },
+    {
+      "type": "tuple",
+      "items": [
+        {
+          "type": "int",
+          "value": "3"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "items": []
+    },
+    {
+      "type": "dict",
+      "entries": [
+        [
+          {
+            "type": "str",
+            "codepoints": [
+              97
+            ]
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ]
+      ]
+    },
+    {
+      "type": "handle",
+      "owner": "worker",
+      "kind": "callback",
+      "id": "w1"
+    }
+  ],
+  "ready_session_transcript": [
+    {
+      "direction": "worker-to-main",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 2,
+        "kind": "request",
+        "id": "w1",
+        "operation": "dom.read",
+        "arguments": {
+          "control": "input"
+        },
+        "timeout_ms": 10000
+      }
+    },
+    {
+      "direction": "main-to-worker",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 2,
+        "kind": "result",
+        "reply_to": "w1",
+        "value": {
+          "type": "str",
+          "codepoints": [
+            65,
+            128512
+          ]
+        }
+      }
+    },
+    {
+      "direction": "worker-to-main",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 3,
+        "kind": "request",
+        "id": "w2",
+        "operation": "fetch.text",
+        "arguments": {
+          "url": "https://example.invalid/metrics",
+          "method": "GET"
+        },
+        "timeout_ms": 1000
+      }
+    },
+    {
+      "direction": "worker-to-main",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 4,
+        "kind": "cancel",
+        "reply_to": "w2"
+      }
+    },
+    {
+      "direction": "main-to-worker",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 3,
+        "kind": "result",
+        "reply_to": "w2",
+        "error": {
+          "domain": "host",
+          "code": "CANCELLED",
+          "type": "HostError",
+          "message": "Request cancelled."
+        }
+      }
+    },
+    {
+      "direction": "main-to-worker",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 4,
+        "kind": "close",
+        "reason": "restart"
+      }
+    },
+    {
+      "direction": "worker-to-main",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 5,
+        "kind": "closed"
+      }
+    }
+  ],
+  "negative_cases": [
+    {
+      "id": "stale-session",
+      "expected": "discard"
+    },
+    {
+      "id": "duplicate-sequence",
+      "expected": "PROTOCOL"
+    },
+    {
+      "id": "denied-control",
+      "expected": "DENIED"
+    },
+    {
+      "id": "released-callback",
+      "expected": "discard-event"
+    },
+    {
+      "id": "released-handle-use",
+      "expected": "STALE_HANDLE"
+    },
+    {
+      "id": "oversized-value",
+      "expected": "BAD_VALUE"
+    },
+    {
+      "id": "deadline-expired",
+      "expected": "TIMEOUT"
+    }
+  ],
+  "initialization": [
+    {
+      "direction": "main-to-worker",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 1,
+        "kind": "init",
+        "application": {
+          "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "profile": "compiled-javascript",
+          "profile_version": 1,
+          "entrypoint": "app.mjs",
+          "engine": null
+        },
+        "capabilities": [
+          {
+            "id": "output/1"
+          },
+          {
+            "id": "dom-text/1",
+            "controls": [
+              "input",
+              "result"
+            ]
+          },
+          {
+            "id": "dom-events/1",
+            "controls": [
+              "run"
+            ],
+            "events": [
+              "click"
+            ]
+          },
+          {
+            "id": "handles/1"
+          },
+          {
+            "id": "fetch/1",
+            "urls": [
+              "https://example.invalid/metrics"
+            ]
+          }
+        ],
+        "limits": {
+          "message_bytes": 1048576,
+          "value_depth": 64,
+          "pending_requests": 32,
+          "subscriptions": 32,
+          "output_codepoints": 65536,
+          "response_bytes": 1048576,
+          "deadline_ms": 10000
+        }
+      }
+    },
+    {
+      "direction": "worker-to-main",
+      "message": {
+        "protocol": "pocket-python-host",
+        "version": 1,
+        "session": "000102030405060708090a0b0c0d0e0f",
+        "seq": 1,
+        "kind": "ready",
+        "application": {
+          "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "profile": "compiled-javascript",
+          "profile_version": 1,
+          "entrypoint": "app.mjs",
+          "engine": null
+        },
+        "capabilities": [
+          "output/1",
+          "dom-text/1",
+          "dom-events/1",
+          "handles/1",
+          "fetch/1"
+        ],
+        "limits": {
+          "message_bytes": 1048576,
+          "value_depth": 64,
+          "pending_requests": 32,
+          "subscriptions": 32,
+          "output_codepoints": 65536,
+          "response_bytes": 1048576,
+          "deadline_ms": 10000
+        }
+      }
+    }
+  ]
+}

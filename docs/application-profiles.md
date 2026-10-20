@@ -106,7 +106,8 @@ client profile, while filesystem/network/UI adapters remain explicit.
 
 ## Implementation gates
 
-HOST-01 defines message/value/error/capability shapes and callback lifetime.
+The [browser host protocol](browser-host-protocol.md) defines versioned
+message/value/error/capability shapes and callback lifetime for HOST-01.
 WEB-03 implements schema ingestion and compiled PWA assembly with tamper/path/
 closure/cache regression cases. INT-WEB-01 implements the independent engine's
 profile and newly entered source. They require real execution, offline reload,

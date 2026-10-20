@@ -49,6 +49,11 @@ separate; application artifacts still include only explicitly selected files.
 
 ## Common acceptance application
 
+The adopted [browser host protocol](docs/browser-host-protocol.md) defines the
+versioned capability, value, request and worker-lifetime contract. Its first UI
+uses named text controls and events; Fetch, virtual files and persistence remain
+separately granted adapters.
+
 Use a small text_metrics application: shared Python computation counts
 characters, words and lines; a local pure-Python helper and immutable constants
 establish module boundaries, with an unused utility for reduction. Start the
