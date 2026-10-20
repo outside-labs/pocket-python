@@ -56,6 +56,10 @@ For resource work, extend the local fixture with one named UTF-8 stop-word file.
 The new compiler/interpreter need not support the whole packaging library to
 meet their first milestones.
 
+[The adopted language contract](docs/interpreter-language.md) and its CPython
+reference corpus define the first semantic decisions. The corpus is reference
+evidence, not an already implemented engine.
+
 ## Staged compatibility
 
 Python 3.14 is the initial reference grammar/semantics, not a promise of complete
