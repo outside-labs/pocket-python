@@ -1,6 +1,5 @@
 import ast
 import json
-import os
 from pathlib import Path
 import subprocess
 import sys
@@ -18,9 +17,8 @@ class InterpreterContractTests(unittest.TestCase):
         for case in corpus["cases"]:
             with self.subTest(case=case["id"]):
                 process = subprocess.run(
-                    [sys.executable, "-I", "-S", "-c", case["source"]],
+                    [sys.executable, "-I", "-X", "utf8", "-S", "-c", case["source"]],
                     capture_output=True, text=True, encoding="utf-8", timeout=5,
-                    env={**os.environ, "PYTHONIOENCODING": "utf-8"},
                 )
                 if "exception" in case:
                     self.assertNotEqual(process.returncode, 0)
