@@ -59,6 +59,10 @@ compiler as well as the VM. An engine that only runs precompiled input cannot
 claim new-source execution. Packaging an upstream engine does not satisfy the
 independent-interpreter profile.
 
+The interpreter engine record also names its backend: `javascript-vm` first,
+with a later explicit `wasm-vm` backend. Backend, bytecode and host ABI versions
+must agree or use a declared translation; never silently change backend.
+
 ## Validation and assembly
 
 Validate schema/types, profile compatibility, complete references, path safety,
