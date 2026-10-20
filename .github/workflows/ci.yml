@@ -47,11 +47,12 @@ jobs:
       - run: uv run --no-sync python scripts/browser_smoke.py
       - run: uv run --no-sync python runtime/browser_smoke.py
       - run: uv run --no-sync python runtime/check_conformance.py --target browser --report build/interpreter-browser-report.json
+      - run: uv run --no-sync python runtime/check_conformance.py --engine vm1 --target browser --report build/vm1-browser-report.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: interpreter-browser-report
-          path: build/interpreter-browser-report.json
+          path: build/*browser-report.json
           if-no-files-found: error
 
   interpreter-prototype:
@@ -65,10 +66,12 @@ jobs:
         with:
           python-version: '3.14.7'
       - run: node --test runtime/prototype.test.mjs
+      - run: node --test runtime/vm.test.mjs
       - run: python runtime/check_conformance.py --report build/interpreter-node-report.json
+      - run: python runtime/check_conformance.py --engine vm1 --report build/vm1-node-report.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: interpreter-node-report
-          path: build/interpreter-node-report.json
+          path: build/*node-report.json
           if-no-files-found: error

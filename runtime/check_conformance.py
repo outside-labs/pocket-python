@@ -84,6 +84,26 @@ def run_browser(engine, requests, channel):
 
 
 def validation_requests(engine_name):
+    if engine_name == "vm1":
+        def program(instructions, values=("1",)):
+            return {"format": "pocket-python-bytecode", "version": 1,
+                    "constants": [{"type": "int", "value": value} for value in values], "instructions": instructions}
+        invalid = [
+            ("budget-loop", program([["jump", 0]]), "BUDGET"),
+            ("jump-outside", program([["jump", 100]]), "BYTECODE"),
+            ("stack-underflow", program([["add"]]), "BYTECODE"),
+            ("unreachable-unknown", program([["const", 0], ["return"], ["unknown"]]), "BYTECODE"),
+            ("constant-limit", program([["const", 0], ["return"]], ["1" * 4097]), "BYTECODE"),
+            ("integer-growth-limit", program([["const", 0], ["const", 1], ["add"], ["return"]], ["9" * 4096, "1"]), "BUDGET"),
+            ("stack-growing-loop", program([["const", 0], ["jump", 0]]), "BYTECODE"),
+            ("fallthrough", program([["const", 0]]), "BYTECODE"),
+            ("version", {**program([["jump", 0]]), "version": 99}, "BYTECODE"),
+        ]
+        randomizer = random.Random(20261020)
+        for index in range(8):
+            invalid.append(("malformed-" + str(index), program([["const", randomizer.randrange(2, 1000)], ["return"]]), "BYTECODE"))
+        return [{"id": name, "program": code, "maxSteps": 10, "expected_code": expected}
+                for name, code, expected in invalid]
     if engine_name != "prototype":
         raise ValueError("Add version-specific validation cases for this engine.")
     def program(instructions):
@@ -143,6 +163,8 @@ def check(engine_name, target, channel=None):
             passed = actual["ok"] and actual["result"] == expected["result"]
         else:
             passed = not actual["ok"] and actual["error"].get("type") == expected["error"]["type"]
+            if "message" in case:
+                passed = passed and actual["error"].get("message") == expected["error"]["message"]
         records.append({**record, "status": "pass" if passed else "fail", "expected": expected, "actual": actual})
     for case in negative:
         actual = results[case["id"]]
@@ -158,7 +180,7 @@ def check(engine_name, target, channel=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--engine", default="prototype", choices=["prototype"])
+    parser.add_argument("--engine", default="prototype", choices=json.loads((ROOT / "engines.json").read_text(encoding="utf-8")))
     parser.add_argument("--target", default="node", choices=["node", "browser"])
     parser.add_argument("--channel")
     parser.add_argument("--report", type=Path)
