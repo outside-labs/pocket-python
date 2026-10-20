@@ -12,7 +12,7 @@ CORPUS = Path(__file__).parent / "fixtures" / "interpreter" / "language.json"
 class InterpreterContractTests(unittest.TestCase):
     def test_adopted_reference_cases_and_boundaries(self):
         corpus = json.loads(CORPUS.read_text(encoding="utf-8"))
-        cases = corpus["cases"] + corpus["boundaries"]
+        cases = corpus["cases"] + corpus["boundaries"] + corpus.get("malformed_source", [])
         self.assertEqual(len({case["id"] for case in cases}), len(cases))
         for case in corpus["cases"]:
             with self.subTest(case=case["id"]):
@@ -29,4 +29,7 @@ class InterpreterContractTests(unittest.TestCase):
         for case in corpus["boundaries"]:
             with self.subTest(boundary=case["id"]):
                 self.assertIn(case["classification"], {"rejected", "deferred"})
+                ast.parse(case["source"])
+        for case in corpus.get("malformed_source", []):
+            with self.subTest(malformed=case["id"]), self.assertRaises(SyntaxError):
                 ast.parse(case["source"])
