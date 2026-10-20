@@ -86,12 +86,13 @@ def smoke(channel):
                     context.on('requestfailed', lambda request: failed.append((request.url, request.failure)))
                     page = context.new_page()
                     page.set_default_timeout(20000)
-                    def ready(page):
+                    def ready(page, *, update=False):
                         try:
                             page.wait_for_function('document.getElementById("status").textContent==="Ready"', timeout=20000)
                         except Exception as error:
                             raise AssertionError({'url': page.url, 'status': page.locator('#status').inner_text(), 'offline': page.locator('#offline').inner_text(), 'visibility': page.evaluate('document.visibilityState'), 'errors': errors, 'failed': failed, 'workers': [worker.url for worker in page.workers], 'service_workers': page.evaluate('async()=>({controller:navigator.serviceWorker.controller?.state,controllerURL:navigator.serviceWorker.controller?.scriptURL,registrations:await Promise.all((await navigator.serviceWorker.getRegistrations()).map(async reg=>({scope:reg.scope,active:reg.active?.state,installing:reg.installing?.state,waiting:reg.waiting?.state,same:reg.active===navigator.serviceWorker.controller}))),caches:await caches.keys()})'), 'paths': server.paths[-35:]}) from error
-                        page.wait_for_function('document.getElementById("offline").textContent==="Offline ready on this device"')
+                        label = 'Update ready.' if update else 'Offline ready on this device'
+                        page.wait_for_function('label=>document.getElementById("offline").textContent.startsWith(label)', arg=label)
                         page.wait_for_function('navigator.serviceWorker.controller!==null')
                     def reload(page):
                         with page.expect_navigation(wait_until='load'):
@@ -131,6 +132,7 @@ def smoke(channel):
                     failure.click('#restart');ready(failure)
                     run(failure, 'restarted', '(9, 1, 1)\n')
                     checks.append('busy-worker-termination-and-fresh-restart')
+                    second = context.new_page();second.goto(origin + '/nested/app/');ready(second)
                     updated_client = EXAMPLE.write_client(root / 'updated-client', app=EXAMPLE.APP.replace('print(metrics(text))', 'print("updated", metrics(text))'))
                     updated_root = root / 'updated'
                     updated = build_compiled(updated_client, updated_root, title='Updated metrics')
@@ -142,17 +144,34 @@ def smoke(channel):
                             shutil.copyfile(path, target)
                     old_key = 'pocket-python:' + origin + '/nested/app/:' + receipt['cache_version']
                     new_key = 'pocket-python:' + origin + '/nested/app/:' + updated['cache_version']
-                    page.evaluate('async()=>{window.priorController=navigator.serviceWorker.controller;await(await navigator.serviceWorker.getRegistration()).update()}')
-                    page.wait_for_function('async()=>{const reg=await navigator.serviceWorker.getRegistration();return navigator.serviceWorker.controller!==window.priorController&&reg.active?.state==="activated"&&navigator.serviceWorker.controller===reg.active&&!reg.installing&&!reg.waiting}')
-                    page.wait_for_function('async keys=>{const all=await caches.keys();return all.includes(keys[1])&&!all.includes(keys[0])}', arg=[old_key, new_key])
+                    page.evaluate('async()=>{await(await navigator.serviceWorker.getRegistration()).update()}')
+                    page.wait_for_function('async()=>{const reg=await navigator.serviceWorker.getRegistration();return reg.waiting?.state==="installed"&&reg.active===navigator.serviceWorker.controller}')
+                    page.wait_for_function('document.getElementById("offline").textContent.startsWith("Update ready.")')
+                    page.wait_for_function('async keys=>{const all=await caches.keys();return all.includes(keys[0])&&all.includes(keys[1])}', arg=[old_key, new_key])
                     keys = page.evaluate('caches.keys()')
                     assert 'unrelated-application-cache' in keys
                     assert 'pocket-python:' + origin + '/neighbor/:' + neighbor['cache_version'] in keys
-                    reload(page);ready(page);run(page, 'fresh', 'updated (5, 1, 1)\n')
+                    context.set_offline(True)
+                    run(page, 'still current', '(13, 2, 1)\n')
+                    page.close()
+                    assert second.evaluate('async()=>{const reg=await navigator.serviceWorker.getRegistration();return reg.waiting?.state==="installed"&&reg.active===navigator.serviceWorker.controller}')
+                    reload(second);ready(second, update=True)
+                    assert second.title() == 'Text metrics'
+                    run(second, 'second tab', '(10, 2, 1)\n')
+                    second.close()
+                    sibling.wait_for_function('async scope=>{const reg=await navigator.serviceWorker.getRegistration(scope);return reg.active?.state==="activated"&&!reg.waiting&&!reg.installing}', arg=origin + '/nested/app/')
+                    sibling.wait_for_function('async keys=>{const all=await caches.keys();return all.includes(keys[1])&&!all.includes(keys[0])}', arg=[old_key, new_key])
+                    context.set_offline(False)
+                    page = context.new_page();page.set_default_timeout(20000)
+                    page.goto(origin + '/nested/app/');ready(page)
+                    assert page.title() == 'Updated metrics'
+                    run(page, 'fresh', 'updated (5, 1, 1)\n')
                     context.set_offline(True)
                     reload(page);ready(page);run(page, 'fresh', 'updated (5, 1, 1)\n')
+                    assert page.title() == 'Updated metrics'
                     context.set_offline(False)
-                    checks.append('scoped-cache-update-and-offline-updated-reload')
+                    checks.append('waiting-update-retains-live-tabs-then-activates-offline')
+                    checks.append('scoped-cache-cleanup-and-offline-updated-reload')
                     assert all(method == 'GET' and url.startswith(origin + '/') for method, url in requests), requests
                     assert not any('micropython' in url.lower() or 'pyodide' in url.lower() or url.split('?')[0].endswith('.wasm') for _, url in requests)
                     checks.append('local-assets-only-no-interpreter-or-server-execution')

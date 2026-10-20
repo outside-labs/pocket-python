@@ -339,10 +339,10 @@ receipt records client-only identities, capabilities, exact assets/imports and
 separate physical payload costs. The text-input/1 UI runs in a worker with
 Run/Stop/Restart; real-browser acceptance covers CPython computation parity,
 offline reload/rerun, errors without maps, busy-worker termination, subdirectory
-hosting and cache updates preserving neighbor scopes. Existing MicroPython
+hosting and cache updates preserving neighbor scopes. Installed sessions keep
+their version while an update waits; closing the app's tabs/windows activates
+the new complete asset set. Existing MicroPython
 regressions remain. The [compiled application guide](docs/compiled-applications.md)
 describes the adopted UI/capability/input limits. The compiler is optional pinned
 build tooling; runtime dependencies stay empty. New-source interpretation remains
 INT-08/INT-WEB-01. No release or deployment was published.
-
-WEB-03 validation checkpoint: profile/unit/package and existing MicroPython browser checks pass; repeated compiled cache-update reloads are under investigation. Browser acceptance remains open and the implementation PR is a draft.

@@ -13,8 +13,8 @@ from urllib.parse import unquote, urlparse
 from pocket_python import __version__
 from pocket_python._compiler_lock import COMPILER_FILES, COMPILER_FINGERPRINT, COMPILER_REVISION
 from pocket_python.assets import ArtifactError, check_names, file_record, json_bytes, read_asset
-from pocket_python.compiled_templates import APP, PAGE
-from pocket_python.templates import ICON, SERVICE_WORKER
+from pocket_python.compiled_templates import APP, PAGE, SERVICE_WORKER
+from pocket_python.templates import ICON
 from pocket_python.web import _publish
 
 
@@ -203,14 +203,12 @@ def build_compiled(client: ClientSources, output: str | Path, *, compiled: Compi
     config_name = 'app-config-' + hashlib.sha256(config_data).hexdigest() + '.json'
     launcher_data = APP.replace('__APPLICATION__', namespace).replace('__CONFIG__', config_name).encode()
     launcher_name = 'app-' + hashlib.sha256(launcher_data).hexdigest() + '.js'
-    files.update({'index.html': PAGE.replace('__TITLE__', html.escape(title, quote=True)).replace('__LAUNCHER__', launcher_name).encode(),
+    files.update({'index.html': PAGE.replace('__LAUNCHER__', launcher_name).replace('__TITLE__', html.escape(title, quote=True)).encode(),
                   launcher_name: launcher_data, config_name: config_data, 'icon.svg': ICON.encode(),
                   'manifest.webmanifest': json_bytes({'name': title, 'short_name': title[:24], 'id': './', 'start_url': './', 'scope': './', 'display': 'standalone', 'theme_color': '#225841', 'background_color': '#f4f7f1', 'icons': [{'src': './icon.svg', 'sizes': 'any', 'type': 'image/svg+xml'}]})})
-    fresh_worker = SERVICE_WORKER.replace('new URL(path, self.registration.scope).href', "new Request(new URL(path, self.registration.scope).href, {cache: 'reload'})")
-    fresh_worker = fresh_worker.replace('cache.match(event.request)', "cache.match(url.href === self.registration.scope ? new URL('index.html', self.registration.scope).href : event.request)")
     records = [file_record(name, data) for name, data in sorted(files.items())]
-    cache_version = hashlib.sha256(json_bytes({'profile': 'compiled-javascript/1', 'pocket_python_version': __version__, 'compiler_revision': COMPILER_REVISION, 'compiler_fingerprint': COMPILER_FINGERPRINT, 'service_worker_template': hashlib.sha256(fresh_worker.encode()).hexdigest(), 'files': records})).hexdigest()
-    files['service-worker.js'] = fresh_worker.replace('__FILES__', json.dumps([*sorted(files), 'service-worker.js', 'POCKET-PYTHON.json'])).replace('__VERSION__', cache_version).encode()
+    cache_version = hashlib.sha256(json_bytes({'profile': 'compiled-javascript/1', 'pocket_python_version': __version__, 'compiler_revision': COMPILER_REVISION, 'compiler_fingerprint': COMPILER_FINGERPRINT, 'service_worker_template': hashlib.sha256(SERVICE_WORKER.encode()).hexdigest(), 'files': records})).hexdigest()
+    files['service-worker.js'] = SERVICE_WORKER.replace('__FILES__', json.dumps([*sorted(files), 'service-worker.js', 'POCKET-PYTHON.json'])).replace('__VERSION__', cache_version).encode()
     for name in files:
         roles.setdefault(name, 'executable-module' if name in {launcher_name, 'service-worker.js'} else 'data')
     receipt = {'kind': 'pocket-python-application', 'schema_version': 2, 'profile': 'compiled-javascript', 'profile_version': 1, 'target': 'client',

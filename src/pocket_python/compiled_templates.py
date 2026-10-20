@@ -34,17 +34,49 @@ function start(){
 byId('run').addEventListener('click',()=>{byId('result').textContent='';});
 byId('stop').addEventListener('click',()=>{current?.stop();byId('run').disabled=true;byId('status').textContent='Stopped';});
 byId('restart').addEventListener('click',start);
+window.addEventListener('pagehide',()=>current?.stop());
+window.addEventListener('pageshow',event=>{if(event.persisted)start();});
 async function prepareOffline(){
   if(!('serviceWorker' in navigator))throw new Error('This browser does not support offline installation.');
   const registration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./',updateViaCache:'none'});
+  function describeOffline(){
+    byId('offline').textContent=registration.waiting?'Update ready. Close this app\u2019s tabs and windows, then reopen to update.':'Offline ready on this device';
+  }
+  function watchUpdate(){
+    registration.installing?.addEventListener('statechange',()=>{if(registration.active)describeOffline();});
+  }
+  registration.addEventListener('updatefound',watchUpdate);watchUpdate();
   const installing=registration.installing||registration.waiting;
-  if(installing&&installing.state!=='activated')await new Promise((resolve,reject)=>{
+  if(!registration.active&&installing&&installing.state!=='activated')await new Promise((resolve,reject)=>{
     function changed(){if(installing.state==='activated')resolve();if(installing.state==='redundant')reject(new Error('Offline installation failed.'));}
     installing.addEventListener('statechange',changed);changed();
   });
   await navigator.serviceWorker.ready;
-  byId('offline').textContent='Offline ready on this device';
+  describeOffline();
 }
 prepareOffline().catch(error=>{byId('offline').textContent='Offline unavailable: '+error.message;});
 start();
+'''
+
+SERVICE_WORKER = '''const FILES = __FILES__;
+const PREFIX = "pocket-python:" + self.registration.scope + ":";
+const CACHE = PREFIX + "__VERSION__";
+self.addEventListener("install", event => {
+  const requests=FILES.map(path=>new Request(new URL(path,self.registration.scope).href,{cache:'reload'}));
+  // Keep the current session's document and module graph together. An update
+  // activates after every client of the previous version has closed.
+  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(requests)));
+});
+self.addEventListener("activate", event => {
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith(PREFIX)&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
+});
+self.addEventListener("fetch", event => {
+  const url=new URL(event.request.url),index=new URL('index.html',self.registration.scope);
+  if(event.request.method!=='GET'||url.origin!==self.location.origin||!url.href.startsWith(self.registration.scope))return;
+  event.respondWith((async()=>{
+    const cache=await caches.open(CACHE);
+    const request=event.request.mode==='navigate'&&url.pathname===new URL(self.registration.scope).pathname?index.href:event.request;
+    return(await cache.match(request))||fetch(event.request);
+  })());
+});
 '''

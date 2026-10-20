@@ -6,8 +6,7 @@ emitted JavaScript and original compatibility helpers. The application includes
 no Python interpreter, CDN imports or server computation. It does not parse new
 Python source after deployment. The independent interpreter and its browser
 parser remain separate milestones. Published pocket-python 0.1.0 predates this
-development API and CLI command. The cache-update browser acceptance gate is
-still under investigation; the corresponding implementation PR remains a draft.
+development API and CLI command.
 
 Install the declared build tooling and build the shared text-metrics example:
 
@@ -93,10 +92,11 @@ changes; altered in-memory snapshots fail validation.
 
 Output is a new directory outside all input roots; existing output, overlaps and
 publication failures use the exclusive-write/rollback behavior shared with the
-MicroPython builder. `application/<compiler-manifest-digest>/` holds the verified modules, helpers, optional
-maps, original notices and compiler manifest. The generated launcher and configuration have content-addressed names. The
-scoped service worker uses fresh precache requests and a canonical index.html
-navigation entry; all assets remain local. POCKET-PYTHON.json uses the adopted schema-2 application
+MicroPython builder. `application/<compiler-manifest-digest>/` holds the verified
+modules, helpers, optional maps, original notices and compiler manifest. The
+generated launcher and configuration have content-addressed names. The scoped
+service worker uses fresh precache requests and a canonical index.html navigation
+entry; all assets remain local. POCKET-PYTHON.json uses the adopted schema-2 application
 identity, profile=compiled-javascript, target=client and engine=null. It records
 the compiler revision/fingerprint/ABI, exact local file/import closure, licenses,
 capabilities, source identities and cache version. Source entries identify
@@ -118,11 +118,14 @@ Original error locations remain available. This policy does not conceal client
 executable code. Full Python traceback objects are outside the compiler profile.
 
 Cache identity covers the complete assembled input assets and producer versions.
-An updated service worker installs the new asset set, claims its scope and drops
-only obsolete caches for that exact scope. Reload after an update to start the
-new page/module session. Neighboring apps and unrelated caches remain. Offline
-reload/rerun needs a successful initial installation; browser-managed storage can
-still be cleared or evicted.
+An updated service worker installs the new asset set and waits while any page
+uses the previous version. The UI displays an update notice. Close this app's
+tabs and windows, then reopen to activate the update; reloading with another tab
+open keeps the current version. Current sessions and offline reloads retain
+their complete document/module graph while the update waits. Activation drops
+only obsolete caches for that exact scope. Neighboring apps and unrelated caches
+remain. Offline reload/rerun needs a successful initial installation;
+browser-managed storage can still be cleared or evicted.
 
 Run the focused tests and real browser gate:
 
@@ -135,8 +138,10 @@ uv run --no-sync python scripts/compiled_browser_smoke.py --report build/compile
 
 The browser gate compares the shared computation with CPython, reloads/reruns
 offline under a URL subdirectory, checks original errors with omitted maps,
-terminates a busy worker, restarts, updates and reloads the cache offline, and
-preserves a neighbor and unrelated cache. All observed application requests are
+terminates a busy worker, restarts, retains the installed version across two
+live tabs and an offline reload while an update waits, activates after both
+close, reloads the new version offline, and preserves neighboring and unrelated
+caches. All observed application requests are
 local static GETs; no upstream interpreter assets enter this profile. Existing
 MicroPython worker/browser/offline checks continue separately. The shared
 text-metrics computation and full MIT notice are attributed in the example;

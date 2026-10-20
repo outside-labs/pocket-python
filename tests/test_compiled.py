@@ -34,7 +34,7 @@ class CompiledTests(unittest.TestCase):
         self.assertEqual(receipt['profile'], 'compiled-javascript')
         self.assertEqual(receipt['target'], 'client')
         self.assertIsNone(receipt['engine'])
-        self.assertIn("cache: 'reload'", (self.output / 'service-worker.js').read_text())
+        self.assertIn("cache:'reload'", (self.output / 'service-worker.js').read_text())
         self.assertEqual(receipt['size']['engine_bytes'], 0)
         files = {record['path'] for record in receipt['files']}
         for record in receipt['files']:
