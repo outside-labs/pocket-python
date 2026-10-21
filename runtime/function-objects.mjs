@@ -1,3 +1,4 @@
+import {DESCRIPTOR_HOOKS} from "./class-policy.mjs";
 // VM-owned edges are explicit so closed-over cells and recursive graphs are rooted.
 export class Cell {
   constructor() { this.bound = false; this.value = null; }
@@ -32,7 +33,7 @@ export class InstanceValue {
 export class BoundMethodValue {
   constructor(callable, receiver) { this.callable = callable; this.receiver = receiver; }
 }
-export const DESCRIPTOR_HOOKS = Object.freeze(["__get__", "__set__", "__delete__", "__set_name__"]);
+export {DESCRIPTOR_HOOKS};
 export class BuiltinValue { constructor(name) { this.name = name; } }
 export class PropertyValue {
   constructor(fget = null, fset = null, fdel = null) {

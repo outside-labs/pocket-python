@@ -525,3 +525,12 @@ contract/reference evidence, shared admission policy, resumable call execution,
 callable queries and offline console acceptance. The contract alone changes no
 source acceptance. Additive support retains classes-source/1 and bytecode 5;
 engine fingerprints distinguish builds. INT-09 and alpha publication remain open.
+
+
+### Shared class special-method policy
+
+Class definitions, direct attribute admission and mutation now consult one
+immutable class-policy module from both compiler and runtime. Scoped metadata
+validation stays explicit. The pinned engine closure includes the reviewed policy
+module and import edges. This refactor keeps the C2 surface unchanged; __call__
+and the later C3 protocols are still refused until their execution step lands.

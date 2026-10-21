@@ -122,8 +122,8 @@ construction and initializer-return checks report the calling class statement.
 
 Hand-authored bytecode tests cover initialization/method execution, failure side
 effects and locations, malformed records and shared resource limits. The pinned
-console closure now includes the class runtime (twenty-one modules plus two
-notices), while core-source/1 still compiles bytecode 4 and refuses class syntax.
+console closure now includes the class runtime and shared special-method policy (twenty-two modules
+plus two notices), while core-source/1 still compiles bytecode 4 and refuses class syntax.
 The source and console integrations below retain these versioned records.
 
 ## Opt-in source execution
