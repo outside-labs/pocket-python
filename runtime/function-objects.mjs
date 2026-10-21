@@ -1,0 +1,33 @@
+// VM-owned edges are explicit so closed-over cells and recursive graphs are rooted.
+export class Cell {
+  constructor() { this.bound = false; this.value = null; }
+}
+export class Environment {
+  constructor() { this.cells = new Map(); }
+}
+export class CodePool {
+  constructor(code, bytes) { this.code = code; this.bytes = bytes; }
+}
+export class FunctionValue {
+  constructor(pool, index, globals, closure) {
+    this.pool = pool; this.index = index; this.globals = globals; this.closure = closure;
+  }
+}
+export class BuiltinValue { constructor(name) { this.name = name; } }
+export class ExceptionValue {
+  constructor(name, args, message) {
+    this.name = name; this.args = args; this.message = message;
+    this.traceback = []; this.context = null;
+  }
+}
+export const EXCEPTIONS = Object.freeze({
+  BaseException: null, Exception: "BaseException", ArithmeticError: "Exception",
+  ZeroDivisionError: "ArithmeticError", OverflowError: "ArithmeticError", LookupError: "Exception", IndexError: "LookupError",
+  KeyError: "LookupError", ValueError: "Exception", TypeError: "Exception",
+  NameError: "Exception", UnboundLocalError: "NameError", RuntimeError: "Exception",
+  RecursionError: "RuntimeError", StopIteration: "Exception"
+});
+export function matchesException(name, expected) {
+  for (let current = name; current; current = EXCEPTIONS[current]) if (expected === current) return true;
+  return false;
+}

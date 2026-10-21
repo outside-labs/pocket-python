@@ -1,4 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
+import {Cell, Environment, CodePool, FunctionValue, BuiltinValue, ExceptionValue} from "./function-objects.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -61,6 +62,11 @@ export class ValueRuntime {
   string(points) {
     this.limit(points.length <= VALUE_LIMITS.text, "String length budget exceeded.");
     this.charge(points.length + 1); return this.make(64 + 4 * points.length, [], () => new StringValue(points));
+  }
+  text(value) {
+    if (!(value instanceof StringValue)) return null;
+    this.charge(value.points.length + 1);
+    return value.points.map(point => String.fromCodePoint(point)).join("");
   }
   list(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new ListValue(items)); }
   tuple(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new TupleValue(items)); }
@@ -130,6 +136,7 @@ export class ValueRuntime {
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
     if (value instanceof IteratorValue) return true;
+    if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
   }
   equal(left, right, depth = 0) {
@@ -417,5 +424,13 @@ export function valueLayout(value) {
   if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
   if (value instanceof IteratorValue) return {bytes: 64, children: [value.value]};
+  if (value instanceof Cell) return {bytes: 48, children: value.bound ? [value.value] : []};
+  if (value instanceof Environment) return {bytes: 64 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [...value.cells.values()]};
+  if (value instanceof CodePool) return {bytes: value.bytes, children: value.code.constants};
+  if (value instanceof FunctionValue) return {bytes: 80 + 8 * value.closure.size, children: [value.pool, value.globals, ...value.closure.values()]};
+  if (value instanceof BuiltinValue) return {bytes: 48 + 2 * value.name.length, children: []};
+  if (value instanceof ExceptionValue) return {bytes: 96 + 2 * (value.name.length + value.message.length) +
+    value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),
+    children: [...value.args, ...(value.context ? [value.context] : [])]};
   throw new TypeError("Only adopted VM values have an allocation layout.");
 }

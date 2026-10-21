@@ -15,13 +15,14 @@ for await (const chunk of process.stdin) {
 const requests = JSON.parse(input);
 const results = requests.map(request => {
   let session = null;
+  let stdout = "";
   try {
-    session = process.argv[2] === "vm2" ? new InterpreterSession({memoryLimits: request.memoryLimits}) : null;
-    const options = {maxSteps: request.maxSteps, maxWork: request.maxWork};
+    session = ["vm2", "vm3"].includes(process.argv[2]) ? new InterpreterSession({memoryLimits: request.memoryLimits}) : null;
+    const options = {maxSteps: request.maxSteps, maxWork: request.maxWork, onOutput: text => { stdout += text; }};
     const result = session ? session.read(session.run(request.program, options)) : encodeValue(execute(request.program, options));
-    return {id: request.id, ok: true, result};
+    return {id: request.id, ok: true, result, stdout};
   } catch (error) {
-    return {id: request.id, ok: false, error: {
+    return {id: request.id, ok: false, stdout, error: {
       code: error.code || "HOST", type: error.name, message: error.message
     }};
   } finally { session?.close(); }

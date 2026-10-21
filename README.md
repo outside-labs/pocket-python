@@ -126,3 +126,7 @@ The development [compiled JavaScript PWA builder](docs/compiled-applications.md)
 The development [shared server/browser example](docs/shared-application.md) runs
 the same supported computation under CPython and in a compiled browser worker,
 with explicit network reference calls and offline failure checks.
+
+Development [version 3 functions and exception unwinding](docs/interpreter-functions.md)
+add argument binding, lexical closures, recursion and source-located handlers.
+The same bytecode runs in Node and browser workers; source parsing remains INT-08.

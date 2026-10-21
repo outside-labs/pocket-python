@@ -18,6 +18,13 @@ ROOT = Path(__file__).resolve().parent
 CORPUS = ROOT.parent / "tests/fixtures/interpreter/language.json"
 
 
+def function_program(program):
+    return {"format": program["format"], "version": 3, "constants": program["constants"],
+            "functions": [{"name": "<module>", "qualname": "<module>", "params": {"posonly": [], "positional": [], "kwonly": [], "defaults": [], "kwdefaults": {}},
+                           "locals": [], "free": [], "body": 0, "blocks": [{"kind": "statement", "instructions": program["instructions"],
+                                                                           "source": program.get("source")}]}]}
+
+
 def oracle(expression):
     # Only expressions in the committed acceptance corpus reach this test oracle.
     source = (
@@ -91,6 +98,9 @@ def run_browser(engine, requests, channel):
 
 
 def validation_requests(engine_name):
+    if engine_name == "vm3":
+        return [{**case, "program": function_program(case["program"]) if case["program"]["version"] == 2 else case["program"]}
+                for case in validation_requests("vm2")]
     if engine_name in {"vm1", "vm2"}:
         def program(instructions, values=("1",)):
             return {"format": "pocket-python-bytecode", "version": 2 if engine_name == "vm2" else 1,
@@ -168,7 +178,12 @@ def check(engine_name, target, channel=None):
         if missing:
             records.append({**record, "status": "unsupported", "missing_features": missing})
         else:
-            if engine_name not in case.get("programs", {}) or "expression" not in case:
+            if engine_name == "vm3":
+                from function_fixtures import compile_fixture
+                program = (function_program(case["programs"]["vm2"]) if "expression" in case else
+                           compile_fixture(case["source"], case["id"] + ".py"))
+                case.setdefault("programs", {})[engine_name] = program
+            if engine_name not in case.get("programs", {}) or ("expression" not in case and engine_name != "vm3"):
                 raise ValueError("Supported case lacks its engine fixture/reference: " + case["id"])
             supported.append((case, record))
     requests = [{"id": case["id"], "program": case["programs"][engine_name], "maxSteps": 100}
@@ -190,9 +205,14 @@ def check(engine_name, target, channel=None):
         raise ValueError("Engine response IDs/count do not match submitted cases.")
     results = {result["id"]: result for result in results}
     for case, record in supported:
-        expected, actual = oracle(case["expression"]), results[case["id"]]
+        actual = results[case["id"]]
+        if "expression" in case:
+            expected = oracle(case["expression"])
+        else:
+            from check_functions import reference
+            expected = reference(case["source"], case["id"] + ".py")
         if expected["ok"]:
-            passed = actual["ok"] and actual["result"] == expected["result"]
+            passed = actual["ok"] and (actual["result"] == expected["result"] if "result" in expected else actual.get("stdout") == expected["stdout"])
         else:
             passed = not actual["ok"] and actual["error"].get("type") == expected["error"]["type"]
             if "message" in case:
