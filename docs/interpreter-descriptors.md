@@ -84,7 +84,7 @@ programs. During staged development, `--stages` selects source cases and reports
 the omitted stages without treating them as implemented.
 
 The console example combines a private field, property setter, inherited class
-method constructor and static method. Fifteen source comparisons and eight browser
+method constructor and static method. Twenty source comparisons and nine browser
 acceptance groups cover fresh sessions, callback/decorator locations, new decorated
 source after offline reload, property-getter Stop/Restart and a waiting update to
 the reduced core language/library selection. No hosted deployment follows from

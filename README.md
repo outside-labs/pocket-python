@@ -140,10 +140,11 @@ remain excluded from the 0.2.0 distributions.
 
 The explicit [class-source profile](docs/interpreter-classes.md) adds class bodies,
 C3 inheritance, attributes, initialization, bound methods, [private names](docs/interpreter-private-names.md),
-and adopted [descriptors, properties and decorators](docs/interpreter-descriptors.md), with Node/Chromium
+adopted [descriptors, properties and decorators](docs/interpreter-descriptors.md),
+and [callable objects](docs/interpreter-special-methods.md), with Node/Chromium
 and offline-console checks. Build its example with
 `uv run python -m examples.interpreter_classes`. The default core-source/1 profile
-remains available; custom special methods and async follow separate stages.
+remains available; further special protocols and async follow separate stages.
 
 The development [library profiles](docs/interpreter-profiles.md) select core-only/1
 or the supplied operator/1 Python library without changing the complete engine.

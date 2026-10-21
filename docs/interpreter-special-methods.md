@@ -90,3 +90,20 @@ Deliver focused PRs for this contract/reference matrix, the shared policy, call
 execution, callable queries and offline-console acceptance. Keep the existing
 39 class, 34 private-name, 69 descriptor and core/library matrices. Add resource,
 exception-location, pending-root and teardown tests as each implementation lands.
+
+
+## Delivered call milestone
+
+The shared policy and iterative call dispatcher implement the adopted call surface
+in classes-source/1. All 63 source cases run in Node and Chromium: 55 CPython
+stdout/error-type comparisons and eight explicit future-protocol refusals.
+The default core profile retains its source and builtin boundaries.
+
+The Counter/StepCounter example now invokes inherited __call__ and reports
+callable(counter). Twenty source comparisons and nine browser acceptance groups
+cover callback and binding failures, a newly entered callable decorator with a
+property-based call binding after offline reload, busy call/body binding Stop
+with three fresh Restarts, and a waiting class/library-to-core update that removes
+callable() along with class source and the optional library. Logical teardown,
+owned temporaries, redirect-cycle depth, real OOM and cancellation have dedicated
+tests. INT-09 remains open for the later protocol milestones in the table.

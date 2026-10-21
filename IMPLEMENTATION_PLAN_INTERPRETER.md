@@ -8,7 +8,8 @@ The development source-console milestone now runs newly entered Python offline
 in Chromium, using our independent parser/compiler/VM. Measured optional library
 profiles now have full/reduced and complete-application evidence. Class foundations,
 private names and adopted descriptors/decorators now run in Node and Chromium.
-Individual special methods and asynchronous host integration remain next; the application-alpha
+The first special call protocol now has shared admission and resumable dispatch;
+length/truth and asynchronous host integration remain next; the application-alpha
 publication gates are still open.
 
 ## Goal and ownership
@@ -564,3 +565,19 @@ All 63 source cases now run in Node and Chromium: 55 CPython comparisons and eig
 explicit future-protocol refusals. Tests also cover invalid query arguments, user
 binding shadows, an intentionally busy descriptor that must never execute during
 a query, and unchanged core-profile builtin lookup. Console acceptance follows.
+
+
+### C3 call-console checkpoint
+
+The Counter example now uses inherited __call__ and callable(). Twenty CPython
+source comparisons and nine Chromium acceptance groups cover explicit/implicit
+lookup, properties/descriptors and callable decorators, original callback/binding
+errors, new callable-decorator source after offline reload, call/body binding Stop
+with three fresh Restarts, and waiting updates that remove class source, callable()
+and the optional library together. The full 63-case call matrix accompanies the
+39 class, 34 private-name and 69 descriptor matrices in Node/Chromium.
+
+The first selected C3 call protocol is implemented; INT-09 stays open for
+length/truth, formatting, indexed objects, iteration/membership and equality/hash.
+Further construction/attribute/arithmetic/metaclass semantics, async/host work,
+later C/Rust WebAssembly and publication retain their separate gates.
