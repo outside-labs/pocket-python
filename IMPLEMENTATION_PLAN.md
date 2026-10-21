@@ -356,3 +356,12 @@ record. Browser checks compare outputs/errors, prove that local execution makes
 no API call, retain offline local reruns and expose disconnected Fetch failure
 without silently switching execution targets. No framework/runtime dependency,
 production server or broader Python compatibility is introduced.
+
+MEASURE-01 provides [versioned complete application measurements](docs/application-measurements.md).
+Equivalent mapped/map-omitted compiled PWAs share a source/workload/UI comparison
+set, explicit physical/compressed payload buckets, raw full-build/readiness and
+separate dedicated-worker heap observations. Matching compiler component evidence
+is retained with different startup boundaries clearly identified. Unavailable
+interpreter profiles carry gates/reasons instead of fabricated estimates; matched
+source-interpreter producers join after INT-WEB-01/INT-11. No general runtime
+savings are inferred from source removal or a single host's measurements.

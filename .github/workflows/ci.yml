@@ -46,6 +46,13 @@ jobs:
       - run: uv run --no-sync python -m playwright install --with-deps chromium
       - run: uv run --no-sync python scripts/compiled_browser_smoke.py --report build/compiled-browser-report.json
       - run: uv run --no-sync python scripts/shared_application_smoke.py --report build/shared-application-browser-report.json
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: outside-labs/Python-JavaScript
+          ref: 804a70fa37ef4ca126519c7222d1862966a63d0c
+          path: build/compiler-reference
+          persist-credentials: false
+      - run: uv run --no-sync python scripts/measure_applications.py --compiler-report build/compiler-reference/docs/measurements/2026-10-20-compiler.json --repeats 3 --output build/application-measurements
       - run: uv run --no-sync python scripts/browser_smoke.py
       - run: uv run --no-sync python runtime/check_memory.py --target browser --report build/memory-browser-report.json
       - run: uv run --no-sync python runtime/browser_smoke.py
@@ -56,7 +63,10 @@ jobs:
         if: always()
         with:
           name: interpreter-browser-report
-          path: build/*browser-report.json
+          path: |
+            build/*browser-report.json
+            build/application-measurements/report.json
+            build/application-measurements/compiler-component-report.json
           if-no-files-found: error
 
   interpreter-prototype:

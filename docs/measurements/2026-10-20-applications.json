@@ -1,0 +1,1280 @@
+{
+  "browser": {
+    "channel": null,
+    "playwright_version": "1.64.0",
+    "requests": "local-static-GET-only",
+    "version": "156.0.8078.4",
+    "worker_memory_api": "CDP Runtime.getHeapUsage after HeapProfiler.collectGarbage"
+  },
+  "collected_at_utc": "2026-10-21T01:20:38.728776+00:00",
+  "common_computation": {
+    "hash_policy": "utf-8-canonical-lf",
+    "name": "text_metrics.metrics",
+    "sha256": "cd0fc16e047b4c81230a1272446b0257ef741f937b1ea0857d2a94bb3d0bb350"
+  },
+  "comparison_sets": [
+    {
+      "id": "compiled-source-map-policy",
+      "profiles": [
+        "compiled-maps",
+        "compiled-no-maps"
+      ],
+      "same_computation": true,
+      "same_ui_profile": true,
+      "same_workload": true
+    }
+  ],
+  "compression": {
+    "archive": "canonical USTAR then gzip level 9, mtime 0",
+    "files": "independent gzip level 9, mtime 0; HTTP/TLS framing excluded",
+    "zlib_version": "1.2.12"
+  },
+  "host": {
+    "logical_cpu_count": 10,
+    "machine": "arm64",
+    "processor": "arm",
+    "release": "27.0.0",
+    "system": "Darwin"
+  },
+  "kind": "pocket-python-application-measurements",
+  "methods": {
+    "build": "Warm compiler; full source verification, compilation, receipt generation and filesystem publication into a new directory. Omit-maps validates the declared mapped input and recompiles without maps, matching the adopted builder option.",
+    "cold": "Fresh browser context per sample; performance.now from document navigation to observed Ready and Offline-ready mutations, then three observed text-input computations. Browser process and OS caches remain shared/uncontrolled.",
+    "comparison": "Only mapped versus omitted-map PWAs share the same UI, input workload and observation boundary. The related compiler report measures synchronous components with a different harness/startup boundary and is not directly ranked against the complete PWA.",
+    "memory": "Separate fresh contexts: dedicated-worker V8 used/total heap, embedder heap and backing storage in bytes after forced GC at Ready and after observed outputs. Transport quiescence is not asserted. Excludes page/service-worker/cache/process RSS, peak memory and native/code allocations outside CDP.",
+    "warm": "One installed context, untimed warm-up, then same-version reloads with the installed service-worker cache. Offline reload/workload verified separately without ranking it as an online startup sample."
+  },
+  "profiles": [
+    {
+      "browser": {
+        "cold_context_samples": [
+          {
+            "offline_ms": 115.79999995231628,
+            "ready_ms": 103.09999990463257,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 1.5,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.9000000953674316,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.19999992847442627,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 38.700000047683716,
+            "ready_ms": 37.800000071525574,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.7999999523162842,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.5,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.20000004768371582,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 39.200000047683716,
+            "ready_ms": 38,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.8999999761581421,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.6000000238418579,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.20000004768371582,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 35.40000009536743,
+            "ready_ms": 38.40000009536743,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.9000000953674316,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.3999999761581421,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.10000002384185791,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 40.10000002384186,
+            "ready_ms": 37.800000071525574,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.8000000715255737,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.3999999761581421,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.10000002384185791,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          }
+        ],
+        "installed_warm_samples": [
+          {
+            "offline_ms": 12.700000047683716,
+            "ready_ms": 25.600000023841858,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.8999999761581421,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.5,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.20000004768371582,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 7.800000071525574,
+            "ready_ms": 21.600000023841858,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.7000000476837158,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.2999999523162842,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.20000004768371582,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 7.199999928474426,
+            "ready_ms": 20.299999952316284,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.8000000715255737,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.2999999523162842,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.20000004768371582,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 7.399999976158142,
+            "ready_ms": 21.100000023841858,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.6000000238418579,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.3999999761581421,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.20000004768371582,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 7.5,
+            "ready_ms": 21,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.8999999761581421,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.5,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.20000004768371582,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          }
+        ],
+        "median_cold_ready_ms": 38,
+        "median_installed_warm_ready_ms": 21.100000023841858,
+        "offline_reload_and_workload": "pass",
+        "worker_heap_samples": [
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444464
+            },
+            "after_ready": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388504
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          },
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444464
+            },
+            "after_ready": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388504
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          },
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444464
+            },
+            "after_ready": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388504
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          },
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444464
+            },
+            "after_ready": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388504
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          },
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444464
+            },
+            "after_ready": {
+              "backingStorageSize": 60472,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388504
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          }
+        ]
+      },
+      "build_ns": [
+        13549417,
+        15542834,
+        13836833,
+        13479542,
+        14758875
+      ],
+      "cache_version": "78c00fcccdff213719ce8e9c651eb8f60ae2e5349d2a2b111ac674fbb811f745",
+      "capabilities": [
+        {
+          "id": "output/1"
+        },
+        {
+          "controls": [
+            "input",
+            "result",
+            "status"
+          ],
+          "id": "dom-text/1"
+        },
+        {
+          "controls": [
+            "run"
+          ],
+          "events": [
+            "click"
+          ],
+          "id": "dom-events/1"
+        },
+        {
+          "id": "handles/1"
+        }
+      ],
+      "common_features": [
+        "unicode-codepoint-str",
+        "ascii-word-separators",
+        "lf-lines",
+        "integer-tuples",
+        "local-worker",
+        "dom-events",
+        "text-output",
+        "offline-reload"
+      ],
+      "engine": null,
+      "files": [
+        {
+          "bucket": "receipt_bytes",
+          "gzip_bytes": 2044,
+          "path": "POCKET-PYTHON.json",
+          "sha256": "e6ee3e0e3dc5f6aea6b49046cbbfe6919f313326159b8a2ca1a2f19b0e7e4408",
+          "size_bytes": 8587
+        },
+        {
+          "bucket": "assembly_module_bytes",
+          "gzip_bytes": 1188,
+          "path": "app-7ddcdaa1fbd6ed5c5dac74c7ead138903be44a79aac2764c44557d60e1f69178.js",
+          "sha256": "7ddcdaa1fbd6ed5c5dac74c7ead138903be44a79aac2764c44557d60e1f69178",
+          "size_bytes": 2898
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 289,
+          "path": "app-config-36169969a4ad40185feffea534f58c326298f70881e71657a8c9cdea3ce5de5e.json",
+          "sha256": "36169969a4ad40185feffea534f58c326298f70881e71657a8c9cdea3ce5de5e",
+          "size_bytes": 572
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 1384,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/COMPILED-MANIFEST.json",
+          "sha256": "965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2",
+          "size_bytes": 3435
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 646,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/LICENSES/shimify.txt",
+          "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+          "size_bytes": 1066
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 173,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/NOTICES.txt",
+          "sha256": "6f5d82cbe362365fa7b97ab5825f5d5e1c6766e6f285f4ffe10c50ba9cedb270",
+          "size_bytes": 210
+        },
+        {
+          "bucket": "generated_module_bytes",
+          "gzip_bytes": 594,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/app.mjs",
+          "sha256": "060f3a82afc2582704570df5c3ed08f83d70973be17f04ad457e59c87e776ca1",
+          "size_bytes": 1282
+        },
+        {
+          "bucket": "helper_bytes",
+          "gzip_bytes": 3833,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/browser-host.mjs",
+          "sha256": "122aed7edbda37ffe92c4d82efc84ced4ef9e3687cdbc299ea09800dbb0f022a",
+          "size_bytes": 12195
+        },
+        {
+          "bucket": "helper_bytes",
+          "gzip_bytes": 3116,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/browser-protocol.mjs",
+          "sha256": "841602b8e605529093f8638a6ce497743cbd70d0bb05a39ed55f50f65e8693f1",
+          "size_bytes": 9628
+        },
+        {
+          "bucket": "generated_module_bytes",
+          "gzip_bytes": 2317,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/browser-worker.mjs",
+          "sha256": "e73d50eda9b2339ffb0afbd8c025a338d5011f5d9828171fcf2984973ee106cf",
+          "size_bytes": 6968
+        },
+        {
+          "bucket": "generated_module_bytes",
+          "gzip_bytes": 627,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/module-000.mjs",
+          "sha256": "586b09de48889e8c1dfeb97e9b1412f268981e882a198dcb6d74f4fd3ebe9c97",
+          "size_bytes": 1946
+        },
+        {
+          "bucket": "source_map_bytes",
+          "gzip_bytes": 241,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/module-000.mjs.map",
+          "sha256": "0506ff19ed9eec75961e420a01e287f513b20b9b3c76d0965a1d600412bc82e1",
+          "size_bytes": 365
+        },
+        {
+          "bucket": "generated_module_bytes",
+          "gzip_bytes": 1343,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/module-001.mjs",
+          "sha256": "64eaa944260540f4e43f12a15d1a2a13311c9fb320081f7c43afdd9052be5822",
+          "size_bytes": 6938
+        },
+        {
+          "bucket": "source_map_bytes",
+          "gzip_bytes": 424,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/module-001.mjs.map",
+          "sha256": "38ed4675a488715c129e6ac5624d288c5c729b8360805c4c224580354feb94f6",
+          "size_bytes": 1014
+        },
+        {
+          "bucket": "helper_bytes",
+          "gzip_bytes": 10180,
+          "path": "application/965c7ff8328cb9a413489941cd9d8912bf9ec1ed2064918c07477948e27dadc2/runtime.mjs",
+          "sha256": "0c7fb3754d90cc39a930ca9314cb5b94a9f490e637efda93a47347235b8f81bb",
+          "size_bytes": 32861
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 183,
+          "path": "icon.svg",
+          "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691",
+          "size_bytes": 214
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 748,
+          "path": "index.html",
+          "sha256": "8b9f9c21d8f65c8a973c1c82a464be04eeb9ec65a13b3e6762d4c0c8c67a9040",
+          "size_bytes": 1378
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 197,
+          "path": "manifest.webmanifest",
+          "sha256": "b3c90a1c48c51e0f5c149b41e0a54ee0734f1deadb43c2344bad9002bef25a4d",
+          "size_bytes": 310
+        },
+        {
+          "bucket": "assembly_module_bytes",
+          "gzip_bytes": 999,
+          "path": "service-worker.js",
+          "sha256": "d18def1109237e7d9593fcc4d654bed5c734f741f4f37c99598e8c5e2eb4992e",
+          "size_bytes": 2727
+        }
+      ],
+      "id": "compiled-maps",
+      "median_build_ns": 13836833,
+      "new_source_after_deployment": false,
+      "profile": "compiled-javascript/1",
+      "sizes": {
+        "application_source_bytes": 0,
+        "assembly_module_bytes": 5625,
+        "canonical_tar_bytes": 112640,
+        "complete_payload_bytes": 94594,
+        "data_metadata_bytes": 5909,
+        "generated_module_bytes": 17134,
+        "gzip_file_transfer_bytes": 30526,
+        "gzip_tar_bytes": 27150,
+        "gzip_tar_sha256": "95a9a38480db5b8a4d8a1be3d8167525a09ac5f265d51e14ac9106debd1bbbbc",
+        "helper_bytes": 54684,
+        "input_source_bytes": 757,
+        "interpreter_asset_bytes": 0,
+        "notice_bytes": 1276,
+        "receipt_bytes": 8587,
+        "source_map_bytes": 1379
+      },
+      "source_execution": "ahead-of-time",
+      "source_map": true,
+      "sources": [
+        {
+          "path": "app.py",
+          "sha256": "11bcb6c3c23c59bba020c0098b3cce00063d0b9133fb982086ab8a965821f3c1",
+          "size": 176
+        },
+        {
+          "path": "text_metrics.py",
+          "sha256": "cd0fc16e047b4c81230a1272446b0257ef741f937b1ea0857d2a94bb3d0bb350",
+          "size": 581
+        }
+      ],
+      "status": "measured",
+      "ui_profile": "text-input/1",
+      "versions": {
+        "compiler": {
+          "abi": "python-browser-host-esm/1",
+          "language_profile": "python-browser-modules-host-async/1",
+          "name": "Python-JavaScript",
+          "source_fingerprint": "3e584572c4849523571d82df511e7a553a210d5d9ce1d442032de4d4c7ad15c0",
+          "source_revision": "35fbe6eb399f5d94e05e850eb36dbdf695e6d15a",
+          "version": "0.1.0"
+        },
+        "host_protocol": "pocket-python-host/1",
+        "pocket_python": "0.1.0"
+      }
+    },
+    {
+      "browser": {
+        "cold_context_samples": [
+          {
+            "offline_ms": 39.89999997615814,
+            "ready_ms": 40.200000047683716,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 1,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.5,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.10000002384185791,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 38.799999952316284,
+            "ready_ms": 37.39999997615814,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 1,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.3999999761581421,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.30000007152557373,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 37.299999952316284,
+            "ready_ms": 38.199999928474426,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.8999999761581421,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.3999999761581421,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.10000002384185791,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 36.299999952316284,
+            "ready_ms": 38,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.9000000953674316,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.40000009536743164,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.19999992847442627,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 38.200000047683716,
+            "ready_ms": 38.39999997615814,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.9000000953674316,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.5,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.09999990463256836,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          }
+        ],
+        "installed_warm_samples": [
+          {
+            "offline_ms": 7.899999976158142,
+            "ready_ms": 21.5,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.7999999523162842,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.3999999761581421,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.10000002384185791,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 8,
+            "ready_ms": 21.899999976158142,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.6999999284744263,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.40000009536743164,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.19999992847442627,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 7.799999952316284,
+            "ready_ms": 21.399999976158142,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.7000000476837158,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.3999999761581421,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.20000004768371582,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 8,
+            "ready_ms": 21.299999952316284,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.8000000715255737,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.2999999523162842,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.2999999523162842,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          },
+          {
+            "offline_ms": 10.799999952316284,
+            "ready_ms": 24.399999976158142,
+            "workload": [
+              {
+                "id": "empty",
+                "result_ms": 0.8999999761581421,
+                "stdout": "(0, 0, 0)\n"
+              },
+              {
+                "id": "unicode",
+                "result_ms": 0.5,
+                "stdout": "(14, 4, 2)\n"
+              },
+              {
+                "id": "non-ascii-space",
+                "result_ms": 0.10000002384185791,
+                "stdout": "(3, 1, 1)\n"
+              }
+            ]
+          }
+        ],
+        "median_cold_ready_ms": 38.199999928474426,
+        "median_installed_warm_ready_ms": 21.5,
+        "offline_reload_and_workload": "pass",
+        "worker_heap_samples": [
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444400
+            },
+            "after_ready": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388440
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          },
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444400
+            },
+            "after_ready": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388440
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          },
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444400
+            },
+            "after_ready": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388440
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          },
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444400
+            },
+            "after_ready": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388440
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          },
+          {
+            "after_observed_workload": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 1310720,
+              "usedSize": 444400
+            },
+            "after_ready": {
+              "backingStorageSize": 60410,
+              "embedderHeapUsedSize": 26944,
+              "totalSize": 786432,
+              "usedSize": 388440
+            },
+            "workload_outputs": [
+              "(0, 0, 0)\n",
+              "(14, 4, 2)\n",
+              "(3, 1, 1)\n"
+            ]
+          }
+        ]
+      },
+      "build_ns": [
+        16658291,
+        16530708,
+        16767000,
+        16374167,
+        16886958
+      ],
+      "cache_version": "82c051cc7d83bc910f321d9fba6c5dd04cb17107b5eb03775fb7f64d38f9b5a9",
+      "capabilities": [
+        {
+          "id": "output/1"
+        },
+        {
+          "controls": [
+            "input",
+            "result",
+            "status"
+          ],
+          "id": "dom-text/1"
+        },
+        {
+          "controls": [
+            "run"
+          ],
+          "events": [
+            "click"
+          ],
+          "id": "dom-events/1"
+        },
+        {
+          "id": "handles/1"
+        }
+      ],
+      "common_features": [
+        "unicode-codepoint-str",
+        "ascii-word-separators",
+        "lf-lines",
+        "integer-tuples",
+        "local-worker",
+        "dom-events",
+        "text-output",
+        "offline-reload"
+      ],
+      "engine": null,
+      "files": [
+        {
+          "bucket": "receipt_bytes",
+          "gzip_bytes": 1929,
+          "path": "POCKET-PYTHON.json",
+          "sha256": "7e019feb152ee8bf2c40b6f269504efac4dfe6d87c7d2a7c7be3e8a377c6cb8f",
+          "size_bytes": 8060
+        },
+        {
+          "bucket": "assembly_module_bytes",
+          "gzip_bytes": 1187,
+          "path": "app-655304e2e85160ceb1c8c16c8c5695ffa8efb7a17bfafacf7fda31d3a4586768.js",
+          "sha256": "655304e2e85160ceb1c8c16c8c5695ffa8efb7a17bfafacf7fda31d3a4586768",
+          "size_bytes": 2898
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 288,
+          "path": "app-config-d1f6077302e383c199137980b53facd3ba78be5c5fcd1bec936a722f94f09af3.json",
+          "sha256": "d1f6077302e383c199137980b53facd3ba78be5c5fcd1bec936a722f94f09af3",
+          "size_bytes": 572
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 1272,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/COMPILED-MANIFEST.json",
+          "sha256": "97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde",
+          "size_bytes": 3160
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 646,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/LICENSES/shimify.txt",
+          "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+          "size_bytes": 1066
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 173,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/NOTICES.txt",
+          "sha256": "6f5d82cbe362365fa7b97ab5825f5d5e1c6766e6f285f4ffe10c50ba9cedb270",
+          "size_bytes": 210
+        },
+        {
+          "bucket": "generated_module_bytes",
+          "gzip_bytes": 594,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/app.mjs",
+          "sha256": "060f3a82afc2582704570df5c3ed08f83d70973be17f04ad457e59c87e776ca1",
+          "size_bytes": 1282
+        },
+        {
+          "bucket": "helper_bytes",
+          "gzip_bytes": 3833,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/browser-host.mjs",
+          "sha256": "122aed7edbda37ffe92c4d82efc84ced4ef9e3687cdbc299ea09800dbb0f022a",
+          "size_bytes": 12195
+        },
+        {
+          "bucket": "helper_bytes",
+          "gzip_bytes": 3116,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/browser-protocol.mjs",
+          "sha256": "841602b8e605529093f8638a6ce497743cbd70d0bb05a39ed55f50f65e8693f1",
+          "size_bytes": 9628
+        },
+        {
+          "bucket": "generated_module_bytes",
+          "gzip_bytes": 2317,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/browser-worker.mjs",
+          "sha256": "e73d50eda9b2339ffb0afbd8c025a338d5011f5d9828171fcf2984973ee106cf",
+          "size_bytes": 6968
+        },
+        {
+          "bucket": "generated_module_bytes",
+          "gzip_bytes": 595,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/module-000.mjs",
+          "sha256": "204a8ba71b6a9c1b809210891e203262ecb63754ed05664066106a356f726fe9",
+          "size_bytes": 1906
+        },
+        {
+          "bucket": "generated_module_bytes",
+          "gzip_bytes": 1307,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/module-001.mjs",
+          "sha256": "f86dd734b0ab924f413415a1d16d55c7149be357bb80454b9d267fbb5ea740d5",
+          "size_bytes": 6898
+        },
+        {
+          "bucket": "helper_bytes",
+          "gzip_bytes": 10180,
+          "path": "application/97ad55dfed02d46bbda6c6f65ff9b308d19d1e0051d24317d2d48482ea69dbde/runtime.mjs",
+          "sha256": "0c7fb3754d90cc39a930ca9314cb5b94a9f490e637efda93a47347235b8f81bb",
+          "size_bytes": 32861
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 183,
+          "path": "icon.svg",
+          "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691",
+          "size_bytes": 214
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 746,
+          "path": "index.html",
+          "sha256": "1a07ceb7ff66185c57aa78221e2cca5bb70c380003ffbc57b9ae79f9adc2fa7d",
+          "size_bytes": 1378
+        },
+        {
+          "bucket": "data_metadata_bytes",
+          "gzip_bytes": 197,
+          "path": "manifest.webmanifest",
+          "sha256": "b3c90a1c48c51e0f5c149b41e0a54ee0734f1deadb43c2344bad9002bef25a4d",
+          "size_bytes": 310
+        },
+        {
+          "bucket": "assembly_module_bytes",
+          "gzip_bytes": 989,
+          "path": "service-worker.js",
+          "sha256": "100f61df15d45c21873270ab285ecebc22fa0bf9baead4fadf2ff0eb91617ef4",
+          "size_bytes": 2529
+        }
+      ],
+      "id": "compiled-no-maps",
+      "median_build_ns": 16658291,
+      "new_source_after_deployment": false,
+      "profile": "compiled-javascript/1",
+      "sizes": {
+        "application_source_bytes": 0,
+        "assembly_module_bytes": 5427,
+        "canonical_tar_bytes": 112640,
+        "complete_payload_bytes": 92135,
+        "data_metadata_bytes": 5634,
+        "generated_module_bytes": 17054,
+        "gzip_file_transfer_bytes": 29552,
+        "gzip_tar_bytes": 26452,
+        "gzip_tar_sha256": "fba2c8e02a0f43e99148b87604e772c3df5eb5f75648070d50f2aef4446cdfd1",
+        "helper_bytes": 54684,
+        "input_source_bytes": 757,
+        "interpreter_asset_bytes": 0,
+        "notice_bytes": 1276,
+        "receipt_bytes": 8060,
+        "source_map_bytes": 0
+      },
+      "source_execution": "ahead-of-time",
+      "source_map": false,
+      "sources": [
+        {
+          "path": "app.py",
+          "sha256": "11bcb6c3c23c59bba020c0098b3cce00063d0b9133fb982086ab8a965821f3c1",
+          "size": 176
+        },
+        {
+          "path": "text_metrics.py",
+          "sha256": "cd0fc16e047b4c81230a1272446b0257ef741f937b1ea0857d2a94bb3d0bb350",
+          "size": 581
+        }
+      ],
+      "status": "measured",
+      "ui_profile": "text-input/1",
+      "versions": {
+        "compiler": {
+          "abi": "python-browser-host-esm/1",
+          "language_profile": "python-browser-modules-host-async/1",
+          "name": "Python-JavaScript",
+          "source_fingerprint": "3e584572c4849523571d82df511e7a553a210d5d9ce1d442032de4d4c7ad15c0",
+          "source_revision": "35fbe6eb399f5d94e05e850eb36dbdf695e6d15a",
+          "version": "0.1.0"
+        },
+        "host_protocol": "pocket-python-host/1",
+        "pocket_python": "0.1.0"
+      }
+    }
+  ],
+  "python": "3.14.7",
+  "related_component_report": {
+    "browser": {
+      "playwright_version": "1.64.0",
+      "version": "156.0.8078.4"
+    },
+    "compiler_version": "0.1.0",
+    "direct_startup_or_memory_comparison": false,
+    "file": "compiler-component-report.json",
+    "host": {
+      "logical_cpu_count": 10,
+      "machine": "arm64",
+      "processor": "arm",
+      "release": "27.0.0",
+      "system": "Darwin"
+    },
+    "kind": "python-javascript-compiler-measurements",
+    "methods": {
+      "build": "Warm imported compiler and Unicode repr table; compilation and manifest generation only; excludes filesystem writes and Python startup.",
+      "cold": "Fresh browser context and worker per sample; browser process and OS caches remain warm/uncontrolled. Timer covers worker creation, imports, initialization, one call and result message; excludes document navigation.",
+      "memory": "Separate fresh-context worker samples. CDP HeapProfiler.collectGarbage then Runtime.getHeapUsage before import and after retaining one module/result. Used/total V8 heap, embedder heap and backing storage are bytes; excludes process RSS, other processes, and native/code allocations not exposed by this API.",
+      "scope": "Synchronous compiled-module browser fixtures, including measurement harness, maps/notices/manifest. Browser-host SDK and pocket PWA shell are measured separately. All-profile baseline includes every helper valid for the same profile; no new feature is enabled.",
+      "warm": "One context, explicit untimed warm-up, then a fresh worker for each observation. HTTP cache is shared; code-cache reuse is browser-controlled."
+    },
+    "node": "v24.19.0",
+    "python": "3.14.7",
+    "schema_version": 1,
+    "sha256": "83ea98535325f13bc1c8149f498a29d3e2546fff4fe19e41ecce0bc7a74f1ae3",
+    "shared_computation_variants": [
+      {
+        "id": "required-maps",
+        "sizes": {
+          "canonical_tar_bytes": 40960,
+          "complete_payload_bytes": 25152,
+          "generated_module_bytes": 7001,
+          "gzip_file_transfer_bytes": 8947,
+          "gzip_tar_bytes": 8069,
+          "gzip_tar_sha256": "8a374adb1246c56b5aa5771a35bd80bcd0d96809cbb4e5b0f5e02e8af50665d4",
+          "helper_bytes": 10357,
+          "input_source_bytes": 702,
+          "interpreter_asset_bytes": 0,
+          "measurement_harness_bytes": 2837,
+          "metadata_bytes": 2496,
+          "notice_bytes": 1276,
+          "source_map_bytes": 1185
+        }
+      },
+      {
+        "id": "all-profile-maps",
+        "sizes": {
+          "canonical_tar_bytes": 51200,
+          "complete_payload_bytes": 38378,
+          "generated_module_bytes": 7001,
+          "gzip_file_transfer_bytes": 13996,
+          "gzip_tar_bytes": 13160,
+          "gzip_tar_sha256": "eed86a64b13efe6ffdc1047272565e593a42a8904b3d249dca0a47381f22a909",
+          "helper_bytes": 23547,
+          "input_source_bytes": 702,
+          "interpreter_asset_bytes": 0,
+          "measurement_harness_bytes": 2837,
+          "metadata_bytes": 2532,
+          "notice_bytes": 1276,
+          "source_map_bytes": 1185
+        }
+      },
+      {
+        "id": "required-no-maps",
+        "sizes": {
+          "canonical_tar_bytes": 40960,
+          "complete_payload_bytes": 23612,
+          "generated_module_bytes": 6921,
+          "gzip_file_transfer_bytes": 8146,
+          "gzip_tar_bytes": 7496,
+          "gzip_tar_sha256": "706b5fa595e1bdf5684dff34a520435add07a55e8fa1ad6368c3dfeebb103c81",
+          "helper_bytes": 10357,
+          "input_source_bytes": 702,
+          "interpreter_asset_bytes": 0,
+          "measurement_harness_bytes": 2837,
+          "metadata_bytes": 2221,
+          "notice_bytes": 1276,
+          "source_map_bytes": 0
+        }
+      },
+      {
+        "id": "all-profile-no-maps",
+        "sizes": {
+          "canonical_tar_bytes": 51200,
+          "complete_payload_bytes": 36838,
+          "generated_module_bytes": 6921,
+          "gzip_file_transfer_bytes": 13194,
+          "gzip_tar_bytes": 12591,
+          "gzip_tar_sha256": "0d733c69534ef5a3fd278603a60e7298b70fc1e205b8f950c206de8d30259c5a",
+          "helper_bytes": 23547,
+          "input_source_bytes": 702,
+          "interpreter_asset_bytes": 0,
+          "measurement_harness_bytes": 2837,
+          "metadata_bytes": 2257,
+          "notice_bytes": 1276,
+          "source_map_bytes": 0
+        }
+      }
+    ]
+  },
+  "repository_revision": "2c3190765ef0609b60fd896308c3c21d291fcefe",
+  "samples_per_condition": 5,
+  "schema_version": 1,
+  "scripts": {
+    "_measurement_browser.py": "c9a373f5878cc795a387deaef6779c730661e0d684d9bc80cef39377f09e48e1",
+    "measure_applications.py": "85005dd3faa7e527dcc676460a3db2da4dce08c8dc0cce229c1c340af8294f27"
+  },
+  "suite": "browser-python-footprints/1",
+  "unavailable_profiles": [
+    {
+      "gate": "INT-WEB-01",
+      "id": "independent-javascript",
+      "reason": "The source parser and comparable browser application are not available; partial VM tests are not this workload.",
+      "status": "deferred"
+    },
+    {
+      "gate": "INT-WASM-03",
+      "id": "independent-webassembly",
+      "reason": "The later C/Rust WebAssembly route remains planned.",
+      "status": "planned"
+    },
+    {
+      "id": "micropython",
+      "reason": "The existing schema-1 script shell has no equivalent adopted text-input/1 adapter; no unlike UI/workload comparison is inferred.",
+      "status": "not-measured"
+    },
+    {
+      "gate": "PYODIDE-01",
+      "id": "pyodide",
+      "status": "not-adopted"
+    }
+  ],
+  "working_tree_modified": true,
+  "workload": [
+    {
+      "expected_stdout": "(0, 0, 0)\n",
+      "id": "empty",
+      "input": ""
+    },
+    {
+      "expected_stdout": "(14, 4, 2)\n",
+      "id": "unicode",
+      "input": "A\ud83d\ude00 e\u0301\nline two"
+    },
+    {
+      "expected_stdout": "(3, 1, 1)\n",
+      "id": "non-ascii-space",
+      "input": "a\u00a0b"
+    }
+  ]
+}
