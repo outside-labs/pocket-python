@@ -4,6 +4,8 @@ HOST-01 adopts this contract for future compiled applications and our independen
 interpreter. It specifies an adapter, not an implemented browser engine. Released
 MicroPython schema-1 applications retain their existing console messages.
 Profile/engine identities remain independent of this protocol and of each other.
+The [source-console subset](interpreter-console.md) now implements a bounded
+output-only adapter and the profile's `interpreter.run` control operation.
 
 ## Placement and capabilities
 

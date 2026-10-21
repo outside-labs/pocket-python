@@ -296,3 +296,14 @@ after INT-08 integration; class/async/performance and INT-REL-01 remain later
 gates. The C/Rust-to-WebAssembly option stays in INT-WASM-01–03. Published
 assembler 0.2.0 artifacts exclude `runtime/`; no independent-engine release is
 claimed by these implementation milestones.
+
+### Source console integration stages (2026-10-21)
+
+INT-WEB-01 begins with a versioned, output-only host/worker adapter using the
+independent source engine. The [console contract](docs/interpreter-console.md)
+records initialization, tagged source, fresh per-run registries, bounded
+messages/output/memory, source diagnostics, deadlines and immediate worker
+termination. Node state-machine tests exercise these paths. Follow with explicit
+engine/source application assembly and the editor, then real-browser offline,
+subdirectory, update and regression acceptance before closing the milestone.
+The adapter stage alone is not an offline-console or publication claim.
