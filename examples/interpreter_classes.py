@@ -9,11 +9,11 @@ from pocket_python.interpreter import build_interpreter, read_interpreter
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = '''class Counter:
     def __init__(self, start=0):
-        self.value = start
+        self.__value = start
 
     def add(self, amount):
-        self.value += amount
-        return self.value
+        self.__value += amount
+        return self.__value
 
 class StepCounter(Counter):
     def twice(self, amount):

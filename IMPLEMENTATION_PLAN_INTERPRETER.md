@@ -406,7 +406,7 @@ CPython in Node/Chromium, alongside malformed-record and resource tests.
 
 `interpreter-web --language-profile classes-source/1` and the class example select
 the profile explicitly. Application/receipt/configuration identity and Ready
-bind its language/bytecode version. Eleven Chromium checks cover CPython examples,
+bind its language/bytecode version. Dedicated Chromium checks cover CPython examples,
 new class source after offline reload, errors/refusals, fresh state, Stop/Restart
 and a waiting class-plus-library to core-only update. Wheel/sdist installation
 checks assemble both languages with both library selections from supplied assets.
@@ -426,5 +426,8 @@ lowers names before binding under classes-source/1, using existing bytecode 5.
 Node/Chromium compare all 33 cases; source tests cover generated-name budgets,
 collisions before effects and unchanged explicit module grants. Original names,
 source spans, literals and call keywords remain available unchanged where required.
-Offline-console acceptance follows; descriptors, decorators and individually
-adopted special methods remain later C2/C3 work.
+The console's Counter example now uses a private field; sixteen Chromium cases/
+groups verify common class/private behavior, source errors, collisions before
+effects, new private input after offline reload, private-method Stop/Restart and
+waiting updates. Descriptors, decorators and individually adopted special methods
+remain later C2/C3 work. No new host grant, opcode, dependency or publication follows.

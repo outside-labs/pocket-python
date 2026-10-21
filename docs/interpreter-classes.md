@@ -58,8 +58,9 @@ staticmethod and classmethod binding, inherited descriptors and __set_name__.
 
 Decorator expressions evaluate in source order; application proceeds in reverse
 order after constructing the function/class. Cover replacement objects, errors
-and side effects before exposing decorator syntax. Add private-name mangling
-with nested class/function and Unicode cases. Unsupported descriptors, special
+and side effects before exposing decorator syntax. The separately delivered
+[private-name compiler](interpreter-private-names.md) covers nested scopes,
+Unicode and import rules. Unsupported descriptors, special
 methods and inheritance hooks must not silently behave as ordinary attributes.
 
 ## C3: adopted special methods and closure of INT-09
@@ -141,7 +142,7 @@ with lexical name mangling, using the same verified bytecode 5 instructions.
 The intrinsic object type is immutable. Class module metadata is text in C1.
 
 Run `python runtime/check_classes.py --target node` or `--target browser`.
-The expanded thirty-nine-case matrix checks C1 stdout/error types against
+The expanded thirty-nine-case matrix checks adopted class/private stdout/error types against
 CPython and explicitly classifies later-stage refusals. Messages, repr addresses
 and generic object transport are not treated as compatible. Node tests also
 cover defining-module globals, shared object identity across imports, namespace/
@@ -175,11 +176,12 @@ retain their reviewed sources, notices and output-only/1 host boundary. Classes
 gain no DOM, network, storage or file authority. Classes and bound methods remain
 inside each run's arena rather than crossing the host protocol.
 
-`python scripts/classes_console_browser_smoke.py` records five CPython source
-comparisons and six browser acceptance groups: explicit selection, source-located
-errors/refusal and fresh state, new class input after offline reload, busy-worker
+`python scripts/classes_console_browser_smoke.py` records nine CPython source
+comparisons and seven browser acceptance groups: explicit selection, source-located
+errors/refusal and fresh state, private errors and parameter collisions before
+effects, new class/private input after offline reload, busy-worker
 Stop/Restart, a waiting class-plus-library to core-only update, and local static
 GET-only execution. The old tab retains its selected language until closed; the
 new offline application refuses classes and removed imports before recovering
 with core source. CI retains this report and the Node/Chromium class corpus.
-C2/C3 and INT-09 remain open; this development checkpoint has no PyPI release.
+Descriptors/decorators, C3 and INT-09 remain open; this development checkpoint has no PyPI release.

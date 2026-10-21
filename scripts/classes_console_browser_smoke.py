@@ -68,12 +68,16 @@ def smoke(channel=None):
                     page.goto(url)
                     ready()
                     assert 'classes-source/1' in page.locator('#language').inner_text()
+                    assert 'private names' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
                     programs = [SOURCE] + [c['source'] for c in corpus['cases'] if c['id'] in
                                            ['diamond-mro', 'class-free-local-overlap', 'unicode-class']]
                     programs.append('import operator\nclass A:\n def __init__(self,n): self.n=n\n def add(self,x): return operator.add(self.n,x)\nprint(A(7).add(5))\n')
+                    private = json.loads((ROOT / 'tests/fixtures/interpreter/private-names.json').read_bytes())
+                    programs.extend(c['source'] for c in private['cases'] if c['id'] in
+                                    ['private-class-value', 'subclass-private-fields', 'nested-private-class', 'normalized-unicode-prefix'])
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -88,12 +92,22 @@ def smoke(channel=None):
                     refused('import browser\n', 'ImportError:')
                     run(SOURCE, 'Count: 7\nClass: StepCounter\n')
                     checks.append('class-errors-refusal-fresh-state-and-unchanged-host-grants')
+                    failure = next(c['source'] for c in private['cases'] if c['id'] == 'private-write-augment-delete')
+                    refused(failure, 'AttributeError:')
+                    assert page.locator('#result').inner_text() == '9\n'
+                    assert 'read at sources/app.py:7' in page.locator('#diagnostic').inner_text()
+                    collision = next(c['source'] for c in private['cases'] if c['id'] == 'parameter-collision-after-mangling')
+                    refused(collision, 'SyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    assert 'sources/app.py:3' in page.locator('#status').inner_text()
+                    run(SOURCE, 'Count: 7\nClass: StepCounter\n')
+                    checks.append('private-name-errors-and-collisions-before-effects')
                     context.set_offline(True)
                     page.reload()
                     ready()
-                    run('class NewAfterReload:\n def f(self,x): return x+7\nprint(NewAfterReload().f(5))\n', '12\n')
-                    checks.append('new-class-source-after-offline-reload')
-                    busy = 'class Spin:\n def run(self):\n  while True: pass\nSpin().run()\n'
+                    run('class NewAfterReload:\n def __init__(self): self.__value=7\n def f(self,x): return x+self.__value\nprint(NewAfterReload().f(5))\n', '12\n')
+                    checks.append('new-class-and-private-source-after-offline-reload')
+                    busy = 'class Spin:\n def __run(self):\n  while True: pass\n def run(self): return self.__run()\nSpin().run()\n'
                     stopped = []
                     for _ in range(3):
                         page.fill('#input', busy)
