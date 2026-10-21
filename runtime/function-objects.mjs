@@ -19,6 +19,19 @@ export class FunctionValue {
     this.pool = pool; this.index = index; this.globals = globals; this.closure = closure;
   }
 }
+export class ClassValue {
+  constructor(name, qualname, module, bases, parents, namespace, root = false) {
+    this.name = name; this.qualname = qualname; this.module = module; this.root = root;
+    this.bases = Object.freeze([...bases]); this.mro = Object.freeze([this, ...parents]);
+    this.namespace = new Map(namespace);
+  }
+}
+export class InstanceValue {
+  constructor(type) { this.type = type; this.attributes = new Map(); }
+}
+export class BoundMethodValue {
+  constructor(callable, receiver) { this.callable = callable; this.receiver = receiver; }
+}
 export class BuiltinValue { constructor(name) { this.name = name; } }
 export class AppendValue extends BuiltinValue {
   constructor(receiver) { super("append"); this.receiver = receiver; }

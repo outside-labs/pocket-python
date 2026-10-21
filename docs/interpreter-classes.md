@@ -94,3 +94,14 @@ stacked PRs, with INT-09 progress recorded in the issue and Project.
 References: [Python data model](https://docs.python.org/3.14/reference/datamodel.html),
 [class execution and name binding](https://docs.python.org/3.14/reference/executionmodel.html),
 and the [descriptor guide](https://docs.python.org/3.14/howto/descriptor.html).
+
+## Delivered value foundation
+
+The internal ClassRuntime now owns class/instance maps, bounded C3 order and
+receiver/function method wrappers. Limits are sixteen direct bases, sixty-four
+MRO entries and 128 attributes per namespace/instance. Explicit layout edges
+retain bases, namespaces, receivers and lexical function graphs. Growth and
+foreign-arena failures roll back mutations; cyclic graphs release with roots.
+Truth/identity and supported method equality remain distinct from deferred
+hashing and by-value transport. Core engine locks include the changed allocation
+layouts; class execution/source acceptance follow in separate stages.

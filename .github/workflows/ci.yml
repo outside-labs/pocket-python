@@ -97,6 +97,7 @@ jobs:
       - run: node --test runtime/prototype.test.mjs
       - run: node --test runtime/vm.test.mjs
       - run: node --test runtime/values.test.mjs
+      - run: node --test runtime/class-values.test.mjs
       - run: node --test runtime/memory.test.mjs
       - run: node --test runtime/functions.test.mjs
       - run: node --test runtime/module-registry.test.mjs
