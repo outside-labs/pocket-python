@@ -1,0 +1,3 @@
+"""Reviewed optional library identities; generated without executing library code."""
+
+LIBRARY_PROFILES = {'core-only/1': {'id': 'core-only/1', 'modules': [], 'fingerprint': '0658bf184744e21e6a2eb0901a55c5f71e640eb5dbd4f5b5297c83ffd57782c9'}, 'operator/1': {'id': 'operator/1', 'modules': [{'name': 'operator', 'package': False, 'imports': [], 'source': {'path': 'library/operator.py', 'size_bytes': 457, 'sha256': '2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7'}, 'notice': {'path': 'licenses/POCKET-PYTHON.txt', 'size_bytes': 1066, 'sha256': '30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85'}}], 'fingerprint': '8fae1499faa7ae0fe071de23902082c4a7c979cdc71990d877ca537e941cae40'}}

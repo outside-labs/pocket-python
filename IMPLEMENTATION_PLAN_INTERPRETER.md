@@ -339,3 +339,12 @@ The next unblocked work is INT-09's staged class/descriptor contracts, INT-10's
 coroutine/scheduling/host contracts and INT-11's measured optional profiles.
 No broad package support, physical-memory/startup claim or independent-engine
 release follows from this milestone. INT-REL-01 remains gated on those stages.
+
+### Optional library profiles (2026-10-21)
+
+INT-11 begins with reviewed core-only/1 and operator/1 library selections and an
+explicit output-only/1 host-module boundary. The [profile contract](docs/interpreter-profiles.md)
+records source/notice hashes, snapshots, grants, missing-feature diagnostics and
+full/reduced differential tests. Both profiles retain the complete engine; no VM
+internals are removed. Console assembly and measured payload/startup/memory
+observations follow as focused stages before accepting INT-11.
