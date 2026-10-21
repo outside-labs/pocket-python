@@ -94,6 +94,21 @@ else:
     else:
         raise AssertionError("A default installation unexpectedly supplied compiler tooling")
 print("Installed distribution verified", __version__, sys.argv[2])
+from pocket_python.interpreter import build_interpreter, read_console_source, read_interpreter
+client = root / "console-source"
+(client / "LICENSES").mkdir(parents=True)
+source, notice = b"print('installed console')", b"Synthetic supplied-source notice"
+(client / "app.py").write_bytes(source)
+(client / "LICENSES/source.txt").write_bytes(notice)
+manifest = {"kind": "pocket-python-console-source", "schema_version": 1, "target": "client",
+    "source": {**file_record("app.py", source), "role": "client-source"},
+    "notice": {**file_record("LICENSES/source.txt", notice), "role": "notice"}}
+(client / "CONSOLE-SOURCE.json").write_bytes(json_bytes(manifest))
+receipt = build_interpreter(read_console_source(client / "CONSOLE-SOURCE.json"), read_interpreter(sys.argv[3]), root / "console")
+assert receipt["profile"] == "in-house-interpreter" and receipt["source_execution"]
+assert receipt["size"]["artifact_bytes"] == sum(path.stat().st_size for path in (root / "console").rglob("*") if path.is_file())
+assert not any(path.suffix == ".wasm" for path in (root / "console").rglob("*"))
+print("Installed source-console assembly verified with explicitly supplied engine assets")
 ''')
     for index, artifact in enumerate([wheels[0], sdists[0]]):
         for profile in ["default", "compiled"]:
@@ -101,4 +116,5 @@ print("Installed distribution verified", __version__, sys.argv[2])
             work.mkdir()
             tooling = ["--with", "Python-JavaScript==0.2.0"] if profile == "compiled" else []
             subprocess.run(["uv", "run", "--isolated", "--no-project", "--python", sys.executable,
-                "--with", str(artifact.resolve()), *tooling, "python", "-I", str(script), version, profile], check=True, cwd=work)
+                "--with", str(artifact.resolve()), *tooling, "python", "-I", str(script), version, profile,
+                str(Path('runtime').resolve())], check=True, cwd=work)

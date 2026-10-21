@@ -133,7 +133,9 @@ upstream notices before distributing generated applications.
 The development [independent VM value model](docs/interpreter-values.md) executes
 our own versioned bytecode in Node and browser workers. It covers staged Python
 scalars, containers and iteration; the [source front end](docs/interpreter-source.md) now handles new source in
-Node/browser workers, while the offline console remains the next milestone. It is excluded from the 0.2.0 distributions.
+Node/browser workers. The development [source console](docs/interpreter-console.md)
+adds a local editor and explicit independent-engine assembly; full browser
+acceptance follows in INT-WEB-01. Runtime assets remain excluded from the 0.2.0 distributions.
 
 Development sessions now have [explicit roots, allocation limits and owned host handles](docs/interpreter-memory.md), with shared Node/browser lifetime checks. New source uses the independent source front end.
 
@@ -150,4 +152,4 @@ The same bytecode runs in Node and browser workers; source parsing remains INT-0
 Development [version 4 verified modules](docs/interpreter-modules.md) add explicit
 imports, session cache identity, relative packages and a supplied small library
 profile. The original text-metrics computation runs through this independent VM;
-newly entered source awaits the independent parser.
+newly entered source uses the independent source front end.

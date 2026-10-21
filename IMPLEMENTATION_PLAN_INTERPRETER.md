@@ -307,3 +307,12 @@ termination. Node state-machine tests exercise these paths. Follow with explicit
 engine/source application assembly and the editor, then real-browser offline,
 subdirectory, update and regression acceptance before closing the milestone.
 The adapter stage alone is not an offline-console or publication claim.
+
+The second integration stage adds development `interpreter-web` assembly and an
+editor with output, source diagnostics and main-thread stop/restart controls.
+The explicit client-source/notice allowlist and pinned twenty-asset engine graph
+are hashed without executing input. The schema-2 receipt records complete local
+closure, notices, source/engine identity and bytes. Initial source/configuration
+are verified, and service-worker precaching checks SHA-256 integrity while
+retaining the established waiting-update lifecycle. Focused assembly and installed
+artifact checks accompany this stage; comprehensive browser acceptance is next.

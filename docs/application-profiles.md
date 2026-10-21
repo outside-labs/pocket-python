@@ -4,7 +4,9 @@ Adopted for PROFILE-01. The released schema-1 MicroPython runtime lock and
 source-bundle commands remain unchanged. This document defines future profile
 implementation. WEB-03 now implements the compiled schema-2 output through
 [compiled-web and its verified client-source input](compiled-applications.md);
-independent-interpreter profile ingestion remains a later milestone.
+the development `interpreter-web` command now assembles the
+[source console](interpreter-console.md) with its explicitly supplied independent
+engine. Browser/offline acceptance is the final INT-WEB-01 integration stage.
 
 ## Identity and compatibility
 
@@ -15,7 +17,7 @@ changes its language semantics, host APIs or execution location.
 | --- | --- | --- |
 | `micropython` / 1 | Verified Python source supported by the selected runtime | Explicit existing schema-1 MicroPython JS/WASM lock. |
 | `compiled-javascript` / 1 | Compiler-produced ES module entrypoint | Verified emitted modules and required compatibility helpers; no Python interpreter. |
-| `in-house-interpreter` / 1 | Verified Python source or our versioned bytecode; later newly entered source | Our identified engine, parser/compiler/VM, adopted library modules and host bridge. |
+| `in-house-interpreter` / 1 | Verified initial Python source and newly entered source in the console | Our identified engine, independent parser/compiler/VM and output-only host bridge. |
 
 Profile version identifies the integration contract, independently of engine,
 compiler, package and bytecode versions. A profile declares its supported
