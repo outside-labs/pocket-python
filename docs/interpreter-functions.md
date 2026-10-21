@@ -130,6 +130,6 @@ and source_execution=false.
 
 Node 24.19.0/Chromium 156.0.8078.4 checks against CPython 3.14.7 passed 60
 function/resource cases on both targets. Version 3 also passed 187 broader cases,
-with four explicitly unsupported parser/module/class/async entries. Node tests
+with four malformed-source entries explicitly unsupported until the parser. Node tests
 cover retained cyclic closures, owned handles, foreign/stale roots, cancellation
 and malformed bytecode. CI retains both target reports.
