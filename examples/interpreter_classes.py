@@ -31,13 +31,17 @@ SOURCE = '''class Counter:
         self.value += amount
         return self.value
 
+    def __call__(self, amount):
+        return self.add(amount)
+
 class StepCounter(Counter):
     def twice(self, amount):
-        return self.add(self.doubled(amount))
+        return self(self.doubled(amount))
 
 counter = StepCounter.from_start(1)
 print("Count:", counter.twice(3))
 print("Class:", type(counter).__name__)
+print("Callable:", callable(counter))
 '''
 
 if __name__ == '__main__':

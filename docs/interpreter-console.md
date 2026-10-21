@@ -42,7 +42,7 @@ empty source is permitted. A notice is required, and does not grant a license
 to subsequently entered code. No other checkout files are selected.
 
 `--engine` must explicitly supply the known runtime assets. The assembler pins
-twenty-three core assets (twenty-one modules and the project/Unicode notices) through
+twenty-four core assets (twenty-two modules and the project/Unicode notices) through
 `_interpreter_lock.py`; it canonicalizes checkout CRLF to LF before verifying.
 Unknown engine code, missing/modified files and forged snapshots fail before
 publication. `python scripts/lock_interpreter.py` checks the lock; `--write` is
@@ -54,9 +54,10 @@ The default language selection is core-source/1 (bytecode 4). Add
 `--language-profile classes-source/1` to select the [class foundation](interpreter-classes.md)
 (bytecode 5): class bodies, C3 inheritance, instance attributes, initialization,
 bound methods, [private names](interpreter-private-names.md), and the adopted
-[descriptors, properties and decorators](interpreter-descriptors.md). The editor shows the selected profile. Build a class example
+[descriptors, properties and decorators](interpreter-descriptors.md), plus
+[callable instances and queries](interpreter-special-methods.md). The editor shows the selected profile. Build a class example
 with `uv run python -m examples.interpreter_classes`, then serve
-`build/class-console`. Custom special methods and async remain later stages. Language selection is independent of `--library-profile`;
+`build/class-console`. Other special protocols and async remain later stages. Language selection is independent of `--library-profile`;
 both language profiles use the same complete pinned engine.
 
 Output uses application schema 2, profile in-house-interpreter/1, with distinct

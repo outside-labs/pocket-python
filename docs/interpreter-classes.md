@@ -178,15 +178,16 @@ retain their reviewed sources, notices and output-only/1 host boundary. Classes
 gain no DOM, network, storage or file authority. Classes and bound methods remain
 inside each run's arena rather than crossing the host protocol.
 
-`python scripts/classes_console_browser_smoke.py` records fifteen CPython source
-comparisons and eight browser acceptance groups: explicit selection, source-located
+`python scripts/classes_console_browser_smoke.py` records twenty CPython source
+comparisons and nine browser acceptance groups: explicit selection, source-located
 errors/refusal and fresh state, private errors and parameter collisions before
-effects, descriptor/decorator error locations, new decorated class/property input
-after offline reload, property-getter Stop/Restart, a waiting class-plus-library to core-only update, and local static
+effects, descriptor/decorator error locations, call/binding failures, new callable decorator input
+after offline reload, call/pending-binding Stop/Restart, a waiting class-plus-library to core-only update, and local static
 GET-only execution. The old tab retains its selected language until closed; the
 new offline application refuses classes and removed imports before recovering
 with core source. CI retains this report and the Node/Chromium class corpus.
 The adopted C2 descriptor/decorator matrix now passes in Node/Chromium and the
 offline console; see the [implementation contract](interpreter-descriptors.md).
-The Counter example uses a property, class method and static method. C3 and INT-09
+The Counter example uses a property, class method, static method and inherited
+__call__, with callable() confirming the available type slot. C3 and INT-09
 remain open; this development checkpoint has no PyPI release.
