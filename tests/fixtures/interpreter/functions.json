@@ -368,6 +368,34 @@
         "function.arguments"
       ],
       "source": "def f(a,*,b):\n    return a\nf(1,2,3,b=4)\n"
+    },
+    {
+      "id": "delete-unbound-builtin",
+      "features": [
+        "scope.global"
+      ],
+      "source": "del len\n"
+    },
+    {
+      "id": "delete-unbound-module-name",
+      "features": [
+        "scope.global"
+      ],
+      "source": "del missing\n"
+    },
+    {
+      "id": "delete-unbound-local-name",
+      "features": [
+        "scope.local"
+      ],
+      "source": "def f():\n    del missing\nf()\n"
+    },
+    {
+      "id": "delete-shadowed-builtin",
+      "features": [
+        "scope.global"
+      ],
+      "source": "len=7\ndel len\nprint(len(\"ok\"))\n"
     }
   ],
   "limits": [
