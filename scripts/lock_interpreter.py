@@ -8,7 +8,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = sorted(['browser-protocol.mjs', 'bytecode.mjs', 'function-bytecode.mjs',
+NAMES = sorted(['browser-protocol.mjs', 'bytecode.mjs', 'class-values.mjs', 'function-bytecode.mjs',
     'function-objects.mjs', 'functions.mjs', 'interpreter-host.mjs', 'interpreter-worker.mjs',
     'memory.mjs', 'module-context.mjs', 'module-registry.mjs', 'module-session.mjs',
     'source-compiler.mjs', 'source-identifiers.mjs', 'source-modules.mjs',

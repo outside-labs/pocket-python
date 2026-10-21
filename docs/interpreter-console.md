@@ -42,7 +42,7 @@ empty source is permitted. A notice is required, and does not grant a license
 to subsequently entered code. No other checkout files are selected.
 
 `--engine` must explicitly supply the known runtime assets. The assembler pins
-twenty-two core assets (twenty modules and the project/Unicode notices) through
+twenty-three core assets (twenty-one modules and the project/Unicode notices) through
 `_interpreter_lock.py`; it canonicalizes checkout CRLF to LF before verifying.
 Unknown engine code, missing/modified files and forged snapshots fail before
 publication. `python scripts/lock_interpreter.py` checks the lock; `--write` is

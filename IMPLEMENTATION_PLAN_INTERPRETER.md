@@ -401,3 +401,9 @@ evidence are required before accepting a delivered stage.
 The value foundation now provides bounded C3 class/instance maps and bound-method
 references with explicit arena layouts, rollback and cyclic-graph collection.
 It is an internal API stage; source acceptance and class execution remain pending.
+
+Verified bytecode 5 now distinguishes class-body frames and checks class/attribute
+operands, captures and stack effects. Registry-owned execution shares the existing
+resource/exception machinery, constructs types after body effects, and validates
+initializer completion. Source/profile and offline browser integration follow;
+core-source/1 still emits bytecode 4 and refuses classes.

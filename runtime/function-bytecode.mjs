@@ -30,16 +30,19 @@ function fields(value, expected) {
 
 export function verifyFunctions(program) {
   fields(program, ["format", "version", "constants", "functions"]);
-  if (program.format !== "pocket-python-bytecode" || ![3, 4].includes(program.version) || !Array.isArray(program.functions) ||
-      !integer(program.functions.length - 1, FUNCTION_LIMITS.functions - 1)) fail("Expected bounded pocket-python-bytecode version 3 or 4 functions.");
+  if (program.format !== "pocket-python-bytecode" || ![3, 4, 5].includes(program.version) || !Array.isArray(program.functions) ||
+      !integer(program.functions.length - 1, FUNCTION_LIMITS.functions - 1)) fail("Expected bounded pocket-python-bytecode version 3, 4 or 5 functions.");
   const constants = verify({format: program.format, version: 2, constants: program.constants,
     instructions: [["build-tuple", 0], ["return"]]}).constants;
-  const validName = program.version === 4 ? isPythonIdentifier : name;
-  const privateName = value => program.version === 4 && typeof value === "string" && /^@source:[0-9]{1,5}$/.test(value);
+  const modern = program.version >= 4, classes = program.version === 5;
+  const validName = modern ? isPythonIdentifier : name;
+  const privateName = value => modern && typeof value === "string" && /^@source:[0-9]{1,5}$/.test(value);
   const storageName = value => validName(value) || privateName(value);
   let count = 0, blockCount = 0;
   const functions = Array.from(program.functions, (fn, functionIndex) => {
-    fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks"]);
+    fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : [])]);
+    const kind = classes ? fn.kind : functionIndex === 0 ? "module" : "function";
+    if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
     if (!(fn.name === "<module>" && functionIndex === 0) && !validName(fn.name)) fail("Invalid function name.");
     if (typeof fn.qualname !== "string" || !fn.qualname || fn.qualname.length > 256) fail("Invalid qualified function name.");
     fields(fn.params, ["posonly", "positional", "kwonly", "defaults", "kwdefaults"]);
@@ -47,7 +50,8 @@ export function verifyFunctions(program) {
     const allParams = [...params.posonly, ...params.positional, ...params.kwonly];
     const locals = names(fn.locals, storageName), free = names(fn.free, validName);
     if (new Set(allParams).size !== allParams.length || allParams.length > FUNCTION_LIMITS.names ||
-        allParams.some(key => !locals.includes(key)) || free.some(key => locals.includes(key))) fail("Parameter, local and free names conflict.");
+        allParams.some(key => !locals.includes(key)) || (kind !== "class" && free.some(key => locals.includes(key)))) fail("Parameter, local and free names conflict.");
+    if (kind === "class" && (allParams.length || !["__module__", "__qualname__"].every(key => locals.includes(key)))) fail("Class bodies require metadata locals and no parameters.");
     if (!Array.isArray(fn.params.defaults) || fn.params.defaults.length > params.posonly.length + params.positional.length ||
         !Array.from(fn.params.defaults).every(index => integer(index, constants.length - 1)) || !record(fn.params.kwdefaults) ||
         Object.keys(fn.params.kwdefaults).some(key => !params.kwonly.includes(key) || !integer(fn.params.kwdefaults[key], constants.length - 1))) fail("Defaults must refer to immutable constants and declared parameters.");
@@ -71,24 +75,29 @@ export function verifyFunctions(program) {
       const edges = [], instructions = Array.from(block.instructions, instruction => {
         if (!Array.isArray(instruction)) fail("Instruction requires an array.");
         const [op, arg, extra] = instruction;
-        if (program.version !== 4 && typeof op === "string" && op.startsWith("inplace-")) fail("In-place operations require version 4.");
+        if (!modern && typeof op === "string" && op.startsWith("inplace-")) fail("In-place operations require version 4 or later.");
         let length = 1;
         const blockRef = (id, kind) => {
           if (!integer(id, fn.blocks.length - 1) || fn.blocks[id]?.kind !== kind) fail("Block reference has the wrong index or kind.");
           edges.push(id);
         };
         if (op === "const") { length = 2; if (!integer(arg, constants.length - 1)) fail("Constant outside pool."); }
-        else if (["load", "store", "delete"].includes(op) || (program.version === 4 && ["module-get", "import-from"].includes(op))) {
+        else if (["load", "store", "delete"].includes(op) || (modern && ["module-get", "import-from"].includes(op)) ||
+            (classes && ["attribute-get", "attribute-set", "attribute-delete"].includes(op))) {
           length = 2;
           const storage = ["load", "store", "delete"].includes(op);
           if (!(storage ? storageName(arg) : validName(arg)) || (storage && privateName(arg) && !locals.includes(arg)) ||
               (["store", "delete"].includes(op) && !locals.includes(arg))) fail("Store/delete requires a declared local.");
-        } else if (program.version === 4 && op === "import") {
+        } else if (modern && op === "import") {
           length = 4;
           if (typeof arg !== "string" || arg.length > 192 || (!arg && !extra) ||
               (arg && !/^[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*$/.test(arg)) ||
               !integer(extra, 32) || typeof instruction[3] !== "boolean" || (extra && instruction[3])) fail("Invalid static import operands.");
-        } else if (op === "function") { length = 2; if (!integer(arg, program.functions.length - 1) || arg === 0) fail("Invalid function reference."); }
+        } else if (op === "function") { length = 2; if (!integer(arg, program.functions.length - 1) || arg === 0 || (classes && program.functions[arg]?.kind !== "function")) fail("Invalid function reference."); }
+        else if (classes && op === "class") {
+          length = 3;
+          if (!integer(arg, program.functions.length - 1) || arg === 0 || program.functions[arg]?.kind !== "class" || !integer(extra, 16)) fail("Invalid class body or base count.");
+        }
         else if (op === "call") {
           length = 3; if (!integer(arg, FUNCTION_LIMITS.names)) fail("Invalid positional argument count."); names(extra, validName);
         } else if (CONSTRUCT.has(op)) { length = 2; if (!integer(arg, 1024)) fail("Invalid container item count."); }
@@ -111,7 +120,8 @@ export function verifyFunctions(program) {
           if (instruction[3] !== null) blockRef(instruction[3], "statement");
           if (instruction[4] !== null) blockRef(instruction[4], "statement");
         } else if (!(BINARY.has(op) || UNARY.has(op) || ["pop", "dup", "swap", "setitem", "slice", "end", "return", "raise", "reraise", "break", "continue"].includes(op))) fail("Unknown function opcode.");
-        if (instruction.length !== length || (block.kind === "expression" && ["return", "break", "continue", "if", "while", "for", "try"].includes(op))) fail("Invalid operands or expression control flow.");
+        if (instruction.length !== length || (kind === "class" && op === "return") ||
+            (block.kind === "expression" && ["return", "break", "continue", "if", "while", "for", "try"].includes(op))) fail("Invalid operands or expression control flow.");
         return Object.freeze(instruction.map((value, index) => op === "try" && index === 2 ?
           Object.freeze(value.map(handler => Object.freeze([Object.freeze([...handler[0]]), handler[1], handler[2], sourceSpan(handler[3])]))) :
           Array.isArray(value) ? Object.freeze([...value]) : value));
@@ -119,15 +129,15 @@ export function verifyFunctions(program) {
       const heights = new Map([[0, 0]]), pending = [0];
       for (let cursor = 0; cursor < pending.length; cursor++) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
-        const needs = BINARY.has(op) || op === "swap" ? 2 : op === "setitem" ? 3 : op === "slice" ? 4 :
+        const needs = op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : op === "setitem" ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
-          UNARY.has(op) || ["module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
+          UNARY.has(op) || ["attribute-get", "attribute-delete", "module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
         if (["end", "return", "raise", "reraise", "break", "continue"].includes(op)) {
           if (before !== (op === "end" ? Number(block.kind === "expression") : needs)) fail("Block completion requires an exact stack height.");
           continue;
         }
-        const after = before + (["const", "load", "function", "dup", "import"].includes(op) ? 1 :
+        const after = before + (op === "class" ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
           BINARY.has(op) || CONSTRUCT.has(op) || ["call", "setitem", "slice"].includes(op) ? 1 - needs :
           ["store", "pop", "if", "jump-if-false"].includes(op) ? -1 : 0);
         if (after > FUNCTION_LIMITS.stack) fail("Function stack exceeds 256 values.");
@@ -174,10 +184,11 @@ export function verifyFunctions(program) {
     };
     control(fn.body, false);
     if (reached.size !== blocks.length) fail("Function contains an unreferenced block.");
-    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks)});
+    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {})});
   });
   for (const fn of functions) for (const block of fn.blocks) for (const [op, target] of block.instructions) {
-    if (op === "function" && functions[target].free.some(key => !fn.locals.includes(key) && !fn.free.includes(key))) fail("Function capture has no lexical cell.");
+    if (["function", "class"].includes(op) && functions[target].free.some(key =>
+      (fn.kind === "class" || !fn.locals.includes(key)) && !fn.free.includes(key))) fail("Function/class capture has no lexical cell.");
   }
   const code = Object.freeze({format: program.format, version: program.version, constants, functions: Object.freeze(functions)});
   return Object.freeze({code, bytes: 64 + 2 * JSON.stringify({constants: program.constants, functions}).length});

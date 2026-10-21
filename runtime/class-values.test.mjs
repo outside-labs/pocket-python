@@ -75,6 +75,8 @@ test("identity/truth, metadata and explicit unsupported boundaries remain separa
     assert.throws(() => s.runtime.get(a, "__dict__"), {code: "UNSUPPORTED"});
     assert.throws(() => s.runtime.mutate(A, "__bases__", null), {code: "UNSUPPORTED"});
     assert.throws(() => s.make("Descriptor", [], new Map([["__get__", method("f")]])), {code: "UNSUPPORTED"});
+    assert.throws(() => s.make("BadInit", [], new Map([["__init__", A]])), {code: "UNSUPPORTED"});
+    assert.throws(() => s.runtime.mutate(A, "__init__", s.runtime.make(BoundMethodValue, A, a)), {code: "UNSUPPORTED"});
     assert.throws(() => s.runtime.subclass(a, A), {name: "TypeError"});
   } finally { s.close(); }
 });

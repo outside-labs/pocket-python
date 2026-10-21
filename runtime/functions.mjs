@@ -1,5 +1,6 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue} from "./function-objects.mjs";
+import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
@@ -31,8 +32,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   if ((moduleContext === null) !== (module === null) ||
       (moduleContext !== null && (!isModuleContext(moduleContext) || moduleContext.memory !== arena || !moduleContext.activeRun ||
         !(module instanceof ModuleValue) || moduleContext.module(module.name) !== module || moduleContext.registry.program(module.name) !== program)) ||
-      (verified.code.version === 4 && moduleContext === null) ||
-      (inheritedException !== null && (!(inheritedException instanceof ExceptionValue) || moduleContext === null))) throw new TypeError("Version 4 requires a verified module execution context.");
+      (verified.code.version >= 4 && moduleContext === null) ||
+      (inheritedException !== null && (!(inheritedException instanceof ExceptionValue) || moduleContext === null))) throw new TypeError("Version 4/5 requires a verified module execution context.");
   const frames = [], outputLeases = [], builtins = new Map();
   const execution = {};
   let pool = null, globals = null, temporaries = [], steps = 0, work = 0, outputLength = 0, current = null, result = null;
@@ -79,6 +80,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message);
     hard(code, name, message);
   }});
+  const classes = new ClassRuntime({memory, charge, values, fail: values.fail});
+  const objectType = () => moduleContext.builtin("object", () => classes.root());
   const setCell = (cell, value, bound = true) => mutate(cell, () => {
     const before = [cell.value, cell.bound]; cell.value = value; cell.bound = bound;
     return () => { [cell.value, cell.bound] = before; };
@@ -88,11 +91,15 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   });
   const block = (frame, id) => frame.tasks.push({type: "block", block: frame.fn.blocks[id], pc: 0, stack: []});
   const load = (frame, key) => {
-    const local = frame.locals.get(key), cell = local || frame.closure.get(key) || frame.callable.globals.cells.get(key);
+    const local = frame.locals.get(key), classBody = frame.fn.kind === "class";
+    const cell = local?.bound ? local : classBody && local ? frame.callable.globals.cells.get(key) :
+      local || frame.closure.get(key) || frame.callable.globals.cells.get(key);
     if (cell?.bound) return cell.value;
-    if (local && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
-    if (frame.closure.has(key)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
-    if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key))) {
+    if (local && !classBody && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
+    if (frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
+    if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
+    if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
+        (frame.callable.pool.code.version === 5 && ["type", "issubclass"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!builtins.has(key)) builtins.set(key, allocate(BuiltinValue, key));
       return builtins.get(key);
@@ -136,14 +143,16 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     missing(p.kwonly.filter(key => !bindings.has(key)), "keyword-only");
     return bindings;
   };
-  const enter = (callable, bindings, callsite = null) => {
+  const enter = (callable, bindings, callsite = null, completion = null) => {
     if (frames.length >= Math.min(maxDepth, memory.limits.maxFrames - 1) || memory.stats().frames >= memory.limits.maxFrames) python("RecursionError", "maximum recursion depth exceeded");
     const fn = callable.pool.code.functions[callable.index];
     const frame = {fn, callable, closure: callable.closure, locals: callable.index === 0 ? callable.globals.cells : new Map(),
-      tasks: [], activeException: frames.at(-1)?.activeException || inheritedException, callsite};
+      tasks: [], activeException: frames.at(-1)?.activeException || inheritedException, callsite,
+      completion, returnInstruction: current?.instruction ?? null};
     frame.leave = memory.enter(() => [callable, ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
       ...frame.tasks.flatMap(task => task.type === "block" ? task.stack :
-        [task.iterator ?? null, task.pending?.value ?? null, task.caught ?? null, task.previous ?? null])], {charge, fail: hard});
+        [task.iterator ?? null, task.pending?.value ?? null, task.caught ?? null, task.previous ?? null]),
+      ...(completion?.bases || []), ...(completion?.instance ? [completion.instance] : [])], {charge, fail: hard});
     frames.push(frame);
     for (const key of fn.locals) {
       let cell = frame.locals.get(key);
@@ -188,12 +197,40 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (moduleContext && callable.name === "isinstance") {
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
       const type = args[1];
+      if (type instanceof ClassValue) return classes.isinstance(args[0], type);
       if (type instanceof BuiltinValue && type.name === "str") return values.isString(args[0]);
       if (type instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, type.name)) return args[0] instanceof ExceptionValue && matchesException(args[0].name, type.name);
       hard("UNSUPPORTED", "UnsupportedOperationError", "isinstance supports str and the adopted exception classes in this profile.");
     }
+    if (callable.name === "issubclass") {
+      if (args.length !== 2) python("TypeError", "issubclass requires two arguments.");
+      return classes.subclass(args[0], args[1]);
+    }
+    if (callable.name === "type") {
+      if (args.length !== 1 || !(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "type supports one user instance in C1.");
+      return args[0].type;
+    }
     if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
     return callable.name === "len" ? values.unary("len", args[0]) : values.string(Array.from(display(args[0]), char => char.codePointAt(0)));
+  };
+  const call = (callable, args, keywords, keywordValues, site, completion = null) => {
+    if (callable instanceof BoundMethodValue) { args = [callable.receiver, ...args]; callable = callable.callable; }
+    if (callable instanceof ClassValue) {
+      const instance = classes.instance(callable); temporaries.push(instance);
+      const initializer = classes.lookup(callable, "__init__");
+      if (!initializer.found) {
+        if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
+        frames.at(-1).tasks.at(-1).stack.push(instance); return;
+      }
+      const method = classes.get(instance, "__init__"); temporaries.push(method);
+      call(method, args, keywords, keywordValues, site, {kind: "init", instance}); return;
+    }
+    if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
+    if (callable instanceof BuiltinValue) {
+      const value = builtin(callable, [...args, ...keywordValues], keywords);
+      frames.at(-1).tasks.at(-1).stack.push(value); return;
+    }
+    python("TypeError", "Value is not callable in this profile");
   };
   const unhandled = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, current?.instruction ?? null, null);
@@ -289,6 +326,22 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         frame.leave(); frames.pop();
         continue;
       }
+      if (frame.completion?.kind === "class") {
+        const namespace = new Map([...frame.locals].filter(([key, cell]) => cell.bound && !key.startsWith("@source:")).map(([key, cell]) => [key, cell.value]));
+        const completion = frame.completion;
+        temporaries.push(...namespace.values(), ...completion.bases);
+        current = {...frame.callsite, instruction: frame.returnInstruction};
+        frame.leave(); frames.pop();
+        parent.tasks.at(-1).stack.push(classes.create(frame.fn.name, frame.fn.qualname,
+          completion.module, completion.bases, namespace, objectType())); return;
+      }
+      if (frame.completion?.kind === "init") {
+        const instance = frame.completion.instance; temporaries.push(instance);
+        current = {...frame.callsite, instruction: frame.returnInstruction};
+        frame.leave(); frames.pop();
+        if (returned !== null) python("TypeError", "__init__() should return None");
+        parent.tasks.at(-1).stack.push(instance); return;
+      }
       parent.tasks.at(-1).stack.push(returned); frame.leave(); frames.pop(); return;
     }
   };
@@ -318,16 +371,27 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           }
           store(frame, arg, null, false);
         }
-        else if (op === "function") {
+        else if (op === "function" || op === "class") {
           const owner = frame.callable.pool;
-          const closure = new Map(owner.code.functions[arg].free.map(key => [key, frame.locals.get(key) || frame.closure.get(key)]));
-          stack.push(allocate(FunctionValue, owner, arg, frame.callable.globals, closure));
+          const closure = new Map(owner.code.functions[arg].free.map(key => [key,
+            frame.fn.kind === "class" ? frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
+          const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure);
+          if (op === "function") stack.push(callable);
+          else {
+            const bases = stack.splice(stack.length - extra), name = values.text(frame.callable.globals.cells.get("__name__")?.value);
+            temporaries.push(callable);
+            if (name === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Class module metadata requires text in C1.");
+            enter(callable, new Map(), summary(frame, cursor), {kind: "class", bases, module: name});
+            store(frames.at(-1), "__module__", values.string(Array.from(name, char => char.codePointAt(0))));
+            store(frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
+          }
         } else if (op === "call") {
           const kwargs = stack.splice(stack.length - extra.length), args = stack.splice(stack.length - arg), callable = stack.pop();
-          if (callable instanceof FunctionValue) enter(callable, bind(callable, args, extra, kwargs), summary(frame, cursor));
-          else if (callable instanceof BuiltinValue) stack.push(builtin(callable, [...args, ...kwargs], extra));
-          else python("TypeError", "Value is not callable in this profile");
-        } else if (["import", "module-get", "import-from"].includes(op)) {
+          call(callable, args, extra, kwargs, summary(frame, cursor));
+        } else if (["attribute-set", "attribute-delete"].includes(op)) {
+          const value = op === "attribute-set" ? stack.pop() : null;
+          stack.push(classes.mutate(stack.pop(), arg, value, op === "attribute-delete"));
+        } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
           const owner = frame.callable.pool.module;
           if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
           const invoke = (target, unit) => execute(unit, {...moduleContext.options, arena: memory, moduleContext, module: target,
@@ -335,7 +399,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           if (op === "import") stack.push(moduleContext.load(owner.name, arg, extra, fourth, invoke));
           else {
             const receiver = stack.pop();
-            stack.push(op === "module-get" && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
+            stack.push(op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue) ? classes.get(receiver, arg) :
+              ["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
               moduleContext.attribute(receiver, arg, op === "import-from", owner.name, invoke));
           }
         } else if (op === "if") block(frame, values.truth(stack.pop()) ? arg : extra);

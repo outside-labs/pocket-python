@@ -43,6 +43,7 @@ export class ClassRuntime {
       if (special(key) && !["__init__", "__module__", "__qualname__"].includes(key))
         this.fail("UnsupportedOperationError", "Custom special methods require a later class stage.", "UNSUPPORTED");
     }
+    if (namespace.has("__init__")) this.initializer(namespace.get("__init__"));
     const pending = [...bases.map(base => [...base.mro]), [...bases]], parents = [];
     while (pending.some(items => items.length)) {
       this.charge(1); let candidate = null;
@@ -101,6 +102,7 @@ export class ClassRuntime {
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (special(name) && name !== "__init__") this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
+    if (receiver instanceof ClassValue && name === "__init__" && !remove) this.initializer(value);
     const map = receiver instanceof ClassValue ? receiver.namespace : receiver.attributes;
     const present = map.has(name), before = map.get(name);
     if (remove && !present) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
@@ -115,6 +117,10 @@ export class ClassRuntime {
     this.touch(type); this.touch(parent);
     for (const base of type.mro) { this.charge(1); if (base === parent) return true; }
     return false;
+  }
+  initializer(value) {
+    if (!(value instanceof FunctionValue || value instanceof BoundMethodValue && value.callable instanceof FunctionValue))
+      this.fail("UnsupportedOperationError", "Initializers require Python functions or retained bound methods in C1.", "UNSUPPORTED");
   }
   isinstance(value, type) {
     if (!(type instanceof ClassValue)) this.fail("TypeError", "isinstance requires an adopted class.");

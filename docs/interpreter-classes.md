@@ -31,7 +31,8 @@ Bound methods compare by receiver/function identity and expose __self__/__func__
 Classes/instances otherwise compare by identity and have default true truthiness.
 
 Calling a class allocates a fresh instance, resolves __init__ on its class and
-calls it with the instance plus ordinary arguments. The initializer must return
+calls it with the instance plus ordinary arguments. C1 initializer overrides
+require Python functions or retained Python bound methods. The initializer must return
 None. Without an initializer, arguments are refused. Existing positional-only,
 keyword-only, immutable default and exception rules continue to apply. object(),
 type(instance), isinstance(value, user_class/object) and issubclass(user_class,
@@ -105,3 +106,19 @@ foreign-arena failures roll back mutations; cyclic graphs release with roots.
 Truth/identity and supported method equality remain distinct from deferred
 hashing and by-value transport. Core engine locks include the changed allocation
 layouts; class execution/source acceptance follow in separate stages.
+
+## Verified execution foundation
+
+Bytecode 5 distinguishes module, function and class-body records. Class creation
+and attribute instructions have verified operands, captures and stack effects;
+class bodies cannot be called as ordinary functions or return values explicitly.
+The registry preserves these record kinds. A class body runs through ordinary
+frames, shares work/memory/recursion limits, and completes before C3 construction.
+Constructor completion validates None and returns the retained instance. Failed
+construction and initializer-return checks report the calling class statement.
+
+Hand-authored bytecode tests cover initialization/method execution, failure side
+effects and locations, malformed records and shared resource limits. The pinned
+console closure now includes the class runtime (twenty-one modules plus two
+notices), while core-source/1 still compiles bytecode 4 and refuses class syntax.
+Independent source and browser acceptance remain the next integration stages.
