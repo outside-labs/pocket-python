@@ -51,12 +51,16 @@ def references(corpus_path=CORPUS):
                                         for status in ['pass', 'fail']}}
 
 
-def check(target, channel=None, corpus_path=CORPUS):
+def check(target, channel=None, corpus_path=CORPUS, stages=None):
     report = references(corpus_path)
     if report['summary']['fail']:
         raise AssertionError('The class reference corpus differs from its recorded expectations.')
     corpus = json.loads(corpus_path.read_bytes())
-    cases = corpus['cases']
+    available = {case['stage'] for case in corpus['cases']}
+    if stages and not set(stages) <= available:
+        raise ValueError('Unknown corpus stage selection.')
+    cases = [case for case in corpus['cases'] if not stages or case['stage'] in stages]
+    reference_by_id = {case['id']: case['reference'] for case in report['cases']}
     adopted = corpus.get('implemented_stages', ['C1'])
     requests = [{'id': case['id'], 'modules': [{'name': 'app', 'package': False, 'imports': case.get('imports', []),
         'notice': 'Synthetic class fixture notice\n', 'source': case['source']}] +
@@ -72,8 +76,8 @@ def check(target, channel=None, corpus_path=CORPUS):
     assert len(results) == len(cases) and {r['id'] for r in results} == {c['id'] for c in cases}
     results = {item['id']: item for item in results}
     records = []
-    for case, reference_case in zip(cases, report['cases']):
-        actual, expected = results[case['id']], reference_case['reference']
+    for case in cases:
+        actual, expected = results[case['id']], reference_by_id[case['id']]
         if case['stage'] in adopted:
             passed = actual['ok'] == expected['ok'] and actual['stdout'] == expected['stdout']
             if not expected['ok']:
@@ -92,6 +96,10 @@ def check(target, channel=None, corpus_path=CORPUS):
     files = [p for p in ROOT.glob('*.mjs') if not p.name.endswith('.test.mjs')]
     return {**report, 'mode': 'source', 'source_execution': True, 'target': target,
             'host_version': host, 'bytecode_version': 5,
+            'corpus_cases': len(corpus['cases']), 'source_cases': len(cases),
+            'selected_stages': sorted({case['stage'] for case in cases}),
+            'omitted_stages': sorted(available - {case['stage'] for case in cases}),
+            'reference_summary': report['summary'],
             'implementation_status': 'Implemented stages: ' + ', '.join(adopted) + '. Other recorded stages must refuse.',
             'comparison': 'Adopted stdout and error types match CPython; messages/repr identity are not compared. Later stages must refuse explicitly.',
             'inputs_sha256': {p.name: hashlib.sha256(p.read_bytes().replace(b'\r\n', b'\n')).hexdigest()
@@ -105,9 +113,10 @@ if __name__ == '__main__':
     parser.add_argument('--target', choices=['node', 'browser'], default='node')
     parser.add_argument('--channel')
     parser.add_argument('--corpus', type=Path, default=CORPUS)
+    parser.add_argument('--stages', nargs='+', help='Execute only these source stages; reference validation still covers the complete corpus.')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
-    report = references(args.corpus) if args.reference_only else check(args.target, args.channel, args.corpus)
+    report = references(args.corpus) if args.reference_only else check(args.target, args.channel, args.corpus, args.stages)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

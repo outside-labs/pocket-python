@@ -106,7 +106,10 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     }
     python("NameError", "name '" + key + "' is not defined");
   };
-  const store = (frame, key, value, bound = true) => setCell(frame.locals.get(key), value, bound);
+  const store = (frame, key, value, bound = true) => {
+    setCell(frame.locals.get(key), value, bound);
+    if (frame.namespaceOrder) { if (bound) frame.namespaceOrder.add(key); else frame.namespaceOrder.delete(key); }
+  };
   const bind = (callable, positional, keywordNames, keywordValues) => {
     const fn = callable.pool.code.functions[callable.index], constants = callable.pool.code.constants;
     const p = fn.params, ordered = [...p.posonly, ...p.positional], bindings = new Map();
@@ -148,11 +151,11 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     const fn = callable.pool.code.functions[callable.index];
     const frame = {fn, callable, closure: callable.closure, locals: callable.index === 0 ? callable.globals.cells : new Map(),
       tasks: [], activeException: frames.at(-1)?.activeException || inheritedException, callsite,
-      completion, returnInstruction: current?.instruction ?? null};
+      completion, namespaceOrder: fn.kind === "class" ? new Set() : null, returnInstruction: current?.instruction ?? null};
     frame.leave = memory.enter(() => [callable, ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
       ...frame.tasks.flatMap(task => task.type === "block" ? task.stack :
         [task.iterator ?? null, task.pending?.value ?? null, task.caught ?? null, task.previous ?? null]),
-      ...(completion?.bases || []), ...(completion?.instance ? [completion.instance] : [])], {charge, fail: hard});
+      ...(completion?.bases || []), ...(completion?.instance ? [completion.instance] : []), ...(completion?.roots || [])], {charge, fail: hard});
     frames.push(frame);
     for (const key of fn.locals) {
       let cell = frame.locals.get(key);
@@ -213,6 +216,31 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
     return callable.name === "len" ? values.unary("len", args[0]) : values.string(Array.from(display(args[0]), char => char.codePointAt(0)));
   };
+  const deliver = (value, completion, site) => {
+    while (completion?.kind === "init") {
+      if (value !== null) python("TypeError", "__init__() should return None");
+      value = completion.instance; completion = completion.after;
+    }
+    if (completion?.kind === "notify") {
+      notifyNext(completion.type, completion.entries, completion.index, site); return;
+    }
+    frames.at(-1).tasks.at(-1).stack.push(completion?.kind === "discard" ? null : value);
+  };
+  const notifyNext = (type, entries, index, site) => {
+    temporaries.push(type, ...entries.map(entry => entry[1]));
+    while (index < entries.length) {
+      charge(1);
+      const [name, value] = entries[index++];
+      // Keep the name rooted while planning a bound callback can allocate.
+      const nameValue = values.string(Array.from(name, char => char.codePointAt(0))); temporaries.push(nameValue);
+      const plan = classes.notification(value, type, nameValue);
+      if (!plan) continue;
+      temporaries.push(plan.callable, ...plan.args);
+      call(plan.callable, plan.args, [], [], site,
+        {kind: "notify", type, entries, index, roots: [type, ...entries.map(entry => entry[1])]}); return;
+    }
+    deliver(type, null, site);
+  };
   const call = (callable, args, keywords, keywordValues, site, completion = null) => {
     if (callable instanceof BoundMethodValue) { args = [callable.receiver, ...args]; callable = callable.callable; }
     if (callable instanceof ClassValue) {
@@ -220,15 +248,16 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       const initializer = classes.lookup(callable, "__init__");
       if (!initializer.found) {
         if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
-        frames.at(-1).tasks.at(-1).stack.push(instance); return;
+        deliver(instance, completion, site); return;
       }
       const method = classes.get(instance, "__init__"); temporaries.push(method);
-      call(method, args, keywords, keywordValues, site, {kind: "init", instance}); return;
+      call(method, args, keywords, keywordValues, site,
+        {kind: "init", instance, after: completion, roots: [instance, ...(completion?.roots || [])]}); return;
     }
     if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
     if (callable instanceof BuiltinValue) {
       const value = builtin(callable, [...args, ...keywordValues], keywords);
-      frames.at(-1).tasks.at(-1).stack.push(value); return;
+      deliver(value, completion, site); return;
     }
     python("TypeError", "Value is not callable in this profile");
   };
@@ -327,22 +356,19 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         continue;
       }
       if (frame.completion?.kind === "class") {
-        const namespace = new Map([...frame.locals].filter(([key, cell]) => cell.bound && !key.startsWith("@source:")).map(([key, cell]) => [key, cell.value]));
+        const namespace = new Map([...frame.namespaceOrder].filter(key => frame.locals.get(key).bound && !key.startsWith("@source:"))
+          .map(key => [key, frame.locals.get(key).value]));
         const completion = frame.completion;
         temporaries.push(...namespace.values(), ...completion.bases);
         current = {...frame.callsite, instruction: frame.returnInstruction};
         frame.leave(); frames.pop();
-        parent.tasks.at(-1).stack.push(classes.create(frame.fn.name, frame.fn.qualname,
-          completion.module, completion.bases, namespace, objectType())); return;
+        const type = classes.create(frame.fn.name, frame.fn.qualname, completion.module, completion.bases, namespace, objectType());
+        notifyNext(type, [...namespace], 0, frame.callsite); return;
       }
-      if (frame.completion?.kind === "init") {
-        const instance = frame.completion.instance; temporaries.push(instance);
-        current = {...frame.callsite, instruction: frame.returnInstruction};
-        frame.leave(); frames.pop();
-        if (returned !== null) python("TypeError", "__init__() should return None");
-        parent.tasks.at(-1).stack.push(instance); return;
-      }
-      parent.tasks.at(-1).stack.push(returned); frame.leave(); frames.pop(); return;
+      const completion = frame.completion;
+      temporaries.push(...(completion?.roots || []));
+      current = {...frame.callsite, instruction: frame.returnInstruction};
+      frame.leave(); frames.pop(); deliver(returned, completion, frame.callsite); return;
     }
   };
   try {
@@ -390,7 +416,9 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           call(callable, args, extra, kwargs, summary(frame, cursor));
         } else if (["attribute-set", "attribute-delete"].includes(op)) {
           const value = op === "attribute-set" ? stack.pop() : null;
-          stack.push(classes.mutate(stack.pop(), arg, value, op === "attribute-delete"));
+          const plan = classes.write(stack.pop(), arg, value, op === "attribute-delete");
+          if (plan.kind === "value") stack.push(plan.value);
+          else { temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), {kind: "discard"}); }
         } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
           const owner = frame.callable.pool.module;
           if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
@@ -399,8 +427,11 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           if (op === "import") stack.push(moduleContext.load(owner.name, arg, extra, fourth, invoke));
           else {
             const receiver = stack.pop();
-            stack.push(op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue) ? classes.get(receiver, arg) :
-              ["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
+            if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue)) {
+              const plan = classes.read(receiver, arg);
+              if (plan.kind === "value") stack.push(plan.value);
+              else { temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }
+            } else stack.push(["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
               moduleContext.attribute(receiver, arg, op === "import-from", owner.name, invoke));
           }
         } else if (op === "if") block(frame, values.truth(stack.pop()) ? arg : extra);

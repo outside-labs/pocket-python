@@ -1,7 +1,7 @@
 import {parseSource, freezeSourceTree} from "./source-parser.mjs";
 import {SourceError, SOURCE_LIMITS} from "./source-tokens.mjs";
 import {verifyFunctions, FUNCTION_LIMITS} from "./function-bytecode.mjs";
-import {EXCEPTIONS} from "./function-objects.mjs";
+import {EXCEPTIONS, DESCRIPTOR_HOOKS} from "./function-objects.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 const MODULE_NAME = /^[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*$/;
@@ -106,7 +106,7 @@ class Compiler {
       if ([...scope.locals, ...scope.uses].some(name => ["None", "True", "False"].includes(name)))
         this.fail("A normalized identifier cannot name a reserved constant.", scope.node, "UNSUPPORTED", "bind");
       if (scope.node.kind === "Class" && [...scope.locals].some(name => name.startsWith("__") && name.endsWith("__") &&
-          !["__init__", "__module__", "__qualname__"].includes(name)))
+          !["__init__", "__module__", "__qualname__", ...DESCRIPTOR_HOOKS].includes(name)))
         this.fail("Custom special methods require a later class stage.", scope.node, "UNSUPPORTED", "bind");
     }
     for (const scope of this.scopes.slice(1)) for (const name of scope.uses) {
@@ -168,7 +168,7 @@ class Compiler {
       };
       const pushNone = site => emit(site, "const", this.constant(NONE, site));
       const attribute = (value, write = false) => {
-        if (write && value.name.startsWith("__") && value.name.endsWith("__") && value.name !== "__init__")
+        if (write && value.name.startsWith("__") && value.name.endsWith("__") && !["__init__", ...DESCRIPTOR_HOOKS].includes(value.name))
           this.fail("Special attribute mutation is outside C1.", value);
         return value.name;
       };

@@ -127,7 +127,7 @@
     },
     {
       "id": "custom-descriptor",
-      "stage": "C2",
+      "stage": "C2-descriptor",
       "source": "class D:\n    def __get__(self,obj,owner): return 7\nclass A:\n    x=D()\nprint(A().x)\n",
       "stdout": "7\n"
     },
@@ -241,6 +241,7 @@
   ],
   "implemented_stages": [
     "C1",
-    "C2-private"
+    "C2-private",
+    "C2-descriptor"
   ]
 }
