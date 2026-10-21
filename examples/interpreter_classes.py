@@ -1,4 +1,4 @@
-"""Build the explicit class-foundation console from checkout-owned sources."""
+"""Build the explicit class console from checkout-owned sources."""
 
 import argparse
 from pathlib import Path
@@ -11,16 +11,31 @@ SOURCE = '''class Counter:
     def __init__(self, start=0):
         self.__value = start
 
-    def add(self, amount):
-        self.__value += amount
+    @classmethod
+    def from_start(cls, start):
+        return cls(start)
+
+    @property
+    def value(self):
         return self.__value
+
+    @value.setter
+    def value(self, amount):
+        self.__value = amount
+
+    @staticmethod
+    def doubled(amount):
+        return amount * 2
+
+    def add(self, amount):
+        self.value += amount
+        return self.value
 
 class StepCounter(Counter):
     def twice(self, amount):
-        self.add(amount)
-        return self.add(amount)
+        return self.add(self.doubled(amount))
 
-counter = StepCounter(1)
+counter = StepCounter.from_start(1)
 print("Count:", counter.twice(3))
 print("Class:", type(counter).__name__)
 '''
