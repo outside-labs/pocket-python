@@ -4,6 +4,11 @@ Part 3 of the coordinated Python application program; adopted 2026-10-20.
 Planning/issue owner: pocket-python. This records delivered prototype stages and future work; released
 pocket-python 0.2.0 assembles compiled and supplied MicroPython applications.
 
+The development source-console milestone now runs newly entered Python offline
+in Chromium, using our independent parser/compiler/VM. Classes/descriptors,
+asynchronous host integration and measured optional profiles remain the next
+stages; the application-alpha publication gates are still open.
+
 ## Goal and ownership
 
 Implement a defined Python language subset through our own execution engine,
@@ -117,7 +122,7 @@ Select version numbers and publication separately from this roadmap.
 
 ## Ordered interpreter queue
 
-| Task | Scope | Depends on | Readiness |
+| Task | Scope | Depends on | Readiness at adoption |
 | --- | --- | --- | --- |
 | [pocket/INT-01](https://github.com/outside-labs/pocket-python/issues/23) | Specify independent interpreter language stages and compatibility | Released foundation | Ready |
 | [pocket/INT-02](https://github.com/outside-labs/pocket-python/issues/24) | Establish the selected JavaScript VM architecture and prototype | [pocket/INT-01](https://github.com/outside-labs/pocket-python/issues/23) | Blocked |
@@ -134,7 +139,7 @@ Select version numbers and publication separately from this roadmap.
 | [pocket/INT-11](https://github.com/outside-labs/pocket-python/issues/35) | Measure interpreter profiles and bounded component inclusion | [pocket/INT-WEB-01](https://github.com/outside-labs/pocket-python/issues/32) | Blocked |
 | [pocket/INT-REL-01](https://github.com/outside-labs/pocket-python/issues/36) | Validate an independent interpreter alpha candidate | [pocket/INT-09](https://github.com/outside-labs/pocket-python/issues/33), [pocket/INT-10](https://github.com/outside-labs/pocket-python/issues/34), [pocket/INT-11](https://github.com/outside-labs/pocket-python/issues/35), [pocket/MEASURE-01](https://github.com/outside-labs/pocket-python/issues/20) | Blocked |
 
-INT-01 is Ready; INT-02 follows its language contract. INT-QA-01 establishes
+At adoption INT-01 was Ready; INT-02 followed its language contract. INT-QA-01 establishes
 the harness before VM implementation and grows with every feature. INT-WEB-01
 requires the independent parser and HOST-01, not the completed ahead-of-time
 compiler. Classes, async and measurement follow the console milestone along
@@ -316,3 +321,21 @@ closure, notices, source/engine identity and bytes. Initial source/configuration
 are verified, and service-worker precaching checks SHA-256 integrity while
 retaining the established waiting-update lifecycle. Focused assembly and installed
 artifact checks accompany this stage; comprehensive browser acceptance is next.
+
+### Browser source milestone accepted (2026-10-21)
+
+INT-WEB-01 now delivers a complete independent source console. Fresh Chromium
+applications pass seven comparisons against CPython's shared computation and
+nine acceptance groups covering new source after offline reload in a URL
+subdirectory, original source errors, fresh state, responsive interruption,
+repeated restart, explicit grants and bounded messages/allocations/work, host
+output-error recovery, deadlines, stale/malformed sessions and listener cleanup.
+Integrity failure refuses an initial install; a missing update asset preserves
+the old offline graph. Complete updates wait for all old tabs to close and clean
+only that scope's prior cache. Existing compiled/MicroPython regressions remain
+in CI alongside interpreter conformance; reports retain engine/tool hashes.
+
+The next unblocked work is INT-09's staged class/descriptor contracts, INT-10's
+coroutine/scheduling/host contracts and INT-11's measured optional profiles.
+No broad package support, physical-memory/startup claim or independent-engine
+release follows from this milestone. INT-REL-01 remains gated on those stages.

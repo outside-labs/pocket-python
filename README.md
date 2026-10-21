@@ -134,8 +134,9 @@ The development [independent VM value model](docs/interpreter-values.md) execute
 our own versioned bytecode in Node and browser workers. It covers staged Python
 scalars, containers and iteration; the [source front end](docs/interpreter-source.md) now handles new source in
 Node/browser workers. The development [source console](docs/interpreter-console.md)
-adds a local editor and explicit independent-engine assembly; full browser
-acceptance follows in INT-WEB-01. Runtime assets remain excluded from the 0.2.0 distributions.
+adds a local editor, explicit independent-engine assembly and verified offline
+source execution, stop/restart and scoped updates in Chromium. Runtime assets
+remain excluded from the 0.2.0 distributions.
 
 Development sessions now have [explicit roots, allocation limits and owned host handles](docs/interpreter-memory.md), with shared Node/browser lifetime checks. New source uses the independent source front end.
 
