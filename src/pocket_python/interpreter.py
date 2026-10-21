@@ -9,6 +9,7 @@ import re
 
 from pocket_python import __version__
 from pocket_python._interpreter_lock import ENGINE_FILES, ENGINE_FINGERPRINT, ENGINE_IMPORTS
+from pocket_python._library_lock import LIBRARY_PROFILES
 from pocket_python.assets import ArtifactError, check_names, file_record, json_bytes, read_asset
 from pocket_python.interpreter_templates import APP, PAGE, SERVICE_WORKER
 from pocket_python.templates import ICON
@@ -27,6 +28,7 @@ LIMITS = {'message_bytes': 1048576, 'value_depth': 16, 'pending_requests': 1, 's
 class InterpreterAssets:
     root: Path
     files: tuple[tuple[str, bytes], ...]
+    library_profile: str = 'core-only/1'
 
 
 @dataclass(frozen=True)
@@ -92,11 +94,19 @@ def _source_snapshot(source):
     return manifest, files
 
 
+def _library_profile(identity):
+    if not isinstance(identity, str) or identity not in LIBRARY_PROFILES:
+        raise ArtifactError('Unknown library profile; no fallback is selected.')
+    return LIBRARY_PROFILES[identity]
+
+
 def _engine_snapshot(engine):
     if not isinstance(engine, InterpreterAssets) or not isinstance(engine.files, tuple):
         raise ArtifactError('Expected an immutable independent-engine snapshot.')
     files = dict(engine.files)
-    if len(files) != len(engine.files) or set(files) != {name for name, _, _ in ENGINE_FILES}:
+    profile = _library_profile(engine.library_profile)
+    optional = {record['source']['path']: record['source'] for record in profile['modules']}
+    if len(files) != len(engine.files) or set(files) != {name for name, _, _ in ENGINE_FILES} | set(optional):
         raise ArtifactError('Independent-engine file set differs from the pinned allowlist.')
     digest = hashlib.sha256()
     for name, size, sha in ENGINE_FILES:
@@ -108,6 +118,9 @@ def _engine_snapshot(engine):
             digest.update(part)
     if digest.hexdigest() != ENGINE_FINGERPRINT:
         raise ArtifactError('Independent-engine fingerprint differs.')
+    for record in [*optional.values(), *(record['notice'] for record in profile['modules'])]:
+        if record['path'] not in files or type(files[record['path']]) is not bytes or file_record(record['path'], files[record['path']]) != record:
+            raise ArtifactError('Library source/notice differs from its reviewed identity.')
     return files
 
 
@@ -122,19 +135,24 @@ def read_console_source(manifest_path: str | Path) -> ConsoleSource:
     return result
 
 
-def read_interpreter(root: str | Path) -> InterpreterAssets:
+def read_interpreter(root: str | Path, *, library_profile: str = 'core-only/1') -> InterpreterAssets:
     root = Path(root).absolute()
+    profile = _library_profile(library_profile)
     # Canonicalize checkout line endings only; source inputs retain exact bytes.
     files = tuple((name, read_asset(root, name, max_bytes=max(2 * size, 1)).replace(b'\r\n', b'\n')) for name, size, _ in ENGINE_FILES)
-    result = InterpreterAssets(root, files)
+    files += tuple((record['source']['path'], read_asset(root, record['source']['path'], max_bytes=2 * record['source']['size_bytes']).replace(b'\r\n', b'\n')) for record in profile['modules'])
+    result = InterpreterAssets(root, files, library_profile)
     _engine_snapshot(result)
     return result
 
 
 def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: str | Path,
-                      *, title: str = 'Pocket Python Console') -> dict:
+                      *, title: str = 'Pocket Python Console', host_profile: str = 'output-only/1') -> dict:
     manifest, source_files = _source_snapshot(source)
     engine_files = _engine_snapshot(engine)
+    profile = _library_profile(engine.library_profile)
+    if host_profile != 'output-only/1':
+        raise ArtifactError('Unavailable host-module profile; async adapters require INT-10.')
     requested = Path(output).absolute()
     if requested.exists() or requested.is_symlink():
         raise ArtifactError('Output already exists; choose a new directory.')
@@ -148,6 +166,7 @@ def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: 
     engine_root = 'engine/' + ENGINE_FINGERPRINT
     identity = {'kind': 'pocket-python-source-console', 'schema_version': 1,
                 'profile': 'in-house-interpreter', 'profile_version': 1, 'engine': {**ENGINE, 'fingerprint': ENGINE_FINGERPRINT},
+                'library_profile': profile, 'host_profile': host_profile,
                 'source': manifest['source'], 'notice': manifest['notice'], 'capabilities': [{'id': 'output/1'}], 'limits': LIMITS}
     identity_bytes = json_bytes(identity)
     source_root = 'application/' + hashlib.sha256(identity_bytes).hexdigest()
@@ -156,8 +175,12 @@ def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: 
     notice_path = source_root + '/' + manifest['notice']['path']
     files.update({source_path: source_files[manifest['source']['path']], notice_path: source_files[manifest['notice']['path']],
                   source_root + '/APPLICATION.json': identity_bytes})
+    libraries = [{**{key: record[key] for key in ['name', 'package', 'imports']},
+                  **{key: file_record(engine_root + '/' + record[key]['path'], engine_files[record[key]['path']]) for key in ['source', 'notice']}}
+                 for record in profile['modules']]
     config = {'application': {'manifest_sha256': hashlib.sha256(identity_bytes).hexdigest(), 'profile': 'in-house-interpreter',
                              'profile_version': 1, 'entrypoint': 'sources/app.py', 'engine': ENGINE},
+              'library_profile': profile['id'], 'libraries': libraries, 'host_profile': host_profile,
               'source': file_record(source_path, files[source_path]), 'capabilities': identity['capabilities'], 'limits': LIMITS}
     config_bytes = json_bytes(config)
     config_sha = hashlib.sha256(config_bytes).hexdigest()
@@ -171,6 +194,7 @@ def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: 
                   'icons': [{'src': './icon.svg', 'sizes': 'any', 'type': 'image/svg+xml'}]})})
     roles = {name: 'data' for name in files}
     roles.update({engine_root + '/' + name: 'notice' if name.startswith('licenses/') else 'engine' for name in engine_files})
+    roles.update({record['source']['path']: 'library' for record in libraries})
     roles.update({source_path: 'source', notice_path: 'notice', launcher_path: 'executable-module'})
     records = [file_record(name, data) for name, data in sorted(files.items())]
     cache_version = hashlib.sha256(json_bytes({'profile': 'in-house-interpreter/1', 'pocket_python_version': __version__,
@@ -184,13 +208,16 @@ def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: 
                'engine': {**ENGINE, 'fingerprint': ENGINE_FINGERPRINT, 'entrypoint': engine_root + '/interpreter-worker.mjs'},
                'producer': {'name': 'pocket-python', 'version': __version__, 'language_profile': 'core-source/1'},
                'source_execution': True, 'input_mode': 'source', 'capabilities': identity['capabilities'], 'limits': LIMITS,
-               'sources': [{**file_record(source_path, files[source_path]), 'original_path': manifest['source']['path'], 'logical_path': 'sources/app.py'}],
+               'library_profile': {'id': profile['id'], 'fingerprint': profile['fingerprint']}, 'libraries': libraries, 'host_profile': host_profile,
+               'sources': [{**file_record(source_path, files[source_path]), 'original_path': manifest['source']['path'], 'logical_path': 'sources/app.py'}] +
+                          [{**record['source'], 'original_path': definition['source']['path'],
+                            'logical_path': 'sources/' + record['name'].replace('.', '/') + '.py'} for record, definition in zip(libraries, profile['modules'])],
                'imports': [{'from': launcher_path, 'to': engine_root + '/interpreter-host.mjs'}] +
                           [{'from': engine_root + '/' + origin, 'to': engine_root + '/' + target} for origin, target in ENGINE_IMPORTS],
                'licenses': sorted(name for name in files if roles[name] == 'notice'), 'cache_version': cache_version,
                'files': [{**file_record(name, data), 'role': roles[name]} for name, data in sorted(files.items())],
                'size': {**{role + '_bytes': sum(len(data) for name, data in files.items() if roles[name] == role)
-                          for role in ['source', 'engine', 'notice', 'data']},
+                          for role in ['source', 'engine', 'library', 'notice', 'data']},
                         'assembly_module_bytes': sum(len(data) for name, data in files.items() if roles[name] == 'executable-module'),
                         'receipt_bytes': 0, 'artifact_bytes': 0}}
     payload_size = sum(map(len, files.values()))

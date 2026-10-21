@@ -41,6 +41,8 @@ def main(argv: list[str] | None = None) -> int:
     interpreter.add_argument("--engine", type=Path, required=True, help="Directory containing the known source-console engine assets.")
     interpreter.add_argument("--output", type=Path, required=True)
     interpreter.add_argument("--title", default="Pocket Python Console")
+    interpreter.add_argument("--library-profile", choices=["core-only/1", "operator/1"], default="core-only/1")
+    interpreter.add_argument("--host-profile", choices=["output-only/1"], default="output-only/1")
     args = parser.parse_args(argv)
     try:
         if args.command == "lock-runtime":
@@ -51,7 +53,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Created {args.output.resolve()}")
         elif args.command == "interpreter-web":
             from pocket_python.interpreter import build_interpreter, read_console_source, read_interpreter
-            receipt = build_interpreter(read_console_source(args.client), read_interpreter(args.engine), args.output, title=args.title)
+            receipt = build_interpreter(read_console_source(args.client), read_interpreter(args.engine, library_profile=args.library_profile), args.output,
+                                        title=args.title, host_profile=args.host_profile)
             print(f"Created {args.output.resolve()} ({receipt['size']['artifact_bytes']} bytes)")
         elif args.command == "compiled-web":
             from pocket_python.compiled import build_compiled, read_client, read_compiled

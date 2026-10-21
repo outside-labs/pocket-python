@@ -1,4 +1,5 @@
 // The source-console profile is an explicit subset of host protocol 1.
+import {isSourceLocation} from "./library-selection.mjs";
 export const ENGINE = Object.freeze({implementation: "pocket-python-source", version: "1",
   backend: "javascript-vm", bytecode_version: 4, language_profile: "core-source/1"});
 export const CONSOLE_LIMITS = Object.freeze({message_bytes: 1048576, value_depth: 16,
@@ -99,7 +100,7 @@ export function sourceValue(source, bounds) {
 }
 export function diagnostic(error) {
   const location = input => {
-    if (!input || input.filename !== "sources/app.py") return null;
+    if (!input || !isSourceLocation(input.filename)) return null;
     const span = input.span || [input.line, input.column, input.end_line, input.end_column];
     return span.length === 4 && span.every(value => integer(value, 262145)) ?
       {filename: input.filename, line: span[0], column: span[1], end_line: span[2], end_column: span[3]} : null;
@@ -114,7 +115,7 @@ export function checkError(value) {
       typeof value.message !== "string" || value.message.length > 1024 ||
       Object.keys(value).some(key => !["domain", "code", "type", "message", "location", "frames"].includes(key))) throw exception(failure("PROTOCOL", "Invalid error record."));
   for (const at of [value.location, ...(value.frames || []).map(frame => frame.location)].filter(Boolean)) {
-    if (!exact(at, ["filename", "line", "column", "end_line", "end_column"]) || at.filename !== "sources/app.py" ||
+    if (!exact(at, ["filename", "line", "column", "end_line", "end_column"]) || !isSourceLocation(at.filename) ||
         ![at.line, at.column, at.end_line, at.end_column].every(n => integer(n, 262145))) throw exception(failure("PROTOCOL", "Invalid source location."));
   }
   if (value.frames !== undefined && (!Array.isArray(value.frames) || value.frames.length > 16 || value.frames.some(frame =>

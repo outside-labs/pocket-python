@@ -348,3 +348,11 @@ records source/notice hashes, snapshots, grants, missing-feature diagnostics and
 full/reduced differential tests. Both profiles retain the complete engine; no VM
 internals are removed. Console assembly and measured payload/startup/memory
 observations follow as focused stages before accepting INT-11.
+
+The second INT-11 stage adds explicit console library selection, source/notice
+verification before Ready and versioned profile receipts. Full and reduced
+artifacts retain the same twenty-two core engine assets. Optional Python library
+bytes and their grants are separate. Browser checks prove common behavior,
+source diagnostics, offline restart, tamper refusal and full-to-reduced updates
+that remove the library cache and authority. Transitive bootstrap tests keep
+language compilation/execution in the worker. Measurement follows next.

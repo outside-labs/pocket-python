@@ -1,14 +1,16 @@
 """Known source-console assets, canonical LF bytes; refresh with scripts/lock_interpreter.py."""
 
-ENGINE_FINGERPRINT = 'f5e5fec414e85dd2f7fb3899c2553718dd4fd38c9cbc7005ed430a761f8afd46'
+ENGINE_FINGERPRINT = '7d5f23292d8eaa4143106b658518db70d2e74d33f49aca2d74dc309c4971502c'
 ENGINE_FILES = (
-    ('browser-protocol.mjs', 10213, '1ef4225ae7db6ba237d293f2ac4109774c104aadb9090278ab71f2790892ce09'),
+    ('browser-protocol.mjs', 10267, '24a224eab795881512d722d66247712bc1a9307e646110e880ee2175151a99b6'),
     ('bytecode.mjs', 6803, '631241161ce44b8196655f0772b13a34479e5212577519fdafb78cf0d657be09'),
     ('function-bytecode.mjs', 14277, '4f239025feae3a519a2c42cf3ef7d8a244236c5c8daa38ef46f8a9b08c507257'),
     ('function-objects.mjs', 1870, '8281ce22a22dc8b5faee1d8a4a4697a575f45b684617b3925ceeb109064b4101'),
     ('functions.mjs', 25912, 'f2688d8479ab5bcec6fc2b66f8503e6e3faa0a36098f11f081d6660bb03b472c'),
-    ('interpreter-host.mjs', 6448, '6a26117a2409c829cd3951e3e98e54c583b4a98f5e72b25d626875546bd4a4c7'),
-    ('interpreter-worker.mjs', 7264, 'f8a4801bb14c301b91d430cebae2c56081aa5c1cedde0784a5ecccbfad683977'),
+    ('interpreter-host.mjs', 6967, '2ea3ca0d5b6a9bb5087e05c7ffa4ef67b038bf20b9b49e31278a279149cc9d9f'),
+    ('interpreter-worker.mjs', 8183, '76c338f7ad252f6fe162297475388ba7ebf286dbb8e9d2812d00f96d63dde8d0'),
+    ('library-catalog.mjs', 907, '0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c'),
+    ('library-selection.mjs', 3661, 'b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a'),
     ('licenses/POCKET-PYTHON.txt', 1066, '30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85'),
     ('licenses/UNICODE.txt', 1995, 'e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96'),
     ('memory.mjs', 7163, 'd0d718867a0543c9025767158b2a07a58bc368b3ae6ad1153ee3b8fea6896ea8'),
@@ -24,6 +26,7 @@ ENGINE_FILES = (
     ('vm.mjs', 6080, '796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d'),
 )
 ENGINE_IMPORTS = (
+    ('browser-protocol.mjs', 'library-selection.mjs'),
     ('bytecode.mjs', 'values.mjs'),
     ('function-bytecode.mjs', 'bytecode.mjs'),
     ('function-bytecode.mjs', 'function-objects.mjs'),
@@ -37,9 +40,12 @@ ENGINE_IMPORTS = (
     ('functions.mjs', 'vm.mjs'),
     ('interpreter-host.mjs', 'browser-protocol.mjs'),
     ('interpreter-host.mjs', 'interpreter-worker.mjs'),
+    ('interpreter-host.mjs', 'library-selection.mjs'),
     ('interpreter-worker.mjs', 'browser-protocol.mjs'),
+    ('interpreter-worker.mjs', 'library-selection.mjs'),
     ('interpreter-worker.mjs', 'module-session.mjs'),
     ('interpreter-worker.mjs', 'source-modules.mjs'),
+    ('library-selection.mjs', 'library-catalog.mjs'),
     ('memory.mjs', 'values.mjs'),
     ('module-context.mjs', 'function-objects.mjs'),
     ('module-context.mjs', 'memory.mjs'),

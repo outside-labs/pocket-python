@@ -13,6 +13,7 @@ NAMES = sorted(['browser-protocol.mjs', 'bytecode.mjs', 'function-bytecode.mjs',
     'memory.mjs', 'module-context.mjs', 'module-registry.mjs', 'module-session.mjs',
     'source-compiler.mjs', 'source-identifiers.mjs', 'source-modules.mjs',
     'source-parser.mjs', 'source-tokens.mjs', 'values.mjs', 'vm.mjs',
+    'library-selection.mjs', 'library-catalog.mjs',
     'licenses/POCKET-PYTHON.txt', 'licenses/UNICODE.txt'])
 
 

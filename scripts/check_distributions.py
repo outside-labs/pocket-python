@@ -104,11 +104,14 @@ manifest = {"kind": "pocket-python-console-source", "schema_version": 1, "target
     "source": {**file_record("app.py", source), "role": "client-source"},
     "notice": {**file_record("LICENSES/source.txt", notice), "role": "notice"}}
 (client / "CONSOLE-SOURCE.json").write_bytes(json_bytes(manifest))
-receipt = build_interpreter(read_console_source(client / "CONSOLE-SOURCE.json"), read_interpreter(sys.argv[3]), root / "console")
-assert receipt["profile"] == "in-house-interpreter" and receipt["source_execution"]
-assert receipt["size"]["artifact_bytes"] == sum(path.stat().st_size for path in (root / "console").rglob("*") if path.is_file())
-assert not any(path.suffix == ".wasm" for path in (root / "console").rglob("*"))
-print("Installed source-console assembly verified with explicitly supplied engine assets")
+for library_profile in ["core-only/1", "operator/1"]:
+    output = root / ("console-" + library_profile.split("/")[0])
+    receipt = build_interpreter(read_console_source(client / "CONSOLE-SOURCE.json"), read_interpreter(sys.argv[3], library_profile=library_profile), output)
+    assert receipt["profile"] == "in-house-interpreter" and receipt["source_execution"]
+    assert receipt["library_profile"]["id"] == library_profile
+    assert receipt["size"]["artifact_bytes"] == sum(path.stat().st_size for path in output.rglob("*") if path.is_file())
+    assert not any(path.suffix == ".wasm" for path in output.rglob("*"))
+print("Installed source-console assembly verified with explicitly supplied engine and library assets")
 ''')
     for index, artifact in enumerate([wheels[0], sdists[0]]):
         for profile in ["default", "compiled"]:

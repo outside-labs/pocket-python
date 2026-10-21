@@ -42,7 +42,7 @@ empty source is permitted. A notice is required, and does not grant a license
 to subsequently entered code. No other checkout files are selected.
 
 `--engine` must explicitly supply the known runtime assets. The assembler pins
-twenty assets (eighteen modules and the project/Unicode notices) through
+twenty-two core assets (twenty modules and the project/Unicode notices) through
 `_interpreter_lock.py`; it canonicalizes checkout CRLF to LF before verifying.
 Unknown engine code, missing/modified files and forged snapshots fail before
 publication. `python scripts/lock_interpreter.py` checks the lock; `--write` is
@@ -73,8 +73,17 @@ The console uses [host protocol 1](browser-host-protocol.md), profile
 language `core-source/1` and bytecode 4. Initialization requires exactly output/1.
 Other capabilities are rejected before a worker is created. The host owns the
 editor and controls; Python cannot read or modify arbitrary DOM, fetch URLs,
-access files or persistent storage. Source imports have no grants in this console.
+access files or persistent storage. The default core-only/1 selection supplies
+no library imports; operator/1 grants only its reviewed operator module.
 Later INT-10 supplies asynchronous language calls to additional host adapters.
+
+Initialization additionally names library_profile and supplies its bounded
+libraries (exact name/package/imports/source/notice records). The worker snapshots
+and verifies every source/notice against the reviewed catalog before ready,
+which echoes the library ID and fingerprint. Unknown selections fail explicitly.
+These fields accompany the complete engine fingerprint; cached applications keep
+their original host/worker graph. Library errors retain adopted library source
+locations, without revealing host paths.
 
 This profile adds one host-to-worker request operation, `interpreter.run`, with
 exact arguments `{source: <tagged str>}`. It returns tagged None or a structured
