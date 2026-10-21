@@ -2,7 +2,9 @@
   "schema_version": 1,
   "suite": "interpreter-special-calls/1",
   "profile": "classes-source/1",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "C3-call"
+  ],
   "cases": [
     {
       "id": "call-arguments-and-defaults",

@@ -534,3 +534,19 @@ immutable class-policy module from both compiler and runtime. Scoped metadata
 validation stays explicit. The pinned engine closure includes the reviewed policy
 module and import edges. This refactor keeps the C2 surface unchanged; __call__
 and the later C3 protocols are still refused until their execution step lands.
+
+
+### C3 instance call execution
+
+Implicit __call__ now resolves on the instance type and uses the adopted descriptor
+binding independently of ordinary instance attribute lookup. Resumable invocation
+retains original arguments/keywords and receivers, while callbacks run through
+ordinary frames. An iterative call-task dispatcher also carries constructor,
+notification and ignored-mutation completions without recursive host dispatch.
+Python frames and frame-free callable redirect cycles have explicit depth limits.
+
+The 41 implemented call cases and eight future-protocol refusals pass in Node and
+Chromium. All 63 CPython reference cases remain validated; fourteen callable-query
+cases are explicitly omitted from source reports until the next step. Focused
+checks exercise pending temporary roots, original tracebacks, recursive redirects,
+work, cancellation, memory exhaustion and zero logical teardown accounting.

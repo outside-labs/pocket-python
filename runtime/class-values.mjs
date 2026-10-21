@@ -1,5 +1,5 @@
 import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, BuiltinValue, EXCEPTIONS, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
-import {allowsClassSpecial} from "./class-policy.mjs";
+import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
@@ -124,19 +124,33 @@ export class ClassRuntime {
     if (!allowsClassSpecial(name, "attribute")) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
     const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
-    const getter = () => ({kind: "call", callable: descriptor.get.value,
-      args: [item.value, receiver instanceof ClassValue ? null : receiver, owner]});
-    if (receiver instanceof InstanceValue && item.value instanceof PropertyValue) {
-      if (item.value.fget === null) this.fail("AttributeError", "Property has no getter.");
-      return {kind: "call", callable: item.value.fget, args: [receiver]};
-    }
-    if (receiver instanceof InstanceValue && descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)) return getter();
+    if (receiver instanceof InstanceValue && (item.value instanceof PropertyValue ||
+        descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)))
+      return this.bindAttribute(item.value, receiver, owner);
     if (receiver instanceof InstanceValue && receiver.attributes.has(name)) return value(receiver.attributes.get(name));
     if (!item.found) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
-    if (descriptor?.get.found) return getter();
-    if (item.value instanceof MethodWrapperValue) return value(item.value.kind === "staticmethod" ? item.value.callable : this.make(BoundMethodValue, item.value.callable, owner));
-    return value(receiver instanceof InstanceValue && item.value instanceof FunctionValue ? this.make(BoundMethodValue, item.value, receiver) : item.value);
+    return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
+  bindAttribute(value, receiver, owner) {
+    if (receiver !== null && value instanceof PropertyValue) {
+      if (value.fget === null) this.fail("AttributeError", "Property has no getter.");
+      return {kind: "call", callable: value.fget, args: [receiver]};
+    }
+    const descriptor = this.descriptor(value);
+    if (descriptor?.get.found) return {kind: "call", callable: descriptor.get.value, args: [value, receiver, owner]};
+    if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
+      value.callable : this.make(BoundMethodValue, value.callable, owner)};
+    return {kind: "value", value: receiver !== null && value instanceof FunctionValue ? this.make(BoundMethodValue, value, receiver) : value};
+  }
+  special(receiver, name) {
+    this.key(name); this.touch(receiver);
+    if (!isSpecialName(name) || !allowsClassSpecial(name, "implicit"))
+      this.fail("UnsupportedOperationError", "This implicit special protocol is outside classes-source/1.", "UNSUPPORTED");
+    if (!(receiver instanceof InstanceValue)) throw new TypeError("Implicit user protocols require an instance.");
+    const item = this.lookup(receiver.type, name);
+    return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : null;
+  }
+
   get(receiver, name) {
     const result = this.read(receiver, name);
     if (result.kind !== "value") this.fail("UnsupportedOperationError", "Descriptor calls require VM execution frames.", "UNSUPPORTED");

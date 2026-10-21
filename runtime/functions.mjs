@@ -216,15 +216,21 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
     return callable.name === "len" ? values.unary("len", args[0]) : values.string(Array.from(display(args[0]), char => char.codePointAt(0)));
   };
+  const callTask = (callable, args, keywords, keywordValues, site, completion = null, depth = 0) =>
+    ({callable, args, keywords, keywordValues, site, completion, depth});
   const deliver = (value, completion, site) => {
-    while (completion?.kind === "init") {
-      if (value !== null) python("TypeError", "__init__() should return None");
-      value = completion.instance; completion = completion.after;
+    while (["init", "relay"].includes(completion?.kind)) {
+      if (completion.kind === "init") {
+        if (value !== null) python("TypeError", "__init__() should return None");
+        value = completion.instance;
+      }
+      completion = completion.after;
     }
-    if (completion?.kind === "notify") {
-      notifyNext(completion.type, completion.entries, completion.index, site); return;
-    }
+    if (completion?.kind === "invoke") return callTask(value, completion.args, completion.keywords,
+      completion.keywordValues, site, completion.after, completion.depth);
+    if (completion?.kind === "notify") return notifyNext(completion.type, completion.entries, completion.index, site);
     frames.at(-1).tasks.at(-1).stack.push(completion?.kind === "discard" ? null : value);
+    return null;
   };
   const notifyNext = (type, entries, index, site) => {
     temporaries.push(type, ...entries.map(entry => entry[1]));
@@ -235,47 +241,63 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       const nameValue = values.string(Array.from(name, char => char.codePointAt(0))); temporaries.push(nameValue);
       const plan = classes.notification(value, type, nameValue);
       if (!plan) continue;
-      temporaries.push(plan.callable, ...plan.args);
-      call(plan.callable, plan.args, [], [], site,
-        {kind: "notify", type, entries, index, roots: [type, ...entries.map(entry => entry[1])]}); return;
+      return callTask(plan.callable, plan.args, [], [], site,
+        {kind: "notify", type, entries, index, roots: [type, ...entries.map(entry => entry[1])]});
     }
-    deliver(type, null, site);
+    return deliver(type, null, site);
   };
-  const call = (callable, args, keywords, keywordValues, site, completion = null) => {
-    while (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod") {
-      charge(1);
-      if (callable instanceof BoundMethodValue) args = [callable.receiver, ...args];
-      callable = callable.callable;
-    }
-    if (callable instanceof PropertyAccessorValue) {
-      if (args.length !== 1 || keywords.length) python("TypeError", "Property accessor copy requires one positional value.");
-      const fields = [callable.property.fget, callable.property.fset, callable.property.fdel];
-      fields[{getter: 0, setter: 1, deleter: 2}[callable.name]] = args[0];
-      deliver(allocate(PropertyValue, ...fields), completion, site); return;
-    }
-    if (callable instanceof ClassValue) {
-      const instance = classes.instance(callable); temporaries.push(instance);
-      const initializer = classes.lookup(callable, "__init__");
-      if (!initializer.found) {
-        if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
-        deliver(instance, completion, site); return;
+  const dispatch = task => {
+    while (task) {
+      let {callable, args, keywords, keywordValues, site, completion, depth} = task;
+      temporaries.push(callable, ...args, ...keywordValues, ...(completion?.roots || []));
+      if (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod" || callable instanceof InstanceValue) {
+        charge(1);
+        if (++depth > maxDepth) python("RecursionError", "maximum call dispatch depth exceeded");
+        if (callable instanceof InstanceValue) {
+          const plan = classes.special(callable, "__call__");
+          if (!plan) python("TypeError", "Instance has no callable type slot");
+          completion = {kind: "relay", after: completion, roots: [callable, ...(completion?.roots || [])]};
+          if (plan.kind === "value") task = callTask(plan.value, args, keywords, keywordValues, site, completion, depth);
+          else task = callTask(plan.callable, plan.args, [], [], site, {kind: "invoke", args, keywords, keywordValues,
+            after: completion, depth, roots: [...args, ...keywordValues, ...completion.roots]}, depth);
+        } else {
+          if (callable instanceof BoundMethodValue) args = [callable.receiver, ...args];
+          task = callTask(callable.callable, args, keywords, keywordValues, site, completion, depth);
+        }
+        continue;
       }
-      const method = classes.get(instance, "__init__"); temporaries.push(method);
-      call(method, args, keywords, keywordValues, site,
-        {kind: "init", instance, after: completion, roots: [instance, ...(completion?.roots || [])]}); return;
+      if (callable instanceof PropertyAccessorValue) {
+        if (args.length !== 1 || keywords.length) python("TypeError", "Property accessor copy requires one positional value.");
+        const fields = [callable.property.fget, callable.property.fset, callable.property.fdel];
+        fields[{getter: 0, setter: 1, deleter: 2}[callable.name]] = args[0];
+        task = deliver(allocate(PropertyValue, ...fields), completion, site); continue;
+      }
+      if (callable instanceof ClassValue) {
+        const instance = classes.instance(callable); temporaries.push(instance);
+        const initializer = classes.lookup(callable, "__init__");
+        if (!initializer.found) {
+          if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
+          task = deliver(instance, completion, site); continue;
+        }
+        const method = classes.get(instance, "__init__");
+        task = callTask(method, args, keywords, keywordValues, site,
+          {kind: "init", instance, after: completion, roots: [instance, ...(completion?.roots || [])]}, depth); continue;
+      }
+      if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
+      if (callable instanceof BuiltinValue) {
+        let value;
+        if (callable.name === "property") value = classes.property(args, keywords, keywordValues);
+        else if (["staticmethod", "classmethod"].includes(callable.name)) {
+          if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
+          value = allocate(MethodWrapperValue, callable.name, args[0]);
+        } else value = builtin(callable, [...args, ...keywordValues], keywords);
+        task = deliver(value, completion, site); continue;
+      }
+      python("TypeError", "Value is not callable in this profile");
     }
-    if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
-    if (callable instanceof BuiltinValue) {
-      let value;
-      if (callable.name === "property") value = classes.property(args, keywords, keywordValues);
-      else if (["staticmethod", "classmethod"].includes(callable.name)) {
-        if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
-        value = allocate(MethodWrapperValue, callable.name, args[0]);
-      } else value = builtin(callable, [...args, ...keywordValues], keywords);
-      deliver(value, completion, site); return;
-    }
-    python("TypeError", "Value is not callable in this profile");
   };
+  const call = (callable, args, keywords, keywordValues, site, completion = null) =>
+    dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
   const unhandled = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, current?.instruction ?? null, null);
     // Copy diagnostics without exporting unleased VM objects or frame locals.
@@ -378,12 +400,12 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         current = {...frame.callsite, instruction: frame.returnInstruction};
         frame.leave(); frames.pop();
         const type = classes.create(frame.fn.name, frame.fn.qualname, completion.module, completion.bases, namespace, objectType());
-        notifyNext(type, [...namespace], 0, frame.callsite); return;
+        dispatch(notifyNext(type, [...namespace], 0, frame.callsite)); return;
       }
       const completion = frame.completion;
       temporaries.push(...(completion?.roots || []));
       current = {...frame.callsite, instruction: frame.returnInstruction};
-      frame.leave(); frames.pop(); deliver(returned, completion, frame.callsite); return;
+      frame.leave(); frames.pop(); dispatch(deliver(returned, completion, frame.callsite)); return;
     }
   };
   try {
