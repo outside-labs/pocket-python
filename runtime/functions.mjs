@@ -1,17 +1,25 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException} from "./function-objects.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
+import {isModuleContext} from "./module-context.mjs";
+import {RegistryError} from "./module-registry.mjs";
 
 class Raised { constructor(value) { this.value = value; } }
+const exceptionLeases = new WeakMap();
+export function releaseException(error) {
+  const record = exceptionLeases.get(error);
+  if (record) { exceptionLeases.delete(error); record.lease.release(false); }
+}
 const builtinNames = new Set(["print", "str", "len", ...Object.keys(EXCEPTIONS)]);
 const summary = (frame, cursor) => Object.freeze({function: frame.fn.name,
   location: cursor.block.source ? Object.freeze({filename: cursor.block.source.filename,
     span: cursor.block.source.spans[Math.max(0, cursor.pc - 1)]}) : null});
 
 export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth = 48,
-  shouldCancel = null, memoryLimits = {}, arena = null, retainResult = false, onOutput = () => {}} = {}) {
+  shouldCancel = null, memoryLimits = {}, arena = null, retainResult = false, onOutput = () => {},
+  moduleContext = null, module = null, inheritedException = null} = {}) {
   if (!Number.isSafeInteger(maxSteps) || maxSteps < 1 || maxSteps > 1_000_000 ||
       !Number.isSafeInteger(maxWork) || maxWork < 1 || maxWork > 100_000_000 ||
       !Number.isSafeInteger(maxDepth) || maxDepth < 1 || maxDepth > 256 ||
@@ -20,7 +28,13 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       (retainResult && arena === null) || !memoryLimits || typeof memoryLimits !== "object" || Array.isArray(memoryLimits) ||
       (arena !== null && Object.keys(memoryLimits).length)) throw new TypeError("Invalid function execution options.");
   const verified = verifyFunctions(program), memory = arena || new MemoryArena(memoryLimits);
+  if ((moduleContext === null) !== (module === null) ||
+      (moduleContext !== null && (!isModuleContext(moduleContext) || moduleContext.memory !== arena || !moduleContext.activeRun ||
+        !(module instanceof ModuleValue) || moduleContext.module(module.name) !== module || moduleContext.registry.program(module.name) !== program)) ||
+      (verified.code.version === 4 && moduleContext === null) ||
+      (inheritedException !== null && (!(inheritedException instanceof ExceptionValue) || moduleContext === null))) throw new TypeError("Version 4 requires a verified module execution context.");
   const frames = [], outputLeases = [], builtins = new Map();
+  const execution = {};
   let pool = null, globals = null, temporaries = [], steps = 0, work = 0, outputLength = 0, current = null, result = null;
   const hard = (code, name, message) => {
     const error = new ExecutionError(code, name, message, current?.instruction ?? null, null);
@@ -28,10 +42,11 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     throw error;
   };
   const charge = amount => {
+    if (moduleContext) { moduleContext.charge(amount, hard); return; }
     if ((work += amount) > maxWork) hard("BUDGET", "ExecutionLimitError", "Value work budget exceeded.");
     if (shouldCancel?.()) hard("CANCELLED", "ExecutionCancelled", "Execution cancelled.");
   };
-  const rootLeave = memory.enter(() => [pool, globals, ...builtins.values(), ...temporaries], {charge, fail: hard});
+  const rootLeave = memory.enter(() => [pool, globals, inheritedException, ...builtins.values(), ...temporaries], {charge, fail: hard});
   const allocate = (Type, ...args) => {
     const value = new Type(...args), layout = valueLayout(value);
     return memory.allocate(layout.bytes, layout.children, () => value);
@@ -73,18 +88,20 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   });
   const block = (frame, id) => frame.tasks.push({type: "block", block: frame.fn.blocks[id], pc: 0, stack: []});
   const load = (frame, key) => {
-    const local = frame.locals.get(key), cell = local || frame.closure.get(key) || globals.cells.get(key);
+    const local = frame.locals.get(key), cell = local || frame.closure.get(key) || frame.callable.globals.cells.get(key);
     if (cell?.bound) return cell.value;
-    if (local && frames.indexOf(frame) !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
+    if (local && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
     if (frame.closure.has(key)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
-    if (builtinNames.has(key)) {
+    if (builtinNames.has(key) || (moduleContext && key === "isinstance")) {
+      if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!builtins.has(key)) builtins.set(key, allocate(BuiltinValue, key));
       return builtins.get(key);
     }
     python("NameError", "name '" + key + "' is not defined");
   };
   const store = (frame, key, value, bound = true) => setCell(frame.locals.get(key), value, bound);
-  const bind = (fn, positional, keywordNames, keywordValues) => {
+  const bind = (callable, positional, keywordNames, keywordValues) => {
+    const fn = callable.pool.code.functions[callable.index], constants = callable.pool.code.constants;
     const p = fn.params, ordered = [...p.posonly, ...p.positional], bindings = new Map();
     const label = fn.qualname + "()";
     positional.slice(0, ordered.length).forEach((value, index) => bindings.set(ordered[index], value));
@@ -110,20 +127,20 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     };
     for (let i = 0; i < ordered.length; i++) {
       const key = ordered[i], defaultIndex = i - ordered.length + p.defaults.length;
-      if (!bindings.has(key) && defaultIndex >= 0) bindings.set(key, pool.code.constants[p.defaults[defaultIndex]]);
+      if (!bindings.has(key) && defaultIndex >= 0) bindings.set(key, constants[p.defaults[defaultIndex]]);
     }
     missing(ordered.filter(key => !bindings.has(key)), "positional");
     for (const key of p.kwonly) {
-      if (!bindings.has(key) && Object.hasOwn(p.kwdefaults, key)) bindings.set(key, pool.code.constants[p.kwdefaults[key]]);
+      if (!bindings.has(key) && Object.hasOwn(p.kwdefaults, key)) bindings.set(key, constants[p.kwdefaults[key]]);
     }
     missing(p.kwonly.filter(key => !bindings.has(key)), "keyword-only");
     return bindings;
   };
   const enter = (callable, bindings, callsite = null) => {
-    if (frames.length >= Math.min(maxDepth, memory.limits.maxFrames - 1)) python("RecursionError", "maximum recursion depth exceeded");
-    const fn = pool.code.functions[callable.index];
-    const frame = {fn, callable, closure: callable.closure, locals: callable.index === 0 ? globals.cells : new Map(),
-      tasks: [], activeException: frames.at(-1)?.activeException || null, callsite};
+    if (frames.length >= Math.min(maxDepth, memory.limits.maxFrames - 1) || memory.stats().frames >= memory.limits.maxFrames) python("RecursionError", "maximum recursion depth exceeded");
+    const fn = callable.pool.code.functions[callable.index];
+    const frame = {fn, callable, closure: callable.closure, locals: callable.index === 0 ? callable.globals.cells : new Map(),
+      tasks: [], activeException: frames.at(-1)?.activeException || inheritedException, callsite};
     frame.leave = memory.enter(() => [callable, ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
       ...frame.tasks.flatMap(task => task.type === "block" ? task.stack :
         [task.iterator ?? null, task.pending?.value ?? null, task.caught ?? null, task.previous ?? null])], {charge, fail: hard});
@@ -132,7 +149,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       let cell = frame.locals.get(key);
       if (!cell) {
         cell = allocate(Cell);
-        if (callable.index === 0) addCell(globals, key, cell); else frame.locals.set(key, cell);
+        if (callable.index === 0) addCell(callable.globals, key, cell); else frame.locals.set(key, cell);
       }
       if (bindings.has(key)) setCell(cell, bindings.get(key));
     }
@@ -155,8 +172,16 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     }
     if (callable.name === "print") {
       const text = args.map(display).join(" ") + "\n";
+      if (moduleContext) { moduleContext.write(text, hard); return null; }
       if ((outputLength += text.length) > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
       outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text); return null;
+    }
+    if (moduleContext && callable.name === "isinstance") {
+      if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
+      const type = args[1];
+      if (type instanceof BuiltinValue && type.name === "str") return values.isString(args[0]);
+      if (type instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, type.name)) return args[0] instanceof ExceptionValue && matchesException(args[0].name, type.name);
+      hard("UNSUPPORTED", "UnsupportedOperationError", "isinstance supports str and the adopted exception classes in this profile.");
     }
     if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
     return callable.name === "len" ? values.unary("len", args[0]) : values.string(Array.from(display(args[0]), char => char.codePointAt(0)));
@@ -167,6 +192,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     error.traceback = value.traceback.map(frame => ({function: frame.function, location: frame.location}));
     error.location = error.traceback.at(-1)?.location || null;
     error.context = value.context ? {type: value.context.name, message: value.context.message} : null;
+    if (moduleContext) exceptionLeases.set(error, {lease: memory.pin([value]), owner: execution});
     throw error;
   };
   const settle = signal => {
@@ -258,12 +284,14 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     }
   };
   try {
-    pool = allocate(CodePool, verified.code, verified.bytes);
-    globals = allocate(Environment);
+    pool = allocate(CodePool, verified.code, verified.bytes, module);
+    globals = module ? module.environment : allocate(Environment);
+    if (module) mutate(module, () => { const before = module.pool; module.pool = pool; return () => { module.pool = before; }; });
     const entry = allocate(FunctionValue, pool, 0, globals, new Map());
     temporaries = [entry]; enter(entry, new Map());
     while (frames.length) {
-      if (++steps > maxSteps) hard("BUDGET", "ExecutionLimitError", "Instruction budget exceeded.");
+      if (moduleContext) moduleContext.tick(hard);
+      else if (++steps > maxSteps) hard("BUDGET", "ExecutionLimitError", "Instruction budget exceeded.");
       charge(1); temporaries = []; memory.collect();
       const frame = frames.at(-1), cursor = frame.tasks.at(-1), stack = cursor.stack;
       current = {...summary(frame, cursor), instruction: cursor.pc};
@@ -271,7 +299,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       current = {...summary(frame, cursor), instruction: cursor.pc - 1};
       temporaries = stack.slice();
       try {
-        if (op === "const") stack.push(pool.code.constants[arg]);
+        if (op === "const") stack.push(frame.callable.pool.code.constants[arg]);
         else if (op === "load") stack.push(load(frame, arg));
         else if (op === "store") store(frame, arg, stack.pop());
         else if (op === "delete") {
@@ -282,13 +310,21 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           store(frame, arg, null, false);
         }
         else if (op === "function") {
-          const closure = new Map(pool.code.functions[arg].free.map(key => [key, frame.locals.get(key) || frame.closure.get(key)]));
-          stack.push(allocate(FunctionValue, pool, arg, globals, closure));
+          const owner = frame.callable.pool;
+          const closure = new Map(owner.code.functions[arg].free.map(key => [key, frame.locals.get(key) || frame.closure.get(key)]));
+          stack.push(allocate(FunctionValue, owner, arg, frame.callable.globals, closure));
         } else if (op === "call") {
           const kwargs = stack.splice(stack.length - extra.length), args = stack.splice(stack.length - arg), callable = stack.pop();
-          if (callable instanceof FunctionValue) enter(callable, bind(pool.code.functions[callable.index], args, extra, kwargs), summary(frame, cursor));
+          if (callable instanceof FunctionValue) enter(callable, bind(callable, args, extra, kwargs), summary(frame, cursor));
           else if (callable instanceof BuiltinValue) stack.push(builtin(callable, [...args, ...kwargs], extra));
           else python("TypeError", "Value is not callable in this profile");
+        } else if (["import", "module-get", "import-from"].includes(op)) {
+          const owner = frame.callable.pool.module;
+          if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
+          const invoke = (target, unit) => execute(unit, {...moduleContext.options, arena: memory, moduleContext, module: target,
+            inheritedException: frame.activeException});
+          stack.push(op === "import" ? moduleContext.load(owner.name, arg, extra, fourth, invoke) :
+            moduleContext.attribute(stack.pop(), arg, op === "import-from", owner.name, invoke));
         } else if (op === "if") block(frame, values.truth(stack.pop()) ? arg : extra);
         else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth}); block(frame, arg); }
         else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null}); block(frame, extra); }
@@ -324,6 +360,12 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op)) stack.push(values.unary(op, stack.pop()));
         else { const right = stack.pop(); stack.push(values.binary(op, stack.pop(), right)); }
       } catch (error) {
+        const forwarded = exceptionLeases.get(error);
+        if (forwarded && forwarded.owner !== execution) {
+          const value = forwarded.lease.get()[0]; temporaries.push(value); releaseException(error);
+          addTrace(value, {function: current.function, location: current.location}); error = new Raised(value);
+        } else if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(exception(error.name, error.message));
+        else if (error instanceof RegistryError && error.code === "UNSUPPORTED") hard(error.code, error.name, error.message);
         if (!(error instanceof Raised)) throw error;
         // Handler matching or iterator setup can itself raise while unwinding.
         let pending = error;

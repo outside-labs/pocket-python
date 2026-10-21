@@ -5,6 +5,7 @@ import {InterpreterSession} from "./session.mjs";
 const engines = JSON.parse(await readFile(new URL("./engines.json", import.meta.url), "utf8"));
 const engine = engines[process.argv[2]];
 if (!engine) throw new Error("Unknown conformance engine.");
+if (engine.input_mode !== "bytecode-fixture") throw new Error("Use the registered runner for this input profile: " + engine.runner);
 const {execute} = await import(new URL(engine.module, import.meta.url));
 let input = "";
 process.stdin.setEncoding("utf8");

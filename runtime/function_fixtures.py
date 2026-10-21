@@ -1,4 +1,4 @@
-"""Trusted test-only CPython AST lowering to our version 3 bytecode.
+"""Trusted test-only CPython AST lowering to our version 3/4 bytecode.
 
 This is not the independent source parser and is never loaded by a worker.
 """
@@ -29,11 +29,11 @@ def tagged(value):
     raise FixtureError("Only immutable literal defaults/constants are adopted")
 
 
-def compile_fixture(source, filename="fixture.py"):
+def compile_fixture(source, filename="fixture.py", *, module_profile=False):
     tree = ast.parse(source, filename)
     compile(tree, filename, "exec")  # Validate syntax/context, without running it.
     symbols = symtable.symtable(source, filename, "exec")
-    program = {"format": "pocket-python-bytecode", "version": 3, "constants": [], "functions": []}
+    program = {"format": "pocket-python-bytecode", "version": 4 if module_profile else 3, "constants": [], "functions": []}
     constant_ids = {}
 
     def constant(value):
@@ -90,6 +90,8 @@ def compile_fixture(source, filename="fixture.py"):
                     emit(value, "const", constant(value.value))
                 elif isinstance(value, ast.Name):
                     emit(value, "load", value.id)
+                elif module_profile and isinstance(value, ast.Attribute):
+                    expr(value.value); emit(value, "module-get", value.attr)
                 elif isinstance(value, (ast.List, ast.Tuple)):
                     for item in value.elts:
                         expr(item)
@@ -106,8 +108,6 @@ def compile_fixture(source, filename="fixture.py"):
                     expr(value.operand); emit(value, {ast.Not: "not", ast.USub: "negative", ast.UAdd: "positive"}[type(value.op)])
                 elif isinstance(value, ast.Compare) and len(value.ops) == 1 and type(value.ops[0]) in comparisons:
                     expr(value.left); expr(value.comparators[0])
-                    if isinstance(value.ops[0], ast.In):
-                        emit(value, "swap")
                     emit(value, comparisons[type(value.ops[0])])
                 elif isinstance(value, ast.BoolOp):
                     jumps = []
@@ -143,7 +143,22 @@ def compile_fixture(source, filename="fixture.py"):
                     raise FixtureError("Deferred expression: " + type(value).__name__)
 
             def statement(value):
-                if isinstance(value, ast.FunctionDef):
+                if module_profile and isinstance(value, ast.Import):
+                    for alias in value.names:
+                        emit(value, "import", alias.name, 0, True)
+                        if alias.asname:
+                            for part in alias.name.split(".")[1:]:
+                                emit(value, "import-from", part)
+                        emit(value, "store", alias.asname or alias.name.split(".")[0])
+                elif module_profile and isinstance(value, ast.ImportFrom):
+                    if any(alias.name == "*" for alias in value.names):
+                        raise FixtureError("Star imports are deferred")
+                    emit(value, "import", value.module or "", value.level, False)
+                    for i, alias in enumerate(value.names):
+                        if i < len(value.names) - 1:
+                            emit(value, "dup")
+                        emit(value, "import-from", alias.name); emit(value, "store", alias.asname or alias.name)
+                elif isinstance(value, ast.FunctionDef):
                     child = next(child for child in scope.get_children() if child.get_name() == value.name and child.get_lineno() == value.lineno)
                     emit(value, "function", function(value, child, None if is_module else qualname)); emit(value, "store", value.name)
                 elif isinstance(value, ast.Assign) and all(isinstance(target, ast.Name) for target in value.targets):

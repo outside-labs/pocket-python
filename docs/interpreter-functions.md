@@ -34,7 +34,8 @@ Execution uses this independent VM.
 The explicit hierarchy is BaseException, Exception, ArithmeticError,
 ZeroDivisionError, OverflowError, LookupError, IndexError, KeyError, ValueError,
 TypeError, NameError, UnboundLocalError, RuntimeError, RecursionError and
-StopIteration. Builtin identities are stable during a run; name shadowing applies.
+StopIteration. INT-07 adds the shared ImportError, ModuleNotFoundError and
+AttributeError classes. Builtin identities are stable during a run; name shadowing applies.
 
 The fixture output profile provides print, str and the existing len. Print uses
 spaces/newline without keyword options. Print/str format None, bool, int, str and

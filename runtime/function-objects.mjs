@@ -6,7 +6,13 @@ export class Environment {
   constructor() { this.cells = new Map(); }
 }
 export class CodePool {
-  constructor(code, bytes) { this.code = code; this.bytes = bytes; }
+  constructor(code, bytes, module = null) { this.code = code; this.bytes = bytes; this.module = module; }
+}
+export class ModuleValue {
+  constructor(name, package_, environment) {
+    this.name = name; this.package = package_; this.environment = environment;
+    this.pool = null; this.status = "initializing";
+  }
 }
 export class FunctionValue {
   constructor(pool, index, globals, closure) {
@@ -25,7 +31,8 @@ export const EXCEPTIONS = Object.freeze({
   ZeroDivisionError: "ArithmeticError", OverflowError: "ArithmeticError", LookupError: "Exception", IndexError: "LookupError",
   KeyError: "LookupError", ValueError: "Exception", TypeError: "Exception",
   NameError: "Exception", UnboundLocalError: "NameError", RuntimeError: "Exception",
-  RecursionError: "RuntimeError", StopIteration: "Exception"
+  RecursionError: "RuntimeError", StopIteration: "Exception", AttributeError: "Exception",
+  ImportError: "Exception", ModuleNotFoundError: "ImportError"
 });
 export function matchesException(name, expected) {
   for (let current = name; current; current = EXCEPTIONS[current]) if (expected === current) return true;
