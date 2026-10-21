@@ -122,3 +122,26 @@ effects and locations, malformed records and shared resource limits. The pinned
 console closure now includes the class runtime (twenty-one modules plus two
 notices), while core-source/1 still compiles bytecode 4 and refuses class syntax.
 Independent source and browser acceptance remain the next integration stages.
+
+## Opt-in source execution
+
+`compileSource(source, {languageProfile: "classes-source/1"})` and
+`compileSourceModules(modules, {languageProfile: "classes-source/1"})` now parse,
+bind and compile the C1 subset independently to bytecode 5. Compilation records
+retain the selected profile. Omitting the option preserves core-source/1,
+bytecode 4 and class-syntax refusal. Unknown profiles fail explicitly.
+
+Class scopes retain enclosing function cells without capturing their own
+namespace into methods; nested classes/functions have Python-qualified names.
+Attribute assignment, augmentation and deletion preserve operand order and
+evaluate receivers once. Unsupported private writes, implicit class cells,
+metadata overrides and later special methods refuse before application effects.
+The intrinsic object type is immutable. Class module metadata is text in C1.
+
+Run `python runtime/check_classes.py --target node` or `--target browser`.
+The expanded thirty-eight-case matrix checks C1 stdout/error types against
+CPython and explicitly classifies later-stage refusals. Messages, repr addresses
+and generic object transport are not treated as compatible. Node tests also
+cover defining-module globals, shared object identity across imports, namespace/
+closure overlap, class-suite scope resets and compile/execution/C3 resource limits.
+The development console's explicit profile selection follows as its own stage.

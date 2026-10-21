@@ -18,6 +18,10 @@ export function freezeSourceTree(root) {
 class Parser {
   constructor(source, options) {
     this.lexed = tokenize(source, options); this.options = options;
+    this.languageProfile = options.languageProfile ?? "core-source/1";
+    if (!["core-source/1", "classes-source/1"].includes(this.languageProfile))
+      throw new SourceError("UNSUPPORTED", "Unknown source language profile.", {filename: this.lexed.filename, phase: "parse"});
+    this.classes = this.languageProfile === "classes-source/1";
     this.tokens = this.lexed.tokens; this.filename = this.lexed.filename; this.index = 0;
     this.previous = this.tokens[0]; this.work = this.lexed.stats.work; this.nodes = 0; this.depth = 0;
     this.functionDepth = 0; this.loopDepth = 0; this.heights = new WeakMap();
@@ -65,6 +69,7 @@ class Parser {
   ending() { return ["newline", "dedent", "eof"].includes(this.peek().kind) || this.at(";"); }
   target(value, deletion = false) {
     if (value.kind === "Name") return;
+    if (this.classes && value.kind === "Attribute") return;
     if (value.kind === "Subscript" && value.index.kind !== "Slice") return;
     if (["Tuple", "List", "Attribute", "Subscript"].includes(value.kind)) this.unsupported(deletion ? "This deletion target is not adopted." : "Unpacking, attribute and slice assignment are not adopted.", value);
     this.fail("Invalid assignment/deletion target.", value);
@@ -76,17 +81,19 @@ class Parser {
       body.push(...this.statement());
     }
     const module = this.node("Module", start, {body});
-    return freezeSourceTree({module, source: this.lexed.source, filename: this.filename,
+    return freezeSourceTree({module, source: this.lexed.source, filename: this.filename, languageProfile: this.languageProfile,
       stats: {...this.lexed.stats, work: this.work, nodes: this.nodes}});
   }
   statement() {
     return this.guard(() => {
       if (this.kind("indent") || this.kind("dedent")) this.fail("Unexpected indentation.", this.peek(), "SYNTAX", "IndentationError");
       if (this.at("def")) return [this.definition()];
+      if (this.at("class") && this.classes) return [this.classDefinition()];
       if (this.at("if")) return [this.branch()];
       if (this.at("while") || this.at("for")) return [this.loop()];
       if (this.at("try")) return [this.attempt()];
-      if (["class", "async", "with", "@"].some(value => this.at(value))) this.unsupported("Classes, async, context managers and decorators are not adopted.");
+      if (["class", "async", "with", "@"].some(value => this.at(value))) this.unsupported(this.classes ?
+        "Async, context managers and decorators require later stages." : "Classes, async, context managers and decorators are not adopted.");
       return this.simpleLine();
     });
   }
@@ -214,6 +221,23 @@ class Parser {
     let body;
     try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
     return this.node("Function", start, {name, params: {posonly, positional, kwonly}, body}, body.at(-1));
+  }
+  classDefinition() {
+    const start = this.expect("class"), name = this.name().value, bases = [];
+    if (this.at("[")) this.unsupported("Generic classes are not adopted.");
+    if (this.eat("(")) {
+      while (!this.at(")")) {
+        if (this.at("*") || this.at("**") || this.kind("name") && this.peek(1).value === "=")
+          this.unsupported("Class keywords, metaclasses and expanded bases are not adopted.");
+        bases.push(this.expression());
+        if (!this.eat(",")) break;
+      }
+      this.expect(")");
+    }
+    const before = [this.functionDepth, this.loopDepth]; this.functionDepth = 0; this.loopDepth = 0;
+    let body;
+    try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
+    return this.node("Class", start, {name, bases, body}, body.at(-1));
   }
   branch(keyword = "if") {
     const start = this.expect(keyword), test = this.expression(), body = this.suite();
