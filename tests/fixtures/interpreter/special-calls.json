@@ -1,0 +1,412 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-special-calls/1",
+  "profile": "classes-source/1",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "call-arguments-and-defaults",
+      "stage": "C3-call",
+      "source": "class Add:\n def __call__(self,x,/,y=2,*,z=3): return x+y+z\nprint(Add()(7),Add()(1,y=3,z=5))\n",
+      "stdout": "12 9\n"
+    },
+    {
+      "id": "positional-only-error",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self,x,/): return x\nA()(x=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "required-keyword-error",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self,*,x): return x\nA()()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "inherited-diamond-call",
+      "stage": "C3-call",
+      "source": "class Root:\n def __call__(self): return 'root'\nclass Left(Root):\n def __call__(self): return 'left'\nclass Right(Root): pass\nclass Child(Left,Right): pass\nprint(Child()())\n",
+      "stdout": "left\n"
+    },
+    {
+      "id": "instance-shadow-direct-versus-implicit",
+      "stage": "C3-call",
+      "source": "def replacement(): return 99\nclass A:\n def __call__(self): return 7\na=A()\na.__call__=replacement\nprint(a.__call__(),a())\ndel a.__call__\nprint(a.__call__(),A.__call__(a))\n",
+      "stdout": "99 7\n7 7\n"
+    },
+    {
+      "id": "instance-only-call-attribute",
+      "stage": "C3-call",
+      "source": "def f(): return 5\nclass A: pass\na=A()\na.__call__=f\nprint(a.__call__())\na()\n",
+      "stdout": "5\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "type-replacement-keeps-retained-method",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self): return 1\na=A()\nsaved=a.__call__\ndef changed(self): return 2\nA.__call__=changed\nprint(saved(),a())\n",
+      "stdout": "1 2\n"
+    },
+    {
+      "id": "type-deletion-restores-inherited-call",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self): return 7\nclass B(A):\n def __call__(self): return 9\ndel B.__call__\nprint(B()())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "type-deletion-removes-call",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self): return 7\na=A()\ndel A.__call__\na()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "type-addition-updates-existing-instance",
+      "stage": "C3-call",
+      "source": "class A: pass\na=A()\ndef invoke(self): return 7\nA.__call__=invoke\nprint(a())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "private-field-in-call",
+      "stage": "C3-call",
+      "source": "class A:\n def __init__(self,n): self.__value=n\n def __call__(self,x): return self.__value+x\nprint(A(4)(3))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "stateful-call",
+      "stage": "C3-call",
+      "source": "class A:\n def __init__(self): self.n=0\n def __call__(self):\n  self.n+=1\n  return self.n\na=A()\nprint(a(),a())\n",
+      "stdout": "1 2\n"
+    },
+    {
+      "id": "call-result-identity",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self): return self\na=A()\nprint(a() is a)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "call-result-container",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self): return [1,2]\nprint(len(A()()))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "builtin-call-slot",
+      "stage": "C3-call",
+      "source": "class A:\n __call__=len\nprint(A()([1,2]))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "static-call-slot",
+      "stage": "C3-call",
+      "source": "class A:\n @staticmethod\n def __call__(x): return x+1\nprint(A()(7))\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "class-call-slot-binds-derived-owner",
+      "stage": "C3-call",
+      "source": "class A:\n @classmethod\n def __call__(cls): return cls.__name__\nclass B(A): pass\nprint(A()(),B()())\n",
+      "stdout": "A B\n"
+    },
+    {
+      "id": "retained-bound-call-slot",
+      "stage": "C3-call",
+      "source": "class Receiver:\n def __init__(self,n): self.n=n\n def run(self): return self.n\nclass A:\n __call__=Receiver(9).run\nprint(A()())\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "class-valued-call-slot",
+      "stage": "C3-call",
+      "source": "class Box:\n def __init__(self,n): self.n=n\nclass A:\n __call__=Box\nb=A()(7)\nprint(type(b).__name__,b.n)\n",
+      "stdout": "Box 7\n"
+    },
+    {
+      "id": "none-call-slot",
+      "stage": "C3-call",
+      "source": "class A:\n __call__=None\nA()()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "non-callable-slot",
+      "stage": "C3-call",
+      "source": "class A:\n __call__=7\nA()()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-call-binding",
+      "stage": "C3-call",
+      "source": "def run(x): return x+1\nclass A:\n @property\n def __call__(self): return run\nprint(A()(6))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operand-order-before-property-binding",
+      "stage": "C3-call",
+      "source": "events=[]\ndef run(value):\n events.append('run')\n return value\nclass A:\n @property\n def __call__(self):\n  events.append('bind')\n  return run\ndef owner():\n events.append('owner')\n return A()\ndef argument():\n events.append('arg')\n return 7\nprint(owner()(argument()))\nprint(events[0],events[1],events[2],events[3])\n",
+      "stdout": "7\nowner arg bind run\n"
+    },
+    {
+      "id": "property-call-without-getter",
+      "stage": "C3-call",
+      "source": "class A:\n __call__=property()\nA()()\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "property-binding-error",
+      "stage": "C3-call",
+      "source": "class A:\n @property\n def __call__(self):\n  print('binding')\n  raise ValueError('binding')\nA()()\n",
+      "stdout": "binding\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "property-binding-non-callable",
+      "stage": "C3-call",
+      "source": "class A:\n @property\n def __call__(self): return None\nA()()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "descriptor-call-closure-and-owner",
+      "stage": "C3-call",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(owner.__name__)\n  def run(x): return obj.n+x\n  return run\nclass A:\n n=2\n __call__=D()\nclass B(A): pass\nprint(B()(5))\n",
+      "stdout": "B\n7\n"
+    },
+    {
+      "id": "descriptor-call-ignores-instance-shadow",
+      "stage": "C3-call",
+      "source": "def run(): return 7\ndef other(): return 9\nclass D:\n def __get__(self,obj,owner): return run\nclass A:\n __call__=D()\na=A()\na.__call__=other\nprint(a.__call__(),a())\n",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "descriptor-binding-error",
+      "stage": "C3-call",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError('bind')\nclass A:\n __call__=D()\nA()()\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "descriptor-binding-non-callable",
+      "stage": "C3-call",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass A:\n __call__=D()\nA()()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "callable-object-as-raw-getter",
+      "stage": "C3-call",
+      "source": "def run(): return 7\nclass Getter:\n def __call__(self,descriptor,obj,owner): return run\nclass D:\n __get__=Getter()\nclass A:\n __call__=D()\nprint(A()())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "callable-object-as-call-slot",
+      "stage": "C3-call",
+      "source": "class Router:\n def __call__(self,x): return x+1\nclass A:\n __call__=Router()\nprint(A()(6))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "callable-decorator-instance",
+      "stage": "C3-call",
+      "source": "class Wrap:\n def __init__(self,fn): self.fn=fn\n def __call__(self,x): return self.fn(x)+1\n@Wrap\ndef doubled(x): return x*2\nprint(doubled(3))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "defining-module-globals",
+      "stage": "C3-call",
+      "source": "n=99\nimport helper\nprint(helper.A()())\n",
+      "stdout": "5\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "n=5\nclass A:\n def __call__(self): return n\n"
+        }
+      ]
+    },
+    {
+      "id": "fresh-binding-on-every-call",
+      "stage": "C3-call",
+      "source": "class A:\n def __init__(self): self.n=0\n @property\n def __call__(self):\n  self.n+=1\n  def run(): return self.n\n  return run\na=A()\nprint(a(),a())\n",
+      "stdout": "1 2\n"
+    },
+    {
+      "id": "call-exception-effects",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self):\n  print('before')\n  raise ValueError('call')\nA()()\n",
+      "stdout": "before\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "call-finally",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self):\n  try: return 7\n  finally: print('cleanup')\nprint(A()())\n",
+      "stdout": "cleanup\n7\n"
+    },
+    {
+      "id": "callable-setter-result-discard",
+      "stage": "C3-call",
+      "source": "class Writer:\n def __call__(self,obj,value):\n  obj.saved=value\n  return 99\nclass D:\n __set__=Writer()\nclass A:\n x=D()\na=A()\na.x=7\nprint(a.saved)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "callable-name-notification-result-discard",
+      "stage": "C3-call",
+      "source": "class Notify:\n def __call__(self,owner,name):\n  print(owner.__name__,name)\n  return 99\nclass D:\n __set_name__=Notify()\nclass A:\n x=D()\nprint(A.__name__)\n",
+      "stdout": "A x\nA\n"
+    },
+    {
+      "id": "callable-property-getter",
+      "stage": "C3-call",
+      "source": "class Reader:\n def __call__(self,obj): return obj.n\nclass A:\n n=7\n x=property(Reader())\nprint(A().x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "ordinary-class-construction-kept",
+      "stage": "C3-call",
+      "source": "class A:\n def __call__(self): return 7\na=A()\nprint(type(a).__name__,a())\n",
+      "stdout": "A 7\n"
+    },
+    {
+      "id": "callable-type-presence",
+      "stage": "C3-callable",
+      "source": "class A:\n def __call__(self): return 7\nclass B: pass\nprint(callable(A),callable(A()),callable(B),callable(B()))\n",
+      "stdout": "True True True False\n"
+    },
+    {
+      "id": "callable-instance-shadow-ignored",
+      "stage": "C3-callable",
+      "source": "class A: pass\ndef run(): return 7\na=A()\na.__call__=run\nprint(callable(a),callable(a.__call__))\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "callable-non-callable-slot-is-present",
+      "stage": "C3-callable",
+      "source": "class A:\n __call__=None\nclass B:\n __call__=7\nprint(callable(A()),callable(B()))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-query-has-no-binding-effects",
+      "stage": "C3-callable",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print('never')\n  raise ValueError('binding')\nclass A:\n __call__=D()\nprint(callable(A()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "callable-query-property-without-getter",
+      "stage": "C3-callable",
+      "source": "class A:\n __call__=property()\nprint(callable(A()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "callable-query-dynamic-slot",
+      "stage": "C3-callable",
+      "source": "class A: pass\na=A()\nprint(callable(a))\nA.__call__=None\nprint(callable(a))\ndel A.__call__\nprint(callable(a))\n",
+      "stdout": "False\nTrue\nFalse\n"
+    },
+    {
+      "id": "callable-query-native-wrappers",
+      "stage": "C3-callable",
+      "source": "def run(): return 7\nprint(callable(staticmethod(run)),callable(staticmethod(7)),callable(classmethod(run)),callable(property(run)))\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-query-functions-and-builtins",
+      "stage": "C3-callable",
+      "source": "def run(): return 7\nprint(callable(run),callable(print),callable(property),callable(object),callable(object()))\n",
+      "stdout": "True True True True False\n"
+    },
+    {
+      "id": "callable-query-bound-method",
+      "stage": "C3-callable",
+      "source": "class A:\n def run(self): return 7\nprint(callable(A().run),callable(A.run),callable(A.run.__name__))\n",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "callable-query-values",
+      "stage": "C3-callable",
+      "source": "print(callable(None),callable(7),callable('x'),callable([]),callable({}),callable(ValueError('x')))\n",
+      "stdout": "False False False False False False\n"
+    },
+    {
+      "id": "callable-query-inherited-slot",
+      "stage": "C3-callable",
+      "source": "class A:\n __call__=None\nclass B(A): pass\nprint(callable(B()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "callable-query-no-arguments",
+      "stage": "C3-callable",
+      "source": "callable()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "callable-query-extra-arguments",
+      "stage": "C3-callable",
+      "source": "callable(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "callable-query-keyword",
+      "stage": "C3-callable",
+      "source": "callable(object=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "future-length",
+      "stage": "C3-future",
+      "source": "class A:\n def __len__(self): return 7\nprint(len(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-truth",
+      "stage": "C3-future",
+      "source": "class A:\n def __bool__(self): return False\nprint(bool(A()))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "future-formatting",
+      "stage": "C3-future",
+      "source": "class A:\n def __str__(self): return \"text\"\nprint(str(A()))\n",
+      "stdout": "text\n"
+    },
+    {
+      "id": "future-getitem",
+      "stage": "C3-future",
+      "source": "class A:\n def __getitem__(self,key): return key+1\nprint(A()[6])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-iteration",
+      "stage": "C3-future",
+      "source": "class A:\n def __iter__(self): return iter([7])\nfor value in A(): print(value)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-equality",
+      "stage": "C3-future",
+      "source": "class A:\n def __eq__(self,other): return True\nprint(A()==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-new",
+      "stage": "C3-future",
+      "source": "class A:\n def __new__(cls): return 7\nprint(A())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-attribute-hook",
+      "stage": "C3-future",
+      "source": "class A:\n def __getattr__(self,name): return 7\nprint(A().missing)\n",
+      "stdout": "7\n"
+    }
+  ]
+}

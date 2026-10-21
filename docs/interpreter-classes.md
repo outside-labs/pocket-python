@@ -65,6 +65,8 @@ methods and inheritance hooks must not silently behave as ordinary attributes.
 
 ## C3: adopted special methods and closure of INT-09
 
+The [selected protocol sequence and call contract](interpreter-special-methods.md)
+start with __call__ and callable(), followed by length/truth and formatting.
 Choose and test an explicit special-method matrix before each extension. Cover
 implicit lookup on the type, return-type validation, exception transport and
 bounded recursive dispatch. __new__, arithmetic/comparison overrides,

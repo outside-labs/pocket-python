@@ -508,3 +508,20 @@ Nested descriptor binding for setters, deleters and notifications now refuses
 explicitly for both custom and property descriptors. The full matrix has 69
 programs: 66 adopted comparisons and three deferred refusals. No runtime behavior
 for unadopted nested binding is presented as a Python-compatible call error.
+
+
+### C3 protocol sequence and call contract adopted (2026-10-21)
+
+The next INT-09 batch adopts a [shared special-method policy and resumable dispatch](docs/interpreter-special-methods.md).
+First implement __call__ and a non-invoking callable() query, then length/truth,
+formatting, indexed objects, iteration/membership and equality/hash through their
+own matrices. Postpone __new__, custom attribute hooks, arithmetic and metaclasses.
+The existing synchronous primitive operations cannot execute Python callbacks;
+pending operations must resume through ordinary VM frames and explicit roots.
+
+The first 63-program CPython matrix separates 41 call cases, 14 callable-query
+cases and eight future-protocol refusals. Delivery uses five focused steps:
+contract/reference evidence, shared admission policy, resumable call execution,
+callable queries and offline console acceptance. The contract alone changes no
+source acceptance. Additive support retains classes-source/1 and bytecode 5;
+engine fingerprints distinguish builds. INT-09 and alpha publication remain open.
