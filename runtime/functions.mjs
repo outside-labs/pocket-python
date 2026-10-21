@@ -256,8 +256,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       temporaries.push(callable, ...args, ...keywordValues, ...(completion?.roots || []));
       if (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod" || callable instanceof InstanceValue) {
         charge(1);
-        if (++depth > maxDepth) python("RecursionError", "maximum call dispatch depth exceeded");
         if (callable instanceof InstanceValue) {
+          if (++depth > maxDepth) python("RecursionError", "maximum implicit call dispatch depth exceeded");
           const plan = classes.special(callable, "__call__");
           if (!plan) python("TypeError", "Instance has no callable type slot");
           completion = {kind: "relay", after: completion, roots: [callable, ...(completion?.roots || [])]};
