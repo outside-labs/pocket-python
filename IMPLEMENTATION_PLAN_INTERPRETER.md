@@ -467,3 +467,18 @@ native method binding; the raw __get__ slot retains its separate calling rule.
 The selected source matrix now covers all 54 custom/native cases and two explicit
 refusals in Node and Chromium. Wrapper edges, retained closures, callback failures
 and invalid arguments have focused tests. Decorator source remains the next step.
+
+
+### C2 decorator source implementation
+
+The explicit classes profile now parses at most sixteen decorators per definition,
+evaluates their expressions in source order and applies them in reverse. Class
+creation and notifications complete before class decorators run; the final binding
+is stored only after successful application. Decorators preserve enclosing closure
+resolution, textual private-name context and original function/class metadata.
+
+All 68 descriptor/decorator source cases now run in Node and Chromium: 66 adopted
+comparisons and two explicit deferred refusals. Focused checks cover the decorator
+count limit before effects, failure locations, retained old bindings, closure and
+private decorator expressions. The default core profile continues to refuse this
+syntax. Offline console acceptance is the final step of this batch.

@@ -61,3 +61,28 @@ test('native wrapper argument errors are Python errors and default core builtins
     notice: 'Synthetic core fixture notice', source: 'property()\n'}]});
   assert.equal(result.error.type, 'NameError'); closed(result);
 });
+
+test('decorators obey the count budget before effects and preserve default core refusal', async () => {
+  const prefix = 'def identity(value): return value\n';
+  const accepted = await run(prefix + '@identity\n'.repeat(16) + 'def f(): return 7\nprint(f())\n');
+  assert.equal(accepted.error, undefined, JSON.stringify(accepted.error)); assert.equal(accepted.stdout, '7\n'); closed(accepted);
+  const bounded = await run('print("never")\n' + prefix + '@identity\n'.repeat(17) + 'def f(): pass\n');
+  assert.equal(bounded.error.code, 'COMPILE_BUDGET'); assert.equal(bounded.stdout, ''); assert.equal(bounded.stats, null);
+  const core = await runSourceRequest({modules: [{name: 'app', source: '@missing\ndef f(): pass\n',
+    package: false, imports: [], notice: 'Synthetic decorator fixture notice'}]});
+  assert.equal(core.error.code, 'UNSUPPORTED'); assert.equal(core.stats, null);
+});
+
+test('decorator errors retain their expression locations and old bindings', async () => {
+  const failed = await run('@7\ndef f(): pass\n');
+  assert.equal(failed.error.type, 'TypeError'); assert.equal(failed.error.location.span[0], 1); closed(failed);
+  const missing = await run('@missing\nclass A: pass\n');
+  assert.equal(missing.error.type, 'NameError'); assert.equal(missing.error.location.span[0], 1); closed(missing);
+  const result = await run('def reject(value): raise ValueError("reject")\nf=7\ntry:\n @reject\n def f(): pass\nexcept ValueError: pass\nprint(f)\n');
+  assert.equal(result.error, undefined); assert.equal(result.stdout, '7\n'); closed(result);
+});
+
+test('decorator closures resolve in the enclosing scope and private expressions use its class context', async () => {
+  const result = await run('def build(value):\n def decorate(fn):\n  def wrapped(): return value\n  return wrapped\n @decorate\n def f(): return 0\n return f\nprint(build(7)())\nclass Outer:\n def __decorate(value): return value\n @__decorate\n class Inner:\n  @property\n  def __value(self): return 9\n  def read(self): return self.__value\nprint(Outer.Inner().read())\n');
+  assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, '7\n9\n'); closed(result);
+});

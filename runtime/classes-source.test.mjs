@@ -46,7 +46,7 @@ test('metadata overrides and implicit class cells refuse before source effects',
     'class A:\n def __len__(self): return 7\n',
     'class A: pass\na=A()\na.__class__=A\n',
     'class A(metaclass=type): pass\n','class A[T]: pass\n','class A(*bases): pass\n',
-    '@decorator\nclass A: pass\n'
+    'async def f(): pass\n'
   ]){
     const result=await run("print('never')\n"+source);
     assert.equal(result.error.code,'UNSUPPORTED',source);assert.equal(result.stdout,'');assert.equal(result.stats,null);

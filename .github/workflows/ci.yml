@@ -76,7 +76,7 @@ jobs:
       - run: uv run --no-sync python runtime/check_library_profiles.py --target browser --report build/library-profiles-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --report build/classes-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/descriptors.json --stages C2-descriptor C2-native deferred --report build/descriptors-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-browser-report.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:
@@ -123,7 +123,7 @@ jobs:
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-reference-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/descriptors.json --stages C2-descriptor C2-native deferred --report build/descriptors-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-node-report.json
       - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json
       - run: python scripts/interpreter_measurements.py --no-browser --repeats 3 --output build/interpreter-node-measurements
         env:

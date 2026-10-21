@@ -133,7 +133,7 @@
     },
     {
       "id": "decorator-order",
-      "stage": "C2",
+      "stage": "C2-decorator",
       "source": "events=[]\ndef decorate(cls):\n    events.append(2)\n    return cls\n@decorate\nclass A:\n    events.append(1)\nprint(events[0],events[1])\n",
       "stdout": "1 2\n"
     },
@@ -242,6 +242,7 @@
   "implemented_stages": [
     "C1",
     "C2-private",
-    "C2-descriptor"
+    "C2-descriptor",
+    "C2-decorator"
   ]
 }
