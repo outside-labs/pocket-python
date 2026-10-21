@@ -356,3 +356,11 @@ bytes and their grants are separate. Browser checks prove common behavior,
 source diagnostics, offline restart, tamper refusal and full-to-reduced updates
 that remove the library cache and authority. Transitive bootstrap tests keep
 language compilation/execution in the worker. Measurement follows next.
+
+The third INT-11 stage adds the [reproducible measurement tool](docs/interpreter-measurements.md).
+It verifies complete payload buckets and canonical compression, compares the
+shared corpus across explicit source/compiled/supplied-engine profiles, and
+records cold/warm browser and Node observations. Logical arena, process memory
+and dedicated-worker CDP observations retain separate scopes. CI collects both
+Node-only and real-browser reports; a clean-commit baseline and review complete
+the acceptance evidence.

@@ -40,7 +40,8 @@ or granting network/storage access. Library selection never widens host grants.
 ## Verification and delivery stages
 
 `node --test runtime/library-profiles.test.mjs` checks common behavior, explicit
-imports, missing/changed selections and notices, immutable snapshots, budgets,+cancellation and teardown. `python runtime/check_library_profiles.py --target
+imports, missing/changed selections and notices, immutable snapshots, budgets,
+cancellation and teardown. `python runtime/check_library_profiles.py --target
 node` (or browser) runs forty source/selection cases: six common computations in
 both profiles, eleven operator functions plus an exception in full/reduced
 selections, and four profile/host/budget policies. CPython supplies the reference
@@ -50,7 +51,7 @@ wrapper tracebacks are retained and are not equated with native stdlib frames.
 The development console builder now selects these profiles explicitly:
 
 ```sh
-uv run pocket-python interpreter-web build/console-source/CONSOLE-SOURCE.json \\
+uv run pocket-python interpreter-web build/console-source/CONSOLE-SOURCE.json \
   --engine runtime --library-profile operator/1 --output build/operator-console
 ```
 
@@ -70,7 +71,8 @@ offline reload/restart, tampered source refusal and a full-to-reduced update tha
 removes both grants and the cached optional source. Existing console acceptance
 remains mandatory.
 
-Measurement is the next INT-11 stage. It must distinguish engine, library, data, bridge and source
-bytes; full/reduced behavior; compression policy; startup boundaries; logical
-arena accounting and observed browser/process memory. Static source counts do
-not prove general minimality or whole-process memory bounds.
+The [measurement tool and methods](interpreter-measurements.md) distinguish
+engine, library, data, bridge and source bytes; full/reduced behavior; compression
+policy; startup boundaries; logical arena accounting and observed browser/process
+memory. Static source counts do not prove general minimality or whole-process
+memory bounds.
