@@ -386,3 +386,14 @@ worker reuse and observed process/worker memory scopes differ across adapters
 and are labeled; no general VM minimality or physical-memory bound is inferred.
 CI retains fresh Node-only and four-profile browser reports. Classes/async and
 alpha publication remain separate gates; no package release accompanies INT-11.
+
+### Staged class contract (2026-10-21)
+
+INT-09 now adopts the [C1/C2/C3 class contract](docs/interpreter-classes.md) and
+stage-tagged CPython reference corpus. C1 adds explicit classes-source/1 with
+verified bytecode 5: class namespaces, C3 inheritance, instance attributes, bound
+methods and initialization. The existing core-source/1 profile remains stable.
+Descriptors/decorators and special methods follow their recorded stages; native
+subclassing/metaclasses/reflection stay gated. Adoption alone does not implement
+these features or close INT-09. Execution, memory, source and offline-browser
+evidence are required before accepting a delivered stage.

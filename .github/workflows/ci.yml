@@ -109,6 +109,7 @@ jobs:
       - run: python runtime/check_source_tokens.py --report build/source-tokens-node-report.json
       - run: python runtime/check_conformance.py --engine source --report build/source-node-report.json
       - run: python scripts/lock_library_profiles.py
+      - run: python runtime/check_classes.py --reference-only --report build/classes-reference-report.json
       - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json
       - run: python scripts/interpreter_measurements.py --no-browser --repeats 3 --output build/interpreter-node-measurements
         env:
@@ -127,4 +128,5 @@ jobs:
           path: |
             build/*node-report.json
             build/interpreter-node-measurements/report.json
+            build/classes-reference-report.json
           if-no-files-found: error
