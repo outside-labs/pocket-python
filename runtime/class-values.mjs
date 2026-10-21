@@ -1,4 +1,4 @@
-import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, BuiltinValue, EXCEPTIONS, DESCRIPTOR_HOOKS} from "./function-objects.mjs";
+import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, BuiltinValue, EXCEPTIONS, DESCRIPTOR_HOOKS, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
@@ -32,7 +32,7 @@ export class ClassRuntime {
     bases = bases.length ? [...bases] : [root]; namespace = new Map(namespace);
     for (const base of bases) {
       this.charge(1);
-      if (base instanceof BuiltinValue && (["str", "bool", "type"].includes(base.name) || Object.hasOwn(EXCEPTIONS, base.name)))
+      if (base instanceof BuiltinValue && (["str", "bool", "type", "property", "staticmethod", "classmethod"].includes(base.name) || Object.hasOwn(EXCEPTIONS, base.name)))
         this.fail("UnsupportedOperationError", "Builtin subclassing is outside classes-source/1.", "UNSUPPORTED");
       if (!(base instanceof ClassValue)) this.fail("TypeError", "Class bases must be adopted class values.");
       this.touch(base);
@@ -87,6 +87,8 @@ export class ClassRuntime {
     if (!(receiver instanceof InstanceValue)) return null;
     const hook = this.lookup(receiver.type, name);
     if (!hook.found) return null;
+    if (hook.value instanceof MethodWrapperValue) return {kind: "call",
+      callable: hook.value.kind === "classmethod" ? this.make(BoundMethodValue, hook.value.callable, receiver.type) : hook.value.callable, args};
     if (hook.value instanceof FunctionValue) return {kind: "call", callable: hook.value, args: [receiver, ...args]};
     if (this.descriptor(hook.value)?.get.found)
       this.fail("UnsupportedOperationError", "Descriptor-valued mutation/notification hooks require a later stage.", "UNSUPPORTED");
@@ -96,6 +98,15 @@ export class ClassRuntime {
   read(receiver, name) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
+    if (receiver instanceof PropertyValue) {
+      if (["fget", "fset", "fdel"].includes(name)) return value(receiver[name]);
+      if (["getter", "setter", "deleter"].includes(name)) return value(this.make(PropertyAccessorValue, name, receiver));
+      this.fail("UnsupportedOperationError", "Property reflection is outside the adopted profile.", "UNSUPPORTED");
+    }
+    if (receiver instanceof MethodWrapperValue) {
+      if (name === "__func__") return value(receiver.callable);
+      this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
+    }
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
@@ -115,10 +126,15 @@ export class ClassRuntime {
     const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
     const getter = () => ({kind: "call", callable: descriptor.get.value,
       args: [item.value, receiver instanceof ClassValue ? null : receiver, owner]});
+    if (receiver instanceof InstanceValue && item.value instanceof PropertyValue) {
+      if (item.value.fget === null) this.fail("AttributeError", "Property has no getter.");
+      return {kind: "call", callable: item.value.fget, args: [receiver]};
+    }
     if (receiver instanceof InstanceValue && descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)) return getter();
     if (receiver instanceof InstanceValue && receiver.attributes.has(name)) return value(receiver.attributes.get(name));
     if (!item.found) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
     if (descriptor?.get.found) return getter();
+    if (item.value instanceof MethodWrapperValue) return value(item.value.kind === "staticmethod" ? item.value.callable : this.make(BoundMethodValue, item.value.callable, owner));
     return value(receiver instanceof InstanceValue && item.value instanceof FunctionValue ? this.make(BoundMethodValue, item.value, receiver) : item.value);
   }
   get(receiver, name) {
@@ -130,6 +146,11 @@ export class ClassRuntime {
     this.key(name); this.touch(receiver);
     if (receiver instanceof InstanceValue) {
       const item = this.lookup(receiver.type, name), descriptor = item.found ? this.descriptor(item.value) : null;
+      if (item.value instanceof PropertyValue) {
+        const callable = item.value[remove ? "fdel" : "fset"];
+        if (callable === null) this.fail("AttributeError", "Property has no " + (remove ? "deleter" : "setter") + ".");
+        return {kind: "call", callable, args: remove ? [receiver] : [receiver, value]};
+      }
       if (descriptor && (descriptor.set.found || descriptor.delete.found)) {
         const hook = remove ? "__delete__" : "__set__";
         if (!descriptor[remove ? "delete" : "set"].found) this.fail("AttributeError", "Descriptor has no " + hook + " operation.");
@@ -160,9 +181,21 @@ export class ClassRuntime {
     for (const base of type.mro) { this.charge(1); if (base === parent) return true; }
     return false;
   }
+  property(args, keywordNames, keywordValues) {
+    const fields = ["fget", "fset", "fdel"], assigned = new Map();
+    if (args.length > fields.length || keywordNames.includes("doc"))
+      this.fail("UnsupportedOperationError", "Property documentation requires a later stage.", "UNSUPPORTED");
+    args.forEach((value, index) => assigned.set(fields[index], value));
+    keywordNames.forEach((name, index) => {
+      if (!fields.includes(name) || assigned.has(name)) this.fail("TypeError", "Invalid or duplicate property argument.");
+      assigned.set(name, keywordValues[index]);
+    });
+    return this.make(PropertyValue, ...fields.map(name => assigned.has(name) ? assigned.get(name) : null));
+  }
   initializer(value) {
+    if (value instanceof MethodWrapperValue) value = value.callable;
     if (!(value instanceof FunctionValue || value instanceof BoundMethodValue && value.callable instanceof FunctionValue))
-      this.fail("UnsupportedOperationError", "Initializers require Python functions or retained bound methods in C1.", "UNSUPPORTED");
+      this.fail("UnsupportedOperationError", "Initializers require Python functions, retained Python bound methods or native method wrappers.", "UNSUPPORTED");
   }
   isinstance(value, type) {
     if (!(type instanceof ClassValue)) this.fail("TypeError", "isinstance requires an adopted class.");

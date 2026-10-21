@@ -34,6 +34,17 @@ export class BoundMethodValue {
 }
 export const DESCRIPTOR_HOOKS = Object.freeze(["__get__", "__set__", "__delete__", "__set_name__"]);
 export class BuiltinValue { constructor(name) { this.name = name; } }
+export class PropertyValue {
+  constructor(fget = null, fset = null, fdel = null) {
+    this.fget = fget; this.fset = fset; this.fdel = fdel; Object.freeze(this);
+  }
+}
+export class MethodWrapperValue {
+  constructor(kind, callable) { this.kind = kind; this.callable = callable; Object.freeze(this); }
+}
+export class PropertyAccessorValue extends BuiltinValue {
+  constructor(name, property) { super(name); this.property = property; Object.freeze(this); }
+}
 export class AppendValue extends BuiltinValue {
   constructor(receiver) { super("append"); this.receiver = receiver; }
 }

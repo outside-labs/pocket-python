@@ -39,3 +39,25 @@ test('notification snapshots retain removed later descriptors until their callba
   const result = await run(source);
   assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, 'first\nsecond\nA\n'); closed(result);
 });
+
+test('retained property accessor copies and native method wrappers keep their defining closures', async () => {
+  const result = await run('def make(value):\n def read(self): return value\n p=property(read)\n return p.getter\ncopy=make(7)\ndef replacement(self): return 9\np=copy(replacement)\nclass A:\n x=p\nprint(A().x,p.fget is replacement)\ndef build(value):\n def method(): return value\n return staticmethod(method)\nwrapped=build(8)\nprint(wrapped())\n');
+  assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, '9 True\n8\n'); closed(result);
+});
+
+test('native property callbacks preserve exceptions, ignored setter returns and initialized getter values', async () => {
+  const result = await run('class Result:\n def __init__(self,obj): self.saved=7\nclass A:\n def write(self,value): return 99\n x=property(Result,write)\na=A()\na.x=1\nprint(a.x.saved)\n');
+  assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, '7\n'); closed(result);
+  const failed = await run('class A:\n def read(self): return 1//0\n x=property(read)\nA().x\n');
+  assert.equal(failed.error.type, 'ZeroDivisionError');
+  assert.deepEqual(failed.error.traceback.map(frame => frame.function), ['<module>', 'read']); closed(failed);
+});
+
+test('native wrapper argument errors are Python errors and default core builtins stay bounded', async () => {
+  for (const expression of ['property(1,fget=2)', 'property(unknown=1)', 'staticmethod()', 'classmethod(1,2)', 'property().setter()']) {
+    const result = await run(expression + '\n'); assert.equal(result.error.type, 'TypeError', expression); closed(result);
+  }
+  const result = await runSourceRequest({modules: [{name: 'app', package: false, imports: [],
+    notice: 'Synthetic core fixture notice', source: 'property()\n'}]});
+  assert.equal(result.error.type, 'NameError'); closed(result);
+});

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {ClassRuntime, CLASS_LIMITS} from "./class-values.mjs";
-import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, Environment, CodePool, BuiltinValue} from "./function-objects.mjs";
+import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, Environment, CodePool, BuiltinValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {ValueRuntime, encodeValue} from "./values.mjs";
 
@@ -119,4 +119,22 @@ test("C3 and namespace limits charge work and preserve cancellation", () => {
     assert.throws(() => runtime.create("Child", "Child", "app", [A], new Map(), s.root), {code: "CANCELLED"});
     assert.equal(A.mro[0], A);
   } finally { s.close(); }
+});
+
+
+test("native descriptor layouts retain accessors and functions without exporting or hashing them", () => {
+  const s = setup(), foreign = setup();
+  try {
+    const fn = method("read"), property = s.runtime.make(PropertyValue, fn), wrapper = s.runtime.make(MethodWrapperValue, "staticmethod", fn);
+    const copy = s.runtime.get(property, "setter"); s.roots.push(copy, wrapper);
+    assert.ok(copy instanceof PropertyAccessorValue); assert.equal(copy.property, property);
+    s.memory.collect(); assert.equal(s.runtime.get(copy.property, "fget"), fn);
+    for (const value of [property, wrapper, copy]) {
+      assert.equal(s.runtime.values.truth(value), true);
+      assert.throws(() => encodeValue(value), {name: "TypeError"});
+      assert.throws(() => s.runtime.values.hash(value), {code: "UNSUPPORTED"});
+    }
+    assert.throws(() => s.runtime.make(PropertyValue, foreign.make("Other")), {code: "STALE_HANDLE"});
+    s.roots.length = 0; s.memory.collect(); assert.equal(s.memory.stats().objects, 0);
+  } finally { s.close(); foreign.close(); }
 });

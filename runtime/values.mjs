@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -168,7 +168,7 @@ export class ValueRuntime {
     if (value instanceof DictValue) return value.entries.length !== 0;
     if (value instanceof IteratorValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
-        value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue) return true;
+        value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
   }
   equal(left, right, depth = 0) {
@@ -223,7 +223,7 @@ export class ValueRuntime {
   }
   hash(value, depth = 0) {
     this.depth(depth); this.charge(1);
-    if (value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue)
+    if (value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue)
       this.fail("UnsupportedOperationError", "Object dictionary keys require the later identity-hash profile.", "UNSUPPORTED");
     if (value === null) return "none";
     if (typeof value === "bigint" || typeof value === "boolean") {
@@ -471,6 +471,9 @@ export function valueLayout(value) {
   if (value instanceof InstanceValue) return {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
     children: [value.type, ...value.attributes.values()]};
   if (value instanceof BoundMethodValue) return {bytes: 64, children: [value.callable, value.receiver]};
+  if (value instanceof PropertyValue) return {bytes: 80, children: [value.fget, value.fset, value.fdel]};
+  if (value instanceof MethodWrapperValue) return {bytes: 64, children: [value.callable]};
+  if (value instanceof PropertyAccessorValue) return {bytes: 64, children: [value.property]};
   if (value instanceof AppendValue) return {bytes: 64, children: [value.receiver]};
   if (value instanceof BuiltinValue) return {bytes: 48 + 2 * value.name.length, children: []};
   if (value instanceof ExceptionValue) return {bytes: 96 + 2 * (value.name.length + value.message.length) +
