@@ -64,6 +64,37 @@ class InterpreterTests(unittest.TestCase):
         self.assertNotIn('skipWaiting', worker)
         self.assertNotIn('https://', (self.output / receipt['launcher']).read_text())
 
+    def test_explicit_class_profile_receipts_config_and_cache_identity(self):
+        core = build_interpreter(self.source, self.engine, self.root / 'core')
+        selected = build_interpreter(self.source, self.engine, self.output, language_profile='classes-source/1')
+        self.assertEqual(selected['engine']['bytecode_version'], 5)
+        self.assertEqual(selected['engine']['language_profile'], 'classes-source/1')
+        self.assertEqual(selected['producer']['language_profile'], 'classes-source/1')
+        self.assertEqual(selected['engine']['fingerprint'], core['engine']['fingerprint'])
+        self.assertEqual(selected['capabilities'], core['capabilities'])
+        self.assertNotEqual(selected['cache_version'], core['cache_version'])
+        self.assertNotEqual(selected['application_manifest'], core['application_manifest'])
+        config = json.loads((self.output / selected['configuration']).read_bytes())
+        manifest = json.loads((self.output / selected['application_manifest']).read_bytes())
+        self.assertEqual(config['application']['engine']['bytecode_version'], 5)
+        self.assertEqual(config['application']['engine']['language_profile'], 'classes-source/1')
+        self.assertEqual(manifest['engine']['language_profile'], 'classes-source/1')
+        self.assertEqual(selected['size']['artifact_bytes'], sum(p.stat().st_size for p in self.output.rglob('*') if p.is_file()))
+        full = read_interpreter(ROOT / 'runtime', library_profile='operator/1')
+        receipt = build_interpreter(self.source, full, self.root / 'class-library', language_profile='classes-source/1')
+        self.assertEqual(receipt['library_profile']['id'], 'operator/1')
+        for invalid in ['unknown/1', None, True, [], {}]:
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ArtifactError, 'language profile'):
+                build_interpreter(self.source, self.engine, self.root / 'invalid', language_profile=invalid)
+        self.assertFalse((self.root / 'invalid').exists())
+
+    def test_class_language_cli_selects_an_explicit_known_profile(self):
+        self.assertEqual(main(['interpreter-web', str(self.source.root / 'CONSOLE-SOURCE.json'), '--engine', str(ROOT / 'runtime'),
+                               '--language-profile', 'classes-source/1', '--output', str(self.output)]), 0)
+        receipt = json.loads((self.output / 'POCKET-PYTHON.json').read_bytes())
+        self.assertEqual(receipt['engine']['language_profile'], 'classes-source/1')
+        self.assertEqual(receipt['engine']['bytecode_version'], 5)
+
     def test_engine_pin_refuses_changed_files_and_immutable_snapshot_forgery(self):
         root = self.root / 'engine'
         for name, data in self.engine.files:

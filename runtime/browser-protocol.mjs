@@ -2,6 +2,8 @@
 import {isSourceLocation} from "./library-selection.mjs";
 export const ENGINE = Object.freeze({implementation: "pocket-python-source", version: "1",
   backend: "javascript-vm", bytecode_version: 4, language_profile: "core-source/1"});
+export const LANGUAGE_ENGINES = Object.freeze({"core-source/1": ENGINE,
+  "classes-source/1": Object.freeze({...ENGINE, bytecode_version: 5, language_profile: "classes-source/1"})});
 export const CONSOLE_LIMITS = Object.freeze({message_bytes: 1048576, value_depth: 16,
   pending_requests: 1, subscriptions: 0, output_codepoints: 16384, response_bytes: 1048576,
   deadline_ms: 10000, source_bytes: 65536, compile_work: 4194304,
@@ -74,7 +76,8 @@ export function checkMessage(value, bounds = CONSOLE_LIMITS) {
 export function application(value) {
   if (!exact(value, ["manifest_sha256", "profile", "profile_version", "entrypoint", "engine"]) ||
       typeof value.manifest_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(value.manifest_sha256) || value.profile !== "in-house-interpreter" || value.profile_version !== 1 ||
-      value.entrypoint !== "sources/app.py" || !same(ENGINE, value.engine)) throw exception(failure("PROTOCOL", "Unsupported source application/engine identity."));
+      value.entrypoint !== "sources/app.py" || !record(value.engine) || !Object.hasOwn(LANGUAGE_ENGINES, value.engine.language_profile) ||
+      !same(LANGUAGE_ENGINES[value.engine.language_profile], value.engine)) throw exception(failure("PROTOCOL", "Unsupported source application/engine identity."));
   return structuredClone(value);
 }
 export function capabilities(value) {

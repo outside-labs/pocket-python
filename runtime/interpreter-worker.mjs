@@ -6,7 +6,7 @@ import {Peer, CONSOLE_LIMITS, application, capabilities, limits, record, exact, 
 
 // Ports make the same state machine usable by a browser Worker and unit tests.
 export function attachInterpreterWorker(port) {
-  let peer = null, state = "created", nextHost = 1, nextOutput = 1, active = null, output = null, selection = null;
+  let peer = null, state = "created", nextHost = 1, nextOutput = 1, active = null, output = null, selection = null, languageProfile = null;
   const dispose = () => {
     if (state === "closed") return;
     state = "closed"; if (active) active.cancelled = true;
@@ -36,7 +36,7 @@ export function attachInterpreterWorker(port) {
       const source = readText(message.arguments.source, peer.limits.source_bytes);
       sourceValue(source, peer.limits);
       const result = await compileSourceModules(profileModules(source, selection),
-      {entry: "app", maxBytes: peer.limits.source_bytes, maxWork: peer.limits.compile_work, shouldCancel: cancelled});
+      {entry: "app", languageProfile, maxBytes: peer.limits.source_bytes, maxWork: peer.limits.compile_work, shouldCancel: cancelled});
       registry = result.registry;
       if (state === "closed" || token.cancelled) throw exception(failure("CANCELLED", "Run cancelled.", "host", "HostError"));
       session = new ModuleSession(registry, {memoryLimits: {maxBytes: peer.limits.memory_bytes,
@@ -69,6 +69,7 @@ export function attachInterpreterWorker(port) {
       const extended = Object.hasOwn(message, "library_profile") || Object.hasOwn(message, "libraries");
       fields(message, ["application", "capabilities", "limits", ...(extended ? ["library_profile", "libraries"] : [])]);
       const identity = application(message.application), grants = capabilities(message.capabilities), bounds = limits(message.limits);
+      languageProfile = identity.engine.language_profile;
       if (!exact(message.limits, Object.keys(CONSOLE_LIMITS))) throw new Error("Explicit effective limits required.");
       peer.limits = bounds; state = "initializing";
       selection = await verifyLibraries(extended ? message.library_profile : "core-only/1", extended ? message.libraries : []);

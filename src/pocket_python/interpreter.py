@@ -18,6 +18,8 @@ from pocket_python.web import _publish
 
 ENGINE = {'implementation': 'pocket-python-source', 'version': '1', 'backend': 'javascript-vm',
           'bytecode_version': 4, 'language_profile': 'core-source/1'}
+LANGUAGE_ENGINES = {'core-source/1': ENGINE,
+                    'classes-source/1': {**ENGINE, 'bytecode_version': 5, 'language_profile': 'classes-source/1'}}
 LIMITS = {'message_bytes': 1048576, 'value_depth': 16, 'pending_requests': 1, 'subscriptions': 0,
           'output_codepoints': 16384, 'response_bytes': 1048576, 'deadline_ms': 10000,
           'source_bytes': 65536, 'compile_work': 4194304, 'execution_steps': 1000000,
@@ -147,7 +149,11 @@ def read_interpreter(root: str | Path, *, library_profile: str = 'core-only/1') 
 
 
 def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: str | Path,
-                      *, title: str = 'Pocket Python Console', host_profile: str = 'output-only/1') -> dict:
+                      *, title: str = 'Pocket Python Console', host_profile: str = 'output-only/1',
+                      language_profile: str = 'core-source/1') -> dict:
+    if not isinstance(language_profile, str) or language_profile not in LANGUAGE_ENGINES:
+        raise ArtifactError('Unavailable source language profile.')
+    language = dict(LANGUAGE_ENGINES[language_profile])
     manifest, source_files = _source_snapshot(source)
     engine_files = _engine_snapshot(engine)
     profile = _library_profile(engine.library_profile)
@@ -165,7 +171,7 @@ def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: 
 
     engine_root = 'engine/' + ENGINE_FINGERPRINT
     identity = {'kind': 'pocket-python-source-console', 'schema_version': 1,
-                'profile': 'in-house-interpreter', 'profile_version': 1, 'engine': {**ENGINE, 'fingerprint': ENGINE_FINGERPRINT},
+                'profile': 'in-house-interpreter', 'profile_version': 1, 'engine': {**language, 'fingerprint': ENGINE_FINGERPRINT},
                 'library_profile': profile, 'host_profile': host_profile,
                 'source': manifest['source'], 'notice': manifest['notice'], 'capabilities': [{'id': 'output/1'}], 'limits': LIMITS}
     identity_bytes = json_bytes(identity)
@@ -179,7 +185,7 @@ def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: 
                   **{key: file_record(engine_root + '/' + record[key]['path'], engine_files[record[key]['path']]) for key in ['source', 'notice']}}
                  for record in profile['modules']]
     config = {'application': {'manifest_sha256': hashlib.sha256(identity_bytes).hexdigest(), 'profile': 'in-house-interpreter',
-                             'profile_version': 1, 'entrypoint': 'sources/app.py', 'engine': ENGINE},
+                             'profile_version': 1, 'entrypoint': 'sources/app.py', 'engine': language},
               'library_profile': profile['id'], 'libraries': libraries, 'host_profile': host_profile,
               'source': file_record(source_path, files[source_path]), 'capabilities': identity['capabilities'], 'limits': LIMITS}
     config_bytes = json_bytes(config)
@@ -205,8 +211,8 @@ def build_interpreter(source: ConsoleSource, engine: InterpreterAssets, output: 
                'profile_version': 1, 'pocket_python_version': __version__, 'title': title, 'ui_profile': 'source-console/1',
                'entrypoint': {'path': source_path, 'kind': 'python-source'}, 'ui_entrypoint': 'index.html',
                'launcher': launcher_path, 'configuration': config_path, 'application_manifest': source_root + '/APPLICATION.json',
-               'engine': {**ENGINE, 'fingerprint': ENGINE_FINGERPRINT, 'entrypoint': engine_root + '/interpreter-worker.mjs'},
-               'producer': {'name': 'pocket-python', 'version': __version__, 'language_profile': 'core-source/1'},
+               'engine': {**language, 'fingerprint': ENGINE_FINGERPRINT, 'entrypoint': engine_root + '/interpreter-worker.mjs'},
+               'producer': {'name': 'pocket-python', 'version': __version__, 'language_profile': language_profile},
                'source_execution': True, 'input_mode': 'source', 'capabilities': identity['capabilities'], 'limits': LIMITS,
                'library_profile': {'id': profile['id'], 'fingerprint': profile['fingerprint']}, 'libraries': libraries, 'host_profile': host_profile,
                'sources': [{**file_record(source_path, files[source_path]), 'original_path': manifest['source']['path'], 'logical_path': 'sources/app.py'}] +

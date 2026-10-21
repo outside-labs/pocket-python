@@ -231,6 +231,12 @@
       "stage": "C1",
       "source": "class Caf\u00e9:\n def r\u00e9sum\u00e9(self): return 7\na=Caf\u00e9()\nprint(a.r\u00e9sum\u00e9(),Caf\u00e9.__name__)\n",
       "stdout": "7 Caf\u00e9\n"
+    },
+    {
+      "id": "enclosing-class-self-cell",
+      "stage": "C1",
+      "source": "def make():\n class A:\n  def f(self): return A\n return A\nA=make()\nprint(A().f() is A)\n",
+      "stdout": "True\n"
     }
   ]
 }

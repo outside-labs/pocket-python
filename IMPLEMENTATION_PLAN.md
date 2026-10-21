@@ -413,3 +413,19 @@ operator/1 adds 2,901 bytes overall. Compiled and supplied MicroPython artifact
 results retain their different runtime and shell boundaries. No general
 minimality, physical-memory bound or independent-engine release follows from
 these measurements. INT-09/INT-10 remain the application-alpha dependencies.
+
+### Class-source console checkpoint (2026-10-21)
+
+INT-09 now delivers its [C1 class foundation](docs/interpreter-classes.md) through
+the independent parser, verified bytecode 5 and offline browser console. Explicit
+classes-source/1 adds class bodies, C3 inheritance, attributes, bound methods and
+initialization; core-source/1 remains the bytecode-4 default. Thirty-nine
+CPython/source-refusal cases pass in Node/Chromium, with eleven dedicated console
+checks for profile identity, diagnostics, fresh state, offline new source,
+Stop/Restart and waiting updates that remove class/library selection together.
+The full engine is shared by both language profiles; host grants remain output-only.
+
+The [interpreter plan](IMPLEMENTATION_PLAN_INTERPRETER.md) retains C2 descriptors,
+decorators/private-name mangling and C3 individually adopted special methods
+before closing INT-09. INT-10 async, the separate C/Rust WebAssembly path and
+INT-REL-01 publication remain staged. Published package versions are unchanged.

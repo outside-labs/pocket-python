@@ -105,7 +105,7 @@ retain bases, namespaces, receivers and lexical function graphs. Growth and
 foreign-arena failures roll back mutations; cyclic graphs release with roots.
 Truth/identity and supported method equality remain distinct from deferred
 hashing and by-value transport. Core engine locks include the changed allocation
-layouts; class execution/source acceptance follow in separate stages.
+layouts; the execution and source integration below use the same layouts.
 
 ## Verified execution foundation
 
@@ -121,7 +121,7 @@ Hand-authored bytecode tests cover initialization/method execution, failure side
 effects and locations, malformed records and shared resource limits. The pinned
 console closure now includes the class runtime (twenty-one modules plus two
 notices), while core-source/1 still compiles bytecode 4 and refuses class syntax.
-Independent source and browser acceptance remain the next integration stages.
+The source and console integrations below retain these versioned records.
 
 ## Opt-in source execution
 
@@ -139,9 +139,45 @@ metadata overrides and later special methods refuse before application effects.
 The intrinsic object type is immutable. Class module metadata is text in C1.
 
 Run `python runtime/check_classes.py --target node` or `--target browser`.
-The expanded thirty-eight-case matrix checks C1 stdout/error types against
+The expanded thirty-nine-case matrix checks C1 stdout/error types against
 CPython and explicitly classifies later-stage refusals. Messages, repr addresses
 and generic object transport are not treated as compatible. Node tests also
 cover defining-module globals, shared object identity across imports, namespace/
 closure overlap, class-suite scope resets and compile/execution/C3 resource limits.
-The development console's explicit profile selection follows as its own stage.
+
+## Browser console selection
+
+From the checkout, build the class example and serve the generated directory:
+
+```sh
+uv run python -m examples.interpreter_classes
+python -m http.server 8000 --bind 127.0.0.1 --directory build/class-console
+```
+
+The editor identifies classes-source/1 and runs the Counter/StepCounter example.
+After **Offline ready on this device**, newly entered class source also executes
+offline. Each Run has fresh variables, classes and instances. Stop terminates a
+busy worker; Restart creates a fresh session with the editor text retained.
+
+For an existing CONSOLE-SOURCE.json selection, add
+`--language-profile classes-source/1` to `pocket-python interpreter-web`.
+The Python builder accepts `build_interpreter(..., language_profile='classes-source/1')`.
+Omitting the selection retains core-source/1 and bytecode 4. Unknown profiles and
+mismatched profile/bytecode identities fail explicitly; initialization and Ready
+bind the complete selected identity. Receipts, provenance, configuration and
+cache versions include that selection. Both profiles supply the same complete
+engine; this is a language selection, without component pruning.
+
+Language and library selection compose independently: core-only/1 or operator/1
+retain their reviewed sources, notices and output-only/1 host boundary. Classes
+gain no DOM, network, storage or file authority. Classes and bound methods remain
+inside each run's arena rather than crossing the host protocol.
+
+`python scripts/classes_console_browser_smoke.py` records five CPython source
+comparisons and six browser acceptance groups: explicit selection, source-located
+errors/refusal and fresh state, new class input after offline reload, busy-worker
+Stop/Restart, a waiting class-plus-library to core-only update, and local static
+GET-only execution. The old tab retains its selected language until closed; the
+new offline application refuses classes and removed imports before recovering
+with core source. CI retains this report and the Node/Chromium class corpus.
+C2/C3 and INT-09 remain open; this development checkpoint has no PyPI release.
