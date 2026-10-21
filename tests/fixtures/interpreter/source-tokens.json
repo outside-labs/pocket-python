@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "reference": {
+    "implementation": "CPython",
+    "version": "3.14"
+  },
+  "cases": [
+    {
+      "id": "unicode-names",
+      "source": "\u03c0=2\ncaf\u00e9=\u03c0+1\n\u53d8\u91cf=caf\u00e9\n\u212a=\u53d8\u91cf\n\ud835\udcf2\ud835\udc87=\u212a\nprint(\ud835\udcf2\ud835\udc87)\n"
+    },
+    {
+      "id": "combining-name",
+      "source": "cafe\u0301=3\nprint(caf\u00e9)\n"
+    },
+    {
+      "id": "tab-and-blank",
+      "source": "if True:\n\t# comment\n\tif False:\n\t\tpass\n\n\tpass\nx=1\n"
+    },
+    {
+      "id": "physical-lines",
+      "source": "value = (\n  [1, 2],\n  {3: 4}\n)\nvalue = 1 + \\\n   2\n"
+    },
+    {
+      "id": "line-endings",
+      "source": "if True:\r\n    x=1\r    y=2"
+    },
+    {
+      "id": "strings",
+      "source": "x='A\ud83d\ude00\\u0301'\ny=r'\\n'\nz=U'\\x61\\101\\U0001f600\\ud800'\nw='''first\nsecond'''\na='adjacent' 'text'\nb='a\\\nb'\n"
+    },
+    {
+      "id": "numbers",
+      "source": "x=(9007199254740993,0xff_ff,0o7_1,0b_101,00,0_00,1_000,.5,1.,1e-3,1_2.5_0e+2,1e309)\n"
+    },
+    {
+      "id": "trivia-and-empty",
+      "source": "\n# empty\n\n"
+    },
+    {
+      "id": "soft-keywords",
+      "source": "match=1\ncase=2\ntype=3\n"
+    },
+    {
+      "id": "utf8-bom",
+      "bytes": [
+        239,
+        187,
+        191,
+        120,
+        61,
+        49
+      ]
+    },
+    {
+      "id": "bad-tabs",
+      "source": "if True:\n\tpass\n        pass\n",
+      "code": "SYNTAX",
+      "type": "TabError"
+    },
+    {
+      "id": "bad-dedent",
+      "source": "if True:\n    pass\n  pass\n",
+      "code": "SYNTAX",
+      "type": "IndentationError"
+    },
+    {
+      "id": "unclosed",
+      "source": "x=(1\n",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "mismatched",
+      "source": "x=[1)\n",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "string-newline",
+      "source": "x='bad\n'",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "bad-hex",
+      "source": "'\\x1'",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "bad-unicode",
+      "source": "'\\U00110000'",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "bad-integer",
+      "source": "x=0b12",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "leading-zero",
+      "source": "x=01",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "null-byte",
+      "source": "#\u0000",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "lone-source-surrogate",
+      "source": "\ud800",
+      "code": "SYNTAX",
+      "type": "SyntaxError"
+    },
+    {
+      "id": "formatted-string",
+      "source": "f'{x}'",
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "byte-string",
+      "source": "b'data'",
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "template-string",
+      "source": "t'{x}'",
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "unicode-name",
+      "source": "'\\N{SNOWMAN}'",
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "complex",
+      "source": "2j",
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "invalid-utf8",
+      "bytes": [
+        237,
+        160,
+        128
+      ],
+      "code": "SYNTAX"
+    },
+    {
+      "id": "token-budget",
+      "source": "x=1",
+      "options": {
+        "maxTokens": 2
+      },
+      "code": "COMPILE_BUDGET"
+    },
+    {
+      "id": "byte-budget",
+      "source": "\u00e9",
+      "options": {
+        "maxBytes": 1
+      },
+      "code": "COMPILE_BUDGET"
+    },
+    {
+      "id": "depth-budget",
+      "source": "((1))",
+      "options": {
+        "maxDepth": 1
+      },
+      "code": "COMPILE_BUDGET"
+    },
+    {
+      "id": "work-budget",
+      "source": "#comment",
+      "options": {
+        "maxWork": 2
+      },
+      "code": "COMPILE_BUDGET"
+    },
+    {
+      "id": "indent-budget",
+      "source": "if True:\n  if True:\n    pass\n",
+      "options": {
+        "maxIndent": 1
+      },
+      "code": "COMPILE_BUDGET"
+    }
+  ]
+}
