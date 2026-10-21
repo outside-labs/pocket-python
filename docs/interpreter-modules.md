@@ -2,8 +2,9 @@
 
 INT-07 combines a verified module registry with version 4 bytecode execution.
 Node and browser workers use the same module/session implementation. Input is
-verified bytecode; trusted CPython AST lowering builds fixtures only. Independent
-source parsing remains INT-08. Published pocket-python 0.1.0 is unchanged.
+verified bytecode; trusted CPython AST lowering builds fixtures only. The independent
+[source front end](interpreter-source.md) now produces verified units from new
+source in Node/browser workers. Published pocket-python 0.2.0 excludes the engine.
 
 ## Registry schema 1
 
@@ -34,12 +35,13 @@ incorrectly sized files reject. There is no implicit host/package lookup.
 
 Bytecode passes the function/value verifier before validated fields enter a
 frozen serialized program snapshot. Sources are provenance, not proof that the
-bytecode was compiled from them. Independent compilation/receipts remain later
-work. Asset getters return defensive copies; records/programs keep stable frozen
+bytecode was compiled from them. The source front-end builder separately compiles its supplied source and
+records the generated identity; raw registry provenance alone is not proof. Asset getters return defensive copies; records/programs keep stable frozen
 identity within one registry. Sessions decode their own arena-owned values.
 
 Bounds are 64 modules, 256 files, 16 roots and 16 MiB total asset bytes. Individual
-bytecode/source/notice limits are 1 MiB, 256 KiB and 64 KiB. A module has at most
+bytecode/source/notice limits are 1 MiB, 256 KiB and 64 KiB. Empty source assets
+are valid provenance for empty modules; bytecode/notices must be nonempty. A module has at most
 64 import grants and 16 notices; version 3's function/value bounds also apply.
 
 Registry methods are record(name), program(name), asset(path), parents(name),
@@ -65,7 +67,7 @@ Version 4 adds these instructions to the existing function/value format:
 | --- | --- |
 | import(specifier, level, root) | Static import through the owning module's grants; returns the target or, for an unaliased dotted import, its root package. |
 | import-from(name) | Resolves an export or an explicitly granted declared child module. |
-| module-get(name) | Reads a module namespace export; arbitrary object/host attributes are unsupported. |
+| module-get(name) | Reads a module namespace export or the adopted bound list.append; arbitrary object/host attributes are unsupported. |
 
 Ordinary dotted imports request the root namespace; alias lowering then reads
 each namespace component, preserving package bindings that shadow submodules.
@@ -149,3 +151,9 @@ Node 24.19.0 and Chromium 156.0.8078.4 passed all 26 module cases against CPytho
 3.14.7. Native tests additionally cover retained cache identity, independent
 arenas, retries, cancellation, initialization depth, combined output limits,
 callback failures and closed sessions. CI retains both target reports.
+
+The `core-source/1` integration adds pinned Unicode 16 identifier operands,
+compiler-private local slots, version-4 in-place arithmetic and receiver-owned
+list.append. bool(0/1 arguments), iter(1) and next(1) join the named module builtin
+set. Version 3 retains its ASCII operands and rejects the new in-place opcodes.
+See the source profile for exact extension/repetition and unsupported call forms.

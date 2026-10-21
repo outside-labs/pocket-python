@@ -1,0 +1,707 @@
+{
+  "schema_version": 1,
+  "reference": {
+    "implementation": "CPython",
+    "version": "3.14"
+  },
+  "cases": [
+    {
+      "id": "empty",
+      "source": "",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "literal-precedence",
+      "source": "\u03c0=(1+2*3)\nprint(\u03c0,-7//3,-7%3,not 0==1,'a' '\ud83d\ude00')\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "unicode-closure",
+      "source": "cafe\u0301=3\ndef outer(\u03c0,/,*,\u53d8\u91cf=2):\n    caf\u00e9=\u03c0+\u53d8\u91cf\n    def middle():\n        def inner(\u212a=1):\n            return caf\u00e9+K\n        return inner\n    return middle\nprint(outer(4,\u53d8\u91cf=3)()(),caf\u00e9)\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "chain-order",
+      "source": "events=[]\n__source_t0=99\ndef mark(n):\n    events.append(n)\n    return n\nprint(mark(3)<mark(2)<mark(9),len(events),events[0],events[1],__source_t0)\nprint(mark(1)<mark(2)<mark(3),len(events))\nprint(0 and mark(9),1 or mark(8),4 if True else mark(7))\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "chain-identity-membership",
+      "source": "a=[]\nb=a\nprint(a is b is a, 1 not in [2,3], a is not [], 1 in [1] in [[1]])\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "item-write-order",
+      "source": "events=[]\na=[10]\ndef owner():\n    events.append(1)\n    return a\ndef key():\n    events.append(2)\n    return 0\ndef rhs():\n    events.append(3)\n    return 5\nowner()[key()]=rhs()\nprint(events[0],events[1],events[2],a[0])\nevents=[]\nowner()[key()]+=rhs()\nprint(events[0],events[1],events[2],a[0])\nx=a[0]=rhs()\nprint(x,a[0])\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "key-delete",
+      "source": "d={'a':1,'b':2}\ndel d['a']\nprint(len(d),d['b'])\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "slice",
+      "source": "s='A\ud83d\ude00bc'\nprint(s[::-1],s[1:3],s[:2],s[2:])\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "iterator-builtins",
+      "source": "values=[1,2]\nit=iter(values)\nprint(next(it),bool(values),bool(),bool(''))\nvalues.append(3)\nprint(next(it),next(it))\ntry:\n    next(it)\nexcept StopIteration:\n    print('done')\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "bound-append",
+      "source": "def make():\n    values=[]\n    def count():\n        return len(values)\n    return values.append,count\npair=make()\npair[0](7)\nprint(pair[1]())\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "prototype-names",
+      "source": "__proto__=5\nconstructor=6\ndef f(*,__proto__=7,constructor=8):\n    return __proto__+constructor\nprint(__proto__,constructor,f(),f(__proto__=1,constructor=2))\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "normalized-keyword-name",
+      "source": "\ud835\udcf2\ud835\udc87=7\nprint(\ud835\udcf2\ud835\udc87)\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "semicolon-suite",
+      "source": "def f(x): return x+1; print('unreachable')\nif True: x=1; y=2\nprint(f(x),y)\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "raw-triple-continuation",
+      "source": "value=(r'\\n' '\ud83d\ude00'\n       '''a\nb''')\nprint(len(value),value[2],value[-1])\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "if-elif-else",
+      "source": "n=2\nif n==1:\n    print('a')\nelif n==2:\n    print('b')\nelse:\n    print('c')\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "conditional-order",
+      "source": "def bad():\n    raise ValueError('wrong')\nprint(1 if True else bad(),bad() if False else 2,1 if False else 2 if True else 3)\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "loop-else-outer-break",
+      "source": "for x in [1,2]:\n    for y in []:\n        pass\n    else:\n        break\nelse:\n    print('wrong')\nprint(x)\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "comparison-error-then-retry",
+      "source": "try:\n    value=1<'bad'<3\nexcept TypeError:\n    print(1<2<3)\n",
+      "features": [
+        "source.grammar"
+      ],
+      "compare_message": false
+    },
+    {
+      "id": "unicode-source-error",
+      "source": "\u03c0=3\ndef caf\u00e9():\n    return \u03c0//0\ncaf\u00e9()\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "module-export-append",
+      "source": "",
+      "features": [
+        "source.grammar"
+      ],
+      "modules": {
+        "app": {
+          "source": "import helper\nprint(helper.append(8))\n"
+        },
+        "helper": {
+          "source": "def append(value):\n    return value+1\n"
+        }
+      }
+    },
+    {
+      "id": "empty-package",
+      "source": "",
+      "features": [
+        "source.grammar"
+      ],
+      "entry": "pkg.app",
+      "modules": {
+        "pkg": {
+          "source": "",
+          "package": true
+        },
+        "pkg.app": {
+          "source": "from .helper import value\nprint(value)\n"
+        },
+        "pkg.helper": {
+          "source": "value=7\n"
+        }
+      }
+    },
+    {
+      "id": "list-inplace-aliases",
+      "features": [
+        "source.augmented-assignment",
+        "value.identity"
+      ],
+      "source": "a=[1]\nb=a\na+=a\nprint(a is b,len(b),b[0],b[1])\na*=2\nprint(a is b,len(b))\na+=(3,4)\na+='\ud83d\ude00'\na+={'x':1}\nprint(len(a),a[-2],a[-1])\na*=0\nprint(a is b,len(b))\nx=[[1]]\nchild=x[0]\nx[0]+=[2]\nprint(child is x[0],len(child))\n"
+    },
+    {
+      "id": "private-temporary-module",
+      "source": "",
+      "features": [
+        "source.bindings",
+        "module.attributes"
+      ],
+      "modules": {
+        "app": {
+          "source": "import helper\ntry:\n    print(helper.__source_t0)\nexcept AttributeError:\n    print('private')\n"
+        },
+        "helper": {
+          "source": "try:\n    1 < 'bad' < 3\nexcept TypeError:\n    pass\n"
+        }
+      }
+    },
+    {
+      "id": "inplace-error-keeps-alias",
+      "source": "a=[1]\nb=a\ntry:\n    a*=1.5\nexcept TypeError:\n    print(a is b,len(a),a[0])\ntry:\n    a+=1\nexcept TypeError:\n    print(a is b,len(a),a[0])\n",
+      "features": [
+        "source.augmented-assignment",
+        "exception.identity"
+      ]
+    },
+    {
+      "id": "debug-constant",
+      "source": "print(__debug__)\n",
+      "features": [
+        "source.bindings"
+      ]
+    },
+    {
+      "id": "python314-unparenthesized-handlers",
+      "source": "try:\n    raise TypeError('handled')\nexcept ValueError, TypeError:\n    print('many')\ntry:\n    raise ValueError('handled')\nexcept ValueError,:\n    print('trailing')\n",
+      "features": [
+        "source.grammar",
+        "exception.handlers"
+      ]
+    },
+    {
+      "id": "relative-future-module",
+      "source": "",
+      "entry": "pkg.app",
+      "modules": {
+        "pkg": {
+          "source": "",
+          "package": true
+        },
+        "pkg.app": {
+          "source": "from .__future__ import value\nprint(value)\n"
+        },
+        "pkg.__future__": {
+          "source": "value=7\n"
+        }
+      },
+      "features": [
+        "source.grammar",
+        "module.relative"
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "id": "unsupported-class",
+      "source": "print('must not run')\nclass C: pass",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-async",
+      "source": "print('must not run')\nasync def f(): pass",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-starred-params",
+      "source": "print('must not run')\ndef f(*args): pass",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-starred-call",
+      "source": "print('must not run')\nf(*args)",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-lambda",
+      "source": "print('must not run')\nx=lambda:1",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-comprehension",
+      "source": "print('must not run')\nx=[n for n in []]",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-unpacking",
+      "source": "print('must not run')\na,b=(1,2)",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-set",
+      "source": "print('must not run')\nx={1,2}",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-power",
+      "source": "print('must not run')\nx=2**3",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-bitwise",
+      "source": "print('must not run')\nx=1<<2",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-global",
+      "source": "print('must not run')\nglobal x",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-nonlocal",
+      "source": "print('must not run')\ndef outer():\n    x=1\n    def inner():\n        nonlocal x\n",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-import-star",
+      "source": "print('must not run')\nfrom x import *",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-annotation",
+      "source": "print('must not run')\nx:int=1",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-parameter-annotation",
+      "source": "print('must not run')\ndef f(a:int): pass",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-mutable-default",
+      "source": "print('must not run')\ndef f(a=[]): pass",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-computed-default",
+      "source": "print('must not run')\ndef f(a=1+2): pass",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-exception-cause",
+      "source": "print('must not run')\nraise ValueError() from None",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-named-unicode",
+      "source": "print('must not run')\n'\\N{SNOWMAN}'",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-formatted-string",
+      "source": "print('must not run')\nf'{x}'",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-byte-string",
+      "source": "print('must not run')\nb'abc'",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-template-string",
+      "source": "print('must not run')\nt'{x}'",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-empty-handler",
+      "source": "print('must not run')\ntry:\n    pass\nexcept ():\n    pass\n",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    }
+  ],
+  "malformed_source": [
+    {
+      "id": "syntax-return",
+      "source": "return 1",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-break",
+      "source": "break",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-continue",
+      "source": "continue",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-if-colon",
+      "source": "if True print(1)",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-bad-def",
+      "source": "def f(:\n pass",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-expression",
+      "source": "x=(1+)",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-duplicate-keyword",
+      "source": "f(a=1,a=2)",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-pos-after-key",
+      "source": "f(a=1,2)",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-incomplete-try",
+      "source": "try:\n pass\n",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-required-after-default",
+      "source": "def f(a=1,b):\n pass",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-bare-star",
+      "source": "def f(*):\n pass",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-duplicate-param",
+      "source": "def f(a,a):\n pass",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-assign-keyword",
+      "source": "None=1",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-bad-indent",
+      "source": "if True:\n    pass\n  pass\n",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "debug-assignment",
+      "source": "__debug__=1",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "debug-param",
+      "source": "def f(__debug__): pass",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "debug-definition",
+      "source": "def __debug__(): pass",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "bad-import-star",
+      "source": "import *",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "unparenthesized-handler-alias",
+      "source": "try:\n    pass\nexcept ValueError, TypeError as e:\n    pass\n",
+      "code": "SYNTAX",
+      "features": [
+        "source.syntax-error"
+      ]
+    }
+  ],
+  "limits": [
+    {
+      "id": "source-steps",
+      "source": "while True:\n    pass\n",
+      "features": [
+        "source.resources"
+      ],
+      "options": {
+        "maxSteps": 40
+      },
+      "code": "BUDGET"
+    },
+    {
+      "id": "parse-nodes",
+      "source": "x=1+2\n",
+      "features": [
+        "source.resources"
+      ],
+      "compileOptions": {
+        "maxNodes": 2
+      },
+      "code": "COMPILE_BUDGET"
+    },
+    {
+      "id": "parse-depth",
+      "source": "x=[[[1]]]\n",
+      "features": [
+        "source.resources"
+      ],
+      "compileOptions": {
+        "maxParseDepth": 2
+      },
+      "code": "COMPILE_BUDGET"
+    },
+    {
+      "id": "compile-work",
+      "source": "print(1)\n",
+      "features": [
+        "source.resources"
+      ],
+      "compileOptions": {
+        "maxWork": 30
+      },
+      "code": "COMPILE_BUDGET"
+    },
+    {
+      "id": "compile-constants",
+      "source": "x=0\nx=1\nx=2\nx=3\nx=4\nx=5\nx=6\nx=7\nx=8\nx=9\nx=10\nx=11\nx=12\nx=13\nx=14\nx=15\nx=16\nx=17\nx=18\nx=19\nx=20\nx=21\nx=22\nx=23\nx=24\nx=25\nx=26\nx=27\nx=28\nx=29\nx=30\nx=31\nx=32\nx=33\nx=34\nx=35\nx=36\nx=37\nx=38\nx=39\nx=40\nx=41\nx=42\nx=43\nx=44\nx=45\nx=46\nx=47\nx=48\nx=49\nx=50\nx=51\nx=52\nx=53\nx=54\nx=55\nx=56\nx=57\nx=58\nx=59\nx=60\nx=61\nx=62\nx=63\nx=64\nx=65\nx=66\nx=67\nx=68\nx=69\nx=70\nx=71\nx=72\nx=73\nx=74\nx=75\nx=76\nx=77\nx=78\nx=79\nx=80\nx=81\nx=82\nx=83\nx=84\nx=85\nx=86\nx=87\nx=88\nx=89\nx=90\nx=91\nx=92\nx=93\nx=94\nx=95\nx=96\nx=97\nx=98\nx=99\nx=100\nx=101\nx=102\nx=103\nx=104\nx=105\nx=106\nx=107\nx=108\nx=109\nx=110\nx=111\nx=112\nx=113\nx=114\nx=115\nx=116\nx=117\nx=118\nx=119\nx=120\nx=121\nx=122\nx=123\nx=124\nx=125\nx=126\nx=127\nx=128\nx=129\nx=130\nx=131\nx=132\nx=133\nx=134\nx=135\nx=136\nx=137\nx=138\nx=139\nx=140\nx=141\nx=142\nx=143\nx=144\nx=145\nx=146\nx=147\nx=148\nx=149\nx=150\nx=151\nx=152\nx=153\nx=154\nx=155\nx=156\nx=157\nx=158\nx=159\nx=160\nx=161\nx=162\nx=163\nx=164\nx=165\nx=166\nx=167\nx=168\nx=169\nx=170\nx=171\nx=172\nx=173\nx=174\nx=175\nx=176\nx=177\nx=178\nx=179\nx=180\nx=181\nx=182\nx=183\nx=184\nx=185\nx=186\nx=187\nx=188\nx=189\nx=190\nx=191\nx=192\nx=193\nx=194\nx=195\nx=196\nx=197\nx=198\nx=199\nx=200\nx=201\nx=202\nx=203\nx=204\nx=205\nx=206\nx=207\nx=208\nx=209\nx=210\nx=211\nx=212\nx=213\nx=214\nx=215\nx=216\nx=217\nx=218\nx=219\nx=220\nx=221\nx=222\nx=223\nx=224\nx=225\nx=226\nx=227\nx=228\nx=229\nx=230\nx=231\nx=232\nx=233\nx=234\nx=235\nx=236\nx=237\nx=238\nx=239\nx=240\nx=241\nx=242\nx=243\nx=244\nx=245\nx=246\nx=247\nx=248\nx=249\nx=250\nx=251\nx=252\nx=253\nx=254\nx=255\nx=256",
+      "features": [
+        "source.resources"
+      ],
+      "code": "COMPILE_BUDGET"
+    },
+    {
+      "id": "source-oom",
+      "source": "values=[]\nwhile len(values)<1000:\n    values.append(1)\n",
+      "features": [
+        "source.resources"
+      ],
+      "memoryLimits": {
+        "maxBytes": 6000
+      },
+      "code": "OOM"
+    },
+    {
+      "id": "bool-extra-args",
+      "source": "bool(1,2)\n",
+      "features": [
+        "source.resources"
+      ],
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "iter-sentinel",
+      "source": "iter(print,None)\n",
+      "features": [
+        "source.resources"
+      ],
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "next-default",
+      "source": "next(iter([]),1)\n",
+      "features": [
+        "source.resources"
+      ],
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "list-repeat-factor",
+      "source": "a=[]\na*=1025\n",
+      "code": "BUDGET",
+      "features": [
+        "source.resources"
+      ]
+    },
+    {
+      "id": "list-inplace-iterator",
+      "source": "a=[]\na+=iter([1])\n",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "future-directive",
+      "source": "from __future__ import annotations\nprint('must not execute')\n",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "normalized-constant-name",
+      "source": "\ud835\udce3\ud835\udcfb\ud835\udcfe\ud835\udcee=1\n",
+      "code": "UNSUPPORTED",
+      "features": [
+        "source.feature-boundary"
+      ]
+    }
+  ]
+}

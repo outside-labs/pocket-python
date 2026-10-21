@@ -1,12 +1,10 @@
 // Independent, bounded Python source scanning; no host parser or evaluation.
-import {isIdentifierStart, isIdentifierContinue} from "./source-identifiers.mjs";
+import {isIdentifierStart, isIdentifierContinue, isPythonIdentifier} from "./source-identifiers.mjs";
 export const SOURCE_LIMITS = Object.freeze({bytes: 262144, tokens: 32768, depth: 64,
   indents: 64, work: 4194304, digits: 4096, text: 65536, identifier: 64});
 const startsIdentifier = value => value.length > 0 && isIdentifierStart(value.codePointAt(0));
 const continuesIdentifier = value => value.length > 0 && isIdentifierContinue(value.codePointAt(0));
-export const isIdentifier = value => typeof value === "string" && value.length > 0 && value.length <= 128 &&
-  Array.from(value).length <= SOURCE_LIMITS.identifier && value.normalize("NFKC") === value &&
-  Array.from(value).every((char, index) => (index ? isIdentifierContinue : isIdentifierStart)(char.codePointAt(0)));
+export const isIdentifier = isPythonIdentifier;
 const KEYWORDS = new Set(("False None True and as assert async await break class continue def del elif else " +
   "except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield").split(" "));
 const OPERATORS = ["**=", "//=", "<<=", ">>=", "...", "==", "!=", "<=", ">=", ":=", "->", "**", "//", "<<", ">>",

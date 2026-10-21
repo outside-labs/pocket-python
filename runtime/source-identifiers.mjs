@@ -205,3 +205,8 @@ function contains(ranges, point) {
 }
 export const isIdentifierStart = point => contains(START, point);
 export const isIdentifierContinue = point => contains(CONTINUE, point);
+export function isPythonIdentifier(value) {
+  if (typeof value !== "string" || !value || value.length > 128 || value.normalize("NFKC") !== value) return false;
+  const points = Array.from(value, char => char.codePointAt(0));
+  return points.length <= 64 && points.every((point, index) => (index ? isIdentifierContinue : isIdentifierStart)(point));
+}

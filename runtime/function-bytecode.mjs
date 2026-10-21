@@ -1,9 +1,11 @@
 import {verify, BytecodeError} from "./bytecode.mjs";
 import {EXCEPTIONS} from "./function-objects.mjs";
+import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const FUNCTION_LIMITS = Object.freeze({functions: 128, blocks: 512, instructions: 4096,
   names: 128, depth: 32, stack: 256});
 const BINARY = new Set(["add", "subtract", "multiply", "floor-divide", "modulo", "divide",
+  "inplace-add", "inplace-subtract", "inplace-multiply", "inplace-floor-divide", "inplace-modulo", "inplace-divide",
   "equal", "not-equal", "less", "less-equal", "greater", "greater-equal", "is", "contains", "getitem", "append", "dict-delete"]);
 const UNARY = new Set(["truth", "not", "len", "negative", "positive", "iter", "next"]);
 const CONSTRUCT = new Set(["build-list", "build-tuple", "build-dict"]);
@@ -17,8 +19,8 @@ function sourceSpan(span) {
     span[2] < span[0] || (span[2] === span[0] && span[3] < span[1])) fail("Invalid source span.");
   return Object.freeze([...span]);
 }
-function names(value) {
-  if (!Array.isArray(value) || value.length > FUNCTION_LIMITS.names || !Array.from(value).every(name) ||
+function names(value, validName = name) {
+  if (!Array.isArray(value) || value.length > FUNCTION_LIMITS.names || !Array.from(value).every(validName) ||
       new Set(value).size !== value.length) fail("Names require a bounded unique identifier array.");
   return Object.freeze([...value]);
 }
@@ -32,15 +34,18 @@ export function verifyFunctions(program) {
       !integer(program.functions.length - 1, FUNCTION_LIMITS.functions - 1)) fail("Expected bounded pocket-python-bytecode version 3 or 4 functions.");
   const constants = verify({format: program.format, version: 2, constants: program.constants,
     instructions: [["build-tuple", 0], ["return"]]}).constants;
+  const validName = program.version === 4 ? isPythonIdentifier : name;
+  const privateName = value => program.version === 4 && typeof value === "string" && /^@source:[0-9]{1,5}$/.test(value);
+  const storageName = value => validName(value) || privateName(value);
   let count = 0, blockCount = 0;
   const functions = Array.from(program.functions, (fn, functionIndex) => {
     fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks"]);
-    if (!(fn.name === "<module>" && functionIndex === 0) && !name(fn.name)) fail("Invalid function name.");
+    if (!(fn.name === "<module>" && functionIndex === 0) && !validName(fn.name)) fail("Invalid function name.");
     if (typeof fn.qualname !== "string" || !fn.qualname || fn.qualname.length > 256) fail("Invalid qualified function name.");
     fields(fn.params, ["posonly", "positional", "kwonly", "defaults", "kwdefaults"]);
-    const params = Object.fromEntries(["posonly", "positional", "kwonly"].map(key => [key, names(fn.params[key])]));
+    const params = Object.fromEntries(["posonly", "positional", "kwonly"].map(key => [key, names(fn.params[key], validName)]));
     const allParams = [...params.posonly, ...params.positional, ...params.kwonly];
-    const locals = names(fn.locals), free = names(fn.free);
+    const locals = names(fn.locals, storageName), free = names(fn.free, validName);
     if (new Set(allParams).size !== allParams.length || allParams.length > FUNCTION_LIMITS.names ||
         allParams.some(key => !locals.includes(key)) || free.some(key => locals.includes(key))) fail("Parameter, local and free names conflict.");
     if (!Array.isArray(fn.params.defaults) || fn.params.defaults.length > params.posonly.length + params.positional.length ||
@@ -66,6 +71,7 @@ export function verifyFunctions(program) {
       const edges = [], instructions = Array.from(block.instructions, instruction => {
         if (!Array.isArray(instruction)) fail("Instruction requires an array.");
         const [op, arg, extra] = instruction;
+        if (program.version !== 4 && typeof op === "string" && op.startsWith("inplace-")) fail("In-place operations require version 4.");
         let length = 1;
         const blockRef = (id, kind) => {
           if (!integer(id, fn.blocks.length - 1) || fn.blocks[id]?.kind !== kind) fail("Block reference has the wrong index or kind.");
@@ -74,7 +80,9 @@ export function verifyFunctions(program) {
         if (op === "const") { length = 2; if (!integer(arg, constants.length - 1)) fail("Constant outside pool."); }
         else if (["load", "store", "delete"].includes(op) || (program.version === 4 && ["module-get", "import-from"].includes(op))) {
           length = 2;
-          if (!name(arg) || (["store", "delete"].includes(op) && !locals.includes(arg))) fail("Store/delete requires a declared local.");
+          const storage = ["load", "store", "delete"].includes(op);
+          if (!(storage ? storageName(arg) : validName(arg)) || (storage && privateName(arg) && !locals.includes(arg)) ||
+              (["store", "delete"].includes(op) && !locals.includes(arg))) fail("Store/delete requires a declared local.");
         } else if (program.version === 4 && op === "import") {
           length = 4;
           if (typeof arg !== "string" || arg.length > 192 || (!arg && !extra) ||
@@ -82,7 +90,7 @@ export function verifyFunctions(program) {
               !integer(extra, 32) || typeof instruction[3] !== "boolean" || (extra && instruction[3])) fail("Invalid static import operands.");
         } else if (op === "function") { length = 2; if (!integer(arg, program.functions.length - 1) || arg === 0) fail("Invalid function reference."); }
         else if (op === "call") {
-          length = 3; if (!integer(arg, FUNCTION_LIMITS.names)) fail("Invalid positional argument count."); names(extra);
+          length = 3; if (!integer(arg, FUNCTION_LIMITS.names)) fail("Invalid positional argument count."); names(extra, validName);
         } else if (CONSTRUCT.has(op)) { length = 2; if (!integer(arg, 1024)) fail("Invalid container item count."); }
         else if (["jump", "jump-if-false"].includes(op)) { length = 2; if (!integer(arg, block.instructions.length - 1)) fail("Jump outside current block."); }
         else if (op === "if") { length = 3; blockRef(arg, "statement"); blockRef(extra, "statement"); }

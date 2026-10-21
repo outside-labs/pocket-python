@@ -53,3 +53,18 @@ separate round-trip tests. Function/parser cases remain unsupported.
 the verified engine and differential corpus. Select `--engine vm3` and run
 `runtime/check_functions.py` on both Node and browser targets. Bytecode fixtures
 still require build-time lowering; independent source parsing remains INT-08.
+
+## Independent source execution
+
+Select `--engine source` for `pocket-python-source/1`. Its Node runner and browser
+worker accept supplied source registries and run our tokenizer/parser/binder/
+bytecode compiler plus VM locally. No CPython bytecode or prepared AST enters
+those workers. CPython remains the test oracle. Source JSON, module/notice and
+generated-bytecode hashes, input/tool digests, source traces and teardown counts
+are retained; reports explicitly set `source_execution: true`. Additional source
+builtin/operator fixtures remain listed as deferred. Negative syntax/features
+and hard limits are verified outcomes, distinct from successful language execution.
+
+The separate `check_source_tokens.py` reports lexical-only comparisons with
+`source_execution: false`. The older vm1/vm2/vm3/vm4 fixtures retain their input
+profiles; adding a source front end does not make fixture runs source execution.

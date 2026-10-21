@@ -24,9 +24,9 @@ function path(value) {
       value.split("/").some(part => !part || part === "." || part === "..") || value.startsWith("/")) fail("Registry paths must be safe relative paths.");
   return value;
 }
-function descriptor(value, maximum) {
+function descriptor(value, maximum, allowEmpty = false) {
   fields(value, ["path", "size_bytes", "sha256"]);
-  if (!Number.isSafeInteger(value.size_bytes) || value.size_bytes < 1 || value.size_bytes > maximum ||
+  if (!Number.isSafeInteger(value.size_bytes) || value.size_bytes < (allowEmpty ? 0 : 1) || value.size_bytes > maximum ||
       typeof value.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(value.sha256)) fail("Invalid asset size or SHA-256.");
   return Object.freeze({path: path(value.path), size_bytes: value.size_bytes, sha256: value.sha256});
 }
@@ -105,7 +105,7 @@ export async function verifyRegistry(manifest, suppliedAssets) {
   if (!(suppliedAssets instanceof Map) || suppliedAssets.size > REGISTRY_LIMITS.files) fail("Assets require a bounded path-to-byte Map.");
   const assets = new Map(), descriptors = new Map(), records = new Map();
   const declare = (value, role, maximum) => {
-    const item = descriptor(value, maximum), previous = descriptors.get(item.path);
+    const item = descriptor(value, maximum, role === "source"), previous = descriptors.get(item.path);
     if (previous && (role !== "notice" || previous.role !== "notice" || previous.item.sha256 !== item.sha256 ||
         previous.item.size_bytes !== item.size_bytes)) fail("Conflicting asset identities or roles.");
     descriptors.set(item.path, {item, role});

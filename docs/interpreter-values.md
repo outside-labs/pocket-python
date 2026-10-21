@@ -124,3 +124,8 @@ aliases, mutation, dictionary keys/order and iterators. Negative cases cover
 unknown/mutable constants, invalid code points, depth, stack effects, deferred
 operations and growth/work limits. Functions/scopes, exception unwinding and
 malformed source remain visibly unsupported in the report.
+
+The independent [source profile](interpreter-source.md) adopts receiver-owned
+list.append and in-place list extension/repetition with explicit bounds. These
+use the same arena edges and mutation accounting. Ordinary binary sequence
+repetition remains deferred; this is a named source-profile extension.
