@@ -239,3 +239,13 @@ Python calls/closure cells and exception handlers remain INT-06; this milestone
 provides and tests their root/scope ownership primitives. Accounting describes
 defined logical byte costs, not process RSS or actual host collection timing.
 No runtime dependency, package release or backend/toolchain choice changed.
+
+
+INT-06 adds [version 3 functions, scopes and exception unwinding](docs/interpreter-functions.md).
+It implements iterative call frames, positional/keyword/default binding, rooted
+lexical cells and closures, recursion, structured loop/try/except/else/finally
+completion and source-located traceback propagation. CPython differential and
+resource cases run in Node and Chromium, with remaining boundaries recorded.
+Fixtures use trusted build-time AST lowering; independent source parsing remains
+INT-08. Explicit modules and the small named library follow in INT-07. Published
+artifacts are unchanged.

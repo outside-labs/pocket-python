@@ -47,3 +47,9 @@ None, float/Unicode, tuples/lists/dicts and iteration. Both targets use tagged
 values with float bits, code-point arrays and ordered dictionary entries. NaN
 arithmetic is compared with a canonical payload; retained input NaN bits have
 separate round-trip tests. Function/parser cases remain unsupported.
+
+
+[Version 3 functions and exception unwinding](interpreter-functions.md) extend
+the verified engine and differential corpus. Select `--engine vm3` and run
+`runtime/check_functions.py` on both Node and browser targets. Bytecode fixtures
+still require build-time lowering; independent source parsing remains INT-08.

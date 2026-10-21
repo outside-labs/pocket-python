@@ -59,6 +59,8 @@ jobs:
       - run: uv run --no-sync python runtime/check_conformance.py --target browser --report build/interpreter-browser-report.json
       - run: uv run --no-sync python runtime/check_conformance.py --engine vm1 --target browser --report build/vm1-browser-report.json
       - run: uv run --no-sync python runtime/check_conformance.py --engine vm2 --target browser --report build/vm2-browser-report.json
+      - run: uv run --no-sync python runtime/check_conformance.py --engine vm3 --target browser --report build/vm3-browser-report.json
+      - run: uv run --no-sync python runtime/check_functions.py --target browser --report build/functions-browser-report.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:
@@ -83,10 +85,13 @@ jobs:
       - run: node --test runtime/vm.test.mjs
       - run: node --test runtime/values.test.mjs
       - run: node --test runtime/memory.test.mjs
+      - run: node --test runtime/functions.test.mjs
       - run: python runtime/check_memory.py --report build/memory-node-report.json
       - run: python runtime/check_conformance.py --report build/interpreter-node-report.json
       - run: python runtime/check_conformance.py --engine vm1 --report build/vm1-node-report.json
       - run: python runtime/check_conformance.py --engine vm2 --report build/vm2-node-report.json
+      - run: python runtime/check_conformance.py --engine vm3 --report build/vm3-node-report.json
+      - run: python runtime/check_functions.py --report build/functions-node-report.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:

@@ -64,3 +64,9 @@ fallthrough, digit limits and bounded loops exercise the verifier and budgets.
 [Bytecode version 2](interpreter-values.md) extends this verifier with explicit
 core values, container construction/mutation, indexing/slicing and iteration.
 Version 1 retains the integer-only format described above.
+
+
+[Version 3 functions and exception unwinding](interpreter-functions.md) extend
+the verified engine and differential corpus. Select `--engine vm3` and run
+`runtime/check_functions.py` on both Node and browser targets. Bytecode fixtures
+still require build-time lowering; independent source parsing remains INT-08.

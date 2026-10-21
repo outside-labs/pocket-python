@@ -1,5 +1,6 @@
 import {MemoryArena, ResourceError} from "./memory.mjs";
 import {execute} from "./vm.mjs";
+import {execute as executeFunctions} from "./functions.mjs";
 import {encodeValue} from "./values.mjs";
 
 export class HostHandles {
@@ -78,7 +79,8 @@ export class InterpreterSession {
   }
   run(program, options = {}) {
     this.handles.active();
-    const lease = execute(program, {...options, arena: this.memory, retainResult: true});
+    const run = program?.version === 3 ? executeFunctions : execute;
+    const lease = run(program, {...options, arena: this.memory, retainResult: true});
     return this.handles.adoptValue(lease);
   }
   read(handle) { return encodeValue(this.handles.resolve(handle, {owner: "worker", kind: "python.value"})); }

@@ -1,0 +1,422 @@
+{
+  "schema_version": 1,
+  "reference": "CPython 3.14",
+  "cases": [
+    {
+      "id": "bindings",
+      "features": [
+        "function.arguments",
+        "function.defaults"
+      ],
+      "source": "def f(a, /, b=2, *, c=3):\n    return a*100 + b*10 + c\nprint(f(1), f(1, c=7, b=4), f(1, 8, c=9))\n"
+    },
+    {
+      "id": "tuple-default-identity",
+      "features": [
+        "function.defaults",
+        "value.identity"
+      ],
+      "source": "def f(value=(1, 'x')):\n    return value\nprint(f() is f())\n"
+    },
+    {
+      "id": "global-read-late",
+      "features": [
+        "scope.global"
+      ],
+      "source": "value=1\ndef f():\n    return value\nvalue=9\nprint(f())\n"
+    },
+    {
+      "id": "local-shadows",
+      "features": [
+        "scope.local"
+      ],
+      "source": "value=9\ndef f():\n    value=2\n    return value\nprint(f(), value)\n"
+    },
+    {
+      "id": "unbound-local",
+      "features": [
+        "scope.local"
+      ],
+      "source": "value=9\ndef f():\n    print(value)\n    value=2\nf()\n"
+    },
+    {
+      "id": "unbound-free",
+      "features": [
+        "scope.closure"
+      ],
+      "source": "def f():\n    def g():\n        return value\n    g()\n    value=2\nf()\n"
+    },
+    {
+      "id": "late-closure-cell",
+      "features": [
+        "scope.closure"
+      ],
+      "source": "def f():\n    value=1\n    def g():\n        return value\n    value=4\n    return g\nprint(f()())\n"
+    },
+    {
+      "id": "transitive-capture",
+      "features": [
+        "scope.closure"
+      ],
+      "source": "def outer(value):\n    def middle():\n        def inner():\n            return value\n        return inner\n    return middle\nprint(outer(7)()())\n"
+    },
+    {
+      "id": "closure-alias-mutation",
+      "features": [
+        "scope.closure",
+        "container.mutation"
+      ],
+      "source": "def outer():\n    values=[]\n    def add(value):\n        values.append(value)\n        return values\n    return add\nf=outer()\na=f(1)\nb=f(2)\nprint(a is b, len(a), a[1])\n"
+    },
+    {
+      "id": "recursive-factorial",
+      "features": [
+        "function.recursion"
+      ],
+      "source": "def fact(n):\n    if n < 2:\n        return 1\n    return n*fact(n-1)\nprint(fact(12))\n"
+    },
+    {
+      "id": "recursive-local-function",
+      "features": [
+        "function.recursion",
+        "scope.closure"
+      ],
+      "source": "def outer():\n    def fact(n):\n        if n < 2:\n            return 1\n        return n*fact(n-1)\n    return fact\nprint(outer()(8))\n"
+    },
+    {
+      "id": "mutual-recursion",
+      "features": [
+        "function.recursion",
+        "scope.global"
+      ],
+      "source": "def odd(n):\n    if n == 0:\n        return False\n    return even(n-1)\ndef even(n):\n    if n == 0:\n        return True\n    return odd(n-1)\nprint(odd(7), even(8))\n"
+    },
+    {
+      "id": "argument-evaluation-order",
+      "features": [
+        "function.arguments",
+        "control.order"
+      ],
+      "source": "def mark(n):\n    print(n)\n    return n\ndef f(a,b,c):\n    return a+b+c\nprint(f(mark(1), c=mark(3), b=mark(2)))\n"
+    },
+    {
+      "id": "binding-error-side-effects",
+      "features": [
+        "function.arguments",
+        "control.order"
+      ],
+      "source": "def mark(n):\n    print(n)\n    return n\ndef f(a):\n    return a\nf(mark(1), a=mark(2))\n"
+    },
+    {
+      "id": "missing-positional",
+      "features": [
+        "function.arguments"
+      ],
+      "source": "def f(a, /, b=2):\n    return a+b\ndef g(a, *, b):\n    return a+b\nf()\n"
+    },
+    {
+      "id": "too-many-positional",
+      "features": [
+        "function.arguments"
+      ],
+      "source": "def f(a, /, b=2):\n    return a+b\ndef g(a, *, b):\n    return a+b\nf(1,2,3)\n"
+    },
+    {
+      "id": "unknown-keyword",
+      "features": [
+        "function.arguments"
+      ],
+      "source": "def f(a, /, b=2):\n    return a+b\ndef g(a, *, b):\n    return a+b\nf(1, thing=2)\n"
+    },
+    {
+      "id": "posonly-keyword",
+      "features": [
+        "function.arguments"
+      ],
+      "source": "def f(a, /, b=2):\n    return a+b\ndef g(a, *, b):\n    return a+b\nf(a=1)\n"
+    },
+    {
+      "id": "missing-keyword-only",
+      "features": [
+        "function.arguments"
+      ],
+      "source": "def f(a, /, b=2):\n    return a+b\ndef g(a, *, b):\n    return a+b\ng(1)\n"
+    },
+    {
+      "id": "non-callable",
+      "features": [
+        "function.arguments"
+      ],
+      "source": "value=1\nvalue()\n",
+      "compare_message": false
+    },
+    {
+      "id": "implicit-return",
+      "features": [
+        "function.value"
+      ],
+      "source": "def f():\n    pass\nprint(f())\n"
+    },
+    {
+      "id": "nested-return-finally",
+      "features": [
+        "exception.unwind",
+        "control.order"
+      ],
+      "source": "def f():\n    try:\n        try:\n            print('body')\n            return 1\n        finally:\n            print('inner')\n    finally:\n        print('outer')\nprint(f())\n"
+    },
+    {
+      "id": "finally-return-overrides",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "def f():\n    try:\n        return 1\n    finally:\n        return 2\nprint(f())\n"
+    },
+    {
+      "id": "finally-handled-error-return",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "def f():\n    try:\n        raise ValueError('discarded')\n    finally:\n        return 4\nprint(f())\n"
+    },
+    {
+      "id": "finally-error-overrides",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "def f():\n    try:\n        raise ValueError('first')\n    finally:\n        raise TypeError('second')\nf()\n"
+    },
+    {
+      "id": "handler-else-finally",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "def f(fail):\n    try:\n        print('body')\n        if fail:\n            raise ValueError('bad')\n    except ValueError as error:\n        print(str(error))\n    else:\n        print('else')\n    finally:\n        print('finally')\nf(False)\nf(True)\n"
+    },
+    {
+      "id": "else-error-not-caught",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "try:\n    print('body')\nexcept ValueError:\n    print('wrong')\nelse:\n    raise ValueError('else')\nfinally:\n    print('finally')\n"
+    },
+    {
+      "id": "handler-subclass-tuple",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "try:\n    1//0\nexcept (LookupError, ArithmeticError) as error:\n    print(str(error))\n"
+    },
+    {
+      "id": "alias-cleared-local",
+      "features": [
+        "exception.unwind",
+        "scope.local"
+      ],
+      "source": "def f():\n    error=3\n    try:\n        raise ValueError('bad')\n    except Exception as error:\n        print(str(error))\n    return error\nf()\n"
+    },
+    {
+      "id": "alias-closure-cleared",
+      "features": [
+        "exception.unwind",
+        "scope.closure"
+      ],
+      "source": "def f():\n    try:\n        raise ValueError('bad')\n    except ValueError as error:\n        def capture():\n            return error\n    return capture\nf()()\n"
+    },
+    {
+      "id": "bare-reraise",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "def f():\n    try:\n        raise ValueError('bad')\n    except ValueError:\n        print('caught')\n        raise\nf()\n"
+    },
+    {
+      "id": "bare-reraise-from-call",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "def again():\n    raise\ntry:\n    raise ValueError('bad')\nexcept ValueError:\n    again()\n"
+    },
+    {
+      "id": "bare-reraise-no-active",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "raise\n"
+    },
+    {
+      "id": "exception-context",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "try:\n    raise ValueError('first')\nexcept ValueError:\n    raise TypeError('second')\n"
+    },
+    {
+      "id": "traceback-three-frames",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "def inner():\n    return 1//0\ndef middle():\n    return inner()\ndef outer():\n    return middle()\nouter()\n"
+    },
+    {
+      "id": "raise-class",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "raise ValueError\n"
+    },
+    {
+      "id": "raise-non-exception",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "raise 1\n"
+    },
+    {
+      "id": "loop-unwind",
+      "features": [
+        "control.loop",
+        "exception.unwind"
+      ],
+      "source": "def f():\n    for n in [1,2,3]:\n        try:\n            if n == 1:\n                continue\n            if n == 2:\n                break\n        finally:\n            print(n)\n    else:\n        print('wrong')\n    i=0\n    while i < 2:\n        try:\n            i += 1\n            continue\n        finally:\n            print(i)\n    else:\n        print('done')\nf()\n"
+    },
+    {
+      "id": "nested-loop-break-finally",
+      "features": [
+        "control.loop",
+        "exception.unwind"
+      ],
+      "source": "for a in [1,2]:\n    for b in [3,4]:\n        try:\n            break\n        finally:\n            print(a,b)\n    else:\n        print('wrong')\nelse:\n    print('outer-else')\n"
+    },
+    {
+      "id": "finally-continue-overrides",
+      "features": [
+        "control.loop",
+        "exception.unwind"
+      ],
+      "source": "for n in [1,2]:\n    try:\n        break\n    finally:\n        continue\nelse:\n    print('completed')\n"
+    },
+    {
+      "id": "recursion-caught",
+      "features": [
+        "function.recursion",
+        "exception.unwind"
+      ],
+      "source": "def f():\n    return f()\ntry:\n    f()\nexcept RecursionError:\n    print('bounded')\n"
+    },
+    {
+      "id": "boolean-order",
+      "features": [
+        "function.arguments",
+        "control.order"
+      ],
+      "source": "def mark(value):\n    print(value)\n    return value\nprint(mark(0) and mark(1))\nprint(mark(2) or mark(3))\n"
+    },
+    {
+      "id": "for-empty-else",
+      "features": [
+        "control.loop"
+      ],
+      "source": "for value in []:\n    print(value)\nelse:\n    print(\"empty\")\n"
+    },
+    {
+      "id": "try-bare-handler",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "try:\n    raise TypeError('bad')\nexcept:\n    print('caught')\n"
+    },
+    {
+      "id": "shadowed-handler-type",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "ValueError=1\ntry:\n    raise TypeError('original')\nexcept ValueError:\n    print('wrong')\nfinally:\n    print('finally')\n"
+    },
+    {
+      "id": "handler-type-alias",
+      "features": [
+        "exception.unwind"
+      ],
+      "source": "ValueError=TypeError\ntry:\n    raise TypeError('original')\nexcept ValueError:\n    print('caught')\n"
+    },
+    {
+      "id": "for-iterator-error",
+      "features": [
+        "exception.unwind",
+        "control.loop"
+      ],
+      "source": "try:\n    for value in 1:\n        pass\nexcept TypeError:\n    print('caught')\n"
+    },
+    {
+      "id": "builtin-identities",
+      "features": [
+        "function.value"
+      ],
+      "source": "print(len is len, ValueError is ValueError, str is str)\n"
+    },
+    {
+      "id": "nested-call-binding-message",
+      "features": [
+        "function.arguments"
+      ],
+      "source": "def outer():\n    def inner(a,b,c):\n        return a\n    return inner\nouter()()\n"
+    },
+    {
+      "id": "many-positional-and-keyword-only",
+      "features": [
+        "function.arguments"
+      ],
+      "source": "def f(a,*,b):\n    return a\nf(1,2,3,b=4)\n"
+    }
+  ],
+  "limits": [
+    {
+      "id": "step-limit-finally",
+      "source": "try:\n    while True:\n        pass\nfinally:\n    print(\"wrong\")",
+      "options": {
+        "maxSteps": 20
+      },
+      "code": "BUDGET"
+    },
+    {
+      "id": "recursion-limit",
+      "source": "def f():\n    return f()\nf()",
+      "options": {
+        "maxDepth": 6
+      },
+      "code": "PYTHON"
+    },
+    {
+      "id": "allocation-limit",
+      "source": "def f(value):\n    return value\nf(1)",
+      "memoryLimits": {
+        "maxObjects": 2
+      },
+      "code": "OOM"
+    },
+    {
+      "id": "work-limit",
+      "source": "def f():\n    return f()\nf()",
+      "options": {
+        "maxWork": 20
+      },
+      "code": "BUDGET"
+    },
+    {
+      "id": "unsupported-format",
+      "source": "print([1])",
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "unsupported-exception-args",
+      "source": "raise ValueError(1,2)",
+      "code": "UNSUPPORTED"
+    },
+    {
+      "id": "unsupported-function-format",
+      "source": "def f():\n    pass\nprint(f)",
+      "code": "UNSUPPORTED"
+    }
+  ]
+}

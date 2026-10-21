@@ -107,10 +107,9 @@ python runtime/check_memory.py --report build/memory-node-report.json
 python runtime/check_memory.py --target browser --report build/memory-browser-report.json
 ```
 
-Python functions, closure cells, calls and exception handlers are INT-06. This
-milestone tests retained host callback captures and the scope/root primitives
-that their future Python counterparts will use; it does not claim Python
-closure execution. Source parsing is still INT-08. Worker termination is the
+INT-06 adds [Python functions, closure cells and exception handlers](interpreter-functions.md)
+using these scope/root primitives. Its session tests retain closures after call
+frames return and release their cyclic graphs. Source parsing is still INT-08. Worker termination is the
 final browser interruption mechanism for synchronous work that cannot process
 queued messages. Workers isolate responsiveness, not arbitrary same-origin
 code. Published 0.1.0 artifacts remain unchanged.
