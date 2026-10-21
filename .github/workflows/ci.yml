@@ -45,6 +45,7 @@ jobs:
       - run: uv run --no-sync python scripts/prepare_runtime.py
       - run: uv run --no-sync python -m playwright install --with-deps chromium
       - run: uv run --no-sync python scripts/compiled_browser_smoke.py --report build/compiled-browser-report.json
+      - run: uv run --no-sync python scripts/shared_application_smoke.py --report build/shared-application-browser-report.json
       - run: uv run --no-sync python scripts/browser_smoke.py
       - run: uv run --no-sync python runtime/check_memory.py --target browser --report build/memory-browser-report.json
       - run: uv run --no-sync python runtime/browser_smoke.py

@@ -346,3 +346,13 @@ regressions remain. The [compiled application guide](docs/compiled-applications.
 describes the adopted UI/capability/input limits. The compiler is optional pinned
 build tooling; runtime dependencies stay empty. New-source interpretation remains
 INT-08/INT-WEB-01. No release or deployment was published.
+
+E2E-01 adds the [shared server/browser example](docs/shared-application.md).
+The same canonical-LF computation runs directly under CPython and as a compiled
+browser worker. Separate local, remote-reference and invalid-input adapters make
+network behavior explicit. A stdlib HTTP fixture exposes only named reference
+cases; source allowlists exclude its implementation and synthetic server-only
+record. Browser checks compare outputs/errors, prove that local execution makes
+no API call, retain offline local reruns and expose disconnected Fetch failure
+without silently switching execution targets. No framework/runtime dependency,
+production server or broader Python compatibility is introduced.
