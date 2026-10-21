@@ -1,4 +1,4 @@
-import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, BuiltinValue, EXCEPTIONS} from "./function-objects.mjs";
+import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, BuiltinValue, EXCEPTIONS, DESCRIPTOR_HOOKS} from "./function-objects.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
@@ -40,7 +40,7 @@ export class ClassRuntime {
     if (new Set(bases).size !== bases.length) this.fail("TypeError", "Duplicate class base.");
     for (const key of namespace.keys()) {
       this.key(key);
-      if (special(key) && !["__init__", "__module__", "__qualname__"].includes(key))
+      if (special(key) && !["__init__", "__module__", "__qualname__", ...DESCRIPTOR_HOOKS].includes(key))
         this.fail("UnsupportedOperationError", "Custom special methods require a later class stage.", "UNSUPPORTED");
     }
     if (namespace.has("__init__")) this.initializer(namespace.get("__init__"));
@@ -78,34 +78,72 @@ export class ClassRuntime {
     }
     return {found: false, value: null};
   }
-  get(receiver, name) {
+  descriptor(value) {
+    if (!(value instanceof InstanceValue)) return null;
+    return {get: this.lookup(value.type, "__get__"), set: this.lookup(value.type, "__set__"),
+      delete: this.lookup(value.type, "__delete__")};
+  }
+  boundHook(receiver, name, args) {
+    if (!(receiver instanceof InstanceValue)) return null;
+    const hook = this.lookup(receiver.type, name);
+    if (!hook.found) return null;
+    if (hook.value instanceof FunctionValue) return {kind: "call", callable: hook.value, args: [receiver, ...args]};
+    if (this.descriptor(hook.value)?.get.found)
+      this.fail("UnsupportedOperationError", "Descriptor-valued mutation/notification hooks require a later stage.", "UNSUPPORTED");
+    return {kind: "call", callable: hook.value, args};
+  }
+  notification(receiver, owner, name) { return this.boundHook(receiver, "__set_name__", [owner, name]); }
+  read(receiver, name) {
     this.key(name); this.touch(receiver);
+    const value = value => ({kind: "value", value});
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
-      return name === "__self__" ? receiver.receiver : receiver.callable;
+      return value(name === "__self__" ? receiver.receiver : receiver.callable);
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
       const fn = receiver.pool.code.functions[receiver.index];
-      return this.values.string(Array.from(name === "__name__" ? fn.name : fn.qualname, char => char.codePointAt(0)));
+      return value(this.values.string(Array.from(name === "__name__" ? fn.name : fn.qualname, char => char.codePointAt(0))));
     }
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
-    if (receiver instanceof InstanceValue && name === "__class__") return receiver.type;
+    if (receiver instanceof InstanceValue && name === "__class__") return value(receiver.type);
     if (receiver instanceof ClassValue) {
-      if (["__name__", "__qualname__", "__module__"].includes(name)) return this.values.string(Array.from(
-        receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0)));
-      if (["__bases__", "__mro__"].includes(name)) return this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro);
+      if (["__name__", "__qualname__", "__module__"].includes(name)) return value(this.values.string(Array.from(
+        receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
+      if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
     }
-    if (special(name) && name !== "__init__") this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
-    if (receiver instanceof InstanceValue && receiver.attributes.has(name)) return receiver.attributes.get(name);
-    const item = this.lookup(receiver instanceof ClassValue ? receiver : receiver.type, name);
+    if (special(name) && !["__init__", ...DESCRIPTOR_HOOKS].includes(name)) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
+    const owner = receiver instanceof ClassValue ? receiver : receiver.type;
+    const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
+    const getter = () => ({kind: "call", callable: descriptor.get.value,
+      args: [item.value, receiver instanceof ClassValue ? null : receiver, owner]});
+    if (receiver instanceof InstanceValue && descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)) return getter();
+    if (receiver instanceof InstanceValue && receiver.attributes.has(name)) return value(receiver.attributes.get(name));
     if (!item.found) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
-    return receiver instanceof InstanceValue && item.value instanceof FunctionValue ? this.make(BoundMethodValue, item.value, receiver) : item.value;
+    if (descriptor?.get.found) return getter();
+    return value(receiver instanceof InstanceValue && item.value instanceof FunctionValue ? this.make(BoundMethodValue, item.value, receiver) : item.value);
+  }
+  get(receiver, name) {
+    const result = this.read(receiver, name);
+    if (result.kind !== "value") this.fail("UnsupportedOperationError", "Descriptor calls require VM execution frames.", "UNSUPPORTED");
+    return result.value;
+  }
+  write(receiver, name, value, remove = false) {
+    this.key(name); this.touch(receiver);
+    if (receiver instanceof InstanceValue) {
+      const item = this.lookup(receiver.type, name), descriptor = item.found ? this.descriptor(item.value) : null;
+      if (descriptor && (descriptor.set.found || descriptor.delete.found)) {
+        const hook = remove ? "__delete__" : "__set__";
+        if (!descriptor[remove ? "delete" : "set"].found) this.fail("AttributeError", "Descriptor has no " + hook + " operation.");
+        return this.boundHook(item.value, hook, remove ? [receiver] : [receiver, value]);
+      }
+    }
+    return {kind: "value", value: this.mutate(receiver, name, value, remove)};
   }
   mutate(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
-    if (special(name) && name !== "__init__") this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
+    if (special(name) && !["__init__", ...DESCRIPTOR_HOOKS].includes(name)) this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && name === "__init__" && !remove) this.initializer(value);
     const map = receiver instanceof ClassValue ? receiver.namespace : receiver.attributes;
     const present = map.has(name), before = map.get(name);

@@ -3,7 +3,9 @@
   "suite": "interpreter-descriptors/1",
   "profile": "classes-source/1",
   "reference": "CPython 3.14",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "C2-descriptor"
+  ],
   "cases": [
     {
       "id": "get-instance-and-class",

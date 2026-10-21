@@ -440,3 +440,17 @@ continuations/__set_name__, property/staticmethod/classmethod values, decorator
 source and offline-console acceptance. Source namespace order, callback exceptions,
 pre-binding decorator failures and shared resource/teardown checks are required.
 The contract alone does not widen source acceptance or complete C2/INT-09.
+
+
+### C2 custom descriptor implementation
+
+The explicit classes profile now runs type-level __get__, __set__, __delete__ and
+__set_name__ hooks in ordinary VM frames. Data/non-data precedence, inherited
+owners, namespace definition order and snapshot notifications share the existing
+work, recursion, cancellation and memory bounds. Failed notifications preserve the
+previous class binding and propagate the original CPython 3.14 exception.
+
+All 68 descriptor/decorator reference cases remain checked. Source reports select
+the 33 implemented custom descriptor cases and explicitly list omitted native and
+decorator stages; those stages remain subsequent work. The original class/private
+matrices still run in full. No publication or default core-profile change follows.

@@ -32,6 +32,7 @@ export class InstanceValue {
 export class BoundMethodValue {
   constructor(callable, receiver) { this.callable = callable; this.receiver = receiver; }
 }
+export const DESCRIPTOR_HOOKS = Object.freeze(["__get__", "__set__", "__delete__", "__set_name__"]);
 export class BuiltinValue { constructor(name) { this.name = name; } }
 export class AppendValue extends BuiltinValue {
   constructor(receiver) { super("append"); this.receiver = receiver; }
