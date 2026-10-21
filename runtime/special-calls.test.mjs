@@ -62,3 +62,24 @@ test('later protocols still refuse before effects and default core selection sta
   const core = await runSourceRequest({modules: [unit('class A:\n def __call__(self): return 7\n')]});
   assert.equal(core.error.code, 'UNSUPPORTED'); assert.equal(core.stats, null);
 });
+
+
+test('callable queries never execute property or descriptor binding and ignore instance shadows', async () => {
+  const result = await run('class D:\n def __get__(self,obj,owner):\n  while True: pass\nclass A:\n __call__=D()\nclass B: pass\nb=B()\nb.__call__=print\nprint(callable(A()),callable(b))\n', {maxSteps: 1000});
+  assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, 'True False\n'); closed(result);
+});
+
+test('query presence follows inherited type mutation without validating or invoking the slot value', async () => {
+  const result = await run('class A: pass\nclass B(A): pass\nb=B()\nprint(callable(b))\nA.__call__=None\nprint(callable(b))\ndel A.__call__\nprint(callable(b))\n');
+  assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, 'False\nTrue\nFalse\n'); closed(result);
+});
+
+test('callable argument errors, global shadows and core builtin selection remain explicit', async () => {
+  for (const source of ['callable()', 'callable(1,2)', 'callable(object=7)']) {
+    const result = await run(source); assert.equal(result.error.type, 'TypeError'); closed(result);
+  }
+  const shadowed = await run('def callable(value): return value+1\nprint(callable(6))\n');
+  assert.equal(shadowed.error, undefined); assert.equal(shadowed.stdout, '7\n'); closed(shadowed);
+  const core = await runSourceRequest({modules: [unit('callable(print)\n')]});
+  assert.equal(core.error.type, 'NameError'); closed(core);
+});

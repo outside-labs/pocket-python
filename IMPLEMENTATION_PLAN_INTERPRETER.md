@@ -550,3 +550,17 @@ Chromium. All 63 CPython reference cases remain validated; fourteen callable-que
 cases are explicitly omitted from source reports until the next step. Focused
 checks exercise pending temporary roots, original tracebacks, recursive redirects,
 work, cancellation, memory exhaustion and zero logical teardown accounting.
+
+
+### C3 callable queries
+
+The explicit classes profile now supplies callable() as a one-positional-argument
+query. It examines type-level call presence without binding descriptors, invoking
+user code or promising that invocation will succeed. Native function/method/class
+and static-wrapper classifications retain their ordinary call behavior; instance
+shadows and later type-slot mutation are covered separately.
+
+All 63 source cases now run in Node and Chromium: 55 CPython comparisons and eight
+explicit future-protocol refusals. Tests also cover invalid query arguments, user
+binding shadows, an intentionally busy descriptor that must never execute during
+a query, and unchanged core-profile builtin lookup. Console acceptance follows.
