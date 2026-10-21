@@ -93,6 +93,7 @@ jobs:
       - run: node --test runtime/modules.test.mjs
       - run: node --test runtime/source-tokens.test.mjs
       - run: node --test runtime/source.test.mjs
+      - run: node --test runtime/browser-host.test.mjs
       - run: python runtime/generate_identifiers.py --check
       - run: python runtime/check_source_tokens.py --report build/source-tokens-node-report.json
       - run: python runtime/check_conformance.py --engine source --report build/source-node-report.json

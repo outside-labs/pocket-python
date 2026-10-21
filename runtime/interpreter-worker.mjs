@@ -1,0 +1,104 @@
+import {compileSourceModules} from "./source-modules.mjs";
+import {ModuleSession} from "./module-session.mjs";
+import {Peer, CONSOLE_LIMITS, application, capabilities, limits, record, exact, fields, request,
+  failure, exception, readText, sourceValue, textValue, diagnostic, checkError} from "./browser-protocol.mjs";
+
+// Ports make the same state machine usable by a browser Worker and unit tests.
+export function attachInterpreterWorker(port) {
+  let peer = null, state = "created", nextHost = 1, nextOutput = 1, active = null, output = null;
+  const dispose = () => {
+    if (state === "closed") return;
+    state = "closed"; if (active) active.cancelled = true;
+    port.removeEventListener("message", receive);
+    if (output) { clearTimeout(output.timer); output.reject(exception(failure("CANCELLED", "Worker closed.", "host", "HostError"))); output = null; }
+  };
+  const fatal = error => {
+    try { peer?.send("fatal", {error: failure("PROTOCOL", String(error.message).slice(0, 1024))}); }
+    finally { dispose(); }
+  };
+  const sendOutput = text => new Promise((resolve, reject) => {
+    const id = "w" + nextOutput++;
+    const timer = setTimeout(() => { output = null; reject(exception(failure("TIMEOUT", "Output deadline expired.", "host", "HostError"))); dispose(); }, peer.limits.deadline_ms);
+    output = {id, resolve, reject, timer};
+    try { peer.send("request", {id, operation: "output.write", arguments: {stream: "stdout", text: textValue(text, peer.limits.output_codepoints)}, timeout_ms: peer.limits.deadline_ms}); }
+    catch (error) { clearTimeout(timer); output = null; reject(error); }
+  });
+  async function run(message, token) {
+    let registry = null, session = null, stdout = "", points = 0, error = null;
+    const expires = performance.now() + Math.min(message.timeout_ms, peer.limits.deadline_ms);
+    const cancelled = () => token.cancelled || performance.now() >= expires;
+    try {
+      if (message.operation !== "interpreter.run") throw exception(failure("UNAVAILABLE", "Unknown console operation.", "host", "HostError"));
+      if (!exact(message.arguments, ["source"])) throw exception(failure("BAD_VALUE", "Run requires only source.", "host", "HostError"));
+      const source = readText(message.arguments.source, peer.limits.source_bytes);
+      sourceValue(source, peer.limits);
+      const result = await compileSourceModules([{name: "app", package: false, source, imports: [],
+        notice: "Source entered in the local console; no redistribution license is inferred."}],
+      {entry: "app", maxBytes: peer.limits.source_bytes, maxWork: peer.limits.compile_work, shouldCancel: cancelled});
+      registry = result.registry;
+      if (state === "closed" || token.cancelled) throw exception(failure("CANCELLED", "Run cancelled.", "host", "HostError"));
+      session = new ModuleSession(registry, {memoryLimits: {maxBytes: peer.limits.memory_bytes,
+        maxObjects: peer.limits.memory_objects, maxFrames: peer.limits.memory_frames}});
+      session.run({maxSteps: peer.limits.execution_steps, maxWork: peer.limits.execution_work,
+        maxDepth: peer.limits.memory_frames, shouldCancel: cancelled}, text => {
+        points += Array.from(text).length;
+        if (points > peer.limits.output_codepoints) throw exception(failure("QUOTA", "Console output budget exceeded.", "runtime", "ExecutionLimitError"));
+        stdout += text;
+      });
+    } catch (cause) { error = cause.detail || diagnostic(cause); }
+    finally { session?.close(); registry?.close(); }
+    if (state === "closed") return;
+    try {
+      // Sync execution cannot await host calls yet. One bounded output batch is
+      // acknowledged before the terminal result; INT-10 adds async host calls.
+      if (stdout) await sendOutput(stdout);
+      if (state === "closed") return;
+      if (token.cancelled) error = failure("CANCELLED", "Run cancelled.", "host", "HostError");
+      else if (performance.now() >= expires) error = failure("TIMEOUT", "Source execution deadline expired.", "host", "HostError");
+      peer.send("result", {reply_to: message.id, ...(error ? {error} : {value: {type: "none"}})});
+    } catch (cause) { if (state !== "closed") fatal(cause); }
+    finally { if (active === token) active = null; }
+  }
+  function receive(event) {
+    if (state === "closed") return;
+    try {
+      const message = event.data;
+      if (!peer) {
+        if (!record(message) || !/^[0-9a-f]{32}$/.test(message.session)) throw new Error("Invalid initialization session.");
+        peer = new Peer(port, message.session, CONSOLE_LIMITS);
+      }
+      if (!peer.receive(message)) return;
+      if (state === "created") {
+        if (message.kind !== "init") throw new Error("Initialization required.");
+        fields(message, ["application", "capabilities", "limits"]);
+        const identity = application(message.application), grants = capabilities(message.capabilities), bounds = limits(message.limits);
+        if (!exact(message.limits, Object.keys(CONSOLE_LIMITS))) throw new Error("Explicit effective limits required.");
+        peer.limits = bounds; state = "ready";
+        peer.send("ready", {application: identity, capabilities: grants.map(grant => grant.id), limits: bounds});
+      } else if (message.kind === "request") {
+        request(message, "h", nextHost++);
+        if (active) { peer.send("result", {reply_to: message.id, error: failure("QUOTA", "Only one source run may be pending.", "host", "HostError")}); return; }
+        active = {id: message.id, cancelled: false}; void run(message, active);
+      } else if (message.kind === "result") {
+        fields(message, ["reply_to", Object.hasOwn(message, "error") ? "error" : "value"]);
+        if (!output || output.id !== message.reply_to) throw new Error("Unknown or duplicate output reply.");
+        if (message.error) checkError(message.error);
+        else if (!exact(message.value, ["type"]) || message.value.type !== "none") throw new Error("Output must return None.");
+        clearTimeout(output.timer); const pending = output; output = null;
+        if (message.error) pending.reject(exception(message.error)); else pending.resolve();
+      } else if (message.kind === "cancel") {
+        fields(message, ["reply_to"]);
+        if (typeof message.reply_to !== "string" || !/^h[1-9][0-9]{0,9}$/.test(message.reply_to) || Number(message.reply_to.slice(1)) >= nextHost) throw new Error("Cancellation must name an admitted request.");
+        if (active?.id === message.reply_to) active.cancelled = true;
+      } else if (message.kind === "close") {
+        fields(message, ["reason"]);
+        if (!["stop", "restart", "completed", "error"].includes(message.reason)) throw new Error("Unknown close reason.");
+        peer.send("closed"); dispose();
+      } else throw new Error("Unexpected worker message.");
+    } catch (error) { fatal(error); }
+  }
+  port.addEventListener("message", receive);
+  return Object.freeze({dispose, stats: () => ({state, active: active !== null && state !== "closed", pending: output ? 1 : 0})});
+}
+
+if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope) attachInterpreterWorker(globalThis);
