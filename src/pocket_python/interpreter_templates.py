@@ -77,7 +77,7 @@ async function prepareOffline(){
 prepareOffline().catch(error=>{byId('offline').textContent='Offline unavailable: '+error.message;});
 try{
   config=JSON.parse(await verified('./__CONFIG__','__CONFIG_SHA__',65536));
-  const descriptions={'classes-source/1':'Language profile: classes-source/1. Supports the core subset plus classes, inheritance, attributes and methods. Descriptors, decorators and async are later stages.',
+  const descriptions={'classes-source/1':'Language profile: classes-source/1. Supports the core subset plus classes, inheritance, attributes, methods and private names. Descriptors, decorators and async are later stages.',
     'core-source/1':'Language profile: core-source/1. Supports values, loops, functions and exceptions. Classes require the explicit class profile; async and external packages are later stages.'};
   if(!Object.hasOwn(descriptions,config.application.engine.language_profile))throw new Error('Source language profile is unavailable.');
   byId('language').textContent=descriptions[config.application.engine.language_profile];

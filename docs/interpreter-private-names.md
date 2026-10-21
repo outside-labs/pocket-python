@@ -60,6 +60,11 @@ tests additionally cover post-mangling parameter collisions, identifier growth,+
 default source profile and later-feature refusal boundary retain their tests.
 
 Run the source matrix with the same command and `--target node` or `--target
-browser` in place of `--reference-only`. Offline-console private-name acceptance
-follows as a separate integration step. Broader C2/C3 and alpha publication
-remain separate tasks.
+browser` in place of `--reference-only`. The class console example now uses a
+private Counter field inherited through StepCounter's public methods. Its
+Chromium suite includes four private-name CPython comparisons, source-located
+private-field errors, pre-effect parameter collisions, new private source after
+offline reload and Stop/Restart inside a private method. Together with C1 checks,
+the console suite has sixteen passing cases/groups. Waiting updates still remove
+class/library selection together. Broader C2/C3 and alpha publication remain
+separate tasks.

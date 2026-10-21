@@ -429,3 +429,15 @@ The [interpreter plan](IMPLEMENTATION_PLAN_INTERPRETER.md) retains C2 descriptor
 decorators/private-name mangling and C3 individually adopted special methods
 before closing INT-09. INT-10 async, the separate C/Rust WebAssembly path and
 INT-REL-01 publication remain staged. Published package versions are unchanged.
+
+### Private-name source checkpoint (2026-10-21)
+
+INT-09 now adds [C2 private-name mangling](docs/interpreter-private-names.md) to
+classes-source/1, using the same verified bytecode 5 and explicit host/library
+grants. The compiler lowers normalized names before lexical binding and preserves
+original metadata, literals, keyword names and source spans. Thirty-three CPython
+cases cover nested scopes, inheritance collisions, Unicode, parameters and real
+synthetic imports in Node/Chromium. The class console's expanded sixteen-case/
+group suite includes private fields after offline reload and worker restart.
+Descriptors/decorators and individually adopted special methods still keep
+INT-09 open; async, WebAssembly and alpha publication retain their separate gates.

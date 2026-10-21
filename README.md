@@ -139,7 +139,7 @@ source execution, stop/restart and scoped updates in Chromium. Runtime assets
 remain excluded from the 0.2.0 distributions.
 
 The explicit [class-source profile](docs/interpreter-classes.md) adds class bodies,
-C3 inheritance, attributes, initialization and bound methods, with Node/Chromium
+C3 inheritance, attributes, initialization, bound methods and [private names](docs/interpreter-private-names.md), with Node/Chromium
 and offline-console checks. Build its example with
 `uv run python -m examples.interpreter_classes`. The default core-source/1 profile
 remains available; descriptors, decorators and async follow separate stages.
