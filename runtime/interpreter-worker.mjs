@@ -51,7 +51,10 @@ export function attachInterpreterWorker(port) {
     try {
       // Sync execution cannot await host calls yet. One bounded output batch is
       // acknowledged before the terminal result; INT-10 adds async host calls.
-      if (stdout) await sendOutput(stdout);
+      if (stdout) {
+        try { await sendOutput(stdout); }
+        catch (cause) { error = cause.detail || diagnostic(cause); }
+      }
       if (state === "closed") return;
       if (token.cancelled) error = failure("CANCELLED", "Run cancelled.", "host", "HostError");
       else if (performance.now() >= expires) error = failure("TIMEOUT", "Source execution deadline expired.", "host", "HostError");

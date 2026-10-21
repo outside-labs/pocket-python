@@ -92,6 +92,22 @@ test("stop and restart reject pending work, detach all listeners and use fresh u
   assert.equal(sessions.size, 8);
 });
 
+test("host output quota and display errors resolve the run without closing a healthy session", async () => {
+  let refuse = true, text = "";
+  const app = create({limits: {response_bytes: 2}, onOutput: value => {
+    if (refuse) throw new Error("Display unavailable");
+    text += value;
+  }});
+  try {
+    await app.ready;
+    await assert.rejects(app.run("print('long')"), error => error.code === "QUOTA" && error.detail.domain === "host");
+    await assert.rejects(app.run("print('x')"), error => error.code === "IO" && error.detail.domain === "host");
+    assert.equal(app.stats().state, "ready"); assert.equal(app.stats().pending, 0);
+    refuse = false;
+    await app.run("print('x')"); assert.equal(text, "x\n");
+  } finally { app.stop(); }
+});
+
 test("stale sessions are discarded and active malformed sequences close the host", async () => {
   const errors = [], app = create({onError: error => errors.push(error)});
   await app.ready;
