@@ -1,20 +1,37 @@
 # Pocket-python
 
-Pocket-python packages explicit Python runtime assets and Shimify source
-bundles into offline MicroPython browser applications. Python runs on the
-client through WebAssembly, with a worker for execution and a service worker
-for cached reloads. No application server executes the Python code.
+Pocket-python builds offline browser applications from explicit verified client
+sources. The compiled profile runs emitted JavaScript and selected helpers in a
+module worker. The supplied MicroPython profile runs compatible Python through
+WebAssembly. Both use local assets and a service worker for cached reloads.
 
-Requires Python 3.14+ to build artifacts; the generated application must also
-be compatible with the selected MicroPython runtime. The tool has zero runtime
-dependencies and uses the MIT license. Version 0.1.0 is experimental.
+Requires Python 3.14+ to build artifacts and compatibility with the selected
+compiler/runtime profile. The tool has zero runtime dependencies and uses the
+MIT license. Version 0.2.0 is experimental.
 
 ```sh
-python -m pip install pocket-python==0.1.0 shimify==0.2.0
+python -m pip install pocket-python==0.2.0 shimify==0.3.0
 pocket-python --help
 ```
 
-## Build a browser application
+## Build a compiled application
+
+Install the optional compiler explicitly when using this profile:
+
+```sh
+python -m pip install Python-JavaScript==0.2.0
+pocket-python compiled-web CLIENT-SOURCES.json --output build/compiled-web
+```
+
+The [compiled application guide](docs/compiled-applications.md) defines the hashed
+client-source allowlist, named text-input UI, source-map policy, exact compiler
+identity and offline update lifecycle. Compiler installation is build tooling;
+the CLI never installs it automatically. Generated applications contain no Python
+interpreter and parse no new source after deployment.
+
+See [0.2.0 release notes](docs/release-0.2.0.md) for the published scope.
+
+## Build a supplied MicroPython application
 
 First create a portable source bundle with
 [Shimify](https://github.com/outside-labs/shimify). Supply a MicroPython
@@ -73,7 +90,7 @@ time and memory are separate quantities.
 ## Development and verification
 
 ```sh
-uv sync --locked --group browser-tests
+uv sync --locked --group browser-tests --group compiled-build
 uv run python scripts/prepare_runtime.py
 POCKET_PYTHON_RUNTIME=build/runtime uv run python -m unittest discover -s tests -v
 uv run python -m playwright install chromium
@@ -99,17 +116,16 @@ APIs, resources and dynamic imports need explicit adapters or a different
 runtime profile. The initial console has no interactive stdin or DOM bridge.
 Browser cache persistence and PWA installation affordances vary by platform.
 
-The delivered small-runtime route is MicroPython WebAssembly. The forward
-program adds our compiler-produced JavaScript application profile and a
-separately staged [independent interpreter](IMPLEMENTATION_PLAN_INTERPRETER.md)
-for newly supplied Python source in the browser. These engines are planned, not
-included in 0.1.0. Shimify owns source reduction, Python-JavaScript owns
-compilation, and pocket-python owns assembly and the interpreter queue. Native
-CPython assembly/trimming, an upstream CPython WebAssembly build, Pyodide and
+Version 0.2.0 delivers compiled JavaScript applications and supplied MicroPython
+WebAssembly applications. The separately staged [independent interpreter](IMPLEMENTATION_PLAN_INTERPRETER.md)
+will parse newly supplied Python in the browser. Its VM prototype remains in the
+repository and is excluded from this PyPI release. Shimify owns source reduction,
+Python-JavaScript owns compilation, and pocket-python owns assembly and the
+interpreter queue. Native CPython assembly/trimming, an upstream CPython WebAssembly build, Pyodide and
 PyScript remain optional profiles with separate compatibility/test gates.
 
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md),
-[release notes](docs/release-0.1.0.md), and the
+[release notes](docs/release-0.2.0.md), and the
 [GitHub Project](https://github.com/orgs/outside-labs/projects/13).
 Runtime and dependency licenses remain applicable; preserve and review their
 upstream notices before distributing generated applications.
@@ -117,11 +133,11 @@ upstream notices before distributing generated applications.
 The development [independent VM value model](docs/interpreter-values.md) executes
 our own versioned bytecode in Node and browser workers. It covers staged Python
 scalars, containers and iteration; browser-side parsing of new source remains a
-subsequent milestone. It is not included in the published 0.1.0 package.
+subsequent milestone. It is excluded from the 0.2.0 distributions.
 
 Development sessions now have [explicit roots, allocation limits and owned host handles](docs/interpreter-memory.md), with shared Node/browser lifetime checks. New Python source still requires the planned independent parser.
 
-The development [compiled JavaScript PWA builder](docs/compiled-applications.md) now packages verified client modules and original helpers for browser-worker execution, offline reload and scoped updates. Build the text-metrics example with the optional pinned compiled-build tooling; the published 0.1.0 package remains unchanged.
+The [compiled JavaScript PWA builder](docs/compiled-applications.md) now packages verified client modules and original helpers for browser-worker execution, offline reload and scoped updates. Build the text-metrics example with the optional pinned compiled-build tooling; the builder is included in 0.2.0.
 
 The development [shared server/browser example](docs/shared-application.md) runs
 the same supported computation under CPython and in a compiled browser worker,

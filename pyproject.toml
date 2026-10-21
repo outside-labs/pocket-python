@@ -1,7 +1,7 @@
 [project]
 name = "pocket-python"
-version = "0.1.0"
-description = "Auditable Python runtime assets and offline MicroPython application bundles"
+version = "0.2.0"
+description = "Auditable compiled JavaScript and supplied MicroPython offline application bundles"
 readme = "README.md"
 authors = [{ name = "ellainng", email = "299958882+ellainng@users.noreply.github.com" }]
 requires-python = ">=3.14"
@@ -32,8 +32,5 @@ browser-tests = [
     "playwright==1.64.0",
 ]
 compiled-build = [
-    "python-javascript",
+    "python-javascript==0.2.0",
 ]
-
-[tool.uv.sources]
-python-javascript = { git = "https://github.com/outside-labs/Python-JavaScript", rev = "35fbe6eb399f5d94e05e850eb36dbdf695e6d15a" }

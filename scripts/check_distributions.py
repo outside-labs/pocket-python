@@ -63,9 +63,42 @@ assert main(["web", str(bundle), "--runtime", str(runtime), "--runtime-lock", st
 artifact = json.loads((root / "web/POCKET-PYTHON.json").read_bytes())
 assert artifact["pocket_python_version"] == __version__
 assert (root / "web/runtime/LICENSE").read_bytes() == b"Synthetic test license"
-print("Installed distribution verified", __version__)
+if sys.argv[2] == "compiled":
+    from pocket_python._compiler_lock import COMPILER_VERSION, COMPILER_FINGERPRINT
+    from pocket_python.compiled import build_compiled, read_client
+    assert metadata.version("Python-JavaScript") == COMPILER_VERSION == "0.2.0"
+    client = root / "client"
+    client.mkdir()
+    source = b"from JavaScript.browser import on_click\\nasync def show(text):\\n    print(len(text))\\nasync def main():\\n    await on_click('run', show)\\n"
+    (client / "app.py").write_bytes(source)
+    (client / "LICENSES").mkdir()
+    notice = b"Synthetic installed-artifact fixture notice"
+    (client / "LICENSES/test.txt").write_bytes(notice)
+    manifest = {"kind": "pocket-python-client", "schema_version": 1, "target": "client", "entrypoint": "app", "source_map": True,
+        "sources": [{**file_record("app.py", source), "module": "app", "is_package": False, "role": "client-source"}],
+        "notices": [{**file_record("LICENSES/test.txt", notice), "role": "notice"}], "fetch_urls": []}
+    (client / "CLIENT-SOURCES.json").write_bytes(json_bytes(manifest))
+    receipt = build_compiled(read_client(client / "CLIENT-SOURCES.json"), root / "compiled-web")
+    assert receipt["schema_version"] == 2 and receipt["profile"] == "compiled-javascript" and receipt["engine"] is None
+    assert receipt["pocket_python_version"] == __version__
+    assert receipt["producer"]["source_fingerprint"] == COMPILER_FINGERPRINT
+    assert receipt["size"]["artifact_bytes"] == sum(p.stat().st_size for p in (root / "compiled-web").rglob("*") if p.is_file())
+    assert not any(p.suffix == ".wasm" for p in (root / "compiled-web").rglob("*"))
+else:
+    from pocket_python.assets import ArtifactError
+    from pocket_python.compiled import _compiler
+    try:
+        _compiler()
+    except ArtifactError:
+        pass
+    else:
+        raise AssertionError("A default installation unexpectedly supplied compiler tooling")
+print("Installed distribution verified", __version__, sys.argv[2])
 ''')
     for index, artifact in enumerate([wheels[0], sdists[0]]):
-        work = root / str(index)
-        work.mkdir()
-        subprocess.run(["uv", "run", "--isolated", "--no-project", "--python", "3.14", "--with", str(artifact.resolve()), "python", "-I", str(script), version], check=True, cwd=work)
+        for profile in ["default", "compiled"]:
+            work = root / (str(index) + "-" + profile)
+            work.mkdir()
+            tooling = ["--with", "Python-JavaScript==0.2.0"] if profile == "compiled" else []
+            subprocess.run(["uv", "run", "--isolated", "--no-project", "--python", sys.executable,
+                "--with", str(artifact.resolve()), *tooling, "python", "-I", str(script), version, profile], check=True, cwd=work)

@@ -148,6 +148,9 @@ class CompiledTests(unittest.TestCase):
         self.assertEqual((self.output / 'keep').read_bytes(), b'keep')
 
     def test_compiler_identity_capability_refusals_and_cli(self):
+        with patch('pocket_python.compiled.metadata.version', return_value='0.1.0'):
+            with self.assertRaisesRegex(ArtifactError, 'supported pinned build'):
+                build_compiled(self.client, self.output)
         with patch('pocket_python.compiled.COMPILER_FINGERPRINT', '0' * 64):
             with self.assertRaisesRegex(ArtifactError, 'supported pinned build'):
                 build_compiled(self.client, self.output)
