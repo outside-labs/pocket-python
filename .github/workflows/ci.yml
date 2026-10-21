@@ -121,6 +121,7 @@ jobs:
       - run: python runtime/check_classes.py --reference-only --report build/classes-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-reference-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-node-report.json
@@ -145,4 +146,5 @@ jobs:
             build/classes-reference-report.json
             build/private-names-reference-report.json
             build/descriptors-reference-report.json
+            build/special-calls-reference-report.json
           if-no-files-found: error
