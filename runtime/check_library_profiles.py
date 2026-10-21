@@ -67,7 +67,7 @@ def check(target, channel=None):
         if item['stats'] is not None:
             passed = passed and item['stats']['frames'] == 0 and item['closed']['bytes'] == 0 and item['closed']['roots'] == 0
         records.append({'id': item['id'], 'classification': classification[item['id']], 'status': 'pass' if passed else 'fail', 'expected': wanted, 'actual': item})
-    files = ['library-profiles.mjs', 'library-catalog.mjs', 'library-profile-request.mjs', 'library/operator.py', 'licenses/POCKET-PYTHON.txt', 'check_library_profiles.py']
+    files = ['library-profiles.mjs', 'library-selection.mjs', 'library-catalog.mjs', 'library-profile-request.mjs', 'library/operator.py', 'licenses/POCKET-PYTHON.txt', 'check_library_profiles.py']
     return {'schema_version': 1, 'suite': 'interpreter-library-profiles/1', 'source_execution': True,
             'engine': 'pocket-python-source/1', 'language_profile': 'core-source/1', 'target': target,
             'host_version': version, 'reference': platform.python_version(),

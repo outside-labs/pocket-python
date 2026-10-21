@@ -11,6 +11,7 @@ button{padding:.6rem 1rem;font:inherit;border:1px solid #779287;border-radius:.4
 <main><h1>__TITLE__</h1><p>Write Python and run it on this device. Each run starts with fresh variables.</p>
 <label for="input">Python source</label><textarea id="input" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="language"></textarea>
 <p id="language" class="note">Supports the core Python subset: values, loops, functions and exceptions. Classes, async and external packages are planned.</p>
+<p id="libraries" class="note"></p>
 <nav aria-label="Execution"><button id="run" disabled>Run</button><button id="stop">Stop</button><button id="restart">Restart</button></nav>
 <p id="status" role="status">Starting…</p><label for="result">Output</label><pre id="result" aria-live="polite"></pre><pre id="diagnostic" role="alert"></pre>
 <p id="offline" role="status">Preparing offline use…</p><p class="note">Source stays in this tab. Reload restores the supplied example.</p></main>
@@ -42,6 +43,7 @@ function start(){
   byId('run').disabled=true;byId('result').textContent='';byId('diagnostic').textContent='';byId('status').textContent='Starting…';
   try{
     const active=mountInterpreter({application:config.application,capabilities:config.capabilities,limits:config.limits,
+      libraryProfile:config.library_profile,libraries:config.library_sources,hostProfile:config.host_profile,
       onOutput:text=>{if(turn===generation)byId('result').append(document.createTextNode(text));},
       onError:error=>{if(turn===generation){byId('run').disabled=true;showError(error);}}});
     current=active;
@@ -75,6 +77,11 @@ async function prepareOffline(){
 prepareOffline().catch(error=>{byId('offline').textContent='Offline unavailable: '+error.message;});
 try{
   config=JSON.parse(await verified('./__CONFIG__','__CONFIG_SHA__',65536));
+  config.library_sources=[];
+  for(const module of config.libraries){config.library_sources.push({name:module.name,package:module.package,imports:module.imports,
+    source:await verified('./'+module.source.path,module.source.sha256,module.source.size_bytes),
+    notice:await verified('./'+module.notice.path,module.notice.sha256,module.notice.size_bytes)});}
+  byId('libraries').textContent='Library profile: '+config.library_profile+'. Host profile: '+config.host_profile+'.';
   byId('input').value=await verified('./'+config.source.path,config.source.sha256,65536);
   start();
 }catch(error){showError(error);}

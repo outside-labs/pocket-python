@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from pocket_python._interpreter_lock import ENGINE_FILES, ENGINE_FINGERPRINT
+from pocket_python._interpreter_lock import ENGINE_FILES, ENGINE_FINGERPRINT, ENGINE_IMPORTS
 from pocket_python.assets import ArtifactError, json_bytes
 from pocket_python.cli import main
 from pocket_python.interpreter import build_interpreter, read_console_source, read_interpreter
@@ -161,3 +161,56 @@ class InterpreterTests(unittest.TestCase):
             updated = build_interpreter(self.source, self.engine, self.root / 'updated')
         current = json.loads((self.output / 'POCKET-PYTHON.json').read_bytes())
         self.assertNotEqual(current['cache_version'], updated['cache_version'])
+
+    def test_optional_library_assets_and_profile_receipts_do_not_prune_the_engine(self):
+        core = build_interpreter(self.source, self.engine, self.output)
+        selected = read_interpreter(ROOT / 'runtime', library_profile='operator/1')
+        full = build_interpreter(self.source, selected, self.root / 'full')
+        self.assertEqual(core['engine'], full['engine'])
+        self.assertEqual(core['size']['engine_bytes'], full['size']['engine_bytes'])
+        self.assertEqual(core['library_profile']['id'], 'core-only/1')
+        self.assertEqual(core['size']['library_bytes'], 0)
+        self.assertEqual(core['libraries'], [])
+        self.assertEqual(full['size']['library_bytes'], len((ROOT / 'runtime/library/operator.py').read_bytes().replace(b'\r\n', b'\n')))
+        self.assertEqual(len(full['libraries']), 1)
+        for record in full['libraries'][0]['source'], full['libraries'][0]['notice']:
+            self.assertIn(record, [{key: value for key, value in file.items() if key != 'role'} for file in full['files']])
+        self.assertEqual(len(full['sources']), 2)
+        self.assertNotEqual(core['cache_version'], full['cache_version'])
+        self.assertEqual(core['capabilities'], full['capabilities'])
+        size = full['size']
+        self.assertEqual(size['artifact_bytes'], sum(size[key] for key in ['source_bytes', 'engine_bytes', 'library_bytes', 'notice_bytes', 'data_bytes', 'assembly_module_bytes', 'receipt_bytes']))
+        config = json.loads((self.root / 'full' / full['configuration']).read_bytes())
+        self.assertEqual(config['library_profile'], 'operator/1')
+        self.assertEqual(config['libraries'], full['libraries'])
+
+    def test_library_identity_transitive_engine_requirements_and_unavailable_host_profiles(self):
+        selected = read_interpreter(ROOT / 'runtime', library_profile='operator/1')
+        for changes in [{'library_profile': 'operator/2'}, {'files': tuple((name, b'changed' if name == 'library/operator.py' else data) for name, data in selected.files)},
+                        {'files': tuple((name, data) for name, data in selected.files if name != 'functions.mjs')}]:
+            with self.subTest(changes=list(changes)), self.assertRaises(ArtifactError):
+                build_interpreter(self.source, replace(selected, **changes), self.root / 'bad')
+        with self.assertRaisesRegex(ArtifactError, 'Unavailable host'):
+            build_interpreter(self.source, self.engine, self.output, host_profile='fetch/1')
+        self.assertFalse(self.output.exists())
+        self.assertEqual(main(['interpreter-web', str(self.source.root / 'CONSOLE-SOURCE.json'), '--engine', str(ROOT / 'runtime'),
+                               '--library-profile', 'operator/1', '--output', str(self.output)]), 0)
+
+    def test_transitive_bootstrap_keeps_the_compiler_and_vm_in_the_worker(self):
+        def reachable(entry):
+            selected, pending = set(), [entry]
+            while pending:
+                name = pending.pop()
+                if name not in selected:
+                    selected.add(name)
+                    # The recorded Worker constructor edge belongs to a separate
+                    # execution context, while ordinary imports stay here.
+                    pending.extend(target for origin, target in ENGINE_IMPORTS if origin == name and
+                                   (origin, target) != ('interpreter-host.mjs', 'interpreter-worker.mjs'))
+            return selected
+        main = reachable('interpreter-host.mjs')
+        self.assertEqual(main, {'interpreter-host.mjs', 'browser-protocol.mjs', 'library-selection.mjs', 'library-catalog.mjs'})
+        worker = reachable('interpreter-worker.mjs')
+        self.assertIn('source-compiler.mjs', worker)
+        self.assertIn('functions.mjs', worker)
+        self.assertEqual(main | worker, {name for name, _, _ in ENGINE_FILES if name.endswith('.mjs')})

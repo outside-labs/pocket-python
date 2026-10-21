@@ -47,8 +47,30 @@ selections, and four profile/host/budget policies. CPython supplies the referenc
 stdout and error types. Missing-library cases intentionally refuse; Python
 wrapper tracebacks are retained and are not equated with native stdlib frames.
 
-Console artifact selection and measurement are subsequent INT-11 stages. The
-final measurements must distinguish engine, library, data, bridge and source
+The development console builder now selects these profiles explicitly:
+
+```sh
+uv run pocket-python interpreter-web build/console-source/CONSOLE-SOURCE.json \\
+  --engine runtime --library-profile operator/1 --output build/operator-console
+```
+
+The default remains core-only/1. The engine snapshot carries its selected library
+identity and only the optional source files belonging to that selection. Both
+profiles preserve the identical core-engine fingerprint. The receipt separately
+records library/source/notice hashes and bytes, profile fingerprint, grants and
+physical paths. Source and notice assets are verified before worker startup;
+the worker independently verifies the catalog before Ready. No selection widens
+the output-only host profile. Hashes/versioned cache paths prevent mixing graphs.
+
+The worker retains language compilation/execution. The main-thread host imports
+only protocol, selection and catalog modules. Tests verify the transitive static
+bootstrap graph and refuse a missing required VM dependency. The real browser
+suite also verifies full/reduced shared-source results, library error locations,
+offline reload/restart, tampered source refusal and a full-to-reduced update that
+removes both grants and the cached optional source. Existing console acceptance
+remains mandatory.
+
+Measurement is the next INT-11 stage. It must distinguish engine, library, data, bridge and source
 bytes; full/reduced behavior; compression policy; startup boundaries; logical
 arena accounting and observed browser/process memory. Static source counts do
 not prove general minimality or whole-process memory bounds.

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFile} from "node:fs/promises";
 import {mountInterpreter} from "./interpreter-host.mjs";
 import {attachInterpreterWorker} from "./interpreter-worker.mjs";
 import {ENGINE, CONSOLE_LIMITS, Peer, checkMessage, sourceValue, limits, diagnostic} from "./browser-protocol.mjs";
@@ -28,6 +29,9 @@ class LocalWorker extends Port {
 const create = options => mountInterpreter({application: identity(), ...options}, LocalWorker);
 const last = () => LocalWorker.instances.at(-1);
 const tick = () => new Promise(resolve => setImmediate(resolve));
+const operator = async () => [{name: "operator", package: false, imports: [],
+  source: (await readFile(new URL("library/operator.py", import.meta.url), "utf8")).replaceAll("\r\n", "\n"),
+  notice: (await readFile(new URL("licenses/POCKET-PYTHON.txt", import.meta.url), "utf8")).replaceAll("\r\n", "\n")}];
 
 test("source host executes new source, preserves text and clears Python state on each run", async () => {
   let output = "";
@@ -106,6 +110,31 @@ test("host output quota and display errors resolve the run without closing a hea
     refuse = false;
     await app.run("print('x')"); assert.equal(text, "x\n");
   } finally { app.stop(); }
+});
+
+test("selected libraries initialize before ready and retain source diagnostics without host grants", async () => {
+  let output = "";
+  const app = create({libraryProfile: "operator/1", libraries: await operator(), onOutput: text => { output += text; }});
+  try {
+    await app.ready; assert.equal(app.stats().library_profile.id, "operator/1");
+    await app.run("import operator\nprint(operator.add(9007199254740993,1))");
+    assert.equal(output, "9007199254740994\n");
+    await assert.rejects(app.run("import operator\noperator.floordiv(1,0)"), error =>
+      error.name === "ZeroDivisionError" && error.detail.location.filename === "sources/operator.py");
+    await assert.rejects(app.run("import browser"), error => error.name === "ImportError");
+    await app.run("print('ready')");
+    assert.equal(app.stats().state, "ready");
+  } finally { app.stop(); }
+  assert.throws(() => create({hostProfile: "dom/1"}), error => error.code === "UNAVAILABLE");
+  assert.throws(() => create({libraryProfile: "operator/2"}), error => error.code === "LIBRARY_PROFILE");
+});
+
+test("a changed selected library cannot reach ready and releases host listeners", async () => {
+  const libraries = await operator(); libraries[0].source = libraries[0].source.replace("return a + b", "return a - b");
+  const app = create({libraryProfile: "operator/1", libraries});
+  await assert.rejects(app.ready, error => error.code === "LIBRARY_INTEGRITY");
+  assert.equal(app.stats().state, "closed"); assert.equal(app.stats().listeners, 0);
+  assert.equal(last().terminated, true);
 });
 
 test("stale sessions are discarded and active malformed sequences close the host", async () => {

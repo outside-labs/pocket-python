@@ -1,11 +1,12 @@
 import {compileSourceModules} from "./source-modules.mjs";
 import {ModuleSession} from "./module-session.mjs";
+import {verifyLibraries, profileModules} from "./library-selection.mjs";
 import {Peer, CONSOLE_LIMITS, application, capabilities, limits, record, exact, fields, request,
   failure, exception, readText, sourceValue, textValue, diagnostic, checkError} from "./browser-protocol.mjs";
 
 // Ports make the same state machine usable by a browser Worker and unit tests.
 export function attachInterpreterWorker(port) {
-  let peer = null, state = "created", nextHost = 1, nextOutput = 1, active = null, output = null;
+  let peer = null, state = "created", nextHost = 1, nextOutput = 1, active = null, output = null, selection = null;
   const dispose = () => {
     if (state === "closed") return;
     state = "closed"; if (active) active.cancelled = true;
@@ -13,7 +14,9 @@ export function attachInterpreterWorker(port) {
     if (output) { clearTimeout(output.timer); output.reject(exception(failure("CANCELLED", "Worker closed.", "host", "HostError"))); output = null; }
   };
   const fatal = error => {
-    try { peer?.send("fatal", {error: failure("PROTOCOL", String(error.message).slice(0, 1024))}); }
+    const library = ["LIBRARY_PROFILE", "LIBRARY_INTEGRITY", "UNAVAILABLE"].includes(error.code);
+    try { peer?.send("fatal", {error: failure(library ? error.code : "PROTOCOL", String(error.message).slice(0, 1024),
+      library ? "runtime" : "protocol", library ? error.name : "ProtocolError")}); }
     finally { dispose(); }
   };
   const sendOutput = text => new Promise((resolve, reject) => {
@@ -32,8 +35,7 @@ export function attachInterpreterWorker(port) {
       if (!exact(message.arguments, ["source"])) throw exception(failure("BAD_VALUE", "Run requires only source.", "host", "HostError"));
       const source = readText(message.arguments.source, peer.limits.source_bytes);
       sourceValue(source, peer.limits);
-      const result = await compileSourceModules([{name: "app", package: false, source, imports: [],
-        notice: "Source entered in the local console; no redistribution license is inferred."}],
+      const result = await compileSourceModules(profileModules(source, selection),
       {entry: "app", maxBytes: peer.limits.source_bytes, maxWork: peer.limits.compile_work, shouldCancel: cancelled});
       registry = result.registry;
       if (state === "closed" || token.cancelled) throw exception(failure("CANCELLED", "Run cancelled.", "host", "HostError"));
@@ -62,6 +64,20 @@ export function attachInterpreterWorker(port) {
     } catch (cause) { if (state !== "closed") fatal(cause); }
     finally { if (active === token) active = null; }
   }
+  async function initialize(message) {
+    try {
+      const extended = Object.hasOwn(message, "library_profile") || Object.hasOwn(message, "libraries");
+      fields(message, ["application", "capabilities", "limits", ...(extended ? ["library_profile", "libraries"] : [])]);
+      const identity = application(message.application), grants = capabilities(message.capabilities), bounds = limits(message.limits);
+      if (!exact(message.limits, Object.keys(CONSOLE_LIMITS))) throw new Error("Explicit effective limits required.");
+      peer.limits = bounds; state = "initializing";
+      selection = await verifyLibraries(extended ? message.library_profile : "core-only/1", extended ? message.libraries : []);
+      if (state === "closed") return;
+      state = "ready";
+      peer.send("ready", {application: identity, capabilities: grants.map(grant => grant.id), limits: bounds,
+        library_profile: {id: selection.id, fingerprint: selection.fingerprint}});
+    } catch (error) { if (state !== "closed") fatal(error); }
+  }
   function receive(event) {
     if (state === "closed") return;
     try {
@@ -73,11 +89,9 @@ export function attachInterpreterWorker(port) {
       if (!peer.receive(message)) return;
       if (state === "created") {
         if (message.kind !== "init") throw new Error("Initialization required.");
-        fields(message, ["application", "capabilities", "limits"]);
-        const identity = application(message.application), grants = capabilities(message.capabilities), bounds = limits(message.limits);
-        if (!exact(message.limits, Object.keys(CONSOLE_LIMITS))) throw new Error("Explicit effective limits required.");
-        peer.limits = bounds; state = "ready";
-        peer.send("ready", {application: identity, capabilities: grants.map(grant => grant.id), limits: bounds});
+        void initialize(message);
+      } else if (state === "initializing" && message.kind !== "close") {
+        throw new Error("Library verification must complete before application messages.");
       } else if (message.kind === "request") {
         request(message, "h", nextHost++);
         if (active) { peer.send("result", {reply_to: message.id, error: failure("QUOTA", "Only one source run may be pending.", "host", "HostError")}); return; }

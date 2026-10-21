@@ -1,9 +1,14 @@
 import {Peer, CONSOLE_LIMITS, application, capabilities, limits, exact, fields, request,
   same, failure, exception, sourceValue, readText, checkError} from "./browser-protocol.mjs";
+import {libraryProfile, snapshotLibraries, hostProfile as verifyHostProfile} from "./library-selection.mjs";
 
 export function mountInterpreter({application: identity, capabilities: grants = [{id: "output/1"}],
-  limits: requested = {}, onOutput = () => {}, onError = () => {}} = {}, WorkerType = Worker) {
+  limits: requested = {}, libraryProfile: profile = "core-only/1", libraries = [], hostProfile: host = "output-only/1",
+  onOutput = () => {}, onError = () => {}} = {}, WorkerType = Worker) {
   identity = application(identity); grants = capabilities(grants); const bounds = limits(requested);
+  verifyHostProfile(host);
+  libraries = snapshotLibraries(profile, libraries);
+  const selected = {id: profile, fingerprint: libraryProfile(profile).fingerprint};
   if (typeof onOutput !== "function" || typeof onError !== "function") throw new TypeError("Console callbacks must be functions.");
   const session = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
   const worker = new WorkerType(new URL("./interpreter-worker.mjs", import.meta.url), {type: "module"});
@@ -33,8 +38,9 @@ export function mountInterpreter({application: identity, capabilities: grants = 
         fields(message, ["error"]); checkError(message.error); fail(message.error); return;
       }
       if (state === "initializing") {
-        fields(message, ["application", "capabilities", "limits"]);
+        fields(message, ["application", "capabilities", "limits", "library_profile"]);
         if (message.kind !== "ready" || !same(identity, message.application) || !same(bounds, message.limits) ||
+            !same(selected, message.library_profile) ||
             !Array.isArray(message.capabilities) || message.capabilities.length !== 1 || message.capabilities[0] !== "output/1") throw new Error("Ready identities/grants/limits differ.");
         clearTimeout(deadline); state = "ready"; resolveReady();
       } else if (message.kind === "request") {
@@ -63,7 +69,7 @@ export function mountInterpreter({application: identity, capabilities: grants = 
     } catch (error) { fail(failure("PROTOCOL", String(error.message).slice(0, 1024))); }
   }
   worker.addEventListener("message", receive); worker.addEventListener("error", crashed); worker.addEventListener("messageerror", crashed);
-  try { peer.send("init", {application: identity, capabilities: grants, limits: bounds}); }
+  try { peer.send("init", {application: identity, capabilities: grants, limits: bounds, library_profile: profile, libraries}); }
   catch (error) { stop("error", error.detail || failure("PROTOCOL", "Initialization failed.")); throw error; }
   return Object.freeze({ready,
     run(source) {
@@ -82,5 +88,6 @@ export function mountInterpreter({application: identity, capabilities: grants = 
         catch (error) { clearTimeout(timer); pending = null; reject(error); }
       });
     }, stop,
-    stats: () => ({state, session, pending: pending ? 1 : 0, listeners: state === "closed" ? 0 : 3, handles: 0, subscriptions: 0, limits: bounds})});
+    stats: () => ({state, session, pending: pending ? 1 : 0, listeners: state === "closed" ? 0 : 3, handles: 0, subscriptions: 0,
+      limits: bounds, library_profile: {...selected}})});
 }
