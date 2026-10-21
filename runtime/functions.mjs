@@ -1,5 +1,5 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException} from "./function-objects.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
@@ -92,7 +92,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (cell?.bound) return cell.value;
     if (local && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
     if (frame.closure.has(key)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
-    if (builtinNames.has(key) || (moduleContext && key === "isinstance")) {
+    if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!builtins.has(key)) builtins.set(key, allocate(BuiltinValue, key));
       return builtins.get(key);
@@ -166,6 +166,15 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   };
   const builtin = (callable, args, keywords) => {
     if (keywords.length) python("TypeError", callable.name + "() does not accept keywords in this profile");
+    if (callable instanceof AppendValue) {
+      if (args.length !== 1) python("TypeError", "append() requires one argument in this profile");
+      return values.binary("append", callable.receiver, args[0]);
+    }
+    if (moduleContext && ["bool", "iter", "next"].includes(callable.name)) {
+      if (callable.name === "bool" && args.length === 0) return false;
+      if (args.length !== 1) hard("UNSUPPORTED", "UnsupportedOperationError", "This builtin call form is outside the source profile.");
+      return values.unary({bool: "truth", iter: "iter", next: "next"}[callable.name], args[0]);
+    }
     if (Object.hasOwn(EXCEPTIONS, callable.name)) {
       if (args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception arguments require the later repr profile.");
       return allocate(ExceptionValue, callable.name, args, args.length ? display(args[0]) : "");
@@ -323,8 +332,12 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
           const invoke = (target, unit) => execute(unit, {...moduleContext.options, arena: memory, moduleContext, module: target,
             inheritedException: frame.activeException});
-          stack.push(op === "import" ? moduleContext.load(owner.name, arg, extra, fourth, invoke) :
-            moduleContext.attribute(stack.pop(), arg, op === "import-from", owner.name, invoke));
+          if (op === "import") stack.push(moduleContext.load(owner.name, arg, extra, fourth, invoke));
+          else {
+            const receiver = stack.pop();
+            stack.push(op === "module-get" && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
+              moduleContext.attribute(receiver, arg, op === "import-from", owner.name, invoke));
+          }
         } else if (op === "if") block(frame, values.truth(stack.pop()) ? arg : extra);
         else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth}); block(frame, arg); }
         else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null}); block(frame, extra); }
@@ -358,7 +371,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         } else if (op === "setitem") { const item = stack.pop(), key = stack.pop(); stack.push(values.set(stack.pop(), key, item)); }
         else if (op === "slice") { const step = stack.pop(), stop = stack.pop(), start = stack.pop(); stack.push(values.slice(stack.pop(), start, stop, step)); }
         else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op)) stack.push(values.unary(op, stack.pop()));
-        else { const right = stack.pop(); stack.push(values.binary(op, stack.pop(), right)); }
+        else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
       } catch (error) {
         const forwarded = exceptionLeases.get(error);
         if (forwarded && forwarded.owner !== execution) {

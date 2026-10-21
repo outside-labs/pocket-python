@@ -20,6 +20,9 @@ export class FunctionValue {
   }
 }
 export class BuiltinValue { constructor(name) { this.name = name; } }
+export class AppendValue extends BuiltinValue {
+  constructor(receiver) { super("append"); this.receiver = receiver; }
+}
 export class ExceptionValue {
   constructor(name, args, message) {
     this.name = name; this.args = args; this.message = message;

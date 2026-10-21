@@ -1,8 +1,8 @@
 # Independent interpreter language contract
 
 INT-01 adopts Python 3.14 as the initial reference grammar and behavior oracle.
-This is a staged implementation contract, not a claim that an interpreter is
-already available. The executable reference cases live in
+This is a staged implementation contract for a repository prototype, with
+its [independent source profile](interpreter-source.md) now implemented. The executable reference cases live in
 tests/fixtures/interpreter/language.json. The [conformance harness](interpreter-conformance.md)
 compares implemented bytecode fixtures with CPython and reports the remaining
 source/language cases as unsupported.
@@ -91,7 +91,7 @@ after offline reload, including errors, interrupting an infinite loop and restar
 
 INT-04 implements [core values and staged containers](interpreter-values.md)
 under bytecode version 2. INT-06 adds [functions, closures and exception unwinding](interpreter-functions.md)
-through version 3. Independent source parsing remains INT-08. INT-05 adds
+through version 3. INT-08 now compiles new source through the independent front end. INT-05 adds
 [rooted allocation accounting and explicit host handles](interpreter-memory.md). Pure-int
 true division and equal-size dictionary key mutation during iteration are
-explicitly deferred. The published 0.1.0 package predates this development engine.
+explicitly deferred. The published 0.2.0 assembler excludes this development engine.

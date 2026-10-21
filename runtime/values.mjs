@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, ExceptionValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue} from "./function-objects.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -69,6 +69,36 @@ export class ValueRuntime {
     return value.points.map(point => String.fromCodePoint(point)).join("");
   }
   isString(value) { this.charge(1); return value instanceof StringValue; }
+  isList(value) { this.charge(1); return value instanceof ListValue; }
+  inplace(operation, left, right) {
+    this.charge(1);
+    if (!(left instanceof ListValue)) return this.binary(operation, left, right);
+    if (operation === "add") {
+      let items;
+      if (right instanceof ListValue || right instanceof TupleValue) items = right.items.slice();
+      else if (right instanceof DictValue) items = right.entries.map(entry => entry.key);
+      else if (right instanceof StringValue) {
+        this.limit(left.items.length + right.points.length <= VALUE_LIMITS.items, "Container length budget exceeded.");
+        for (const point of right.points) this.binary("append", left, this.string([point]));
+        return left;
+      } else if (right instanceof IteratorValue) this.fail("UnsupportedOperationError", "List += with an iterator is outside the source profile.", "UNSUPPORTED");
+      else { this.iterator(right); this.fail("UnsupportedOperationError", "This iterable extension is outside the source profile.", "UNSUPPORTED"); }
+      this.limit(left.items.length + items.length <= VALUE_LIMITS.items, "Container length budget exceeded.");
+      for (const item of items) this.binary("append", left, item);
+      return left;
+    }
+    if (operation === "multiply") {
+      if (!["bigint", "boolean"].includes(typeof right)) return this.binary(operation, left, right);
+      const count = integer(right); this.charge(count.toString().length);
+      this.limit(count >= -BigInt(VALUE_LIMITS.items) && count <= BigInt(VALUE_LIMITS.items), "In-place repeat factor budget exceeded.");
+      const size = count < 0n ? 0 : left.items.length * Number(count);
+      this.limit(size <= VALUE_LIMITS.items, "Container length budget exceeded.");
+      this.charge(size + 1);
+      const original = left.items, items = Array.from({length: size}, (_, index) => original[index % original.length]);
+      this.resize(left, 64 + 8 * items.length, items); left.items = items; return left;
+    }
+    return this.binary(operation, left, right);
+  }
   list(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new ListValue(items)); }
   tuple(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new TupleValue(items)); }
   dict(pairs) {
@@ -430,6 +460,7 @@ export function valueLayout(value) {
   if (value instanceof CodePool) return {bytes: value.bytes, children: [...value.code.constants, ...(value.module ? [value.module] : [])]};
   if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length, children: [value.environment, value.pool]};
   if (value instanceof FunctionValue) return {bytes: 80 + 8 * value.closure.size, children: [value.pool, value.globals, ...value.closure.values()]};
+  if (value instanceof AppendValue) return {bytes: 64, children: [value.receiver]};
   if (value instanceof BuiltinValue) return {bytes: 48 + 2 * value.name.length, children: []};
   if (value instanceof ExceptionValue) return {bytes: 96 + 2 * (value.name.length + value.message.length) +
     value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),

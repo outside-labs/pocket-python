@@ -160,6 +160,9 @@ def validation_requests(engine_name):
 
 
 def check(engine_name, target, channel=None):
+    if engine_name == "source":
+        from check_source import check as check_source
+        return check_source(target, channel)
     if engine_name == "vm4":
         from check_modules import check as check_modules
         return check_modules(target, channel)
@@ -246,6 +249,7 @@ def main():
         args.report.write_text(json.dumps(report, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
     counts = {status: sum(case["status"] == status for case in report["cases"])
               for status in ["pass", "unsupported", "fail"]}
+    counts["unsupported"] += len(report.get("deferred", []))
     print(json.dumps({"engine": report["engine"], "target": args.target,
                       "input_mode": report["input_mode"], "source_execution": report["source_execution"],
                       "host_version": report["host_version"], "oracle": report["oracle"], **counts}))

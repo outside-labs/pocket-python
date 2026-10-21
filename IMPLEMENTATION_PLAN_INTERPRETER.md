@@ -1,8 +1,8 @@
 # Independent Python interpreter implementation plan
 
 Part 3 of the coordinated Python application program; adopted 2026-10-20.
-Planning/issue owner: pocket-python. This describes future work; released
-pocket-python 0.1.0 continues to assemble supplied MicroPython assets.
+Planning/issue owner: pocket-python. This records delivered prototype stages and future work; released
+pocket-python 0.2.0 assembles compiled and supplied MicroPython applications.
 
 ## Goal and ownership
 
@@ -277,3 +277,22 @@ describes resource/cancellation limits and explicit exclusions. Eight unit group
 and Chromium. This is lexical analysis, not source execution; the remaining
 INT-08 work is statement/expression parsing, bindings and verified bytecode
 compilation. The source engine and browser console are still unreleased.
+
+## Independent source execution delivered
+
+INT-08 now delivers our own tokenizer/parser, lexical scope and closure binding,
+immutable-default validation and version-4 bytecode compiler in Node and Chromium
+workers. New source is compiled locally and executed by our VM; CPython is only
+a test oracle. The [core-source/1 contract](docs/interpreter-source.md) names its
+grammar, builtin/value exclusions, provenance, explicit import grants and
+compilation/execution budgets. Source syntax errors, unsupported features,
+evaluation order, Unicode bindings, exception traces, modules, aliases and
+teardown have differential/policy coverage. Older bytecode fixture profiles
+remain separate; deferred source features are never credited as executed.
+
+Next is INT-WEB-01 (#32): an offline source console/application profile using
+this engine, output/errors, interrupt/restart and reload validation. It is ready
+after INT-08 integration; class/async/performance and INT-REL-01 remain later
+gates. The C/Rust-to-WebAssembly option stays in INT-WASM-01–03. Published
+assembler 0.2.0 artifacts exclude `runtime/`; no independent-engine release is
+claimed by these implementation milestones.

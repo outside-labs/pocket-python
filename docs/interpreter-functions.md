@@ -3,11 +3,12 @@
 INT-06 adds our own `pocket-python-bytecode` version 3 interpreter in
 runtime/functions.mjs. The same verified code runs in Node and browser workers.
 Versions 1 and 2 retain their formats and implementations. Published
-pocket-python 0.1.0 is unchanged.
+pocket-python 0.2.0 excludes this independent engine.
 
 Input is bytecode. runtime/function_fixtures.py uses CPython AST/symbol tables
-only to build trusted test fixtures; it never runs in a worker. Independent
-parsing of newly entered source remains INT-08, followed by INT-WEB-01's console.
+only to build trusted test fixtures; it never runs in a worker. The independent
+[source front end](interpreter-source.md) now compiles newly supplied source;
+INT-WEB-01 owns the offline console.
 Execution uses this independent VM.
 
 ## Supported behavior
@@ -50,8 +51,9 @@ statements, decorators, arbitrary attributes/reflection, explicit exception
 causes, exception groups, classes/descriptors, generators and async remain
 unsupported. Handlers initially name the adopted builtins; dynamic expressions
 and arbitrary aliases require later lowering. Bytecode identifiers are bounded
-ASCII names; the independent source grammar remains separate. Modules and the
-small named library follow in INT-07.
+ASCII names in version 3. Version 4 accepts pinned Unicode identifiers and
+compiler-private local storage, with [module](interpreter-modules.md) and
+[source](interpreter-source.md) profiles.
 
 ## Verified format
 
@@ -131,6 +133,7 @@ and source_execution=false.
 
 Node 24.19.0/Chromium 156.0.8078.4 checks against CPython 3.14.7 passed 64
 function/resource cases on both targets. Version 3 also passed 187 broader cases,
-with four malformed-source entries explicitly unsupported until the parser. Node tests
+with four malformed-source entries explicitly unsupported in fixture mode.
+The source engine now checks those as actual source syntax errors. Node tests
 cover retained cyclic closures, owned handles, foreign/stale roots, cancellation
 and malformed bytecode. CI retains both target reports.

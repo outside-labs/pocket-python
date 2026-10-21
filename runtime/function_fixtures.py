@@ -168,7 +168,7 @@ def compile_fixture(source, filename="fixture.py", *, module_profile=False):
                             emit(value, "dup")
                         emit(target, "store", target.id)
                 elif isinstance(value, ast.AugAssign) and isinstance(value.target, ast.Name) and type(value.op) in binary:
-                    expr(value.target); expr(value.value); emit(value, binary[type(value.op)]); emit(value, "store", value.target.id)
+                    expr(value.target); expr(value.value); emit(value, ("inplace-" if module_profile else "") + binary[type(value.op)]); emit(value, "store", value.target.id)
                 elif isinstance(value, ast.Delete) and all(isinstance(target, ast.Name) for target in value.targets):
                     for target in value.targets:
                         emit(target, "delete", target.id)
