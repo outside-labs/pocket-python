@@ -441,3 +441,14 @@ synthetic imports in Node/Chromium. The class console's expanded sixteen-case/
 group suite includes private fields after offline reload and worker restart.
 Descriptors/decorators and individually adopted special methods still keep
 INT-09 open; async, WebAssembly and alpha publication retain their separate gates.
+
+### Public demonstration hosting requested (2026-10-21)
+
+[DEMO-01](https://github.com/outside-labs/pocket-python/issues/78) tracks hosting the
+current independent console: select an HTTPS destination/subpath, build from a
+verified revision, and validate offline installation, new source, Stop/Restart,
+waiting updates and rollback. This is a static application with an output-only
+worker boundary. The [spatial_ui dashboard hosting task](https://github.com/outside-labs/spatial_ui/issues/11)
+separately needs a production Python transport/session/concurrency contract.
+Destinations remain to be selected; no demo deployment or package release is
+implied by this roadmap checkpoint.

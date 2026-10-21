@@ -118,6 +118,7 @@ jobs:
       - run: python scripts/lock_library_profiles.py
       - run: python runtime/check_classes.py --reference-only --report build/classes-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-reference-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-node-report.json
       - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json
@@ -140,4 +141,5 @@ jobs:
             build/interpreter-node-measurements/report.json
             build/classes-reference-report.json
             build/private-names-reference-report.json
+            build/descriptors-reference-report.json
           if-no-files-found: error
