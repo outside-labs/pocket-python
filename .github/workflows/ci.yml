@@ -102,6 +102,7 @@ jobs:
       - run: node --test runtime/vm.test.mjs
       - run: node --test runtime/values.test.mjs
       - run: node --test runtime/class-values.test.mjs
+      - run: node --test runtime/class-policy.test.mjs
       - run: node --test runtime/classes.test.mjs
       - run: node --test runtime/classes-source.test.mjs
       - run: node --test runtime/private-names.test.mjs

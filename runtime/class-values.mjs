@@ -1,9 +1,9 @@
-import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, BuiltinValue, EXCEPTIONS, DESCRIPTOR_HOOKS, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
+import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, BuiltinValue, EXCEPTIONS, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
+import {allowsClassSpecial} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
-const special = name => name.startsWith("__") && name.endsWith("__");
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null} = {}) {
@@ -40,7 +40,7 @@ export class ClassRuntime {
     if (new Set(bases).size !== bases.length) this.fail("TypeError", "Duplicate class base.");
     for (const key of namespace.keys()) {
       this.key(key);
-      if (special(key) && !["__init__", "__module__", "__qualname__", ...DESCRIPTOR_HOOKS].includes(key))
+      if (!allowsClassSpecial(key, "define"))
         this.fail("UnsupportedOperationError", "Custom special methods require a later class stage.", "UNSUPPORTED");
     }
     if (namespace.has("__init__")) this.initializer(namespace.get("__init__"));
@@ -121,7 +121,7 @@ export class ClassRuntime {
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
       if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
     }
-    if (special(name) && !["__init__", ...DESCRIPTOR_HOOKS].includes(name)) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
+    if (!allowsClassSpecial(name, "attribute")) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
     const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
     const getter = () => ({kind: "call", callable: descriptor.get.value,
@@ -164,7 +164,7 @@ export class ClassRuntime {
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
-    if (special(name) && !["__init__", ...DESCRIPTOR_HOOKS].includes(name)) this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
+    if (!allowsClassSpecial(name, "mutate")) this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && name === "__init__" && !remove) this.initializer(value);
     const map = receiver instanceof ClassValue ? receiver.namespace : receiver.attributes;
     const present = map.has(name), before = map.get(name);
