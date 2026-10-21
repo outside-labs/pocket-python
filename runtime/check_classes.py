@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import platform
 import subprocess
+import tempfile
 
 from check_conformance import run_browser
 
@@ -15,19 +16,34 @@ ROOT = Path(__file__).resolve().parent
 CORPUS = ROOT.parent / 'tests/fixtures/interpreter/classes.json'
 
 
-def references():
-    raw = CORPUS.read_bytes()
+def reference_case(case):
+    if not case.get('modules'):
+        return reference(case['source'], 'sources/app.py')
+    # Trusted synthetic registry fixtures get real isolated Python imports.
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        for module in case['modules']:
+            parts = module['name'].split('.')
+            path = root.joinpath(*parts, '__init__.py') if module.get('package') else root.joinpath(*parts).with_suffix('.py')
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(module['source'], encoding='utf-8')
+        source = 'import sys\nsys.path.insert(0, ' + repr(str(root)) + ')\n' + case['source']
+        return reference(source, 'sources/app.py')
+
+
+def references(corpus_path=CORPUS):
+    raw = corpus_path.read_bytes()
     corpus = json.loads(raw)
     records = []
     for case in corpus['cases']:
-        actual = reference(case['source'], 'sources/app.py')
+        actual = reference_case(case)
         passed = actual['ok'] == ('error_type' not in case)
         passed = passed and actual['stdout'] == case.get('stdout', '')
         if 'error_type' in case:
             passed = passed and actual.get('error', {}).get('type') == case['error_type']
         records.append({'id': case['id'], 'stage': case['stage'],
                         'reference_status': 'pass' if passed else 'fail', 'reference': actual})
-    return {'schema_version': 1, 'suite': 'interpreter-classes/1', 'profile': corpus['profile'],
+    return {'schema_version': 1, 'suite': corpus.get('suite', 'interpreter-classes/1'), 'profile': corpus['profile'],
             'mode': 'reference-only', 'reference_version': platform.python_version(),
             'corpus_sha256': hashlib.sha256(raw).hexdigest(), 'source_execution': False,
             'implementation_status': 'Reference mode does not execute the independent engine; see source-mode reports.',
@@ -35,14 +51,17 @@ def references():
                                         for status in ['pass', 'fail']}}
 
 
-def check(target, channel=None):
-    report = references()
+def check(target, channel=None, corpus_path=CORPUS):
+    report = references(corpus_path)
     if report['summary']['fail']:
         raise AssertionError('The class reference corpus differs from its recorded expectations.')
-    cases = json.loads(CORPUS.read_bytes())['cases']
-    requests = [{'id': case['id'], 'modules': [{'name': 'app', 'package': False, 'imports': [],
-        'notice': 'Synthetic class fixture notice\n', 'source': case['source']}],
-        'compileOptions': {'languageProfile': 'classes-source/1'},
+    corpus = json.loads(corpus_path.read_bytes())
+    cases = corpus['cases']
+    adopted = corpus.get('implemented_stages', ['C1'])
+    requests = [{'id': case['id'], 'modules': [{'name': 'app', 'package': False, 'imports': case.get('imports', []),
+        'notice': 'Synthetic class fixture notice\n', 'source': case['source']}] +
+        [{**module, 'notice': 'Synthetic class fixture notice\n'} for module in case.get('modules', [])],
+        'compileOptions': {'languageProfile': report['profile']},
         'options': {'maxSteps': 50000, 'maxWork': 20000000}} for case in cases]
     if target == 'node':
         response = json.loads(subprocess.check_output(['node', str(ROOT / 'source-runner.mjs')],
@@ -55,7 +74,7 @@ def check(target, channel=None):
     records = []
     for case, reference_case in zip(cases, report['cases']):
         actual, expected = results[case['id']], reference_case['reference']
-        if case['stage'] == 'C1':
+        if case['stage'] in adopted:
             passed = actual['ok'] == expected['ok'] and actual['stdout'] == expected['stdout']
             if not expected['ok']:
                 passed = passed and actual.get('error', {}).get('type') == expected['error']['type']
@@ -64,7 +83,7 @@ def check(target, channel=None):
             passed = not actual['ok'] and actual.get('error', {}).get('code') == 'UNSUPPORTED'
             classification = 'intentional-unsupported'
         if actual.get('compilation'):
-            passed = passed and all(c['language_profile'] == 'classes-source/1' for c in actual['compilation'])
+            passed = passed and all(c['language_profile'] == report['profile'] for c in actual['compilation'])
         if actual.get('stats'):
             passed = passed and actual['stats']['frames'] == 0
             passed = passed and all(actual['closed'][key] == 0 for key in ['bytes', 'roots', 'frames'])
@@ -73,8 +92,8 @@ def check(target, channel=None):
     files = [p for p in ROOT.glob('*.mjs') if not p.name.endswith('.test.mjs')]
     return {**report, 'mode': 'source', 'source_execution': True, 'target': target,
             'host_version': host, 'bytecode_version': 5,
-            'implementation_status': 'C1 implemented; C2/C3 and deferred cases intentionally refuse.',
-            'comparison': 'Common C1 stdout and error types match CPython; messages/repr identity are not compared. Later stages must refuse explicitly.',
+            'implementation_status': 'Implemented stages: ' + ', '.join(adopted) + '. Other recorded stages must refuse.',
+            'comparison': 'Adopted stdout and error types match CPython; messages/repr identity are not compared. Later stages must refuse explicitly.',
             'inputs_sha256': {p.name: hashlib.sha256(p.read_bytes().replace(b'\r\n', b'\n')).hexdigest()
                               for p in [*files, Path(__file__), ROOT / 'check_functions.py']},
             'cases': records, 'summary': {status: sum(r['status'] == status for r in records) for status in ['pass', 'fail']}}
@@ -85,9 +104,10 @@ if __name__ == '__main__':
     parser.add_argument('--reference-only', action='store_true')
     parser.add_argument('--target', choices=['node', 'browser'], default='node')
     parser.add_argument('--channel')
+    parser.add_argument('--corpus', type=Path, default=CORPUS)
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
-    report = references() if args.reference_only else check(args.target, args.channel)
+    report = references(args.corpus) if args.reference_only else check(args.target, args.channel, args.corpus)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
