@@ -83,3 +83,9 @@ test('callable argument errors, global shadows and core builtin selection remain
   const core = await runSourceRequest({modules: [unit('callable(print)\n')]});
   assert.equal(core.error.type, 'NameError'); closed(core);
 });
+
+
+test('existing native wrapper chains stay work-bounded without consuming Python or implicit call depth', async () => {
+  const result = await run('def plain(): return 7\nwrapped=plain\ni=0\nwhile i<80:\n wrapped=staticmethod(wrapped)\n i+=1\nprint(wrapped())\nclass A:\n __call__=wrapped\nprint(A()())\n', {maxDepth: 8, maxWork: 10000000});
+  assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, '7\n7\n'); closed(result);
+});

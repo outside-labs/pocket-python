@@ -67,8 +67,9 @@ this dispatch mechanism when they need Python callbacks and result validation.
 Binding continuations retain the original receiver, arguments, keyword values,
 outer completions and descriptor graph as explicit arena roots. Constructor,
 notification, ignored setter results and ordinary returns share the same completion
-path. Call redirects use a bounded iterative dispatcher; both Python recursion
-and descriptor/callable redirect chains respect the execution depth limit. Work,
+path. The dispatcher is iterative. Python frames and implicit callable-instance
+redirects respect the execution depth limit. Unwrapping retained bound methods
+and native static wrappers stays work-bounded without adding Python-frame depth. Work,
 cancellation, memory limits and original source locations continue to apply.
 Close must leave zero logical bytes/roots/frames. This accounting does not claim
 zero physical retention or a hard JavaScript-process memory ceiling.

@@ -581,3 +581,12 @@ The first selected C3 call protocol is implemented; INT-09 stays open for
 length/truth, formatting, indexed objects, iteration/membership and equality/hash.
 Further construction/attribute/arithmetic/metaclass semantics, async/host work,
 later C/Rust WebAssembly and publication retain their separate gates.
+
+
+### Native-wrapper depth compatibility
+
+A focused follow-up keeps the new implicit call depth counter on callable-instance
+redirects. Unwrapping existing native static/bound wrappers remains iterative and
+work-bounded, preserving its C2 depth behavior. The expanded static-call reference
+case checks eighty wrappers through both direct invocation and an instance type
+slot, while a focused low-depth test retains the redirect-cycle regressions.

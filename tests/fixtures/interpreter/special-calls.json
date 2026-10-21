@@ -104,8 +104,8 @@
     {
       "id": "static-call-slot",
       "stage": "C3-call",
-      "source": "class A:\n @staticmethod\n def __call__(x): return x+1\nprint(A()(7))\n",
-      "stdout": "8\n"
+      "source": "class A:\n @staticmethod\n def __call__(x): return x+1\nprint(A()(7))\ndef plain(): return 7\nwrapped=plain\ni=0\nwhile i<80:\n wrapped=staticmethod(wrapped)\n i+=1\nprint(wrapped())\nclass Wrapped:\n __call__=wrapped\nprint(Wrapped()())\n",
+      "stdout": "8\n7\n7\n"
     },
     {
       "id": "class-call-slot-binds-derived-owner",
