@@ -62,6 +62,7 @@ jobs:
       - run: uv run --no-sync python runtime/check_conformance.py --engine vm3 --target browser --report build/vm3-browser-report.json
       - run: uv run --no-sync python runtime/check_functions.py --target browser --report build/functions-browser-report.json
       - run: uv run --no-sync python runtime/check_conformance.py --engine vm4 --target browser --report build/modules-browser-report.json
+      - run: uv run --no-sync python runtime/check_source_tokens.py --target browser --report build/source-tokens-browser-report.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:
@@ -89,6 +90,9 @@ jobs:
       - run: node --test runtime/functions.test.mjs
       - run: node --test runtime/module-registry.test.mjs
       - run: node --test runtime/modules.test.mjs
+      - run: node --test runtime/source-tokens.test.mjs
+      - run: python runtime/generate_identifiers.py --check
+      - run: python runtime/check_source_tokens.py --report build/source-tokens-node-report.json
       - run: python runtime/check_memory.py --report build/memory-node-report.json
       - run: python runtime/check_conformance.py --report build/interpreter-node-report.json
       - run: python runtime/check_conformance.py --engine vm1 --report build/vm1-node-report.json

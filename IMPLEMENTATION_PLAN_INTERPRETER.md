@@ -266,3 +266,14 @@ MicroPython assemblers. Independent `runtime/` prototypes remain outside its
 wheel/sdist; source parsing, browser-console adoption and INT-REL-01 are separate
 interpreter gates. [REL-02](https://github.com/outside-labs/pocket-python/issues/56)
 records publication verification. INT-08 remains next and is not a release claim.
+
+## Independent source tokenizer
+
+INT-08 now has an independent bounded tokenizer in `runtime/source-tokens.mjs`,
+with UTF-8 locations, indentation, literal decoding and pinned Unicode 16
+identifier data. [The source front-end contract](docs/interpreter-source.md)
+describes resource/cancellation limits and explicit exclusions. Eight unit groups,
+500 seeded malformed inputs and 205 CPython lexical comparisons pass in Node
+and Chromium. This is lexical analysis, not source execution; the remaining
+INT-08 work is statement/expression parsing, bindings and verified bytecode
+compilation. The source engine and browser console are still unreleased.
