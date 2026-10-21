@@ -195,6 +195,12 @@ export class ClassRuntime {
     for (const base of type.mro) { this.charge(1); if (base === parent) return true; }
     return false;
   }
+  callable(value) {
+    this.touch(value);
+    if (value instanceof InstanceValue) return this.lookup(value.type, "__call__").found;
+    return value instanceof ClassValue || value instanceof FunctionValue || value instanceof BuiltinValue ||
+      value instanceof BoundMethodValue || value instanceof MethodWrapperValue && value.kind === "staticmethod";
+  }
   property(args, keywordNames, keywordValues) {
     const fields = ["fget", "fset", "fdel"], assigned = new Map();
     if (args.length > fields.length || keywordNames.includes("doc"))

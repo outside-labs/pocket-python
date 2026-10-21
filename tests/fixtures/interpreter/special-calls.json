@@ -3,7 +3,8 @@
   "suite": "interpreter-special-calls/1",
   "profile": "classes-source/1",
   "implemented_stages": [
-    "C3-call"
+    "C3-call",
+    "C3-callable"
   ],
   "cases": [
     {
@@ -314,8 +315,8 @@
     {
       "id": "callable-query-native-wrappers",
       "stage": "C3-callable",
-      "source": "def run(): return 7\nprint(callable(staticmethod(run)),callable(staticmethod(7)),callable(classmethod(run)),callable(property(run)))\n",
-      "stdout": "True True False False\n"
+      "source": "def run(): return 7\nprint(callable(staticmethod(run)),callable(staticmethod(7)),callable(classmethod(run)),callable(property(run)))\nclass A:\n __call__=classmethod(7)\nprint(callable(A().__call__))\n",
+      "stdout": "True True False False\nTrue\n"
     },
     {
       "id": "callable-query-functions-and-builtins",

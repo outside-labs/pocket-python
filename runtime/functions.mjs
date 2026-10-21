@@ -99,7 +99,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod"].includes(key))) {
+        (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!builtins.has(key)) builtins.set(key, allocate(BuiltinValue, key));
       return builtins.get(key);
@@ -178,6 +178,10 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   };
   const builtin = (callable, args, keywords) => {
     if (keywords.length) python("TypeError", callable.name + "() does not accept keywords in this profile");
+    if (callable.name === "callable") {
+      if (args.length !== 1) python("TypeError", "callable() requires one positional argument.");
+      return classes.callable(args[0]);
+    }
     if (callable instanceof AppendValue) {
       if (args.length !== 1) python("TypeError", "append() requires one argument in this profile");
       return values.binary("append", callable.receiver, args[0]);
