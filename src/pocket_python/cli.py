@@ -36,6 +36,11 @@ def main(argv: list[str] | None = None) -> int:
     compiled.add_argument("--output", type=Path, required=True)
     compiled.add_argument("--title", default="Pocket Python")
     compiled.add_argument("--omit-source-maps", action="store_true")
+    interpreter = commands.add_parser("interpreter-web", help="Build a source console using the explicitly supplied pinned independent engine.")
+    interpreter.add_argument("client", type=Path, help="Console-source JSON manifest.")
+    interpreter.add_argument("--engine", type=Path, required=True, help="Directory containing the known source-console engine assets.")
+    interpreter.add_argument("--output", type=Path, required=True)
+    interpreter.add_argument("--title", default="Pocket Python Console")
     args = parser.parse_args(argv)
     try:
         if args.command == "lock-runtime":
@@ -44,6 +49,10 @@ def main(argv: list[str] | None = None) -> int:
             with args.output.open("xb") as stream:
                 stream.write(json_bytes(result))
             print(f"Created {args.output.resolve()}")
+        elif args.command == "interpreter-web":
+            from pocket_python.interpreter import build_interpreter, read_console_source, read_interpreter
+            receipt = build_interpreter(read_console_source(args.client), read_interpreter(args.engine), args.output, title=args.title)
+            print(f"Created {args.output.resolve()} ({receipt['size']['artifact_bytes']} bytes)")
         elif args.command == "compiled-web":
             from pocket_python.compiled import build_compiled, read_client, read_compiled
             client = read_client(args.client)

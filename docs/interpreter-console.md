@@ -2,9 +2,68 @@
 
 INT-WEB-01 integrates the independent source engine in three stages: the bounded
 host/worker adapter, application assembly/editor, and browser/offline acceptance.
-The first stage is implemented in `runtime/interpreter-host.mjs` and
-`runtime/interpreter-worker.mjs`. Application assembly and actual offline console
-acceptance follow separately; these adapters alone do not deliver an offline UI.
+The adapter is implemented in `runtime/interpreter-host.mjs` and
+`runtime/interpreter-worker.mjs`. The development `interpreter-web` command now
+assembles the pinned engine and editor. Full browser/offline acceptance follows
+as the final integration stage. No new PyPI release is implied by these changes.
+
+## Build and use the console
+
+From a checkout with the normal project environment:
+
+```sh
+uv run python examples/interpreter_console.py
+python -m http.server 8000 --bind 127.0.0.1 --directory build/console
+```
+
+Open `http://localhost:8000/`, wait for **Offline ready on this device**, edit the
+source and choose Run. Output and source errors are visible below the editor.
+Stop terminates a busy worker; Restart creates a new session and retains the
+editor text. Each Run starts fresh Python variables. Reload restores the supplied
+example; this first console neither persists nor uploads editor contents.
+HTTPS/localhost is required. Deployment under a URL subdirectory is supported.
+
+The example uses the same text-metrics computation as the CPython/compiled
+acceptance application. It writes a `CONSOLE-SOURCE.json` client allowlist with
+one source and one nonempty UTF-8 provenance/license notice. To assemble that
+selection with the CLI into another new directory:
+
+```sh
+uv run pocket-python interpreter-web build/console-source/CONSOLE-SOURCE.json \\
+  --engine runtime --output build/another-console --title "Local Python"
+```
+
+Input kind is `pocket-python-console-source`, schema_version 1, target `client`,
+with exactly source and notice records. Both carry path, size_bytes, sha256 and
+role; roles must be client-source/notice, source a .py path, and notice under
+LICENSES/. Each file is at most 65,536 bytes. Source is UTF-8 without BOM;
+empty source is permitted. A notice is required, and does not grant a license
+to subsequently entered code. No other checkout files are selected.
+
+`--engine` must explicitly supply the known runtime assets. The assembler pins
+twenty assets (eighteen modules and the project/Unicode notices) through
+`_interpreter_lock.py`; it canonicalizes checkout CRLF to LF before verifying.
+Unknown engine code, missing/modified files and forged snapshots fail before
+publication. `python scripts/lock_interpreter.py` checks the lock; `--write` is
+an explicit maintenance step after reviewing engine changes. The engine itself
+remains outside Python distributions; there is no implicit download or compiler
+dependency. Assembly never executes the source or engine.
+
+Output uses application schema 2, profile in-house-interpreter/1, with distinct
+engine/source identities, complete local module edges and notices, content-based
+engine/application/launcher/configuration paths, file hashes and separate source,
+engine, notice, data, assembly-module and total byte counts. The editor verifies
+the configuration and initial source before reading them. Service-worker install
+fetches the entire executable/source/notice closure with SHA-256 integrity;
+receipt and service-worker files are cached alongside it. The receipt excludes
+its own hash. These are provenance/integrity checks for the selected build,
+not authentication of an untrusted web origin.
+
+A failed install leaves the previous active version available. A complete
+update waits until every old app tab/window closes; the visible status explains
+when an update is waiting. Activation deletes only this URL scope's older caches.
+Known cached assets stay together, and unknown paths within the app scope return
+404. Offline use depends on the browser retaining this complete cache.
 
 ## Host protocol subset
 
