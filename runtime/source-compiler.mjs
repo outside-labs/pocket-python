@@ -44,13 +44,15 @@ class Compiler {
       if (!value.kind) return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, rewrite(child, owner)]));
       this.charge(value);
       if (value.kind === "Class") return {...value, bindingName: name(value.name, owner, value),
-        bases: rewrite(value.bases, owner), body: rewrite(value.body, value.name)};
+        bases: rewrite(value.bases, owner), body: rewrite(value.body, value.name),
+        ...(value.decorators ? {decorators: rewrite(value.decorators, owner)} : {})};
       if (value.kind === "Function") {
         const params = Object.fromEntries(Object.entries(value.params).map(([key, group]) => [key,
           group.map(param => ({...param, name: name(param.name, owner, param), value: rewrite(param.value, owner)}))]));
         const names = Object.values(params).flat().map(param => param.name);
         if (new Set(names).size !== names.length) this.fail("Duplicate function parameter after name mangling.", value, "SYNTAX", "bind");
-        return {...value, bindingName: name(value.name, owner, value), params, body: rewrite(value.body, owner)};
+        return {...value, bindingName: name(value.name, owner, value), params, body: rewrite(value.body, owner),
+          ...(value.decorators ? {decorators: rewrite(value.decorators, owner)} : {})};
       }
       if (value.kind === "Import") return {...value, specifier: value.specifier === null ? null : name(value.specifier, owner, value),
         aliases: value.aliases.map(alias => ({...alias, name: name(alias.name, owner, value),
@@ -82,6 +84,7 @@ class Compiler {
     const visit = value => {
       this.charge(value);
       if (["Function", "Class"].includes(value.kind)) {
+        (value.decorators || []).forEach(visit);
         binding(value.bindingName ?? value.name, value);
         if (value.kind === "Class") value.bases.forEach(visit);
         this.bind(value, scope); return;
@@ -265,10 +268,26 @@ class Compiler {
             else if (target.kind === "Attribute") { expr(target.value); emit(target, "attribute-delete", attribute(target, true)); emit(target, "pop"); }
             else { expr(target.value); expr(target.index); emit(target, "dict-delete"); emit(target, "pop"); }
           }
-        } else if (value.kind === "Function") { emit(value, "function", this.scopeOf.get(value).index); emit(value, "store", value.bindingName ?? value.name); }
-        else if (value.kind === "Class") {
-          if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
-          value.bases.forEach(expr); emit(value, "class", this.scopeOf.get(value).index, value.bases.length); emit(value, "store", value.bindingName ?? value.name);
+        } else if (["Function", "Class"].includes(value.kind)) {
+          const decorators = (value.decorators || []).map(decorator => {
+            const name = this.temporary(scope, decorator); expr(decorator); emit(decorator, "store", name);
+            return {name, site: decorator};
+          });
+          if (value.kind === "Function") emit(value, "function", this.scopeOf.get(value).index);
+          else {
+            if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
+            value.bases.forEach(expr); emit(value, "class", this.scopeOf.get(value).index, value.bases.length);
+          }
+          if (decorators.length) {
+            const result = this.temporary(scope, value); emit(value, "store", result);
+            for (const decorator of decorators.toReversed()) {
+              emit(decorator.site, "load", decorator.name); emit(value, "load", result);
+              emit(decorator.site, "call", 1, []); emit(value, "store", result);
+            }
+            emit(value, "load", result); emit(value, "delete", result);
+            for (const decorator of decorators) emit(decorator.site, "delete", decorator.name);
+          }
+          emit(value, "store", value.bindingName ?? value.name);
         }
         else if (value.kind === "Return") { value.value ? expr(value.value) : pushNone(value); emit(value, "return"); }
         else if (value.kind === "Raise") { if (value.value) { expr(value.value); emit(value, "raise"); } else emit(value, "reraise"); }

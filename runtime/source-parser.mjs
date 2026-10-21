@@ -1,6 +1,6 @@
 import {tokenize, SourceError, SOURCE_LIMITS} from "./source-tokens.mjs";
 
-export const PARSER_LIMITS = Object.freeze({nodes: 8192, depth: 64});
+export const PARSER_LIMITS = Object.freeze({nodes: 8192, depth: 64, decorators: 16});
 const BINARY = new Map([["+", "add"], ["-", "subtract"], ["*", "multiply"], ["/", "divide"], ["//", "floor-divide"], ["%", "modulo"]]);
 const COMPARISONS = new Map([["==", "equal"], ["!=", "not-equal"], ["<", "less"], ["<=", "less-equal"], [">", "greater"], [">=", "greater-equal"], ["is", "is"], ["in", "contains"]]);
 const AUGMENT = new Set(["+=", "-=", "*=", "/=", "//=", "%=", "**=", "@=", "&=", "|=", "^=", "<<=", ">>="]);
@@ -87,13 +87,14 @@ class Parser {
   statement() {
     return this.guard(() => {
       if (this.kind("indent") || this.kind("dedent")) this.fail("Unexpected indentation.", this.peek(), "SYNTAX", "IndentationError");
+      if (this.at("@") && this.classes) return [this.decorated()];
       if (this.at("def")) return [this.definition()];
       if (this.at("class") && this.classes) return [this.classDefinition()];
       if (this.at("if")) return [this.branch()];
       if (this.at("while") || this.at("for")) return [this.loop()];
       if (this.at("try")) return [this.attempt()];
       if (["class", "async", "with", "@"].some(value => this.at(value))) this.unsupported(this.classes ?
-        "Async, context managers and decorators require later stages." : "Classes, async, context managers and decorators are not adopted.");
+        "Async and context managers require later stages." : "Classes, async, context managers and decorators are not adopted.");
       return this.simpleLine();
     });
   }
@@ -186,7 +187,19 @@ class Parser {
     if (parenthesized) this.expect(")");
     return this.node("Import", start, {specifier, level, aliases});
   }
-  definition() {
+  decorated() {
+    const decorators = [];
+    while (this.eat("@")) {
+      if (decorators.length >= PARSER_LIMITS.decorators) this.fail("Decorator count budget exceeded.", this.previous, "COMPILE_BUDGET");
+      decorators.push(this.expression());
+      this.expectKind("newline", "Expected a newline after the decorator expression.");
+    }
+    if (this.at("def")) return this.definition(decorators);
+    if (this.at("class")) return this.classDefinition(decorators);
+    if (this.at("async")) this.unsupported("Async definitions require a later stage.");
+    this.fail("Decorators require a function or class definition.");
+  }
+  definition(decorators = []) {
     const start = this.expect("def"), name = this.name().value;
     if (this.at("[")) this.unsupported("Generic functions are not adopted.");
     this.expect("(");
@@ -220,9 +233,9 @@ class Parser {
     const before = [this.functionDepth, this.loopDepth]; this.functionDepth++; this.loopDepth = 0;
     let body;
     try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
-    return this.node("Function", start, {name, params: {posonly, positional, kwonly}, body}, body.at(-1));
+    return this.node("Function", start, {name, params: {posonly, positional, kwonly}, body, ...(decorators.length ? {decorators} : {})}, body.at(-1));
   }
-  classDefinition() {
+  classDefinition(decorators = []) {
     const start = this.expect("class"), name = this.name().value, bases = [];
     if (this.at("[")) this.unsupported("Generic classes are not adopted.");
     if (this.eat("(")) {
@@ -237,7 +250,7 @@ class Parser {
     const before = [this.functionDepth, this.loopDepth]; this.functionDepth = 0; this.loopDepth = 0;
     let body;
     try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
-    return this.node("Class", start, {name, bases, body}, body.at(-1));
+    return this.node("Class", start, {name, bases, body, ...(decorators.length ? {decorators} : {})}, body.at(-1));
   }
   branch(keyword = "if") {
     const start = this.expect(keyword), test = this.expression(), body = this.suite();
