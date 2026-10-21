@@ -590,3 +590,20 @@ redirects. Unwrapping existing native static/bound wrappers remains iterative an
 work-bounded, preserving its C2 depth behavior. The expanded static-call reference
 case checks eighty wrappers through both direct invocation and an instance type
 slot, while a focused low-depth test retains the redirect-cycle regressions.
+
+
+### C3 length/truth contract
+
+The [length/truth contract](docs/interpreter-special-methods.md#length-and-truth-contract)
+selects __len__/__bool__, signed-64-bit nonnegative lengths, actual bool results,
+type-level descriptor binding and the reference's optional-binding distinction.
+The authored 93-case matrix separates length, truth, control flow and six later
+protocol refusals. All recorded stdout/error types must pass CPython reference
+validation before source admission; this first checkpoint enables no new syntax.
+
+Delivery proceeds through a focused contract/reference PR, resumable operation/
+branch/loop implementation with resource and differential checks, then offline
+console acceptance. Preserve core-source/1, bytecode 5 for explicit classes,
+existing compatibility matrices, logical ownership and the output-only host.
+INT-09 remains open for formatting and subsequent C3 protocols. Async, the later
+C/Rust WebAssembly path, alpha publication and hosting retain separate tasks.

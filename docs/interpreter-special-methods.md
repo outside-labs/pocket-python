@@ -108,3 +108,66 @@ with three fresh Restarts, and a waiting class/library-to-core update that remov
 callable() along with class source and the optional library. Logical teardown,
 owned temporaries, redirect-cycle depth, real OOM and cancellation have dedicated
 tests. INT-09 remains open for the later protocol milestones in the table.
+
+
+## Length and truth contract
+
+The next C3 milestone adopts __len__ and __bool__ through the same type-level
+lookup and descriptor binding used for __call__. Instance shadows affect direct
+attribute access, while implicit len(), bool(), not, conditions, conditional
+expressions, and/or and while use the type's current MRO. Class objects themselves
+retain their ordinary true value; metaclass protocols remain outside this profile.
+A direct method call returns its raw result without implicit protocol validation.
+
+Normal length dispatch requires a native integer result (bool is accepted as 0/1),
+rejects negative values with ValueError, and rejects values above 9223372036854775807
+with OverflowError. This signed-64-bit positive maximum is a virtual-machine
+contract shared by Node and browsers, independent of JavaScript safe-number
+limits and the host pointer size. It matches the pinned 64-bit CPython reference.
+Returning a custom __index__ object remains outside admission until that protocol
+has its own contract. Other result types raise TypeError.
+
+Truth dispatch first selects __bool__, which must return an actual bool; a bad
+result or an exception from its body does not fall back to length. With no bool
+slot, __len__ uses the normal validated length result and zero means false. With
+neither slot, instances are true. A present non-callable/None slot raises TypeError.
+Inherited static/class methods, retained methods, properties, custom descriptors
+and callable slot objects use ordinary binding and invocation semantics.
+
+The reference has an additional binding distinction: AttributeError while binding
+an existing __bool__ descriptor treats that binding as missing. Its optional
+__len__ lookup then truth-tests the raw returned value; it does not take the normal
+validated-length path. A missing optional length binding (including a binding
+AttributeError) means true. Errors from an invoked body still propagate. The
+93-program matrix records this separately, including raw invalid length values,
+a result with its own truth protocol, and direct length-binding errors. This
+behavior is confirmed against the pinned CPython source and executable reference;
+no blanket exception suppression applies to other operations.
+
+The VM must suspend the operation while a getter or callback runs, then validate
+and resume the original expression, branch or loop. Preserve operand identity,
+single evaluation and short circuiting; while else/break/continue, returns and
+finally keep their control-flow behavior. Pending receivers, operands and outer
+completions remain explicit arena roots. Recursion/redirect depth, work, memory,
+cancellation, original error locations and zero logical teardown remain required.
+Primitive ValueRuntime operations stay synchronous and do not run user callbacks.
+
+References: [truth testing](https://docs.python.org/3.14/reference/datamodel.html#object.__bool__),
+[length](https://docs.python.org/3.14/reference/datamodel.html#object.__len__),
+[len()](https://docs.python.org/3.14/library/functions.html#len) and the pinned
+[CPython type slots](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+### Length/truth delivery
+
+1. Adopt this contract and the 93 authored reference cases: 32 length, 39 truth,
+   16 control-flow and six future-protocol cases. Reference-only reports make no
+   independent-engine execution claim.
+2. Implement resumable builtin/unary, branch and loop completions together with
+   source differential, malformed-result, root/exception and resource checks.
+   Keep the existing call, descriptor, class and primitive matrices green.
+3. Extend the console with newly entered length/truth source after offline reload,
+   errors, pending-binding/body Stop/Restart and waiting profile updates.
+
+Additive support keeps classes-source/1 and bytecode 5; engine fingerprints identify
+the changed runtime. Formatting, indexing, iteration and equality/hash remain
+separately gated. This milestone does not close INT-09 or authorize publication.

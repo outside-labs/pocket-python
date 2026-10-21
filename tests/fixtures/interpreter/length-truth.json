@@ -1,0 +1,604 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-length-truth/1",
+  "profile": "classes-source/1",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "length-zero",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 0\nprint(len(A()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "length-positive",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 7\nprint(len(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "length-true",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return True\nprint(len(A()))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "length-false",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return False\nprint(len(A()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "length-signed64-limit",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 9223372036854775807\nprint(len(A()))\n",
+      "stdout": "9223372036854775807\n"
+    },
+    {
+      "id": "length-result-negative",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return -1\nlen(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "length-result-large-negative",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return -9223372036854775809\nlen(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "length-result-overflow",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 9223372036854775808\nlen(A())\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "length-result-none",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return None\nlen(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-result-string",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return \"7\"\nlen(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-result-float",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 7.0\nlen(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-result-list",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return []\nlen(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-missing",
+      "stage": "C3-length",
+      "source": "class A: pass\nlen(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-only-instance-attribute",
+      "stage": "C3-length",
+      "source": "class A: pass\na=A()\ndef size(): return 9\na.__len__=size\nprint(a.__len__())\nlen(a)\n",
+      "stdout": "9\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-instance-shadow",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 7\na=A()\ndef size(): return 9\na.__len__=size\nprint(a.__len__(),len(a))\n",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "length-mro-and-retained-method",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 3\nclass B(A): pass\nb=B()\nsaved=b.__len__\ndef size(self): return 8\nA.__len__=size\nprint(saved(),len(b))\nB.__len__=saved\nprint(len(b))\ndel B.__len__\nprint(len(b))\n",
+      "stdout": "3 8\n3\n8\n"
+    },
+    {
+      "id": "length-add-delete-existing-instance",
+      "stage": "C3-length",
+      "source": "class A: pass\na=A()\ndef size(self): return 4\nA.__len__=size\nprint(len(a))\ndel A.__len__\nlen(a)\n",
+      "stdout": "4\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-static-and-class-method",
+      "stage": "C3-length",
+      "source": "class A:\n n=5\n @staticmethod\n def __len__(): return 4\nclass B(A):\n @classmethod\n def __len__(cls): return cls.n\nclass D(B): n=7\nprint(len(A()),len(B()),len(D()))\n",
+      "stdout": "4 5 7\n"
+    },
+    {
+      "id": "length-property-binding",
+      "stage": "C3-length",
+      "source": "class A:\n def __init__(self,n): self.__n=n\n @property\n def __len__(self):\n  print(\"binding\")\n  def size(): return self.__n\n  return size\nprint(len(A(7)))\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "length-custom-descriptor-owner",
+      "stage": "C3-length",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(owner.__name__,obj.__class__.__name__)\n  def size(): return obj.n\n  return size\nclass A:\n n=7\n __len__=D()\nclass B(A): pass\nprint(len(B()))\n",
+      "stdout": "B B\n7\n"
+    },
+    {
+      "id": "length-callable-slot-value",
+      "stage": "C3-length",
+      "source": "class Size:\n def __call__(self): return 7\nclass A:\n __len__=Size()\nprint(len(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "length-builtin-slot-value",
+      "stage": "C3-length",
+      "source": "class A:\n __len__=print\nlen(A())\n",
+      "stdout": "\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-none-slot",
+      "stage": "C3-length",
+      "source": "class A:\n __len__=None\nlen(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-slot-arguments",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self,extra): return extra\nlen(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-call-error",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): raise ValueError(\"size\")\nlen(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "length-binding-error",
+      "stage": "C3-length",
+      "source": "class A:\n @property\n def __len__(self): raise AttributeError(\"binding\")\nlen(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "length-direct-result-not-validated",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return -7\na=A()\nprint(a.__len__())\nlen(a)\n",
+      "stdout": "-7\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "length-builtin-alias-and-shadow",
+      "stage": "C3-length",
+      "source": "size=len\ndef len(value): return 9\nclass A:\n def __len__(self): return 7\nprint(size(A()),len(A()))\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "length-builtin-missing",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 7\nlen()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-builtin-extra",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 7\nlen(A(),1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-builtin-keyword",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 7\nlen(obj=A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "length-default-class-truth-unrelated",
+      "stage": "C3-length",
+      "source": "class A:\n def __len__(self): return 0\nprint(bool(A),bool(A.__len__))\nlen(A)\n",
+      "stdout": "True True\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-bool-true",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return True\nprint(bool(A()),not A())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "truth-bool-false",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return False\nprint(bool(A()),not A())\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "truth-invalid-bool-integer",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return 1\n def __len__(self):\n  print(\"never\")\n  return 7\nbool(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-invalid-bool-zero",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return 0\n def __len__(self):\n  print(\"never\")\n  return 7\nbool(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-invalid-bool-none",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return None\n def __len__(self):\n  print(\"never\")\n  return 7\nbool(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-invalid-bool-string",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return \"\"\n def __len__(self):\n  print(\"never\")\n  return 7\nbool(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-invalid-bool-list",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return []\n def __len__(self):\n  print(\"never\")\n  return 7\nbool(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-invalid-bool-instance",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return self\n def __len__(self):\n  print(\"never\")\n  return 7\nbool(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-default-and-instance-shadows",
+      "stage": "C3-truth",
+      "source": "class A: pass\na=A()\ndef no(): return False\na.__bool__=no\na.__len__=no\nprint(a.__bool__(),bool(a),not a)\n",
+      "stdout": "False True False\n"
+    },
+    {
+      "id": "truth-bool-before-length",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self):\n  print(\"bool\")\n  return False\n def __len__(self):\n  print(\"never\")\n  return -1\nprint(bool(A()))\n",
+      "stdout": "bool\nFalse\n"
+    },
+    {
+      "id": "truth-length-zero",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return 0\nprint(bool(A()),not A())\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "truth-length-positive",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return 7\nprint(bool(A()),not A())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "truth-length-true",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return True\nprint(bool(A()),not A())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "truth-length-maximum",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return 9223372036854775807\nprint(bool(A()),not A())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "truth-length-negative",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return -1\nbool(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "truth-length-overflow",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return 9223372036854775808\nbool(A())\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "truth-length-bad-type",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return \"7\"\nbool(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-bool-none-no-fallback",
+      "stage": "C3-truth",
+      "source": "class A:\n __bool__=None\n def __len__(self):\n  print(\"never\")\n  return 0\nbool(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-binding-attributeerror-falls-back",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __bool__(self): raise AttributeError(\"binding\")\n def __len__(self):\n  print(\"never\")\n  return 0\nbool(A())\n",
+      "stdout": "never\n"
+    },
+    {
+      "id": "truth-call-error-no-fallback",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): raise ValueError(\"truth\")\n def __len__(self):\n  print(\"never\")\n  return 0\nbool(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "truth-dynamic-inherited-slot",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return 0\nclass B(A): pass\nb=B()\nprint(bool(b))\ndef yes(self): return True\nA.__bool__=yes\nprint(bool(b))\ndel A.__bool__\nprint(bool(b))\ndel A.__len__\nprint(bool(b))\n",
+      "stdout": "False\nTrue\nFalse\nTrue\n"
+    },
+    {
+      "id": "truth-static-class-property",
+      "stage": "C3-truth",
+      "source": "class A:\n @staticmethod\n def __bool__(): return True\nclass B:\n active=False\n @classmethod\n def __bool__(cls): return cls.active\nclass Child(B): active=True\nclass C:\n @property\n def __bool__(self):\n  print(\"binding\")\n  def no(): return False\n  return no\nprint(bool(A()),bool(B()),bool(Child()),bool(C()))\n",
+      "stdout": "binding\nTrue False True False\n"
+    },
+    {
+      "id": "truth-callable-slot-value",
+      "stage": "C3-truth",
+      "source": "class No:\n def __call__(self): return False\nclass A:\n __bool__=No()\nprint(bool(A()))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "truth-custom-binding",
+      "stage": "C3-truth",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(owner.__name__)\n  def yes(): return True\n  return yes\nclass A:\n __bool__=D()\nprint(bool(A()))\n",
+      "stdout": "A\nTrue\n"
+    },
+    {
+      "id": "truth-direct-bool-result-not-validated",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return 7\na=A()\nprint(a.__bool__())\nbool(a)\n",
+      "stdout": "7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-bool-bypasses-length-overflow",
+      "stage": "C3-truth",
+      "source": "class A:\n def __len__(self): return 9223372036854775808\n def __bool__(self): return False\nprint(bool(A()))\nlen(A())\n",
+      "stdout": "False\n",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "truth-bool-default-alias-shadow",
+      "stage": "C3-truth",
+      "source": "query=bool\ndef bool(value): return \"shadow\"\nclass A:\n def __bool__(self): return False\nprint(query(),query(A()),bool(A()))\n",
+      "stdout": "False False shadow\n"
+    },
+    {
+      "id": "truth-builtin-extra",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return True\nbool(A(),1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-builtin-keyword",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): return True\nbool(obj=A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-body-attributeerror-propagates",
+      "stage": "C3-truth",
+      "source": "class A:\n def __bool__(self): raise AttributeError(\"body\")\n def __len__(self):\n  print(\"never\")\n  return 0\nbool(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "truth-binding-attributeerror-default",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __bool__(self): raise AttributeError(\"binding\")\nprint(bool(A()),not A())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "truth-length-binding-attributeerror-propagates",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __len__(self): raise AttributeError(\"length\")\nbool(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "truth-both-binding-attributeerrors-default",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __bool__(self): raise AttributeError(\"boolean\")\n @property\n def __len__(self): raise AttributeError(\"length\")\nprint(bool(A()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "truth-optional-binding-length-result-negative",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __bool__(self): raise AttributeError(\"boolean\")\n def __len__(self): return -1\nprint(bool(A()),not A())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "truth-optional-binding-length-result-overflow",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __bool__(self): raise AttributeError(\"boolean\")\n def __len__(self): return 9223372036854775808\nprint(bool(A()),not A())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "truth-optional-binding-length-result-string",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __bool__(self): raise AttributeError(\"boolean\")\n def __len__(self): return \"7\"\nprint(bool(A()),not A())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "truth-optional-binding-length-result-none",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __bool__(self): raise AttributeError(\"boolean\")\n def __len__(self): return None\nprint(bool(A()),not A())\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "truth-optional-binding-result-custom-truth",
+      "stage": "C3-truth",
+      "source": "class Empty:\n def __bool__(self): return False\nclass A:\n @property\n def __bool__(self): raise AttributeError(\"boolean\")\n def __len__(self): return Empty()\nprint(bool(A()))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "truth-optional-length-body-attributeerror-propagates",
+      "stage": "C3-truth",
+      "source": "class A:\n @property\n def __bool__(self): raise AttributeError(\"boolean\")\n def __len__(self): raise AttributeError(\"body\")\nbool(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "condition-if-elif-conditional-expression",
+      "stage": "C3-control",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __bool__(self):\n  print(self.n)\n  return self.n>0\nif A(0): print(\"never\")\nelif A(1): print(\"selected\")\nelse: print(\"never\")\nprint(\"yes\" if A(2) else \"no\")\n",
+      "stdout": "0\n1\nselected\n2\nyes\n"
+    },
+    {
+      "id": "condition-length-fallback",
+      "stage": "C3-control",
+      "source": "class A:\n def __len__(self):\n  print(\"length\")\n  return 0\nif A(): print(\"never\")\nelse: print(\"empty\")\nprint(\"yes\" if A() else \"no\")\n",
+      "stdout": "length\nempty\nlength\nno\n"
+    },
+    {
+      "id": "condition-short-circuit-retains-operands",
+      "stage": "C3-control",
+      "source": "class A:\n def __init__(self,active): self.active=active\n def __bool__(self):\n  print(\"truth\",self.active)\n  return self.active\na=A(False)\nb=A(True)\nprint((a and b) is a,(b and a) is a,(a or b) is b,(b or a) is b)\n",
+      "stdout": "truth False\ntruth True\ntruth False\ntruth True\nTrue True True True\n"
+    },
+    {
+      "id": "condition-operands-once-and-short-circuit",
+      "stage": "C3-control",
+      "source": "class A:\n def __bool__(self):\n  print(\"test\")\n  return False\na=A()\ndef make():\n print(\"make\")\n return a\ndef skipped():\n print(\"never\")\n return 7\nprint((make() and skipped()) is a)\n",
+      "stdout": "make\ntest\nTrue\n"
+    },
+    {
+      "id": "condition-while-else",
+      "stage": "C3-control",
+      "source": "class A:\n def __init__(self): self.n=3\n def __len__(self):\n  print(\"test\",self.n)\n  return self.n\na=A()\nwhile a:\n print(\"body\",a.n)\n a.n-=1\nelse: print(\"done\")\n",
+      "stdout": "test 3\nbody 3\ntest 2\nbody 2\ntest 1\nbody 1\ntest 0\ndone\n"
+    },
+    {
+      "id": "condition-while-continue-break-finally",
+      "stage": "C3-control",
+      "source": "class A:\n def __init__(self): self.n=0\n def __bool__(self):\n  self.n+=1\n  print(\"test\",self.n)\n  return self.n<5\na=A()\nwhile a:\n try:\n  if a.n==1: continue\n  break\n finally: print(\"finally\",a.n)\nelse: print(\"never\")\nprint(\"done\")\n",
+      "stdout": "test 1\nfinally 1\ntest 2\nfinally 2\ndone\n"
+    },
+    {
+      "id": "condition-nested-loops",
+      "stage": "C3-control",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __bool__(self):\n  self.n-=1\n  return self.n>=0\na=A(2)\nwhile a:\n b=A(2)\n while b: print(a.n,b.n)\n else: print(\"inner\")\nelse: print(\"outer\")\n",
+      "stdout": "1 1\n1 0\ninner\n0 1\n0 0\ninner\nouter\n"
+    },
+    {
+      "id": "condition-call-result-and-builtin-slot",
+      "stage": "C3-control",
+      "source": "class A:\n def __bool__(self): return False\n def __call__(self): return self\na=A()\nif a(): print(\"never\")\nelse: print(\"called\")\nclass B:\n __bool__=bool\nprint(bool(B()))\n",
+      "stdout": "called\nFalse\n"
+    },
+    {
+      "id": "condition-binding-property-resumes-expression",
+      "stage": "C3-control",
+      "source": "class A:\n @property\n def __bool__(self):\n  print(\"binding\")\n  def no():\n   print(\"callback\")\n   return False\n  return no\nprint(3+(1 if A() else 4))\n",
+      "stdout": "binding\ncallback\n7\n"
+    },
+    {
+      "id": "condition-function-return-finally",
+      "stage": "C3-control",
+      "source": "class A:\n def __bool__(self): return True\ndef choose():\n try:\n  if A(): return [7]\n finally: print(\"finally\")\nprint(choose()[0])\n",
+      "stdout": "finally\n7\n"
+    },
+    {
+      "id": "condition-exception-handled-outside-loop",
+      "stage": "C3-control",
+      "source": "class A:\n def __bool__(self): raise ValueError(\"test\")\ntry:\n while A(): print(\"never\")\nexcept ValueError: print(\"caught\")\nfinally: print(\"finally\")\n",
+      "stdout": "caught\nfinally\n"
+    },
+    {
+      "id": "condition-invalid-result-handled",
+      "stage": "C3-control",
+      "source": "class A:\n def __bool__(self): return 1\ntry:\n print(7 if A() else 9)\nexcept TypeError: print(\"caught\")\n",
+      "stdout": "caught\n"
+    },
+    {
+      "id": "condition-exception-context-and-reraise",
+      "stage": "C3-control",
+      "source": "class A:\n def __bool__(self): raise\ntry:\n raise ValueError(\"original\")\nexcept ValueError:\n try:\n  if A(): print(\"never\")\n except ValueError as error: print(str(error))\n",
+      "stdout": "original\n"
+    },
+    {
+      "id": "condition-while-descriptor-mutation",
+      "stage": "C3-control",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"binding\",obj.n)\n  def yes():\n   obj.n-=1\n   return obj.n>=0\n  return yes\nclass A:\n n=2\n __bool__=D()\nwhile A():\n break\na=A()\nwhile a: print(a.n)\nelse: print(\"done\")\n",
+      "stdout": "binding 2\nbinding 2\n1\nbinding 1\n0\nbinding 0\ndone\n"
+    },
+    {
+      "id": "condition-replace-slot-during-call",
+      "stage": "C3-control",
+      "source": "def no(self):\n print(\"next\")\n return False\nclass A:\n def __bool__(self):\n  A.__bool__=no\n  print(\"first\")\n  return True\na=A()\nwhile a: print(\"body\")\nelse: print(\"done\")\n",
+      "stdout": "first\nbody\nnext\ndone\n"
+    },
+    {
+      "id": "condition-constructor-and-property-completions",
+      "stage": "C3-control",
+      "source": "class Flag:\n def __bool__(self): return False\nclass A:\n def __init__(self):\n  if Flag(): self.n=0\n  else: self.n=7\n @property\n def value(self): return 3 if Flag() else self.n\nprint(A().value)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-index-return",
+      "stage": "C3-future",
+      "source": "class Index:\n def __index__(self): return 7\nclass A:\n def __len__(self): return Index()\nprint(len(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-format",
+      "stage": "C3-future",
+      "source": "class Index:\n def __str__(self): return \"seven\"\nprint(str(Index()))\n",
+      "stdout": "seven\n"
+    },
+    {
+      "id": "future-getitem",
+      "stage": "C3-future",
+      "source": "class Index:\n def __getitem__(self,key): return 7\nprint(Index()[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-iterator",
+      "stage": "C3-future",
+      "source": "class Index:\n def __iter__(self): return iter([7])\nprint(next(iter(Index())))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-equality",
+      "stage": "C3-future",
+      "source": "class Index:\n def __eq__(self,other): return True\nprint(Index()==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-new",
+      "stage": "C3-future",
+      "source": "class Index:\n def __new__(cls): return object()\nvalue=Index()\n",
+      "stdout": ""
+    }
+  ]
+}
