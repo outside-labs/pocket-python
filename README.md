@@ -122,3 +122,7 @@ subsequent milestone. It is not included in the published 0.1.0 package.
 Development sessions now have [explicit roots, allocation limits and owned host handles](docs/interpreter-memory.md), with shared Node/browser lifetime checks. New Python source still requires the planned independent parser.
 
 The development [compiled JavaScript PWA builder](docs/compiled-applications.md) now packages verified client modules and original helpers for browser-worker execution, offline reload and scoped updates. Build the text-metrics example with the optional pinned compiled-build tooling; the published 0.1.0 package remains unchanged.
+
+The development [shared server/browser example](docs/shared-application.md) runs
+the same supported computation under CPython and in a compiled browser worker,
+with explicit network reference calls and offline failure checks.
