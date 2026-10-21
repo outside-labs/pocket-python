@@ -623,3 +623,21 @@ truth examples to adopted stages. Twelve focused units plus a verified-bytecode
 regression cover control flow, source errors, logical roots, exception/finally
 behavior, depth, work, cancellation and actual callback OOM. The complete Node
 suite now has 152 tests. Offline-console acceptance follows as a separate PR.
+
+
+### C3 length/truth console checkpoint
+
+The offline class console accepts the adopted length/truth matrix. Twenty-six
+CPython source comparisons and eleven browser groups cover results, binding/body
+errors, optional binding fallback, short circuiting, loops and optional operator
+truth/not_. New private-state queue source executes length and property-bound
+truth through while/else after offline reload. Five Stop/Restart cycles cover
+existing calls and new length/truth callbacks and pending bindings; waiting
+updates remove class/library selection while retaining primitive core builtins.
+
+The 93-case length/truth matrix has 87 adopted comparisons and six later refusals
+in Node/Chromium. The full 63-call, 69-descriptor, 39-class and 34-private-name
+matrices remain required, alongside 152 Node tests, Python/distribution checks,
+core/library console acceptance and exact-revision retained reports. C3 length/
+truth is delivered; next adopt __repr__/__str__ with resumable output/formatting
+and validated strings. INT-09 and the later async/Wasm/publication gates stay open.

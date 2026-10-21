@@ -34,6 +34,12 @@ SOURCE = '''class Counter:
     def __call__(self, amount):
         return self.add(amount)
 
+    def __len__(self):
+        return self.value
+
+    def __bool__(self):
+        return self.value > 0
+
 class StepCounter(Counter):
     def twice(self, amount):
         return self(self.doubled(amount))
@@ -42,6 +48,9 @@ counter = StepCounter.from_start(1)
 print("Count:", counter.twice(3))
 print("Class:", type(counter).__name__)
 print("Callable:", callable(counter))
+print("Length:", len(counter), "Active:", bool(counter))
+empty = StepCounter.from_start(0)
+print("Empty:", "yes" if not empty else "no")
 '''
 
 if __name__ == '__main__':

@@ -452,3 +452,19 @@ worker boundary. The [spatial_ui dashboard hosting task](https://github.com/outs
 separately needs a production Python transport/session/concurrency contract.
 Destinations remain to be selected; no demo deployment or package release is
 implied by this roadmap checkpoint.
+
+
+### Length/truth interpreter checkpoint (2026-10-21)
+
+INT-09 adds __len__/__bool__ through the independent VM's resumable operations,
+including native builtins, not, conditions, short circuiting and while. The
+[contract](docs/interpreter-special-methods.md#length-and-truth-contract) defines
+validated results, fixed signed-64-bit lengths, descriptor/body failure distinctions
+and shared ownership/resource limits. All 93 new Node/Chromium source cases pass;
+the offline console now has 37 comparisons/checks and five Stop/Restart cycles.
+The default core selection and output-only boundary remain unchanged.
+
+Next are individually adopted __repr__/__str__ formatting operations, followed by
+indexing, iteration/membership and equality/hash. INT-09 remains open. Async, the
+later C/Rust WebAssembly path, alpha publication and public console/dashboard
+hosting remain separate Project items.

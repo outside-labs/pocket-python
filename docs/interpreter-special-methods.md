@@ -189,3 +189,20 @@ finally behavior, Python recursion, native binding cycles, eighty native wrapper
 instruction/work/cancellation limits, real callback OOM and zero logical teardown.
 The core-source default and explicit host/library grants remain unchanged. Console
 acceptance is the next focused delivery step; INT-09 stays open for later protocols.
+
+
+### Length/truth console checkpoint
+
+The class console now demonstrates __len__/__bool__ alongside callable methods.
+Twenty-six CPython source comparisons plus eleven Chromium groups exercise type
+lookup, result validation, optional binding fallback, short circuiting, loops and
+operator-library truth/not_. A newly entered private-state queue runs its own
+length, property-bound truth and while/else after offline reload. Original source
+locations, invalid results, five Stop/Restart cycles through calls/length/truth/
+pending bindings, and a waiting class/library-to-core update are accepted. The
+reduced profile retains primitive len()/bool() while refusing class source and
+removed imports. The output-only host boundary and local static GETs remain.
+
+C3 length/truth is complete for this adopted matrix. Formatting, indexed objects,
+iteration/membership and equality/hash remain future milestones, so INT-09 stays
+open. This checkpoint adds no package publication or public deployment.
