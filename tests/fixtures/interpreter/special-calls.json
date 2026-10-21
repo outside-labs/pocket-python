@@ -4,7 +4,9 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "C3-call",
-    "C3-callable"
+    "C3-callable",
+    "C3-length",
+    "C3-truth"
   ],
   "cases": [
     {
@@ -365,13 +367,13 @@
     },
     {
       "id": "future-length",
-      "stage": "C3-future",
+      "stage": "C3-length",
       "source": "class A:\n def __len__(self): return 7\nprint(len(A()))\n",
       "stdout": "7\n"
     },
     {
       "id": "future-truth",
-      "stage": "C3-future",
+      "stage": "C3-truth",
       "source": "class A:\n def __bool__(self): return False\nprint(bool(A()))\n",
       "stdout": "False\n"
     },

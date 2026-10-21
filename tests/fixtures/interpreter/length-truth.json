@@ -2,7 +2,11 @@
   "schema_version": 1,
   "suite": "interpreter-length-truth/1",
   "profile": "classes-source/1",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "C3-length",
+    "C3-truth",
+    "C3-control"
+  ],
   "cases": [
     {
       "id": "length-zero",

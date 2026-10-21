@@ -222,17 +222,54 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   };
   const callTask = (callable, args, keywords, keywordValues, site, completion = null, depth = 0) =>
     ({callable, args, keywords, keywordValues, site, completion, depth});
+  const unaryTask = (operation, value, site, completion = null, depth = 0, optionalLength = false) =>
+    ({kind: "unary", operation, value, site, completion, depth, optionalLength});
+  const lengthResult = value => {
+    if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "__len__() must return an adopted integer");
+    if (typeof value === "boolean") value = values.int(BigInt(value));
+    if (value < 0n) python("ValueError", "__len__() should return >= 0");
+    if (value > 9223372036854775807n) python("OverflowError", "length exceeds the signed-64-bit maximum");
+    return value;
+  };
+  const bindingRecovery = (value, completion, site) => {
+    while (["init", "relay"].includes(completion?.kind)) completion = completion.after;
+    if (value.name !== "AttributeError" || !completion?.fallback) return null;
+    const {operation, receiver, after, depth, missing} = completion.fallback;
+    // Optional lookup suppresses binding AttributeError, never a method-body error.
+    return missing === "length" ? unaryTask(operation, receiver, site, after, depth, true) :
+      {kind: "value", value: operation !== "not", site, completion: after, depth};
+  };
   const deliver = (value, completion, site) => {
-    while (["init", "relay"].includes(completion?.kind)) {
+    while (["init", "relay", "protocol-result"].includes(completion?.kind)) {
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
         value = completion.instance;
+      } else if (completion.kind === "protocol-result") {
+        if (completion.slot === "__bool__") {
+          if (typeof value !== "boolean") python("TypeError", "__bool__() should return bool");
+        } else value = lengthResult(value);
+        if (completion.operation !== "len") {
+          if (completion.slot === "__len__") value = value !== 0n;
+          if (completion.operation === "not") value = !value;
+        }
       }
       completion = completion.after;
     }
+    if (completion?.kind === "optional-truth") return unaryTask(completion.operation, value, site,
+      completion.after, completion.depth);
     if (completion?.kind === "invoke") return callTask(value, completion.args, completion.keywords,
       completion.keywordValues, site, completion.after, completion.depth);
     if (completion?.kind === "notify") return notifyNext(completion.type, completion.entries, completion.index, site);
+    if (completion?.kind === "condition") {
+      const frame = frames.at(-1), task = frame.tasks.at(-1);
+      if (completion.control === "if") block(frame, value ? completion.body : completion.otherwise);
+      else if (completion.control === "jump") { if (!value) task.pc = completion.target; }
+      else if (completion.control === "while") {
+        if (!value) { frame.tasks.pop(); block(frame, task.otherwise); }
+        else { task.phase = "body"; block(frame, task.body); }
+      }
+      return null;
+    }
     frames.at(-1).tasks.at(-1).stack.push(completion?.kind === "discard" ? null : value);
     return null;
   };
@@ -253,51 +290,94 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   const dispatch = task => {
     while (task) {
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
-      temporaries.push(callable, ...args, ...keywordValues, ...(completion?.roots || []));
-      if (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod" || callable instanceof InstanceValue) {
-        charge(1);
-        if (callable instanceof InstanceValue) {
-          if (++depth > maxDepth) python("RecursionError", "maximum implicit call dispatch depth exceeded");
-          const plan = classes.special(callable, "__call__");
-          if (!plan) python("TypeError", "Instance has no callable type slot");
-          completion = {kind: "relay", after: completion, roots: [callable, ...(completion?.roots || [])]};
-          if (plan.kind === "value") task = callTask(plan.value, args, keywords, keywordValues, site, completion, depth);
-          else task = callTask(plan.callable, plan.args, [], [], site, {kind: "invoke", args, keywords, keywordValues,
-            after: completion, depth, roots: [...args, ...keywordValues, ...completion.roots]}, depth);
-        } else {
-          if (callable instanceof BoundMethodValue) args = [callable.receiver, ...args];
-          task = callTask(callable.callable, args, keywords, keywordValues, site, completion, depth);
+      try {
+        if (task.kind === "value") { task = deliver(task.value, completion, site); continue; }
+        if (task.kind === "unary") {
+          const {operation, value, optionalLength} = task;
+          temporaries.push(value, ...(completion?.roots || []));
+          if (!(value instanceof InstanceValue) || !["len", "truth", "not"].includes(operation)) {
+            task = deliver(values.unary(operation, value), completion, site); continue;
+          }
+          charge(1);
+          if (!optionalLength && ++depth > maxDepth) python("RecursionError", "maximum implicit protocol dispatch depth exceeded");
+          let slot = operation === "len" || optionalLength ? "__len__" : "__bool__";
+          const fallback = operation === "len" ? null : {operation, receiver: value, after: completion, depth,
+            missing: optionalLength ? "true" : "length"};
+          let plan;
+          try { plan = classes.special(value, slot); }
+          catch (error) {
+            const recovery = error instanceof Raised && bindingRecovery(error.value, {fallback}, site);
+            if (!recovery) throw error;
+            task = recovery; continue;
+          }
+          if (!plan && slot === "__bool__") { slot = "__len__"; plan = classes.special(value, slot); }
+          if (!plan) {
+            if (operation === "len") python("TypeError", "Instance has no length type slot");
+            task = deliver(operation !== "not", completion, site); continue;
+          }
+          const roots = [value, ...(completion?.roots || [])];
+          const finish = optionalLength ? {kind: "optional-truth", operation, after: completion, depth, roots} :
+            {kind: "protocol-result", operation, slot, after: completion, roots};
+          if (plan.kind === "value") task = callTask(plan.value, [], [], [], site, finish, depth);
+          else task = callTask(plan.callable, plan.args, [], [], site, {kind: "invoke", args: [], keywords: [],
+            keywordValues: [], after: finish, depth, roots, fallback: slot === "__bool__" || optionalLength ? fallback : null}, depth);
+          continue;
         }
-        continue;
-      }
-      if (callable instanceof PropertyAccessorValue) {
-        if (args.length !== 1 || keywords.length) python("TypeError", "Property accessor copy requires one positional value.");
-        const fields = [callable.property.fget, callable.property.fset, callable.property.fdel];
-        fields[{getter: 0, setter: 1, deleter: 2}[callable.name]] = args[0];
-        task = deliver(allocate(PropertyValue, ...fields), completion, site); continue;
-      }
-      if (callable instanceof ClassValue) {
-        const instance = classes.instance(callable); temporaries.push(instance);
-        const initializer = classes.lookup(callable, "__init__");
-        if (!initializer.found) {
-          if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
-          task = deliver(instance, completion, site); continue;
+        temporaries.push(callable, ...args, ...keywordValues, ...(completion?.roots || []));
+        if (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod" || callable instanceof InstanceValue) {
+          charge(1);
+          if (callable instanceof InstanceValue) {
+            if (++depth > maxDepth) python("RecursionError", "maximum implicit call dispatch depth exceeded");
+            const plan = classes.special(callable, "__call__");
+            if (!plan) python("TypeError", "Instance has no callable type slot");
+            completion = {kind: "relay", after: completion, roots: [callable, ...(completion?.roots || [])]};
+            if (plan.kind === "value") task = callTask(plan.value, args, keywords, keywordValues, site, completion, depth);
+            else task = callTask(plan.callable, plan.args, [], [], site, {kind: "invoke", args, keywords, keywordValues,
+              after: completion, depth, roots: [...args, ...keywordValues, ...completion.roots]}, depth);
+          } else {
+            if (callable instanceof BoundMethodValue) args = [callable.receiver, ...args];
+            task = callTask(callable.callable, args, keywords, keywordValues, site, completion, depth);
+          }
+          continue;
         }
-        const method = classes.get(instance, "__init__");
-        task = callTask(method, args, keywords, keywordValues, site,
-          {kind: "init", instance, after: completion, roots: [instance, ...(completion?.roots || [])]}, depth); continue;
+        if (callable instanceof PropertyAccessorValue) {
+          if (args.length !== 1 || keywords.length) python("TypeError", "Property accessor copy requires one positional value.");
+          const fields = [callable.property.fget, callable.property.fset, callable.property.fdel];
+          fields[{getter: 0, setter: 1, deleter: 2}[callable.name]] = args[0];
+          task = deliver(allocate(PropertyValue, ...fields), completion, site); continue;
+        }
+        if (callable instanceof ClassValue) {
+          const instance = classes.instance(callable); temporaries.push(instance);
+          const initializer = classes.lookup(callable, "__init__");
+          if (!initializer.found) {
+            if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
+            task = deliver(instance, completion, site); continue;
+          }
+          const method = classes.get(instance, "__init__");
+          task = callTask(method, args, keywords, keywordValues, site,
+            {kind: "init", instance, after: completion, roots: [instance, ...(completion?.roots || [])]}, depth); continue;
+        }
+        if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
+        if (callable instanceof BuiltinValue) {
+          if (["len", "bool"].includes(callable.name) && args.length === 1 && !keywords.length) {
+            task = unaryTask(callable.name === "bool" ? "truth" : "len", args[0], site, completion, depth); continue;
+          }
+          if (callable.name === "bool" && frames.at(-1).callable.pool.code.version === 5 &&
+              (args.length > 1 || keywords.length)) python("TypeError", "bool() accepts at most one positional argument");
+          let value;
+          if (callable.name === "property") value = classes.property(args, keywords, keywordValues);
+          else if (["staticmethod", "classmethod"].includes(callable.name)) {
+            if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
+            value = allocate(MethodWrapperValue, callable.name, args[0]);
+          } else value = builtin(callable, [...args, ...keywordValues], keywords);
+          task = deliver(value, completion, site); continue;
+        }
+        python("TypeError", "Value is not callable in this profile");
+      } catch (error) {
+        const recovery = error instanceof Raised && bindingRecovery(error.value, completion, site);
+        if (!recovery) throw error;
+        task = recovery;
       }
-      if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
-      if (callable instanceof BuiltinValue) {
-        let value;
-        if (callable.name === "property") value = classes.property(args, keywords, keywordValues);
-        else if (["staticmethod", "classmethod"].includes(callable.name)) {
-          if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
-          value = allocate(MethodWrapperValue, callable.name, args[0]);
-        } else value = builtin(callable, [...args, ...keywordValues], keywords);
-        task = deliver(value, completion, site); continue;
-      }
-      python("TypeError", "Value is not callable in this profile");
     }
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
@@ -326,8 +406,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           if (!["normal", "continue"].includes(signal.kind)) { frame.tasks.pop(); continue; }
           if (task.type === "while") {
             if (task.phase === "test" && signal.kind === "normal") {
-              if (!values.truth(signal.value)) { frame.tasks.pop(); block(frame, task.otherwise); return; }
-              task.phase = "body"; block(frame, task.body); return;
+              task.phase = "truth";
+              dispatch(unaryTask("truth", signal.value, task.site, {kind: "condition", control: "while"})); return;
             }
             task.phase = "test"; block(frame, task.test); return;
           }
@@ -392,6 +472,12 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         frame.leave(); frames.pop(); return;
       }
       if (signal.kind === "raise") {
+        const recovery = bindingRecovery(returned, frame.completion, frame.callsite);
+        if (recovery) {
+          temporaries.push(...(frame.completion?.roots || []));
+          current = {...frame.callsite, instruction: frame.returnInstruction};
+          frame.leave(); frames.pop(); dispatch(recovery); return;
+        }
         addTrace(returned, frame.callsite);
         frame.leave(); frames.pop();
         continue;
@@ -475,8 +561,9 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
             } else stack.push(["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
               moduleContext.attribute(receiver, arg, op === "import-from", owner.name, invoke));
           }
-        } else if (op === "if") block(frame, values.truth(stack.pop()) ? arg : extra);
-        else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth}); block(frame, arg); }
+        } else if (op === "if") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
+          {kind: "condition", control: "if", body: arg, otherwise: extra}));
+        else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth, site: summary(frame, cursor)}); block(frame, arg); }
         else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null}); block(frame, extra); }
         else if (op === "try") {
           frame.tasks.push({type: "try", phase: "body", instruction: cursor.block.instructions[cursor.pc - 1], previous: frame.activeException,
@@ -500,14 +587,16 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         else if (op === "dup") stack.push(stack.at(-1));
         else if (op === "swap") { const right = stack.pop(), left = stack.pop(); stack.push(right, left); }
         else if (op === "jump") cursor.pc = arg;
-        else if (op === "jump-if-false") { if (!values.truth(stack.pop())) cursor.pc = arg; }
+        else if (op === "jump-if-false") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
+          {kind: "condition", control: "jump", target: arg}));
         else if (["build-list", "build-tuple", "build-dict"].includes(op)) {
           const items = stack.splice(stack.length - arg * (op === "build-dict" ? 2 : 1));
           stack.push(op === "build-dict" ? values.dict(Array.from({length: arg}, (_, index) => items.slice(index * 2, index * 2 + 2))) :
             op === "build-list" ? values.list(items) : values.tuple(items));
         } else if (op === "setitem") { const item = stack.pop(), key = stack.pop(); stack.push(values.set(stack.pop(), key, item)); }
         else if (op === "slice") { const step = stack.pop(), stop = stack.pop(), start = stack.pop(); stack.push(values.slice(stack.pop(), start, stop, step)); }
-        else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op)) stack.push(values.unary(op, stack.pop()));
+        else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op))
+          dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
         else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
       } catch (error) {
         const forwarded = exceptionLeases.get(error);
