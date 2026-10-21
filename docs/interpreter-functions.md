@@ -128,7 +128,7 @@ Resource cases require deterministic failures and clean frame teardown. Reports
 identify both corpus inputs, fixture-compiler digest, host/reference versions
 and source_execution=false.
 
-Node 24.19.0/Chromium 156.0.8078.4 checks against CPython 3.14.7 passed 60
+Node 24.19.0/Chromium 156.0.8078.4 checks against CPython 3.14.7 passed 64
 function/resource cases on both targets. Version 3 also passed 187 broader cases,
 with four malformed-source entries explicitly unsupported until the parser. Node tests
 cover retained cyclic closures, owned handles, foreign/stale roots, cancellation

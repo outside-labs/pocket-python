@@ -274,7 +274,13 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         if (op === "const") stack.push(pool.code.constants[arg]);
         else if (op === "load") stack.push(load(frame, arg));
         else if (op === "store") store(frame, arg, stack.pop());
-        else if (op === "delete") { load(frame, arg); store(frame, arg, null, false); }
+        else if (op === "delete") {
+          if (!frame.locals.get(arg).bound) {
+            if (frame.callable.index === 0) python("NameError", "name '" + arg + "' is not defined");
+            python("UnboundLocalError", "cannot access local variable '" + arg + "' where it is not associated with a value");
+          }
+          store(frame, arg, null, false);
+        }
         else if (op === "function") {
           const closure = new Map(pool.code.functions[arg].free.map(key => [key, frame.locals.get(key) || frame.closure.get(key)]));
           stack.push(allocate(FunctionValue, pool, arg, globals, closure));
