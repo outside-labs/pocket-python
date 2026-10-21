@@ -9,7 +9,8 @@ const NONE = Object.freeze({type: "none"});
 class Compiler {
   constructor(parsed, options) {
     this.parsed = parsed; this.options = options; this.work = parsed.stats.work;
-    this.program = {format: "pocket-python-bytecode", version: 4, constants: [], functions: []};
+    this.classes = parsed.languageProfile === "classes-source/1";
+    this.program = {format: "pocket-python-bytecode", version: this.classes ? 5 : 4, constants: [], functions: []};
     this.constants = new Map(); this.scopes = []; this.scopeOf = new WeakMap(); this.imports = [];
     this.instructions = 0; this.blocks = 0; this.tempSerial = 0;
   }
@@ -30,20 +31,35 @@ class Compiler {
     this.charge(node);
     if (this.scopes.length >= FUNCTION_LIMITS.functions) this.fail("Function budget exceeded.", node, "COMPILE_BUDGET", "bind");
     const scope = {node, parent, locals: new Set(), uses: new Set(), free: new Set(), index: this.scopes.length,
-      qualname: parent === null ? "<module>" : (parent.parent ? parent.qualname + ".<locals>." : "") + node.name};
+      qualname: parent === null ? "<module>" : !parent.parent ? node.name :
+        parent.qualname + (parent.node.kind === "Class" ? "." : ".<locals>.") + node.name};
     this.scopes.push(scope); this.scopeOf.set(node, scope);
+    scope.classContext = node.kind === "Class" || !!parent?.classContext;
     if (scope.qualname.length > 256) this.fail("Qualified function name budget exceeded.", node, "COMPILE_BUDGET", "bind");
     if (node.kind === "Function") for (const group of Object.values(node.params)) for (const param of group) scope.locals.add(param.name);
-    const target = value => { if (value.kind === "Name") scope.locals.add(value.name); };
+    if (node.kind === "Class") { scope.locals.add("__module__"); scope.locals.add("__qualname__"); }
+    const binding = (name, site) => {
+      if (node.kind === "Class" && ["__module__", "__qualname__"].includes(name))
+        this.fail("Class metadata overrides are outside C1.", site, "UNSUPPORTED", "bind");
+      scope.locals.add(name);
+    };
+    const target = value => { if (value.kind === "Name") binding(value.name, value); };
     const visit = value => {
       this.charge(value);
-      if (value.kind === "Function") { scope.locals.add(value.name); this.bind(value, scope); return; }
-      if (value.kind === "Name") scope.uses.add(value.name);
+      if (["Function", "Class"].includes(value.kind)) {
+        binding(value.name, value);
+        if (value.kind === "Class") value.bases.forEach(visit);
+        this.bind(value, scope); return;
+      }
+      if (value.kind === "Name") {
+        if (scope.classContext && value.name === "__class__") this.fail("Implicit class cells require a later class stage.", value);
+        scope.uses.add(value.name);
+      }
       if (["Assign", "Delete"].includes(value.kind)) value.targets.forEach(target);
       if (value.kind === "Augment") target(value.target);
       if (value.kind === "For") target(value.target);
-      if (value.kind === "Handler" && value.alias) scope.locals.add(value.alias);
-      if (value.kind === "Import") for (const alias of value.aliases) scope.locals.add(alias.asname || (value.specifier === null ? alias.name.split(".")[0] : alias.name));
+      if (value.kind === "Handler" && value.alias) binding(value.alias, value);
+      if (value.kind === "Import") for (const alias of value.aliases) binding(alias.asname || (value.specifier === null ? alias.name.split(".")[0] : alias.name), value);
       for (const [key, child] of Object.entries(value)) if (key !== "span") this.children(child, visit);
     };
     node.body.forEach(visit); return scope;
@@ -54,12 +70,17 @@ class Compiler {
       if (scope.locals.has("__debug__")) this.fail("Cannot assign to or delete __debug__.", scope.node, "SYNTAX", "bind");
       if ([...scope.locals, ...scope.uses].some(name => ["None", "True", "False"].includes(name)))
         this.fail("A normalized identifier cannot name a reserved constant.", scope.node, "UNSUPPORTED", "bind");
+      if (scope.node.kind === "Class" && [...scope.locals].some(name => name.startsWith("__") && name.endsWith("__") &&
+          !["__init__", "__module__", "__qualname__"].includes(name)))
+        this.fail("Custom special methods require a later class stage.", scope.node, "UNSUPPORTED", "bind");
+      if (scope.classContext && [...scope.locals, ...scope.uses].some(name => name.startsWith("__") && !name.endsWith("__")))
+        this.fail("Private name mangling requires the later class stage.", scope.node, "UNSUPPORTED", "bind");
     }
     for (const scope of this.scopes.slice(1)) for (const name of scope.uses) {
       this.charge(scope.node);
       if (scope.locals.has(name)) continue;
       let owner = scope.parent;
-      while (owner?.parent && !owner.locals.has(name)) { this.charge(scope.node); owner = owner.parent; }
+      while (owner?.parent && (owner.node.kind === "Class" || !owner.locals.has(name))) { this.charge(scope.node); owner = owner.parent; }
       if (!owner?.parent) continue;
       for (let current = scope; current !== owner; current = current.parent) { this.charge(scope.node); current.free.add(name); }
     }
@@ -89,16 +110,17 @@ class Compiler {
     return name;
   }
   function(scope) {
-    const node = scope.node, isModule = node.kind === "Module";
+    const node = scope.node, isModule = node.kind === "Module", isClass = node.kind === "Class";
     if (scope.locals.size > FUNCTION_LIMITS.names || scope.free.size > FUNCTION_LIMITS.names) this.fail("Binding name budget exceeded.", node, "COMPILE_BUDGET", "bind");
     const params = {posonly: [], positional: [], kwonly: [], defaults: [], kwdefaults: {}};
-    if (!isModule) {
+    if (!isModule && !isClass) {
       for (const key of ["posonly", "positional", "kwonly"]) params[key] = node.params[key].map(param => param.name);
       params.defaults = [...node.params.posonly, ...node.params.positional].filter(param => param.value !== null).map(param => this.constant(this.literal(param.value), param.value));
       params.kwdefaults = Object.fromEntries(node.params.kwonly.filter(param => param.value !== null).map(param => [param.name, this.constant(this.literal(param.value), param.value)]));
     }
     const fn = {name: isModule ? "<module>" : node.name, qualname: scope.qualname, params,
-      locals: [], free: [...scope.free].sort(), body: null, blocks: []};
+      locals: [], free: [...scope.free].sort(), body: null, blocks: [],
+      ...(this.classes ? {kind: isModule ? "module" : isClass ? "class" : "function"} : {})};
     this.program.functions[scope.index] = fn;
     const makeBlock = (nodes, expression = false) => {
       this.charge(node);
@@ -112,6 +134,12 @@ class Compiler {
         instructions.push(instruction); spans.push(site.span); return instructions.length - 1;
       };
       const pushNone = site => emit(site, "const", this.constant(NONE, site));
+      const attribute = (value, write = false) => {
+        if (scope.classContext && value.name.startsWith("__") && !value.name.endsWith("__")) this.fail("Private name mangling requires the later class stage.", value);
+        if (write && value.name.startsWith("__") && value.name.endsWith("__") && value.name !== "__init__")
+          this.fail("Special attribute mutation is outside C1.", value);
+        return value.name;
+      };
       const expr = value => {
         this.charge(value);
         if (value.kind === "Literal") emit(value, "const", this.constant(value.literal, value));
@@ -151,7 +179,9 @@ class Compiler {
             exits.forEach(at => { instructions[at][1] = instructions.length; });
             emit(value, "delete", left); emit(value, "delete", right);
           }
-        } else if (value.kind === "Attribute") { expr(value.value); emit(value, "module-get", value.name); }
+        } else if (value.kind === "Attribute") {
+          expr(value.value); emit(value, this.classes ? "attribute-get" : "module-get", attribute(value));
+        }
         else if (value.kind === "Subscript") {
           expr(value.value);
           if (value.index.kind === "Slice") {
@@ -167,6 +197,9 @@ class Compiler {
       const assign = target => {
         if (target.kind === "Name") { emit(target, "store", target.name); return; }
         const item = this.temporary(scope, target); emit(target, "store", item);
+        if (target.kind === "Attribute") {
+          expr(target.value); emit(target, "load", item); emit(target, "attribute-set", attribute(target, true)); emit(target, "pop"); emit(target, "delete", item); return;
+        }
         expr(target.value); expr(target.index); emit(target, "load", item); emit(target, "setitem"); emit(target, "pop"); emit(target, "delete", item);
       };
       const statement = value => {
@@ -179,6 +212,14 @@ class Compiler {
         } else if (value.kind === "Augment") {
           const target = value.target;
           if (target.kind === "Name") { expr(target); expr(value.value); emit(value, "inplace-" + value.operator); emit(target, "store", target.name); }
+          else if (target.kind === "Attribute") {
+            attribute(target, true);
+            const owner = this.temporary(scope, value), item = this.temporary(scope, value);
+            expr(target.value); emit(target, "store", owner); emit(target, "load", owner); emit(target, "attribute-get", target.name);
+            expr(value.value); emit(value, "inplace-" + value.operator); emit(value, "store", item);
+            emit(target, "load", owner); emit(value, "load", item); emit(target, "attribute-set", target.name); emit(value, "pop");
+            emit(value, "delete", owner); emit(value, "delete", item);
+          }
           else {
             const owner = this.temporary(scope, value), key = this.temporary(scope, value), item = this.temporary(scope, value);
             expr(target.value); emit(target, "store", owner); expr(target.index); emit(target, "store", key);
@@ -189,9 +230,14 @@ class Compiler {
         } else if (value.kind === "Delete") {
           for (const target of value.targets) {
             if (target.kind === "Name") emit(target, "delete", target.name);
+            else if (target.kind === "Attribute") { expr(target.value); emit(target, "attribute-delete", attribute(target, true)); emit(target, "pop"); }
             else { expr(target.value); expr(target.index); emit(target, "dict-delete"); emit(target, "pop"); }
           }
         } else if (value.kind === "Function") { emit(value, "function", this.scopeOf.get(value).index); emit(value, "store", value.name); }
+        else if (value.kind === "Class") {
+          if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
+          value.bases.forEach(expr); emit(value, "class", this.scopeOf.get(value).index, value.bases.length); emit(value, "store", value.name);
+        }
         else if (value.kind === "Return") { value.value ? expr(value.value) : pushNone(value); emit(value, "return"); }
         else if (value.kind === "Raise") { if (value.value) { expr(value.value); emit(value, "raise"); } else emit(value, "reraise"); }
         else if (value.kind === "Break" || value.kind === "Continue") emit(value, value.kind.toLowerCase());
@@ -236,7 +282,7 @@ class Compiler {
     }
     const bytecodeBytes = new TextEncoder().encode(JSON.stringify(this.program)).byteLength;
     if (bytecodeBytes > 1048576) this.fail("Bytecode asset budget exceeded.", this.parsed.module, "COMPILE_BUDGET");
-    return freezeSourceTree({program: this.program, imports: this.imports, filename: this.parsed.filename,
+    return freezeSourceTree({program: this.program, imports: this.imports, filename: this.parsed.filename, languageProfile: this.parsed.languageProfile,
       source: this.parsed.source, stats: {...this.parsed.stats, work: this.work, functions: this.scopes.length,
         blocks: this.blocks, instructions: this.instructions, bytecodeBytes}});
   }

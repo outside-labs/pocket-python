@@ -407,3 +407,10 @@ operands, captures and stack effects. Registry-owned execution shares the existi
 resource/exception machinery, constructs types after body effects, and validates
 initializer completion. Source/profile and offline browser integration follow;
 core-source/1 still emits bytecode 4 and refuses classes.
+
+The opt-in classes-source/1 front end now parses C1 class bodies and attributes,
+binds outer cells through class namespaces, and compiles verified bytecode 5.
+Thirty-eight source/refusal cases compare with CPython in Node/Chromium; default
+core-source/1 remains unchanged. The console selection/offline milestone follows.
+INT-09 stays open for descriptors/decorators and individually adopted special
+methods; no broad package or alpha-publication claim follows from C1.

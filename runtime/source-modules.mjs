@@ -56,9 +56,9 @@ export async function compileSourceModules(input, {entry = "app", ...options} = 
     const source = await asset(item.filename, sourceBytes, REGISTRY_LIMITS.sourceBytes, true);
     const bytecode = await asset("code/" + item.name.replaceAll(".", "/") + ".pbc.json", encoder.encode(JSON.stringify(item.result.program)), REGISTRY_LIMITS.bytecodeBytes);
     records.push({name: item.name, package: item.package, imports: item.imports, licenses: [notice], source, bytecode});
-    compilations.push(Object.freeze({module: item.name, source, bytecode, stats: item.result.stats}));
+    compilations.push(Object.freeze({module: item.name, source, bytecode, language_profile: item.result.languageProfile, stats: item.result.stats}));
   }
   const registry = await verifyRegistry({kind: "pocket-python-module-registry", schema_version: 1,
     entry, roots: ["sources", "code"], modules: records}, assets);
-  return Object.freeze({registry, compilations: Object.freeze(compilations)});
+  return Object.freeze({registry, compilations: Object.freeze(compilations), languageProfile: options.languageProfile ?? "core-source/1"});
 }

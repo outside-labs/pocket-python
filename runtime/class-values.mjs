@@ -44,6 +44,9 @@ export class ClassRuntime {
         this.fail("UnsupportedOperationError", "Custom special methods require a later class stage.", "UNSUPPORTED");
     }
     if (namespace.has("__init__")) this.initializer(namespace.get("__init__"));
+    for (const [key, expected] of [["__module__", module], ["__qualname__", qualname]])
+      if (namespace.has(key) && this.values.text(namespace.get(key)) !== expected)
+        this.fail("UnsupportedOperationError", "Class metadata overrides are outside C1.", "UNSUPPORTED");
     const pending = [...bases.map(base => [...base.mro]), [...bases]], parents = [];
     while (pending.some(items => items.length)) {
       this.charge(1); let candidate = null;
@@ -101,6 +104,7 @@ export class ClassRuntime {
     this.key(name); this.touch(receiver);
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
+    if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
     if (special(name) && name !== "__init__") this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && name === "__init__" && !remove) this.initializer(value);
     const map = receiver instanceof ClassValue ? receiver.namespace : receiver.attributes;

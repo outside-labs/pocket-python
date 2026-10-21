@@ -153,6 +153,84 @@
       "id": "metaclass",
       "stage": "deferred",
       "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\n"
+    },
+    {
+      "id": "nested-class-global",
+      "stage": "C1",
+      "source": "x=8\nclass Outer:\n    x=1\n    class Inner:\n        y=x\nprint(Outer.Inner.y,Outer.Inner.__qualname__,Outer.__qualname__)\n",
+      "stdout": "8 Outer.Inner Outer\n"
+    },
+    {
+      "id": "class-unbound-local-with-free-cell",
+      "stage": "C1",
+      "source": "y=4\ndef make(y):\n    class A:\n        print(y)\n        y=1\n        def f(self): return y\n    return A\nA=make(9)\nprint(A.y,A().f())\n",
+      "stdout": "4\n1 9\n"
+    },
+    {
+      "id": "inherited-initializer",
+      "stage": "C1",
+      "source": "class A:\n    def __init__(self,x=3): self.x=x\nclass B(A): pass\nb=B(7)\nprint(b.x,isinstance(b,A),issubclass(B,object),B.__bases__[0] is A)\n",
+      "stdout": "7 True True True\n"
+    },
+    {
+      "id": "attribute-order",
+      "stage": "C1",
+      "source": "events=[]\nclass A: pass\na=A()\na.x=10\ndef owner():\n    events.append(1)\n    return a\ndef rhs():\n    events.append(2)\n    return 3\nowner().x=rhs()\nprint(events[0],events[1],a.x)\nevents=[]\nowner().x+=rhs()\nprint(events[0],events[1],a.x)\ndel owner().x\ntry: a.x\nexcept AttributeError: print(\"deleted\")\n",
+      "stdout": "2 1 3\n1 2 6\ndeleted\n"
+    },
+    {
+      "id": "repeated-type-definition",
+      "stage": "C1",
+      "source": "types=[]\nfor n in (1,2):\n    class A:\n        x=n\n    types.append(A)\nprint(types[0] is types[1],types[0].x,types[1].x)\n",
+      "stdout": "False 1 2\n"
+    },
+    {
+      "id": "class-local-loop",
+      "stage": "C1",
+      "source": "class A:\n    total=0\n    for n in (1,2,3):\n        total+=n\nprint(A.total,A.n)\n",
+      "stdout": "6 3\n"
+    },
+    {
+      "id": "metadata-override",
+      "stage": "C2",
+      "source": "class A:\n    __module__=\"custom\"\nprint(A.__module__)\n",
+      "stdout": "custom\n"
+    },
+    {
+      "id": "private-write-only",
+      "stage": "C2",
+      "source": "class A:\n    def __init__(self): self.__private=7\na=A()\nprint(a._A__private)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "implicit-class-cell",
+      "stage": "deferred",
+      "source": "class A:\n    def f(self): return __class__\nprint(A().f() is A)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "object-hash",
+      "stage": "C3",
+      "source": "class A: pass\na=A()\nd={a:7}\nprint(d[a])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "immutable-root",
+      "stage": "C1",
+      "source": "object.value=7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-function-field",
+      "stage": "C1",
+      "source": "class A: pass\ndef plain(x): return x+1\na=A()\na.f=plain\nprint(a.f(7))\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "unicode-class",
+      "stage": "C1",
+      "source": "class Caf\u00e9:\n def r\u00e9sum\u00e9(self): return 7\na=Caf\u00e9()\nprint(a.r\u00e9sum\u00e9(),Caf\u00e9.__name__)\n",
+      "stdout": "7 Caf\u00e9\n"
     }
   ]
 }
