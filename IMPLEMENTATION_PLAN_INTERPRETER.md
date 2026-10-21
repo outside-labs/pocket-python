@@ -250,8 +250,11 @@ Fixtures use trusted build-time AST lowering; independent source parsing remains
 INT-08. Explicit modules and the small named library follow in INT-07. Published
 artifacts are unchanged.
 
-INT-07 begins with the [verified module registry](docs/interpreter-modules.md):
-explicit roots and import grants, hashed bytecode/source/notice closure,
-immutable records and relative-name resolution. Per-session module execution,
-initialization/cache identity, cycle policy and the small library profile remain
-the next change; INT-07 stays open until those acceptance checks pass.
+INT-07 combines the [verified module registry and execution profile](docs/interpreter-modules.md):
+explicit roots/grants, hashed source/bytecode/notices, per-session module/cache
+identity, ordered initialization, relative imports, failure cleanup and explicit
+cycle rejection. Version 4 preserves defining-module globals/defaults/closures
+and exception identities across imports. A supplied Python operator profile and
+small builtin subset run through this VM; the unchanged shared text-metrics
+computation passes Node/Chromium differential and resource checks. Independent
+source parsing is next in INT-08; published artifacts remain unchanged.

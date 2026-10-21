@@ -160,6 +160,9 @@ def validation_requests(engine_name):
 
 
 def check(engine_name, target, channel=None):
+    if engine_name == "vm4":
+        from check_modules import check as check_modules
+        return check_modules(target, channel)
     engines = json.loads((ROOT / "engines.json").read_text(encoding="utf-8"))
     engine = engines[engine_name]
     corpus = json.loads(CORPUS.read_text(encoding="utf-8"))

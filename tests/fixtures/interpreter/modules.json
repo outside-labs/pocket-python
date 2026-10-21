@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "reference": "CPython 3.14",
+  "cases": [
+    {
+      "id": "identity-defaults",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "import helper\nimport helper as again\nfrom helper import add\nprint(helper is again, add(3), helper.str_type is str)\n"
+        },
+        "helper": {
+          "source": "print('init')\nvalue=7\nstr_type=str\ndef add(n, amount=2):\n    return value+n+amount\n"
+        }
+      }
+    },
+    {
+      "id": "dotted-import-root",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "import pkg.helper\nprint(pkg.__name__, pkg.helper.value)\n"
+        },
+        "pkg": {
+          "source": "print('pkg')\n",
+          "package": true
+        },
+        "pkg.helper": {
+          "source": "value=7\n"
+        }
+      }
+    },
+    {
+      "id": "relative-imports",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "import pkg.child.worker as worker\nfrom pkg import helper\nprint(worker.answer, helper is worker.helper)\n"
+        },
+        "pkg": {
+          "source": "print('pkg')\n",
+          "package": true
+        },
+        "pkg.child": {
+          "source": "print('child')\n",
+          "package": true
+        },
+        "pkg.child.worker": {
+          "source": "from .. import helper\nfrom ..helper import value\nanswer=value+1\nprint('worker')\n"
+        },
+        "pkg.helper": {
+          "source": "value=7\nprint('helper')\n"
+        }
+      }
+    },
+    {
+      "id": "package-entry",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "pkg": {
+          "source": "print('pkg')\n",
+          "package": true
+        },
+        "pkg.main": {
+          "source": "from .helper import value\nprint(__name__, __package__, value)\n"
+        },
+        "pkg.helper": {
+          "source": "value=7\n"
+        }
+      },
+      "entry": "pkg.main"
+    },
+    {
+      "id": "function-local-import",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "def f():\n    import helper\n    return helper.value\nprint(f(), f())\n"
+        },
+        "helper": {
+          "source": "print('helper')\nvalue=7\n"
+        }
+      }
+    },
+    {
+      "id": "cross-module-closure",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "from helper import outer\nf=outer(7)\nprint(f(), f(5))\n"
+        },
+        "helper": {
+          "source": "amount=2\ndef outer(value):\n    def inner(extra=3):\n        return value+extra+amount\n    return inner\n"
+        }
+      }
+    },
+    {
+      "id": "failed-init-retry",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "import state\ntry:\n    import bad\nexcept ValueError as error:\n    print(str(error))\nfinally:\n    print('done')\ntry:\n    import bad\nexcept ValueError:\n    print(len(state.calls))\n"
+        },
+        "state": {
+          "source": "calls=[]\n"
+        },
+        "bad": {
+          "source": "import state\nstate.calls.append(1)\nraise ValueError('bad')\n"
+        }
+      }
+    },
+    {
+      "id": "exception-object-identity",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "import state\ntry:\n    import bad\nexcept ValueError as error:\n    print(error is state.error)\n"
+        },
+        "state": {
+          "source": "error=ValueError('bad')\n"
+        },
+        "bad": {
+          "source": "import state\nraise state.error\n"
+        }
+      }
+    },
+    {
+      "id": "cross-module-traceback",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "from helper import broken\nbroken()\n"
+        },
+        "helper": {
+          "source": "def broken():\n    return 1//0\n"
+        }
+      }
+    },
+    {
+      "id": "initialization-traceback",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "try:\n    import helper\nfinally:\n    print('cleanup')\n"
+        },
+        "helper": {
+          "source": "print('helper')\nraise ValueError('bad')\n"
+        }
+      }
+    },
+    {
+      "id": "missing-export",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "from helper import missing\n"
+        },
+        "helper": {
+          "source": "value=7\n"
+        }
+      },
+      "compare_message": false
+    },
+    {
+      "id": "missing-module-attribute",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "import helper\nprint(helper.missing)\n"
+        },
+        "helper": {
+          "source": "value=7\n"
+        }
+      }
+    },
+    {
+      "id": "small-operator-profile",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "import operator\nprint(operator.add(2,3), operator.floordiv(-7,3), operator.mod(-7,3), operator.truth([]), operator.getitem((4,5),1))\nprint(operator.sub(5,2), operator.mul(2,3), operator.eq(1,True), operator.lt(1,2), operator.neg(-2), operator.not_([]))\n"
+        },
+        "operator": {
+          "fixture": "operator"
+        }
+      }
+    },
+    {
+      "id": "shared-text-metrics",
+      "features": [
+        "module.registry",
+        "module.identity",
+        "module.initialization"
+      ],
+      "modules": {
+        "app": {
+          "source": "from text_metrics import metrics\nfor text in [\"\", \"A \ud83c\udf4a\\nB\", \"two\\u00a0words\"]:\n    result=metrics(text)\n    print(result[0], result[1], result[2])\ntry:\n    metrics(None)\nexcept TypeError as error:\n    print(str(error))\n"
+        },
+        "text_metrics": {
+          "fixture": "text-metrics"
+        }
+      }
+    },
+    {
+      "id": "relative-beyond-root",
+      "features": [
+        "module.relative"
+      ],
+      "entry": "pkg.main",
+      "modules": {
+        "pkg": {
+          "package": true,
+          "source": "pass\n"
+        },
+        "pkg.main": {
+          "source": "from ..helper import value\n"
+        },
+        "helper": {
+          "source": "value=7\n"
+        }
+      }
+    },
+    {
+      "id": "reexport-identity",
+      "features": [
+        "module.identity"
+      ],
+      "modules": {
+        "app": {
+          "source": "from pkg import add\nfrom pkg.helper import add as again\nprint(add is again, add(3))\n"
+        },
+        "pkg": {
+          "package": true,
+          "source": "from .helper import add\n"
+        },
+        "pkg.helper": {
+          "source": "def add(n, amount=2):\n    return n+amount\n"
+        }
+      }
+    },
+    {
+      "id": "import-inherits-exception-context",
+      "features": [
+        "module.initialization",
+        "exception.unwind"
+      ],
+      "modules": {
+        "app": {
+          "source": "try:\n    raise ValueError('first')\nexcept ValueError:\n    import bad\n"
+        },
+        "bad": {
+          "source": "raise TypeError('second')\n"
+        }
+      }
+    },
+    {
+      "id": "bare-reraise-import",
+      "features": [
+        "module.initialization",
+        "exception.unwind"
+      ],
+      "modules": {
+        "app": {
+          "source": "try:\n    raise ValueError('first')\nexcept ValueError:\n    import bad\n"
+        },
+        "bad": {
+          "source": "raise\n"
+        }
+      }
+    },
+    {
+      "id": "dotted-alias-package-shadow",
+      "features": [
+        "module.identity"
+      ],
+      "modules": {
+        "app": {
+          "source": "import pkg.helper as alias\nprint(alias == 7)\n"
+        },
+        "pkg": {
+          "package": true,
+          "source": "from .helper import value\nhelper=7\n"
+        },
+        "pkg.helper": {
+          "source": "value=3\n"
+        }
+      }
+    }
+  ],
+  "limits": [
+    {
+      "id": "reject-cycle",
+      "features": [
+        "module.cycles"
+      ],
+      "modules": {
+        "app": {
+          "source": "import other\n"
+        },
+        "other": {
+          "source": "import app\n"
+        }
+      },
+      "code": "PYTHON",
+      "message_contains": "Cyclic imports",
+      "stdout": ""
+    },
+    {
+      "id": "reject-undeclared",
+      "features": [
+        "module.authority"
+      ],
+      "modules": {
+        "app": {
+          "source": "import helper\n",
+          "imports": []
+        },
+        "helper": {
+          "source": "print('wrong')\n"
+        }
+      },
+      "code": "PYTHON",
+      "message_contains": "not declared",
+      "stdout": ""
+    },
+    {
+      "id": "reject-host-module",
+      "features": [
+        "module.authority"
+      ],
+      "modules": {
+        "app": {
+          "source": "import sys\n"
+        }
+      },
+      "code": "PYTHON",
+      "message_contains": "not declared",
+      "stdout": ""
+    },
+    {
+      "id": "global-step-budget",
+      "features": [
+        "module.resources"
+      ],
+      "modules": {
+        "app": {
+          "source": "import helper\nprint(helper.value)\n"
+        },
+        "helper": {
+          "source": "value=7\n"
+        }
+      },
+      "options": {
+        "maxSteps": 2
+      },
+      "code": "BUDGET",
+      "stdout": ""
+    },
+    {
+      "id": "global-work-budget",
+      "features": [
+        "module.resources"
+      ],
+      "modules": {
+        "app": {
+          "source": "import helper\n"
+        },
+        "helper": {
+          "source": "value=7\n"
+        }
+      },
+      "options": {
+        "maxWork": 10
+      },
+      "code": "BUDGET",
+      "stdout": ""
+    },
+    {
+      "id": "reject-nonmodule-attribute",
+      "features": [
+        "module.authority"
+      ],
+      "modules": {
+        "app": {
+          "source": "print(\"text\".lower())\n"
+        }
+      },
+      "code": "UNSUPPORTED",
+      "stdout": ""
+    },
+    {
+      "id": "frame-budget",
+      "features": [
+        "module.resources"
+      ],
+      "modules": {
+        "app": {
+          "source": "value=7\n"
+        }
+      },
+      "memoryLimits": {
+        "maxFrames": 1
+      },
+      "code": "BUDGET",
+      "stdout": ""
+    }
+  ]
+}

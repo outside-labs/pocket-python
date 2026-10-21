@@ -130,3 +130,8 @@ with explicit network reference calls and offline failure checks.
 Development [version 3 functions and exception unwinding](docs/interpreter-functions.md)
 add argument binding, lexical closures, recursion and source-located handlers.
 The same bytecode runs in Node and browser workers; source parsing remains INT-08.
+
+Development [version 4 verified modules](docs/interpreter-modules.md) add explicit
+imports, session cache identity, relative packages and a supplied small library
+profile. The original text-metrics computation runs through this independent VM;
+newly entered source awaits the independent parser.

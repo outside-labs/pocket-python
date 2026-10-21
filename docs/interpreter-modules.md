@@ -1,82 +1,151 @@
-# Verified module registry
+# Verified modules and the small library profile
 
-The first INT-07 change establishes the registry and asset-verification boundary
-for module execution. It does not yet execute imports, initialize Python modules
-or provide a standard-library profile. Those remain the next INT-07 change;
-the issue stays open until their differential and resource cases pass.
-
-`await verifyRegistry(manifest, assets)` accepts an explicit manifest and a Map
-of relative paths to Uint8Array bytes. It snapshots caller-owned records and
-buffers before asynchronous SHA-256 checks, verifies exact file closure,
-validates bytecode and returns a VerifiedRegistry. Verification performs no
-filesystem/network access, dynamic JavaScript imports or Python execution.
-The package CLI and published 0.1.0 artifacts are unchanged.
+INT-07 combines a verified module registry with version 4 bytecode execution.
+Node and browser workers use the same module/session implementation. Input is
+verified bytecode; trusted CPython AST lowering builds fixtures only. Independent
+source parsing remains INT-08. Published pocket-python 0.1.0 is unchanged.
 
 ## Registry schema 1
 
+`await verifyRegistry(manifest, assets)` takes an explicit manifest and a Map of
+relative paths to Uint8Array bytes. It snapshots records and buffers before
+asynchronous SHA-256 checks, verifies exact closure and bytecode, then returns a
+VerifiedRegistry. Verification performs no filesystem/network access, dynamic
+JavaScript imports or Python execution.
+
 The manifest contains kind=`pocket-python-module-registry`, schema_version=1,
 entry, roots and modules. Roots are distinct, non-overlapping relative paths.
-Each module has these fields:
 
-| Field | Contract |
+| Module field | Contract |
 | --- | --- |
 | name | Bounded dotted ASCII module identity. |
-| package | Boolean indicating a package namespace. Every dotted module has declared package parents. |
-| bytecode | Hashed asset descriptor for a verified version 3 unit. |
+| package | Boolean package namespace; every dotted module has declared package parents. |
+| bytecode | Hashed descriptor for a verified version 3 or 4 unit. |
 | source | Optional hashed UTF-8 provenance asset; never executed. |
-| imports | Unique absolute module identities granted to this module, all present in the registry. |
-| licenses | One or more hashed notice descriptors; identical notices may be shared. |
+| imports | Unique absolute identities granted to this module, all declared in the registry. |
+| licenses | One or more hashed notices; identical notices may be shared. |
 
-Every descriptor contains path, size_bytes and lowercase SHA-256. Bytecode and
-source paths lie inside declared roots. Notices can use separate LICENSES paths.
+Descriptors contain path, size_bytes and lowercase SHA-256. Bytecode/source
+paths lie inside declared roots; notices may use separate LICENSES paths.
 Paths reject absolute/URL forms, empty/dot/parent components, backslashes and
-percent encoding. One file cannot have conflicting roles or identities.
-Supplied assets must exactly equal the declared closure; missing, extra,
-tampered and incorrectly sized files reject. There is no implicit lookup on
-the host or support for undeclared packages/native extensions.
+percent encoding. Files cannot have conflicting roles/identities. Supplied
+assets exactly equal the declared closure: missing, extra, tampered and
+incorrectly sized files reject. There is no implicit host/package lookup.
 
-Bytecode JSON passes the version 3 structural/value verifier, then only validated
-fields enter the frozen program snapshot. Optional source bytes are provenance,
-not proof that the bytecode was compiled from that source. Independent source
-compilation and corresponding receipts remain later work. Notice bytes retain
-their original identity and are returned only as defensive copies.
+Bytecode passes the function/value verifier before validated fields enter a
+frozen serialized program snapshot. Sources are provenance, not proof that the
+bytecode was compiled from them. Independent compilation/receipts remain later
+work. Asset getters return defensive copies; records/programs keep stable frozen
+identity within one registry. Sessions decode their own arena-owned values.
 
-The bounds are 64 modules, 256 files, 16 roots and 16 MiB of total supplied bytes.
-Individual bytecode/source/notice limits are 1 MiB, 256 KiB and 64 KiB; per-module
-imports are bounded by the module limit and notice lists by 16 entries. Version
-3's function/value bounds also apply. These are bounded host registry inputs;
-the later execution integration must account for active module state in the VM.
+Bounds are 64 modules, 256 files, 16 roots and 16 MiB total asset bytes. Individual
+bytecode/source/notice limits are 1 MiB, 256 KiB and 64 KiB. A module has at most
+64 import grants and 16 notices; version 3's function/value bounds also apply.
 
-## Lookup, identity and relative resolution
+Registry methods are record(name), program(name), asset(path), parents(name),
+resolve(importer, specifier, level) and close(), with entry/names/sizeBytes
+properties. Relative level 1 uses the importing package; higher levels move
+upward. Beyond-root requests fail. The absolute target must be explicitly
+allowed. Parent namespaces grant no extra import authority. Closing releases
+stored inputs and rejects subsequent access with STALE_REGISTRY.
 
-The registry exposes entry, names, sizeBytes, record(name), program(name),
-asset(path), parents(name) and resolve(importer, specifier, level). Records and
-programs keep stable frozen identity within one registry; returned asset bytes
-are copies. Program snapshots contain serialized constants, allowing future
-sessions to decode independent values without sharing arena-owned objects.
+## Session execution and identity
 
-Absolute imports use level 0. Relative imports resolve from the importing
-package, with level 1 using the current package and higher levels moving upward.
-Requests beyond the package root fail. The resolved absolute target must appear
-in that importer's explicit grants. Parent namespaces are listed separately for
-ordered initialization; listing parents grants no extra import authority.
+`new ModuleSession(registry, {memoryLimits})` owns an arena and one persistent
+module cache. `run(options, onOutput)` initializes the registry entry with normal
+import semantics; its __name__ is its registry identity. Package parents
+initialize first. Repeated runs return the same frozen identity receipt without
+reexecuting a ready module. The receipt contains no Python object graph.
+`read(name)` serializes an entry export using the adopted value transport;
+function/module encoding remains unavailable. close() releases all state.
 
-Preflight failures use REGISTRY (or BYTECODE for invalid units). Undeclared and
-invalid import requests use IMPORT with an ImportError/ModuleNotFoundError
-diagnostic. No request triggers fallback. close() releases stored assets and
-programs and makes every later lookup fail with STALE_REGISTRY.
+Version 4 adds these instructions to the existing function/value format:
 
-## Next execution step
+| Instruction | Behavior |
+| --- | --- |
+| import(specifier, level, root) | Static import through the owning module's grants; returns the target or, for an unaliased dotted import, its root package. |
+| import-from(name) | Resolves an export or an explicitly granted declared child module. |
+| module-get(name) | Reads a module namespace export; arbitrary object/host attributes are unsupported. |
 
-INT-07 still requires per-session module objects, cache identity, parent-before-
-child initialization, relative import execution and failure cleanup, with cycle
-support or explicit rejection. Registry dependency graphs can currently contain
-cycles as declarations; they do not imply successful cyclic initialization.
-The execution change will define a small named builtin/library profile needed
-by shared fixtures and keep it separate from browser/native host capabilities.
+Ordinary dotted imports request the root namespace; alias lowering then reads
+each namespace component, preserving package bindings that shadow submodules.
+From-import lowering requests the full module before resolving its exports.
 
-Run `node --test runtime/module-registry.test.mjs`. Seven tests cover closed
-asset/notice identities, absolute/relative grants, package parents, snapshots
-across asynchronous hashes (including Buffer copies), malformed/tampered inputs,
-bounded bytecode/source validation and closed-registry access. Import behavior
-will receive CPython differential and real browser-worker checks with execution.
+Version 3 rejects these opcodes. Version 4 requires a branded execution context
+with a verified registry and its own arena; raw units cannot supply host imports.
+Functions use their defining module's globals, constants and default pool.
+Lexical closures, recursive calls, reexports and builtin identities retain their
+meaning across module boundaries.
+
+A cache entry moves from initializing to ready. Ready imports share one Python
+module object. Successful child initialization publishes it on its package.
+Failure removes that module's entry, releases transient frames and permits a
+later retry; already successful dependencies remain cached. Original exception
+objects, context and source tracebacks propagate through imports and finally.
+Private temporary root leases preserve exceptions during nested loader cleanup.
+
+The first cycle policy rejects any requested target already initializing with
+an explicit ImportError. Parent-namespace traversal can pass an initializing
+package while loading a different child. Partial-module cyclic access, including
+`from . import child` requesting the initializing package itself, is outside this
+profile; a package can use `from .child import name` without requesting itself.
+Registry graphs may declare cycles, but they do not imply executable cyclic
+initialization. Dynamic __import__, star imports, import hooks, namespace-package
+search, arbitrary pip installation and CPython native extensions are unavailable.
+
+## Builtin and library profile
+
+The named core-modules/1 profile extends the existing print/str/len fixture
+subset with isinstance(value, str) and checks against adopted exception classes.
+Other class specifications remain UNSUPPORTED. Missing exports/attributes and
+import failures use adopted ImportError, ModuleNotFoundError and AttributeError
+classes with source locations. Virtual __name__, __package__ and __file__ values
+come from registry records; no host filesystem is exposed. Import diagnostics
+can omit host-specific path text.
+
+runtime/library/operator.py is our small Python operator profile: add, sub, mul,
+floordiv, mod, eq, lt, neg, not_, truth and getitem. It executes through the same
+VM as application code. Applications explicitly include its source/bytecode,
+hashes, MIT notice and import grants like any other module. It has no privileged
+loader path or implicit availability. Other standard-library names require a
+separately adopted, supplied implementation; browser/native host adapters remain
+separate capabilities. Python wrapper frames remain visible in its tracebacks.
+
+## Ownership, limits and teardown
+
+The session owns its cache root lease and a declared host allocation for the
+registry's raw asset bytes. Module values own namespaces/code pools; functions
+own their defining graphs. Cache, module and closure cycles use iterative arena
+accounting. This is logical accounting, not whole-process RSS or host GC timing.
+
+Instruction, value/collection work, cancellation and output budgets span every
+module initialization in one run. Python calls use iterative frames; module
+initialization uses bounded synchronous loader reentry, at most 16 levels,
+subject to arena scope limits. Output is limited to 65,536 UTF-16 units across
+all modules. Hard resource/unsupported failures bypass Python except/finally and
+release every transient scope; cached successful dependencies can survive a
+failed entry until close. Host callback reentry or teardown during a run rejects.
+
+## Verification
+
+```sh
+node --test runtime/module-registry.test.mjs runtime/modules.test.mjs
+python runtime/check_conformance.py --engine vm4 --report build/modules-node-report.json
+python runtime/check_conformance.py --engine vm4 --target browser --report build/modules-browser-report.json
+```
+
+The module corpus compares stdout, adopted errors/context and original source
+frame/line order with isolated CPython imports. Separate policy/resource cases
+require explicit cycle/grant/host/attribute failures, shared budgets and teardown.
+Reports retain every module's source/bytecode/notice identity, tool/input digests,
+host/reference versions and source_execution=false. The operator cases compare
+its supported API values with CPython's operators.
+
+The same shared text-metrics source used by Shimify, the application compiler and
+assembled PWA runs here as a verified module: 581 canonical UTF-8 bytes,
+SHA-256 cd0fc16e047b4c81230a1272446b0257ef741f937b1ea0857d2a94bb3d0bb350.
+The computation is unchanged, including Unicode, whitespace and None errors.
+Node 24.19.0 and Chromium 156.0.8078.4 passed all 26 module cases against CPython
+3.14.7. Native tests additionally cover retained cache identity, independent
+arenas, retries, cancellation, initialization depth, combined output limits,
+callback failures and closed sessions. CI retains both target reports.

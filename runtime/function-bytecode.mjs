@@ -28,8 +28,8 @@ function fields(value, expected) {
 
 export function verifyFunctions(program) {
   fields(program, ["format", "version", "constants", "functions"]);
-  if (program.format !== "pocket-python-bytecode" || program.version !== 3 || !Array.isArray(program.functions) ||
-      !integer(program.functions.length - 1, FUNCTION_LIMITS.functions - 1)) fail("Expected bounded pocket-python-bytecode version 3 functions.");
+  if (program.format !== "pocket-python-bytecode" || ![3, 4].includes(program.version) || !Array.isArray(program.functions) ||
+      !integer(program.functions.length - 1, FUNCTION_LIMITS.functions - 1)) fail("Expected bounded pocket-python-bytecode version 3 or 4 functions.");
   const constants = verify({format: program.format, version: 2, constants: program.constants,
     instructions: [["build-tuple", 0], ["return"]]}).constants;
   let count = 0, blockCount = 0;
@@ -72,9 +72,14 @@ export function verifyFunctions(program) {
           edges.push(id);
         };
         if (op === "const") { length = 2; if (!integer(arg, constants.length - 1)) fail("Constant outside pool."); }
-        else if (["load", "store", "delete"].includes(op)) {
+        else if (["load", "store", "delete"].includes(op) || (program.version === 4 && ["module-get", "import-from"].includes(op))) {
           length = 2;
-          if (!name(arg) || (op !== "load" && !locals.includes(arg))) fail("Store/delete requires a declared local.");
+          if (!name(arg) || (["store", "delete"].includes(op) && !locals.includes(arg))) fail("Store/delete requires a declared local.");
+        } else if (program.version === 4 && op === "import") {
+          length = 4;
+          if (typeof arg !== "string" || arg.length > 192 || (!arg && !extra) ||
+              (arg && !/^[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*$/.test(arg)) ||
+              !integer(extra, 32) || typeof instruction[3] !== "boolean" || (extra && instruction[3])) fail("Invalid static import operands.");
         } else if (op === "function") { length = 2; if (!integer(arg, program.functions.length - 1) || arg === 0) fail("Invalid function reference."); }
         else if (op === "call") {
           length = 3; if (!integer(arg, FUNCTION_LIMITS.names)) fail("Invalid positional argument count."); names(extra);
@@ -108,13 +113,13 @@ export function verifyFunctions(program) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
         const needs = BINARY.has(op) || op === "swap" ? 2 : op === "setitem" ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
-          UNARY.has(op) || ["store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
+          UNARY.has(op) || ["module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
         if (["end", "return", "raise", "reraise", "break", "continue"].includes(op)) {
           if (before !== (op === "end" ? Number(block.kind === "expression") : needs)) fail("Block completion requires an exact stack height.");
           continue;
         }
-        const after = before + (["const", "load", "function", "dup"].includes(op) ? 1 :
+        const after = before + (["const", "load", "function", "dup", "import"].includes(op) ? 1 :
           BINARY.has(op) || CONSTRUCT.has(op) || ["call", "setitem", "slice"].includes(op) ? 1 - needs :
           ["store", "pop", "if", "jump-if-false"].includes(op) ? -1 : 0);
         if (after > FUNCTION_LIMITS.stack) fail("Function stack exceeds 256 values.");
@@ -166,6 +171,6 @@ export function verifyFunctions(program) {
   for (const fn of functions) for (const block of fn.blocks) for (const [op, target] of block.instructions) {
     if (op === "function" && functions[target].free.some(key => !fn.locals.includes(key) && !fn.free.includes(key))) fail("Function capture has no lexical cell.");
   }
-  const code = Object.freeze({format: program.format, version: 3, constants, functions: Object.freeze(functions)});
+  const code = Object.freeze({format: program.format, version: program.version, constants, functions: Object.freeze(functions)});
   return Object.freeze({code, bytes: 64 + 2 * JSON.stringify({constants: program.constants, functions}).length});
 }
