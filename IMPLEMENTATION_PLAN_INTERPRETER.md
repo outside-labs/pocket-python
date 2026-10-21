@@ -249,3 +249,9 @@ resource cases run in Node and Chromium, with remaining boundaries recorded.
 Fixtures use trusted build-time AST lowering; independent source parsing remains
 INT-08. Explicit modules and the small named library follow in INT-07. Published
 artifacts are unchanged.
+
+INT-07 begins with the [verified module registry](docs/interpreter-modules.md):
+explicit roots and import grants, hashed bytecode/source/notice closure,
+immutable records and relative-name resolution. Per-session module execution,
+initialization/cache identity, cycle policy and the small library profile remain
+the next change; INT-07 stays open until those acceptance checks pass.
