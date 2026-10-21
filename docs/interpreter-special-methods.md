@@ -61,8 +61,8 @@ adding a method must not require separate name allowlists to stay synchronized.
 Implicit dispatch plans a type lookup and descriptor binding independently of
 ordinary instance lookup. The VM owns pending binding/invocation continuations
 and runs Python callbacks in its existing frames. ValueRuntime remains synchronous
-for adopted primitive values; future truth/iteration/format operations will use
-this dispatch mechanism when they need Python callbacks and result validation.
+for adopted primitive values. Length/truth now use VM operations and completions;
+future iteration/format operations will use the same callback/result foundation.
 
 Binding continuations retain the original receiver, arguments, keyword values,
 outer completions and descriptor graph as explicit arena roots. Constructor,
@@ -96,8 +96,9 @@ exception-location, pending-root and teardown tests as each implementation lands
 ## Delivered call milestone
 
 The shared policy and iterative call dispatcher implement the adopted call surface
-in classes-source/1. All 63 source cases run in Node and Chromium: 55 CPython
-stdout/error-type comparisons and eight explicit future-protocol refusals.
+in classes-source/1. The original call milestone ran all 63 source cases in Node
+and Chromium: 55 CPython comparisons and eight future-protocol refusals. Length/
+truth admission now promotes two of those cases to adopted comparisons.
 The default core profile retains its source and builtin boundaries.
 
 The Counter/StepCounter example now invokes inherited __call__ and reports
@@ -171,3 +172,20 @@ References: [truth testing](https://docs.python.org/3.14/reference/datamodel.htm
 Additive support keeps classes-source/1 and bytecode 5; engine fingerprints identify
 the changed runtime. Formatting, indexing, iteration and equality/hash remain
 separately gated. This milestone does not close INT-09 or authorize publication.
+
+
+### Delivered length/truth execution
+
+Resumable unary tasks now drive len(), bool(), not, conditional branches/jumps
+and while tests. Protocol results and optional-binding recovery use explicit
+completions through ordinary VM frames. The primitive runtime stays synchronous.
+All 93 authored cases execute in Node and Chromium: 87 CPython comparisons and
+six future refusals. The original 63 call cases now contain 57 comparisons and
+six refusals; the 39 class cases include their adopted length example.
+
+Focused checks cover temporary receivers and expression operands, standalone
+verified-bytecode unary operations, source traceback boundaries, active exception/
+finally behavior, Python recursion, native binding cycles, eighty native wrappers,
+instruction/work/cancellation limits, real callback OOM and zero logical teardown.
+The core-source default and explicit host/library grants remain unchanged. Console
+acceptance is the next focused delivery step; INT-09 stays open for later protocols.

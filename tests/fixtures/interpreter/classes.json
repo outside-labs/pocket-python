@@ -145,7 +145,7 @@
     },
     {
       "id": "special-method",
-      "stage": "C3",
+      "stage": "C3-length",
       "source": "class A:\n    def __len__(self): return 3\nprint(len(A()))\n",
       "stdout": "3\n"
     },
@@ -229,8 +229,8 @@
     {
       "id": "unicode-class",
       "stage": "C1",
-      "source": "class Caf\u00e9:\n def r\u00e9sum\u00e9(self): return 7\na=Caf\u00e9()\nprint(a.r\u00e9sum\u00e9(),Caf\u00e9.__name__)\n",
-      "stdout": "7 Caf\u00e9\n"
+      "source": "class Café:\n def résumé(self): return 7\na=Café()\nprint(a.résumé(),Café.__name__)\n",
+      "stdout": "7 Café\n"
     },
     {
       "id": "enclosing-class-self-cell",
@@ -243,6 +243,7 @@
     "C1",
     "C2-private",
     "C2-descriptor",
-    "C2-decorator"
+    "C2-decorator",
+    "C3-length"
   ]
 }

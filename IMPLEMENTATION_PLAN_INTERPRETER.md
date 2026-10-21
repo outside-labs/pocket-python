@@ -607,3 +607,19 @@ console acceptance. Preserve core-source/1, bytecode 5 for explicit classes,
 existing compatibility matrices, logical ownership and the output-only host.
 INT-09 remains open for formatting and subsequent C3 protocols. Async, the later
 C/Rust WebAssembly path, alpha publication and hosting retain separate tasks.
+
+
+### C3 length/truth execution checkpoint
+
+The shared policy now admits __len__/__bool__. Resumable VM unary operations handle
+len(), bool(), not, branches/jumps and while without executing callbacks inside
+ValueRuntime. Result completions enforce bool and signed-64-bit length contracts;
+optional binding recovery preserves the pinned reference's AttributeError behavior.
+Receivers, expression operands and outer completions retain explicit roots.
+
+All 93 length/truth cases pass in Node/Chromium: 87 CPython comparisons and six
+future refusals. The existing 63-call and 39-class matrices promote their length/
+truth examples to adopted stages. Twelve focused units plus a verified-bytecode
+regression cover control flow, source errors, logical roots, exception/finally
+behavior, depth, work, cancellation and actual callback OOM. The complete Node
+suite now has 152 tests. Offline-console acceptance follows as a separate PR.

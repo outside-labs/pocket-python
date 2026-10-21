@@ -28,7 +28,8 @@ found there creates a fresh bound-method wrapper holding the function and
 receiver. Class access returns the original function. Ordinary instance shadowing,
 class replacement and deletion preserve existing retained method bindings.
 Bound methods compare by receiver/function identity and expose __self__/__func__.
-Classes/instances otherwise compare by identity and have default true truthiness.
+Classes/instances otherwise compare by identity. C1 defaults them to true; adopted
+C3 instance length/truth protocols now override that default.
 
 Calling a class allocates a fresh instance, resolves __init__ on its class and
 calls it with the instance plus ordinary arguments. C1 initializer overrides
@@ -66,7 +67,9 @@ methods and inheritance hooks must not silently behave as ordinary attributes.
 ## C3: adopted special methods and closure of INT-09
 
 The [selected protocol sequence and call contract](interpreter-special-methods.md)
-start with __call__ and callable(), followed by length/truth and formatting.
+start with the delivered __call__/callable() and __len__/__bool__ milestones,
+followed by formatting. Length/truth resume native builtin, branch/jump and loop
+operations through ordinary VM callbacks and validated results.
 Choose and test an explicit special-method matrix before each extension. Cover
 implicit lookup on the type, return-type validation, exception transport and
 bounded recursive dispatch. __new__, arithmetic/comparison overrides,

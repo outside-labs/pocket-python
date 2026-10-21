@@ -73,3 +73,16 @@ test('class frames share instruction, recursion, cancellation and arena limits w
   initial.close();reg.close();
   const result=await run(program(),{}, {maxBytes:baseline+512});assert.equal(result.error.code,'OOM');assert.equal(result.stats.frames,0);
 });
+
+test('verified v5 unary operations resume user length and truth without source lowering',async()=>{
+  for(const [operation,expected] of [['len','8'],['truth','True'],['not','False']]){
+    const code=program();
+    code.functions[1].locals[3]='__len__';
+    code.functions[1].blocks[0].instructions[3]=['store','__len__'];
+    code.functions[3].name=code.functions[3].qualname='__len__';
+    code.functions[0].blocks=[block([['class',1,0],['store','A'],['load','A'],['const',1],['call',1,[]],['store','a'],
+      ['load','print'],['load','a'],[operation],['call',1,[]],['pop'],['end']])];
+    const result=await run(code);
+    assert.equal(result.error,null);assert.equal(result.stdout,expected+'\n');assert.equal(result.stats.frames,0);
+  }
+});

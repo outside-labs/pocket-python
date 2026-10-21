@@ -8,10 +8,10 @@ const profile = {languageProfile: 'classes-source/1'};
 test('shared policy is immutable and keeps metadata distinct from ordinary slot admission', () => {
   assert.ok(Object.isFrozen(CLASS_SPECIAL_POLICY)); assert.ok(Object.isFrozen(DESCRIPTOR_HOOKS));
   assert.throws(() => { CLASS_SPECIAL_POLICY.__init__.mutate = false; }, TypeError);
-  assert.throws(() => { CLASS_SPECIAL_POLICY.__len__ = {}; }, TypeError);
-  for (const name of ['__init__', '__call__', ...DESCRIPTOR_HOOKS])
+  assert.throws(() => { CLASS_SPECIAL_POLICY.__index__ = {}; }, TypeError);
+  for (const name of ['__init__', '__call__', '__len__', '__bool__', ...DESCRIPTOR_HOOKS])
     for (const context of ['define', 'attribute', 'mutate']) assert.equal(allowsClassSpecial(name, context), true);
-  assert.equal(allowsClassSpecial('__call__', 'implicit'), true);
+  for (const name of ['__call__', '__len__', '__bool__']) assert.equal(allowsClassSpecial(name, 'implicit'), true);
   assert.equal(allowsClassSpecial('__init__', 'implicit'), false);
   assert.equal(allowsClassSpecial('__module__', 'define'), true);
   assert.equal(allowsClassSpecial('__module__', 'attribute'), false);
@@ -22,7 +22,7 @@ test('shared policy is immutable and keeps metadata distinct from ordinary slot 
 
 test('source and direct class records reject unadopted protocols through the same policy', () => {
   const runtime = new ClassRuntime(), root = runtime.root();
-  for (const name of ['__len__', '__bool__', '__str__', '__new__', '__getattribute__']) {
+  for (const name of ['__index__', '__str__', '__new__', '__getattribute__']) {
     assert.equal(allowsClassSpecial(name, 'define'), false);
     assert.throws(() => compileSource('print("never")\nclass A:\n '+name+'=None\n', profile), {code: 'UNSUPPORTED'});
     assert.throws(() => runtime.create('A', 'A', 'app', [], new Map([[name, null]]), root), {code: 'UNSUPPORTED'});
