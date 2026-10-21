@@ -86,6 +86,7 @@ jobs:
       - run: node --test runtime/values.test.mjs
       - run: node --test runtime/memory.test.mjs
       - run: node --test runtime/functions.test.mjs
+      - run: node --test runtime/module-registry.test.mjs
       - run: python runtime/check_memory.py --report build/memory-node-report.json
       - run: python runtime/check_conformance.py --report build/interpreter-node-report.json
       - run: python runtime/check_conformance.py --engine vm1 --report build/vm1-node-report.json
