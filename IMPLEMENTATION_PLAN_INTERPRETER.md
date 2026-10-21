@@ -431,3 +431,12 @@ groups verify common class/private behavior, source errors, collisions before
 effects, new private input after offline reload, private-method Stop/Restart and
 waiting updates. Descriptors, decorators and individually adopted special methods
 remain later C2/C3 work. No new host grant, opcode, dependency or publication follows.
+
+### Descriptor/decorator contract adopted (2026-10-21)
+
+INT-09 next adopts [custom descriptors, native wrappers and decorators](docs/interpreter-descriptors.md)
+with 68 stage-tagged CPython reference programs. Delivery separates rooted VM
+continuations/__set_name__, property/staticmethod/classmethod values, decorator
+source and offline-console acceptance. Source namespace order, callback exceptions,
+pre-binding decorator failures and shared resource/teardown checks are required.
+The contract alone does not widen source acceptance or complete C2/INT-09.

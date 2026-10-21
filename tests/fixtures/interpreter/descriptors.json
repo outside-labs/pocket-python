@@ -1,0 +1,431 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-descriptors/1",
+  "profile": "classes-source/1",
+  "reference": "CPython 3.14",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "get-instance-and-class",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass A:\n x=D()\nprint(A().x,A.x)\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "accessed-owner-through-inheritance",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return owner.__name__\nclass A:\n x=D()\nclass B(A): pass\nprint(B.x,B().x)\n",
+      "stdout": "B B\n"
+    },
+    {
+      "id": "data-descriptor-before-instance-storage",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass A:\n x=D()\na=A()\na.x=9\ndef set_value(self,obj,value): obj.saved=value\nD.__set__=set_value\na.x=11\nprint(a.x,a.saved)\n",
+      "stdout": "7 11\n"
+    },
+    {
+      "id": "non-data-shadow-and-delete",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass A:\n x=D()\na=A()\na.x=9\nprint(a.x)\ndel a.x\nprint(a.x)\n",
+      "stdout": "9\n7\n"
+    },
+    {
+      "id": "instance-field-does-not-invoke-descriptor",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass A: pass\na=A()\nd=D()\na.x=d\nprint(a.x is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hook-lookup-ignores-descriptor-instance-fields",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nd=D()\ndef fake(obj,owner): return 9\nd.__get__=fake\nclass A:\n x=d\nprint(A().x,d.__get__(None,A))\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "inherited-descriptor-hooks",
+      "stage": "C2-descriptor",
+      "source": "class Base:\n def __get__(self,obj,owner): return 7\nclass D(Base): pass\nclass A:\n x=D()\nprint(A().x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "read-only-descriptor",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\n def __set__(self,obj,value): raise AttributeError(\"read only\")\nclass A:\n x=D()\na=A()\nprint(a.x)\na.x=9\n",
+      "stdout": "7\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "set-only-read-is-ordinary",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set__(self,obj,value): obj.saved=value\nclass A:\n x=D()\na=A()\na.x=5\nprint(a.x is A.x,a.saved)\n",
+      "stdout": "True 5\n"
+    },
+    {
+      "id": "delete-only-preserves-existing-instance-read",
+      "stage": "C2-descriptor",
+      "source": "class D: pass\nclass A:\n x=D()\na=A()\na.x=9\ndef erase(self,obj): obj.marker=0\nD.__delete__=erase\ndel a.x\nprint(a.x,a.marker)\n",
+      "stdout": "9 0\n"
+    },
+    {
+      "id": "delete-only-refuses-assignment",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __delete__(self,obj): pass\nclass A:\n x=D()\nA().x=7\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "set-only-refuses-deletion",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set__(self,obj,value): pass\nclass A:\n x=D()\ndel A().x\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "setter-result-is-discarded",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set__(self,obj,value):\n  obj.saved=value\n  return 99\nclass A:\n x=D()\na=A()\na.x=7\nprint(a.saved)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "deleter-result-is-discarded",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __delete__(self,obj):\n  obj.saved=0\n  return 99\nclass A:\n x=D()\na=A()\ndel a.x\nprint(a.saved)\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "getter-error-and-effects",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"get\")\n  raise ValueError(\"failed\")\nclass A:\n x=D()\nA().x\n",
+      "stdout": "get\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "none-getter-is-a-call-error",
+      "stage": "C2-descriptor",
+      "source": "class D:\n __get__=None\nclass A:\n x=D()\nprint(\"body\")\nA().x\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "none-setter-is-a-call-error",
+      "stage": "C2-descriptor",
+      "source": "class D:\n __set__=None\nclass A:\n x=D()\nA().x=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "class-replacement-bypasses-instance-descriptor",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set__(self,obj,value): raise ValueError(\"never\")\nclass A:\n x=D()\nA.x=9\nprint(A.x)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "dynamic-hook-replacement",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass A:\n x=D()\na=A()\nprint(a.x)\ndef replacement(self,obj,owner): return 9\nD.__get__=replacement\nprint(a.x)\n",
+      "stdout": "7\n9\n"
+    },
+    {
+      "id": "dynamic-hook-deletion",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nd=D()\nclass A:\n x=d\ndel D.__get__\nprint(A().x is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "explicit-hook-calls",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner): return obj.saved\n def __set__(self,obj,value): obj.saved=value\nclass A: pass\na=A()\nd=D()\nd.__set__(a,8)\nprint(d.__get__(a,A))\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "augmented-owner-get-rhs-set-order",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"get\")\n  return obj.saved\n def __set__(self,obj,value):\n  print(\"set\")\n  obj.saved=value\nclass A:\n x=D()\na=A()\na.saved=1\ndef owner():\n print(\"owner\")\n return a\ndef rhs():\n print(\"rhs\")\n return 3\nowner().x+=rhs()\nprint(a.saved)\n",
+      "stdout": "owner\nget\nrhs\nset\n4\n"
+    },
+    {
+      "id": "set-name-definition-order",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set_name__(self,owner,name): print(name)\nclass A:\n z=D()\n a=D()\n",
+      "stdout": "z\na\n"
+    },
+    {
+      "id": "set-name-aliases",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set_name__(self,owner,name): print(name)\nd=D()\nclass A:\n x=d\n y=d\n",
+      "stdout": "x\ny\n"
+    },
+    {
+      "id": "set-name-without-other-hooks",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set_name__(self,owner,name): print(owner.__name__,name)\nclass A:\n x=D()\n",
+      "stdout": "A x\n"
+    },
+    {
+      "id": "set-name-error-preserves-previous-binding",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set_name__(self,owner,name):\n  print(\"name\")\n  raise ValueError(\"failed\")\nA=7\ntry:\n class A:\n  print(\"body\")\n  x=D()\nexcept ValueError: print(A)\n",
+      "stdout": "body\nname\n7\n"
+    },
+    {
+      "id": "set-name-snapshots-removed-future-entries",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set_name__(self,owner,name):\n  del owner.a\n  print(name)\nclass E:\n def __set_name__(self,owner,name): print(name)\nclass A:\n z=D()\n a=E()\n",
+      "stdout": "z\na\n"
+    },
+    {
+      "id": "none-set-name-keeps-call-error",
+      "stage": "C2-descriptor",
+      "source": "class D:\n __set_name__=None\nclass A:\n x=D()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "late-assignment-needs-explicit-set-name",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set_name__(self,owner,name): print(owner.__name__,name)\nclass A: pass\nd=D()\nA.x=d\nprint(\"assigned\")\nd.__set_name__(A,\"x\")\n",
+      "stdout": "assigned\nA x\n"
+    },
+    {
+      "id": "reassignment-keeps-first-namespace-position",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __init__(self,label): self.label=label\n def __set_name__(self,owner,name): print(self.label,name)\nclass A:\n z=D(\"old\")\n a=D(\"a\")\n z=D(\"new\")\n",
+      "stdout": "new z\na a\n"
+    },
+    {
+      "id": "deletion-and-rebind-moves-namespace-position",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __init__(self,label): self.label=label\n def __set_name__(self,owner,name): print(self.label,name)\nclass A:\n z=D(\"z\")\n a=D(\"a\")\n del z\n z=D(\"last\")\n",
+      "stdout": "a a\nlast z\n"
+    },
+    {
+      "id": "inherited-attributes-are-not-renotified",
+      "stage": "C2-descriptor",
+      "source": "class D:\n def __set_name__(self,owner,name): print(owner.__name__,name)\nd=D()\nclass A:\n x=d\nclass B(A): pass\nclass C:\n y=d\n",
+      "stdout": "A x\nC y\n"
+    },
+    {
+      "id": "property-get-and-function-identity",
+      "stage": "C2-native",
+      "source": "class A:\n def read(self): return 7\n x=property(read)\nprint(A().x,A.x.fget is A.read)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "property-read-only",
+      "stage": "C2-native",
+      "source": "class A:\n def read(self): return 7\n x=property(read)\nA().x=9\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "property-get-set-delete",
+      "stage": "C2-native",
+      "source": "class A:\n def __init__(self): self.saved=7\n def read(self): return self.saved\n def write(self,value): self.saved=value\n def erase(self): self.saved=0\n x=property(read,write,erase)\na=A()\na.x+=2\nprint(a.x)\ndel a.x\nprint(a.saved)\n",
+      "stdout": "9\n0\n"
+    },
+    {
+      "id": "property-accessor-clone",
+      "stage": "C2-native",
+      "source": "def read(self): return 7\ndef write(self,value): pass\np=property(read)\nq=p.setter(write)\nprint(p is q,q.fget is p.fget,p.fset is None,q.fset is write)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "property-keyword-arguments",
+      "stage": "C2-native",
+      "source": "class A:\n def read(self): return 7\n x=property(fget=read,fset=None,fdel=None)\nprint(A().x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "property-missing-getter",
+      "stage": "C2-native",
+      "source": "class A:\n x=property()\nA().x\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "staticmethod-class-and-instance",
+      "stage": "C2-native",
+      "source": "def f(): return 7\nclass A:\n x=staticmethod(f)\nprint(A.x(),A().x(),A.x is f)\n",
+      "stdout": "7 7 True\n"
+    },
+    {
+      "id": "staticmethod-direct-call",
+      "stage": "C2-native",
+      "source": "def f(x): return x\nprint(staticmethod(f)(7))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "staticmethod-non-callable-value",
+      "stage": "C2-native",
+      "source": "class A:\n x=staticmethod(5)\nprint(A.x,A().x)\nstaticmethod(5)()\n",
+      "stdout": "5 5\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-binds-accessed-owner",
+      "stage": "C2-native",
+      "source": "def f(cls): return cls.__name__\nclass A:\n x=classmethod(f)\nclass B(A): pass\nprint(A.x(),B.x(),B().x(),A.x.__self__ is A)\n",
+      "stdout": "A B B True\n"
+    },
+    {
+      "id": "classmethod-alternate-constructor",
+      "stage": "C2-native",
+      "source": "class A:\n def __init__(self,x): self.x=x\n def make(cls,x): return cls(x)\n create=classmethod(make)\nclass B(A): pass\nb=B.create(7)\nprint(type(b).__name__,b.x)\n",
+      "stdout": "B 7\n"
+    },
+    {
+      "id": "classmethod-wrapper-is-not-directly-callable",
+      "stage": "C2-native",
+      "source": "def f(cls): return 7\nclassmethod(f)()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-wrappers-are-non-data",
+      "stage": "C2-native",
+      "source": "def f(cls): return cls.__name__\ndef other(): return 9\nclass A:\n x=classmethod(f)\na=A()\na.x=other\nprint(a.x(),A.x())\n",
+      "stdout": "9 A\n"
+    },
+    {
+      "id": "staticmethod-initializer",
+      "stage": "C2-native",
+      "source": "def init(): print(\"init\")\nclass A:\n __init__=staticmethod(init)\nA()\n",
+      "stdout": "init\n"
+    },
+    {
+      "id": "classmethod-initializer",
+      "stage": "C2-native",
+      "source": "def init(cls): print(cls.__name__)\nclass A:\n __init__=classmethod(init)\nA()\n",
+      "stdout": "A\n"
+    },
+    {
+      "id": "staticmethod-descriptor-hook",
+      "stage": "C2-native",
+      "source": "def read(self,obj,owner): return owner.__name__\nclass D:\n __get__=staticmethod(read)\nclass A:\n x=D()\nprint(A().x)\n",
+      "stdout": "A\n"
+    },
+    {
+      "id": "classmethod-descriptor-hook",
+      "stage": "C2-native",
+      "source": "def read(cls,obj,owner): return cls.__name__+owner.__name__\nclass D:\n __get__=classmethod(read)\nclass A:\n x=D()\nprint(A().x)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "decorator-expression-and-application-order",
+      "stage": "C2-decorator",
+      "source": "def decorate(label):\n print(\"evaluate\",label)\n def apply(value):\n  print(\"apply\",label)\n  return value\n return apply\n@decorate(\"outer\")\n@decorate(\"inner\")\ndef f(): return 7\nprint(f())\n",
+      "stdout": "evaluate outer\nevaluate inner\napply inner\napply outer\n7\n"
+    },
+    {
+      "id": "function-decorator-replacement-closure",
+      "stage": "C2-decorator",
+      "source": "def wrap(f):\n def result(): return f()+2\n return result\n@wrap\ndef f(): return 5\nprint(f(),f.__name__)\n",
+      "stdout": "7 result\n"
+    },
+    {
+      "id": "decorator-error-keeps-previous-binding",
+      "stage": "C2-decorator",
+      "source": "def fail(f): raise ValueError(\"failed\")\nf=7\ntry:\n @fail\n def f(): pass\nexcept ValueError: print(f)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "class-decorator-after-name-notification",
+      "stage": "C2-decorator",
+      "source": "class D:\n def __set_name__(self,owner,name): print(\"name\",name)\ndef decorate(cls):\n print(\"decorate\",cls.__name__)\n return cls\n@decorate\nclass A:\n print(\"body\")\n x=D()\n",
+      "stdout": "body\nname x\ndecorate A\n"
+    },
+    {
+      "id": "class-decorator-replaces-binding",
+      "stage": "C2-decorator",
+      "source": "def replace(cls): return 7\n@replace\nclass A: pass\nprint(A)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "class-decorator-expression-before-bases",
+      "stage": "C2-decorator",
+      "source": "def choose():\n print(\"choose\")\n return decorate\ndef decorate(cls):\n print(\"decorate\")\n return cls\ndef base():\n print(\"base\")\n return object\n@choose()\nclass A(base()): print(\"body\")\n",
+      "stdout": "choose\nbase\nbody\ndecorate\n"
+    },
+    {
+      "id": "property-decorator-get-set-delete",
+      "stage": "C2-decorator",
+      "source": "class A:\n def __init__(self): self.saved=1\n @property\n def x(self): return self.saved\n @x.setter\n def x(self,value): self.saved=value\n @x.deleter\n def x(self): self.saved=0\na=A()\na.x+=6\nprint(a.x)\ndel a.x\nprint(a.saved)\n",
+      "stdout": "7\n0\n"
+    },
+    {
+      "id": "classmethod-and-static-decorators",
+      "stage": "C2-decorator",
+      "source": "class A:\n @classmethod\n def who(cls): return cls.__name__\n @staticmethod\n def number(): return 7\nclass B(A): pass\nprint(B.who(),B().number())\n",
+      "stdout": "B 7\n"
+    },
+    {
+      "id": "private-decorated-method-keeps-metadata",
+      "stage": "C2-decorator",
+      "source": "def identity(f): return f\nclass A:\n @identity\n def __read(self): return 7\n def f(self): return self.__read()\nprint(A().f(),A._A__read.__name__,A._A__read.__qualname__)\n",
+      "stdout": "7 __read A.__read\n"
+    },
+    {
+      "id": "decorator-expression-uses-enclosing-class-namespace",
+      "stage": "C2-decorator",
+      "source": "def identity(f): return f\nclass A:\n __decorate=identity\n @__decorate\n def read(self): return 7\nprint(A().read())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "non-callable-decorator",
+      "stage": "C2-decorator",
+      "source": "@7\ndef f(): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "decorator-class-receives-function",
+      "stage": "C2-decorator",
+      "source": "class Wrapper:\n def __init__(self,f): self.f=f\n@Wrapper\ndef f(): return 7\nprint(f.f())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "getter-hook-is-called-without-nested-binding",
+      "stage": "C2-descriptor",
+      "source": "class Hook:\n def __get__(self,obj,owner): return read\ndef read(obj,owner): return 7\nclass D:\n __get__=Hook()\nclass A:\n x=D()\nprint(A().x)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-doc-reflection",
+      "stage": "deferred",
+      "source": "def read(self):\n \"doc\"\n return 7\nclass A:\n x=property(read)\nprint(A.x.__doc__)\n",
+      "stdout": "doc\n"
+    },
+    {
+      "id": "staticmethod-setter-hook",
+      "stage": "C2-native",
+      "source": "def write(obj,value): obj.saved=value\nclass D:\n __set__=staticmethod(write)\nclass A:\n x=D()\na=A()\na.x=7\nprint(a.saved)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "classmethod-setter-hook",
+      "stage": "C2-native",
+      "source": "def write(cls,obj,value): obj.saved=cls.__name__+str(value)\nclass D:\n __set__=classmethod(write)\nclass A:\n x=D()\na=A()\na.x=7\nprint(a.saved)\n",
+      "stdout": "D7\n"
+    },
+    {
+      "id": "staticmethod-delete-hook",
+      "stage": "C2-native",
+      "source": "def erase(obj): obj.saved=0\nclass D:\n __delete__=staticmethod(erase)\nclass A:\n x=D()\na=A()\na.saved=7\ndel a.x\nprint(a.saved)\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "native-set-name-hook-binding",
+      "stage": "C2-native",
+      "source": "def notify(owner,name): print(owner.__name__,name)\ndef notify_class(cls,owner,name): print(cls.__name__,owner.__name__,name)\nclass D:\n __set_name__=staticmethod(notify)\nclass E:\n __set_name__=classmethod(notify_class)\nclass A:\n x=D()\n y=E()\n",
+      "stdout": "A x\nE A y\n"
+    },
+    {
+      "id": "descriptor-valued-setter-hook",
+      "stage": "deferred",
+      "source": "class Hook:\n def __get__(self,obj,owner): return write\ndef write(obj,value): obj.saved=value\nclass D:\n __set__=Hook()\nclass A:\n x=D()\na=A()\na.x=7\nprint(a.saved)\n",
+      "stdout": "7\n"
+    }
+  ]
+}
