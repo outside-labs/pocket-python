@@ -4,8 +4,9 @@ INT-WEB-01 integrates the independent source engine in three stages: the bounded
 host/worker adapter, application assembly/editor, and browser/offline acceptance.
 The adapter is implemented in `runtime/interpreter-host.mjs` and
 `runtime/interpreter-worker.mjs`. The development `interpreter-web` command now
-assembles the pinned engine and editor. Full browser/offline acceptance follows
-as the final integration stage. No new PyPI release is implied by these changes.
+assembles the pinned engine and editor. The real-browser acceptance suite verifies
+offline execution and updates in Chromium. No new PyPI release is implied by
+these changes.
 
 ## Build and use the console
 
@@ -120,5 +121,19 @@ already completed cancellation races are ignored.
 
 Run `node --test runtime/browser-host.test.mjs` for source/output/errors, fresh
 state, grants, malformed/stale messages, source/output/memory limits, cancellation,
-deadlines and teardown. These state-machine tests use paired ports; real worker,
-offline and cache-update evidence belongs to the final browser stage.
+deadlines and teardown. These state-machine tests use paired ports.
+
+`python scripts/interpreter_browser_smoke.py` builds fresh applications and runs
+the actual module worker in Chromium. Its versioned report includes seven
+CPython/shared-source comparisons and nine acceptance groups: text-safe output,
+source errors/refusals, fresh state, new source after offline reload under a
+subdirectory, busy-worker interruption/restarts, transport/allocation/work limits,
+grants/session/deadline/listener behavior, integrity-failed initial installation,
+failed-update recovery, complete waiting updates and cache isolation. Only local
+GET asset requests occur. The engine and tool/source hashes identify the build;
+no startup or physical-memory performance claim follows from these checks.
+
+CI runs this suite alongside existing MicroPython/compiled profile regressions
+and the independent engine's Node/Chromium conformance suites. Browser reports
+are retained as workflow artifacts. Use `--channel chrome` to check an installed
+Chrome explicitly; that is a separate browser result.

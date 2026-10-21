@@ -377,3 +377,20 @@ Independent VM prototypes remain outside PyPI artifacts until their separate
 source/parser/browser/release gates. Strict allowlists, isolated default/compiler
 installs, final package/browser/VM CI, PyPI/workflow hashes and fresh installs
 remain publication gates. INT-08 is the next implementation task.
+
+### Independent source console checkpoint (2026-10-21)
+
+INT-WEB-01 delivers development `interpreter-web`: an explicit source/notice
+allowlist, the pinned independent JavaScript engine, a source editor and a
+complete offline application profile. The [console guide](docs/interpreter-console.md)
+records the output-only host boundary, limits, fresh-state run semantics and
+build/use instructions. Chromium acceptance proves newly entered source after
+offline reload, interruption/restart, diagnostics, failed-install/update handling,
+waiting updates and scoped cache cleanup. Node/Chromium engine conformance and
+existing compiled/MicroPython regressions remain required in CI.
+
+Class/descriptor semantics, async browser host integration and measured profile
+inclusion remain the next interpreter tasks. Native C/Rust WebAssembly remains
+the later planned backend. Published versions remain Shimify 0.3.0,
+Python-JavaScript 0.2.0 and pocket-python 0.2.0; the independent runtime is still
+excluded from that pocket-python release and needs INT-REL-01 before publication.

@@ -6,7 +6,8 @@ implementation. WEB-03 now implements the compiled schema-2 output through
 [compiled-web and its verified client-source input](compiled-applications.md);
 the development `interpreter-web` command now assembles the
 [source console](interpreter-console.md) with its explicitly supplied independent
-engine. Browser/offline acceptance is the final INT-WEB-01 integration stage.
+engine. Its Chromium acceptance suite verifies actual new source after offline
+reload, scoped updates and stop/restart under INT-WEB-01.
 
 ## Identity and compatibility
 

@@ -6,7 +6,8 @@ supplied Python in Node and browser module workers. They do not call CPython's
 parser, a server, another interpreter, our application compiler or `eval`.
 CPython is a test oracle only. This engine remains a repository prototype;
 PyPI pocket-python 0.2.0 contains the assemblers, excluding `runtime/`.
-The offline browser console is the next INT-WEB-01 milestone.
+The development [offline source console](interpreter-console.md) now supplies
+INT-WEB-01's editor, application assembly and browser/offline acceptance.
 
 ## Compile and run
 
