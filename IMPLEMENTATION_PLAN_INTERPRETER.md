@@ -5,9 +5,10 @@ Planning/issue owner: pocket-python. This records delivered prototype stages and
 pocket-python 0.2.0 assembles compiled and supplied MicroPython applications.
 
 The development source-console milestone now runs newly entered Python offline
-in Chromium, using our independent parser/compiler/VM. Classes/descriptors,
-asynchronous host integration and measured optional profiles remain the next
-stages; the application-alpha publication gates are still open.
+in Chromium, using our independent parser/compiler/VM. Measured optional library
+profiles now have full/reduced and complete-application evidence. Classes/
+descriptors and asynchronous host integration remain next; the application-alpha
+publication gates are still open.
 
 ## Goal and ownership
 
@@ -335,10 +336,12 @@ the old offline graph. Complete updates wait for all old tabs to close and clean
 only that scope's prior cache. Existing compiled/MicroPython regressions remain
 in CI alongside interpreter conformance; reports retain engine/tool hashes.
 
-The next unblocked work is INT-09's staged class/descriptor contracts, INT-10's
-coroutine/scheduling/host contracts and INT-11's measured optional profiles.
-No broad package support, physical-memory/startup claim or independent-engine
-release follows from this milestone. INT-REL-01 remains gated on those stages.
+Following the console and profile measurements, the next unblocked work is
+INT-09's staged class/descriptor contracts and INT-10's coroutine/scheduling/host
+contracts. INT-WASM-01 can specify the later backend using the recorded baseline.
+No broad package support, general physical-memory/startup claim or independent-
+engine release follows from these milestones. INT-REL-01 remains gated on the
+remaining language and host stages.
 
 ### Optional library profiles (2026-10-21)
 
@@ -364,3 +367,22 @@ records cold/warm browser and Node observations. Logical arena, process memory
 and dedicated-worker CDP observations retain separate scopes. CI collects both
 Node-only and real-browser reports; a clean-commit baseline and review complete
 the acceptance evidence.
+
+### Profile baseline accepted (2026-10-21)
+
+INT-11 records [the clean-commit five-sample baseline](docs/interpreter-measurements.md#recorded-baseline-2026-10-21)
+and its raw versioned report. The full/reduced source consoles retain the same
+complete engine, explicit bootstrap closure, verified library/notice selection
+and output-only host grants. Forty Node and Chromium source-profile cases plus
+the browser library/cache acceptance suite prove common behavior and intentional
+missing-library diagnostics. The complete payload/compression and cold/warm/
+memory tool also reproduces the shared CPython corpus through compiled and
+explicitly supplied MicroPython artifacts online and offline.
+
+Core source totals 268,574 bytes (78,117 independently gzipped); operator/1 adds
+2,901 bytes overall including 457 Python library-source bytes. Actual engine,
+bridge, data, notice, source and receipt buckets are retained. Startup boundaries,
+worker reuse and observed process/worker memory scopes differ across adapters
+and are labeled; no general VM minimality or physical-memory bound is inferred.
+CI retains fresh Node-only and four-profile browser reports. Classes/async and
+alpha publication remain separate gates; no package release accompanies INT-11.

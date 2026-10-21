@@ -3,9 +3,11 @@
 MEASURE-01 defines browser-python-footprints/1, a versioned report for comparable
 browser Python application profiles. The first measured profiles are the compiled
 text-input PWA with and without source maps. Both use the same computation,
-inputs, UI, host protocol and observation method. Independent interpreter data
-can join this format once its source/host application exists; missing engines
-remain explicit availability records with no invented byte or timing values.
+inputs, UI, host protocol and observation method. This guide retains the original
+compiled-application report and its collection-time availability records. The
+later [interpreter profile baseline](interpreter-measurements.md) measures source,
+compiled and supplied MicroPython artifacts over the same computation with
+explicitly different shell and startup boundaries.
 
 Run from the development checkout with the declared build/browser tooling:
 
@@ -59,15 +61,14 @@ hash, but a different synchronous adapter and harness. Its initialization/call
 boundary is recorded separately and is not ranked against full PWA readiness or
 worker memory. Original notices remain in every application archive.
 
-The independent JavaScript source interpreter is deferred behind INT-WEB-01 and
-a comparable host adapter; partial VM tests cannot supply this application
-measurement. The later C/Rust WebAssembly lane remains planned. MicroPython's
-existing schema-1 script shell lacks the same adopted text-input adapter, and
-Pyodide remains an unselected integration. Their availability entries contain
-reasons/gates instead of zero-sized or faster/slower comparison rows. INT-WEB-01/
-INT-11 can add matched interpreter producers to the profile array using this
-common workload and explicit engine/source asset buckets. Feature gaps remain
-part of any later comparison.
+At the original report's collection time, the independent source console awaited
+INT-WEB-01, MicroPython's schema-1 script shell lacked the same adopted text-input
+adapter, and Pyodide remained an unselected integration. Those historical
+availability entries remain unchanged. INT-11 now provides a separate versioned
+interpreter-profile report using the common computation, explicit engine/source/
+bridge/library buckets and the actual source/compiled/MicroPython shell lifetimes.
+It labels their different startup and memory scopes. The later C/Rust WebAssembly
+lane remains planned; no results are fabricated for it or Pyodide.
 
 ## Complete payload accounting
 
