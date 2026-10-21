@@ -90,7 +90,7 @@ export class ClassRuntime {
     if (hook.value instanceof MethodWrapperValue) return {kind: "call",
       callable: hook.value.kind === "classmethod" ? this.make(BoundMethodValue, hook.value.callable, receiver.type) : hook.value.callable, args};
     if (hook.value instanceof FunctionValue) return {kind: "call", callable: hook.value, args: [receiver, ...args]};
-    if (this.descriptor(hook.value)?.get.found)
+    if (hook.value instanceof PropertyValue || this.descriptor(hook.value)?.get.found)
       this.fail("UnsupportedOperationError", "Descriptor-valued mutation/notification hooks require a later stage.", "UNSUPPORTED");
     return {kind: "call", callable: hook.value, args};
   }

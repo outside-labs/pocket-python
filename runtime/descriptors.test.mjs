@@ -86,3 +86,14 @@ test('decorator closures resolve in the enclosing scope and private expressions 
   const result = await run('def build(value):\n def decorate(fn):\n  def wrapped(): return value\n  return wrapped\n @decorate\n def f(): return 0\n return f\nprint(build(7)())\nclass Outer:\n def __decorate(value): return value\n @__decorate\n class Inner:\n  @property\n  def __value(self): return 9\n  def read(self): return self.__value\nprint(Outer.Inner().read())\n');
   assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, '7\n9\n'); closed(result);
 });
+
+
+test('property-valued mutation and notification hooks refuse nested descriptor binding explicitly', async () => {
+  for (const source of [
+    'class D:\n def hook(self): return 7\n __set__=property(hook)\nclass A:\n x=D()\nA().x=7\n',
+    'class D:\n def hook(self): return 7\n __delete__=property(hook)\nclass A:\n x=D()\ndel A().x\n',
+    'class D:\n def hook(self): return 7\n __set_name__=property(hook)\nclass A:\n x=D()\n'
+  ]) {
+    const result = await run(source); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result);
+  }
+});

@@ -3,7 +3,7 @@
 INT-09 adopts three more C2 steps in the explicit classes-source/1 profile:
 custom descriptors, native property/method wrappers, and decorator source. They
 reuse verified bytecode 5. The default core-source/1 boundary remains unchanged.
-The adopted implementation and 68-case CPython reference matrix now run in Node
+The adopted implementation and 69-case CPython reference matrix now run in Node
 and Chromium, with offline console acceptance.
 
 ## Adopted behavior
@@ -66,7 +66,7 @@ This stage does not promise full Python or arbitrary package compatibility.
 
 ## Verification and delivery
 
-`tests/fixtures/interpreter/descriptors.json` contains 68 original source programs,
+`tests/fixtures/interpreter/descriptors.json` contains 69 original source programs,
 explicit stdout/error-type expectations, and custom/native/decorator/deferred tags.
 Run the oracle with `python runtime/check_classes.py --reference-only --corpus
 tests/fixtures/interpreter/descriptors.json`. Reference mode never claims VM support.
@@ -79,7 +79,7 @@ C3 special methods, async integration and alpha publication retain separate gate
 
 
 The complete source report contains 66 adopted CPython stdout/error-type
-comparisons and two explicit refusals. Reference validation always covers all 68
+comparisons and three explicit refusals. Reference validation always covers all 69
 programs. During staged development, `--stages` selects source cases and reports
 the omitted stages without treating them as implemented.
 

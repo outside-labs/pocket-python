@@ -380,7 +380,7 @@ missing-library diagnostics. The complete payload/compression and cold/warm/
 memory tool also reproduces the shared CPython corpus through compiled and
 explicitly supplied MicroPython artifacts online and offline.
 
-Core source totals 268,574 bytes (78,117 independently gzipped); operator/1 adds
+Core source totals 269,574 bytes (78,117 independently gzipped); operator/1 adds
 2,901 bytes overall including 457 Python library-source bytes. Actual engine,
 bridge, data, notice, source and receipt buckets are retained. Startup boundaries,
 worker reuse and observed process/worker memory scopes differ across adapters
@@ -436,7 +436,7 @@ remain later C2/C3 work. No new host grant, opcode, dependency or publication fo
 ### Descriptor/decorator contract adopted (2026-10-21)
 
 INT-09 next adopts [custom descriptors, native wrappers and decorators](docs/interpreter-descriptors.md)
-with 68 stage-tagged CPython reference programs. Delivery separates rooted VM
+with 69 stage-tagged CPython reference programs. Delivery separates rooted VM
 continuations/__set_name__, property/staticmethod/classmethod values, decorator
 source and offline-console acceptance. Source namespace order, callback exceptions,
 pre-binding decorator failures and shared resource/teardown checks are required.
@@ -451,7 +451,7 @@ owners, namespace definition order and snapshot notifications share the existing
 work, recursion, cancellation and memory bounds. Failed notifications preserve the
 previous class binding and propagate the original CPython 3.14 exception.
 
-All 68 descriptor/decorator reference cases remain checked. Source reports select
+All 69 descriptor/decorator reference cases remain checked. Source reports select
 the 33 implemented custom descriptor cases and explicitly list omitted native and
 decorator stages; those stages remain subsequent work. The original class/private
 matrices still run in full. No publication or default core-profile change follows.
@@ -478,8 +478,8 @@ creation and notifications complete before class decorators run; the final bindi
 is stored only after successful application. Decorators preserve enclosing closure
 resolution, textual private-name context and original function/class metadata.
 
-All 68 descriptor/decorator source cases now run in Node and Chromium: 66 adopted
-comparisons and two explicit deferred refusals. Focused checks cover the decorator
+All 69 descriptor/decorator source cases now run in Node and Chromium: 66 adopted
+comparisons and three explicit deferred refusals. Focused checks cover the decorator
 count limit before effects, failure locations, retained old bindings, closure and
 private decorator expressions. The default core profile continues to refuse this
 syntax. Offline console acceptance is the final step of this batch.
@@ -494,10 +494,17 @@ and decorator errors, newly entered decorated source after offline reload,
 property-getter Stop/Restart with three fresh sessions and scoped updates that
 remove both the class language and optional library authority.
 
-C2's adopted private/descriptor/decorator scope is implemented. All 68 source
-cases run in Node and Chromium (66 reference comparisons, two explicit refusals),
+C2's adopted private/descriptor/decorator scope is implemented. All 69 source
+cases run in Node and Chromium (66 reference comparisons, three explicit refusals),
 alongside the full 39 class and 34 private-name matrices. INT-09 stays open for
 C3's individually adopted special methods; nested hook binding/reflection and
 alpha publication retain separate gates. Public console hosting is tracked by
 DEMO-01; spatial-ui's existing HOST-01 includes its current dashboard. No provider,
 deployment, new dependency or package publication is introduced by this batch.
+
+
+A focused follow-up adds a native property-valued mutation-hook reference case.
+Nested descriptor binding for setters, deleters and notifications now refuses
+explicitly for both custom and property descriptors. The full matrix has 69
+programs: 66 adopted comparisons and three deferred refusals. No runtime behavior
+for unadopted nested binding is presented as a Python-compatible call error.
