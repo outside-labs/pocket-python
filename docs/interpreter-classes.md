@@ -134,8 +134,10 @@ bytecode 4 and class-syntax refusal. Unknown profiles fail explicitly.
 Class scopes retain enclosing function cells without capturing their own
 namespace into methods; nested classes/functions have Python-qualified names.
 Attribute assignment, augmentation and deletion preserve operand order and
-evaluate receivers once. Unsupported private writes, implicit class cells,
-metadata overrides and later special methods refuse before application effects.
+evaluate receivers once. Implicit class cells, metadata overrides and later
+special methods refuse before application effects. The later C2
+[private-name compiler](interpreter-private-names.md) now extends this profile
+with lexical name mangling, using the same verified bytecode 5 instructions.
 The intrinsic object type is immutable. Class module metadata is text in C1.
 
 Run `python runtime/check_classes.py --target node` or `--target browser`.

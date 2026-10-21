@@ -2,6 +2,7 @@ import {parseSource, freezeSourceTree} from "./source-parser.mjs";
 import {SourceError, SOURCE_LIMITS} from "./source-tokens.mjs";
 import {verifyFunctions, FUNCTION_LIMITS} from "./function-bytecode.mjs";
 import {EXCEPTIONS} from "./function-objects.mjs";
+import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 const MODULE_NAME = /^[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*$/;
 const NONE = Object.freeze({type: "none"});
@@ -27,6 +28,40 @@ class Compiler {
     if (Array.isArray(value)) value.forEach(item => this.children(item, visit));
     else Object.values(value).forEach(item => this.children(item, visit));
   }
+  privateNames(root) {
+    const name = (value, owner, site) => {
+      if (!owner || !value.startsWith("__") || value.endsWith("__") || value.includes(".")) return value;
+      this.charge(site, owner.length + value.length);
+      const prefix = owner.replace(/^_+/, "");
+      if (!prefix) return value;
+      const result = "_" + prefix + value;
+      if (!isPythonIdentifier(result)) this.fail("Mangled identifier exceeds the name budget.", site, "COMPILE_BUDGET", "bind");
+      return result;
+    };
+    const rewrite = (value, owner = null) => {
+      if (!value || typeof value !== "object") return value;
+      if (Array.isArray(value)) return value.map(item => rewrite(item, owner));
+      if (!value.kind) return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, rewrite(child, owner)]));
+      this.charge(value);
+      if (value.kind === "Class") return {...value, bindingName: name(value.name, owner, value),
+        bases: rewrite(value.bases, owner), body: rewrite(value.body, value.name)};
+      if (value.kind === "Function") {
+        const params = Object.fromEntries(Object.entries(value.params).map(([key, group]) => [key,
+          group.map(param => ({...param, name: name(param.name, owner, param), value: rewrite(param.value, owner)}))]));
+        const names = Object.values(params).flat().map(param => param.name);
+        if (new Set(names).size !== names.length) this.fail("Duplicate function parameter after name mangling.", value, "SYNTAX", "bind");
+        return {...value, bindingName: name(value.name, owner, value), params, body: rewrite(value.body, owner)};
+      }
+      if (value.kind === "Import") return {...value, specifier: value.specifier === null ? null : name(value.specifier, owner, value),
+        aliases: value.aliases.map(alias => ({...alias, name: name(alias.name, owner, value),
+          bindingName: name(alias.asname || (value.specifier === null ? alias.name.split(".")[0] : alias.name), owner, value)}))};
+      const result = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, key === "span" ? child : rewrite(child, owner)]));
+      if (["Name", "Attribute"].includes(value.kind)) result.name = name(value.name, owner, value);
+      if (value.kind === "Handler" && value.alias) result.alias = name(value.alias, owner, value);
+      return result;
+    };
+    return rewrite(root);
+  }
   bind(node, parent = null) {
     this.charge(node);
     if (this.scopes.length >= FUNCTION_LIMITS.functions) this.fail("Function budget exceeded.", node, "COMPILE_BUDGET", "bind");
@@ -47,7 +82,7 @@ class Compiler {
     const visit = value => {
       this.charge(value);
       if (["Function", "Class"].includes(value.kind)) {
-        binding(value.name, value);
+        binding(value.bindingName ?? value.name, value);
         if (value.kind === "Class") value.bases.forEach(visit);
         this.bind(value, scope); return;
       }
@@ -59,13 +94,13 @@ class Compiler {
       if (value.kind === "Augment") target(value.target);
       if (value.kind === "For") target(value.target);
       if (value.kind === "Handler" && value.alias) binding(value.alias, value);
-      if (value.kind === "Import") for (const alias of value.aliases) binding(alias.asname || (value.specifier === null ? alias.name.split(".")[0] : alias.name), value);
+      if (value.kind === "Import") for (const alias of value.aliases) binding(alias.bindingName ?? alias.asname ?? (value.specifier === null ? alias.name.split(".")[0] : alias.name), value);
       for (const [key, child] of Object.entries(value)) if (key !== "span") this.children(child, visit);
     };
     node.body.forEach(visit); return scope;
   }
   resolve() {
-    this.bind(this.parsed.module);
+    this.bind(this.classes ? this.privateNames(this.parsed.module) : this.parsed.module);
     for (const scope of this.scopes) {
       if (scope.locals.has("__debug__")) this.fail("Cannot assign to or delete __debug__.", scope.node, "SYNTAX", "bind");
       if ([...scope.locals, ...scope.uses].some(name => ["None", "True", "False"].includes(name)))
@@ -73,8 +108,6 @@ class Compiler {
       if (scope.node.kind === "Class" && [...scope.locals].some(name => name.startsWith("__") && name.endsWith("__") &&
           !["__init__", "__module__", "__qualname__"].includes(name)))
         this.fail("Custom special methods require a later class stage.", scope.node, "UNSUPPORTED", "bind");
-      if (scope.classContext && [...scope.locals, ...scope.uses].some(name => name.startsWith("__") && !name.endsWith("__")))
-        this.fail("Private name mangling requires the later class stage.", scope.node, "UNSUPPORTED", "bind");
     }
     for (const scope of this.scopes.slice(1)) for (const name of scope.uses) {
       this.charge(scope.node);
@@ -135,7 +168,6 @@ class Compiler {
       };
       const pushNone = site => emit(site, "const", this.constant(NONE, site));
       const attribute = (value, write = false) => {
-        if (scope.classContext && value.name.startsWith("__") && !value.name.endsWith("__")) this.fail("Private name mangling requires the later class stage.", value);
         if (write && value.name.startsWith("__") && value.name.endsWith("__") && value.name !== "__init__")
           this.fail("Special attribute mutation is outside C1.", value);
         return value.name;
@@ -233,10 +265,10 @@ class Compiler {
             else if (target.kind === "Attribute") { expr(target.value); emit(target, "attribute-delete", attribute(target, true)); emit(target, "pop"); }
             else { expr(target.value); expr(target.index); emit(target, "dict-delete"); emit(target, "pop"); }
           }
-        } else if (value.kind === "Function") { emit(value, "function", this.scopeOf.get(value).index); emit(value, "store", value.name); }
+        } else if (value.kind === "Function") { emit(value, "function", this.scopeOf.get(value).index); emit(value, "store", value.bindingName ?? value.name); }
         else if (value.kind === "Class") {
           if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
-          value.bases.forEach(expr); emit(value, "class", this.scopeOf.get(value).index, value.bases.length); emit(value, "store", value.name);
+          value.bases.forEach(expr); emit(value, "class", this.scopeOf.get(value).index, value.bases.length); emit(value, "store", value.bindingName ?? value.name);
         }
         else if (value.kind === "Return") { value.value ? expr(value.value) : pushNone(value); emit(value, "return"); }
         else if (value.kind === "Raise") { if (value.value) { expr(value.value); emit(value, "raise"); } else emit(value, "reraise"); }
@@ -258,12 +290,12 @@ class Compiler {
           if (value.specifier === null) for (const alias of value.aliases) {
             emit(value, "import", alias.name, 0, true);
             if (alias.asname) for (const part of alias.name.split(".").slice(1)) emit(value, "import-from", part);
-            emit(value, "store", alias.asname || alias.name.split(".")[0]);
+            emit(value, "store", alias.bindingName ?? alias.asname ?? alias.name.split(".")[0]);
           } else {
             emit(value, "import", value.specifier, value.level, false);
             value.aliases.forEach((alias, index) => {
               if (index < value.aliases.length - 1) emit(value, "dup");
-              emit(value, "import-from", alias.name); emit(value, "store", alias.asname || alias.name);
+              emit(value, "import-from", alias.name); emit(value, "store", alias.bindingName ?? alias.asname ?? alias.name);
             });
           }
         } else this.fail("Statement is outside the source profile.", value);

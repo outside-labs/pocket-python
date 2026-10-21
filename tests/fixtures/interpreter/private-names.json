@@ -3,7 +3,9 @@
   "suite": "interpreter-private-names/1",
   "profile": "classes-source/1",
   "reference": "CPython 3.14",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "C2-private"
+  ],
   "cases": [
     {
       "id": "private-class-value",

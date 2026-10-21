@@ -37,9 +37,8 @@ test('class imports share object identity while inherited methods retain their d
   assert.equal(result.closed.bytes,0);assert.equal(result.closed.roots,0);
 });
 
-test('private writes, metadata overrides and implicit class cells refuse before source effects',async()=>{
+test('metadata overrides and implicit class cells refuse before source effects',async()=>{
   for(const source of [
-    'class A:\n def __init__(self): self.__private=7\n',
     'class A:\n def f(self): return __class__\n',
     'class A:\n __module__="custom"\n',
     'class A:\n def __qualname__(self): pass\n',
