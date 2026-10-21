@@ -38,6 +38,9 @@ jobs:
       UV_PYTHON: '3.14.7'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.19.0'
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           version: "0.12.19"
@@ -50,6 +53,7 @@ jobs:
       - run: uv run --no-sync python scripts/shared_application_smoke.py --report build/shared-application-browser-report.json
       - run: uv run --no-sync python scripts/interpreter_browser_smoke.py --report build/interpreter-console-browser-report.json
       - run: uv run --no-sync python scripts/library_profiles_browser_smoke.py --report build/library-console-browser-report.json
+      - run: uv run --no-sync python scripts/interpreter_measurements.py --compiled --micropython-runtime build/runtime --repeats 3 --output build/interpreter-measurements
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: outside-labs/Python-JavaScript
@@ -77,6 +81,7 @@ jobs:
             build/*browser-report.json
             build/application-measurements/report.json
             build/application-measurements/compiler-component-report.json
+            build/interpreter-measurements/report.json
           if-no-files-found: error
 
   interpreter-prototype:
@@ -105,6 +110,9 @@ jobs:
       - run: python runtime/check_conformance.py --engine source --report build/source-node-report.json
       - run: python scripts/lock_library_profiles.py
       - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json
+      - run: python scripts/interpreter_measurements.py --no-browser --repeats 3 --output build/interpreter-node-measurements
+        env:
+          PYTHONPATH: src
       - run: python runtime/check_memory.py --report build/memory-node-report.json
       - run: python runtime/check_conformance.py --report build/interpreter-node-report.json
       - run: python runtime/check_conformance.py --engine vm1 --report build/vm1-node-report.json
@@ -116,5 +124,7 @@ jobs:
         if: always()
         with:
           name: interpreter-node-report
-          path: build/*node-report.json
+          path: |
+            build/*node-report.json
+            build/interpreter-node-measurements/report.json
           if-no-files-found: error
