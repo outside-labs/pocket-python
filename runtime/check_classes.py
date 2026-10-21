@@ -27,7 +27,7 @@ def reference_case(case):
             path = root.joinpath(*parts, '__init__.py') if module.get('package') else root.joinpath(*parts).with_suffix('.py')
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(module['source'], encoding='utf-8')
-        source = 'import sys\nsys.path.insert(0, ' + repr(str(root)) + ')\n' + case['source']
+        source = "__import__('sys').path.insert(0, " + repr(str(root)) + ')\n' + case['source']
         return reference(source, 'sources/app.py')
 
 

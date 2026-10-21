@@ -435,7 +435,7 @@ INT-REL-01 publication remain staged. Published package versions are unchanged.
 INT-09 now adds [C2 private-name mangling](docs/interpreter-private-names.md) to
 classes-source/1, using the same verified bytecode 5 and explicit host/library
 grants. The compiler lowers normalized names before lexical binding and preserves
-original metadata, literals, keyword names and source spans. Thirty-three CPython
+original metadata, literals, keyword names and source spans. Thirty-four CPython
 cases cover nested scopes, inheritance collisions, Unicode, parameters and real
 synthetic imports in Node/Chromium. The class console's expanded sixteen-case/
 group suite includes private fields after offline reload and worker restart.

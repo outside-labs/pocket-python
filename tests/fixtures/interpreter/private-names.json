@@ -304,6 +304,21 @@
       "imports": [
         "__helper"
       ]
+    },
+    {
+      "id": "oracle-module-setup-does-not-bind-globals",
+      "stage": "C2-private",
+      "source": "class A:\n __x=7\n def read(self): return self.__x + sys\nA().read()\n",
+      "stdout": "",
+      "error_type": "NameError",
+      "modules": [
+        {
+          "name": "unused",
+          "source": "marker=1\n",
+          "package": false,
+          "imports": []
+        }
+      ]
     }
   ]
 }

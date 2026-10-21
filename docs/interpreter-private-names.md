@@ -42,10 +42,11 @@ special methods retain their individual gates.
 
 ## Evidence and delivery
 
-The 33 original cases in `tests/fixtures/interpreter/private-names.json` record
+The 34 original cases in `tests/fixtures/interpreter/private-names.json` record
 explicit stdout/error types and synthetic module/grant records where needed.
 The CPython oracle materializes those modules in a temporary directory and uses
-real isolated imports. It does not supply missing code to the independent engine.
+real isolated imports without adding setup names to application globals. It does
+not supply missing code to the independent engine.
 Run the reference contract with:
 
 ```sh
@@ -54,7 +55,7 @@ python runtime/check_classes.py --reference-only \
 ```
 
 The compiler lowers normalized private names before binding, preserving source
-spans and original function/class metadata. All 33 cases run against CPython in
+spans and original function/class metadata. All 34 cases run against CPython in
 Node/Chromium, with report/input hashes and logical arena teardown checks. Node
 tests additionally cover post-mangling parameter collisions, identifier growth,+cancellation and denial of imports without the transformed module grant. The
 default source profile and later-feature refusal boundary retain their tests.

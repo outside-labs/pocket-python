@@ -420,10 +420,10 @@ engine's alpha publication still requires INT-REL-01. No package release accompa
 ### Private-name compiler delivered (2026-10-21)
 
 The next INT-09 step adopts [C2 private-name rules](docs/interpreter-private-names.md)
-with 33 CPython reference cases, including nested scopes, inheritance collisions,
+with 34 CPython reference cases, including nested scopes, inheritance collisions,
 Unicode, parameter collisions and explicit synthetic imports. The compiler now
 lowers names before binding under classes-source/1, using existing bytecode 5.
-Node/Chromium compare all 33 cases; source tests cover generated-name budgets,
+Node/Chromium compare all 34 cases; source tests cover generated-name budgets,
 collisions before effects and unchanged explicit module grants. Original names,
 source spans, literals and call keywords remain available unchanged where required.
 The console's Counter example now uses a private field; sixteen Chromium cases/
