@@ -173,10 +173,17 @@ test("worker validates initialization, source arguments, cancellation races and 
   peer.send("request", {id: "h1", operation: "interpreter.run", arguments: {source: {type: "str", codepoints: [-1]}}, timeout_ms: 1000}); await tick();
   assert.equal(responses.at(-1).error.code, "BAD_VALUE");
   peer.send("cancel", {reply_to: "h1"}); await tick(); assert.equal(controller.stats().state, "ready");
+  const cancelledReply = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { host.removeEventListener("message", received); reject(new Error("Cancellation reply timed out.")); }, 1000);
+    function received(event) {
+      if (event.data.kind !== "result" || event.data.reply_to !== "h2") return;
+      clearTimeout(timer); host.removeEventListener("message", received); resolve(event.data);
+    }
+    host.addEventListener("message", received);
+  });
   peer.send("request", {id: "h2", operation: "interpreter.run", arguments: {source: sourceValue("pass", CONSOLE_LIMITS)}, timeout_ms: 1000});
   peer.send("cancel", {reply_to: "h2"});
-  for (let i = 0; i < 50 && responses.at(-1)?.reply_to !== "h2"; i++) await tick();
-  assert.equal(responses.at(-1).error.code, "CANCELLED");
+  assert.equal((await cancelledReply).error.code, "CANCELLED");
   peer.send("request", {id: "h2", operation: "interpreter.run", arguments: {source: sourceValue("pass", CONSOLE_LIMITS)}, timeout_ms: 1000}); await tick();
   assert.equal(responses.at(-1).kind, "fatal"); assert.equal(controller.stats().state, "closed");
 });
