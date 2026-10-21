@@ -454,3 +454,16 @@ All 68 descriptor/decorator reference cases remain checked. Source reports selec
 the 33 implemented custom descriptor cases and explicitly list omitted native and
 decorator stages; those stages remain subsequent work. The original class/private
 matrices still run in full. No publication or default core-profile change follows.
+
+
+### C2 native property and method wrappers
+
+The classes profile now owns immutable property, staticmethod and classmethod
+wrappers. Property callbacks and accessor copies retain their functions; class
+methods bind the accessed owner, including inherited alternate constructors.
+Initializers and custom descriptor mutation/notification hooks use the adopted
+native method binding; the raw __get__ slot retains its separate calling rule.
+
+The selected source matrix now covers all 54 custom/native cases and two explicit
+refusals in Node and Chromium. Wrapper edges, retained closures, callback failures
+and invalid arguments have focused tests. Decorator source remains the next step.

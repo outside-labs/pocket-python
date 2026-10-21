@@ -1,5 +1,5 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -99,7 +99,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.callable.pool.code.version === 5 && ["type", "issubclass"].includes(key))) {
+        (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!builtins.has(key)) builtins.set(key, allocate(BuiltinValue, key));
       return builtins.get(key);
@@ -242,7 +242,17 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     deliver(type, null, site);
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) => {
-    if (callable instanceof BoundMethodValue) { args = [callable.receiver, ...args]; callable = callable.callable; }
+    while (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod") {
+      charge(1);
+      if (callable instanceof BoundMethodValue) args = [callable.receiver, ...args];
+      callable = callable.callable;
+    }
+    if (callable instanceof PropertyAccessorValue) {
+      if (args.length !== 1 || keywords.length) python("TypeError", "Property accessor copy requires one positional value.");
+      const fields = [callable.property.fget, callable.property.fset, callable.property.fdel];
+      fields[{getter: 0, setter: 1, deleter: 2}[callable.name]] = args[0];
+      deliver(allocate(PropertyValue, ...fields), completion, site); return;
+    }
     if (callable instanceof ClassValue) {
       const instance = classes.instance(callable); temporaries.push(instance);
       const initializer = classes.lookup(callable, "__init__");
@@ -256,7 +266,12 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     }
     if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
     if (callable instanceof BuiltinValue) {
-      const value = builtin(callable, [...args, ...keywordValues], keywords);
+      let value;
+      if (callable.name === "property") value = classes.property(args, keywords, keywordValues);
+      else if (["staticmethod", "classmethod"].includes(callable.name)) {
+        if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
+        value = allocate(MethodWrapperValue, callable.name, args[0]);
+      } else value = builtin(callable, [...args, ...keywordValues], keywords);
       deliver(value, completion, site); return;
     }
     python("TypeError", "Value is not callable in this profile");
@@ -427,7 +442,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           if (op === "import") stack.push(moduleContext.load(owner.name, arg, extra, fourth, invoke));
           else {
             const receiver = stack.pop();
-            if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue)) {
+            if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
               const plan = classes.read(receiver, arg);
               if (plan.kind === "value") stack.push(plan.value);
               else { temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }

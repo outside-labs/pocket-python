@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference": "CPython 3.14",
   "implemented_stages": [
-    "C2-descriptor"
+    "C2-descriptor",
+    "C2-native"
   ],
   "cases": [
     {
