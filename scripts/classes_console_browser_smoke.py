@@ -69,6 +69,7 @@ def smoke(channel=None):
                     ready()
                     assert 'classes-source/1' in page.locator('#language').inner_text()
                     assert 'private names' in page.locator('#language').inner_text()
+                    assert 'properties and decorators' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -78,6 +79,11 @@ def smoke(channel=None):
                     private = json.loads((ROOT / 'tests/fixtures/interpreter/private-names.json').read_bytes())
                     programs.extend(c['source'] for c in private['cases'] if c['id'] in
                                     ['private-class-value', 'subclass-private-fields', 'nested-private-class', 'normalized-unicode-prefix'])
+                    descriptors = json.loads((ROOT / 'tests/fixtures/interpreter/descriptors.json').read_bytes())
+                    programs.extend(c['source'] for c in descriptors['cases'] if c['id'] in
+                                    ['data-descriptor-before-instance-storage', 'set-name-definition-order',
+                                     'classmethod-alternate-constructor', 'decorator-expression-and-application-order',
+                                     'property-decorator-get-set-delete', 'class-decorator-after-name-notification'])
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -102,12 +108,20 @@ def smoke(channel=None):
                     assert 'sources/app.py:3' in page.locator('#status').inner_text()
                     run(SOURCE, 'Count: 7\nClass: StepCounter\n')
                     checks.append('private-name-errors-and-collisions-before-effects')
+                    refused('class A:\n @property\n def read(self):\n  return 1//0\nA().read\n', 'ZeroDivisionError:')
+                    assert 'read at sources/app.py:4' in page.locator('#diagnostic').inner_text()
+                    refused('class D:\n def __set_name__(self,owner,name): raise ValueError("notify")\nclass A:\n x=D()\n', 'ValueError:')
+                    assert '__set_name__ at sources/app.py:2' in page.locator('#diagnostic').inner_text()
+                    refused('@7\ndef f(): pass\n', 'TypeError:')
+                    assert 'sources/app.py:1' in page.locator('#status').inner_text()
+                    run(SOURCE, 'Count: 7\nClass: StepCounter\n')
+                    checks.append('descriptor-notification-and-decorator-error-locations')
                     context.set_offline(True)
                     page.reload()
                     ready()
-                    run('class NewAfterReload:\n def __init__(self): self.__value=7\n def f(self,x): return x+self.__value\nprint(NewAfterReload().f(5))\n', '12\n')
-                    checks.append('new-class-and-private-source-after-offline-reload')
-                    busy = 'class Spin:\n def __run(self):\n  while True: pass\n def run(self): return self.__run()\nSpin().run()\n'
+                    run('class NewAfterReload:\n def __init__(self,n): self.__value=n\n @classmethod\n def create(cls,n): return cls(n)\n @property\n def value(self): return self.__value\nprint(NewAfterReload.create(12).value)\n', '12\n')
+                    checks.append('new-decorated-class-and-property-source-after-offline-reload')
+                    busy = 'class Spin:\n @property\n def run(self):\n  while True: pass\nSpin().run\n'
                     stopped = []
                     for _ in range(3):
                         page.fill('#input', busy)
@@ -122,7 +136,7 @@ def smoke(channel=None):
                         page.click('#restart')
                         ready()
                         run(SOURCE, 'Count: 7\nClass: StepCounter\n')
-                    checks.append('class-worker-stop-and-three-fresh-restarts')
+                    checks.append('property-getter-stop-and-three-fresh-restarts')
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/nested/classes')
                     shutil.copytree(root / 'reduced', root / 'site/nested/classes')

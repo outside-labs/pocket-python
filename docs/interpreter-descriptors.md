@@ -3,7 +3,8 @@
 INT-09 adopts three more C2 steps in the explicit classes-source/1 profile:
 custom descriptors, native property/method wrappers, and decorator source. They
 reuse verified bytecode 5. The default core-source/1 boundary remains unchanged.
-The contract and 68-case CPython reference matrix precede implementation.
+The adopted implementation and 68-case CPython reference matrix now run in Node
+and Chromium, with offline console acceptance.
 
 ## Adopted behavior
 
@@ -75,3 +76,16 @@ continuations and notifications; native wrappers; decorator parsing/lowering;
 and offline-console acceptance. Each implemented stage adds its Node/Chromium
 comparisons, malformed/resource/teardown checks and retained input hashes.
 C3 special methods, async integration and alpha publication retain separate gates.
+
+
+The complete source report contains 66 adopted CPython stdout/error-type
+comparisons and two explicit refusals. Reference validation always covers all 68
+programs. During staged development, `--stages` selects source cases and reports
+the omitted stages without treating them as implemented.
+
+The console example combines a private field, property setter, inherited class
+method constructor and static method. Fifteen source comparisons and eight browser
+acceptance groups cover fresh sessions, callback/decorator locations, new decorated
+source after offline reload, property-getter Stop/Restart and a waiting update to
+the reduced core language/library selection. No hosted deployment follows from
+these local checks; DEMO-01 tracks the public console destination and acceptance.

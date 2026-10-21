@@ -6,8 +6,9 @@ pocket-python 0.2.0 assembles compiled and supplied MicroPython applications.
 
 The development source-console milestone now runs newly entered Python offline
 in Chromium, using our independent parser/compiler/VM. Measured optional library
-profiles now have full/reduced and complete-application evidence. Classes/
-descriptors and asynchronous host integration remain next; the application-alpha
+profiles now have full/reduced and complete-application evidence. Class foundations,
+private names and adopted descriptors/decorators now run in Node and Chromium.
+Individual special methods and asynchronous host integration remain next; the application-alpha
 publication gates are still open.
 
 ## Goal and ownership
@@ -482,3 +483,21 @@ comparisons and two explicit deferred refusals. Focused checks cover the decorat
 count limit before effects, failure locations, retained old bindings, closure and
 private decorator expressions. The default core profile continues to refuse this
 syntax. Offline console acceptance is the final step of this batch.
+
+
+### C2 console acceptance checkpoint
+
+The Counter/StepCounter example now uses a private field, property setter,
+inherited class method constructor and static method. Fifteen CPython source
+comparisons and eight Chromium acceptance groups cover these features, callback
+and decorator errors, newly entered decorated source after offline reload,
+property-getter Stop/Restart with three fresh sessions and scoped updates that
+remove both the class language and optional library authority.
+
+C2's adopted private/descriptor/decorator scope is implemented. All 68 source
+cases run in Node and Chromium (66 reference comparisons, two explicit refusals),
+alongside the full 39 class and 34 private-name matrices. INT-09 stays open for
+C3's individually adopted special methods; nested hook binding/reflection and
+alpha publication retain separate gates. Public console hosting is tracked by
+DEMO-01; spatial-ui's existing HOST-01 includes its current dashboard. No provider,
+deployment, new dependency or package publication is introduced by this batch.

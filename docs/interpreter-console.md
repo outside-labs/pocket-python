@@ -53,10 +53,10 @@ dependency. Assembly never executes the source or engine.
 The default language selection is core-source/1 (bytecode 4). Add
 `--language-profile classes-source/1` to select the [class foundation](interpreter-classes.md)
 (bytecode 5): class bodies, C3 inheritance, instance attributes, initialization,
-bound methods and [private names](interpreter-private-names.md). The editor shows the selected profile. Build a class example
+bound methods, [private names](interpreter-private-names.md), and the adopted
+[descriptors, properties and decorators](interpreter-descriptors.md). The editor shows the selected profile. Build a class example
 with `uv run python -m examples.interpreter_classes`, then serve
-`build/class-console`. Descriptors, decorators, custom special methods and async
-remain later stages. Language selection is independent of `--library-profile`;
+`build/class-console`. Custom special methods and async remain later stages. Language selection is independent of `--library-profile`;
 both language profiles use the same complete pinned engine.
 
 Output uses application schema 2, profile in-house-interpreter/1, with distinct
