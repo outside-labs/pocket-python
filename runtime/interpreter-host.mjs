@@ -89,5 +89,5 @@ export function mountInterpreter({application: identity, capabilities: grants = 
       });
     }, stop,
     stats: () => ({state, session, pending: pending ? 1 : 0, listeners: state === "closed" ? 0 : 3, handles: 0, subscriptions: 0,
-      limits: bounds, library_profile: {...selected}})});
+      limits: bounds, library_profile: {...selected}, language_profile: identity.engine.language_profile})});
 }

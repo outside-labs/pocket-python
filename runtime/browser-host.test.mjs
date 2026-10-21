@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {mountInterpreter} from "./interpreter-host.mjs";
 import {attachInterpreterWorker} from "./interpreter-worker.mjs";
-import {ENGINE, CONSOLE_LIMITS, Peer, checkMessage, sourceValue, limits, diagnostic} from "./browser-protocol.mjs";
+import {ENGINE, LANGUAGE_ENGINES, CONSOLE_LIMITS, Peer, checkMessage, sourceValue, limits, diagnostic} from "./browser-protocol.mjs";
 
 const identity = () => ({manifest_sha256: "0".repeat(64), profile: "in-house-interpreter", profile_version: 1,
   entrypoint: "sources/app.py", engine: {...ENGINE}});
@@ -46,6 +46,38 @@ test("source host executes new source, preserves text and clears Python state on
     assert.equal(records[2].value.type, "none");
   } finally { app.stop(); }
   assert.equal(app.stats().listeners, 0); assert.equal(last().controller.stats().pending, 0);
+});
+
+test("explicit class identity selects v5, composes libraries and keeps each run fresh", async () => {
+  const selected=identity();selected.engine={...LANGUAGE_ENGINES['classes-source/1']};
+  let output='';
+  const app=create({application:selected,libraryProfile:'operator/1',libraries:await operator(),onOutput:text=>{output+=text;}});
+  selected.engine.language_profile='unknown/1';
+  try{
+    await app.ready;assert.equal(app.stats().language_profile,'classes-source/1');
+    await app.run('import operator\nclass A:\n def __init__(self,n): self.n=n\n def add(self,x): return operator.add(self.n,x)\nprint(A(7).add(5))\n');
+    assert.equal(output,'12\n');
+    await assert.rejects(app.run('A()'),error=>error.name==='NameError');
+    await assert.rejects(app.run("print('never')\nclass A:\n def __get__(self,obj,owner): return 7\n"),error=>error.code==='UNSUPPORTED');
+    assert.equal(output,'12\n');await app.run('class B: pass\nprint(type(B()) is B)\n');
+    assert.equal(output,'12\nTrue\n');assert.equal(app.stats().pending,0);
+  }finally{app.stop();}
+  assert.equal(app.stats().listeners,0);assert.equal(last().controller.stats().state,'closed');
+});
+
+test("unknown, mismatched and downgraded language identities never reach a usable worker", async () => {
+  for(const engine of [{...ENGINE,language_profile:'unknown/1'},{...ENGINE,bytecode_version:5},
+    {...LANGUAGE_ENGINES['classes-source/1'],bytecode_version:4}]){
+    const count=LocalWorker.instances.length;
+    assert.throws(()=>create({application:{...identity(),engine}}),error=>error.code==='PROTOCOL');
+    assert.equal(LocalWorker.instances.length,count);
+  }
+  class DowngradeWorker extends LocalWorker{
+    constructor(...args){super(...args);const send=this.other.postMessage.bind(this.other);
+      this.other.postMessage=message=>{if(message.kind==='ready')message={...message,application:{...message.application,engine:{...ENGINE}}};send(message);};}
+  }
+  const app=mountInterpreter({application:{...identity(),engine:{...LANGUAGE_ENGINES['classes-source/1']}}},DowngradeWorker);
+  await assert.rejects(app.ready,error=>error.code==='PROTOCOL');assert.equal(app.stats().state,'closed');assert.equal(app.stats().listeners,0);
 });
 
 test("syntax, unsupported features and runtime errors retain source locations without closing the host", async () => {

@@ -10,7 +10,7 @@ button{padding:.6rem 1rem;font:inherit;border:1px solid #779287;border-radius:.4
 #diagnostic{color:#8b2323;min-height:0}#diagnostic:empty{display:none}.note{color:#4a6358;font-size:.9rem}label{display:block;margin-bottom:.5rem;font-weight:600}</style>
 <main><h1>__TITLE__</h1><p>Write Python and run it on this device. Each run starts with fresh variables.</p>
 <label for="input">Python source</label><textarea id="input" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="language"></textarea>
-<p id="language" class="note">Supports the core Python subset: values, loops, functions and exceptions. Classes, async and external packages are planned.</p>
+<p id="language" class="note">Loading the selected language profile…</p>
 <p id="libraries" class="note"></p>
 <nav aria-label="Execution"><button id="run" disabled>Run</button><button id="stop">Stop</button><button id="restart">Restart</button></nav>
 <p id="status" role="status">Starting…</p><label for="result">Output</label><pre id="result" aria-live="polite"></pre><pre id="diagnostic" role="alert"></pre>
@@ -77,6 +77,10 @@ async function prepareOffline(){
 prepareOffline().catch(error=>{byId('offline').textContent='Offline unavailable: '+error.message;});
 try{
   config=JSON.parse(await verified('./__CONFIG__','__CONFIG_SHA__',65536));
+  const descriptions={'classes-source/1':'Language profile: classes-source/1. Supports the core subset plus classes, inheritance, attributes and methods. Descriptors, decorators and async are later stages.',
+    'core-source/1':'Language profile: core-source/1. Supports values, loops, functions and exceptions. Classes require the explicit class profile; async and external packages are later stages.'};
+  if(!Object.hasOwn(descriptions,config.application.engine.language_profile))throw new Error('Source language profile is unavailable.');
+  byId('language').textContent=descriptions[config.application.engine.language_profile];
   config.library_sources=[];
   for(const module of config.libraries){config.library_sources.push({name:module.name,package:module.package,imports:module.imports,
     source:await verified('./'+module.source.path,module.source.sha256,module.source.size_bytes),

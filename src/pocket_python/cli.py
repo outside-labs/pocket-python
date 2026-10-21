@@ -43,6 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     interpreter.add_argument("--title", default="Pocket Python Console")
     interpreter.add_argument("--library-profile", choices=["core-only/1", "operator/1"], default="core-only/1")
     interpreter.add_argument("--host-profile", choices=["output-only/1"], default="output-only/1")
+    interpreter.add_argument("--language-profile", choices=["core-source/1", "classes-source/1"], default="core-source/1")
     args = parser.parse_args(argv)
     try:
         if args.command == "lock-runtime":
@@ -54,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "interpreter-web":
             from pocket_python.interpreter import build_interpreter, read_console_source, read_interpreter
             receipt = build_interpreter(read_console_source(args.client), read_interpreter(args.engine, library_profile=args.library_profile), args.output,
-                                        title=args.title, host_profile=args.host_profile)
+                                        title=args.title, host_profile=args.host_profile, language_profile=args.language_profile)
             print(f"Created {args.output.resolve()} ({receipt['size']['artifact_bytes']} bytes)")
         elif args.command == "compiled-web":
             from pocket_python.compiled import build_compiled, read_client, read_compiled

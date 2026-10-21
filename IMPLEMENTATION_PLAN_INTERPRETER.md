@@ -387,30 +387,32 @@ and are labeled; no general VM minimality or physical-memory bound is inferred.
 CI retains fresh Node-only and four-profile browser reports. Classes/async and
 alpha publication remain separate gates; no package release accompanies INT-11.
 
-### Staged class contract (2026-10-21)
+### Class foundation delivered (2026-10-21)
 
-INT-09 now adopts the [C1/C2/C3 class contract](docs/interpreter-classes.md) and
-stage-tagged CPython reference corpus. C1 adds explicit classes-source/1 with
-verified bytecode 5: class namespaces, C3 inheritance, instance attributes, bound
-methods and initialization. The existing core-source/1 profile remains stable.
-Descriptors/decorators and special methods follow their recorded stages; native
-subclassing/metaclasses/reflection stay gated. Adoption alone does not implement
-these features or close INT-09. Execution, memory, source and offline-browser
-evidence are required before accepting a delivered stage.
+INT-09's [C1/C2/C3 contract](docs/interpreter-classes.md) now has C1 implementation
+through source execution and the offline browser console. Explicit classes-source/1
+compiles verified bytecode 5: class namespaces, bounded C3 inheritance, instance
+attributes, bound methods and initialization. The default core-source/1 still
+emits bytecode 4 and refuses class syntax. Both selections use the complete engine.
 
-The value foundation now provides bounded C3 class/instance maps and bound-method
-references with explicit arena layouts, rollback and cyclic-graph collection.
-It is an internal API stage; source acceptance and class execution remain pending.
+Class-body/function records, operands, captures and stack effects are verified.
+Class namespaces, instance maps, method receivers/functions and enclosing cells
+use explicit arena edges, allocation rollback and cyclic-graph collection.
+Execution shares existing work/memory/recursion limits and source-located errors;
+class bodies finish before type construction, and initializers must return None.
+Lexical binding preserves class namespace/outer-cell overlap without capturing a
+class namespace into its methods. Thirty-nine source/refusal cases compare with
+CPython in Node/Chromium, alongside malformed-record and resource tests.
 
-Verified bytecode 5 now distinguishes class-body frames and checks class/attribute
-operands, captures and stack effects. Registry-owned execution shares the existing
-resource/exception machinery, constructs types after body effects, and validates
-initializer completion. Source/profile and offline browser integration follow;
-core-source/1 still emits bytecode 4 and refuses classes.
+`interpreter-web --language-profile classes-source/1` and the class example select
+the profile explicitly. Application/receipt/configuration identity and Ready
+bind its language/bytecode version. Eleven Chromium checks cover CPython examples,
+new class source after offline reload, errors/refusals, fresh state, Stop/Restart
+and a waiting class-plus-library to core-only update. Wheel/sdist installation
+checks assemble both languages with both library selections from supplied assets.
 
-The opt-in classes-source/1 front end now parses C1 class bodies and attributes,
-binds outer cells through class namespaces, and compiles verified bytecode 5.
-Thirty-eight source/refusal cases compare with CPython in Node/Chromium; default
-core-source/1 remains unchanged. The console selection/offline milestone follows.
-INT-09 stays open for descriptors/decorators and individually adopted special
-methods; no broad package or alpha-publication claim follows from C1.
+INT-09 remains In Progress for C2 descriptors/decorators/private-name mangling
+and C3 individually adopted special methods. Native subclassing, metaclasses,
+reflection and full Python package compatibility retain their gates. INT-10 async
+and the later C/Rust WebAssembly backend remain planned separately; the independent
+engine's alpha publication still requires INT-REL-01. No package release accompanies C1.

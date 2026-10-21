@@ -138,6 +138,12 @@ adds a local editor, explicit independent-engine assembly and verified offline
 source execution, stop/restart and scoped updates in Chromium. Runtime assets
 remain excluded from the 0.2.0 distributions.
 
+The explicit [class-source profile](docs/interpreter-classes.md) adds class bodies,
+C3 inheritance, attributes, initialization and bound methods, with Node/Chromium
+and offline-console checks. Build its example with
+`uv run python -m examples.interpreter_classes`. The default core-source/1 profile
+remains available; descriptors, decorators and async follow separate stages.
+
 The development [library profiles](docs/interpreter-profiles.md) select core-only/1
 or the supplied operator/1 Python library without changing the complete engine.
 The [measured baseline](docs/interpreter-measurements.md) records verified payload,

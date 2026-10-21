@@ -30,7 +30,7 @@ one source and one nonempty UTF-8 provenance/license notice. To assemble that
 selection with the CLI into another new directory:
 
 ```sh
-uv run pocket-python interpreter-web build/console-source/CONSOLE-SOURCE.json \\
+uv run pocket-python interpreter-web build/console-source/CONSOLE-SOURCE.json \
   --engine runtime --output build/another-console --title "Local Python"
 ```
 
@@ -49,6 +49,15 @@ publication. `python scripts/lock_interpreter.py` checks the lock; `--write` is
 an explicit maintenance step after reviewing engine changes. The engine itself
 remains outside Python distributions; there is no implicit download or compiler
 dependency. Assembly never executes the source or engine.
+
+The default language selection is core-source/1 (bytecode 4). Add
+`--language-profile classes-source/1` to select the [class foundation](interpreter-classes.md)
+(bytecode 5): class bodies, C3 inheritance, instance attributes, initialization
+and bound methods. The editor shows the selected profile. Build a class example
+with `uv run python -m examples.interpreter_classes`, then serve
+`build/class-console`. Descriptors, decorators, custom special methods and async
+remain later stages. Language selection is independent of `--library-profile`;
+both language profiles use the same complete pinned engine.
 
 Output uses application schema 2, profile in-house-interpreter/1, with distinct
 engine/source identities, complete local module edges and notices, content-based
@@ -70,7 +79,10 @@ Known cached assets stay together, and unknown paths within the app scope return
 
 The console uses [host protocol 1](browser-host-protocol.md), profile
 `in-house-interpreter/1`, engine `pocket-python-source/1`, backend `javascript-vm`,
-language `core-source/1` and bytecode 4. Initialization requires exactly output/1.
+language `core-source/1` with bytecode 4 or explicit `classes-source/1` with
+bytecode 5. Receipts, configuration, application identity and cache version bind
+the selection. Ready must echo the complete engine identity; an unknown profile,
+wrong bytecode version or downgrade fails without a fallback. Initialization requires exactly output/1.
 Other capabilities are rejected before a worker is created. The host owns the
 editor and controls; Python cannot read or modify arbitrary DOM, fetch URLs,
 access files or persistent storage. The default core-only/1 selection supplies
