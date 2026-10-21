@@ -397,3 +397,7 @@ Descriptors/decorators and special methods follow their recorded stages; native
 subclassing/metaclasses/reflection stay gated. Adoption alone does not implement
 these features or close INT-09. Execution, memory, source and offline-browser
 evidence are required before accepting a delivered stage.
+
+The value foundation now provides bounded C3 class/instance maps and bound-method
+references with explicit arena layouts, rollback and cyclic-graph collection.
+It is an internal API stage; source acceptance and class execution remain pending.

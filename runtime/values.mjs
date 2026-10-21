@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue} from "./function-objects.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -167,7 +167,8 @@ export class ValueRuntime {
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
     if (value instanceof IteratorValue) return true;
-    if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue) return true;
+    if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
+        value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
   }
   equal(left, right, depth = 0) {
@@ -182,6 +183,8 @@ export class ValueRuntime {
       return Number.isFinite(floating) && Number.isInteger(floating) && BigInt(floating) === integral;
     }
     if (left === right) return true;
+    if (left instanceof BoundMethodValue && right instanceof BoundMethodValue)
+      return left.callable === right.callable && left.receiver === right.receiver;
     if (left instanceof StringValue && right instanceof StringValue) {
       this.charge(Math.max(left.points.length, right.points.length));
       return left.points.length === right.points.length && left.points.every((point, i) => point === right.points[i]);
@@ -220,6 +223,8 @@ export class ValueRuntime {
   }
   hash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue)
+      this.fail("UnsupportedOperationError", "Object dictionary keys require the later identity-hash profile.", "UNSUPPORTED");
     if (value === null) return "none";
     if (typeof value === "bigint" || typeof value === "boolean") {
       const integral = integer(value); this.charge(integral.toString().length);
@@ -460,6 +465,12 @@ export function valueLayout(value) {
   if (value instanceof CodePool) return {bytes: value.bytes, children: [...value.code.constants, ...(value.module ? [value.module] : [])]};
   if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length, children: [value.environment, value.pool]};
   if (value instanceof FunctionValue) return {bytes: 80 + 8 * value.closure.size, children: [value.pool, value.globals, ...value.closure.values()]};
+  if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
+    8 * (value.bases.length + value.mro.length) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
+    children: [...value.bases, ...value.mro.slice(1), ...value.namespace.values()]};
+  if (value instanceof InstanceValue) return {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
+    children: [value.type, ...value.attributes.values()]};
+  if (value instanceof BoundMethodValue) return {bytes: 64, children: [value.callable, value.receiver]};
   if (value instanceof AppendValue) return {bytes: 64, children: [value.receiver]};
   if (value instanceof BuiltinValue) return {bytes: 48 + 2 * value.name.length, children: []};
   if (value instanceof ExceptionValue) return {bytes: 96 + 2 * (value.name.length + value.message.length) +
