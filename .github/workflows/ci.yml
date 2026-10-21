@@ -27,6 +27,7 @@ jobs:
       - run: uv sync --locked --group compiled-build
       - run: uv run --no-sync python scripts/prepare_runtime.py
       - run: uv run --no-sync python scripts/lock_interpreter.py
+      - run: uv run --no-sync python scripts/lock_library_profiles.py
       - run: uv run --no-sync python -m unittest discover -s tests -v
       - run: uv build
       - run: uv run --no-sync python scripts/check_distributions.py
@@ -66,6 +67,7 @@ jobs:
       - run: uv run --no-sync python runtime/check_conformance.py --engine vm4 --target browser --report build/modules-browser-report.json
       - run: uv run --no-sync python runtime/check_source_tokens.py --target browser --report build/source-tokens-browser-report.json
       - run: uv run --no-sync python runtime/check_conformance.py --engine source --target browser --report build/source-browser-report.json
+      - run: uv run --no-sync python runtime/check_library_profiles.py --target browser --report build/library-profiles-browser-report.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:
@@ -96,9 +98,12 @@ jobs:
       - run: node --test runtime/source-tokens.test.mjs
       - run: node --test runtime/source.test.mjs
       - run: node --test runtime/browser-host.test.mjs
+      - run: node --test runtime/library-profiles.test.mjs
       - run: python runtime/generate_identifiers.py --check
       - run: python runtime/check_source_tokens.py --report build/source-tokens-node-report.json
       - run: python runtime/check_conformance.py --engine source --report build/source-node-report.json
+      - run: python scripts/lock_library_profiles.py
+      - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json
       - run: python runtime/check_memory.py --report build/memory-node-report.json
       - run: python runtime/check_conformance.py --report build/interpreter-node-report.json
       - run: python runtime/check_conformance.py --engine vm1 --report build/vm1-node-report.json
