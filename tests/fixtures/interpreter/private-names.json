@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-private-names/1",
+  "profile": "classes-source/1",
+  "reference": "CPython 3.14",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "private-class-value",
+      "stage": "C2-private",
+      "source": "class A:\n __x=7\n def read(self): return self.__x\nprint(A._A__x,A().read())\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "private-write-augment-delete",
+      "stage": "C2-private",
+      "source": "class A:\n def __init__(self): self.__x=7\n def add(self):\n  self.__x+=2\n  return self.__x\n def erase(self): del self.__x\n def read(self): return self.__x\na=A()\nprint(a.add())\na.erase()\na.read()\n",
+      "stdout": "9\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "subclass-private-fields",
+      "stage": "C2-private",
+      "source": "class A:\n def base(self): return self.__x\nclass B(A):\n def __init__(self):\n  self._A__x=7\n  self.__x=9\n def own(self): return self.__x\nb=B()\nprint(b.base(),b.own())\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "subclass-private-methods",
+      "stage": "C2-private",
+      "source": "class A:\n def __go(self): return 7\n def read(self): return self.__go()\nclass B(A):\n def __go(self): return 9\nprint(B().read(),B()._B__go())\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "private-function-metadata",
+      "stage": "C2-private",
+      "source": "class A:\n def __go(self): return 7\nprint(A._A__go.__name__,A._A__go.__qualname__)\n",
+      "stdout": "__go A.__go\n"
+    },
+    {
+      "id": "leading-class-underscores",
+      "stage": "C2-private",
+      "source": "class ___A:\n __x=7\nprint(___A._A__x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "underscore-class-identity",
+      "stage": "C2-private",
+      "source": "class _:\n __x=7\nprint(_.__x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "double-underscore-class-identity",
+      "stage": "C2-private",
+      "source": "class __:\n __x=9\nprint(__.__x)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "nested-private-class",
+      "stage": "C2-private",
+      "source": "class Outer:\n class __Inner:\n  __x=7\n  def __read(self): return self.__x\nI=Outer._Outer__Inner\nprint(I.__name__,I.__qualname__,I._Inner__x,I()._Inner__read())\n",
+      "stdout": "__Inner Outer.__Inner 7 7\n"
+    },
+    {
+      "id": "nested-function-private-cell",
+      "stage": "C2-private",
+      "source": "class A:\n def make(self):\n  __x=7\n  def nested(): return __x\n  return nested\nprint(A().make()())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "private-default-keyword-parameters",
+      "stage": "C2-private",
+      "source": "class A:\n def f(self,__x=7,*,__y=9): return __x+__y\nprint(A().f(_A__x=3,_A__y=4))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "private-positional-only-parameter",
+      "stage": "C2-private",
+      "source": "class A:\n def f(self,__x,/,__y): return __x+__y\nprint(A().f(3,_A__y=4))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "call-keywords-are-not-mangled",
+      "stage": "C2-private",
+      "source": "class A:\n def f(self,__x): return __x\n def g(self): return self.f(__x=7)\nprint('before')\nA().g()\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "parameter-collision-after-mangling",
+      "stage": "C2-private",
+      "source": "print('never')\nclass A:\n def f(self,__x,_A__x): pass\n",
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "class-binding-collision",
+      "stage": "C2-private",
+      "source": "class A:\n __x=7\n _A__x=9\nprint(A._A__x)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "outside-private-access-is-literal",
+      "stage": "C2-private",
+      "source": "class A:\n def __init__(self): self.__x=7\na=A()\nprint(a._A__x)\nprint(a.__x)\n",
+      "stdout": "7\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "trailing-dunder-parameter-unchanged",
+      "stage": "C2-private",
+      "source": "class A:\n def f(self,__x__): return __x__\nprint(A().f(__x__=7))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "three-leading-underscores",
+      "stage": "C2-private",
+      "source": "class A:\n ___x=7\n def f(self): return self.___x\nprint(A._A___x,A().f())\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "literal-text-unchanged",
+      "stage": "C2-private",
+      "source": "class A:\n __x=\"__x\"\nprint(\"__x\",A._A__x)\n",
+      "stdout": "__x __x\n"
+    },
+    {
+      "id": "normalized-unicode-prefix",
+      "stage": "C2-private",
+      "source": "class __K:\n __café=7\n def read(self): return self.__café\nprint(__K._K__café,__K().read(),__K.__name__)\n",
+      "stdout": "7 7 __K\n"
+    },
+    {
+      "id": "class-local-and-global-private",
+      "stage": "C2-private",
+      "source": "_A__x=8\nclass A:\n print(__x)\n __x=7\n def read(self): return __x\nprint(A._A__x,A().read())\n",
+      "stdout": "8\n7 8\n"
+    },
+    {
+      "id": "private-free-local-overlap",
+      "stage": "C2-private",
+      "source": "def factory(_A__x):\n class A:\n  __x=7\n  def read(self): return __x\n return A\nA=factory(9)\nprint(A._A__x,A().read())\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "nested-class-bases-use-outer-prefix",
+      "stage": "C2-private",
+      "source": "class Outer:\n class __Base: pass\n class Inner(__Base): pass\nprint(issubclass(Outer.Inner,Outer._Outer__Base))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "private-loop-and-handler-bindings",
+      "stage": "C2-private",
+      "source": "class A:\n def f(self):\n  for __x in [1,2]: pass\n  print(__x)\n  try: 1//0\n  except ZeroDivisionError as __e: print(isinstance(__e,ZeroDivisionError))\n  return __e\nA().f()\n",
+      "stdout": "2\nTrue\n",
+      "error_type": "UnboundLocalError"
+    },
+    {
+      "id": "private-namespace-deletion",
+      "stage": "C2-private",
+      "source": "class A:\n __x=7\n del __x\n __x=9\nprint(A._A__x)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "private-module-import",
+      "stage": "C2-private",
+      "source": "class A:\n import __secret\n def read(self): return self.__secret.value\nprint(A().read())\n",
+      "stdout": "7\n",
+      "modules": [
+        {
+          "name": "_A__secret",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "_A__secret"
+      ]
+    },
+    {
+      "id": "private-module-import-alias",
+      "stage": "C2-private",
+      "source": "class A:\n import __secret as __s\n def read(self): return self.__s.value\nprint(A().read())\n",
+      "stdout": "7\n",
+      "modules": [
+        {
+          "name": "_A__secret",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "_A__secret"
+      ]
+    },
+    {
+      "id": "dotted-private-module-is-not-mangled",
+      "stage": "C2-private",
+      "source": "class A:\n import __pkg.helper\n def read(self): return self.__pkg.helper.value\nprint(A().read())\n",
+      "stdout": "7\n",
+      "modules": [
+        {
+          "name": "__pkg",
+          "source": "",
+          "package": true,
+          "imports": []
+        },
+        {
+          "name": "__pkg.helper",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "__pkg",
+        "__pkg.helper"
+      ]
+    },
+    {
+      "id": "private-from-member",
+      "stage": "C2-private",
+      "source": "class A:\n from helper import __value\nprint(A._A__value)\n",
+      "stdout": "7\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "_A__value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "helper"
+      ]
+    },
+    {
+      "id": "private-from-member-alias",
+      "stage": "C2-private",
+      "source": "class A:\n from helper import __value as __v\nprint(A._A__v)\n",
+      "stdout": "7\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "_A__value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "helper"
+      ]
+    },
+    {
+      "id": "private-from-module",
+      "stage": "C2-private",
+      "source": "class A:\n from __helper import value\nprint(A.value)\n",
+      "stdout": "7\n",
+      "modules": [
+        {
+          "name": "_A__helper",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "_A__helper"
+      ]
+    },
+    {
+      "id": "private-import-in-method",
+      "stage": "C2-private",
+      "source": "class A:\n def read(self):\n  import __helper as __h\n  return __h.value\nprint(A().read())\n",
+      "stdout": "7\n",
+      "modules": [
+        {
+          "name": "_A__helper",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "_A__helper"
+      ]
+    },
+    {
+      "id": "module-context-does-not-mangle",
+      "stage": "C2-private",
+      "source": "import __helper\nprint(__helper.value)\n",
+      "stdout": "7\n",
+      "modules": [
+        {
+          "name": "__helper",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "__helper"
+      ]
+    }
+  ]
+}

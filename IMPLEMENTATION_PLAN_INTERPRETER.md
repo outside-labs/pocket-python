@@ -416,3 +416,12 @@ and C3 individually adopted special methods. Native subclassing, metaclasses,
 reflection and full Python package compatibility retain their gates. INT-10 async
 and the later C/Rust WebAssembly backend remain planned separately; the independent
 engine's alpha publication still requires INT-REL-01. No package release accompanies C1.
+
+### Private-name contract adopted (2026-10-21)
+
+The next INT-09 step adopts [C2 private-name rules](docs/interpreter-private-names.md)
+with 33 CPython reference cases, including nested scopes, inheritance collisions,
+Unicode, parameter collisions and explicit synthetic imports. This stage reuses
+classes-source/1 and bytecode 5; compiler lowering, resource checks and offline
+console execution must follow before accepting implementation. Descriptors,
+decorators and individually adopted special methods remain later C2/C3 work.
