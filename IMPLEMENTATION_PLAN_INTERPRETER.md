@@ -258,3 +258,11 @@ and exception identities across imports. A supplied Python operator profile and
 small builtin subset run through this VM; the unchanged shared text-metrics
 computation passes Node/Chromium differential and resource checks. Independent
 source parsing is next in INT-08; published artifacts remain unchanged.
+
+## Assembler release boundary
+
+The authorized pocket-python 0.2.0 publication includes the compiled and supplied
+MicroPython assemblers. Independent `runtime/` prototypes remain outside its
+wheel/sdist; source parsing, browser-console adoption and INT-REL-01 are separate
+interpreter gates. [REL-02](https://github.com/outside-labs/pocket-python/issues/56)
+records publication verification. INT-08 remains next and is not a release claim.

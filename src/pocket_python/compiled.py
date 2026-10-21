@@ -11,7 +11,7 @@ import re
 from urllib.parse import unquote, urlparse
 
 from pocket_python import __version__
-from pocket_python._compiler_lock import COMPILER_FILES, COMPILER_FINGERPRINT, COMPILER_REVISION
+from pocket_python._compiler_lock import COMPILER_FILES, COMPILER_FINGERPRINT, COMPILER_REVISION, COMPILER_VERSION
 from pocket_python.assets import ArtifactError, check_names, file_record, json_bytes, read_asset
 from pocket_python.compiled_templates import APP, PAGE, SERVICE_WORKER
 from pocket_python.templates import ICON
@@ -130,7 +130,7 @@ def _compiler():
             for data in [name.encode(), read_asset(root, name, max_bytes=1_048_576).replace(b'\r\n', b'\n')]:
                 digest.update(len(data).to_bytes(8, 'big'))
                 digest.update(data)
-        if digest.hexdigest() != COMPILER_FINGERPRINT or metadata.version('Python-JavaScript') != '0.1.0':
+        if digest.hexdigest() != COMPILER_FINGERPRINT or metadata.version('Python-JavaScript') != COMPILER_VERSION:
             raise ArtifactError('Compiler source differs from the supported pinned build.')
         from JavaScript.browser import compile_browser
         from JavaScript.emitter import OutputFile

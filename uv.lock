@@ -88,7 +88,7 @@ wheels = [
 
 [[package]]
 name = "pocket-python"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 
 [package.dev-dependencies]
@@ -103,7 +103,7 @@ compiled-build = [
 
 [package.metadata.requires-dev]
 browser-tests = [{ name = "playwright", specifier = "==1.64.0" }]
-compiled-build = [{ name = "python-javascript", git = "https://github.com/outside-labs/Python-JavaScript?rev=35fbe6eb399f5d94e05e850eb36dbdf695e6d15a" }]
+compiled-build = [{ name = "python-javascript", specifier = "==0.2.0" }]
 
 [[package]]
 name = "pyee"
@@ -119,11 +119,15 @@ wheels = [
 
 [[package]]
 name = "python-javascript"
-version = "0.1.0"
-source = { git = "https://github.com/outside-labs/Python-JavaScript?rev=35fbe6eb399f5d94e05e850eb36dbdf695e6d15a#35fbe6eb399f5d94e05e850eb36dbdf695e6d15a" }
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "javascript-fetch-api" },
     { name = "javascript-json" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/54/bf53dc242de72312cd94249901d1c0735f02ce4bfe83392e2eb000966530/python_javascript-0.2.0.tar.gz", hash = "sha256:9ee9153a0c872234a8a6e099088f73af8d94e23dd140206339e8ff625ef108a6", size = 122287, upload-time = "2026-10-21T05:46:22.864Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/e0/bf678624e3a1ec75eaa33ac403dafc27fe15dab22917d92e13cc5d1c6876/python_javascript-0.2.0-py3-none-any.whl", hash = "sha256:488dcdd2de4c0bd3dd2a1f1430f5372bf78ac983c5da8b017c46bd36b124a8f7", size = 51684, upload-time = "2026-10-21T05:46:21.679Z" },
 ]
 
 [[package]]

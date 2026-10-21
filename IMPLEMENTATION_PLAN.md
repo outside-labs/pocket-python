@@ -365,3 +365,15 @@ is retained with different startup boundaries clearly identified. Unavailable
 interpreter profiles carry gates/reasons instead of fabricated estimates; matched
 source-interpreter producers join after INT-WEB-01/INT-11. No general runtime
 savings are inferred from source removal or a single host's measurements.
+
+## 0.2.0 publication plan
+
+[REL-02](https://github.com/outside-labs/pocket-python/issues/56) publishes the
+merged compiled offline assembler after Python-JavaScript 0.2.0 publication.
+The build-only compiler pin adopts that published version, exact source identity
+and release provenance. The [release contract](docs/release-0.2.0.md) covers both
+compiled and supplied MicroPython profiles; runtime dependencies remain empty.
+Independent VM prototypes remain outside PyPI artifacts until their separate
+source/parser/browser/release gates. Strict allowlists, isolated default/compiler
+installs, final package/browser/VM CI, PyPI/workflow hashes and fresh installs
+remain publication gates. INT-08 is the next implementation task.

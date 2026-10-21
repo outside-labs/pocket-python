@@ -1,12 +1,12 @@
 # Compiled JavaScript offline applications
 
-The development checkout can assemble a compiled-javascript/1 PWA. Approved
+Version 0.2.0 can assemble a compiled-javascript/1 PWA. Approved
 Python source is compiled at build time; a browser module worker executes the
 emitted JavaScript and original compatibility helpers. The application includes
 no Python interpreter, CDN imports or server computation. It does not parse new
 Python source after deployment. The independent interpreter and its browser
 parser remain separate milestones. Published pocket-python 0.1.0 predates this
-development API and CLI command.
+API and CLI command.
 
 Install the declared build tooling and build the shared text-metrics example:
 
@@ -70,11 +70,12 @@ capabilities fail assembly. Arbitrary HTML/UI generation and new source input
 are outside this initial UI profile.
 
 Compilation is optional build tooling. The package's runtime dependencies remain
-empty. The compiled-build group pins Python-JavaScript's source revision
-35fbe6eb399f5d94e05e850eb36dbdf695e6d15a because its published 0.1.0 lacks this
-compiler. Before importing the compiler, the builder checks its installed source
-fingerprint across the adopted files (canonical LF line endings) and package
-identity. No compiler is fetched or installed by the CLI at runtime. A different
+empty. The compiled-build group pins the published
+`Python-JavaScript==0.2.0`. Outside a checkout, install that compiler explicitly
+with `python -m pip install Python-JavaScript==0.2.0`; it is optional build tooling.
+Before importing the compiler, the builder checks its exact installed version
+and source fingerprint across the adopted files (canonical LF line endings).
+The receipt retains the adopted release commit as provenance. No compiler is fetched or installed by the CLI at runtime. A different
 compiler build requires an explicit integration update and compatibility checks.
 
 To consume existing compiler output, save its manifest bytes as

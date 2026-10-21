@@ -1,6 +1,7 @@
 """Build-only compiler source identity adopted for compiled-javascript/1."""
 
-COMPILER_REVISION = "35fbe6eb399f5d94e05e850eb36dbdf695e6d15a"
+COMPILER_REVISION = "3f76c8880667dcbfd52f8de2f9a409928b03e81b"
+COMPILER_VERSION = "0.2.0"
 COMPILER_FINGERPRINT = '3e584572c4849523571d82df511e7a553a210d5d9ce1d442032de4d4c7ad15c0'
 COMPILER_FILES = (
     '__init__.py',
