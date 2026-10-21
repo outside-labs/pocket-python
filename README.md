@@ -138,6 +138,12 @@ adds a local editor, explicit independent-engine assembly and verified offline
 source execution, stop/restart and scoped updates in Chromium. Runtime assets
 remain excluded from the 0.2.0 distributions.
 
+The development [library profiles](docs/interpreter-profiles.md) select core-only/1
+or the supplied operator/1 Python library without changing the complete engine.
+The [measured baseline](docs/interpreter-measurements.md) records verified payload,
+compression, cold/warm startup and separately scoped memory observations for
+source, compiled and supplied MicroPython artifacts over a common computation.
+
 Development sessions now have [explicit roots, allocation limits and owned host handles](docs/interpreter-memory.md), with shared Node/browser lifetime checks. New source uses the independent source front end.
 
 The [compiled JavaScript PWA builder](docs/compiled-applications.md) now packages verified client modules and original helpers for browser-worker execution, offline reload and scoped updates. Build the text-metrics example with the optional pinned compiled-build tooling; the builder is included in 0.2.0.

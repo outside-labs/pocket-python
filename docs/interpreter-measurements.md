@@ -93,4 +93,58 @@ logical bytes, roots and frames; this is distinct from host heap collection.
 Neither logical accounting nor these host observations establish a hard physical
 memory bound. Compare repeat observations only within their recorded scopes.
 
-A checked-in baseline follows collection from the committed measurement tool.
+## Recorded baseline: 2026-10-21
+
+The [complete report](measurements/2026-10-21-interpreter.json) was collected from
+clean commit [0ac0cbe](https://github.com/outside-labs/pocket-python/commit/0ac0cbe7144cff85ccbc485ce4feda323666bc10),
+using Python 3.14.7, Node 24.19.0, Playwright 1.64.0 and Chromium 156.0.8078.4 on
+Darwin 27.0.0 arm64. Each condition has five observations, with nested Node warm
+runs summarized per process. The supplied MicroPython identity and compiled
+producer/profile/source fingerprint are retained in the report. All four profiles
+reproduced the exact CPython corpus output online and after offline reload.
+
+All sizes below are bytes and include the complete application receipt:
+
+| Profile | Complete payload | Independent-file gzip | Canonical tar.gz |
+| --- | ---: | ---: | ---: |
+| Source core-only/1 | 268,574 | 78,117 | 68,752 |
+| Source operator/1 | 271,475 | 78,914 | 69,249 |
+| Compiled, maps omitted | 93,829 | 29,919 | 26,815 |
+| Supplied MicroPython | 577,275 | 236,390 | 235,116 |
+
+Both source selections have 195,095 engine bytes and 29,985 bridge bytes. Selecting
+operator/1 adds 457 library-source bytes and 2,444 configuration, receipt and
+assembly bytes: 2,901 additional bytes overall. Original notices are already
+present in the core closure. These exact corpus artifacts establish the selected
+optional-library difference, without claiming a smaller generated VM. The
+compiled artifact has no interpreter or deployed source editor; the MicroPython
+artifact uses its existing fixed-program shell.
+
+Observed median browser times, in milliseconds:
+
+| Profile | Cold context readiness | Installed warm readiness | Warm click to stdout |
+| --- | ---: | ---: | ---: |
+| Source core-only/1 | 52.9 | 22.6 | 29.5 |
+| Source operator/1 | 57.8 | 28.7 | 32.3 |
+| Compiled | 38.4 | 22.4 | 1.3 |
+| Supplied MicroPython | 37.3 | 21.9 | 17.0 |
+
+The MicroPython readiness column includes its automatic corpus run; the other
+rows stop at Ready before the run. Its click samples create new workers while
+the other profiles reuse theirs. Fresh contexts do not flush OS caches. These
+are observations on this host and workload with different adapter boundaries,
+without a universal startup or execution-speed conclusion.
+
+After-output median dedicated-worker V8 used heap was 1,165,476 bytes for core,
+1,280,008 for operator and 439,800 for compiled. Embedder/backing-storage fields
+are recorded separately. MicroPython retained-worker heap is unavailable because
+the shell terminates that worker. These values exclude browser process/page/cache
+memory and unreported native/Wasm allocations.
+
+Node's median cold compile/registry/run was 24.80 ms for core and 26.80 ms for
+operator; median warm per-process medians were 9.06 and 10.82 ms. Maximum observed
+logical arena peaks were 23,354 and 30,450 bytes, respectively. Every measured
+session released its logical bytes, roots and frames on close. The corresponding
+median live process RSS snapshots were 65,159,168 and 65,929,216 bytes, illustrating
+why logical accounting is not a physical-memory limit. Raw samples and baseline,
+compiled, live and closed process snapshots remain available in the report.

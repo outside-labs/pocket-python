@@ -361,10 +361,11 @@ MEASURE-01 provides [versioned complete application measurements](docs/applicati
 Equivalent mapped/map-omitted compiled PWAs share a source/workload/UI comparison
 set, explicit physical/compressed payload buckets, raw full-build/readiness and
 separate dedicated-worker heap observations. Matching compiler component evidence
-is retained with different startup boundaries clearly identified. Unavailable
-interpreter profiles carry gates/reasons instead of fabricated estimates; matched
-source-interpreter producers join after INT-WEB-01/INT-11. No general runtime
-savings are inferred from source removal or a single host's measurements.
+is retained with different startup boundaries clearly identified. Its original
+report retains collection-time availability records; INT-11 adds a separate
+source/compiled/supplied-engine baseline with explicit adapter boundaries. No
+general runtime savings are inferred from source removal or a single host's
+measurements.
 
 ## 0.2.0 publication plan
 
@@ -376,7 +377,8 @@ compiled and supplied MicroPython profiles; runtime dependencies remain empty.
 Independent VM prototypes remain outside PyPI artifacts until their separate
 source/parser/browser/release gates. Strict allowlists, isolated default/compiler
 installs, final package/browser/VM CI, PyPI/workflow hashes and fresh installs
-remain publication gates. INT-08 is the next implementation task.
+remain publication gates. Subsequent source/console and profile checkpoints are
+recorded below; the independent-engine publication gate remains INT-REL-01.
 
 ### Independent source console checkpoint (2026-10-21)
 
@@ -389,8 +391,25 @@ offline reload, interruption/restart, diagnostics, failed-install/update handlin
 waiting updates and scoped cache cleanup. Node/Chromium engine conformance and
 existing compiled/MicroPython regressions remain required in CI.
 
-Class/descriptor semantics, async browser host integration and measured profile
-inclusion remain the next interpreter tasks. Native C/Rust WebAssembly remains
-the later planned backend. Published versions remain Shimify 0.3.0,
+Class/descriptor semantics and async browser host integration remain the next
+language tasks. Native C/Rust WebAssembly remains the later planned backend,
+with its specification following the profile baseline. Published versions remain Shimify 0.3.0,
 Python-JavaScript 0.2.0 and pocket-python 0.2.0; the independent runtime is still
 excluded from that pocket-python release and needs INT-REL-01 before publication.
+
+### Measured optional interpreter profiles (2026-10-21)
+
+INT-11 delivers [explicit library selections](docs/interpreter-profiles.md) and
+the [complete profile baseline](docs/interpreter-measurements.md), including its
+clean-commit raw report. Core-only/1 and operator/1 retain identical engine/
+bridge assets, verified bootstrap closure and explicit output-only host grants.
+Common behavior, selected functions, intentional missing-library diagnostics,
+offline use and cache/authority removal have Node/Chromium coverage. CI collects
+complete disjoint payload/compression, cold/warm startup and separately scoped
+logical/process/worker memory observations across the common computation.
+
+The source console totals 268,574 bytes with the default library selection;
+operator/1 adds 2,901 bytes overall. Compiled and supplied MicroPython artifact
+results retain their different runtime and shell boundaries. No general
+minimality, physical-memory bound or independent-engine release follows from
+these measurements. INT-09/INT-10 remain the application-alpha dependencies.
