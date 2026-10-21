@@ -139,7 +139,7 @@
     },
     {
       "id": "private-name",
-      "stage": "C2",
+      "stage": "C2-private",
       "source": "class A:\n    def __init__(self): self.__x=7\n    def f(self): return self.__x\nprint(A().f())\n",
       "stdout": "7\n"
     },
@@ -198,7 +198,7 @@
     },
     {
       "id": "private-write-only",
-      "stage": "C2",
+      "stage": "C2-private",
       "source": "class A:\n    def __init__(self): self.__private=7\na=A()\nprint(a._A__private)\n",
       "stdout": "7\n"
     },
@@ -238,5 +238,9 @@
       "source": "def make():\n class A:\n  def f(self): return A\n return A\nA=make()\nprint(A().f() is A)\n",
       "stdout": "True\n"
     }
+  ],
+  "implemented_stages": [
+    "C1",
+    "C2-private"
   ]
 }

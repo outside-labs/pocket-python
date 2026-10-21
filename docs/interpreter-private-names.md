@@ -3,8 +3,7 @@
 INT-09 adopts private-name mangling as a separate C2 step before descriptors and
 decorators. This is a compiler transformation within explicit classes-source/1,
 using existing bytecode 5 identifiers. The default core-source/1 remains unchanged.
-This contract and its CPython reference corpus precede implementation; they do
-not yet widen source acceptance or close C2/INT-09.
+The compiler now implements this contract; broader C2/INT-09 remain open.
 
 ## Adopted transformation
 
@@ -54,7 +53,13 @@ python runtime/check_classes.py --reference-only \
   --corpus tests/fixtures/interpreter/private-names.json
 ```
 
-Deliver the contract/reference matrix first, compiler lowering and source/resource
-checks second, and offline-console acceptance third. Node/Chromium execution must
-then compare the same corpus and retain teardown/report hashes. Broader C2/C3 and
-alpha publication remain separate tasks.
+The compiler lowers normalized private names before binding, preserving source
+spans and original function/class metadata. All 33 cases run against CPython in
+Node/Chromium, with report/input hashes and logical arena teardown checks. Node
+tests additionally cover post-mangling parameter collisions, identifier growth,+cancellation and denial of imports without the transformed module grant. The
+default source profile and later-feature refusal boundary retain their tests.
+
+Run the source matrix with the same command and `--target node` or `--target
+browser` in place of `--reference-only`. Offline-console private-name acceptance
+follows as a separate integration step. Broader C2/C3 and alpha publication
+remain separate tasks.
