@@ -140,6 +140,7 @@ jobs:
       - run: python runtime/check_conformance.py --engine source --report build/source-node-report.json
       - run: python scripts/lock_library_profiles.py
       - run: python runtime/check_classes.py --reference-only --report build/classes-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-reference-report.json
@@ -186,4 +187,5 @@ jobs:
             build/length-truth-reference-report.json
             build/execution-reference-report.json
             build/formatting-reference-report.json
+            build/indexing-reference-report.json
           if-no-files-found: error

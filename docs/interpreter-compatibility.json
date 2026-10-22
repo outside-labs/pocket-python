@@ -2081,7 +2081,25 @@
       "dependencies": [
         "INT-REPR-03"
       ],
-      "order": 232
+      "order": 232,
+      "implementation_steps": [
+        {
+          "id": "INT-INDEX-02",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/135"
+        },
+        {
+          "id": "INT-INDEX-03",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/136"
+        },
+        {
+          "id": "INT-INDEX-04",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/137"
+        },
+        {
+          "id": "INT-INDEX-05",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/138"
+        }
+      ]
     },
     {
       "id": "INT-ITER-01",
