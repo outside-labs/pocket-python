@@ -1,5 +1,5 @@
 import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, numericTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -23,48 +23,30 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if ((state.outputLength += text.length) > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
     state.outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text);
   };
+  const numericNames = new Set(["int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"]);
+  const bindNumeric = (name, args, keywords, keywordValues) => {
+    if (["int","float"].includes(name)) {
+      if (args.length + keywords.length > (name === "int" ? 2 : 1) ||
+          keywords.some(key => name !== "int" || key !== "base") || keywords.length && args.length !== 1)
+        python("TypeError", name + "() received invalid arguments");
+      return [...args,...keywordValues];
+    }
+    const labels = name === "complex" ? ["real","imag"] : name === "pow" ? ["base","exp","mod"] :
+      name === "round" ? ["number","ndigits"] : name === "divmod" ? ["x","y"] : ["value"];
+    if (args.length > labels.length) python("TypeError", name + "() received too many arguments");
+    const bound = new Map(labels.slice(0,args.length).map((label,index)=>[label,args[index]]));
+    for (let index=0;index<keywords.length;index++) {
+      const key=keywords[index];
+      if (!["complex","pow","round"].includes(name) || !labels.includes(key) || bound.has(key)) python("TypeError", name + "() received an invalid keyword");
+      bound.set(key,keywordValues[index]);
+    }
+    if (name === "complex") return bound.has('imag') ? [bound.has('real') ? bound.get('real') : 0n,bound.get('imag')] : bound.has('real') ? [bound.get('real')] : [];
+    const required = name === "pow" || name === "divmod" ? 2 : 1;
+    if (labels.slice(0,required).some(label=>!bound.has(label))) python("TypeError", name + "() is missing a required argument");
+    return labels.map(label=>bound.has(label) ? bound.get(label) : null);
+  };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
-    if (values.numeric && callable.name === "complex") {
-      const positional = args.length - keywords.length, bound = new Map(["real","imag"].slice(0,positional).map((key,index)=>[key,args[index]]));
-      if (args.length > 2) python("TypeError", "complex() takes at most two arguments");
-      for (let index=0;index<keywords.length;index++) {
-        const key=keywords[index];
-        if (!["real","imag"].includes(key) || bound.has(key)) python("TypeError", "complex() received an invalid keyword");
-        bound.set(key,args[positional+index]);
-      }
-      const operands = bound.has('imag') ? [bound.has('real') ? bound.get('real') : 0n,bound.get('imag')] : bound.has('real') ? [bound.get('real')] : [];
-      if (operands.some(value=>value instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "User complex conversions require the conversion callback stage.");
-      return values.complexConstructor(operands);
-    }
-    if (values.numeric && ["int", "float"].includes(callable.name)) {
-      const positional = args.length - keywords.length;
-      if (args.length > (callable.name === "int" ? 2 : 1) || keywords.some(key => callable.name !== "int" || key !== "base") ||
-          keywords.length && positional !== 1) python("TypeError", callable.name + "() received invalid arguments");
-      if (args.some(value => value instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "Numeric constructors require the conversion callback stage for user instances.");
-      return values.realConstructor(callable.name, args, callable.name === "int" && args.length === 2);
-    }
-    if (values.numeric && ["abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(callable.name)) {
-      const name = callable.name, labels = name === "pow" ? ["base", "exp", "mod"] : name === "round" ? ["number", "ndigits"] : name === "divmod" ? ["x", "y"] : ["value"];
-      const positional = args.length - keywords.length, required = name === "pow" || name === "divmod" ? 2 : 1;
-      if (positional > labels.length) python("TypeError", name + "() received too many arguments");
-      const bound = new Map(labels.slice(0, positional).map((label, index) => [label, args[index]]));
-      for (let index = 0; index < keywords.length; index++) {
-        const key = keywords[index];
-        if (!["pow", "round"].includes(name) || !labels.includes(key) || bound.has(key)) python("TypeError", name + "() received an invalid keyword");
-        bound.set(key, args[positional + index]);
-      }
-      if (labels.slice(0, required).some(label => !bound.has(label))) python("TypeError", name + "() is missing a required argument");
-      const operands = labels.map(label => bound.has(label) ? bound.get(label) : null);
-      if (["bin", "oct", "hex", "chr"].includes(name) && operands[0] instanceof InstanceValue || name === "round" && operands[1] instanceof InstanceValue)
-        hard("UNSUPPORTED", "UnsupportedOperationError", "Numeric index consumers require the conversion callback stage.");
-      if (name === "divmod") {
-        const quotient = values.binary("floor-divide", operands[0], operands[1]); state.temporaries.push(quotient);
-        const remainder = values.binary("modulo", operands[0], operands[1]); state.temporaries.push(remainder);
-        return values.tuple([quotient, remainder]);
-      }
-      return values.numericCall(name, operands);
-    }
     if (keywords.length) python("TypeError", callable.name + "() does not accept keywords in this profile");
     if (callable.name === "callable") {
       if (args.length !== 1) python("TypeError", "callable() requires one positional argument.");
@@ -180,6 +162,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (["numeric-result","numeric-index"].includes(completion?.kind)) {
+      const {name,args,position,slot,after,depth} = completion;
+      if (completion.kind === "numeric-result") {
+        if (["__abs__","__round__"].includes(slot)) return valueTask(value,site,after);
+        if (["__int__","__index__"].includes(slot)) {
+          if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError",slot + " returned a non-integer value");
+          if (typeof value === "boolean") value = values.int(BigInt(value));
+        } else if (slot === "__float__" && !values.isPrimitive(value,"float") || slot === "__complex__" && !values.isComplex(value))
+          python("TypeError",slot + " returned an invalid numeric value");
+      }
+      const converted = args.map((argument,index)=>index === position ? value : argument);
+      return numericTask(name,converted,site,after,depth,name === "complex" ? position+1 : 0);
+    }
     if (completion?.kind === "hash-result") return valueTask(values.hashResult(value), site, completion.after);
     if (completion?.kind === "dict-hash") return dictionaryTask(completion.receiver, completion.key, site, completion.after,
       completion.depth, completion.operation, completion.item, value);
@@ -382,6 +377,50 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "numeric") {
+          state.temporaries = operationRoots(task);
+          const name = task.name;
+          let position = task.position;
+          if (name === "complex" && args.length === 2 && values.isString(args[0])) python("TypeError", "complex() first argument cannot be a string with two arguments");
+          if (name === "round" && !(args[0] instanceof InstanceValue) && !values.isPrimitive(args[0],"int") && !values.isPrimitive(args[0],"float"))
+            python("TypeError", "round() argument has no numeric type slot");
+          if (name === "int" && args.length === 2) {
+            if (args[1] instanceof InstanceValue) {
+              task = unaryTask("index",args[1],site,continuation("numeric-index",{name,args,position:1,depth,after:completion}),depth); continue;
+            }
+            task = deliver(values.realConstructor(name,args,true),completion,site); continue;
+          }
+          if (["bin","oct","hex","chr"].includes(name) && args[0] instanceof InstanceValue ||
+              name === "round" && !(args[0] instanceof InstanceValue) && args[1] instanceof InstanceValue) {
+            position = name === "round" ? 1 : 0;
+            task = unaryTask("index",args[position],site,continuation("numeric-index",{name,args,position,depth,after:completion}),depth); continue;
+          }
+          if (name === "complex") while (position < args.length && !(args[position] instanceof InstanceValue)) position++;
+          const receiver = args[position];
+          if (receiver instanceof InstanceValue && ["int","float","complex","abs","round"].includes(name)) {
+            charge(1);
+            if (++depth > maxDepth) python("RecursionError","maximum implicit numeric dispatch depth exceeded");
+            const slots = name === "int" ? ["__int__","__index__"] : name === "float" ? ["__float__","__index__"] :
+              name === "complex" ? (position === 0 ? ["__complex__","__float__","__index__"] : ["__float__","__index__"]) : [name === "abs" ? "__abs__" : "__round__"];
+            let plan,slot;
+            for (slot of slots) { plan = classes.special(receiver,slot); if (plan) break; }
+            if (!plan) python("TypeError",name + "() argument has no adopted numeric type slot");
+            const hookArgs = name === "round" && args[1] !== null ? [args[1]] : [];
+            const finish = continuation("numeric-result",{name,args,position,slot,depth,after:completion});
+            task = plan.kind === "value" ? callTask(plan.value,hookArgs,[],[],site,finish,depth) :
+              callTask(plan.callable,plan.args,[],[],site,continuation("invoke",{args:hookArgs,keywords:[],keywordValues:[],after:finish,depth}),depth);
+            continue;
+          }
+          let result;
+          if (["int","float"].includes(name)) result = values.realConstructor(name,args);
+          else if (name === "complex") result = values.complexConstructor(args);
+          else if (name === "divmod") {
+            const quotient = values.binary("floor-divide",args[0],args[1]);state.temporaries.push(quotient);
+            const remainder = values.binary("modulo",args[0],args[1]);state.temporaries.push(remainder);
+            result = values.tuple([quotient,remainder]);
+          } else result = values.numericCall(name,args);
+          task = deliver(result,completion,site); continue;
+        }
         if (task.kind === "dict-build") {
           state.temporaries = operationRoots(task);
           task = task.position >= task.parts.length ? valueTask(task.receiver, site, completion) :
@@ -662,6 +701,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (values.numeric && numericNames.has(callable.name)) {
+            count("builtin:"+callable.name);
+            task = numericTask(callable.name,bindNumeric(callable.name,args,keywords,keywordValues),site,completion,depth); continue;
+          }
           if (["hash", "object.__hash__"].includes(callable.name)) {
             count("builtin:" + callable.name);
             if (args.length !== 1 || keywords.length) python("TypeError", "hash requires one positional value");
