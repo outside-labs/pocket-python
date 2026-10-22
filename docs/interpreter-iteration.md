@@ -104,3 +104,21 @@ of retaining prior values. A native string-iterator search also passes under a
 32,000-byte logical arena limit. Seventeen focused units and all 224 Node tests
 pass; prior composed resource observations remain unchanged. Custom equality,
 generators and broader iterable RHS slice assignment remain deferred.
+
+## Offline acceptance and payload
+
+The class console has 62 source comparisons, 18 acceptance groups and 25
+Stop/Restart cycles. Fresh source entered after offline reload exercises custom
+next binding, next/default, callable sentinels, contains truth and indexed search.
+Binding/body/result errors preserve source diagnostics; pending acquisition,
+advancement, contains and result-truth callbacks can be stopped and restarted.
+Waiting class-to-core updates remove the extra signatures. Requests remain local
+static GETs, and the default core profile retains primitive traversal.
+
+The complete [payload record](measurements/2026-10-22-iteration.json) verifies
+the previous revision's input/source hashes and records both unchanged-source
+and expanded-example applications. With the old source, complete bytes grow from
+372,607 to 384,338 (+11,731), including 11,717 engine bytes. The expanded example
+adds 658 source bytes, totaling 384,996 bytes across 37 files. Every file, hash,
+notice and per-file gzip size is recorded. These are payload observations, with
+no startup, speed, device-inference or package-support claim.

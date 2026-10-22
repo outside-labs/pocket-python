@@ -56,15 +56,25 @@ The default language selection is core-source/1 (bytecode 4). Add
 bound methods, [private names](interpreter-private-names.md), and the adopted
 [descriptors, properties and decorators](interpreter-descriptors.md), plus
 [callable instances, queries and length/truth protocols](interpreter-special-methods.md),
-and [bounded repr/str](interpreter-formatting.md).
+and [bounded repr/str](interpreter-formatting.md),
+[integer indices/item/slice mutation](interpreter-indexing.md) and
+[iteration/containment](interpreter-iteration.md).
 The editor shows the selected profile. Build a class example
 with `uv run python -m examples.interpreter_classes`, then serve
 `build/class-console`. Its Counter example uses len(), bool(), not, __repr__ and
 __str__ alongside callable methods. Core source also supports primitive repr and
-str(). Float/container/default-object formatting, indexing, iteration and
+str(). Float/container/default-object formatting and
 equality/hash protocols and async remain later stages. Language selection is
 independent of `--library-profile`;
 both language profiles use the same complete pinned engine.
+
+Iteration/containment acceptance has 62 source comparisons and 18 Chromium
+acceptance groups. Newly entered offline programs exercise custom next-slot
+binding, indexed membership, next/default and callable sentinels. Twenty-five
+Stop/Restart cycles include pending iteration/contains hooks and result truth
+conversion. A waiting class-to-core update removes the extra signatures while
+retaining primitive traversal. The finite source matrix remains separately
+checked through drain and instruction-step drivers.
 
 The formatting checkpoint includes 38 source comparisons and 13 Chromium
 acceptance groups: fresh offline input, callback/binding/result errors, prefix

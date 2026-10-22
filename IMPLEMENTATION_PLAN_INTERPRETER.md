@@ -65,8 +65,9 @@ real pure-Python packages. Initial application-profile completion does not close
 this wider goal. Keep Python-version, target, language, stdlib, package and native
 ABI promises separate; the pinned 3.14.7 oracle changes only deliberately.
 
-The [bounded repr/str slice](docs/interpreter-formatting.md) is implemented. Next,
-resume indexed-object, iteration and equality/hash protocols while the
+The [bounded repr/str slice](docs/interpreter-formatting.md), indexed objects and
+[iteration/containment](docs/interpreter-iteration.md) are implemented.
+Resume equality/hash protocols while the
 persistent-session/host program advances through its own contracts. INT-09 and
 INT-10 stay open; the execution foundation is delivered, while their remaining
 protocols, parked ownership, events and host/async behavior still require
