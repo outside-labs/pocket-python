@@ -1,5 +1,5 @@
 import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -80,6 +80,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (value.name !== "AttributeError" || !completion?.fallback) return null;
     const {operation, receiver, after, depth, missing} = completion.fallback;
     if (operation === "iter-indexed") return unaryTask(operation, receiver, site, after, depth);
+    if (operation === "hash-unhashable") return unaryTask(operation, receiver, site, after, depth);
     if (operation === "contains-search") return containsTask(receiver, completion.fallback.key, site, after, depth, true);
     if (operation === "compare-next") {
       const {left, right, comparison, position} = completion.fallback;
@@ -138,6 +139,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "hash-result") return valueTask(values.hashResult(value), site, completion.after);
+    if (completion?.kind === "dict-hash") return dictionaryTask(completion.receiver, completion.key, site, completion.after,
+      completion.depth, completion.operation, completion.item, value);
+    if (completion?.kind === "dict-key") return unaryTask("truth", value, site, continuation("dict-truth", completion), completion.depth);
+    if (completion?.kind === "dict-truth") {
+      checkDictionaryCandidate(completion);
+      return value ? finishDictionary(completion, site, completion.position) :
+        dictionaryTask(completion.receiver, completion.key, site, completion.after, completion.depth,
+          completion.operation, completion.item, completion.hash, completion.position + 1);
+    }
+    if (completion?.kind === "dict-build") return dictionaryBuildTask(completion.receiver, completion.parts, site,
+      completion.after, completion.depth, completion.position + 2);
+    if (completion?.kind === "dict-pair") {
+      checkDictionaryComparison(completion);
+      const [found, other] = values.comparisonSequence(value);
+      if (!found) return valueTask(completion.operation === "not-equal", site, completion.after);
+      if (completion.value === other) return dictionaryNext(completion, site, completion.position + 1);
+      if (completion.depth >= maxDepth) python("RecursionError", "maximum dictionary comparison depth exceeded");
+      return compareTask("equal", completion.value, other, site, continuation("dict-value", completion), completion.depth + 1);
+    }
+    if (completion?.kind === "dict-value") return unaryTask("truth", value, site, continuation("dict-value-truth", completion), completion.depth);
+    if (completion?.kind === "dict-value-truth") {
+      checkDictionaryComparison(completion);
+      return value ? dictionaryNext(completion, site, completion.position + 1) :
+        valueTask(completion.operation === "not-equal", site, completion.after);
+    }
     if (["compare-result", "ne-result"].includes(completion?.kind)) {
       const {operation, left, right, position, depth, after} = completion;
       if (value instanceof NotImplementedValue) return compareTask(operation, left, right, site, after, depth, position + 1);
@@ -282,11 +309,61 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const equal = a.length === b.length;
     return valueTask(operation === "equal" ? equal : !equal, site, after);
   };
+  const checkDictionaryCandidate = record => {
+    if (record.receiver.version !== record.version || record.receiver.entries[record.position]?.key !== record.candidate)
+      hard("UNSUPPORTED", "UnsupportedOperationError", "Structural dictionary mutation during key comparison requires its restart stage.");
+  };
+  const finishDictionary = (record, site, position) => {
+    const {receiver, key, item, hash, operation, completion: destination} = record, after = record.after ?? destination ?? null;
+    const found = position >= 0;
+    if (operation === "contains") return valueTask(found, site, after);
+    if (operation === "probe") return valueTask(values.tuple([found, found ? receiver.entries[position].value : null]), site, after);
+    if (operation === "set") return valueTask(values.commitDictionary(receiver, key, item, hash, position), site, after);
+    if (!found) python("KeyError", "Dictionary key not found");
+    return valueTask(operation === "get" ? receiver.entries[position].value :
+      values.commitDictionary(receiver, key, null, hash, position, true), site, after);
+  };
+  const checkDictionaryComparison = record => {
+    if (record.left.version !== record.version || record.right.version !== record.otherVersion)
+      hard("UNSUPPORTED", "UnsupportedOperationError", "Structural mutation during dictionary equality requires its restart stage.");
+  };
+  const dictionaryNext = (record, site, position = 0) => {
+    const {left, right, operation, after, depth, version, otherVersion} = record;
+    checkDictionaryComparison(record);
+    if (position >= left.entries.length) return valueTask(operation === "equal", site, after);
+    const entry = left.entries[position];
+    return dictionaryTask(right, entry.key, site,
+      continuation("dict-pair", {left, right, value: entry.value, operation, after, depth, version, otherVersion, position}), depth,
+      "probe", null, values.dictionaryEntryHash(entry));
+  };
   const dispatch = task => {
     while (task) {
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "dict-build") {
+          state.temporaries = operationRoots(task);
+          task = task.position >= task.parts.length ? valueTask(task.receiver, site, completion) :
+            dictionaryTask(task.receiver, task.parts[task.position], site, continuation("dict-build", {receiver: task.receiver,
+              parts: task.parts, position: task.position, depth, after: completion}), depth, "set", task.parts[task.position + 1]);
+          continue;
+        }
+        if (task.kind === "dict") {
+          state.temporaries = operationRoots(task);
+          if (task.hash === null) { task = unaryTask("hash", task.key, site, continuation("dict-hash", {...task, after: completion}), depth); continue; }
+          let position = task.position;
+          for (; position < task.receiver.entries.length; position++) {
+            charge(1);
+            const entry = task.receiver.entries[position];
+            if (values.dictionaryEntryHash(entry) !== task.hash) continue;
+            if (entry.key === task.key) break;
+            if (depth >= maxDepth) python("RecursionError", "maximum dictionary key comparison depth exceeded");
+            const finish = continuation("dict-key", {...task, position, version: task.receiver.version, candidate: entry.key, after: completion});
+            task = compareTask("equal", entry.key, task.key, site, finish, depth + 1); break;
+          }
+          if (task.kind === "compare") continue;
+          task = finishDictionary(task, site, position < task.receiver.entries.length ? position : -1); continue;
+        }
         if (task.kind === "compare") {
           state.temporaries.push(...operationRoots(task));
           const {left, right, operation, position} = task;
@@ -296,8 +373,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = a.length !== b.length ? valueTask(operation === "not-equal", site, completion) :
                 sequenceNext({left, right, operation, after: completion, depth}, site); continue;
             }
-            if ((values.isDict(left) || values.isDict(right)) && (values.hasUserEquality(left) || values.hasUserEquality(right)))
-              hard("UNSUPPORTED", "UnsupportedOperationError", "Dictionary protocol comparison requires its hashing stage.");
+            if (values.isDict(left) && values.isDict(right)) {
+              task = left.entries.length !== right.entries.length ? valueTask(operation === "not-equal", site, completion) :
+                dictionaryNext({left, right, operation, after: completion, depth, version: left.version, otherVersion: right.version}, site); continue;
+            }
             task = deliver(values.binary(operation, left, right), completion, site); continue;
           }
           const reflected = left instanceof InstanceValue && right instanceof InstanceValue && left.type !== right.type && right.type.mro.includes(left.type);
@@ -328,12 +407,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "contains") {
           state.temporaries.push(...operationRoots(task));
           const {receiver, key} = task;
+          if (values.dictionaryNeedsProtocol(receiver, key)) { task = dictionaryTask(receiver, key, site, completion, depth, "contains"); continue; }
           if (task.search || values.isIterator(receiver)) {
             task = unaryTask("iter", receiver, site, continuation("search-iter", {receiver, key, after: completion, depth}), depth); continue;
           }
           if (!(receiver instanceof InstanceValue)) {
             if (values.comparisonSequence(receiver) !== null) { task = containsTask(receiver, key, site, completion, depth, true); continue; }
-            if (values.isDict(receiver) && key instanceof InstanceValue) hard("UNSUPPORTED", "UnsupportedOperationError", "User dictionary keys require their hashing stage.");
             task = deliver(values.contains(key, receiver), completion, site); continue;
           }
           charge(1);
@@ -363,6 +442,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             continue;
           }
           const {key} = task;
+          if (values.dictionaryNeedsProtocol(receiver, key)) { task = dictionaryTask(receiver, key, site, completion, depth, operation, item); continue; }
           if (receiver instanceof InstanceValue) {
             charge(1);
             if (++depth > maxDepth) python("RecursionError", "maximum implicit item dispatch depth exceeded");
@@ -386,6 +466,24 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "unary") {
           const {operation, value, optionalLength} = task;
           state.temporaries.push(...operationRoots(task));
+          if (["hash", "hash-unhashable"].includes(operation)) {
+            if (operation === "hash-unhashable") python("TypeError", "unhashable type");
+            if (!(value instanceof InstanceValue)) { task = deliver(values.pythonHash(value), completion, site); continue; }
+            if (++depth > maxDepth) python("RecursionError", "maximum implicit hash dispatch depth exceeded");
+            const fallback = {operation: "hash-unhashable", receiver: value, after: completion, depth};
+            let plan;
+            try { plan = classes.special(value, "__hash__"); }
+            catch (error) {
+              const recovery = error instanceof Raised && bindingRecovery(error.value, {fallback}, site);
+              if (!recovery) throw error;
+              task = recovery; continue;
+            }
+            if (!plan || plan.kind === "value" && plan.value === null) python("TypeError", "unhashable type");
+            const finish = continuation("hash-result", {receiver: value, after: completion});
+            task = plan.kind === "value" ? callTask(plan.value, [], [], [], site, finish, depth) :
+              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: finish, depth, fallback}), depth);
+            continue;
+          }
           if (["iter", "iter-indexed", "next", "iterator-stop"].includes(operation)) {
             if (operation === "iterator-stop") python("StopIteration", "");
             if (value instanceof ProtocolIteratorValue) {
@@ -523,6 +621,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (["hash", "object.__hash__"].includes(callable.name)) {
+            count("builtin:" + callable.name);
+            if (args.length !== 1 || keywords.length) python("TypeError", "hash requires one positional value");
+            if (callable.name === "object.__hash__") {
+              if (!(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "The object hash descriptor supports user instances in this stage.");
+              task = deliver(values.identityHash(args[0]), completion, site);
+            } else task = unaryTask("hash", args[0], site, completion, depth);
+            continue;
+          }
           if (["iter", "next"].includes(callable.name) && state.frames.at(-1).callable.pool.code.version === 5) {
             count("builtin:" + callable.name);
             if (args.length < 1 || args.length > 2 || keywords.length) python("TypeError", callable.name + "() requires one or two positional arguments");

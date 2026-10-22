@@ -6,7 +6,7 @@ import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, dictionaryBuildTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -97,7 +97,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice"].includes(key))) {
+        (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -386,16 +386,20 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         continuation("condition", {control: "jump", target: arg})));
       else if (["build-list", "build-tuple", "build-dict"].includes(op)) {
         const items = stack.splice(stack.length - arg * (op === "build-dict" ? 2 : 1));
-        stack.push(op === "build-dict" ? values.dict(Array.from({length: arg}, (_, index) => items.slice(index * 2, index * 2 + 2))) :
+        if (op === "build-dict" && frame.callable.pool.code.version === 5 && items.some((item, index) => index % 2 === 0 && values.needsOwnedHash(item)))
+          dispatch(dictionaryBuildTask(values.dict([]), items, summary(frame, cursor)));
+        else stack.push(op === "build-dict" ? values.dict(Array.from({length: arg}, (_, index) => items.slice(index * 2, index * 2 + 2))) :
           op === "build-list" ? values.list(items) : values.tuple(items));
       } else if (op === "build-slice") {
         const step = stack.pop(), stop = stack.pop(), start = stack.pop(); stack.push(values.sliceKey(start, stop, step));
       } else if (op === "setitem") {
         const item = stack.pop(), key = stack.pop(), receiver = stack.pop();
-        if (receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key))
+        if (receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key) ||
+            frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(receiver, key))
           dispatch(itemTask(receiver, key, summary(frame, cursor), null, 0, "set", item));
         else stack.push(values.set(receiver, key, item));
-      } else if (op === "dict-delete" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)))) {
+      } else if (op === "dict-delete" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
+          frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor), null, 0, "delete"));
       }
       else if (op === "slice") {
@@ -403,14 +407,16 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         if ([receiver, start, stop, step].some(value => value instanceof InstanceValue))
           dispatch(sliceTask(receiver, [start, stop, step], summary(frame, cursor)));
         else stack.push(values.slice(receiver, start, stop, step));
-      } else if (op === "getitem" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)))) {
+      } else if (op === "getitem" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
+          frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor)));
       }
       else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else if (op === "contains" && frame.callable.pool.code.version === 5 &&
           (stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
-           values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)))) {
+           values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
+           values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));
       }
       else if (["equal", "not-equal"].includes(op) && frame.callable.pool.code.version === 5 &&
