@@ -25,6 +25,18 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
+    if (values.numeric && callable.name === "complex") {
+      const positional = args.length - keywords.length, bound = new Map(["real","imag"].slice(0,positional).map((key,index)=>[key,args[index]]));
+      if (args.length > 2) python("TypeError", "complex() takes at most two arguments");
+      for (let index=0;index<keywords.length;index++) {
+        const key=keywords[index];
+        if (!["real","imag"].includes(key) || bound.has(key)) python("TypeError", "complex() received an invalid keyword");
+        bound.set(key,args[positional+index]);
+      }
+      const operands = bound.has('imag') ? [bound.has('real') ? bound.get('real') : 0n,bound.get('imag')] : bound.has('real') ? [bound.get('real')] : [];
+      if (operands.some(value=>value instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "User complex conversions require the conversion callback stage.");
+      return values.complexConstructor(operands);
+    }
     if (values.numeric && ["int", "float"].includes(callable.name)) {
       const positional = args.length - keywords.length;
       if (args.length > (callable.name === "int" ? 2 : 1) || keywords.some(key => callable.name !== "int" || key !== "base") ||
@@ -79,7 +91,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
       const type = args[1];
       if (type instanceof ClassValue) return classes.isinstance(args[0], type);
-      if (values.numeric && type instanceof BuiltinValue && ["int", "float", "bool"].includes(type.name)) return values.isPrimitive(args[0], type.name);
+      if (values.numeric && type instanceof BuiltinValue && ["int", "float", "complex", "bool"].includes(type.name)) return values.isPrimitive(args[0], type.name);
       if (type instanceof BuiltinValue && type.name === "str") return values.isString(args[0]);
       if (type instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, type.name)) return args[0] instanceof ExceptionValue && matchesException(args[0].name, type.name);
       hard("UNSUPPORTED", "UnsupportedOperationError", "isinstance supports str and the adopted exception classes in this profile.");

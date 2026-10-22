@@ -49,7 +49,9 @@ test("integer bases, separators and floats retain exact tagged values", () => {
   assert.deepEqual(literals.slice(0, 7).map(t => t.value), ["9007199254740993", "255", "57", "5", "0", "0", "1000"]);
   assert.deepEqual(literals.slice(7).map(t => t.bits), ["3fe0000000000000", "3ff0000000000000", "3f50624dd2f1a9fc", "4093880000000000", "7ff0000000000000"]);
   for (const source of ["01", "1__0", "1_", "1e+", "0b102", "0x", "0o8", "1abc", "0x_", "2.0_e1"]) fails(source, "SYNTAX");
-  fails("1j", "UNSUPPORTED");
+  assert.deepEqual(significant("1j 012J").map(t=>t.literal), [
+    {type:"complex",real_bits:"0000000000000000",imag_bits:"3ff0000000000000"},
+    {type:"complex",real_bits:"0000000000000000",imag_bits:"4028000000000000"}]);
 });
 
 test("string scanning preserves code points, raw escapes, triples and lone-surrogate escapes", () => {

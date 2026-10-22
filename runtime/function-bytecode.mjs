@@ -36,7 +36,7 @@ export function verifyFunctions(program) {
   if (program.format !== "pocket-python-bytecode" || ![3, 4, 5].includes(program.version) || !Array.isArray(program.functions) ||
       !integer(program.functions.length - 1, FUNCTION_LIMITS.functions - 1)) fail("Expected bounded pocket-python-bytecode version 3, 4 or 5 functions.");
   const constants = verify({format: program.format, version: 2, constants: program.constants,
-    instructions: [["build-tuple", 0], ["return"]]}).constants;
+    instructions: [["build-tuple", 0], ["return"]]}, {numeric:program.version >= 4}).constants;
   const modern = program.version >= 4, classes = program.version === 5;
   const validName = modern ? isPythonIdentifier : name;
   const privateName = value => modern && typeof value === "string" && /^@source:[0-9]{1,5}$/.test(value);

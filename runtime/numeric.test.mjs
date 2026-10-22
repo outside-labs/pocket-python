@@ -8,6 +8,8 @@ import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
 import {modularPower} from './numeric.mjs';
+import {verify} from './bytecode.mjs';
+import {valueLayout} from './values.mjs';
 
 const unit=source=>({name:'app',source,imports:[],package:false,notice:'Synthetic numeric notice'});
 const run=(source,options={})=>runSourceRequest({modules:[unit(source)],options});
@@ -163,4 +165,65 @@ test('real constructor allocation failures release owned text and results',()=>{
     assert.throws(()=>values.realConstructor('float',[text]),{code:'OOM'});
     assert.equal(memory.stats().objects,1);
   }finally{leave();memory.close();}closed({closed:memory.stats()});
+});
+
+test('complex arithmetic matches independently observed mixed and signed-zero results',()=>{
+  const corpus=JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/complex-arithmetic.json',import.meta.url)));
+  const values=new ValueRuntime({numeric:true});
+  for(const record of corpus.cases){
+    const a=values.decode(record.left),b=values.decode(record.right),calculate=()=>values.binary(record.operation,a,b);
+    if(record.engine_error)assert.throws(calculate,{code:record.engine_error},JSON.stringify(record));
+    else if(record.error)assert.throws(calculate,{name:record.error},JSON.stringify(record));
+    else assert.deepEqual(values.encode(calculate()),record.result,JSON.stringify(record));
+  }
+  for(const record of corpus.constructors){
+    const text=values.string(Array.from(record.text,char=>char.codePointAt(0)));
+    const calculate=()=>values.complexConstructor([text]);
+    if(record.error)assert.throws(calculate,{name:record.error},JSON.stringify(record));
+    else assert.deepEqual(values.encode(calculate()),record.result,JSON.stringify(record));
+  }
+  for(const record of corpus.hashes)assert.equal(values.pythonHash(values.decode({type:'complex',real_bits:record.real_bits,imag_bits:record.imag_bits})),BigInt(record.hash));
+});
+
+test('complex layout, transport, identity, NaN equality and compatible hashes are explicit',()=>{
+  const values=new ValueRuntime({numeric:true}),value=values.complex(-0,4);
+  assert.deepEqual(valueLayout(value),{bytes:80,children:[]});assert(Object.isFrozen(value));
+  assert.deepEqual(values.encode(values.decode(values.encode(value))),values.encode(value));
+  assert.equal(values.complexConstructor([value]),value);
+  for(const real of [0,1,-1,7,1.25,2**53,Infinity]){
+    const z=values.complex(real,0),f=values.float(real);
+    assert.equal(values.equal(z,f),true);assert.equal(values.hash(z),values.hash(f));
+    assert.equal(values.pythonHash(z),values.pythonHash(f));
+  }
+  assert.equal(values.equal(values.complex(9007199254740992,0),9007199254740993n),false);
+  const nan=values.complex(NaN,0);assert.equal(values.equal(nan,nan),false);
+  assert.equal(values.contains(nan,values.list([nan])),true);
+  assert.throws(()=>new ValueRuntime().decode(values.encode(value)),{name:'TypeError'});
+  assert.throws(()=>verify({format:'pocket-python-bytecode',version:2,constants:[values.encode(value)],instructions:[['const',0],['return']]}),{code:'BYTECODE'});
+  assert.throws(()=>values.binary('power',value,101n),{code:'UNSUPPORTED'});
+  assert.throws(()=>values.binary('multiply',values.complex(Infinity,1),value),{code:'UNSUPPORTED'});
+});
+
+test('complex construction preserves signed zeros, validates signatures and bounds text',async()=>{
+  for(const source of ['complex(None,imag=1)','complex(1,real=1)','complex(1,2,3)','complex("1",imag=0)','complex(imag="1")']){
+    const result=await run('print("before")\n'+source+'\n');
+    assert.equal(result.error.type,'TypeError',source);assert.equal(result.stdout,'before\n');closed(result);
+  }
+  const result=await run('z=complex(" ( 3+4j ) ")\nprint(z.real==3.0,z.imag==4.0,complex(z) is z,012j==12j)\n');
+  assert.equal(result.stdout,'True True True True\n');closed(result);
+  const values=new ValueRuntime({numeric:true});
+  assert.deepEqual(values.encode(values.complexConstructor([values.complex(-0,-0),0n])),{type:'complex',real_bits:'8000000000000000',imag_bits:'0000000000000000'});
+  assert.deepEqual(values.encode(values.complexConstructor([0n,values.complex(-0,-0)])),{type:'complex',real_bits:'0000000000000000',imag_bits:'8000000000000000'});
+});
+
+test('complex results and attributes survive forced collection and actual OOM',async()=>{
+  const source='def power(z=-2j): return z**3\nz=power()\nd={7+0j:3}\nprint(z==8j,d[7],z.real==0.0,z.imag==8.0)\n';
+  const {registry}=await compileSourceModules([unit(source)]),session=new ModuleSession(registry);
+  let output='';session.context.begin({maxWork:20000000},text=>{output+=text;});const execution=Execution.modules(session.context);
+  try{while(execution.state!=='completed'){execution.advance();session.memory.collect([],{cleanup:true});}
+    assert.equal(output,'True 3 True True\n');
+  }finally{execution.close();session.context.finish();session.close();registry.close();}closed({closed:session.stats()});
+  const memory=new MemoryArena({maxBytes:207}),values=new ValueRuntime({numeric:true,memory}),leave=memory.enter(()=>[]);
+  try{assert.throws(()=>values.complex(3,4),{code:'OOM'});assert.equal(memory.stats().objects,0);}
+  finally{leave();memory.close();}closed({closed:memory.stats()});
 });

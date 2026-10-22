@@ -162,14 +162,19 @@ class Scanner {
       raw = DECIMAL.exec(tail)?.[0];
       if (!raw) this.fail("SYNTAX", "Invalid numeric literal.", start);
       integer = !/[.eE]/.test(raw);
-      if (integer && /^0[0-9_]+$/.test(raw) && /[1-9]/.test(raw)) this.fail("SYNTAX", "Leading zeros in decimal integer literals are not permitted.", start);
     }
     for (let i = 0; i < raw.length; i++) this.take();
-    if (this.peek() === "j" || this.peek() === "J") this.fail("UNSUPPORTED", "Complex literals are outside this source profile.", start);
+    const imaginary = this.peek() === "j" || this.peek() === "J";
+    if (imaginary) this.take();
+    else if (integer && !/^0[xob]/i.test(raw) && /^0[0-9_]+$/.test(raw) && /[1-9]/.test(raw)) this.fail("SYNTAX", "Leading zeros in decimal integer literals are not permitted.", start);
     if (continuesIdentifier(this.peek())) this.fail("SYNTAX", "Invalid numeric literal.", start);
     if (raw.replace(/_/g, "").length > SOURCE_LIMITS.digits) this.fail("COMPILE_BUDGET", "Numeric literal digit budget exceeded.", start);
     let literal;
-    if (integer) {
+    if (imaginary) {
+      const view = new DataView(new ArrayBuffer(8)); view.setFloat64(0, Number(raw.replace(/_/g, "")));
+      literal = {type: "complex", real_bits: "0000000000000000", imag_bits: view.getBigUint64(0).toString(16).padStart(16, "0")};
+      raw += "j";
+    } else if (integer) {
       const value = BigInt(raw.replace(/_/g, "")).toString(); this.charge(value.length);
       if (value.length > SOURCE_LIMITS.digits) this.fail("COMPILE_BUDGET", "Integer digit budget exceeded.", start);
       literal = {type: "int", value};

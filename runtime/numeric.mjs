@@ -197,3 +197,55 @@ export function parseReal(text, controls) {
   if (!finite.test(input)) controls.fail("ValueError", "could not convert string to float");
   controls.charge(input.length + 1); return Number(input.replaceAll("_", ""));
 }
+
+export function parseComplex(text, controls) {
+  let input = numericText(text, controls);
+  if (input.startsWith('(') && input.endsWith(')')) input = numericText(input.slice(1,-1), controls);
+  const digits = '[0-9](?:_?[0-9])*';
+  const atom = '(?:(?:'+digits+'(?:\\.(?:'+digits+')?)?|\\.'+digits+')(?:[eE][+-]?'+digits+')?|inf(?:inity)?|nan)';
+  const pair = new RegExp('^([+-]?'+atom+')([+-](?:'+atom+')?)j$','i').exec(input);
+  const imaginary = new RegExp('^([+-]?(?:'+atom+')?)j$','i').exec(input);
+  const coefficient = value => parseReal(['','+','-'].includes(value) ? value+'1' : value, controls);
+  if (pair) return [parseReal(pair[1],controls),coefficient(pair[2])];
+  if (imaginary) return [0,coefficient(imaginary[1])];
+  if (new RegExp('^[+-]?'+atom+'$','i').test(input)) return [parseReal(input,controls),0];
+  controls.fail('ValueError','complex() argument is a malformed string');
+}
+
+// Finite Cartesian arithmetic; later non-finite recovery families stay explicit.
+export function complexArithmetic(operation, left, right, {fail}) {
+  const [a,b] = left, [c,d] = right;
+  if (![a,b,c,d].every(Number.isFinite)) fail('UnsupportedOperationError','Non-finite complex arithmetic requires a later numeric stage.','UNSUPPORTED');
+  if (operation === 'add') return [a+c,b+d];
+  if (operation === 'subtract') return [a-c,b-d];
+  if (operation === 'multiply') return [a*c-b*d,a*d+b*c];
+  if (c === 0 && d === 0) fail('ZeroDivisionError','complex division by zero','ZERO_DIVISION');
+  if (Math.abs(c) >= Math.abs(d)) {
+    const ratio = d/c, scale = c+d*ratio;
+    return [(a+b*ratio)/scale,(b-a*ratio)/scale];
+  }
+  const ratio = c/d, scale = c*ratio+d;
+  return [(a*ratio+b)/scale,(b*ratio-a)/scale];
+}
+
+export function complexPower(base, exponent, controls) {
+  if (!Number.isInteger(exponent) || Math.abs(exponent) > 100)
+    controls.fail('UnsupportedOperationError','Complex power currently requires an integer exponent from -100 to 100.','UNSUPPORTED');
+  if (!base.every(Number.isFinite)) controls.fail('UnsupportedOperationError','Non-finite complex power requires a later numeric stage.','UNSUPPORTED');
+  let remaining = Math.abs(exponent), result = [1,0], factor = base;
+  while (remaining) {
+    controls.charge(1);
+    if (remaining % 2) result = complexArithmetic('multiply',result,factor,controls);
+    remaining = Math.floor(remaining/2);
+    if (remaining) factor = complexArithmetic('multiply',factor,factor,controls);
+    if (![...result,...factor].every(Number.isFinite)) {
+      if (exponent < 0) controls.fail('UnsupportedOperationError','Negative complex powers with non-finite intermediates require a later numeric stage.','UNSUPPORTED');
+      controls.fail('OverflowError','complex exponentiation overflow');
+    }
+  }
+  if (exponent < 0) {
+    result = complexArithmetic('divide',[1,0],result,controls);
+    if (!result.every(Number.isFinite)) controls.fail('OverflowError','complex exponentiation overflow');
+  }
+  return result;
+}

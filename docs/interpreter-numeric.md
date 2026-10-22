@@ -20,7 +20,7 @@ their existing boundaries.
 | N1 | `~`, `&`, `\|`, `^`, `<<`, `>>`, their augmented forms, `**`/`**=` and integer true division. Integer powers include negative exponents, zero/unit bases and underflow. |
 | N2 | `abs(x)`, `divmod(x,y)`, `pow(base,exp,mod=None)`, `round(number,ndigits=None)`, `bin(x)`, `oct(x)`, `hex(x)`, `chr(i)` and `ord(c)`. `pow` and `round` accept their named keywords; other helper arguments are positional-only. |
 | N3 | `int()`, `int(x)`, `int(text,base)`/`int(text,base=...)`, `float()` and `float(x)`. Constructor value arguments are positional-only. Explicit bases are 0 or 2–36. |
-| N4 | Complex literals, `complex()`/one/two-argument construction and real/imaginary keywords; basic arithmetic, finite integer powers, equality/truth, real/imaginary attributes and compatible dictionary hashes. |
+| N4 | Complex literals, `complex()`/one/two-argument construction and real/imaginary keywords; basic arithmetic, integer powers from -100 to 100 with finite intermediates, equality/truth, real/imaginary attributes and compatible dictionary hashes. |
 | N5 | Type/MRO-selected `__int__`, `__float__`, `__complex__`, `__abs__`, `__round__` and the adopted `__index__` consumers, with ordinary descriptor binding and explicit result rules. |
 
 All expressions evaluate once in Python order. Power associates to the right;
@@ -130,3 +130,27 @@ use the existing owned binary64 layout and float(existing_float) preserves
 identity. The additional 482 independent CPython observations cover every
 admitted Unicode decimal block and numeric whitespace plus malformed input.
 Bytes and user conversion callbacks remain later stages.
+
+## Complex value checkpoint
+
+N4 adds an immutable 80-byte logical complex layout with native binary64 real
+and imaginary fields and no owned children. Transport uses exact-field
+`{type:"complex",real_bits,imag_bits}` records; earlier engines reject them.
+Read-only real/imag attributes allocate ordinary owned floats. Mixed equality
+compares integers exactly and numeric dictionary hashes agree with equal real
+keys. NaN equality and container identity retain their existing distinction.
+
+The independent CPython observations include 600 arithmetic/power records,
+32 constructor strings and six deterministic hash records. Of the arithmetic
+records, 597 compare results/errors and three verify explicit refusals for
+negative powers requiring non-finite intermediate recovery. Powers admit
+integer exponents from -100 to 100 with finite intermediates; larger,
+fractional/complex exponents and non-finite arithmetic inputs remain explicit
+later families. Five Future source cases retain those and object boundaries.
+The complete numeric reference corpus now has 157 cases.
+
+Cartesian division uses a magnitude-selected ratio to avoid squaring the
+denominator; mixed real operations preserve signed-zero semantics. Primitive
+operations and stored fields are independent implementations, checked against
+the pinned oracle. Floating magnitudes retain host libm precision, as real
+power does; no universal transcendental last-bit promise is made.
