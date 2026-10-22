@@ -114,3 +114,21 @@ and an exhaustive cached root visitor. It copies operand/snapshot arrays and
 preserves the recorded multiset, including duplicate init/ancestor roots.
 Structural transfers retain destination temporaries before releasing a frame.
 These records add no logical metadata charge under the initial contract.
+
+## Owned instruction driver
+
+`Execution` now owns the activation graph, counters, temporaries and source cursor.
+`advance(n)` runs at most n verified instructions and returns an immutable
+value-free diagnostic snapshot. `drain()` drives that same machine to completion;
+`execute` preserves the previous synchronous facade. Ready/paused activations can
+advance; running reentry/close and completed/failed/closed advance are rejected.
+Close is idempotent and leaves explicit result leases with their caller.
+
+The single paused activation retains its mutable LIFO scopes. Another activation
+cannot interleave on that arena; synchronous nested import execution can drain
+and unwind before control returns. At this stage imported initializers still use
+that native nesting. The module-scheduling task must add safe boundaries inside
+those imports before claiming full import-machine consolidation. The test-only
+`execution_checks.mjs` harness and runner/worker are excluded from application
+assets. Node and browser CI exercise the adopted and refusal matrices through
+both draining and instruction-boundary drivers, without resetting quotas.
