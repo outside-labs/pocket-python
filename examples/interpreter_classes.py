@@ -43,6 +43,21 @@ SOURCE = '''class Counter:
     def __index__(self):
         return self.value
 
+    def __int__(self):
+        return self.value
+
+    def __float__(self):
+        return self.value / 2
+
+    def __complex__(self):
+        return complex(self.value, 1)
+
+    def __abs__(self):
+        return abs(self.value)
+
+    def __round__(self, ndigits=None):
+        return round(self.value, ndigits)
+
     def __repr__(self):
         return type(self).__name__ + "(" + str(self.value) + ")"
 
@@ -138,6 +153,9 @@ parts = divmod(-7, 3)
 print("Numbers:", parts[0], parts[1], pow(3, -1, 11), round(250, -2))
 print("Real checks:", (10**400)/(10**400) == 1.0, round(2.675, 2) == 2.67)
 print("Unicode:", ord(chr(128013)))
+print("Conversion:", int(counter), float(counter) == 3.5, complex(counter) == 7+1j)
+print("Hooks:", abs(counter), round(counter), bin(counter))
+print("Constructors:", int("0x_ff", 0), float("١.٢٥") == 1.25, complex("3+4j") == 3+4j)
 '''
 
 if __name__ == '__main__':

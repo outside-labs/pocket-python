@@ -127,7 +127,7 @@ def smoke(channel=None):
                     programs.append('import operator\nclass Key:\n def __hash__(self): return 7\n def __eq__(self,other): return other==7\nd={7:9}\nprint(operator.eq(Key(),7),operator.getitem(d,Key()))\n')
                     numeric = json.loads((ROOT / 'tests/fixtures/interpreter/numeric.json').read_bytes())
                     programs.extend(c['source'] for c in numeric['cases']
-                                    if c['stage'] in ['N1', 'N2'] and 'error_type' not in c)
+                                    if c['stage'] in numeric['implemented_stages'] and 'error_type' not in c)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -232,6 +232,16 @@ def smoke(channel=None):
                     refused('print("entered")\n2**100000000000000000000\n', 'ExecutionLimitError:')
                     assert page.locator('#result').inner_text() == 'entered\n'
                     checks.append('numeric-signature-inverse-shift-and-resource-errors-preserve-prefix')
+                    refused('class A:\n def __int__(self):\n  return 1//0\nint(A())\n', 'ZeroDivisionError:')
+                    assert '__int__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n @property\n def __float__(self):\n  raise AttributeError("binding")\nfloat(A())\n', 'AttributeError:')
+                    assert '__float__ at sources/app.py:4' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n def __complex__(self): return 7\ncomplex(A())\n', 'TypeError:')
+                    assert 'sources/app.py:3' in page.locator('#status').inner_text()
+                    refused('print("entered")\ncomplex("1 +2j")\n', 'ValueError:')
+                    assert page.locator('#result').inner_text() == 'entered\n'
+                    refused('pow(1j,101)\n', 'UnsupportedOperationError:')
+                    checks.append('numeric-conversion-binding-body-result-text-and-explicit-power-errors')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -254,6 +264,10 @@ def smoke(channel=None):
                     run('mask=(1<<12)-1\nmask^=7\nparts=divmod(-41,7)\nprint(hex(mask),bin(9),oct(9),parts[0],parts[1])\nprint(pow(7,-1,19),round(1250,-2),round(1.25,1)==1.2,(10**390)/(10**390)==1.0,ord(chr(128013)))\n',
                         '0xff8 0b1001 0o11 -6 1\n11 1200 True True 128013\n')
                     checks.append('new-exact-operators-helper-rounding-and-unicode-source-offline')
+                    run('class OfflineNumeric:\n def __init__(self): self.__value=7\n def __int__(self): return self.__value\n def __float__(self): return self.__value/2\n def __complex__(self): return complex(self.__value,1)\n def __abs__(self): return self.__value\n def __round__(self,n=None): return self.__value\n def __index__(self): return self.__value\na=OfflineNumeric()\nprint(int(a),float(a)==3.5,complex(a)==7+1j,abs(a),round(a),hex(a),int("10",a))\nprint(int("١٢"),float("١.٢٥")==1.25,complex("(3+4j)")==3+4j)\n',
+                        '7 True True 7 7 0x7 7\n12 True True\n')
+                    run('class OfflineRound:\n @property\n def __round__(self):\n  def use(digits): return digits[0][0]\n  return use\nclass OfflineImaginary:\n @property\n def __float__(self):\n  def use(): return 1.25\n  return use\nprint(round(OfflineRound(),[[7]]),complex(3+4j,OfflineImaginary())==3+5.25j)\nprint({7+0j:3}[7],hash(7+0j)==hash(7),abs(3+4j)==5.0)\n', '7 True\n3 True True\n')
+                    checks.append('new-real-complex-and-owned-numeric-binding-source-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -295,6 +309,15 @@ def smoke(channel=None):
                         'class R:\n def __bool__(self):\n  while True: pass\nclass K:\n def __hash__(self): return 7\n def __eq__(self,other): return R()\nd={K():[3]}\nd[K()]=[7]\n',
                         'class R:\n def __bool__(self):\n  while True: pass\nclass Spin:\n def __eq__(self,other): return R()\nprint(Spin()!=7)\n'])
                     stopped = []
+                    for slot, invocation in [('__int__','int(Spin())'), ('__float__','float(Spin())'),
+                                             ('__complex__','complex(Spin())'), ('__abs__','abs(Spin())'),
+                                             ('__round__','round(Spin(),[[7]])')]:
+                        for binding in [False, True]:
+                            params = ',digits' if slot == '__round__' and not binding else ''
+                            busy.append('class Spin:\n '+('@property\n ' if binding else '')+
+                                        'def '+slot+'(self'+params+'):\n  while True: pass\n'+invocation+'\n')
+                    for invocation in ['int("ff",base=Spin())','bin(Spin())','round(1.25,Spin())']:
+                        busy.append('class Spin:\n @property\n def __index__(self):\n  while True: pass\n'+invocation+'\n')
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
@@ -336,6 +359,8 @@ def smoke(channel=None):
                     refused('callable(print)\n', 'NameError:')
                     run('parts=divmod(-41,7)\nprint(pow(7,-1,19),parts[0],parts[1],hex((1<<12)-1),round(1250,-2))\n', '11 -6 1 0xfff 1200\n')
                     checks.append('numeric-operators-and-helpers-retained-by-offline-core-profile-update')
+                    run('a=float("١.٢٥")\nz=complex("3+4j")\nprint(int("0x_ff",0),a==1.25,z.real==3.0,z.imag==4.0,z/(1-2j)==-1+2j,isinstance(z,complex))\n', '255 True True True True True\n')
+                    checks.append('real-and-complex-values-retained-by-offline-core-profile-update')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')
