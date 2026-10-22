@@ -1,6 +1,7 @@
 // Independent Python values. Native Number is used only inside explicit floats.
 import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
+import {divideIntegers, powerIntegers} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -44,7 +45,9 @@ const bitsOf = value => {
 };
 
 export class ValueRuntime {
-  constructor({charge = () => {}, fail = null, memory = null} = {}) {
+  constructor({charge = () => {}, fail = null, memory = null, numeric = false} = {}) {
+    if (typeof numeric !== "boolean") throw new TypeError("Invalid numeric profile.");
+    this.numeric = numeric;
     this.memory = memory;
     this.charge = charge;
     this.fail = fail || ((name, message, code = "PYTHON") => {
@@ -563,6 +566,10 @@ export class ValueRuntime {
     }
     if (operation === "iter") return this.iterator(value);
     if (operation === "next") return this.next(value);
+    if (operation === "invert" && this.numeric) {
+      if (!["bigint", "boolean"].includes(typeof value)) this.fail("TypeError", "Bitwise inversion requires an integer.");
+      this.charge(integer(value).toString().length); return this.int(~integer(value));
+    }
     if (!["negative", "positive"].includes(operation)) this.fail("UnsupportedOperationError", "Unknown unary operation.", "UNSUPPORTED");
     if (!numeric(value)) this.fail("TypeError", "Unary numeric operation requires a number.");
     return value instanceof FloatValue ? this.float(operation === "negative" ? -value.value : value.value) :
@@ -584,6 +591,29 @@ export class ValueRuntime {
     if (operation === "getitem") return this.index(left, right);
     if (operation === "append") return this.append(left, right);
     if (operation === "dict-delete") return this.remove(left, right);
+    if (this.numeric && ["bit-and", "bit-or", "bit-xor", "left-shift", "right-shift", "power"].includes(operation)) {
+      if (!["bigint", "boolean"].includes(typeof left) || !["bigint", "boolean"].includes(typeof right)) {
+        if (operation === "power" && numeric(left) && numeric(right)) this.fail("UnsupportedOperationError", "Real powers require the next numeric stage.", "UNSUPPORTED");
+        this.fail("TypeError", "This operator requires adopted integers.");
+      }
+      const a = integer(left), b = integer(right);
+      this.charge(a.toString().length + b.toString().length);
+      if (operation === "power") {
+        const result = powerIntegers(a, b, {charge: this.charge, fail: this.fail, digits: VALUE_LIMITS.digits});
+        return typeof result === "bigint" ? this.int(result) : this.float(result);
+      }
+      if (["left-shift", "right-shift"].includes(operation)) {
+        if (b < 0n) this.fail("ValueError", "negative shift count");
+        if (a === 0n) return this.int(0n);
+        const bits = BigInt((a < 0n ? -a : a).toString(2).length);
+        if (operation === "right-shift") return this.int(b >= bits ? a < 0n ? -1n : 0n : a >> b);
+        if (b + bits > BigInt(Math.ceil(VALUE_LIMITS.digits * Math.log2(10))))
+          this.fail("ExecutionLimitError", "Integer shift exceeds the digit budget.", "BUDGET");
+        this.charge(Number(b) + Number(bits)); return this.int(a << b);
+      }
+      const result = operation === "bit-and" ? a & b : operation === "bit-or" ? a | b : a ^ b;
+      return typeof left === "boolean" && typeof right === "boolean" ? result !== 0n : this.int(result);
+    }
     if (operation === "add" && sequence(left) && left.constructor === right?.constructor) {
       const a = elements(left), b = elements(right);
       this.limit(a.length + b.length <= (left instanceof StringValue ? VALUE_LIMITS.text : VALUE_LIMITS.items), "Sequence length budget exceeded.");
@@ -600,7 +630,10 @@ export class ValueRuntime {
       if (operation === "add") return this.int(a + b);
       if (operation === "subtract") return this.int(a - b);
       if (operation === "multiply") return this.int(a * b);
-      if (operation === "divide") this.fail("UnsupportedOperationError", "Integer true division is deferred; no Number conversion is implicit.", "UNSUPPORTED");
+      if (operation === "divide") {
+        if (!this.numeric) this.fail("UnsupportedOperationError", "Integer true division is outside this bytecode profile.", "UNSUPPORTED");
+        return this.float(divideIntegers(a, b, {charge: this.charge, fail: this.fail}));
+      }
       if (b === 0n) this.fail("ZeroDivisionError", "division by zero", "ZERO_DIVISION");
       let quotient = a / b;
       if (a % b !== 0n && (a < 0n) !== (b < 0n)) quotient--;

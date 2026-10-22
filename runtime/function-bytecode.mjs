@@ -5,9 +5,12 @@ import {isPythonIdentifier} from "./source-identifiers.mjs";
 export const FUNCTION_LIMITS = Object.freeze({functions: 128, blocks: 512, instructions: 4096,
   names: 128, depth: 32, stack: 256});
 const BINARY = new Set(["add", "subtract", "multiply", "floor-divide", "modulo", "divide",
+  "power", "bit-and", "bit-or", "bit-xor", "left-shift", "right-shift",
+  "inplace-power", "inplace-bit-and", "inplace-bit-or", "inplace-bit-xor", "inplace-left-shift", "inplace-right-shift",
   "inplace-add", "inplace-subtract", "inplace-multiply", "inplace-floor-divide", "inplace-modulo", "inplace-divide",
   "equal", "not-equal", "less", "less-equal", "greater", "greater-equal", "is", "contains", "getitem", "append", "dict-delete"]);
-const UNARY = new Set(["truth", "not", "len", "negative", "positive", "iter", "next"]);
+const UNARY = new Set(["truth", "not", "len", "negative", "positive", "invert", "iter", "next"]);
+const NUMERIC = new Set(["power", "bit-and", "bit-or", "bit-xor", "left-shift", "right-shift", "invert"]);
 const CONSTRUCT = new Set(["build-list", "build-tuple", "build-dict"]);
 const fail = message => { throw new BytecodeError(message); };
 const record = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -76,6 +79,7 @@ export function verifyFunctions(program) {
         if (!Array.isArray(instruction)) fail("Instruction requires an array.");
         const [op, arg, extra] = instruction;
         if (!modern && typeof op === "string" && op.startsWith("inplace-")) fail("In-place operations require version 4 or later.");
+        if (!modern && NUMERIC.has(op)) fail("Numeric operators require version 4 or later.");
         let length = 1;
         const blockRef = (id, kind) => {
           if (!integer(id, fn.blocks.length - 1) || fn.blocks[id]?.kind !== kind) fail("Block reference has the wrong index or kind.");

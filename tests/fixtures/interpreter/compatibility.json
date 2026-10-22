@@ -124,16 +124,14 @@
     {
       "id": "integer-true-division",
       "source": "print(7/2==3.5)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -195,31 +193,27 @@
     {
       "id": "power",
       "source": "print(2**8)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "256\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "stdout": "256\n",
+        "error_type": null
       }
     },
     {
       "id": "bitwise",
       "source": "print(7&3)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "3\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "stdout": "3\n",
+        "error_type": null
       }
     },
     {

@@ -1,7 +1,8 @@
 import {tokenize, SourceError, SOURCE_LIMITS} from "./source-tokens.mjs";
 
 export const PARSER_LIMITS = Object.freeze({nodes: 8192, depth: 64, decorators: 16});
-const BINARY = new Map([["+", "add"], ["-", "subtract"], ["*", "multiply"], ["/", "divide"], ["//", "floor-divide"], ["%", "modulo"]]);
+const BINARY = new Map([["+", "add"], ["-", "subtract"], ["*", "multiply"], ["/", "divide"], ["//", "floor-divide"], ["%", "modulo"],
+  ["**", "power"], ["&", "bit-and"], ["|", "bit-or"], ["^", "bit-xor"], ["<<", "left-shift"], [">>", "right-shift"]]);
 const COMPARISONS = new Map([["==", "equal"], ["!=", "not-equal"], ["<", "less"], ["<=", "less-equal"], [">", "greater"], [">=", "greater-equal"], ["is", "is"], ["in", "contains"]]);
 const AUGMENT = new Set(["+=", "-=", "*=", "/=", "//=", "%=", "**=", "@=", "&=", "|=", "^=", "<<=", ">>="]);
 
@@ -377,19 +378,30 @@ class Parser {
     return this.node("Unary", start, {operator: "not", value}, value);
   }
   comparison() {
-    const left = this.addition(), parts = [];
+    const left = this.bitwiseOr(), parts = [];
     while ((["keyword", "op"].includes(this.peek().kind) && COMPARISONS.has(this.peek().value)) || this.at("not")) {
       const token = this.take(); let operator = COMPARISONS.get(token.value), invert = false;
       if (token.value === "not") { this.expect("in"); operator = "contains"; invert = true; }
       else if (token.value === "is" && this.eat("not")) invert = true;
-      parts.push({operator, invert, right: this.addition()});
+      parts.push({operator, invert, right: this.bitwiseOr()});
     }
     return parts.length ? this.node("Compare", left, {left, parts}, parts.at(-1).right) : left;
   }
+  binaryLayer(next, operators) {
+    let value = this[next]();
+    while (operators.some(operator => this.at(operator))) {
+      const operator = BINARY.get(this.take().value), right = this[next]();
+      value = this.node("Binary", value, {operator, left: value, right}, right);
+    }
+    return value;
+  }
+  bitwiseOr() { return this.binaryLayer("bitwiseXor", ["|"]); }
+  bitwiseXor() { return this.binaryLayer("bitwiseAnd", ["^"]); }
+  bitwiseAnd() { return this.binaryLayer("shift", ["&"]); }
+  shift() { return this.binaryLayer("addition", ["<<", ">>"]); }
   addition() {
     let value = this.product();
     while (this.at("+") || this.at("-")) { const operator = BINARY.get(this.take().value), right = this.product(); value = this.node("Binary", value, {operator, left: value, right}, right); }
-    if (["|", "^", "&", "<<", ">>"].some(value => this.at(value))) this.unsupported("Bitwise operators are not adopted.");
     return value;
   }
   product() {
@@ -401,14 +413,17 @@ class Parser {
     return value;
   }
   unary() {
-    if (this.at("+") || this.at("-")) {
+    if (this.at("+") || this.at("-") || this.at("~")) {
       const start = this.take(), value = this.guard(() => this.unary());
-      return this.node("Unary", start, {operator: start.value === "+" ? "positive" : "negative", value}, value);
+      return this.node("Unary", start, {operator: {"+": "positive", "-": "negative", "~": "invert"}[start.value], value}, value);
     }
     if (this.typeExpression && (this.at("yield") || this.at("await"))) this.fail("Yield and await cannot occur in type expressions.");
-    if (["~", "await", "lambda", "yield"].some(value => this.at(value))) this.unsupported("This unary/generator/async expression is not adopted.");
+    if (["await", "lambda", "yield"].some(value => this.at(value))) this.unsupported("This generator/async expression is not adopted.");
     const value = this.primary();
-    if (this.at("**")) this.unsupported("Exponentiation is not adopted.");
+    if (this.eat("**")) {
+      const right = this.guard(() => this.unary());
+      return this.node("Binary", value, {operator: "power", left: value, right}, right);
+    }
     return value;
   }
   primary() {

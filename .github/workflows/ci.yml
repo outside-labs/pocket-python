@@ -133,6 +133,7 @@ jobs:
       - run: node --test runtime/iteration.test.mjs
       - run: node --test runtime/equality.test.mjs
       - run: node --test runtime/hashing.test.mjs
+      - run: node --test runtime/numeric.test.mjs
       - run: node --test runtime/formatting.test.mjs
       - run: node --test runtime/memory.test.mjs
       - run: node --test runtime/functions.test.mjs

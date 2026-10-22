@@ -73,7 +73,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     return error;
   };
   const python = (name, message) => { throw new Raised(exception(name, message)); };
-  const values = new ValueRuntime({memory, charge, fail: (name, message, code = "PYTHON") => {
+  const values = new ValueRuntime({memory, charge, numeric: verified.code.version >= 4, fail: (name, message, code = "PYTHON") => {
     if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message);
     hard(code, name, message);
   }});
@@ -411,7 +411,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor)));
       }
-      else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op))
+      else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else if (op === "contains" && frame.callable.pool.code.version === 5 &&
           (stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||

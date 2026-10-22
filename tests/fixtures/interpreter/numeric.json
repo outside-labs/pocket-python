@@ -3,7 +3,9 @@
   "suite": "interpreter-numeric/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "N1"
+  ],
   "cases": [
     {
       "id": "bitwise-signs",
@@ -964,6 +966,39 @@
       "stage": "Future",
       "source": "class A:\n def __trunc__(self): return 7\ntry: int(A())\nexcept TypeError: print(\"type\")\n",
       "stdout": "type\n"
+    },
+    {
+      "id": "power-negative-base-rounding",
+      "stage": "N1",
+      "source": "print(9007199254740993 ** -1 == 1.1102230246251565e-16)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-negative-exponent-rounding",
+      "stage": "N1",
+      "source": "print((-1) ** -9007199254740993 == 1.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-negative-base-overflow",
+      "stage": "N1",
+      "source": "(10 ** 400) ** -1\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "power-negative-exponent-overflow",
+      "stage": "N1",
+      "source": "1 ** -(10 ** 400)\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "power-negative-zero-exponent-overflow",
+      "stage": "N1",
+      "source": "0 ** -(10 ** 400)\n",
+      "stdout": "",
+      "error_type": "OverflowError"
     }
   ]
 }
