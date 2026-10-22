@@ -6,7 +6,7 @@ import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
 import {ProtocolIteratorValue} from './function-objects.mjs';
 import {valueLayout} from './values.mjs';
-import {completion, completionRoots} from './operations.mjs';
+import {completion, completionRoots, containsTask, operationRoots} from './operations.mjs';
 
 const unit = source => ({name:'app',source,imports:[],package:false,notice:'Synthetic iteration notice'});
 const profile = {languageProfile:'classes-source/1'};
@@ -95,4 +95,65 @@ test('primitive core-source traversal keeps its explicit builtin signatures',asy
   for(const source of ['next(iter([]),7)\n','iter(str,7)\n']){
     const result=await runSourceRequest({modules:[unit(source)]});assert.equal(result.error.code,'UNSUPPORTED');closed(result);
   }
+});
+
+test('membership records retain the original key, iterator and outer destination',()=>{
+  const receiver={},key={},after=completion('relay',{receiver:key});
+  for(const kind of ['contains-result','search-iter','search-next'])
+    assert.deepEqual(completionRoots(completion(kind,{receiver,key,after,depth:0})),[receiver,key,key]);
+  assert.deepEqual(operationRoots(containsTask(receiver,key,null,after)),[receiver,key,key]);
+  assert.throws(()=>containsTask(receiver,key,null,null,0,'search'),TypeError);
+  assert.throws(()=>completion('search-next',{receiver,key,depth:-1}),TypeError);
+});
+
+test('membership stops at the first match and propagates contains/truth callback frames',async()=>{
+  const early=await run('class A:\n def __iter__(self): return self\n def __next__(self):\n  self.i+=1\n  if self.i>1: raise ValueError("late")\n  return 7\na=A()\na.i=0\nprint(7 in a,a.i)\n');
+  assert.equal(early.error,undefined,JSON.stringify(early.error));assert.equal(early.stdout,'True 1\n');closed(early);
+  const error=await run('class R:\n def __bool__(self):\n  return 1//0\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A())\n');
+  assert.equal(error.error.type,'ZeroDivisionError');
+  assert.deepEqual(error.error.traceback.map(f=>[f.function,f.location.span[0]]),[['<module>',6],['__bool__',3]]);closed(error);
+  const stop=await run('class R:\n def __bool__(self): raise StopIteration("truth")\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A())\n');
+  assert.equal(stop.error.type,'StopIteration');closed(stop);
+});
+
+test('native iterator search releases compared values before continuing',async()=>{
+  const result=await run('class A:\n def __iter__(self): return iter("'+'a'.repeat(1200)+'")\nprint("z" in A())\n',{maxWork:20000000},{maxBytes:32000});
+  assert.equal(result.error,undefined,JSON.stringify(result.error));assert.equal(result.stdout,'False\n');closed(result);
+});
+
+test('nonterminating membership and recursive descriptors remain bounded',async()=>{
+  const source='class A:\n def __getitem__(self,key): return key\nprint(-1 in A())\n';
+  const budget=await run(source,{maxSteps:500});assert.equal(budget.error.code,'BUDGET');closed(budget);
+  let polls=0;const cancel=await run(source,{shouldCancel:()=>++polls>12000});assert.equal(cancel.error.code,'CANCELLED');closed(cancel);
+  const recursive=await run('class A:\n def __contains__(self,key): return key in self\nprint(7 in A())\n',{maxDepth:8});
+  assert.equal(recursive.error.type,'RecursionError');closed(recursive);
+});
+
+test('paused membership binding, result truth and search callbacks retain temporary keys',async()=>{
+  const sources=[
+    'class A:\n @property\n def __contains__(self):\n  print("entered")\n  def use(key): return key[0]==7\n  return use\nprint([7] in A())\n',
+    'class R:\n @property\n def __bool__(self):\n  print("entered")\n  def use(): return self.saved[0]==7\n  return use\nclass A:\n def __contains__(self,key):\n  r=R()\n  r.saved=key\n  return r\nprint([7] in A())\n',
+    'class A:\n @property\n def __iter__(self):\n  print("entered")\n  def use(): return iter([[7]])\n  return use\nprint([7] in A())\n',
+    'class A:\n def __iter__(self): return self\n @property\n def __next__(self):\n  print("entered")\n  def use(): return [7]\n  return use\nprint([7] in A())\n'
+  ];
+  for(const source of sources){const {registry}=await compileSourceModules([unit(source)],profile);
+    try{for(const mode of ['finish','cancel','close']){
+      const session=new ModuleSession(registry);let output='',cancel=false,reached=false;
+      session.context.begin({shouldCancel:()=>cancel},text=>{output+=text;});const execution=Execution.modules(session.context);
+      try{while(execution.state!=='completed'){
+        const snapshot=execution.advance();if(execution.state==='paused')session.memory.collect([],{cleanup:true});
+        if(output==='entered\n'&&snapshot.frames.some(f=>f.completion==='invoke')){
+          reached=true;if(mode==='cancel'){cancel=true;assert.throws(()=>execution.advance(),{code:'CANCELLED'});break;}if(mode==='close')break;
+        }
+      }assert.ok(reached);if(mode==='finish')assert.equal(output,'entered\nTrue\n');}
+      finally{execution.close();execution.close();session.context.finish();session.close();}closed({closed:session.stats()});
+    }}finally{registry.close();}
+  }
+});
+
+test('contains callback OOM and endless truth callbacks release pending operands',async()=>{
+  const oom=await run('class A:\n def __contains__(self,key):\n  print("entered")\n  held=[]\n  while True: held.append([1,2,3])\nprint([7] in A())\n',{maxSteps:100000,maxWork:20000000},{maxBytes:32000});
+  assert.equal(oom.error.code,'OOM');assert.equal(oom.stdout,'entered\n');closed(oom);
+  const truth=await run('class R:\n def __bool__(self):\n  while True: pass\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A())\n',{maxSteps:500});
+  assert.equal(truth.error.code,'BUDGET');closed(truth);
 });

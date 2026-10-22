@@ -24,6 +24,8 @@ export function completion(kind, fields = {}) {
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
+    case "contains-result": case "search-iter": case "search-next":
+      record = {kind, receiver: fields.receiver, key: fields.key, after, depth: fields.depth}; depthCheck(record.depth); break;
     case "for-iter": case "for-next": case "for-exhausted": record = {kind}; break;
     case "index-key": record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation ?? "get"), item: fields.item ?? null, after, depth: fields.depth}; depthCheck(record.depth); break;
     case "slice-index":
@@ -64,6 +66,7 @@ function visit(record) {
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
+    case "contains-result": case "search-iter": case "search-next": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
@@ -107,10 +110,16 @@ export function sliceTask(receiver, parts, site, after = null, depth = 0, operat
   if (parts.length !== 3) throw new TypeError("A slice requires three parts.");
   return Object.freeze({kind: "slice", receiver, parts: operands(parts), operation: itemOperation(operation), item, site, completion: after, depth});
 }
+export function containsTask(receiver, key, site, after = null, depth = 0, search = false) {
+  depthCheck(depth); completionRoots(after);
+  if (typeof search !== "boolean") throw new TypeError("Invalid membership phase.");
+  return Object.freeze({kind: "contains", receiver, key, site, completion: after, depth, search});
+}
 export function operationRoots(task) {
   switch (task.kind) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
+    case "contains": return [task.receiver, task.key, ...completionRoots(task.completion)];
     case "slice": return [task.receiver, ...task.parts, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "unary": case "value": return [task.value, ...completionRoots(task.completion)];
     default: throw new TypeError("Unknown operation task.");

@@ -1,5 +1,5 @@
 import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue} from "./function-objects.mjs";
-import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -79,6 +79,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (value.name !== "AttributeError" || !completion?.fallback) return null;
     const {operation, receiver, after, depth, missing} = completion.fallback;
     if (operation === "iter-indexed") return unaryTask(operation, receiver, site, after, depth);
+    if (operation === "contains-search") return containsTask(receiver, completion.fallback.key, site, after, depth, true);
     if (operation === "repr-default") return unaryTask(operation, receiver, site, after, depth);
     // Optional lookup suppresses binding AttributeError, never a method-body error.
     return missing === "length" ? unaryTask(operation, receiver, site, after, depth, true) :
@@ -101,6 +102,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (value.name !== "StopIteration") continue;
       if (current.kind === "next-default") return valueTask(current.default, site, current.after);
       if (current.kind === "for-next") return valueTask(null, site, continuation("for-exhausted"));
+      if (current.kind === "search-next") return valueTask(false, site, current.after);
     }
     return null;
   };
@@ -131,6 +133,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "contains-result") return unaryTask("truth", value, site, completion.after, completion.depth);
+    if (completion?.kind === "search-iter") return searchNext(value, completion.key, site, completion.after, completion.depth);
+    if (completion?.kind === "search-next") {
+      state.temporaries.push(value);
+      if (value === completion.key || values.equal(value, completion.key)) return valueTask(true, site, completion.after);
+      return searchNext(completion.receiver, completion.key, site, completion.after, completion.depth);
+    }
     if (completion?.kind === "iter-result") {
       if (!(values.isIterator(value) || value instanceof InstanceValue && classes.lookup(value.type, "__next__").found))
         python("TypeError", "__iter__ returned a non-iterator");
@@ -230,11 +239,41 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return valueTask(operation === "get" ? values.slice(receiver, ...parts) :
       values.mutateSlice(receiver, ...parts, item, operation === "delete"), site, after, depth);
   };
+  const searchNext = (receiver, key, site, after, depth) => {
+    const task = unaryTask("next", receiver, site, continuation("search-next", {receiver, key, after, depth}), depth);
+    // Transfer to the next closed owner before discarding previous search items.
+    // A long native-iterator search must not retain every compared value.
+    state.temporaries = operationRoots(task);
+    return task;
+  };
   const dispatch = task => {
     while (task) {
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "contains") {
+          state.temporaries.push(...operationRoots(task));
+          const {receiver, key} = task;
+          if (task.search || values.isIterator(receiver)) {
+            task = unaryTask("iter", receiver, site, continuation("search-iter", {receiver, key, after: completion, depth}), depth); continue;
+          }
+          if (!(receiver instanceof InstanceValue)) { task = deliver(values.contains(key, receiver), completion, site); continue; }
+          charge(1);
+          if (++depth > maxDepth) python("RecursionError", "maximum implicit membership dispatch depth exceeded");
+          const fallback = {operation: "contains-search", receiver, key, after: completion, depth};
+          let plan;
+          try { plan = classes.special(receiver, "__contains__"); }
+          catch (error) {
+            const recovery = error instanceof Raised && bindingRecovery(error.value, {fallback}, site);
+            if (!recovery) throw error;
+            task = recovery; continue;
+          }
+          if (!plan) { task = containsTask(receiver, key, site, completion, depth, true); continue; }
+          const finish = continuation("contains-result", {receiver, key, after: completion, depth});
+          task = plan.kind === "value" ? callTask(plan.value, [key], [], [], site, finish, depth) :
+            callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [key], keywords: [], keywordValues: [], after: finish, depth, fallback}), depth);
+          continue;
+        }
         if (task.kind === "item" || task.kind === "slice") {
           state.temporaries.push(...operationRoots(task));
           const {receiver, operation, item} = task;

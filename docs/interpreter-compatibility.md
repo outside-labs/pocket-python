@@ -15,7 +15,7 @@ a continuing program beyond the first application profile.
 
 ## Evidence and interpretation
 
-The 118 trusted probes include representative source programs and all 71 names
+The 119 trusted probes include representative source programs and all 71 names
 in the Python 3.14 built-in-functions index. Builtin exceptions and constants are
 separate language/value surfaces. A positive callable(NAME) result proves name
 availability only, not every signature or value family. Negative availability
@@ -59,7 +59,7 @@ Python coverage is inferred from these probe counts.
 | call-length-truth | supported | Type-level __call__/__len__/__bool__, callable(), len(), bool(), not and control tests in classes-source/1, including adopted descriptor binding and optional truth fallback. Length uses the explicit signed-64-bit contract; later protocols remain separate. |
 | repr-str | partial | print/str display None, bool, int, strings and adopted exception messages; str() and str(s) preserve the adopted identity rules. repr covers None/bool/int/str and explicit user __repr__; type-level __str__/__repr__ callbacks and print sequencing run on the owned machine. Float/container/default-object displays, exception repr, format specifications and unadopted str/print keyword or encoding forms remain deferred. |
 | indexed-user-objects | partial | __index__/__getitem__/__setitem__/__delitem__, raw scalar/tuple/slice keys, builtin conversion and bounded list/tuple RHS slice mutation use owned callbacks. Other iterable RHS forms, slice reflection/formatting/hash, builtin subclasses and wider numeric/sequence APIs remain deferred. |
-| iterated-user-objects | partial | Owned __iter__/__next__, indexed fallback and classes-source iter/next signatures. Containment awaits its next delivery slice; generators and async iteration remain separate. |
+| iterated-user-objects | partial | Owned __iter__/__next__/__contains__, indexed fallback, iter/next signatures and iterator membership search in classes-source/1. Custom rich comparisons, generators/async protocols and broader iterable-consuming APIs remain separate. |
 | user-equality-hash | deferred | __eq__/__ne__/__hash__, NotImplemented, reflected priority and dictionary-key contracts. Primitive comparison and identity do not establish these user protocols. |
 | further-object-protocols | deferred | Arithmetic/reflected/in-place slots, __new__, metaclasses, custom attribute hooks and builtin subclassing. Each slice requires an adopted reference and owned continuation contract. |
 | exceptions | partial | Adopted builtin exception classes, catch/raise/bare reraise, try/except/else/finally, active context and source tracebacks. Custom exception inheritance, explicit causes/suppression and exception groups/except* remain deferred. |

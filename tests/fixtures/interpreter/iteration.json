@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "T1"
+    "T1",
+    "T2"
   ],
   "cases": [
     {
@@ -574,6 +575,57 @@
       "stage": "T2",
       "source": "class A:\n @property\n def __contains__(self):\n  print(\"binding\")\n  raise AttributeError\n def __iter__(self): return iter([7])\nprint(7 in A())\n",
       "stdout": "binding\nTrue\n"
+    },
+    {
+      "id": "iterator-custom-descriptor",
+      "stage": "T1",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(owner.__name__)\n  def use(): return iter([7])\n  return use\nclass A:\n __iter__=D()\nprint(next(iter(A())))\n",
+      "stdout": "A\n7\n"
+    },
+    {
+      "id": "indexed-instance-shadow",
+      "stage": "T1",
+      "source": "class A:\n def __getitem__(self,key):\n  if key: raise IndexError\n  return 7\na=A()\na.__getitem__=None\nprint(next(iter(a)))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "contains-native-iterator",
+      "stage": "T2",
+      "source": "it=iter([3,7,8])\nprint(7 in it,next(it),7 not in it)\n",
+      "stdout": "True 8 True\n"
+    },
+    {
+      "id": "contains-callable-sentinel",
+      "stage": "T2",
+      "source": "class A:\n def __call__(self):\n  self.i+=1\n  return self.i\na=A()\na.i=0\nit=iter(a,4)\nprint(2 in it,next(it),9 in it,next(it,7))\n",
+      "stdout": "True 3 False 7\n"
+    },
+    {
+      "id": "contains-direct-raw-result",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key): return \"raw\"\na=A()\nprint(a.__contains__(7),7 in a)\n",
+      "stdout": "raw True\n"
+    },
+    {
+      "id": "contains-truth-stop-propagates",
+      "stage": "T2",
+      "source": "class R:\n def __bool__(self): raise StopIteration(\"truth\")\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "contains-next-binding-attribute-error",
+      "stage": "T2",
+      "source": "class A:\n def __iter__(self): return self\n @property\n def __next__(self): raise AttributeError(\"binding\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "contains-indexed-lookup-error-propagates",
+      "stage": "T2",
+      "source": "class A:\n def __getitem__(self,key): raise KeyError(\"key\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "KeyError"
     }
   ]
 }
