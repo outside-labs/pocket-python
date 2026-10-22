@@ -38,6 +38,7 @@ export class ModuleContext {
     }
     if ((this.options.shouldCancel !== null && typeof this.options.shouldCancel !== "function") || typeof onOutput !== "function" ||
         Object.keys(this.options).some(key => !["maxSteps", "maxWork", "maxDepth", "shouldCancel"].includes(key))) throw new TypeError("Invalid module execution options.");
+    this.transitions = Object.create(null);
     this.steps = 0; this.work = 0; this.outputLength = 0; this.onOutput = onOutput; this.activeRun = true;
   }
   charge(amount, fail = failure) {

@@ -15,9 +15,12 @@ const fixtureRequest = fixture => ({modules: [{name: 'app', source: fixture.sour
 
 for (const fixture of corpus.cases) test('every instruction boundary matches draining: ' + fixture.id, async () => {
   const request = fixtureRequest(fixture), direct = await runSourceRequest(request);
+  const draining = await runExecutionRequest({...request, quantum: 1000000});
   for (const quantum of [1, 3, 17]) {
-    const {boundaries, steps, work, ...stepped} = await runExecutionRequest({...request, quantum});
+    const {boundaries, steps, work, transitions, ...stepped} = await runExecutionRequest({...request, quantum});
     assert.deepEqual(stepped, direct); assert.ok(boundaries > 0 || fixture.error_type);
+    assert.deepEqual(transitions, draining.transitions);
+    assert.ok(transitions["dispatch:call"] > 0);
     assert.equal(steps, baseline.cases[fixture.id].steps); assert.equal(work, baseline.cases[fixture.id].work);
   }
 });
