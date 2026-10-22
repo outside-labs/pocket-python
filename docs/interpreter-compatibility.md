@@ -211,3 +211,8 @@ References: [language](https://docs.python.org/3.14/reference/index.html),
 [builtins](https://docs.python.org/3.14/builtins/functions.html),
 [data model](https://docs.python.org/3.14/reference/datamodel.html) and
 [template values](https://docs.python.org/3.14/library/string.templatelib.html).
+
+The INT-INDEX-01 [finite contract](interpreter-indexing.md) is delivered through
+focused contract, owned read/conversion, mutation/slice and offline-console steps
+[#135–138](https://github.com/outside-labs/pocket-python/issues/135). Reference-only
+results do not change the inventory support classifications.

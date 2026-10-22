@@ -1,0 +1,550 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-indexing/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "index-sequences",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return -1\nprint([1,7][K()],(2,8)[K()],\"A\ud83d\ude00\"[K()],[1,7][True])\n",
+      "stdout": "7 8 \ud83d\ude00 7\n"
+    },
+    {
+      "id": "index-bool",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return True\nprint([3,7][K()])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "index-invalid-none",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return None\nprint([7][K()])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "index-invalid-float",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return 1.0\nprint([7][K()])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "index-invalid-string",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return \"1\"\nprint([7][K()])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "index-invalid-object",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return self\nprint([7][K()])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "index-huge-positive",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return 999999999999999999999999\nprint([7][K()])\n",
+      "stdout": "",
+      "error_type": "IndexError"
+    },
+    {
+      "id": "index-huge-negative",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return -999999999999999999999999\nprint([7][K()])\n",
+      "stdout": "",
+      "error_type": "IndexError"
+    },
+    {
+      "id": "index-mro-shadow-mutation",
+      "stage": "I1",
+      "source": "class Base:\n def __index__(self): return 0\nclass K(Base): pass\ndef other(self): return 1\nk=K()\nk.__index__=None\nprint([3,7][k])\nBase.__index__=other\nprint([3,7][k])\ndel Base.__index__\nprint([3,7][k])\n",
+      "stdout": "3\n7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "index-direct-raw-result",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return \"raw\"\nk=K()\nprint(k.__index__())\nprint([7][k])\n",
+      "stdout": "raw\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__index__-staticmethod",
+      "stage": "I1",
+      "source": "class K:\n @staticmethod\n def __index__(): return 0\nprint([7][K()])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__index__-classmethod",
+      "stage": "I1",
+      "source": "class K:\n @classmethod\n def __index__(cls): return 0\nprint([7][K()])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__index__-property",
+      "stage": "I1",
+      "source": "class K:\n @property\n def __index__(self):\n  print(\"binding\")\n  def use(): return 0\n  return use\nprint([7][K()])\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "__index__-binding-error",
+      "stage": "I1",
+      "source": "class K:\n @property\n def __index__(self): raise AttributeError(\"binding\")\n[7][K()]\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__index__-none",
+      "stage": "I1",
+      "source": "class K:\n __index__=None\n[7][K()]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__getitem__-staticmethod",
+      "stage": "I1",
+      "source": "class K:\n @staticmethod\n def __getitem__(key): return key+1\nprint(K()[6])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__getitem__-classmethod",
+      "stage": "I1",
+      "source": "class K:\n @classmethod\n def __getitem__(cls,key): return key+1\nprint(K()[6])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__getitem__-property",
+      "stage": "I1",
+      "source": "class K:\n @property\n def __getitem__(self):\n  print(\"binding\")\n  def use(key): return key+1\n  return use\nprint(K()[6])\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "__getitem__-binding-error",
+      "stage": "I1",
+      "source": "class K:\n @property\n def __getitem__(self): raise AttributeError(\"binding\")\nK()[6]\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__getitem__-none",
+      "stage": "I1",
+      "source": "class K:\n __getitem__=None\nK()[6]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "index-body-error",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self):\n  try: raise ValueError(\"index\")\n  finally: print(\"cleanup\")\n[7][K()]\n",
+      "stdout": "cleanup\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "index-mutates-sequence",
+      "stage": "I1",
+      "source": "a=[1,7]\nclass K:\n def __index__(self):\n  a.append(9)\n  return -1\nprint(a[K()],len(a))\n",
+      "stdout": "9 3\n"
+    },
+    {
+      "id": "length-index-result",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return 7\nclass A:\n def __len__(self): return K()\nprint(len(A()),bool(A()))\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "length-negative-index",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return -1\nclass A:\n def __len__(self): return K()\nlen(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "length-index-overflow",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return 9223372036854775808\nclass A:\n def __len__(self): return K()\nlen(A())\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "read-raw-key",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self):\n  print(\"not used\")\n  return 0\nclass A:\n def __getitem__(self,key): return key\nk=K()\nprint(A()[k] is k,A()[\"raw\"],A()[1,2][1])\n",
+      "stdout": "True raw 2\n"
+    },
+    {
+      "id": "read-mro-shadow-mutation",
+      "stage": "I1",
+      "source": "class Base:\n def __getitem__(self,key): return key+1\nclass A(Base): pass\ndef changed(self,key): return key+2\na=A()\na.__getitem__=None\nprint(a[6])\nBase.__getitem__=changed\nprint(a[6])\ndel Base.__getitem__\na[6]\n",
+      "stdout": "7\n8\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-descriptor",
+      "stage": "I1",
+      "source": "class Hook:\n def __get__(self,obj,owner):\n  print(obj.__class__ is owner)\n  def use(key): return key+1\n  return use\nclass A:\n __getitem__=Hook()\nprint(A()[6])\n",
+      "stdout": "True\n7\n"
+    },
+    {
+      "id": "read-return-alias",
+      "stage": "I1",
+      "source": "class A:\n def __init__(self): self.values=[7]\n def __getitem__(self,key): return self.values\na=A()\nb=a[0]\nb.append(8)\nprint(a[9] is b,len(a[1]),a[2][1])\n",
+      "stdout": "True 2 8\n"
+    },
+    {
+      "id": "read-body-error",
+      "stage": "I1",
+      "source": "class A:\n def __getitem__(self,key):\n  try: raise KeyError(\"key\")\n  finally: print(\"cleanup\")\nA()[0]\n",
+      "stdout": "cleanup\n",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "slice-raw-key",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self):\n  print(\"not used\")\n  return 1\nclass A:\n def __getitem__(self,key):\n  print(key.start is k,key.stop,key.step)\n  return 7\nk=K()\nprint(A()[k:9:0])\n",
+      "stdout": "True 9 0\n7\n"
+    },
+    {
+      "id": "slice-default-key",
+      "stage": "I1",
+      "source": "class A:\n def __getitem__(self,key):\n  print(key.start,key.stop,key.step)\n  return 7\nprint(A()[:])\n",
+      "stdout": "None None None\n7\n"
+    },
+    {
+      "id": "slice-constructor",
+      "stage": "I1",
+      "source": "a=slice(7)\nb=slice(1,8)\nc=slice(1,9,2)\nprint(a.start,a.stop,a.step,b.start,b.stop,b.step,c.start,c.stop,c.step)\nprint([0,1,2,3,4][c][0])\n",
+      "stdout": "None 7 None 1 8 None 1 9 2\n1\n"
+    },
+    {
+      "id": "slice-constructor-preserves-keys",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self):\n  print(\"converted\")\n  return 0\nk=K()\ns=slice(k,k,k)\nprint(s.start is k,s.stop is k,s.step is k)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "slice-empty",
+      "stage": "I1",
+      "source": "slice()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-extra",
+      "stage": "I1",
+      "source": "slice(1,2,3,4)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-keyword",
+      "stage": "I1",
+      "source": "slice(stop=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-readonly",
+      "stage": "I1",
+      "source": "s=slice(7)\ns.start=1\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "slice-delete",
+      "stage": "I1",
+      "source": "s=slice(7)\ndel s.stop\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "slice-step-start-stop-order",
+      "stage": "I1",
+      "source": "class K:\n def __init__(self,name,value): self.name=name; self.value=value\n def __index__(self):\n  print(self.name)\n  return self.value\na=[0,1,2,3,4]\nb=a[K(\"start\",1):K(\"stop\",5):K(\"step\",2)]\nprint(len(b),b[0],b[1])\n",
+      "stdout": "step\nstart\nstop\n2 1 3\n"
+    },
+    {
+      "id": "slice-index-mutation",
+      "stage": "I1",
+      "source": "a=[0,1]\nclass K:\n def __index__(self):\n  a.append(7)\n  return 3\nb=a[:K()]\nprint(len(b),b[-1],len(a))\n",
+      "stdout": "3 7 3\n"
+    },
+    {
+      "id": "slice-reverse-clamp",
+      "stage": "I1",
+      "source": "class K:\n def __init__(self,n): self.n=n\n def __index__(self): return self.n\na=\"A\ud83d\ude00Z\"[K(999999999999999999999):K(-999999999999999999999):K(-1)]\nprint(a)\n",
+      "stdout": "Z\ud83d\ude00A\n"
+    },
+    {
+      "id": "slice-zero-step",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return 0\n[1,2][::K()]\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "slice-invalid-bound",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self): return \"bad\"\n[1,2][K():]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-step-failure-before-start",
+      "stage": "I1",
+      "source": "class K:\n def __index__(self):\n  print(\"start\")\n  return 0\n[1,2][K()::0]\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "getitem-source-order",
+      "stage": "I1",
+      "source": "def owner():\n print(\"owner\")\n return A()\ndef key():\n print(\"key\")\n return 6\nclass A:\n def __getitem__(self,key):\n  print(\"get\")\n  return key+1\nprint(owner()[key()])\n",
+      "stdout": "owner\nkey\nget\n7\n"
+    },
+    {
+      "id": "write-delete-return-and-alias",
+      "stage": "I2",
+      "source": "class A:\n def __init__(self): self.values=[3]\n def __getitem__(self,key): return self.values[key]\n def __setitem__(self,key,value):\n  self.values[key]=value\n  return \"ignored\"\n def __delitem__(self,key):\n  self.values[key]=0\n  return \"ignored\"\na=A()\nb=a.values\na[0]=7\nprint(a[0],b[0],a.__setitem__(0,8))\ndel a[0]\nprint(a[0],b[0],a.__delitem__(0))\n",
+      "stdout": "7 7 ignored\n0 0 ignored\n"
+    },
+    {
+      "id": "write-target-order",
+      "stage": "I2",
+      "source": "events=[]\nclass A:\n def __getitem__(self,key):\n  events.append(4)\n  return 10\n def __setitem__(self,key,value): events.append(5)\na=A()\ndef owner():\n events.append(1)\n return a\ndef key():\n events.append(2)\n return 0\ndef rhs():\n events.append(3)\n return 7\nowner()[key()]=rhs()\nprint(events[0],events[1],events[2],events[3])\nevents=[]\nowner()[key()]+=rhs()\nprint(events[0],events[1],events[2],events[3],events[4])\n",
+      "stdout": "3 1 2 5\n1 2 4 3 5\n"
+    },
+    {
+      "id": "delete-target-order",
+      "stage": "I2",
+      "source": "class A:\n def __delitem__(self,key): print(key)\na=A()\ndel a[1],a[2]\n",
+      "stdout": "1\n2\n"
+    },
+    {
+      "id": "__setitem__-property",
+      "stage": "I2",
+      "source": "class A:\n @property\n def __setitem__(self):\n  print(\"binding\")\n  def use(key,value):\n   print(key)\n   return \"ignored\"\n  return use\na=A()\na[0]=7\n",
+      "stdout": "binding\n0\n"
+    },
+    {
+      "id": "__setitem__-none",
+      "stage": "I2",
+      "source": "class A:\n __setitem__=None\na=A()\na[0]=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__setitem__-binding-error",
+      "stage": "I2",
+      "source": "class A:\n @property\n def __setitem__(self): raise AttributeError(\"binding\")\na=A()\na[0]=7\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__setitem__-body-error",
+      "stage": "I2",
+      "source": "class A:\n def __setitem__(self,key,value):\n  try: raise ValueError(\"body\")\n  finally: print(\"cleanup\")\na=A()\na[0]=7\n",
+      "stdout": "cleanup\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__delitem__-property",
+      "stage": "I2",
+      "source": "class A:\n @property\n def __delitem__(self):\n  print(\"binding\")\n  def use(key):\n   print(key)\n   return \"ignored\"\n  return use\na=A()\ndel a[0]\n",
+      "stdout": "binding\n0\n"
+    },
+    {
+      "id": "__delitem__-none",
+      "stage": "I2",
+      "source": "class A:\n __delitem__=None\na=A()\ndel a[0]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__delitem__-binding-error",
+      "stage": "I2",
+      "source": "class A:\n @property\n def __delitem__(self): raise AttributeError(\"binding\")\na=A()\ndel a[0]\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__delitem__-body-error",
+      "stage": "I2",
+      "source": "class A:\n def __delitem__(self,key):\n  try: raise ValueError(\"body\")\n  finally: print(\"cleanup\")\na=A()\ndel a[0]\n",
+      "stdout": "cleanup\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "mutation-mro-shadow",
+      "stage": "I2",
+      "source": "class Base:\n def __setitem__(self,key,value): print(\"base\",value)\n def __delitem__(self,key): print(\"base\",key)\nclass A(Base): pass\ndef setter(self,key,value): print(\"new\",value)\ndef deleter(self,key): print(\"new\",key)\na=A()\na.__setitem__=None\na.__delitem__=None\na[0]=7\ndel a[1]\nBase.__setitem__=setter\nBase.__delitem__=deleter\na[0]=8\ndel a[2]\n",
+      "stdout": "base 7\nbase 1\nnew 8\nnew 2\n"
+    },
+    {
+      "id": "raw-mutation-slices",
+      "stage": "I2",
+      "source": "class A:\n def __setitem__(self,key,value): print(key.start,key.stop,key.step,value)\n def __delitem__(self,key): print(key.start,key.stop,key.step)\na=A()\na[1:8:0]=7\ndel a[::-1]\n",
+      "stdout": "1 8 0 7\nNone None -1\n"
+    },
+    {
+      "id": "tuple-slice-keys",
+      "stage": "I2",
+      "source": "class A:\n def __getitem__(self,key): return key[0].start+key[1]\n def __setitem__(self,key,value): print(key[0].stop,key[1],value)\n def __delitem__(self,key): print(key[0].step,key[1].start)\na=A()\nprint(a[1:4,6])\na[:4,6]=7\ndel a[::2,3:]\n",
+      "stdout": "7\n4 6 7\n2 3\n"
+    },
+    {
+      "id": "slice-target-evaluation",
+      "stage": "I2",
+      "source": "class A:\n def __getitem__(self,key):\n  print(\"get\",key.start,key.stop,key.step)\n  return 1\n def __setitem__(self,key,value): print(\"set\",key.start,value)\n def __delitem__(self,key): print(\"del\",key.stop)\na=A()\ndef part(n):\n print(n)\n return n\ndef rhs():\n print(\"rhs\")\n return 7\na[part(1):part(2):part(3)]=rhs()\na[part(1):part(2)]+=rhs()\ndel a[part(1):part(2)]\n",
+      "stdout": "rhs\n1\n2\n3\nset 1 7\n1\n2\nget 1 2 None\nrhs\nset 1 8\n1\n2\ndel 2\n"
+    },
+    {
+      "id": "list-delete-alias",
+      "stage": "I2",
+      "source": "a=[1,2,7]\nb=a\ndel a[-2]\nprint(a is b,len(b),b[0],b[1])\n",
+      "stdout": "True 2 1 7\n"
+    },
+    {
+      "id": "list-converted-write-delete",
+      "stage": "I2",
+      "source": "class K:\n def __index__(self):\n  print(\"index\")\n  return -1\na=[1,2]\na[K()]=7\nprint(a[1])\ndel a[K()]\nprint(len(a),a[0])\n",
+      "stdout": "index\n7\nindex\n1 1\n"
+    },
+    {
+      "id": "slice-grow-shrink-self",
+      "stage": "I2",
+      "source": "a=[0,1,2,3]\nb=a\na[1:3]=(7,8,9)\nprint(a is b,len(b),b[1],b[3],b[4])\na[1:4]=[]\nprint(len(b),b[0],b[1])\na[:]=a\nprint(a is b,len(b),b[1])\na[1:1]=a\nprint(len(a),a[0],a[1],a[2],a[3])\n",
+      "stdout": "True 5 7 9 3\n2 0 3\nTrue 2 3\n4 0 0 3 3\n"
+    },
+    {
+      "id": "slice-extended-negative",
+      "stage": "I2",
+      "source": "a=[0,1,2,3,4]\na[::2]=[7,8,9]\nprint(a[0],a[2],a[4])\na[::-2]=(1,2,3)\nprint(a[0],a[2],a[4])\ndel a[3::-2]\nprint(len(a),a[0],a[1],a[2])\n",
+      "stdout": "7 8 9\n3 2 1\n3 3 2 1\n"
+    },
+    {
+      "id": "slice-delete-all",
+      "stage": "I2",
+      "source": "a=[1,2,3]\nb=a\ndel a[:]\nprint(a is b,len(b))\n",
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "slice-shape-error-no-mutation",
+      "stage": "I2",
+      "source": "a=[0,1,2]\ntry: a[::2]=[7]\nexcept ValueError: print(a[0],a[1],a[2])\n",
+      "stdout": "0 1 2\n"
+    },
+    {
+      "id": "slice-zero-error-no-mutation",
+      "stage": "I2",
+      "source": "a=[1,2]\ntry: a[::0]=[7]\nexcept ValueError: print(a[0],a[1])\n",
+      "stdout": "1 2\n"
+    },
+    {
+      "id": "slice-index-write-order",
+      "stage": "I2",
+      "source": "class K:\n def __init__(self,name,n): self.name=name; self.n=n\n def __index__(self):\n  print(self.name)\n  return self.n\na=[0,1,2,3]\na[K(\"start\",1):K(\"stop\",4):K(\"step\",2)]=(7,8)\nprint(a[1],a[3])\n",
+      "stdout": "step\nstart\nstop\n7 8\n"
+    },
+    {
+      "id": "slice-write-clamps-after-conversion",
+      "stage": "I2",
+      "source": "a=[1,2]\nclass K:\n def __index__(self):\n  a.append(3)\n  return 99\na[:K()]=[7]\nprint(len(a),a[0])\n",
+      "stdout": "1 7\n"
+    },
+    {
+      "id": "delete-oob",
+      "stage": "I2",
+      "source": "a=[1]\ndel a[7]\n",
+      "stdout": "",
+      "error_type": "IndexError"
+    },
+    {
+      "id": "delete-tuple",
+      "stage": "I2",
+      "source": "a=(1,)\ndel a[0]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-tuple",
+      "stage": "I2",
+      "source": "a=(1,)\na[0]=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "delete-bad-index",
+      "stage": "I2",
+      "source": "a=[1]\ndel a[\"x\"]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-bad-index",
+      "stage": "I2",
+      "source": "a=[1]\na[\"x\"]=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-rhs-int",
+      "stage": "I2",
+      "source": "a=[1]\na[:]=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "future-arithmetic",
+      "stage": "I3",
+      "source": "class A:\n def __add__(self,x): return 7\nprint(A()+1)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-iteration",
+      "stage": "I3",
+      "source": "class A:\n def __iter__(self): return iter([7])\nprint(next(iter(A())))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-slice-string-rhs",
+      "stage": "I3",
+      "source": "a=[1]\na[:]=\"x\"\nprint(a[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "future-slice-iterator-rhs",
+      "stage": "I3",
+      "source": "a=[1]\na[:]=iter((7,))\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-slice-dict-rhs",
+      "stage": "I3",
+      "source": "a=[1]\na[:]={\"x\":7}\nprint(a[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "future-slice-indices",
+      "stage": "I3",
+      "source": "s=slice(1,None,2)\nprint(s.indices(7)[2])\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "future-slice-repr",
+      "stage": "I3",
+      "source": "print(repr(slice(1,7)))\n",
+      "stdout": "slice(1, 7, None)\n"
+    },
+    {
+      "id": "future-slice-hash",
+      "stage": "I3",
+      "source": "s=slice(1,7)\nd={s:7}\nprint(d[s])\n",
+      "stdout": "7\n"
+    }
+  ]
+}
