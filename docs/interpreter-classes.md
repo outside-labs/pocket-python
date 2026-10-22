@@ -43,8 +43,9 @@ three-argument type and full builtin-type reflection are later.
 __name__, __qualname__, __module__, __bases__ and __mro__ expose bounded class
 metadata; instance __class__ is readable. Structural metadata mutation and raw
 __dict__ access are deferred. Classes, instances and method wrappers stay inside
-the arena and have no by-value transport. Dictionary keys involving these values
-require a later identity-hash contract. Other custom special methods, private
+the arena and have no by-value transport. Adopted dictionary keys follow the
+[owned equality/hash contract](interpreter-equality.md); bound-method hashing
+retains a separate boundary. Other custom special methods, private
 name mangling, metaclasses, slots, super(), descriptors and decorators are
 explicitly refused in C1 rather than given partial Python semantics.
 
@@ -70,12 +71,13 @@ The [selected protocol sequence and call contract](interpreter-special-methods.m
 start with the delivered __call__/callable() and __len__/__bool__ milestones,
 followed by the delivered [bounded repr/str slice](interpreter-formatting.md)
 and [integer conversion/item/slice contract](interpreter-indexing.md), then
-[owned iteration and containment](interpreter-iteration.md).
+[owned iteration and containment](interpreter-iteration.md), and
+[equality/hash and dictionary keys](interpreter-equality.md).
 Length/truth and formatting resume operations through ordinary VM callbacks and
 validated results; pending print arguments have explicit owned completions.
 Choose and test an explicit special-method matrix before each extension. Cover
 implicit lookup on the type, return-type validation, exception transport and
-bounded recursive dispatch. __new__, arithmetic/comparison overrides,
+bounded recursive dispatch. __new__, arithmetic/ordering overrides,
 __getattribute__/__getattr__, attribute mutation hooks and further formatting
 remain refused until their individual cases and resource rules are adopted.
 Metaclasses, __prepare__, __mro_entries__, __init_subclass__, __classcell__/zero-
@@ -112,8 +114,8 @@ receiver/function method wrappers. Limits are sixteen direct bases, sixty-four
 MRO entries and 128 attributes per namespace/instance. Explicit layout edges
 retain bases, namespaces, receivers and lexical function graphs. Growth and
 foreign-arena failures roll back mutations; cyclic graphs release with roots.
-Truth/identity and supported method equality remain distinct from deferred
-hashing and by-value transport. Core engine locks include the changed allocation
+The [hashing contract](interpreter-equality.md) adds owned identity labels;
+by-value transport remains deferred. Core engine locks include the changed allocation
 layouts; the execution and source integration below use the same layouts.
 
 ## Verified execution foundation
@@ -208,5 +210,12 @@ The indexed-object checkpoint adopts __index__, __getitem__, __setitem__ and
 __delitem__, raw slice/tuple keys, builtin sequence conversion and bounded list
 slice mutation. Its 89-case matrix has 81 reference comparisons and eight future
 refusals. The offline console has 54 source comparisons and 15 acceptance groups,
-including 15 Stop/Restart cycles. Iteration and comparison/hash remain later C3
-steps; these bounded protocols do not close INT-09 or the async milestone.
+including 15 Stop/Restart cycles. The iteration and equality/hash checkpoints
+extend this baseline; these bounded protocols do not close INT-09 or the async milestone.
+
+The current equality/hash checkpoint has 103 source cases (97 comparisons and six
+explicit refusals) and 244 passing Node tests, including the unchanged composed
+resource baselines. The class console has 76 comparisons, 21 acceptance groups
+and 35 Stop/Restart cycles. Fresh offline source covers comparison binding,
+NotImplemented, hash collisions and stored-key identity. Remaining structural
+dictionary reentry, bound-method/slice hashing and ordering keep explicit gates.

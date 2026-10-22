@@ -66,8 +66,9 @@ this wider goal. Keep Python-version, target, language, stdlib, package and nati
 ABI promises separate; the pinned 3.14.7 oracle changes only deliberately.
 
 The [bounded repr/str slice](docs/interpreter-formatting.md), indexed objects and
-[iteration/containment](docs/interpreter-iteration.md) are implemented.
-Resume equality/hash protocols while the
+[iteration/containment](docs/interpreter-iteration.md) and
+[equality/hash protocols](docs/interpreter-equality.md) are implemented.
+Continue the numeric, sequence and object protocol work while the
 persistent-session/host program advances through its own contracts. INT-09 and
 INT-10 stay open; the execution foundation is delivered, while their remaining
 protocols, parked ownership, events and host/async behavior still require

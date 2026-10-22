@@ -138,3 +138,20 @@ construction transfers operands between insertions; a 100-key source literal
 passes within a 262,144-byte logical arena. Ten focused hashing units and all
 244 Node tests pass, including atomic resize failure, paused collection/cancel/
 close, callback OOM and the unchanged eight composed resource baselines.
+
+## Offline acceptance and payload
+
+The console has 76 source comparisons, 21 acceptance groups and 35 Stop/Restart
+cycles. Fresh input after offline reload exercises property-bound equality,
+NotImplemented/default inequality, collision lookup, replacement/deletion and
+original key identity. Source diagnostics cover binding/body errors, invalid hash
+results and disabled hashes. Pending comparison, hash and key-truth operations
+stop/restart cleanly. A waiting class-to-core update removes the added builtin
+authority; all requests remain local static GETs.
+
+The complete [payload record](measurements/2026-10-22-equality.json) verifies the
+preceding revision's input/source hashes and records every current file, hash,
+notice and per-file gzip size. With the same source, complete bytes grow from
+385,018 to 413,091 (+28,073), including 28,056 engine bytes. The expanded example
+adds 518 source bytes, totaling 413,609 bytes across 37 files. These observations
+do not establish startup, speed, device inference or package compatibility.
