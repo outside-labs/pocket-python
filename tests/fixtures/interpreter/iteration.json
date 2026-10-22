@@ -626,6 +626,18 @@
       "source": "class A:\n def __getitem__(self,key): raise KeyError(\"key\")\nprint(7 in A())\n",
       "stdout": "",
       "error_type": "KeyError"
+    },
+    {
+      "id": "callable-reentrant-exhaustion",
+      "stage": "T1",
+      "source": "class Supply:\n def __init__(self): self.inner=False\n def __call__(self):\n  if self.inner: raise StopIteration\n  self.inner=True\n  print(next(it,3))\n  return 7\nit=iter(Supply(),9)\nprint(next(it,5),next(it,6))\n",
+      "stdout": "3\n5 6\n"
+    },
+    {
+      "id": "indexed-reentrant-exhaustion",
+      "stage": "T1",
+      "source": "class A:\n def __getitem__(self,key):\n  if self.inner: raise IndexError\n  self.inner=True\n  print(next(it,3))\n  return 7\na=A()\na.inner=False\nit=iter(a)\nprint(next(it,5),next(it,6))\n",
+      "stdout": "3\n7 6\n"
     }
   ]
 }

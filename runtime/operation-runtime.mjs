@@ -153,7 +153,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "callable-result") {
       const iterator = completion.receiver;
-      if (value === iterator.sentinel || values.equal(iterator.sentinel, value)) {
+      if (iterator.exhausted || value === iterator.sentinel || values.equal(iterator.sentinel, value)) {
         exhaust(iterator); return unaryTask("iterator-stop", iterator, site, completion.after);
       }
       return valueTask(value, site, completion.after);

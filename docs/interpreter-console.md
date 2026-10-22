@@ -68,7 +68,7 @@ equality/hash protocols and async remain later stages. Language selection is
 independent of `--library-profile`;
 both language profiles use the same complete pinned engine.
 
-Iteration/containment acceptance has 62 source comparisons and 18 Chromium
+Iteration/containment acceptance has 63 source comparisons and 18 Chromium
 acceptance groups. Newly entered offline programs exercise custom next-slot
 binding, indexed membership, next/default and callable sentinels. Twenty-five
 Stop/Restart cycles include pending iteration/contains hooks and result truth
