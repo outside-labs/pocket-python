@@ -48,8 +48,8 @@ boolean. A present noncallable/None slot fails instead of falling back. With no
 contains slot, acquire an iterator and search until identity/adopted equality
 matches or advancement exhausts. Stop immediately on a match. Acquisition,
 contains binding/body and truth-conversion errors propagate, including
-StopIteration. Rich custom comparisons remain separately gated by INT-EQ-01;
-iteration does not authorize an approximate custom equality implementation.
+StopIteration. Rich custom comparisons follow the separately adopted
+[equality contract](interpreter-equality.md).
 Optional `__iter__`/`__contains__` lookup treats a binding AttributeError as a
 missing hook and takes its fallback. An AttributeError from the hook body still
 propagates. Next-slot lookup does not suppress binding AttributeError.
@@ -78,7 +78,7 @@ callback errors, pending-hook Stop/Restart and waiting reduced-profile updates.
 - [Offline acceptance #150](https://github.com/outside-labs/pocket-python/issues/150).
 
 These refine [INT-ITER-01/#113](https://github.com/outside-labs/pocket-python/issues/113).
-The parent class milestone remains open for equality/hash and later protocols.
+The parent class milestone remains open for later object protocols and async.
 The [builtin signatures](https://docs.python.org/3.14/library/functions.html#iter)
 and [data model](https://docs.python.org/3.14/reference/datamodel.html#object.__iter__)
 are documentation references; the executable oracle remains pinned independently
@@ -136,3 +136,20 @@ with the same 25 Stop/Restart cycles. The separate
 [correction payload](measurements/2026-10-22-iteration-reentry.json) records
 385,018 bytes, a 22-byte increase with the same example source. Earlier counts
 and the original payload remain evidence for the preceding checkpoint.
+
+## Deferred iterable consumers
+
+List `+=` retains its admitted list, tuple, dictionary and string RHS forms.
+Other iterator and custom iterable forms remain deferred to INT-SEQ-01. A custom
+`__iter__` or indexed fallback, and internal callable/indexed iterators, now
+produce an explicit UnsupportedOperationError before binding or consuming their
+hooks. A missing iterable protocol or `__iter__ = None` keeps ordinary TypeError;
+the disabled slot prevents indexed fallback. Neither path mutates the list.
+
+Six source regressions bring the matrix to 104 cases: 98 comparisons and six
+explicit refusals, passing in Node and Chromium through drain/stepped execution.
+All 245 Node tests pass, including unchanged resource baselines and refusal
+before inherited descriptor effects. The separate
+[boundary payload](measurements/2026-10-22-iterable-boundary.json) verifies the
+preceding equality/hash checkpoint and records 414,161 bytes across 37 files,
+an increase of 552 bytes with the same example source.

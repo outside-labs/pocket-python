@@ -639,6 +639,42 @@
       "stage": "T1",
       "source": "class A:\n def __getitem__(self,key):\n  if self.inner: raise IndexError\n  self.inner=True\n  print(next(it,3))\n  return 7\na=A()\na.inner=False\nit=iter(a)\nprint(next(it,5),next(it,6))\n",
       "stdout": "3\n7 6\n"
+    },
+    {
+      "id": "future-list-extension-iterable",
+      "stage": "T3",
+      "source": "class A:\n def __iter__(self): return iter([7])\na=[3]\na+=A()\nprint(a[0],a[1])\n",
+      "stdout": "3 7\n"
+    },
+    {
+      "id": "future-list-extension-indexed",
+      "stage": "T3",
+      "source": "class A:\n def __getitem__(self,key):\n  if key: raise IndexError\n  return 7\na=[3]\na+=A()\nprint(a[0],a[1])\n",
+      "stdout": "3 7\n"
+    },
+    {
+      "id": "future-list-extension-sentinel",
+      "stage": "T3",
+      "source": "class A:\n def __init__(self): self.i=0\n def __call__(self):\n  self.i+=1\n  return self.i\na=[3]\na+=iter(A(),2)\nprint(a[0],a[1])\n",
+      "stdout": "3 1\n"
+    },
+    {
+      "id": "list-extension-noniterable",
+      "stage": "T1",
+      "source": "class A: pass\na=[3]\ntry: a+=A()\nexcept TypeError: print(a[0],len(a))\n",
+      "stdout": "3 1\n"
+    },
+    {
+      "id": "list-extension-disabled-iteration",
+      "stage": "T1",
+      "source": "class A:\n __iter__=None\n def __getitem__(self,key):\n  print(\"bad\")\n  return 7\na=[3]\ntry: a+=A()\nexcept TypeError: print(a[0],len(a))\n",
+      "stdout": "3 1\n"
+    },
+    {
+      "id": "list-extension-admitted-values",
+      "stage": "T1",
+      "source": "a=[3]\nalias=a\na+=[7]\na+=(8,)\na+={9:0}\na+=\"x\"\nprint(alias is a,len(a),a[0],a[1],a[2],a[3],a[4])\n",
+      "stdout": "True 5 3 7 8 9 x\n"
     }
   ]
 }

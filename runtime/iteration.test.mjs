@@ -97,6 +97,24 @@ test('primitive core-source traversal keeps its explicit builtin signatures',asy
   }
 });
 
+test('list extension refuses deferred iterables before hook binding or consumption',async()=>{
+  const prefixes=[
+    'class A:\n def __iter__(self):\n  print("called")\n  return iter([7])\n',
+    'class Base:\n @property\n def __iter__(self):\n  print("bound")\n  return str\nclass A(Base): pass\n',
+    'class A:\n @property\n def __getitem__(self):\n  print("bound")\n  return str\n',
+    'def supply():\n print("called")\n return 1\n'
+  ];
+  for(let i=0;i<prefixes.length;i++){
+    const result=await run(prefixes[i]+'a=[3]\na+='+ (i===3?'iter(supply,1)':'A()')+'\n');
+    assert.equal(result.error.code,'UNSUPPORTED');assert.equal(result.stdout,'');closed(result);
+  }
+  for(const declaration of ['class A: pass\n',
+    'class A:\n __iter__=None\n @property\n def __getitem__(self):\n  print("bad")\n  return str\n']){
+    const result=await run(declaration+'a=[3]\ntry: a+=A()\nexcept TypeError: print(a[0],len(a))\n');
+    assert.equal(result.error,undefined,JSON.stringify(result.error));assert.equal(result.stdout,'3 1\n');closed(result);
+  }
+});
+
 test('membership records retain the original key, iterator and outer destination',()=>{
   const receiver={},key={},after=completion('relay',{receiver:key});
   for(const kind of ['contains-result','search-iter','search-next'])

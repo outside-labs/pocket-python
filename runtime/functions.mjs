@@ -426,6 +426,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (["less", "less-equal", "greater", "greater-equal"].includes(op) && frame.callable.pool.code.version === 5 &&
           (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1))))
         hard("UNSUPPORTED", "UnsupportedOperationError", "Ordering with user values requires its own comparison stage.");
+      else if (op === "inplace-add" && stack.at(-1) instanceof InstanceValue && values.isList(stack.at(-2))) {
+        const right = stack.pop(), left = stack.pop(), iterator = classes.lookup(right.type, "__iter__");
+        if (iterator.found ? iterator.value !== null : classes.lookup(right.type, "__getitem__").found)
+          hard("UNSUPPORTED", "UnsupportedOperationError", "List += with a user iterable requires its own sequence stage.");
+        stack.push(values.inplace("add", left, right));
+      }
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
     } catch (error) { handle(error); }
   };
