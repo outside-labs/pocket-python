@@ -60,6 +60,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return args[0].type;
     }
     if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
+    if (callable.name === "str" && values.text(args[0]) !== null) return args[0];
     return callable.name === "len" ? values.unary("len", args[0]) : values.string(Array.from(display(args[0]), char => char.codePointAt(0)));
   };
   const lengthResult = value => {

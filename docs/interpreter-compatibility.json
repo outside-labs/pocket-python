@@ -289,15 +289,14 @@
     {
       "id": "repr-str",
       "status": "partial",
-      "scope": "print/str display None, bool, int, strings and adopted exception messages; print accepts positional arguments only.",
-      "gaps": "str(s) currently loses identity; str() and repr are unavailable. User __repr__/__str__, float/container/default-object output and format specs are not adopted.",
+      "scope": "print/str display None, bool, int, strings and adopted exception messages; print accepts positional arguments only. str(s) preserves existing string identity.",
+      "gaps": "str() and repr are unavailable. User __repr__/__str__, float/container/default-object output and format specs are not adopted.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-STR-01",
         "INT-REPR-01",
         "INT-REPR-02",
         "INT-REPR-03",
@@ -312,7 +311,9 @@
         "container-formatting",
         "builtin-repr"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/source.json:str-preserves-identity"
+      ]
     },
     {
       "id": "indexed-user-objects",
@@ -1855,15 +1856,14 @@
     {
       "id": "str",
       "status": "partial",
-      "scope": "str(x), None/bool/int/str/adopted exception messages.",
-      "gaps": "Identity defect, zero-argument form, user/float/container formatting and encoding forms.",
+      "scope": "str(x), None/bool/int/str/adopted exception messages. Existing strings retain identity.",
+      "gaps": "Zero-argument form, user/float/container formatting and encoding forms.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-STR-01",
         "INT-REPR-02",
         "INT-TEXT-01",
         "INT-VALUES-01"
