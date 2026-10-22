@@ -99,8 +99,8 @@
     {
       "id": "container-values",
       "status": "partial",
-      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion.",
-      "gaps": "Constructors, broad method APIs, user hashing/equality, collection displays/unpacking, sets and buffers are deferred.",
+      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality.",
+      "gaps": "Constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -345,14 +345,16 @@
       "id": "iterated-user-objects",
       "status": "partial",
       "scope": "Owned __iter__/__next__/__contains__, indexed fallback, iter/next signatures and iterator membership search in classes-source/1.",
-      "gaps": "Custom rich comparisons, generators/async protocols and broader iterable-consuming APIs remain separate.",
+      "gaps": "Generators/async protocols, broader iterable-consuming APIs and ordering remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-ITER-01"
+        "INT-GEN-01",
+        "INT-SEQ-01",
+        "INT-10"
       ],
       "probes": [
         "iterator-hook",
@@ -376,7 +378,8 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-EQ-01"
+        "INT-SEQ-01",
+        "INT-OBJECT-01"
       ],
       "probes": [
         "equality-hook",
@@ -1286,7 +1289,8 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-EQ-01"
+        "INT-SEQ-01",
+        "INT-OBJECT-01"
       ],
       "probes": [
         "builtin-hash"
@@ -1433,7 +1437,8 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-ITER-01"
+        "INT-GEN-01",
+        "INT-SEQ-01"
       ],
       "probes": [
         "builtin-iter"
@@ -1582,7 +1587,8 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-ITER-01"
+        "INT-GEN-01",
+        "INT-SEQ-01"
       ],
       "probes": [
         "builtin-next"

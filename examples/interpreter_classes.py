@@ -111,6 +111,26 @@ for item in shelf:
 print("Contains:", 25 in shelf, 9 not in shelf)
 cursor = iter(shelf)
 print("Next:", next(cursor), next(cursor), next(cursor, "done"))
+
+class Label:
+    def __init__(self, name):
+        self.__name = name
+
+    def __eq__(self, other):
+        if not isinstance(other, Label):
+            return NotImplemented
+        return self.__name == other.__name
+
+    def __hash__(self):
+        return hash(self.__name)
+
+first = Label("alpha")
+same = Label("alpha")
+labels = {first: 3}
+labels[same] = 7
+print("Equal:", first == same, first != Label("beta"))
+print("Key:", labels[same], "Count:", len(labels))
+print("Original key:", next(iter(labels)) is first)
 '''
 
 if __name__ == '__main__':

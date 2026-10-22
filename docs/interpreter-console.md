@@ -58,13 +58,14 @@ bound methods, [private names](interpreter-private-names.md), and the adopted
 [callable instances, queries and length/truth protocols](interpreter-special-methods.md),
 and [bounded repr/str](interpreter-formatting.md),
 [integer indices/item/slice mutation](interpreter-indexing.md) and
-[iteration/containment](interpreter-iteration.md).
+[iteration/containment](interpreter-iteration.md) and
+[equality/hash and dictionary keys](interpreter-equality.md).
 The editor shows the selected profile. Build a class example
 with `uv run python -m examples.interpreter_classes`, then serve
 `build/class-console`. Its Counter example uses len(), bool(), not, __repr__ and
 __str__ alongside callable methods. Core source also supports primitive repr and
 str(). Float/container/default-object formatting and
-equality/hash protocols and async remain later stages. Language selection is
+ordering protocols and async remain later stages. Language selection is
 independent of `--library-profile`;
 both language profiles use the same complete pinned engine.
 
@@ -75,6 +76,13 @@ Stop/Restart cycles include pending iteration/contains hooks and result truth
 conversion. A waiting class-to-core update removes the extra signatures while
 retaining primitive traversal. The finite source matrix remains separately
 checked through drain and instruction-step drivers.
+
+Equality/hash acceptance has 76 source comparisons, 21 acceptance groups and 35
+Stop/Restart cycles. Fresh offline programs exercise property-bound comparison,
+NotImplemented/default inequality, hash collisions, key replacement/deletion and
+original key identity. Source errors cover binding/body failures, invalid hash
+results and disabled hashing. A waiting core update removes hash/NotImplemented
+authority along with class syntax and the extra iteration signatures.
 
 The formatting checkpoint includes 38 source comparisons and 13 Chromium
 acceptance groups: fresh offline input, callback/binding/result errors, prefix

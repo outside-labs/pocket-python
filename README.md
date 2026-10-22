@@ -144,7 +144,8 @@ adopted [descriptors, properties and decorators](docs/interpreter-descriptors.md
 and [callable objects plus length/truth protocols](docs/interpreter-special-methods.md),
 with [bounded repr/str formatting](docs/interpreter-formatting.md) and
 [integer conversion and item/slice protocols](docs/interpreter-indexing.md) plus
-[iteration and containment](docs/interpreter-iteration.md), Node/Chromium
+[iteration and containment](docs/interpreter-iteration.md) and
+[equality and hashing](docs/interpreter-equality.md), Node/Chromium
 and offline-console checks. Build its example with
 `uv run python -m examples.interpreter_classes`. The default core-source/1 profile
 remains available; further special protocols and async follow separate stages.

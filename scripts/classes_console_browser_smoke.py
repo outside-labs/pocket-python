@@ -71,6 +71,7 @@ def smoke(channel=None):
                     assert 'private names' in page.locator('#language').inner_text()
                     assert 'integer indices and item/slice access and mutation' in page.locator('#language').inner_text()
                     assert 'iteration and containment' in page.locator('#language').inner_text()
+                    assert 'equality and hashing' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -116,6 +117,14 @@ def smoke(channel=None):
                                      'indexed-loop', 'callable-sentinel-loop', 'contains-result-truth',
                                      'contains-iterator-search', 'contains-optional-binding-iter',
                                      'callable-reentrant-exhaustion'])
+                    equality = json.loads((ROOT / 'tests/fixtures/interpreter/equality.json').read_bytes())
+                    programs.extend(c['source'] for c in equality['cases'] if c['id'] in
+                                    ['eq-raw-result', 'subtype-reflected-first', 'notimplemented-default-fallback',
+                                     'ne-default-result-truth', 'membership-rich-eq-truth', 'sentinel-rich-equality',
+                                     'container-nested-rich-equality', 'dictionary-collision-update-delete',
+                                     'hash-restore-object', 'dictionary-primitive-and-user-key',
+                                     'dictionary-value-mutation-during-eq', 'hash-default-descriptor-identity'])
+                    programs.append('import operator\nclass Key:\n def __hash__(self): return 7\n def __eq__(self,other): return other==7\nd={7:9}\nprint(operator.eq(Key(),7),operator.getitem(d,Key()))\n')
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -202,6 +211,16 @@ def smoke(channel=None):
                     refused('class R:\n def __bool__(self): return 7\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A())\n', 'TypeError:')
                     run(SOURCE, cases[0]['stdout'])
                     checks.append('iteration-result-next-and-membership-binding-truth-source-errors')
+                    refused('class A:\n def __eq__(self,other):\n  return 1//0\nprint(A()==7)\n', 'ZeroDivisionError:')
+                    assert '__eq__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n @property\n def __eq__(self):\n  raise ValueError("binding")\nprint(A()==7)\n', 'ValueError:')
+                    assert '__eq__ at sources/app.py:4' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n def __hash__(self): return "bad"\nhash(A())\n', 'TypeError:')
+                    assert 'sources/app.py:3' in page.locator('#status').inner_text()
+                    refused('class A:\n def __eq__(self,other): return True\nhash(A())\n', 'TypeError:')
+                    refused('class K:\n def __hash__(self): return 7\nhash((K(),))\n', 'UnsupportedOperationError:')
+                    run(SOURCE, cases[0]['stdout'])
+                    checks.append('equality-binding-body-hash-result-disabling-and-explicit-future-errors')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -217,6 +236,10 @@ def smoke(channel=None):
                     checks.append('new-iterator-binding-default-and-indexed-membership-source-offline')
                     run('class OfflineContains:\n @property\n def __contains__(self):\n  def use(key): return key==7\n  return use\nclass Supply:\n def __init__(self): self.i=0\n def __call__(self):\n  self.i+=1\n  return self.i\nprint(7 in OfflineContains(),8 not in OfflineContains())\nfor x in iter(Supply(),3): print(x)\n', 'True True\n1\n2\n')
                     checks.append('new-contains-binding-and-callable-sentinel-source-offline')
+                    run('class OfflineNumber:\n def __init__(self,value): self.__value=value\n @property\n def __eq__(self):\n  def compare(other):\n   if isinstance(other,OfflineNumber): return self.__value==other.__value\n   return NotImplemented\n  return compare\nprint(OfflineNumber(7)==OfflineNumber(7),OfflineNumber(7)!=OfflineNumber(8))\nprint(OfflineNumber(7) in [OfflineNumber(7)],OfflineNumber(7)==7)\n', 'True True\nTrue False\n')
+                    checks.append('new-equality-binding-fallback-and-membership-source-offline')
+                    run('class OfflineKey:\n def __init__(self,name): self.__name=name\n def __hash__(self): return 7\n def __eq__(self,other):\n  if not isinstance(other,OfflineKey): return NotImplemented\n  return self.__name==other.__name\na=OfflineKey("a")\nb=OfflineKey("b")\nd={a:3,b:8}\nd[OfflineKey("a")]=7\nprint(len(d),d[a],d[b],OfflineKey("a") in d)\nprint(next(iter(d)) is a)\ndel d[OfflineKey("b")]\nprint(len(d),d[a])\n', '2 7 8 True\nTrue\n1 7\n')
+                    checks.append('new-hash-collision-update-key-identity-and-delete-source-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -244,6 +267,17 @@ def smoke(channel=None):
                     busy.extend([
                         'class Spin:\n def __getitem__(self,key):\n  while True: pass\nfor x in Spin(): pass\n',
                         'class R:\n def __bool__(self):\n  while True: pass\nclass Spin:\n def __contains__(self,key): return R()\n[7] in Spin()\n'])
+                    for slot, invocation in [('__eq__', 'print(Spin()==[7])'),
+                                             ('__ne__', 'print(Spin()!=[7])'),
+                                             ('__hash__', 'd={Spin():[[7]]}')]:
+                        for binding in [False, True]:
+                            busy.append('class Spin:\n '+('@property\n ' if binding else '')+
+                                        'def '+slot+'(self'+(',other' if slot!='__hash__' and not binding else '')+'):\n  while True: pass\n'+invocation+'\n')
+                    busy.extend([
+                        'class Sentinel:\n def __eq__(self,other):\n  while True: pass\ndef supply(): return [7]\nnext(iter(supply,Sentinel()),[3])\n',
+                        'class K:\n def __hash__(self): return 7\n def __eq__(self,other):\n  while True: pass\nd={K():[3]}\nd[K()]=[7]\n',
+                        'class R:\n def __bool__(self):\n  while True: pass\nclass K:\n def __hash__(self): return 7\n def __eq__(self,other): return R()\nd={K():[3]}\nd[K()]=[7]\n',
+                        'class R:\n def __bool__(self):\n  while True: pass\nclass Spin:\n def __eq__(self,other): return R()\nprint(Spin()!=7)\n'])
                     stopped = []
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
@@ -259,7 +293,7 @@ def smoke(channel=None):
                         page.click('#restart')
                         ready()
                         run(SOURCE, cases[0]['stdout'])
-                    checks.append('call-length-truth-format-index-iteration-containment-and-pending-bindings-stop-with-fresh-restarts')
+                    checks.append('call-truth-format-index-iteration-containment-equality-hash-and-pending-bindings-stop-with-fresh-restarts')
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/nested/classes')
                     shutil.copytree(root / 'reduced', root / 'site/nested/classes')
@@ -287,6 +321,8 @@ def smoke(channel=None):
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')
+                    refused('hash(7)\n', 'NameError:')
+                    refused('NotImplemented\n', 'NameError:')
                     run('print(len("okay"),bool([]))\n', '4 False\n')
                     run('print(repr("A😀"),len(str()))\n', "'A😀' 0\n")
                     run('print(7)\n', '7\n')
