@@ -53,6 +53,9 @@ consolidation. Add no language feature or host grant through structural migratio
 Each new engine file belongs to the pinned asset/notice closure; the independent
 engine remains outside released Python distributions until its release gate.
 
+The [execution contract](execution-contract.md) maps the existing owners and
+transitions; its composed fixtures pin the initial accounting rules.
+
 ## Next five focused PRs
 
 | Task | Reviewable result | Dependency |

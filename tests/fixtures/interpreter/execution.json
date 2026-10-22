@@ -1,0 +1,120 @@
+{
+  "suite": "interpreter-execution/1",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "E1"
+  ],
+  "cases": [
+    {
+      "id": "nested-binding-truth-finally",
+      "stage": "E1",
+      "source": "class Flag:\n @property\n def __bool__(self):\n  print('truth binding')\n  def yes():\n   print('truth body')\n   return True\n  return yes\nclass Invoke:\n def __call__(self,x,*,y):\n  try: return x[0]+y[0]\n  finally:\n   if Flag(): print('finally')\nclass Bind:\n def __get__(self,obj,owner):\n  print('call binding')\n  return Invoke()\nclass Target:\n __call__=Bind()\nprint(Target()([3],y=[4]))\n",
+      "stdout": "call binding\ntruth binding\ntruth body\nfinally\n7\n"
+    },
+    {
+      "id": "import-during-pending-return",
+      "stage": "E1",
+      "source": "class Flag:\n @property\n def __bool__(self):\n  import helper\n  return helper.yes\nclass Target:\n def __call__(self,value):\n  try: return value\n  finally:\n   if Flag(): print('cleanup')\nprint(Target()([7])[0])\n",
+      "stdout": "helper\ncleanup\n7\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "print('helper')\ndef yes(): return True\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "helper"
+      ]
+    },
+    {
+      "id": "import-failure-retry-in-truth-finally",
+      "stage": "E1",
+      "source": "import state\nclass Flag:\n def __bool__(self):\n  try: import bad\n  except ValueError as error:\n   print(str(error),len(state.calls))\n  return True\ntry:\n raise TypeError('outer')\nexcept TypeError as error:\n try:\n  if Flag(): print('yes')\n finally:\n  if Flag(): print(str(error))\n",
+      "stdout": "bad 1\nyes\nbad 2\nouter\n",
+      "modules": [
+        {
+          "name": "state",
+          "source": "calls=[]\n",
+          "package": false,
+          "imports": []
+        },
+        {
+          "name": "bad",
+          "source": "import state\nstate.calls.append([7])\nraise ValueError('bad')\n",
+          "package": false,
+          "imports": [
+            "state"
+          ]
+        }
+      ],
+      "imports": [
+        "state",
+        "bad"
+      ]
+    },
+    {
+      "id": "import-inherits-active-exception",
+      "stage": "E1",
+      "source": "class Flag:\n @property\n def __bool__(self):\n  import reraiser\ntry:\n raise ValueError('original')\nexcept ValueError:\n try:\n  if Flag(): print('wrong')\n except ValueError as error: print(str(error))\n finally: print('finally')\n",
+      "stdout": "original\nfinally\n",
+      "modules": [
+        {
+          "name": "reraiser",
+          "source": "raise\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "reraiser"
+      ]
+    },
+    {
+      "id": "notification-snapshot-and-init",
+      "stage": "E1",
+      "source": "class D:\n def __set_name__(self,owner,name):\n  print(name)\n  if name=='a': del owner.b\n def __get__(self,obj,owner): return 7\nclass Box:\n a=D()\n b=D()\n def __init__(self):\n  try: self.value=[8]\n  finally: print(self.a)\nprint(Box().value[0])\n",
+      "stdout": "a\nb\n7\n8\n"
+    },
+    {
+      "id": "nested-import-source-error",
+      "stage": "E1",
+      "source": "class Flag:\n @property\n def __bool__(self):\n  import helper\n  return helper.yes\ntry:\n if Flag(): print('wrong')\nfinally: print('cleanup')\n",
+      "stdout": "helper\ncleanup\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "print('helper')\nimport broken\ndef yes(): return True\n",
+          "package": false,
+          "imports": [
+            "broken"
+          ]
+        },
+        {
+          "name": "broken",
+          "source": "def fail():\n return 1//0\nfail()\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "binding-error-with-outer-operands",
+      "stage": "E1",
+      "source": "class D:\n def __get__(self,obj,owner):\n  try: raise ValueError('binding')\n  finally: print('binding cleanup')\nclass Target:\n __call__=D()\ntry: print([7][0]+Target()([8],y=[9]))\nfinally: print('outer cleanup')\n",
+      "stdout": "binding cleanup\nouter cleanup\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "truth-failure-replaces-pending-return",
+      "stage": "E1",
+      "source": "class Flag:\n def __bool__(self): raise ValueError('truth')\ndef run():\n try: return [7]\n finally:\n  if Flag(): pass\ntry: run()\nexcept ValueError as error: print(str(error))\n",
+      "stdout": "truth\n"
+    }
+  ]
+}
