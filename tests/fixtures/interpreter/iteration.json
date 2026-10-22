@@ -1,0 +1,577 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-iteration/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "iterator-loop-else",
+      "stage": "T1",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\nfor x in Counter(): print(x)\nelse: print(\"done\")\n",
+      "stdout": "1\n2\n3\ndone\n"
+    },
+    {
+      "id": "iterator-identity-next-default",
+      "stage": "T1",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\nit=Counter()\nprint(iter(it) is it)\nprint(next(it),next(it),next(it),next(it,7),next(it,8))\n",
+      "stdout": "True\n1 2 3 7 8\n"
+    },
+    {
+      "id": "iterator-loop-control",
+      "stage": "T1",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\nfor x in Counter():\n if x==1: continue\n print(x)\n if x==2: break\nelse: print(\"bad\")\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "iterator-nested-return-finally",
+      "stage": "T1",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\ndef use():\n try:\n  for x in Counter():\n   for y in Counter(): return x+y\n finally: print(\"cleanup\")\nprint(use())\n",
+      "stdout": "cleanup\n2\n"
+    },
+    {
+      "id": "iterator-body-stop-propagates",
+      "stage": "T1",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\nfor x in Counter():\n print(x)\n raise StopIteration(\"body\")\n",
+      "stdout": "1\n",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "iterator-body-try-finally",
+      "stage": "T1",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\nfor x in Counter():\n try:\n  if x==2: break\n  print(x)\n finally: print(\"cleanup\")\n",
+      "stdout": "1\ncleanup\ncleanup\n"
+    },
+    {
+      "id": "iterator-restartable-user",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return self\n def __next__(self):\n  if self.i==0:\n   self.i=1\n   raise StopIteration\n  return 7\na=A()\na.i=0\nprint(next(a,3),next(a))\n",
+      "stdout": "3 7\n"
+    },
+    {
+      "id": "iterator-result-built-in",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return iter([7,8])\nfor x in A(): print(x)\n",
+      "stdout": "7\n8\n"
+    },
+    {
+      "id": "iterator-result-next-only",
+      "stage": "T1",
+      "source": "class I:\n def __next__(self): raise StopIteration\nclass A:\n def __iter__(self): return I()\nit=iter(A())\nprint(next(it,7))\niter(it)\n",
+      "stdout": "7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "next-only-direct",
+      "stage": "T1",
+      "source": "class A:\n def __next__(self): return 7\nprint(next(A()))\niter(A())\n",
+      "stdout": "7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iterator-invalid-result-None",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return None\niter(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iterator-invalid-result-7",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return 7\niter(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iterator-invalid-result-[7]",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return [7]\niter(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iterator-invalid-result-\"text\"",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return \"text\"\niter(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iterator-none-blocks-fallback",
+      "stage": "T1",
+      "source": "class A:\n __iter__=None\n def __getitem__(self,key):\n  print(\"bad\")\n  return 7\niter(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iterator-instance-shadow",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return iter([7])\na=A()\na.__iter__=None\nfor x in a: print(x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "iterator-mro-type-mutation",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return iter([3])\nclass B(A): pass\ndef other(self): return iter([7])\nb=B()\nprint(next(iter(b)))\nA.__iter__=other\nprint(next(iter(b)))\ndel A.__iter__\niter(b)\n",
+      "stdout": "3\n7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "next-instance-shadow-type-mutation",
+      "stage": "T1",
+      "source": "class A:\n def __next__(self): return 3\na=A()\na.__next__=None\nprint(next(a))\ndef other(self): return 7\nA.__next__=other\nprint(next(a))\ndel A.__next__\nnext(a,9)\n",
+      "stdout": "3\n7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__iter__-staticmethod",
+      "stage": "T1",
+      "source": "class A:\n @staticmethod\n def __iter__(): return iter([7])\nprint(next(iter(A())))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__iter__-classmethod",
+      "stage": "T1",
+      "source": "class A:\n @classmethod\n def __iter__(cls): return iter([7])\nprint(next(iter(A())))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__iter__-property",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __iter__(self):\n  print(\"binding\")\n  def use(): return iter([7])\n  return use\nprint(next(iter(A())))\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "__iter__-binding-error",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __iter__(self): raise AttributeError(\"binding\")\nprint(next(iter(A())))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__iter__-body-error",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): raise ValueError(\"body\")\nprint(next(iter(A())))\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__iter__-none",
+      "stage": "T1",
+      "source": "class A:\n __iter__=None\nprint(next(iter(A())))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__next__-staticmethod",
+      "stage": "T1",
+      "source": "class A:\n @staticmethod\n def __next__(): return 7\nprint(next(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__next__-classmethod",
+      "stage": "T1",
+      "source": "class A:\n @classmethod\n def __next__(cls): return 7\nprint(next(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__next__-property",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __next__(self):\n  print(\"binding\")\n  def use(): return 7\n  return use\nprint(next(A()))\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "__next__-binding-error",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __next__(self): raise AttributeError(\"binding\")\nprint(next(A()))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__next__-body-error",
+      "stage": "T1",
+      "source": "class A:\n def __next__(self): raise ValueError(\"body\")\nprint(next(A()))\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__next__-none",
+      "stage": "T1",
+      "source": "class A:\n __next__=None\nprint(next(A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iter-binding-stop-not-exhaustion",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __iter__(self): raise StopIteration(\"binding\")\nfor x in A(): print(\"bad\")\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "next-binding-stop-default",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __next__(self): raise StopIteration(\"binding\")\nprint(next(A(),7))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "next-binding-stop-loop",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): return self\n @property\n def __next__(self): raise StopIteration(\"binding\")\nfor x in A(): print(\"bad\")\nelse: print(\"done\")\n",
+      "stdout": "done\n"
+    },
+    {
+      "id": "indexed-loop",
+      "stage": "T1",
+      "source": "class A:\n def __getitem__(self,key):\n  print(\"key\",key)\n  if key==2: raise IndexError(\"end\")\n  return key+7\nfor x in A(): print(x)\nelse: print(\"done\")\n",
+      "stdout": "key 0\n7\nkey 1\n8\nkey 2\ndone\n"
+    },
+    {
+      "id": "indexed-sticky-exhaustion",
+      "stage": "T1",
+      "source": "class A:\n def __getitem__(self,key):\n  print(\"key\",key)\n  if key==2: raise IndexError(\"end\")\n  return key+7\nit=iter(A())\nprint(iter(it) is it)\nprint(next(it),next(it),next(it,3),next(it,4))\n",
+      "stdout": "True\nkey 0\nkey 1\nkey 2\n7 8 3 4\n"
+    },
+    {
+      "id": "indexed-stop-exhaustion",
+      "stage": "T1",
+      "source": "class A:\n def __getitem__(self,key): raise StopIteration\nit=iter(A())\nprint(next(it,7),next(it,8))\n",
+      "stdout": "7 8\n"
+    },
+    {
+      "id": "indexed-error-retry",
+      "stage": "T1",
+      "source": "class A:\n def __getitem__(self,key):\n  print(key)\n  if self.fail:\n   self.fail=False\n   raise ValueError(\"retry\")\n  return 7\na=A()\na.fail=True\nit=iter(a)\ntry: next(it)\nexcept ValueError: print(\"caught\")\nprint(next(it))\n",
+      "stdout": "0\ncaught\n0\n7\n"
+    },
+    {
+      "id": "indexed-none-lazy-error",
+      "stage": "T1",
+      "source": "class A:\n __getitem__=None\nit=iter(A())\nprint(\"created\")\nnext(it)\n",
+      "stdout": "created\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "indexed-type-change",
+      "stage": "T1",
+      "source": "class A:\n def __getitem__(self,key): return key+3\na=A()\nit=iter(a)\nprint(next(it))\ndef other(self,key): return key+7\nA.__getitem__=other\nprint(next(it))\ndel A.__getitem__\nnext(it)\n",
+      "stdout": "3\n8\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "indexed-descriptor-stop",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __getitem__(self):\n  print(\"binding\")\n  raise IndexError\nit=iter(A())\nprint(next(it,7),next(it,8))\n",
+      "stdout": "binding\n7 8\n"
+    },
+    {
+      "id": "iter-precedes-indexed",
+      "stage": "T1",
+      "source": "class A:\n def __getitem__(self,key):\n  print(\"key\",key)\n  if key==2: raise IndexError(\"end\")\n  return key+7\ndef use(self): return iter([9])\nA.__iter__=use\nfor x in A(): print(x)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "next-primitive-default",
+      "stage": "T1",
+      "source": "it=iter([7])\nprint(next(it,3),next(it,8),next(it,None))\n",
+      "stdout": "7 8 None\n"
+    },
+    {
+      "id": "next-noniterator-default",
+      "stage": "T1",
+      "source": "next([7],3)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "next-stop-value",
+      "stage": "T1",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\nit=Counter()\nnext(it)\nnext(it)\nnext(it)\ntry: next(it)\nexcept StopIteration as error: print(str(error))\n",
+      "stdout": "done\n"
+    },
+    {
+      "id": "iter-zero",
+      "stage": "T1",
+      "source": "iter()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iter-three",
+      "stage": "T1",
+      "source": "iter([],1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iter-keyword",
+      "stage": "T1",
+      "source": "iter(object=[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "next-zero",
+      "stage": "T1",
+      "source": "next()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "next-three",
+      "stage": "T1",
+      "source": "next(iter([]),1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "next-keyword",
+      "stage": "T1",
+      "source": "next(iter([]),default=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "callable-sentinel-loop",
+      "stage": "T1",
+      "source": "class A:\n def __init__(self): self.i=0\n def __call__(self):\n  self.i+=1\n  print(\"call\",self.i)\n  return self.i\na=A()\nit=iter(a,3)\nprint(iter(it) is it)\nfor x in it: print(x)\nprint(next(it,7),a.i)\n",
+      "stdout": "True\ncall 1\n1\ncall 2\n2\ncall 3\n7 3\n"
+    },
+    {
+      "id": "callable-sentinel-stop",
+      "stage": "T1",
+      "source": "def use():\n print(\"call\")\n raise StopIteration\nit=iter(use,7)\nprint(next(it,3),next(it,4))\n",
+      "stdout": "call\n3 4\n"
+    },
+    {
+      "id": "callable-sentinel-error-retry",
+      "stage": "T1",
+      "source": "class A:\n def __init__(self): self.i=0\n def __call__(self):\n  self.i+=1\n  print(\"call\",self.i)\n  return self.i\ndef use():\n a.i+=1\n if a.i==1: raise ValueError(\"retry\")\n return a.i\na=A()\nit=iter(use,3)\ntry: next(it)\nexcept ValueError: print(\"caught\")\nprint(next(it),next(it,7))\n",
+      "stdout": "caught\n2 7\n"
+    },
+    {
+      "id": "callable-sentinel-validate",
+      "stage": "T1",
+      "source": "iter(7,0)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "callable-sentinel-no-eager-binding",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __call__(self):\n  print(\"binding\")\n  def use(): return 7\n  return use\nit=iter(A(),7)\nprint(\"created\")\nprint(next(it,3))\n",
+      "stdout": "created\nbinding\n3\n"
+    },
+    {
+      "id": "callable-sentinel-identity",
+      "stage": "T1",
+      "source": "sentinel=[]\ndef use(): return sentinel\nit=iter(use,sentinel)\nprint(next(it,7))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "iter-construction-no-len",
+      "stage": "T1",
+      "source": "class A:\n def __len__(self):\n  print(\"bad\")\n  return 0\n def __getitem__(self,key): raise IndexError\nit=iter(A())\nprint(next(it,7))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "contains-result-truth",
+      "stage": "T2",
+      "source": "class R:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass A:\n def __contains__(self,key):\n  print(key)\n  return R()\nprint(7 in A(),7 not in A())\n",
+      "stdout": "7\ntruth\n7\ntruth\nTrue False\n"
+    },
+    {
+      "id": "contains-length-truth",
+      "stage": "T2",
+      "source": "class R:\n def __len__(self): return 0\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A(),7 not in A())\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "contains-invalid-bool",
+      "stage": "T2",
+      "source": "class R:\n def __bool__(self): return 7\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "contains-before-iteration",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key): return False\n def __iter__(self):\n  print(\"bad\")\n  return iter([7])\nprint(7 in A())\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "contains-none-blocks",
+      "stage": "T2",
+      "source": "class A:\n __contains__=None\n def __iter__(self): return iter([7])\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "contains-instance-shadow",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key): return True\na=A()\na.__contains__=None\nprint(7 in a)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-mro-type-mutation",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key): return True\nclass B(A): pass\na=B()\nprint(7 in a)\ndef other(self,key): return False\nA.__contains__=other\nprint(7 in a)\ndel A.__contains__\nprint(7 in a)\n",
+      "stdout": "True\nFalse\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "contains-staticmethod",
+      "stage": "T2",
+      "source": "class A:\n @staticmethod\n def __contains__(key): return key==7\nprint(7 in A())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-classmethod",
+      "stage": "T2",
+      "source": "class A:\n @classmethod\n def __contains__(cls,key): return key==7\nprint(7 in A())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-property",
+      "stage": "T2",
+      "source": "class A:\n @property\n def __contains__(self):\n  print(\"binding\")\n  def use(key): return key==7\n  return use\nprint(7 in A())\n",
+      "stdout": "binding\nTrue\n"
+    },
+    {
+      "id": "contains-body-AttributeError",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key): raise AttributeError(\"error\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "contains-binding-AttributeError",
+      "stage": "T2",
+      "source": "class A:\n @property\n def __contains__(self): raise AttributeError(\"error\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "contains-body-StopIteration",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key): raise StopIteration(\"error\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "contains-binding-StopIteration",
+      "stage": "T2",
+      "source": "class A:\n @property\n def __contains__(self): raise StopIteration(\"error\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "contains-body-ValueError",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key): raise ValueError(\"error\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "contains-binding-ValueError",
+      "stage": "T2",
+      "source": "class A:\n @property\n def __contains__(self): raise ValueError(\"error\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "contains-raw-key",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key): return key is original\noriginal=[]\nprint(original in A())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-evaluation-order",
+      "stage": "T2",
+      "source": "class A:\n def __contains__(self,key):\n  print(\"hook\")\n  return True\ndef key():\n print(\"key\")\n return 7\ndef owner():\n print(\"owner\")\n return A()\nprint(key() in owner())\n",
+      "stdout": "key\nowner\nhook\nTrue\n"
+    },
+    {
+      "id": "contains-iterator-search",
+      "stage": "T2",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\nit=Counter()\nprint(2 in it,next(it),2 in it)\n",
+      "stdout": "True 3 False\n"
+    },
+    {
+      "id": "contains-indexed-search",
+      "stage": "T2",
+      "source": "class A:\n def __getitem__(self,key):\n  print(\"key\",key)\n  if key==2: raise IndexError(\"end\")\n  return key+7\nprint(8 in A(),9 not in A())\n",
+      "stdout": "key 0\nkey 1\nkey 0\nkey 1\nkey 2\nTrue True\n"
+    },
+    {
+      "id": "contains-identity-before-equality",
+      "stage": "T2",
+      "source": "target=[]\nclass A:\n def __iter__(self): return iter([target])\nprint(target in A())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-search-error",
+      "stage": "T2",
+      "source": "class A:\n def __iter__(self): return self\n def __next__(self): raise ValueError(\"next\")\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "contains-iter-stop-propagates",
+      "stage": "T2",
+      "source": "class A:\n def __iter__(self): raise StopIteration\nprint(7 in A())\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "contains-primitive-regression",
+      "stage": "T2",
+      "source": "print(\"\ud83d\ude00\" in \"A\ud83d\ude00\",7 in [3,7],7 not in (3,8),\"x\" in {\"x\":7})\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "future-equality-search",
+      "stage": "T3",
+      "source": "class A:\n def __eq__(self,other): return True\nclass B:\n def __iter__(self): return iter([A()])\nprint(7 in B())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-generator",
+      "stage": "T3",
+      "source": "def use():\n yield 7\nprint(next(use()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-iterable-slice-rhs",
+      "stage": "T3",
+      "source": "class Counter:\n def __init__(self): self.i=0\n def __iter__(self): return self\n def __next__(self):\n  if self.i==3: raise StopIteration(\"done\")\n  self.i+=1\n  return self.i\na=[0]\na[:]=Counter()\nprint(a[0],a[1],a[2])\n",
+      "stdout": "1 2 3\n"
+    },
+    {
+      "id": "iter-optional-binding-indexed",
+      "stage": "T1",
+      "source": "class A:\n @property\n def __iter__(self):\n  print(\"binding\")\n  raise AttributeError\n def __getitem__(self,key):\n  if key: raise IndexError\n  return 7\nfor x in A(): print(x)\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "iter-next-none-result",
+      "stage": "T1",
+      "source": "class A:\n __next__=None\n def __iter__(self): return self\nit=iter(A())\nprint(\"created\")\nnext(it,7)\n",
+      "stdout": "created\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iter-body-attribute-error",
+      "stage": "T1",
+      "source": "class A:\n def __iter__(self): raise AttributeError\n def __getitem__(self,key): return 7\niter(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "contains-optional-binding-iter",
+      "stage": "T2",
+      "source": "class A:\n @property\n def __contains__(self):\n  print(\"binding\")\n  raise AttributeError\n def __iter__(self): return iter([7])\nprint(7 in A())\n",
+      "stdout": "binding\nTrue\n"
+    }
+  ]
+}
