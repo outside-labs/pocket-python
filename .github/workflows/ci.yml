@@ -187,6 +187,7 @@ jobs:
             build/*node-report.json
             build/interpreter-node-measurements/report.json
             build/classes-reference-report.json
+            build/iteration-reference-report.json
             build/private-names-reference-report.json
             build/descriptors-reference-report.json
             build/special-calls-reference-report.json
