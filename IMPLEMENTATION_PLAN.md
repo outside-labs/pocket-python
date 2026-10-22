@@ -39,6 +39,11 @@ records the delivered execution consolidation. The
 language and library work, while persistent applications and mobile feasibility
 retain separate acceptance tracks.
 
+The [bounded repr/str checkpoint](docs/interpreter-formatting.md) now runs through
+the owned engine and offline class console. The inventory continues with accurate
+unsupported-syntax diagnostics, indexing, iteration and equality/hash, alongside
+the separately scoped function, value and library work.
+
 The compiler and independent interpreter must work without MicroPython or
 Pyodide. An optional upstream CPython WebAssembly build is an existing-engine
 distribution, not the independent interpreter. MicroPython, Pyodide and PyScript

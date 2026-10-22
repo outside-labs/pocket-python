@@ -118,8 +118,10 @@ licensed pure-Python library can reduce duplicate work; it still requires engine
 conformance and explicit inclusion. Shimify's source closure establishes which
 files are selected, not whether all their Python behavior is implemented.
 
-The remaining C3 sequence resumes with repr/str, then indexing, iteration and
-equality/hash. Persistent-session work can progress alongside those language
+The [bounded repr/str slice](interpreter-formatting.md) is implemented, with offline
+console acceptance and explicit deferred float/container/default displays. The
+remaining C3 sequence continues with indexing, iteration and equality/hash.
+Persistent-session work can progress alongside those language
 slices after the common foundation. The game, mobile-model trial and completion
 of a UI framework are not prerequisites for unrelated language conformance.
 

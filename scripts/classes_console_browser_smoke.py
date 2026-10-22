@@ -69,7 +69,7 @@ def smoke(channel=None):
                     ready()
                     assert 'classes-source/1' in page.locator('#language').inner_text()
                     assert 'private names' in page.locator('#language').inner_text()
-                    assert 'callable objects and length/truth protocols' in page.locator('#language').inner_text()
+                    assert 'length/truth and repr/str protocols' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -94,6 +94,12 @@ def smoke(channel=None):
                                     ['length-custom-descriptor-owner', 'truth-static-class-property',
                                      'truth-binding-attributeerror-default', 'condition-short-circuit-retains-operands',
                                      'condition-while-continue-break-finally', 'condition-binding-property-resumes-expression'])
+                    formatting = json.loads((ROOT / 'tests/fixtures/interpreter/formatting.json').read_bytes())
+                    programs.extend(c['source'] for c in formatting['cases'] if c['id'] in
+                                    ['primitive-repr', 'str-signatures', 'string-unicode', 'hook-precedence',
+                                     'instance-shadows', 'static-class-slots', 'property-binding-closure',
+                                     'descriptor-accessed-owner', 'returned-string-identity', 'print-nested-output',
+                                     'print-failure-keeps-prefix', 'active-exception'])
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -106,7 +112,7 @@ def smoke(channel=None):
                     assert page.locator('#result').inner_text() == ''
                     refused('A()\n', 'NameError:')
                     refused('import browser\n', 'ImportError:')
-                    run(SOURCE, 'Count: 7\nClass: StepCounter\nCallable: True\nLength: 7 Active: True\nEmpty: yes\n')
+                    run(SOURCE, cases[0]['stdout'])
                     checks.append('class-errors-refusal-fresh-state-and-unchanged-host-grants')
                     failure = next(c['source'] for c in private['cases'] if c['id'] == 'private-write-augment-delete')
                     refused(failure, 'AttributeError:')
@@ -116,7 +122,7 @@ def smoke(channel=None):
                     refused(collision, 'SyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     assert 'sources/app.py:3' in page.locator('#status').inner_text()
-                    run(SOURCE, 'Count: 7\nClass: StepCounter\nCallable: True\nLength: 7 Active: True\nEmpty: yes\n')
+                    run(SOURCE, cases[0]['stdout'])
                     checks.append('private-name-errors-and-collisions-before-effects')
                     refused('class A:\n @property\n def read(self):\n  return 1//0\nA().read\n', 'ZeroDivisionError:')
                     assert 'read at sources/app.py:4' in page.locator('#diagnostic').inner_text()
@@ -124,14 +130,14 @@ def smoke(channel=None):
                     assert '__set_name__ at sources/app.py:2' in page.locator('#diagnostic').inner_text()
                     refused('@7\ndef f(): pass\n', 'TypeError:')
                     assert 'sources/app.py:1' in page.locator('#status').inner_text()
-                    run(SOURCE, 'Count: 7\nClass: StepCounter\nCallable: True\nLength: 7 Active: True\nEmpty: yes\n')
+                    run(SOURCE, cases[0]['stdout'])
                     checks.append('descriptor-notification-and-decorator-error-locations')
                     refused('class A:\n def __call__(self):\n  return 1//0\nA()()\n', 'ZeroDivisionError:')
                     assert '__call__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
                     refused('class A:\n @property\n def __call__(self):\n  raise ValueError("binding")\nA()()\n', 'ValueError:')
                     assert '__call__ at sources/app.py:4' in page.locator('#diagnostic').inner_text()
                     refused('class A:\n __call__=None\nA()()\n', 'TypeError:')
-                    run(SOURCE, 'Count: 7\nClass: StepCounter\nCallable: True\nLength: 7 Active: True\nEmpty: yes\n')
+                    run(SOURCE, cases[0]['stdout'])
                     checks.append('implicit-call-binding-errors-and-fresh-query-state')
                     refused('class A:\n def __len__(self):\n  return 1//0\nlen(A())\n', 'ZeroDivisionError:')
                     assert '__len__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
@@ -140,8 +146,18 @@ def smoke(channel=None):
                     refused('class A:\n def __len__(self): return -1\nbool(A())\n', 'ValueError:')
                     refused('class A:\n @property\n def __bool__(self):\n  raise ValueError("binding")\nwhile A(): pass\n', 'ValueError:')
                     assert '__bool__ at sources/app.py:4' in page.locator('#diagnostic').inner_text()
-                    run(SOURCE, 'Count: 7\nClass: StepCounter\nCallable: True\nLength: 7 Active: True\nEmpty: yes\n')
+                    run(SOURCE, cases[0]['stdout'])
                     checks.append('length-truth-result-callback-binding-errors-and-fresh-state')
+                    refused('class A:\n def __str__(self):\n  return 1//0\nprint("start",A())\n', 'ZeroDivisionError:')
+                    assert page.locator('#result').text_content() == 'start '
+                    assert '__str__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n @property\n def __str__(self):\n  raise ValueError("binding")\nstr(A())\n', 'ValueError:')
+                    assert '__str__ at sources/app.py:4' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n def __repr__(self): return 7\nrepr(A())\n', 'TypeError:')
+                    assert 'sources/app.py:3' in page.locator('#status').inner_text()
+                    refused('class A:\n @property\n def __repr__(self): raise AttributeError("missing")\nrepr(A())\n', 'UnsupportedOperationError:')
+                    run(SOURCE, cases[0]['stdout'])
+                    checks.append('formatting-source-errors-result-validation-prefix-and-deferred-default')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -149,12 +165,18 @@ def smoke(channel=None):
                     checks.append('new-callable-decorator-and-binding-source-after-offline-reload')
                     run('class OfflineQueue:\n def __init__(self,n): self.__n=n\n def __len__(self): return self.__n\n @property\n def __bool__(self):\n  def active(): return self.__n>0\n  return active\n def take(self):\n  self.__n-=1\n  return self.__n\nqueue=OfflineQueue(3)\nwhile queue: print(len(queue),queue.take())\nelse: print("empty",not queue)\n', '3 2\n2 1\n1 0\nempty True\n')
                     checks.append('new-length-truth-loop-source-after-offline-reload')
+                    run('class OfflineLabel:\n def __init__(self,n): self.__n=n\n def __repr__(self): return "Label("+str(self.__n)+")"\n @property\n def __str__(self):\n  def render(): return "value="+str(self.__n)\n  return render\nlabel=OfflineLabel(7)\nprint(label,repr(label))\nprint(repr("A😀\\t"))\n', "value=7 Label(7)\n'A😀\\t'\n")
+                    checks.append('new-formatting-binding-and-unicode-source-after-offline-reload')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n def __len__(self):\n  while True: pass\nlen(Spin())\n',
                         'class Spin:\n def __bool__(self):\n  while True: pass\nwhile Spin(): pass\n',
-                        'class Spin:\n @property\n def __bool__(self):\n  while True: pass\nwhile Spin(): pass\n']
+                        'class Spin:\n @property\n def __bool__(self):\n  while True: pass\nwhile Spin(): pass\n',
+                        'class Spin:\n def __repr__(self):\n  print("entered")\n  while True: pass\nrepr(Spin())\n',
+                        'class Spin:\n @property\n def __repr__(self):\n  print("entered")\n  while True: pass\nrepr(Spin())\n',
+                        'class Spin:\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n',
+                        'class Spin:\n @property\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n']
                     stopped = []
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
@@ -164,18 +186,19 @@ def smoke(channel=None):
                         before = time.perf_counter()
                         page.click('#stop')
                         page.wait_for_function("()=>document.querySelector('#status').textContent==='Stopped'")
+                        assert page.locator('#result').text_content() == ''
                         stopped.append((time.perf_counter() - before) * 1000)
                         assert stopped[-1] < 3000
                         page.click('#restart')
                         ready()
-                        run(SOURCE, 'Count: 7\nClass: StepCounter\nCallable: True\nLength: 7 Active: True\nEmpty: yes\n')
-                    checks.append('call-length-truth-and-pending-bindings-stop-with-five-fresh-restarts')
+                        run(SOURCE, cases[0]['stdout'])
+                    checks.append('call-length-truth-formatting-and-pending-bindings-stop-with-fresh-restarts')
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/nested/classes')
                     shutil.copytree(root / 'reduced', root / 'site/nested/classes')
                     page.evaluate('async()=>{await(await navigator.serviceWorker.getRegistration()).update()}')
                     page.wait_for_function("()=>document.querySelector('#offline').textContent.startsWith('Update ready.')")
-                    run(SOURCE, 'Count: 7\nClass: StepCounter\nCallable: True\nLength: 7 Active: True\nEmpty: yes\n')
+                    run(SOURCE, cases[0]['stdout'])
                     page.close()
                     probe = context.new_page()
                     old = 'pocket-python:' + url + ':' + selected['cache_version']
@@ -195,6 +218,7 @@ def smoke(channel=None):
                     refused('import operator\n', 'ImportError:')
                     refused('callable(print)\n', 'NameError:')
                     run('print(len("okay"),bool([]))\n', '4 False\n')
+                    run('print(repr("A😀"),len(str()))\n', "'A😀' 0\n")
                     run('print(7)\n', '7\n')
                     checks.append('waiting-class-to-core-update-removes-class-and-library-authority-offline')
                     assert not errors and all(method == 'GET' and url.startswith(origin + '/') for method, url in requests)

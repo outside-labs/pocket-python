@@ -65,7 +65,8 @@ real pure-Python packages. Initial application-profile completion does not close
 this wider goal. Keep Python-version, target, language, stdlib, package and native
 ABI promises separate; the pinned 3.14.7 oracle changes only deliberately.
 
-Next, resume repr/str and the remaining C3 protocols while the
+The [bounded repr/str slice](docs/interpreter-formatting.md) is implemented. Next,
+resume indexed-object, iteration and equality/hash protocols while the
 persistent-session/host program advances through its own contracts. INT-09 and
 INT-10 stay open; the execution foundation is delivered, while their remaining
 protocols, parked ownership, events and host/async behavior still require
@@ -684,3 +685,40 @@ matrices remain required, alongside 152 Node tests, Python/distribution checks,
 core/library console acceptance and exact-revision retained reports. C3 length/
 truth is delivered; next adopt __repr__/__str__ with resumable output/formatting
 and validated strings. INT-09 and the later async/Wasm/publication gates stay open.
+
+### Broad compatibility and formatting checkpoint (2026-10-22)
+
+The versioned inventory now records 30 language/platform surfaces, all 71 names
+in the built-in-functions index and 25 linked finite work packages. Its 118
+observations keep positive source comparisons, known diagnostic divergences,
+deferred APIs and host restrictions separate. CPython 3.14.7 and Unicode 16.0.0
+remain pinned; live documentation 3.14.9 does not upgrade language support.
+
+[INT-STR-01](https://github.com/outside-labs/pocket-python/issues/107) fixes str(s)
+identity. [INT-REPR-01](https://github.com/outside-labs/pocket-python/issues/108),
+[INT-REPR-02](https://github.com/outside-labs/pocket-python/issues/109) and
+[INT-REPR-03](https://github.com/outside-labs/pocket-python/issues/110) deliver the
+bounded contract, owned VM execution and offline-console acceptance. Primitive
+repr/str() work in core source; custom __repr__/__str__ require the explicit class
+profile. Strict result checks, MRO/descriptor lookup, nested output ordering,
+source errors, recursion, pauses, cancellation and OOM use the common machine.
+Default/float/container displays and full format/encoding forms remain deferred.
+
+The formatter has 67 source cases: 58 CPython comparisons and nine future
+refusals, executed in Node and Chromium with drain and instruction stepping.
+The class console has 38 source comparisons, 13 acceptance groups and nine
+Stop/Restart cycles, including new source offline and waiting profile updates.
+The [complete payload record](docs/measurements/2026-10-22-formatting.json) keeps
+the old Counter fixture unchanged for comparison: 334,620 to 354,645 bytes;
+its new formatting example adds 223 source bytes, for 354,868 bytes total.
+These are uncompressed complete offline applications, with no startup/speed claim.
+The prior consolidation record uses a different fixture and remains unchanged.
+
+The existing eight composed resource baselines are unchanged. The engine closure
+now includes 25 modules and both notices; independent-engine assets remain outside
+released distributions until INT-REL-01. Next, classify recognized unsupported
+syntax in [INT-DIAG-01](https://github.com/outside-labs/pocket-python/issues/111)
+and adopt indexed-object protocols in
+[INT-INDEX-01](https://github.com/outside-labs/pocket-python/issues/112).
+General function/value/library work remains ordered in the inventory. INT-09,
+INT-10, the mobile feasibility decision and the later C/Rust/Wasm path stay open.
