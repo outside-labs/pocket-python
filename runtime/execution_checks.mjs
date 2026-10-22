@@ -1,7 +1,7 @@
 // Test harness only; excluded from the pinned application asset closure.
 import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
-import {Execution, releaseException} from './functions.mjs';
+import {Execution} from './functions.mjs';
 
 export async function runExecutionRequest(request) {
   let registry = null, session = null, stdout = '', response, compilation = null, boundaries = 0;
@@ -12,20 +12,15 @@ export async function runExecutionRequest(request) {
     const context = session.context;
     context.begin(request.options || {}, text => { stdout += text; });
     try {
-      const invoke = (module, program) => {
-        const execution = new Execution(program, {...context.options, arena: session.memory, moduleContext: context, module});
-        try {
-          do { execution.advance(request.quantum || 1); boundaries++; } while (execution.state === 'paused');
-        } finally { execution.close(); }
-      };
+      const execution = Execution.modules(context);
+      try {
+        do { execution.advance(request.quantum || 1); boundaries++; } while (execution.state === 'paused');
+      } finally { execution.close(); }
       const name = registry.entry;
-      for (const parent of registry.parents(name)) context.ensure(parent, invoke, true);
-      context.ensure(name, invoke);
       const exports = Object.fromEntries((request.exports || []).map(name => [name, session.read(name)]));
       response = {ok: true, stdout, receipt: {module: name, status: 'ready', bytecode_sha256: registry.record(name).bytecode.sha256},
         exports, compilation, steps: context.steps, work: context.work};
-    } catch (error) { releaseException(error); throw error; }
-    finally { context.finish(); }
+    } finally { context.finish(); }
     response.stats = session.stats();
   } catch (error) {
     response = {ok: false, stdout, compilation, error: {code: error.code || 'HOST', type: error.name,

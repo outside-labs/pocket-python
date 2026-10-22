@@ -38,11 +38,14 @@ interpreter does not satisfy independent-engine acceptance.
 
 ## Consolidation and continuing compatibility adopted 2026-10-21
 
-The [execution and compatibility roadmap](docs/interpreter-roadmap.md) adopts a
-bounded five-PR consolidation batch before further C3 feature implementation:
+The [execution and compatibility roadmap](docs/interpreter-roadmap.md) records the
+implemented five-part consolidation before further C3 feature implementation:
 execution/ownership contract, exhaustive pending-operation roots, owned Execution
 with safe-boundary stepping, shared operation/builtin phases, and scheduled module
-initialization. The existing JavaScript VM, front end, values, bytecode 4/5,
+initialization. The [execution contract](docs/execution-contract.md) and
+[compatibility/payload record](docs/measurements/2026-10-22-execution-consolidation.json)
+cover the owned instruction/module driver and unchanged composed resource
+baselines. The existing JavaScript VM, front end, values, bytecode 4/5,
 capability model, synchronous facade and fresh-run console remain the baseline.
 
 - [INT-EXEC-01](https://github.com/outside-labs/pocket-python/issues/94): Adopt the consolidated execution and ownership contract.
@@ -59,9 +62,11 @@ real pure-Python packages. Initial application-profile completion does not close
 this wider goal. Keep Python-version, target, language, stdlib, package and native
 ABI promises separate; the pinned 3.14.7 oracle changes only deliberately.
 
-After consolidation, resume repr/str and the remaining C3 protocols while the
+Next, resume repr/str and the remaining C3 protocols while the
 persistent-session/host program advances through its own contracts. INT-09 and
-INT-10 stay open with implementation dependencies on INT-EXEC-05. The mobile
+INT-10 stay open; the execution foundation is delivered, while their remaining
+protocols, parked ownership, events and host/async behavior still require
+implementation. The mobile
 inference/animation [feasibility task](https://github.com/outside-labs/pocket-python/issues/100) is a
 separate Triage track with minimum devices, assets and budgets still to select.
 Spatial UI browser adaptation, optional expose_api services, Shimify reduction and
