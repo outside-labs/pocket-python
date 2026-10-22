@@ -79,6 +79,7 @@ jobs:
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/length-truth.json --report build/length-truth-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/execution.json --report build/execution-browser-report.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:
@@ -113,6 +114,7 @@ jobs:
       - run: node --test runtime/length-truth.test.mjs
       - run: node --test runtime/memory.test.mjs
       - run: node --test runtime/functions.test.mjs
+      - run: node --test runtime/execution.test.mjs
       - run: node --test runtime/module-registry.test.mjs
       - run: node --test runtime/modules.test.mjs
       - run: node --test runtime/source-tokens.test.mjs
@@ -128,11 +130,13 @@ jobs:
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/length-truth.json --report build/length-truth-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/execution.json --report build/execution-reference-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/length-truth.json --report build/length-truth-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/execution.json --report build/execution-node-report.json
       - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json
       - run: python scripts/interpreter_measurements.py --no-browser --repeats 3 --output build/interpreter-node-measurements
         env:
@@ -156,4 +160,5 @@ jobs:
             build/descriptors-reference-report.json
             build/special-calls-reference-report.json
             build/length-truth-reference-report.json
+            build/execution-reference-report.json
           if-no-files-found: error
