@@ -55,14 +55,24 @@ The default language selection is core-source/1 (bytecode 4). Add
 (bytecode 5): class bodies, C3 inheritance, instance attributes, initialization,
 bound methods, [private names](interpreter-private-names.md), and the adopted
 [descriptors, properties and decorators](interpreter-descriptors.md), plus
-[callable instances, queries and length/truth protocols](interpreter-special-methods.md).
+[callable instances, queries and length/truth protocols](interpreter-special-methods.md),
+and [bounded repr/str](interpreter-formatting.md).
 The editor shows the selected profile. Build a class example
 with `uv run python -m examples.interpreter_classes`, then serve
-`build/class-console`. Its Counter example uses len(), bool(), not and a conditional
-expression alongside callable methods. Formatting, indexing, iteration and
+`build/class-console`. Its Counter example uses len(), bool(), not, __repr__ and
+__str__ alongside callable methods. Core source also supports primitive repr and
+str(). Float/container/default-object formatting, indexing, iteration and
 equality/hash protocols and async remain later stages. Language selection is
 independent of `--library-profile`;
 both language profiles use the same complete pinned engine.
+
+The formatting checkpoint includes 38 source comparisons and 13 Chromium
+acceptance groups: fresh offline input, callback/binding/result errors, prefix
+ordering, nine Stop/Restart cycles and a waiting class-to-core update. The console
+displays a run's buffered output when it completes or reports an error. Stop
+abandons that buffer with the worker; a fresh Restart cannot emit its old output.
+The [payload record](measurements/2026-10-22-formatting.json) separates the unchanged
+Counter fixture from its new formatting example and records the full asset closure.
 
 Output uses application schema 2, profile in-house-interpreter/1, with distinct
 engine/source identities, complete local module edges and notices, content-based

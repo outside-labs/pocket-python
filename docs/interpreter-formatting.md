@@ -4,7 +4,10 @@ INT-REPR-01 adopts the next C3 protocol contract. The reference matrix in
 `tests/fixtures/interpreter/formatting.json` pins CPython 3.14.7. Reference-only
 success does not execute or certify the independent engine. INT-REPR-02 implements
 the 58 adopted source cases and nine explicit future refusals. INT-REPR-03
-delivers offline-console acceptance.
+delivers offline-console acceptance. The class console now has 38 source comparisons,
+13 acceptance groups and nine Stop/Restart cycles. Its
+[payload evidence](measurements/2026-10-22-formatting.json) records the complete
+application and unchanged historical resource baselines.
 
 ## Exact surface
 

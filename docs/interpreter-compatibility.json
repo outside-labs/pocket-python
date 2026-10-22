@@ -297,7 +297,6 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-REPR-03",
         "INT-TEXT-01"
       ],
       "probes": [
@@ -1665,7 +1664,6 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-REPR-03",
         "INT-TEXT-01"
       ],
       "probes": [
