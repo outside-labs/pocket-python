@@ -1,5 +1,5 @@
-import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue} from "./function-objects.mjs";
-import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, operationRoots} from "./operations.mjs";
+import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -9,6 +9,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
+    if (value instanceof NotImplementedValue) return "NotImplemented";
     if (value === null) return "None";
     if (typeof value === "boolean") return value ? "True" : "False";
     if (typeof value === "bigint") return value.toString();
@@ -80,6 +81,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const {operation, receiver, after, depth, missing} = completion.fallback;
     if (operation === "iter-indexed") return unaryTask(operation, receiver, site, after, depth);
     if (operation === "contains-search") return containsTask(receiver, completion.fallback.key, site, after, depth, true);
+    if (operation === "compare-next") {
+      const {left, right, comparison, position} = completion.fallback;
+      return compareTask(comparison, left, right, site, after, depth, position);
+    }
     if (operation === "repr-default") return unaryTask(operation, receiver, site, after, depth);
     // Optional lookup suppresses binding AttributeError, never a method-body error.
     return missing === "length" ? unaryTask(operation, receiver, site, after, depth, true) :
@@ -133,12 +138,29 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (["compare-result", "ne-result"].includes(completion?.kind)) {
+      const {operation, left, right, position, depth, after} = completion;
+      if (value instanceof NotImplementedValue) return compareTask(operation, left, right, site, after, depth, position + 1);
+      return completion.kind === "ne-result" ? unaryTask("not", value, site, after, depth) : valueTask(value, site, after);
+    }
+    if (completion?.kind === "sequence-item") return unaryTask("truth", value, site,
+      continuation("sequence-truth", completion), completion.depth);
+    if (completion?.kind === "sequence-truth") return value ? sequenceNext(completion, site, completion.position + 1) :
+      valueTask(completion.operation === "not-equal", site, completion.after);
+    if (completion?.kind === "search-equal") return unaryTask("truth", value, site, continuation("search-truth", completion), completion.depth);
+    if (completion?.kind === "search-truth") return value ? valueTask(true, site, completion.after) :
+      searchNext(completion.receiver, completion.key, site, completion.after, completion.depth);
+    if (completion?.kind === "sentinel-equal") return unaryTask("truth", value, site, continuation("sentinel-truth", completion), completion.depth);
+    if (completion?.kind === "sentinel-truth") {
+      if (!value) return valueTask(completion.value, site, completion.after);
+      exhaust(completion.receiver); return unaryTask("iterator-stop", completion.receiver, site, completion.after);
+    }
     if (completion?.kind === "contains-result") return unaryTask("truth", value, site, completion.after, completion.depth);
     if (completion?.kind === "search-iter") return searchNext(value, completion.key, site, completion.after, completion.depth);
     if (completion?.kind === "search-next") {
       state.temporaries.push(value);
-      if (value === completion.key || values.equal(value, completion.key)) return valueTask(true, site, completion.after);
-      return searchNext(completion.receiver, completion.key, site, completion.after, completion.depth);
+      if (value === completion.key) return valueTask(true, site, completion.after);
+      return compareTask("equal", value, completion.key, site, continuation("search-equal", completion), completion.depth);
     }
     if (completion?.kind === "iter-result") {
       if (!(values.isIterator(value) || value instanceof InstanceValue && classes.lookup(value.type, "__next__").found))
@@ -153,10 +175,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "callable-result") {
       const iterator = completion.receiver;
-      if (iterator.exhausted || value === iterator.sentinel || values.equal(iterator.sentinel, value)) {
+      if (iterator.exhausted || value === iterator.sentinel) {
         exhaust(iterator); return unaryTask("iterator-stop", iterator, site, completion.after);
       }
-      return valueTask(value, site, completion.after);
+      return compareTask("equal", iterator.sentinel, value, site,
+        continuation("sentinel-equal", {receiver: iterator, value, after: completion.after, depth: 0}));
     }
     if (completion?.kind === "next-default") return valueTask(value, site, completion.after);
     if (["for-iter", "for-next", "for-exhausted"].includes(completion?.kind)) {
@@ -246,18 +269,73 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     state.temporaries = operationRoots(task);
     return task;
   };
+  const sequenceNext = (record, site, position = 0) => {
+    const {left, right, operation, after, depth} = record;
+    const a = values.comparisonSequence(left), b = values.comparisonSequence(right);
+    while (position < a.length && position < b.length) {
+      charge(1);
+      if (a[position] === b[position]) { position++; continue; }
+      if (depth >= maxDepth) python("RecursionError", "maximum comparison depth exceeded");
+      return compareTask("equal", a[position], b[position], site,
+        continuation("sequence-item", {left, right, operation, position, after, depth}), depth + 1);
+    }
+    const equal = a.length === b.length;
+    return valueTask(operation === "equal" ? equal : !equal, site, after);
+  };
   const dispatch = task => {
     while (task) {
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "compare") {
+          state.temporaries.push(...operationRoots(task));
+          const {left, right, operation, position} = task;
+          if (!(left instanceof InstanceValue || right instanceof InstanceValue)) {
+            if (values.sameSequenceKind(left, right)) {
+              const a = values.comparisonSequence(left), b = values.comparisonSequence(right);
+              task = a.length !== b.length ? valueTask(operation === "not-equal", site, completion) :
+                sequenceNext({left, right, operation, after: completion, depth}, site); continue;
+            }
+            if ((values.isDict(left) || values.isDict(right)) && (values.hasUserEquality(left) || values.hasUserEquality(right)))
+              hard("UNSUPPORTED", "UnsupportedOperationError", "Dictionary protocol comparison requires its hashing stage.");
+            task = deliver(values.binary(operation, left, right), completion, site); continue;
+          }
+          const reflected = left instanceof InstanceValue && right instanceof InstanceValue && left.type !== right.type && right.type.mro.includes(left.type);
+          const candidates = reflected ? [[right, left], [left, right]] : [[left, right], [right, left]];
+          if (position >= candidates.length) { task = deliver(operation === "equal" ? left === right : left !== right, completion, site); continue; }
+          const [receiver, other] = candidates[position];
+          if (!(receiver instanceof InstanceValue)) { task = compareTask(operation, left, right, site, completion, depth, position + 1); continue; }
+          if (depth >= maxDepth) python("RecursionError", "maximum implicit comparison dispatch depth exceeded");
+          const fallback = {operation: "compare-next", comparison: operation, left, right, position: position + 1, after: completion, depth};
+          let plan, invert = false;
+          try {
+            plan = classes.special(receiver, operation === "equal" ? "__eq__" : "__ne__");
+            if (!plan && operation === "not-equal") { invert = true; plan = classes.special(receiver, "__eq__"); }
+          } catch (error) {
+            const recovery = error instanceof Raised && bindingRecovery(error.value, {fallback}, site);
+            if (!recovery) throw error;
+            task = recovery; continue;
+          }
+          if (!plan) {
+            task = receiver === other ? valueTask(operation === "equal", site, completion) :
+              compareTask(operation, left, right, site, completion, depth, position + 1); continue;
+          }
+          const finish = continuation(invert ? "ne-result" : "compare-result", {operation, left, right, position, depth, after: completion});
+          task = plan.kind === "value" ? callTask(plan.value, [other], [], [], site, finish, depth + 1) :
+            callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [other], keywords: [], keywordValues: [], after: finish, depth: depth + 1, fallback}), depth + 1);
+          continue;
+        }
         if (task.kind === "contains") {
           state.temporaries.push(...operationRoots(task));
           const {receiver, key} = task;
           if (task.search || values.isIterator(receiver)) {
             task = unaryTask("iter", receiver, site, continuation("search-iter", {receiver, key, after: completion, depth}), depth); continue;
           }
-          if (!(receiver instanceof InstanceValue)) { task = deliver(values.contains(key, receiver), completion, site); continue; }
+          if (!(receiver instanceof InstanceValue)) {
+            if (values.comparisonSequence(receiver) !== null) { task = containsTask(receiver, key, site, completion, depth, true); continue; }
+            if (values.isDict(receiver) && key instanceof InstanceValue) hard("UNSUPPORTED", "UnsupportedOperationError", "User dictionary keys require their hashing stage.");
+            task = deliver(values.contains(key, receiver), completion, site); continue;
+          }
           charge(1);
           if (++depth > maxDepth) python("RecursionError", "maximum implicit membership dispatch depth exceeded");
           const fallback = {operation: "contains-search", receiver, key, after: completion, depth};

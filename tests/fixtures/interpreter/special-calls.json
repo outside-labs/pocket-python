@@ -9,7 +9,8 @@
     "C3-truth",
     "C3-formatting",
     "C3-indexing",
-    "C3-iteration"
+    "C3-iteration",
+    "C3-equality"
   ],
   "cases": [
     {
@@ -400,7 +401,7 @@
     },
     {
       "id": "future-equality",
-      "stage": "C3-future",
+      "stage": "C3-equality",
       "source": "class A:\n def __eq__(self,other): return True\nprint(A()==7)\n",
       "stdout": "True\n"
     },

@@ -108,3 +108,15 @@ These refine [INT-EQ-01/#114](https://github.com/outside-labs/pocket-python/issu
 See the [data model](https://docs.python.org/3.14/reference/datamodel.html#object.__eq__)
 and [NotImplemented rules](https://docs.python.org/3.14/library/constants.html#NotImplemented).
 Live documentation maintenance releases do not change the pinned oracle.
+
+## Equality adoption
+
+E1 is implemented: 42 comparisons and four explicit later boundaries pass as
+independently compiled source in Node and Chromium through drain and
+instruction-step execution. The matrix now has 89 total cases; E2 hashing remains
+the next slice. Nine focused units cover closed roots/layouts, original callback
+frames, active exception/finally state, Python/native recursion, instruction/work
+limits, actual OOM/output failure, paused collection/cancel/close, and deep/cyclic
+protocol discovery without host recursion. All 234 Node tests pass, including
+the eight unchanged composed resource baselines. Earlier equality refusal probes
+now record their adopted behavior.

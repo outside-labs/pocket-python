@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "T1",
-    "T2"
+    "T2",
+    "C3-equality"
   ],
   "cases": [
     {
@@ -534,7 +535,7 @@
     },
     {
       "id": "future-equality-search",
-      "stage": "T3",
+      "stage": "C3-equality",
       "source": "class A:\n def __eq__(self,other): return True\nclass B:\n def __iter__(self): return iter([A()])\nprint(7 in B())\n",
       "stdout": "True\n"
     },

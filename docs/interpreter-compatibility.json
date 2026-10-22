@@ -367,9 +367,9 @@
     },
     {
       "id": "user-equality-hash",
-      "status": "deferred",
-      "scope": "__eq__/__ne__/__hash__, NotImplemented, reflected priority and dictionary-key contracts.",
-      "gaps": "Primitive comparison and identity do not establish these user protocols.",
+      "status": "partial",
+      "scope": "Owned __eq__/__ne__, NotImplemented, subtype/reflected priority, list/tuple comparison and truth consumers.",
+      "gaps": "Hashing and dictionary protocols await their next delivery slice; ordering and broader reflection remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -382,7 +382,10 @@
         "equality-hook",
         "builtin-hash"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/equality.json:subtype-reflected-first",
+        "tests/fixtures/interpreter/equality.json:membership-rich-eq-truth"
+      ]
     },
     {
       "id": "further-object-protocols",
