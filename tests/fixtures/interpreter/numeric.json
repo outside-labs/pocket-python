@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "N1",
-    "N2"
+    "N2",
+    "N3"
   ],
   "cases": [
     {

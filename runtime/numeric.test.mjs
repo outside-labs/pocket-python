@@ -128,3 +128,39 @@ test('divmod retains both owned results across collection and rolls back allocat
     assert.equal(memory.stats().objects,2);
   }finally{leave();memory.close();}closed({closed:memory.stats()});
 });
+
+test('real string constructors match the pinned decimal and whitespace observations',()=>{
+  const corpus=JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/numeric-construction.json',import.meta.url)));
+  assert.equal(corpus.unicode_version,'16.0.0');const values=new ValueRuntime({numeric:true});
+  for(const record of corpus.cases){
+    const text=values.string(Array.from(record.text,char=>char.codePointAt(0)));
+    const calculate=()=>values.realConstructor(record.name,record.name==='int'?[text,BigInt(record.base)]:[text],record.name==='int');
+    if(record.error)assert.throws(calculate,{name:record.error},JSON.stringify(record));
+    else if(record.integer!==undefined)assert.equal(calculate(),BigInt(record.integer),JSON.stringify(record));
+    else assert.deepEqual(values.encode(calculate()),{type:'float',bits:record.bits},JSON.stringify(record));
+  }
+});
+
+test('real conversion preserves float identity and refuses bounded oversized work',async()=>{
+  const values=new ValueRuntime({numeric:true}),real=values.float(-0);
+  assert.equal(values.realConstructor('float',[real]),real);
+  assert.equal(values.realConstructor('int',[values.float(-3.75)]),-3n);
+  const text=values.string(Array.from('9'.repeat(5000),char=>char.codePointAt(0)));
+  assert.throws(()=>values.realConstructor('int',[text]),{code:'BUDGET'});
+  let polls=0;const cancelled=new ValueRuntime({numeric:true,charge:()=>{
+    if(++polls===10)throw Object.assign(new Error('cancelled'),{code:'CANCELLED'});
+  }});
+  assert.throws(()=>cancelled.realConstructor('int',[text]),{code:'CANCELLED'});
+  const result=await run('a=float("-0")\nprint(a is float(a),int("١٢")==12,isinstance(True,int),isinstance(False,bool))\n');
+  assert.equal(result.stdout,'True True True True\n');closed(result);
+});
+
+test('real constructor allocation failures release owned text and results',()=>{
+  const memory=new MemoryArena({maxBytes:271}),values=new ValueRuntime({numeric:true,memory}),roots=[];
+  const leave=memory.enter(()=>roots);
+  try{
+    const text=values.string([49,46,50,53]);roots.push(text);
+    assert.throws(()=>values.realConstructor('float',[text]),{code:'OOM'});
+    assert.equal(memory.stats().objects,1);
+  }finally{leave();memory.close();}closed({closed:memory.stats()});
+});

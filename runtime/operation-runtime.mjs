@@ -25,6 +25,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
+    if (values.numeric && ["int", "float"].includes(callable.name)) {
+      const positional = args.length - keywords.length;
+      if (args.length > (callable.name === "int" ? 2 : 1) || keywords.some(key => callable.name !== "int" || key !== "base") ||
+          keywords.length && positional !== 1) python("TypeError", callable.name + "() received invalid arguments");
+      if (args.some(value => value instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "Numeric constructors require the conversion callback stage for user instances.");
+      return values.realConstructor(callable.name, args, callable.name === "int" && args.length === 2);
+    }
     if (values.numeric && ["abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(callable.name)) {
       const name = callable.name, labels = name === "pow" ? ["base", "exp", "mod"] : name === "round" ? ["number", "ndigits"] : name === "divmod" ? ["x", "y"] : ["value"];
       const positional = args.length - keywords.length, required = name === "pow" || name === "divmod" ? 2 : 1;
@@ -72,6 +79,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
       const type = args[1];
       if (type instanceof ClassValue) return classes.isinstance(args[0], type);
+      if (values.numeric && type instanceof BuiltinValue && ["int", "float", "bool"].includes(type.name)) return values.isPrimitive(args[0], type.name);
       if (type instanceof BuiltinValue && type.name === "str") return values.isString(args[0]);
       if (type instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, type.name)) return args[0] instanceof ExceptionValue && matchesException(args[0].name, type.name);
       hard("UNSUPPORTED", "UnsupportedOperationError", "isinstance supports str and the adopted exception classes in this profile.");

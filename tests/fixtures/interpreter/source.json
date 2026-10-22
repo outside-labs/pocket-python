@@ -290,6 +290,13 @@
       "features": [
         "source.grammar"
       ]
+    },
+    {
+      "id": "real-constructors-core",
+      "source": "a=float(\"١.٢٥\")\nprint(int(\"0x_ff\",0),int(-3.75),a==1.25,a is float(a),isinstance(True,int),isinstance(a,float))\n",
+      "features": [
+        "source.grammar"
+      ]
     }
   ],
   "boundaries": [

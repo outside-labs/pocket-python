@@ -1023,17 +1023,15 @@
     },
     {
       "id": "builtin-float",
-      "source": "print(callable(float))\n",
-      "classification": "deferred",
+      "source": "a=float(\"\u0661.\u0662\u0665\")\nprint(a==1.25,a is float(a),isinstance(a,float))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "True True True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True True True\n",
+        "error_type": null
       }
     },
     {
@@ -1184,17 +1182,15 @@
     },
     {
       "id": "builtin-int",
-      "source": "print(callable(int))\n",
-      "classification": "deferred",
+      "source": "print(int(\"0x_ff\",0),int(-3.75),isinstance(True,int))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "255 -3 True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "255 -3 True\n",
+        "error_type": null
       }
     },
     {

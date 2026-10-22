@@ -79,8 +79,8 @@ jobs:
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/iteration.json --report build/iteration-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/equality.json --report build/equality-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/equality.json --stepped --report build/equality-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 Future --report build/numeric-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 Future --stepped --report build/numeric-stepped-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 N3 Future --report build/numeric-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 N3 Future --stepped --report build/numeric-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/iteration.json --stepped --report build/iteration-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/indexing.json --stepped --report build/indexing-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_compatibility.py --target browser --report build/compatibility-browser-report.json
@@ -181,8 +181,8 @@ jobs:
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/equality.json --report build/equality-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/equality.json --stepped --report build/equality-stepped-node-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/numeric.json --report build/numeric-reference-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 Future --report build/numeric-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 Future --stepped --report build/numeric-stepped-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 N3 Future --report build/numeric-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 N3 Future --stepped --report build/numeric-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/iteration.json --stepped --report build/iteration-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/indexing.json --stepped --report build/indexing-stepped-node-report.json
       - run: python runtime/check_compatibility.py --target node --report build/compatibility-node-report.json
