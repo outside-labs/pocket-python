@@ -98,13 +98,13 @@
     {
       "id": "str-identity",
       "source": "s=\"hello\"\nprint(str(s) is s)\n",
-      "classification": "known-divergence",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "False\n",
+        "stdout": "True\n",
         "error_type": null
       }
     },

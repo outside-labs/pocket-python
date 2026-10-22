@@ -35,9 +35,9 @@ python runtime/check_compatibility.py --target browser --report build/compatibil
 Each report hashes its inventory, corpus and implementation inputs, records the
 actual source output/diagnostic/phase and checks logical teardown. A passing
 observation means the recorded behavior was reproduced. Only supported positive
-cases earn support credit. The current identity defect in str(s), and valid but
-unadopted assignment expressions/type aliases reported as SyntaxError, remain
-explicit known divergences until their own fixes pass. No overall percentage of
+cases earn support credit. str(s) now preserves the existing string identity. Valid but unadopted assignment
+expressions/type aliases reported as SyntaxError remain explicit known
+divergences until their own fixes pass. No overall percentage of
 Python coverage is inferred from these probe counts.
 
 ## Language and platform surfaces
@@ -56,7 +56,7 @@ Python coverage is inferred from these probe counts.
 | private-names | supported | Lexical private-name mangling in admitted class bodies, nested code, parameters/imports and metadata. No additional syntax beyond the explicit source profile. |
 | descriptors-decorators | partial | Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Descriptor-valued setter/deleter/name-notification hooks and unrestricted reflection remain refused. |
 | call-length-truth | supported | Type-level __call__/__len__/__bool__, callable(), len(), bool(), not and control tests in classes-source/1, including adopted descriptor binding and optional truth fallback. Length uses the explicit signed-64-bit contract; later protocols remain separate. |
-| repr-str | partial | print/str display None, bool, int, strings and adopted exception messages; print accepts positional arguments only. str(s) currently loses identity; str() and repr are unavailable. User __repr__/__str__, float/container/default-object output and format specs are not adopted. |
+| repr-str | partial | print/str display None, bool, int, strings and adopted exception messages; str(s) preserves string identity; print accepts positional arguments only. str() and repr are unavailable. User __repr__/__str__, float/container/default-object output and format specs are not adopted. |
 | indexed-user-objects | deferred | __index__/__getitem__/__setitem__/__delitem__ on user instances, including slices. Primitive indexing exists; these custom slots are refused at bind. |
 | iterated-user-objects | deferred | __iter__/__next__/__contains__ and Python fallback chains for user objects. Built-in list/tuple/dict/string iterators exist; custom slots and richer iter/next forms do not. |
 | user-equality-hash | deferred | __eq__/__ne__/__hash__, NotImplemented, reflected priority and dictionary-key contracts. Primitive comparison and identity do not establish these user protocols. |
@@ -142,7 +142,7 @@ Python coverage is inferred from these probe counts.
 | slice | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | sorted | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | staticmethod | partial | staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1. | Unrestricted wrapper introspection. |
-| str | partial | str(x), None/bool/int/str/adopted exception messages. | Identity defect, zero-argument form, user/float/container formatting and encoding forms. |
+| str | partial | str(x), None/bool/int/str/adopted exception messages. | Zero-argument form, user/float/container formatting and encoding forms. |
 | sum | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | super | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | tuple | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
