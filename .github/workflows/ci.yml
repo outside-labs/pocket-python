@@ -141,6 +141,7 @@ jobs:
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/length-truth.json --report build/length-truth-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/execution.json --report build/execution-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/formatting.json --report build/formatting-reference-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
       - run: python runtime/check_classes.py --target node --stepped --report build/classes-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-node-report.json
@@ -178,4 +179,5 @@ jobs:
             build/special-calls-reference-report.json
             build/length-truth-reference-report.json
             build/execution-reference-report.json
+            build/formatting-reference-report.json
           if-no-files-found: error

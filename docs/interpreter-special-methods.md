@@ -22,6 +22,10 @@ hooks retain separate gates. INT-09 stays open beyond the first call milestone.
 Async/host integration, later C/Rust WebAssembly and alpha publication remain
 separate queue items.
 
+The [bounded formatting contract](interpreter-formatting.md) and its pinned
+reference corpus define the next exact repr/str slice. Float/container/default
+displays and format specifications retain their separate work package.
+
 ## Call contract
 
 An instance call resolves __call__ through its type's C3 MRO. It bypasses instance
