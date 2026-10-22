@@ -34,6 +34,8 @@ def reference_case(case):
 def references(corpus_path=CORPUS):
     raw = corpus_path.read_bytes()
     corpus = json.loads(raw)
+    if corpus.get('reference_version') and platform.python_version() != corpus['reference_version']:
+        raise AssertionError('The corpus requires its explicitly pinned reference version.')
     records = []
     for case in corpus['cases']:
         actual = reference_case(case)

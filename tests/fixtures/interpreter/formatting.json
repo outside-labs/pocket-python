@@ -1,0 +1,439 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-formatting/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "primitive-repr",
+      "stage": "R1",
+      "source": "print(repr(None),repr(True),repr(False),repr(-9007199254740993),repr(\"hello\"))\n",
+      "stdout": "None True False -9007199254740993 'hello'\n"
+    },
+    {
+      "id": "str-signatures",
+      "stage": "R1",
+      "source": "s=\"A\ud83d\ude00\"\nprint(len(str()),str(s) is s,str(None),str(False),str(7),str(ValueError(\"bad\")))\n",
+      "stdout": "0 True None False 7 bad\n"
+    },
+    {
+      "id": "repr-empty",
+      "stage": "R1",
+      "source": "repr()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "repr-extra",
+      "stage": "R1",
+      "source": "repr(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "repr-keyword",
+      "stage": "R1",
+      "source": "repr(object=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "str-extra",
+      "stage": "R1",
+      "source": "str(1,2,3,4)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "str-unknown-keyword",
+      "stage": "R1",
+      "source": "str(unknown=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "string-quote-choice",
+      "stage": "R1",
+      "source": "print(repr(\"'\"))\n",
+      "stdout": "\"'\"\n"
+    },
+    {
+      "id": "string-both-quotes",
+      "stage": "R1",
+      "source": "print(repr('\\'\"'))\n",
+      "stdout": "'\\'\"'\n"
+    },
+    {
+      "id": "string-backslash",
+      "stage": "R1",
+      "source": "print(repr('\\\\'))\n",
+      "stdout": "'\\\\'\n"
+    },
+    {
+      "id": "string-controls",
+      "stage": "R1",
+      "source": "print(repr('\\x00\\t\\n\\r\\x08\\x0b\\x0c\\x1b\\x7f\\x85'))\n",
+      "stdout": "'\\x00\\t\\n\\r\\x08\\x0b\\x0c\\x1b\\x7f\\x85'\n"
+    },
+    {
+      "id": "string-unicode",
+      "stage": "R1",
+      "source": "print(repr('A\\U0001f600e\\u0301\\xa0\\u2028\\u2029\\u200d\\ue000\\u0378\\U0001faea\\U000f0000'))\n",
+      "stdout": "'A\ud83d\ude00e\u0301\\xa0\\u2028\\u2029\\u200d\\ue000\\u0378\\U0001faea\\U000f0000'\n"
+    },
+    {
+      "id": "string-surrogates",
+      "stage": "R1",
+      "source": "print(repr('\\ud800\\udfff'))\n",
+      "stdout": "'\\ud800\\udfff'\n"
+    },
+    {
+      "id": "string-empty",
+      "stage": "R1",
+      "source": "print(repr(''))\n",
+      "stdout": "''\n"
+    },
+    {
+      "id": "hook-precedence",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return \"representation\"\n def __str__(self): return \"display\"\nprint(repr(A()),str(A()),A())\n",
+      "stdout": "representation display display\n"
+    },
+    {
+      "id": "str-falls-back-to-repr",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return \"representation\"\na=A()\nprint(str(a),a,repr(a))\n",
+      "stdout": "representation representation representation\n"
+    },
+    {
+      "id": "inherited-slots",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return \"base\"\nclass B(A): pass\nclass C(A):\n def __str__(self): return \"child\"\nprint(repr(B()),str(B()),repr(C()),str(C()))\n",
+      "stdout": "base base base child\n"
+    },
+    {
+      "id": "instance-shadows",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return \"type-repr\"\n def __str__(self): return \"type-str\"\na=A()\ndef local(): return \"local\"\na.__repr__=local\na.__str__=local\nprint(a.__repr__(),a.__str__(),repr(a),str(a))\n",
+      "stdout": "local local type-repr type-str\n"
+    },
+    {
+      "id": "slot-replacement-delete",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return \"base\"\nclass B(A):\n def __repr__(self): return \"before\"\nb=B()\nold=b.__repr__\ndef changed(self): return \"after\"\nB.__repr__=changed\nprint(repr(b),old())\ndel B.__repr__\nprint(repr(b),str(b))\n",
+      "stdout": "after before\nbase base\n"
+    },
+    {
+      "id": "__repr__-bad-result-none",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return None\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__repr__-bad-result-int",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return 7\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__repr__-bad-result-bool",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return False\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__repr__-bad-result-container",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return []\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__repr__-bad-result-self",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return self\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__repr__-noncallable",
+      "stage": "R1",
+      "source": "class A:\n __repr__=7\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__repr__-none-slot",
+      "stage": "R1",
+      "source": "class A:\n __repr__=None\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__repr__-body-error",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): raise ValueError(\"body\")\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__repr__-binding-error",
+      "stage": "R2",
+      "source": "class A:\n @property\n def __repr__(self): raise AttributeError(\"binding\")\n def other(self): return \"unused\"\nprint(\"A object at 0x\" in repr(A()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "__repr__-binding-result",
+      "stage": "R1",
+      "source": "class A:\n @property\n def __repr__(self): return \"not callable\"\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__str__-bad-result-none",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): return None\nstr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__str__-bad-result-int",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): return 7\nstr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__str__-bad-result-bool",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): return False\nstr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__str__-bad-result-container",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): return []\nstr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__str__-bad-result-self",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): return self\nstr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__str__-noncallable",
+      "stage": "R1",
+      "source": "class A:\n __str__=7\nstr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__str__-none-slot",
+      "stage": "R1",
+      "source": "class A:\n __str__=None\nstr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__str__-body-error",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): raise ValueError(\"body\")\nstr(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__str__-binding-error",
+      "stage": "R1",
+      "source": "class A:\n @property\n def __str__(self): raise AttributeError(\"binding\")\n def other(self): return \"unused\"\nstr(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__str__-binding-result",
+      "stage": "R1",
+      "source": "class A:\n @property\n def __str__(self): return \"not callable\"\nstr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "str-binding-error-no-repr-fallback",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return \"fallback\"\n @property\n def __str__(self): raise AttributeError(\"binding\")\nstr(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "static-class-slots",
+      "stage": "R1",
+      "source": "class A:\n @staticmethod\n def __repr__(): return \"static\"\n @classmethod\n def __str__(cls): return cls.__name__\nprint(repr(A()),str(A()))\n",
+      "stdout": "static A\n"
+    },
+    {
+      "id": "property-binding-closure",
+      "stage": "R1",
+      "source": "class A:\n def __init__(self,n): self.n=n\n @property\n def __str__(self):\n  print(\"binding\")\n  def render(): return \"n=\"+str(self.n)\n  return render\nprint(\"start\",A(7),\"end\")\n",
+      "stdout": "start binding\nn=7 end\n"
+    },
+    {
+      "id": "descriptor-accessed-owner",
+      "stage": "R1",
+      "source": "class D:\n def __get__(self,instance,owner):\n  print(owner.__name__)\n  def render(): return str(instance.n)\n  return render\nclass A:\n __repr__=D()\n def __init__(self,n): self.n=n\nclass B(A): pass\nprint(repr(B(8)))\n",
+      "stdout": "B\n8\n"
+    },
+    {
+      "id": "callable-slot",
+      "stage": "R1",
+      "source": "class Render:\n def __call__(self): return \"callable\"\nclass A:\n __str__=Render()\nprint(A())\n",
+      "stdout": "callable\n"
+    },
+    {
+      "id": "direct-invalid-result-is-ordinary",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return 7\n def __str__(self): return None\na=A()\nprint(a.__repr__(),a.__str__())\n",
+      "stdout": "7 None\n"
+    },
+    {
+      "id": "returned-string-identity",
+      "stage": "R1",
+      "source": "text=\"value\ud83d\ude00\"\nclass A:\n def __str__(self): return text\n def __repr__(self): return text\nprint(str(A()) is text,repr(A()) is text)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "print-evaluation-before-conversion",
+      "stage": "R1",
+      "source": "events=[]\nclass A:\n def __str__(self):\n  events.append(3)\n  return \"a\"\ndef mark(n):\n events.append(n)\n return A()\nprint(mark(1),mark(2))\nprint(events[0],events[1],events[2],events[3])\n",
+      "stdout": "a a\n1 2 3 3\n"
+    },
+    {
+      "id": "print-nested-output",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self):\n  print(\"inner\")\n  return \"outer\"\nprint(\"start\",A(),\"end\")\n",
+      "stdout": "start inner\nouter end\n"
+    },
+    {
+      "id": "print-first-hook-output",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self):\n  print(\"inner\")\n  return \"outer\"\nprint(A(),A())\n",
+      "stdout": "inner\nouter inner\nouter\n"
+    },
+    {
+      "id": "print-failure-keeps-prefix",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): raise ValueError(\"bad\")\ntry: print(\"start\",A(),\"end\")\nexcept ValueError: print(\"caught\")\n",
+      "stdout": "start caught\n"
+    },
+    {
+      "id": "print-invalid-keeps-prefix",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): return 7\ntry: print(\"start\",A())\nexcept TypeError: print(\"caught\")\n",
+      "stdout": "start caught\n"
+    },
+    {
+      "id": "print-binding-keeps-prefix",
+      "stage": "R1",
+      "source": "class A:\n @property\n def __str__(self): raise AttributeError(\"bad\")\ntry: print(\"start\",A())\nexcept AttributeError: print(\"caught\")\n",
+      "stdout": "start caught\n"
+    },
+    {
+      "id": "nested-repr-str",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self): return \"a\"\nclass B:\n def __str__(self): return \"b:\"+repr(A())\nprint(B())\n",
+      "stdout": "b:a\n"
+    },
+    {
+      "id": "repr-return-finally",
+      "stage": "R1",
+      "source": "class A:\n def __repr__(self):\n  try: return \"value\"\n  finally: print(\"finally\")\nprint(repr(A()))\n",
+      "stdout": "finally\nvalue\n"
+    },
+    {
+      "id": "active-exception",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self): raise\ntry:\n raise ValueError(\"original\")\nexcept ValueError:\n try: print(\"start\",A())\n except ValueError as error: print(str(error))\n finally: print(\"finally\")\n",
+      "stdout": "start original\nfinally\n"
+    },
+    {
+      "id": "printing-no-arguments",
+      "stage": "R1",
+      "source": "print()\nprint(\"\", \"x\", \"\")\n",
+      "stdout": "\n x \n"
+    },
+    {
+      "id": "print-keyword-error",
+      "stage": "R1",
+      "source": "class A:\n def __str__(self):\n  print(\"wrong\")\n  return \"a\"\nprint(A(),unknown=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "future-float-repr",
+      "stage": "R2",
+      "source": "print(repr(1.5))\n",
+      "stdout": "1.5\n"
+    },
+    {
+      "id": "future-container-repr",
+      "stage": "R2",
+      "source": "print(repr([1,2]))\n",
+      "stdout": "[1, 2]\n"
+    },
+    {
+      "id": "future-float-str",
+      "stage": "R2",
+      "source": "print(str(1.5))\n",
+      "stdout": "1.5\n"
+    },
+    {
+      "id": "future-container-str",
+      "stage": "R2",
+      "source": "print(str([1,2]))\n",
+      "stdout": "[1, 2]\n"
+    },
+    {
+      "id": "future-default-object",
+      "stage": "R2",
+      "source": "class A: pass\nprint(\"A object at 0x\" in str(A()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-exception-repr",
+      "stage": "R2",
+      "source": "print(repr(ValueError(\"bad\")))\n",
+      "stdout": "ValueError('bad')\n"
+    },
+    {
+      "id": "future-format-protocol",
+      "stage": "R2",
+      "source": "class A:\n def __format__(self,spec): return \"value\"\nprint(format(A()))\n",
+      "stdout": "value\n"
+    },
+    {
+      "id": "repr-binding-ValueError",
+      "stage": "R1",
+      "source": "class A:\n @property\n def __repr__(self): raise ValueError(\"binding\")\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "repr-binding-TypeError",
+      "stage": "R1",
+      "source": "class A:\n @property\n def __repr__(self): raise TypeError(\"binding\")\nrepr(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "str-repr-binding-default",
+      "stage": "R2",
+      "source": "class A:\n @property\n def __repr__(self): raise AttributeError(\"binding\")\nprint(\"A object at 0x\" in str(A()))\n",
+      "stdout": "True\n"
+    }
+  ]
+}
