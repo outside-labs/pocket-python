@@ -734,3 +734,36 @@ The inventory's two diagnostic divergences are now deferred observations with
 UNSUPPORTED, earning no execution support credit. The next task is INT-INDEX-01,
 through a pinned contract, owned read/conversion and mutation/slice operations,
 then offline-console acceptance. The semantic oracle remains CPython 3.14.7.
+
+
+### Indexed-object and diagnostic checkpoint (2026-10-22)
+
+INT-DIAG-01 classifies recognized assignment expressions and type aliases as
+UNSUPPORTED before effects; malformed forms in the diagnostic grammar retain
+SyntaxError. Both forms remain deferred. The source matrix has 371 cases; the
+118-observation inventory has 28 positive source/availability cases, 86 deferred
+observations, no known diagnostic divergences and four host restrictions. These
+counts are not a percentage of Python coverage.
+
+The [indexing contract](docs/interpreter-indexing.md) implements INT-INDEX-01
+through focused steps [#135–138](https://github.com/outside-labs/pocket-python/issues/135):
+current type-slot lookup, __index__/__getitem__/__setitem__/__delitem__, raw slice
+keys, builtin sequence conversion, __len__ index results and bounded list/tuple
+RHS slice mutation. Python hooks use owned operations and ordinary frames. A
+class-only build-slice instruction retains explicit legacy/core admission.
+
+The indexing matrix has 81 CPython 3.14.7 comparisons and eight future refusals.
+All eight source matrices pass in Node/Chromium through drain and instruction
+stepping (1,848 source/refusal executions), with 206 Node tests and unchanged
+resource baselines. The class console has 54 source comparisons, 15 acceptance
+groups and 15 Stop/Restart cycles. The [complete artifact measurement](docs/measurements/2026-10-22-indexing.json)
+keeps the prior source fixed: 354,868 to 371,597 bytes; the expanded example adds
+560 bytes, yielding 372,157 bytes. No startup/speed improvement is claimed.
+
+Next is [INT-ITER-01/#113](https://github.com/outside-labs/pocket-python/issues/113),
+followed by equality/hashing and broader numeric/sequence/function/value work in
+the compatibility inventory. Other iterable slice RHS forms, slice reflection
+and formatting, builtin subclasses and further protocols remain deferred.
+General Python 3.14+ compatibility beyond applications/games remains the goal;
+INT-09 and INT-10 stay open. The later C/Rust/Wasm path, mobile inference, consumer
+adapters, independent-engine publication and hosting retain separate gates.

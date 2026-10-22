@@ -112,3 +112,21 @@ and static/class method binding. The complete matrix now has 81 comparisons and
 eight future refusals. A class-only build-slice opcode constructs first-class
 keys for mutation and mixed subscripts; legacy bytecode versions 1–4 reject it.
 Existing single-slice read bytecode and core admission remain unchanged.
+
+
+## Offline acceptance and payload
+
+The console has 54 source comparisons and 15 acceptance groups, with 15
+Stop/Restart cycles. New source after offline reload exercises index conversion,
+property-bound reads, setters/deleters and slice mutation. Failures cover strict
+results, binding/body frames, shape errors and explicit future refusals. A waiting
+class-to-core update removes class and library authority plus the slice constructor.
+All requests remain local static GETs; the default core profile stays available.
+
+The complete [payload record](measurements/2026-10-22-indexing.json) retains every
+file/hash/notice and an unchanged previous source: 354,868 to 371,597 bytes
+(+16,729), including engine growth of 16,670 bytes. The expanded example adds 560
+source bytes, totaling 372,157 bytes across 37 files. These are uncompressed
+complete applications, with per-file gzip sums recorded separately. Earlier
+formatting/consolidation measurements retain their original fixtures and scope.
+No startup, speed, device-inference or package-support claim follows from size.

@@ -68,7 +68,8 @@ methods and inheritance hooks must not silently behave as ordinary attributes.
 
 The [selected protocol sequence and call contract](interpreter-special-methods.md)
 start with the delivered __call__/callable() and __len__/__bool__ milestones,
-followed by the delivered [bounded repr/str slice](interpreter-formatting.md).
+followed by the delivered [bounded repr/str slice](interpreter-formatting.md)
+and [integer conversion/item/slice contract](interpreter-indexing.md).
 Length/truth and formatting resume operations through ordinary VM callbacks and
 validated results; pending print arguments have explicit owned completions.
 Choose and test an explicit special-method matrix before each extension. Cover
@@ -200,3 +201,11 @@ __call__, with callable() confirming the available type slot. Its __len__/__bool
 methods also demonstrate length, active/empty state and conditional evaluation.
 The optional operator library exercises user length through truth/not_. C3 and INT-09
 remain open; this development checkpoint has no PyPI release.
+
+
+The indexed-object checkpoint adopts __index__, __getitem__, __setitem__ and
+__delitem__, raw slice/tuple keys, builtin sequence conversion and bounded list
+slice mutation. Its 89-case matrix has 81 reference comparisons and eight future
+refusals. The offline console has 54 source comparisons and 15 acceptance groups,
+including 15 Stop/Restart cycles. Iteration and comparison/hash remain later C3
+steps; these bounded protocols do not close INT-09 or the async milestone.
