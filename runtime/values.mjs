@@ -136,7 +136,7 @@ export class ValueRuntime {
         this.limit(left.items.length + right.points.length <= VALUE_LIMITS.items, "Container length budget exceeded.");
         for (const point of right.points) this.binary("append", left, this.string([point]));
         return left;
-      } else if (right instanceof IteratorValue) this.fail("UnsupportedOperationError", "List += with an iterator is outside the source profile.", "UNSUPPORTED");
+      } else if (right instanceof IteratorValue || right instanceof ProtocolIteratorValue) this.fail("UnsupportedOperationError", "List += with an iterator is outside the source profile.", "UNSUPPORTED");
       else { this.iterator(right); this.fail("UnsupportedOperationError", "This iterable extension is outside the source profile.", "UNSUPPORTED"); }
       this.limit(left.items.length + items.length <= VALUE_LIMITS.items, "Container length budget exceeded.");
       for (const item of items) this.binary("append", left, item);
