@@ -13,6 +13,14 @@ const operands = values => {
   if (!Array.isArray(values) || values.length > 131072) throw new TypeError("Invalid operation operands.");
   return Object.freeze([...values]);
 };
+const numericName = value => {
+  if (!["int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"].includes(value)) throw new TypeError("Invalid numeric operation.");
+  return value;
+};
+const numericPosition = value => {
+  if (!Number.isSafeInteger(value) || value < 0 || value > 2) throw new TypeError("Invalid numeric operand position.");
+  return value;
+};
 export function completion(kind, fields = {}) {
   const after = fields.after ?? null;
   if (after !== null && !records.has(after)) throw new TypeError("Invalid outer completion.");
@@ -27,6 +35,12 @@ export function completion(kind, fields = {}) {
     case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
     case "hash-result": record = {kind, receiver: fields.receiver, after}; break;
+    case "numeric-result": case "numeric-index":
+      record = {kind, name:numericName(fields.name), args:operands(fields.args), position:numericPosition(fields.position), slot:fields.slot, depth:fields.depth, after};
+      depthCheck(record.depth);
+      if (record.args.length > 3 || record.position >= record.args.length || kind === "numeric-result" &&
+          !["__int__","__float__","__complex__","__index__","__abs__","__round__"].includes(record.slot)) throw new TypeError("Invalid numeric continuation.");
+      break;
     case "dict-hash": case "dict-key": case "dict-truth":
       record = {kind, receiver: fields.receiver, key: fields.key, item: fields.item, operation: dictionaryOperation(fields.operation), depth: fields.depth, after,
         hash: fields.hash ?? null, position: fields.position ?? 0, version: fields.version ?? 0, candidate: fields.candidate ?? null};
@@ -97,6 +111,7 @@ function visit(record) {
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "hash-result": return [record.receiver, ...completionRoots(record.after)];
+    case "numeric-result": case "numeric-index": return [...record.args, ...completionRoots(record.after)];
     case "dict-hash": case "dict-key": case "dict-truth": return [record.receiver, record.key, record.hash, record.candidate,
       ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "dict-build": return [record.receiver, ...record.parts, ...completionRoots(record.after)];
@@ -145,6 +160,11 @@ export function unaryTask(operation, value, site, after = null, depth = 0, optio
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "unary", operation, value, site, completion: after, depth, optionalLength});
 }
+export function numericTask(name, args, site, after = null, depth = 0, position = 0) {
+  depthCheck(depth); completionRoots(after); numericPosition(position);
+  if (args.length > 3) throw new TypeError("Invalid numeric operands.");
+  return Object.freeze({kind:"numeric", name:numericName(name), args:operands(args), position, site, completion:after, depth});
+}
 export function valueTask(value, site, after = null, depth = 0) {
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "value", value, site, completion: after, depth});
@@ -178,6 +198,7 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
 export function operationRoots(task) {
   switch (task.kind) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
+    case "numeric": return [...task.args, ...completionRoots(task.completion)];
     case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "contains": return [task.receiver, task.key, ...completionRoots(task.completion)];
     case "compare": return [task.left, task.right, ...completionRoots(task.completion)];

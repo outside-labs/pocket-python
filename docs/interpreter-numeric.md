@@ -154,3 +154,24 @@ denominator; mixed real operations preserve signed-zero semantics. Primitive
 operations and stored fields are independent implementations, checked against
 the pinned oracle. Floating magnitudes retain host libm precision, as real
 power does; no universal transcendental last-bit promise is made.
+
+## Numeric callback checkpoint
+
+N5 admits type/MRO-selected int/float/complex/abs/round hooks and the numeric
+index consumers. Binding/body failures propagate without optional lookup
+recovery. Int falls back to index, float to index, and complex to float/index;
+explicitly disabled or invalid results do not fall through. Bool integer
+results normalize to int; float/complex hooks require their matching owned
+type. Abs/round may return arbitrary values. Round passes raw digits to user
+hooks and treats an explicit None as an omitted argument. The imaginary
+argument to complex uses float/index conversion.
+
+One closed numeric task and two exhaustive continuation variants keep all
+arguments, converted components and outer destinations rooted. Callbacks enter
+ordinary VM frames; implicit native binding loops and Python recursion remain
+depth-bounded. Tests cover forced collection while paused, cancellation/close,
+work/instruction/output limits and actual callback OOM, with zero logical
+teardown. All eight earlier composed resource observations remain unchanged.
+The source corpus now includes 180 references: 175 adopted comparisons and
+five explicit future refusals. General binary/reflected/in-place hooks,
+truncation fallback, builtin subclasses and broader numeric methods stay gated.

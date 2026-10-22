@@ -740,17 +740,15 @@
   "builtins": [
     {
       "id": "abs",
-      "status": "partial",
-      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
-      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
+      "status": "supported",
+      "scope": "Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-NUM-01"
-      ],
+      "next_tasks": [],
       "probes": [
         "builtin-abs"
       ],
@@ -848,17 +846,15 @@
     },
     {
       "id": "bin",
-      "status": "partial",
-      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
-      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
+      "status": "supported",
+      "scope": "Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-NUM-01"
-      ],
+      "next_tasks": [],
       "probes": [
         "builtin-bin"
       ],
@@ -956,17 +952,15 @@
     },
     {
       "id": "chr",
-      "status": "partial",
-      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
-      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
+      "status": "supported",
+      "scope": "Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-NUM-01"
-      ],
+      "next_tasks": [],
       "probes": [
         "builtin-chr"
       ],
@@ -1011,8 +1005,8 @@
     {
       "id": "complex",
       "status": "partial",
-      "scope": "Owned immutable Cartesian values, literal/text/real/complex construction, real/imag keywords and attributes, finite basic arithmetic, equality/truth/hash and bounded integer powers.",
-      "gaps": "User conversion callbacks follow N5; general powers, non-finite arithmetic/recovery families, numeric methods and formatting remain explicit later boundaries.",
+      "scope": "Owned immutable Cartesian values, literal/text/real/complex construction, real/imag keywords and attributes, finite basic arithmetic, equality/truth/hash and bounded integer powers. Owned conversion and index fallback callbacks run in ordinary VM frames under classes-source/1.",
+      "gaps": "General powers, non-finite arithmetic/recovery families, numeric methods, formatting and builtin subclasses remain later boundaries.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1173,8 +1167,8 @@
     {
       "id": "float",
       "status": "partial",
-      "scope": "Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles.",
-      "gaps": "Owned conversion callbacks follow N5; bytes and builtin subclasses require later value/object stages.",
+      "scope": "Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles. Owned conversion and index fallback callbacks run in ordinary VM frames under classes-source/1.",
+      "gaps": "Bytes (int/float), builtin subclasses, numeric methods and formatting remain later value/object stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1320,17 +1314,15 @@
     },
     {
       "id": "hex",
-      "status": "partial",
-      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
-      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
+      "status": "supported",
+      "scope": "Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-NUM-01"
-      ],
+      "next_tasks": [],
       "probes": [
         "builtin-hex"
       ],
@@ -1375,8 +1367,8 @@
     {
       "id": "int",
       "status": "partial",
-      "scope": "Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles.",
-      "gaps": "Owned conversion callbacks follow N5; bytes and builtin subclasses require later value/object stages.",
+      "scope": "Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles. Owned conversion and index fallback callbacks run in ordinary VM frames under classes-source/1.",
+      "gaps": "Bytes (int/float), builtin subclasses, numeric methods and formatting remain later value/object stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1618,17 +1610,15 @@
     },
     {
       "id": "oct",
-      "status": "partial",
-      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
-      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
+      "status": "supported",
+      "scope": "Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-NUM-01"
-      ],
+      "next_tasks": [],
       "probes": [
         "builtin-oct"
       ],
@@ -1778,17 +1768,15 @@
     },
     {
       "id": "round",
-      "status": "partial",
-      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
-      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
+      "status": "supported",
+      "scope": "Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-NUM-01"
-      ],
+      "next_tasks": [],
       "probes": [
         "builtin-round"
       ],

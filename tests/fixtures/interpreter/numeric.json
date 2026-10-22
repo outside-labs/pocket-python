@@ -7,7 +7,8 @@
     "N1",
     "N2",
     "N3",
-    "N4"
+    "N4",
+    "N5"
   ],
   "cases": [
     {
@@ -1020,6 +1021,156 @@
       "stage": "Future",
       "source": "print((complex(1e309,0)+1).real==1e309)\n",
       "stdout": "True\n"
+    },
+    {
+      "id": "round-raw-digits",
+      "stage": "N5",
+      "source": "class N:\n def __index__(self):\n  print(\"never\")\n  return 2\nclass A:\n def __round__(self,digits=None):\n  print(isinstance(digits,N))\n  return \"raw\"\nprint(round(A(),N()))\n",
+      "stdout": "True\nraw\n"
+    },
+    {
+      "id": "round-none-omitted",
+      "stage": "N5",
+      "source": "class A:\n def __round__(self): return \"none\"\nprint(round(A()),round(A(),None),round(number=A(),ndigits=None))\n",
+      "stdout": "none none none\n"
+    },
+    {
+      "id": "int-base-index-order",
+      "stage": "N5",
+      "source": "class Base:\n def __index__(self):\n  print(\"base\")\n  return 16\nprint(int(\"ff\",Base()),int(\"ff\",base=Base()))\n",
+      "stdout": "base\nbase\n255 255\n"
+    },
+    {
+      "id": "int-base-before-invalid-value",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self):\n  print(\"never\")\n  return 7\nclass Base:\n def __index__(self):\n  print(\"base\")\n  return 10\nint(A(),Base())\n",
+      "stdout": "base\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "numeric-index-bool-result",
+      "stage": "N5",
+      "source": "class A:\n def __index__(self): return True\nprint(int(A()),float(A())==1.0,complex(A())==1,bin(A()),ord(chr(A())))\n",
+      "stdout": "1 True True 0b1 1\n"
+    },
+    {
+      "id": "numeric-bool-int-result",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self): return True\nprint(int(A()),isinstance(int(A()),int))\n",
+      "stdout": "1 True\n"
+    },
+    {
+      "id": "complex-callback-order",
+      "stage": "N5",
+      "source": "class A:\n def __complex__(self):\n  print(\"complex\")\n  return 3+4j\n def __float__(self):\n  print(\"float\")\n  return 1.25\nprint(complex(A(),A())==3+5.25j,complex(imag=A())==1.25j)\n",
+      "stdout": "complex\nfloat\nfloat\nTrue True\n"
+    },
+    {
+      "id": "numeric-mro-descriptor",
+      "stage": "N5",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(owner.__name__)\n  def use(): return obj.value\n  return use\nclass A:\n __int__=D()\nclass B(A):\n def __init__(self): self.value=7\nprint(int(B()))\n",
+      "stdout": "B\n7\n"
+    },
+    {
+      "id": "numeric-static-class-slots",
+      "stage": "N5",
+      "source": "class A:\n @staticmethod\n def __int__(): return 7\n @classmethod\n def __float__(cls): return 1.25\nprint(int(A()),float(A())==1.25)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "numeric-mutated-type-slot",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self): return 3\na=A()\nprint(int(a))\ndef changed(self): return 7\nA.__int__=changed\nprint(int(a))\n",
+      "stdout": "3\n7\n"
+    },
+    {
+      "id": "numeric-raw-hook-results",
+      "stage": "N5",
+      "source": "class A:\n def __abs__(self): return [3,4]\n def __round__(self,n=None): return [n]\na=A()\nprint(abs(a)[1],round(a,7)[0])\n",
+      "stdout": "4 7\n"
+    },
+    {
+      "id": "numeric-finally-control",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self):\n  try: return 7\n  finally: print(\"cleanup\")\nprint(int(A()))\n",
+      "stdout": "cleanup\n7\n"
+    },
+    {
+      "id": "int-binding-attributeerror",
+      "stage": "N5",
+      "source": "class A:\n @property\n def __int__(self): raise AttributeError(\"bind\")\n def __index__(self): return 7\nint(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "float-binding-attributeerror",
+      "stage": "N5",
+      "source": "class A:\n @property\n def __float__(self): raise AttributeError(\"bind\")\n def __index__(self): return 7\nfloat(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "complex-binding-attributeerror",
+      "stage": "N5",
+      "source": "class A:\n @property\n def __complex__(self): raise AttributeError(\"bind\")\n def __float__(self): return 1.25\ncomplex(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "abs-disabled",
+      "stage": "N5",
+      "source": "class A:\n __abs__=None\nabs(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "round-disabled",
+      "stage": "N5",
+      "source": "class A:\n __round__=None\nround(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "index-round-precision-result",
+      "stage": "N5",
+      "source": "class A:\n def __index__(self): return \"bad\"\nround(1.25,A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "float-disabled-no-fallback",
+      "stage": "N5",
+      "source": "class A:\n __float__=None\n def __index__(self): return 7\nfloat(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-disabled-no-fallback",
+      "stage": "N5",
+      "source": "class A:\n __complex__=None\n def __float__(self): return 1.25\ncomplex(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-imag-float-result",
+      "stage": "N5",
+      "source": "class A:\n def __float__(self): return 7\ncomplex(0,A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "conversion-int-no-trunc",
+      "stage": "N5",
+      "source": "class A: pass\nint(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "numeric-signature-before-callback",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self):\n  print(\"never\")\n  return 7\nint(A(),x=3)\n",
+      "stdout": "",
+      "error_type": "TypeError"
     }
   ]
 }

@@ -42,7 +42,11 @@ resource-limited operation may raise an explicit budget error; it must not retur
 a rounded JavaScript Number or silently wrap a C integer. Floats preserve the
 adopted signed-zero, NaN/infinity and division/error behavior. The
 [numeric contract](interpreter-numeric.md) adds exact integer-ratio division,
-integer power and bitwise/shift operations in source bytecode 4/5. Bool is distinct
+integer power, bitwise/shift operations, numeric helpers, real constructors and
+owned complex values in source bytecode 4/5. Type-selected numeric conversion,
+abs/round and index callbacks require classes-source/1 and run in ordinary VM
+frames. General complex powers and non-finite recovery remain explicitly gated.
+Bool is distinct
 in transport even where Python numeric equality treats it as an integer.
 
 Strings count/index Unicode code points, with no implicit normalization; astral
