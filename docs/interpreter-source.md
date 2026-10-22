@@ -104,15 +104,18 @@ Immutable arithmetic delegates to the same verified value operations.
 
 ## Builtins and exclusions
 
-The named source profile provides print, str, len, bool with zero/one argument,
-iter/next with one argument, isinstance against str/adopted exception classes,
+The named source profile provides positional print, zero/one-argument str/bool,
+one-argument repr/len/iter/next, isinstance against str/adopted exception classes,
 and the existing exception hierarchy. List append is a receiver-owning Python
 callable, including when aliased; a module export named append keeps ordinary
 module dispatch. Arbitrary object/host attributes remain unavailable.
 
-Print/str retain the existing None/bool/int/str/exception-message subset;
-float/container formatting, broad repr, float constructors, range and unlisted
-builtins are not added. Unavailable names raise the profile's lookup error.
+Print/str retain the None/bool/int/str/exception-message subset; str() is empty
+and str(s) preserves identity. repr(x) covers None/bool/int/str. The explicit class
+profile adds the [bounded repr/str protocols](interpreter-formatting.md).
+Float/container/default-object formatting, format specifications, float
+constructors, range and unlisted builtins remain deferred. Unavailable names raise
+the profile's lookup error.
 Integer true division, ordinary sequence repetition and existing value/transport
 limits remain explicit staged boundaries. The independent source grammar does
 not imply full Python builtin/stdlib coverage.

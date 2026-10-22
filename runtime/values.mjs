@@ -1,5 +1,6 @@
 // Independent Python values. Native Number is used only inside explicit floats.
 import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
+import {isPrintable} from "./string-printability.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -69,6 +70,32 @@ export class ValueRuntime {
     return value.points.map(point => String.fromCodePoint(point)).join("");
   }
   isString(value) { this.charge(1); return value instanceof StringValue; }
+  repr(value) {
+    if (value instanceof StringValue) {
+      this.charge(2 * value.points.length + 1);
+      const quote = value.points.includes(39) && !value.points.includes(34) ? 34 : 39, points = [];
+      const append = (...items) => {
+        this.limit(points.length + items.length <= VALUE_LIMITS.text, "String representation length budget exceeded.");
+        this.charge(items.length); points.push(...items);
+      };
+      append(quote);
+      for (const point of value.points) {
+        if (point === quote || point === 92) append(92, point);
+        else if ([9, 10, 13].includes(point)) append(92, {9: 116, 10: 110, 13: 114}[point]);
+        else if (isPrintable(point, this.charge)) append(point);
+        else {
+          const width = point <= 255 ? 2 : point <= 65535 ? 4 : 8;
+          const hex = point.toString(16).padStart(width, "0");
+          append(92, width === 2 ? 120 : width === 4 ? 117 : 85, ...Array.from(hex, char => char.charCodeAt(0)));
+        }
+      }
+      append(quote); return this.string(points);
+    }
+    const text = value === null ? "None" : typeof value === "boolean" ? value ? "True" : "False" :
+      typeof value === "bigint" ? value.toString() : null;
+    if (text === null) this.fail("UnsupportedOperationError", "Representation of this value is outside the adopted profile.", "UNSUPPORTED");
+    return this.string(Array.from(text, char => char.codePointAt(0)));
+  }
   isList(value) { this.charge(1); return value instanceof ListValue; }
   inplace(operation, left, right) {
     this.charge(1);

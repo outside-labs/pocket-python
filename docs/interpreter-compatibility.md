@@ -56,7 +56,7 @@ Python coverage is inferred from these probe counts.
 | private-names | supported | Lexical private-name mangling in admitted class bodies, nested code, parameters/imports and metadata. No additional syntax beyond the explicit source profile. |
 | descriptors-decorators | partial | Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Descriptor-valued setter/deleter/name-notification hooks and unrestricted reflection remain refused. |
 | call-length-truth | supported | Type-level __call__/__len__/__bool__, callable(), len(), bool(), not and control tests in classes-source/1, including adopted descriptor binding and optional truth fallback. Length uses the explicit signed-64-bit contract; later protocols remain separate. |
-| repr-str | partial | print/str display None, bool, int, strings and adopted exception messages; str(s) preserves string identity; print accepts positional arguments only. str() and repr are unavailable. User __repr__/__str__, float/container/default-object output and format specs are not adopted. |
+| repr-str | partial | print/str display None, bool, int, strings and adopted exception messages; str() and str(s) preserve the adopted identity rules. repr covers None/bool/int/str and explicit user __repr__; type-level __str__/__repr__ callbacks and print sequencing run on the owned machine. Float/container/default-object displays, exception repr, format specifications and unadopted str/print keyword or encoding forms remain deferred. |
 | indexed-user-objects | deferred | __index__/__getitem__/__setitem__/__delitem__ on user instances, including slices. Primitive indexing exists; these custom slots are refused at bind. |
 | iterated-user-objects | deferred | __iter__/__next__/__contains__ and Python fallback chains for user objects. Built-in list/tuple/dict/string iterators exist; custom slots and richer iter/next forms do not. |
 | user-equality-hash | deferred | __eq__/__ne__/__hash__, NotImplemented, reflected priority and dictionary-key contracts. Primitive comparison and identity do not establish these user protocols. |
@@ -131,10 +131,10 @@ Python coverage is inferred from these probe counts.
 | open | host-restricted | Not installed; availability probe only, never invoked. | Interactive/process/filesystem behavior needs an explicit target capability contract. |
 | ord | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | pow | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| print | partial | print(*values) for None/bool/int/str/adopted exception messages. | Keywords, float/container/object displays and user formatting hooks. |
+| print | partial | print(*values) with default space/newline; admitted scalar/exception displays and user __str__/__repr__ callbacks. | Keyword forms and unadopted value displays. |
 | property | partial | property(fget=None,fset=None,fdel=None,doc=None) and accessor decorators; classes-source/1. | General property reflection and arbitrary doc behavior. |
 | range | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| repr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| repr | partial | repr(x), exactly one positional argument: None/bool/int/str or adopted user __repr__. | Float/container/default-object and exception representations. |
 | reversed | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | round | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | set | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -142,7 +142,7 @@ Python coverage is inferred from these probe counts.
 | slice | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | sorted | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | staticmethod | partial | staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1. | Unrestricted wrapper introspection. |
-| str | partial | str(x), None/bool/int/str/adopted exception messages. | Zero-argument form, user/float/container formatting and encoding forms. |
+| str | partial | str() and str(x) for None/bool/int/str/adopted exceptions and user slots; existing/returned strings retain identity. | Float/container/default-object displays, object= keyword and encoding forms. |
 | sum | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | super | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | tuple | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |

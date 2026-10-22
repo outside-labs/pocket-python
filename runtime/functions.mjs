@@ -10,7 +10,7 @@ import {completion as continuation, completionRoots, unaryTask, controlRoots, re
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
-const builtinNames = new Set(["print", "str", "len", ...Object.keys(EXCEPTIONS)]);
+const builtinNames = new Set(["print", "str", "repr", "len", ...Object.keys(EXCEPTIONS)]);
 const summary = (frame, cursor) => Object.freeze({function: frame.fn.name,
   location: cursor.block.source ? Object.freeze({filename: cursor.block.source.filename,
     span: cursor.block.source.spans[Math.max(0, cursor.pc - 1)]}) : null});

@@ -6,7 +6,8 @@
     "C3-call",
     "C3-callable",
     "C3-length",
-    "C3-truth"
+    "C3-truth",
+    "C3-formatting"
   ],
   "cases": [
     {
@@ -379,7 +380,7 @@
     },
     {
       "id": "future-formatting",
-      "stage": "C3-future",
+      "stage": "C3-formatting",
       "source": "class A:\n def __str__(self): return \"text\"\nprint(str(A()))\n",
       "stdout": "text\n"
     },

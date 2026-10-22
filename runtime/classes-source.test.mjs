@@ -43,7 +43,7 @@ test('metadata overrides and implicit class cells refuse before source effects',
     'class A:\n __module__="custom"\n',
     'class A:\n def __qualname__(self): pass\n',
     'class A:\n from helper import value as __module__\n',
-    'class A:\n def __str__(self): return 7\n',
+    'class A:\n def __index__(self): return 7\n',
     'class A: pass\na=A()\na.__class__=A\n',
     'class A(metaclass=type): pass\n','class A[T]: pass\n','class A(*bases): pass\n',
     'async def f(): pass\n'

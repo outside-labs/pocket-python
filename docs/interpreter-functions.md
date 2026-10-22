@@ -42,7 +42,9 @@ The fixture output profile provides print, str and the existing len. Print uses
 spaces/newline without keyword options. Print/str format None, bool, int, str and
 exception messages. Exceptions accept zero or one argument with that formatting.
 Other formatting and multiple exception arguments fail with UNSUPPORTED; broad
-repr/formatting belongs to later library profiles. Non-callable errors preserve
+formatting retains its own protocol/value gates. The source engine additionally
+adopts [bounded repr/str](interpreter-formatting.md), including primitive repr and
+explicit class callbacks. Non-callable errors preserve
 TypeError with a stage-specific message. Binding-error messages in the corpus
 match CPython, including nested qualified names.
 

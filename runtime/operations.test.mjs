@@ -7,6 +7,11 @@ import {Cell} from './function-objects.mjs';
 test('closed completions preserve ordered duplicate ancestor roots and init frame costs', () => {
   const receiver = {}, instance = {}, arg = {}, keyword = {}, type = {}, descriptor = {};
   const relay = completion('relay', {receiver});
+  const formatted = completion('format-result', {receiver, slot: '__str__', after: relay});
+  const printed = completion('print-argument', {args: [arg, keyword], index: 1, depth: 2, after: formatted});
+  assert.deepEqual(completionRoots(printed), [arg, keyword, receiver, receiver]);
+  assert.throws(() => completion('print-argument', {args: [arg], index: 1, depth: 0}), TypeError);
+  assert.throws(() => completion('print-argument', {args: [arg], index: 0, depth: 257}), TypeError);
   const init = completion('init', {instance, after: relay});
   const protocol = completion('protocol-result', {receiver, slot: '__bool__', operation: 'truth', after: init});
   const optional = completion('optional-truth', {receiver, operation: 'truth', depth: 2, after: protocol});
