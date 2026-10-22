@@ -147,6 +147,11 @@ and offline-console checks. Build its example with
 `uv run python -m examples.interpreter_classes`. The default core-source/1 profile
 remains available; further special protocols and async follow separate stages.
 
+The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
+Python 3.14+ compatibility through finite supported profiles. Its next five tasks
+consolidate execution ownership and suspension; persistent applications and mobile
+inference feasibility have separate acceptance tracks.
+
 The development [library profiles](docs/interpreter-profiles.md) select core-only/1
 or the supplied operator/1 Python library without changing the complete engine.
 The [measured baseline](docs/interpreter-measurements.md) records verified payload,

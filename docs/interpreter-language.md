@@ -7,6 +7,11 @@ tests/fixtures/interpreter/language.json. The [conformance harness](interpreter-
 compares implemented bytecode fixtures with CPython and reports the remaining
 source/language cases as unsupported.
 
+The [continuing compatibility roadmap](interpreter-roadmap.md) keeps broad Python
+3.14+ language/library coverage as a separate objective beyond the initial
+application profile. Staged restrictions below are current support boundaries;
+future adoption still requires exact contracts and independently executed cases.
+
 ## Stages and feature decisions
 
 | Area | Initial adopted behavior | Later or rejected |

@@ -8,14 +8,17 @@ The development source-console milestone now runs newly entered Python offline
 in Chromium, using our independent parser/compiler/VM. Measured optional library
 profiles now have full/reduced and complete-application evidence. Class foundations,
 private names and adopted descriptors/decorators now run in Node and Chromium.
-The first special call protocol now has shared admission and resumable dispatch;
-length/truth and asynchronous host integration remain next; the application-alpha
-publication gates are still open.
+Special call and length/truth protocols now have shared admission, resumable
+dispatch and offline acceptance. The next bounded work consolidates execution
+ownership before the remaining C3 protocols and persistent async applications;
+the application-alpha publication gates remain open.
 
 ## Goal and ownership
 
-Implement a defined Python language subset through our own execution engine,
-usable from a native/CLI harness and browser worker. After initial loading and
+Develop progressively broad Python 3.14+ language, builtin and standard-library
+coverage through our own execution engine, usable from a native/CLI harness and
+browser worker. Finite language/application profiles are delivery checkpoints
+within that continuing implementation program. After initial loading and
 caching, users can enter new Python source, run it locally, observe results and
 errors, interrupt long computation and restart offline.
 
@@ -32,6 +35,38 @@ the dependency-free Python packaging CLI. Do not implicitly create a repository,
 change visibility or choose a distribution identity. Third-party implementation
 code needs recorded ownership, notices and licenses; rebranding an existing
 interpreter does not satisfy independent-engine acceptance.
+
+## Consolidation and continuing compatibility adopted 2026-10-21
+
+The [execution and compatibility roadmap](docs/interpreter-roadmap.md) adopts a
+bounded five-PR consolidation batch before further C3 feature implementation:
+execution/ownership contract, exhaustive pending-operation roots, owned Execution
+with safe-boundary stepping, shared operation/builtin phases, and scheduled module
+initialization. The existing JavaScript VM, front end, values, bytecode 4/5,
+capability model, synchronous facade and fresh-run console remain the baseline.
+
+- [INT-EXEC-01](https://github.com/outside-labs/pocket-python/issues/94): Adopt the consolidated execution and ownership contract.
+- [INT-EXEC-02](https://github.com/outside-labs/pocket-python/issues/95): Centralize pending operation ownership.
+- [INT-EXEC-03](https://github.com/outside-labs/pocket-python/issues/96): Extract owned execution state with safe-boundary stepping.
+- [INT-EXEC-04](https://github.com/outside-labs/pocket-python/issues/97): Share operation phases and builtin dispatch.
+- [INT-EXEC-05](https://github.com/outside-labs/pocket-python/issues/98): Schedule module initialization on the execution machine.
+
+[INT-COMPAT-01](https://github.com/outside-labs/pocket-python/issues/99) tracks broad language/library
+coverage independently of game requirements, including functions/scopes, ordinary
+builtins, generators, comprehensions, context managers, pattern matching,
+coroutines/async generators, annotations, t-strings, object protocols and selected
+real pure-Python packages. Initial application-profile completion does not close
+this wider goal. Keep Python-version, target, language, stdlib, package and native
+ABI promises separate; the pinned 3.14.7 oracle changes only deliberately.
+
+After consolidation, resume repr/str and the remaining C3 protocols while the
+persistent-session/host program advances through its own contracts. INT-09 and
+INT-10 stay open with implementation dependencies on INT-EXEC-05. The mobile
+inference/animation [feasibility task](https://github.com/outside-labs/pocket-python/issues/100) is a
+separate Triage track with minimum devices, assets and budgets still to select.
+Spatial UI browser adaptation, optional expose_api services, Shimify reduction and
+AOT compilation remain explicit cooperating boundaries. Their product milestones
+do not gate unrelated Python conformance. The later C/Rust/Wasm path is retained.
 
 ## Relationship to source reduction and compilation
 
