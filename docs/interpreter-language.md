@@ -40,7 +40,9 @@ implementation, negative tests and feature-tagged native/browser conformance lan
 Integers must preserve Python precision, including values beyond 2**53. A
 resource-limited operation may raise an explicit budget error; it must not return
 a rounded JavaScript Number or silently wrap a C integer. Floats preserve the
-adopted signed-zero, NaN/infinity and division/error behavior. The [numeric contract](interpreter-numeric.md) adds exact integer-ratio division, integer power and bitwise/shift operations in source bytecode 4/5. Bool is distinct
+adopted signed-zero, NaN/infinity and division/error behavior. The
+[numeric contract](interpreter-numeric.md) adds exact integer-ratio division,
+integer power and bitwise/shift operations in source bytecode 4/5. Bool is distinct
 in transport even where Python numeric equality treats it as an integer.
 
 Strings count/index Unicode code points, with no implicit normalization; astral
@@ -99,9 +101,11 @@ after offline reload, including errors, interrupting an infinite loop and restar
 INT-04 implements [core values and staged containers](interpreter-values.md)
 under bytecode version 2. INT-06 adds [functions, closures and exception unwinding](interpreter-functions.md)
 through version 3. INT-08 now compiles new source through the independent front end. INT-05 adds
-[rooted allocation accounting and explicit host handles](interpreter-memory.md). Pure-int
-true division and equal-size dictionary key mutation during iteration are
-explicitly deferred. The published 0.2.0 assembler excludes this development engine.
+[rooted allocation accounting and explicit host handles](interpreter-memory.md).
+Earlier value/bytecode profiles keep their pure-integer division refusal; source
+bytecode 4/5 adopts the numeric contract above. Equal-size dictionary key mutation
+during iteration remains deferred. The published 0.2.0 assembler excludes this
+development engine.
 
 ## Deferred-syntax diagnostics
 
