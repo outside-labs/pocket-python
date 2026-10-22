@@ -9,8 +9,9 @@ in Chromium, using our independent parser/compiler/VM. Measured optional library
 profiles now have full/reduced and complete-application evidence. Class foundations,
 private names and adopted descriptors/decorators now run in Node and Chromium.
 Special call and length/truth protocols now have shared admission, resumable
-dispatch and offline acceptance. The next bounded work consolidates execution
-ownership before the remaining C3 protocols and persistent async applications;
+dispatch and offline acceptance. Execution ownership is consolidated. The
+versioned compatibility inventory orders the remaining C3 protocols, broad
+language/library work and persistent async applications;
 the application-alpha publication gates remain open.
 
 ## Goal and ownership
@@ -55,7 +56,9 @@ capability model, synchronous facade and fresh-run console remain the baseline.
 - [INT-EXEC-05](https://github.com/outside-labs/pocket-python/issues/98): Schedule module initialization on the execution machine.
 
 [INT-COMPAT-01](https://github.com/outside-labs/pocket-python/issues/99) tracks broad language/library
-coverage independently of game requirements, including functions/scopes, ordinary
+coverage independently of game requirements. The delivered
+[inventory](docs/interpreter-compatibility.md) records 30 feature surfaces, all
+71 builtin-function names and 25 finite linked work packages, including functions/scopes, ordinary
 builtins, generators, comprehensions, context managers, pattern matching,
 coroutines/async generators, annotations, t-strings, object protocols and selected
 real pure-Python packages. Initial application-profile completion does not close

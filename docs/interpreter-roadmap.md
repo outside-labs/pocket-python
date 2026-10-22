@@ -90,7 +90,10 @@ parked ownership and host/async work retain their own acceptance criteria.
 
 ## Broader language and library program
 
-[INT-COMPAT-01](https://github.com/outside-labs/pocket-python/issues/99) establishes a versioned coverage inventory against
+[INT-COMPAT-01](https://github.com/outside-labs/pocket-python/issues/99) delivers the
+[versioned inventory](interpreter-compatibility.md), its
+[machine-readable API boundaries](interpreter-compatibility.json) and 118
+independent source/availability observations against
 the [language reference](https://docs.python.org/3.14/reference/index.html), builtins
 and selected library APIs. Each entry records exact scope, supported/partial/
 deferred/host-restricted status, target, Python version, independent execution

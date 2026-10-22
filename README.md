@@ -148,9 +148,10 @@ and offline-console checks. Build its example with
 remains available; further special protocols and async follow separate stages.
 
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
-Python 3.14+ compatibility through finite supported profiles. Its next five tasks
-consolidate execution ownership and suspension; persistent applications and mobile
-inference feasibility have separate acceptance tracks.
+Python 3.14+ compatibility through finite supported profiles. Execution ownership
+is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)
+records current language/builtin boundaries and ordered follow-up tasks.
+Persistent applications and mobile inference feasibility have separate tracks.
 
 The development [library profiles](docs/interpreter-profiles.md) select core-only/1
 or the supplied operator/1 Python library without changing the complete engine.
