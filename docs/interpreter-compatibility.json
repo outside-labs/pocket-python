@@ -99,7 +99,7 @@
     {
       "id": "container-values",
       "status": "partial",
-      "scope": "List/tuple/dict literals, item access/mutation/deletion, slices, list append, aliases and bounded list += / *=; primitive-key dictionary equivalence/order.",
+      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion.",
       "gaps": "Constructors, broad method APIs, user hashing/equality, collection displays/unpacking, sets and buffers are deferred.",
       "reference_version": "3.14.7",
       "targets": [
@@ -317,22 +317,28 @@
     {
       "id": "indexed-user-objects",
       "status": "partial",
-      "scope": "__index__/__getitem__ through current type lookup and owned callbacks, including raw slice keys; builtin sequence index/slice conversion and ordinary __len__ index results.",
-      "gaps": "Item writes/deletes and bounded slice mutation follow in INT-INDEX-04. Iteration, broader constructors and slice repr/hash/indices remain deferred.",
+      "scope": "__index__/__getitem__/__setitem__/__delitem__ through current type lookup and owned callbacks; raw scalar/tuple/slice keys, builtin sequence conversion, __len__ index results and bounded list/tuple RHS slice mutation.",
+      "gaps": "Other iterable RHS slice assignment, slice repr/hash/indices, builtin subclasses and broader numeric/sequence APIs remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-INDEX-01"
+        "INT-ITER-01",
+        "INT-SEQ-01",
+        "INT-TEXT-01",
+        "INT-EQ-01",
+        "INT-OBJECT-01"
       ],
       "probes": [
         "getitem-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/indexing.json:index-sequences",
-        "tests/fixtures/interpreter/indexing.json:slice-raw-key"
+        "tests/fixtures/interpreter/indexing.json:slice-raw-key",
+        "tests/fixtures/interpreter/indexing.json:write-target-order",
+        "tests/fixtures/interpreter/indexing.json:slice-grow-shrink-self"
       ]
     },
     {
@@ -1432,12 +1438,15 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-INDEX-01"
+        "INT-VALUES-01",
+        "INT-OBJECT-01"
       ],
       "probes": [
         "builtin-len"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/indexing.json:length-index-result"
+      ]
     },
     {
       "id": "list",

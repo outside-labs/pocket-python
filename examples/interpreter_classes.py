@@ -40,6 +40,9 @@ SOURCE = '''class Counter:
     def __bool__(self):
         return self.value > 0
 
+    def __index__(self):
+        return self.value
+
     def __repr__(self):
         return type(self).__name__ + "(" + str(self.value) + ")"
 
@@ -59,6 +62,29 @@ print("Display:", counter)
 print("Representation:", repr(counter))
 empty = StepCounter.from_start(0)
 print("Empty:", "yes" if not empty else "no")
+
+class Shelf:
+    def __init__(self, items):
+        self.__items = items
+
+    def __getitem__(self, key):
+        return self.__items[key]
+
+    def __setitem__(self, key, value):
+        self.__items[key] = value
+
+    def __delitem__(self, key):
+        del self.__items[key]
+
+    def __len__(self):
+        return len(self.__items)
+
+shelf = Shelf([10, 20, 30])
+index = Counter.from_start(1)
+shelf[index] += 5
+shelf[::2] = (7, 9)
+del shelf[-1]
+print("Indexed:", shelf[0], shelf[index], "Size:", len(shelf))
 '''
 
 if __name__ == '__main__':

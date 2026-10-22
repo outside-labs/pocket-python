@@ -69,7 +69,7 @@ def smoke(channel=None):
                     ready()
                     assert 'classes-source/1' in page.locator('#language').inner_text()
                     assert 'private names' in page.locator('#language').inner_text()
-                    assert 'length/truth and repr/str protocols' in page.locator('#language').inner_text()
+                    assert 'integer indices and item/slice access and mutation' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -100,6 +100,15 @@ def smoke(channel=None):
                                      'instance-shadows', 'static-class-slots', 'property-binding-closure',
                                      'descriptor-accessed-owner', 'returned-string-identity', 'print-nested-output',
                                      'print-failure-keeps-prefix', 'active-exception'])
+                    indexing = json.loads((ROOT / 'tests/fixtures/interpreter/indexing.json').read_bytes())
+                    programs.extend(c['source'] for c in indexing['cases'] if c['id'] in
+                                    ['index-sequences', 'index-mro-shadow-mutation', 'index-mutates-sequence',
+                                     'length-index-result', 'read-raw-key', 'read-descriptor', 'slice-raw-key',
+                                     'slice-constructor-preserves-keys', 'slice-step-start-stop-order',
+                                     'write-delete-return-and-alias', 'write-target-order', 'raw-mutation-slices',
+                                     'tuple-slice-keys', 'slice-grow-shrink-self', 'slice-extended-negative',
+                                     'slice-shape-error-no-mutation', 'augmented-slice-converts-twice']
+                                    and 'error_type' not in c)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -158,6 +167,21 @@ def smoke(channel=None):
                     refused('class A:\n @property\n def __repr__(self): raise AttributeError("missing")\nrepr(A())\n', 'UnsupportedOperationError:')
                     run(SOURCE, cases[0]['stdout'])
                     checks.append('formatting-source-errors-result-validation-prefix-and-deferred-default')
+                    refused('class K:\n def __index__(self): return "bad"\n[7][K()]\n', 'TypeError:')
+                    assert 'sources/app.py:3' in page.locator('#status').inner_text()
+                    refused('class A:\n @property\n def __getitem__(self):\n  raise ValueError("binding")\nA()[0]\n', 'ValueError:')
+                    assert '__getitem__ at sources/app.py:4' in page.locator('#diagnostic').inner_text()
+                    for slot, statement, params in [('__setitem__', 'a[0]=7', 'key,value'), ('__delitem__', 'del a[0]', 'key')]:
+                        refused('class A:\n def '+slot+'(self,'+params+'):\n  return 1//0\na=A()\n'+statement+'\n', 'ZeroDivisionError:')
+                        assert slot+' at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    refused('a=[1,2,3]\na[::2]=[7]\n', 'ValueError:')
+                    refused('a=[1]\na[:]=iter((7,))\n', 'UnsupportedOperationError:')
+                    refused("print('never')\nprint((x:=7))\n", 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused("print('never')\ntype A=list[int]\n", 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    run(SOURCE, cases[0]['stdout'])
+                    checks.append('index-item-result-binding-body-shape-and-deferred-source-errors')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -167,6 +191,8 @@ def smoke(channel=None):
                     checks.append('new-length-truth-loop-source-after-offline-reload')
                     run('class OfflineLabel:\n def __init__(self,n): self.__n=n\n def __repr__(self): return "Label("+str(self.__n)+")"\n @property\n def __str__(self):\n  def render(): return "value="+str(self.__n)\n  return render\nlabel=OfflineLabel(7)\nprint(label,repr(label))\nprint(repr("A😀\\t"))\n', "value=7 Label(7)\n'A😀\\t'\n")
                     checks.append('new-formatting-binding-and-unicode-source-after-offline-reload')
+                    run('class Key:\n def __index__(self): return -1\nclass Store:\n def __init__(self): self.__items=[3,4,5]\n @property\n def __getitem__(self):\n  def read(key): return self.__items[key]\n  return read\n def __setitem__(self,key,value): self.__items[key]=value\n def __delitem__(self,key): del self.__items[key]\nstore=Store()\nstore[Key()]+=2\nstore[::2]=(7,9)\ndel store[1]\nprint(store[0],store[Key()])\n', '7 9\n')
+                    checks.append('new-index-conversion-item-binding-and-slice-mutation-source-after-offline-reload')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -177,6 +203,13 @@ def smoke(channel=None):
                         'class Spin:\n @property\n def __repr__(self):\n  print("entered")\n  while True: pass\nrepr(Spin())\n',
                         'class Spin:\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n',
                         'class Spin:\n @property\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n']
+                    busy.extend([
+                        'class Spin:\n def __index__(self):\n  while True: pass\n[7][Spin()]\n',
+                        'class Spin:\n @property\n def __index__(self):\n  while True: pass\n[7][Spin():]\n',
+                        'class Spin:\n def __getitem__(self,key):\n  while True: pass\nSpin()[0]\n',
+                        'class Spin:\n @property\n def __getitem__(self):\n  while True: pass\nSpin()[:[7]]\n',
+                        'class Spin:\n def __setitem__(self,key,value):\n  while True: pass\nSpin()[:]=[[7]]\n',
+                        'class Spin:\n @property\n def __delitem__(self):\n  while True: pass\ndel Spin()[:[7]]\n'])
                     stopped = []
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
@@ -192,7 +225,7 @@ def smoke(channel=None):
                         page.click('#restart')
                         ready()
                         run(SOURCE, cases[0]['stdout'])
-                    checks.append('call-length-truth-formatting-and-pending-bindings-stop-with-fresh-restarts')
+                    checks.append('call-length-truth-formatting-index-mutation-and-pending-bindings-stop-with-fresh-restarts')
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/nested/classes')
                     shutil.copytree(root / 'reduced', root / 'site/nested/classes')
@@ -217,6 +250,7 @@ def smoke(channel=None):
                     assert page.locator('#result').inner_text() == ''
                     refused('import operator\n', 'ImportError:')
                     refused('callable(print)\n', 'NameError:')
+                    refused('slice(7)\n', 'NameError:')
                     run('print(len("okay"),bool([]))\n', '4 False\n')
                     run('print(repr("A😀"),len(str()))\n', "'A😀' 0\n")
                     run('print(7)\n', '7\n')
