@@ -80,26 +80,26 @@ Python coverage is inferred from these probe counts.
 
 | Builtin | Status | Current signature/value boundary | Missing forms |
 | --- | --- | --- | --- |
-| abs | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| abs | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | aiter | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | all | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | anext | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | any | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | ascii | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| bin | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| bin | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | bool | partial | bool() / bool(x) on admitted primitive/user values; classes truth protocols. | Other unadopted value families. |
 | breakpoint | host-restricted | Not installed; availability probe only, never invoked. | Interactive/process/filesystem behavior needs an explicit target capability contract. |
 | bytearray | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | bytes | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | callable | partial | callable(x), exactly one positional argument, classes-source/1. | Availability does not imply support for every Python callable kind. |
-| chr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| chr | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | classmethod | partial | classmethod(callable), classes-source/1 and accessed-owner binding. | Unrestricted wrapper introspection. |
 | compile | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | complex | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | delattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | dict | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | dir | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| divmod | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| divmod | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | enumerate | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | eval | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | exec | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -112,7 +112,7 @@ Python coverage is inferred from these probe counts.
 | hasattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | hash | partial | hash(value), positional-only in classes-source/1; numeric/string/primitive tuple hashes, user __hash__ and owned default identities. | Tuple-with-instance, bound-method and slice hash families remain deferred; exact string/object hash numbers are not a cross-process guarantee. |
 | help | host-restricted | Not installed; availability probe only, never invoked. | Interactive/process/filesystem behavior needs an explicit target capability contract. |
-| hex | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| hex | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | id | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | input | host-restricted | Not installed; availability probe only, never invoked. | Interactive/process/filesystem behavior needs an explicit target capability contract. |
 | int | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -128,16 +128,16 @@ Python coverage is inferred from these probe counts.
 | min | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | next | partial | Primitive next(iterator); classes-source adds user __next__ and next(iterator, default). | Generator/async protocols and iterator reflection remain separate. |
 | object | partial | object() and root base in classes-source/1. | Default displays, identity hashing, __new__ and richer object APIs. |
-| oct | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| oct | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | open | host-restricted | Not installed; availability probe only, never invoked. | Interactive/process/filesystem behavior needs an explicit target capability contract. |
-| ord | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| pow | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| ord | supported | One-character Unicode strings, including non-BMP code points and lone surrogate values; positional-only argument. |  |
+| pow | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | print | partial | print(*values) with default space/newline; admitted scalar/exception displays and user __str__/__repr__ callbacks. | Keyword forms and unadopted value displays. |
 | property | partial | property(fget=None,fset=None,fdel=None,doc=None) and accessor decorators; classes-source/1. | General property reflection and arbitrary doc behavior. |
 | range | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | repr | partial | repr(x), exactly one positional argument: None/bool/int/str or adopted user __repr__. | Float/container/default-object and exception representations. |
 | reversed | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| round | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| round | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | set | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | setattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | slice | partial | classes-source/1 positional constructor with raw read-only start/stop/step. Core constructor, indices(), repr, equality/hash and broader reflection remain deferred. |

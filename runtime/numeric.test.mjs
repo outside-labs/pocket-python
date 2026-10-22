@@ -7,6 +7,7 @@ import {runSourceRequest} from './source-request.mjs';
 import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
+import {modularPower} from './numeric.mjs';
 
 const unit=source=>({name:'app',source,imports:[],package:false,notice:'Synthetic numeric notice'});
 const run=(source,options={})=>runSourceRequest({modules:[unit(source)],options});
@@ -74,4 +75,56 @@ test('numeric results survive collection at every instruction boundary',async()=
 test('power budget failures preserve preceding output and close execution',async()=>{
   const result=await run('print("entered")\nx=2**10000\n',{maxWork:30000});
   assert.equal(result.error.code,'BUDGET');assert.equal(result.stdout,'entered\n');closed(result);
+});
+
+test('round matches independent binary64 observations including ties and non-finite inputs',()=>{
+  const corpus=JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/numeric-rounding.json',import.meta.url)));
+  const values=new ValueRuntime({numeric:true});
+  for(const record of corpus.cases){
+    const value=values.decode({type:'float',bits:record.bits}),digits=record.ndigits===null?null:BigInt(record.ndigits);
+    const calculate=()=>values.numericCall('round',[value,digits]);
+    if(record.error)assert.throws(calculate,{name:record.error});
+    else if(record.integer!==undefined)assert.equal(calculate(),BigInt(record.integer));
+    else assert.deepEqual(values.encode(calculate()),{type:'float',bits:record.result_bits});
+  }
+});
+
+test('modular inverse and exponentiation stay exact and poll cancellation',()=>{
+  const values=new ValueRuntime({numeric:true});
+  assert.equal(values.numericCall('pow',[3n,-1001n,11n]),4n);
+  assert.equal(values.numericCall('pow',[3n,-1n,-11n]),-7n);
+  assert.equal(values.numericCall('pow',[0n,-1n,1n]),0n);
+  assert.throws(()=>values.numericCall('pow',[6n,-1n,12n]),{name:'ValueError'});
+  assert.throws(()=>values.numericCall('pow',[2n,3n,0n]),{name:'ValueError'});
+  let polls=0;assert.throws(()=>modularPower(3n,-(10n**300n),1000000007n,{
+    charge:()=>{if(++polls===20)throw Object.assign(new Error('cancelled'),{code:'CANCELLED'});},
+    fail:()=>assert.fail('unexpected numeric error')
+  }),{code:'CANCELLED'});
+});
+
+test('helper signatures retain Python errors and preceding output at source frames',async()=>{
+  for(const expression of ['abs(x=1)','divmod(x=7,y=3)','pow(2,base=2,exp=3)','round(1,2,3)','hex(1.0)','ord("ab")','chr(1114112)']){
+    const result=await run('print("before")\n'+expression+'\n');
+    assert.equal(result.stdout,'before\n');assert.equal(result.error.type,expression.startsWith('chr')?'ValueError':'TypeError');
+    assert.equal(result.error.traceback[0].location.span[0],2);closed(result);
+  }
+});
+
+test('divmod retains both owned results across collection and rolls back allocation failure',async()=>{
+  const source='pair=divmod(-7.5,2.0)\nprint(pair[0]==-4.0,pair[1]==0.5,round(number=2.675,ndigits=2)==2.67)\n';
+  const {registry}=await compileSourceModules([unit(source)]),session=new ModuleSession(registry);
+  let output='';session.context.begin({maxWork:20000000},text=>{output+=text;});
+  const execution=Execution.modules(session.context);
+  try{while(execution.state!=='completed'){execution.advance();session.memory.collect([],{cleanup:true});}
+    assert.equal(output,'True True True\n');
+  }finally{execution.close();session.context.finish();session.close();registry.close();}
+  closed({closed:session.stats()});
+  const memory=new MemoryArena({maxBytes:300}),values=new ValueRuntime({numeric:true,memory}),roots=[];
+  const leave=memory.enter(()=>roots);
+  try{
+    const quotient=values.float(2);roots.push(quotient);
+    const remainder=values.float(1);roots.push(remainder);
+    assert.throws(()=>values.tuple(roots),{code:'OOM'});
+    assert.equal(memory.stats().objects,2);
+  }finally{leave();memory.close();}closed({closed:memory.stats()});
 });

@@ -25,6 +25,27 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
+    if (values.numeric && ["abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(callable.name)) {
+      const name = callable.name, labels = name === "pow" ? ["base", "exp", "mod"] : name === "round" ? ["number", "ndigits"] : name === "divmod" ? ["x", "y"] : ["value"];
+      const positional = args.length - keywords.length, required = name === "pow" || name === "divmod" ? 2 : 1;
+      if (positional > labels.length) python("TypeError", name + "() received too many arguments");
+      const bound = new Map(labels.slice(0, positional).map((label, index) => [label, args[index]]));
+      for (let index = 0; index < keywords.length; index++) {
+        const key = keywords[index];
+        if (!["pow", "round"].includes(name) || !labels.includes(key) || bound.has(key)) python("TypeError", name + "() received an invalid keyword");
+        bound.set(key, args[positional + index]);
+      }
+      if (labels.slice(0, required).some(label => !bound.has(label))) python("TypeError", name + "() is missing a required argument");
+      const operands = labels.map(label => bound.has(label) ? bound.get(label) : null);
+      if (["bin", "oct", "hex", "chr"].includes(name) && operands[0] instanceof InstanceValue || name === "round" && operands[1] instanceof InstanceValue)
+        hard("UNSUPPORTED", "UnsupportedOperationError", "Numeric index consumers require the conversion callback stage.");
+      if (name === "divmod") {
+        const quotient = values.binary("floor-divide", operands[0], operands[1]); state.temporaries.push(quotient);
+        const remainder = values.binary("modulo", operands[0], operands[1]); state.temporaries.push(remainder);
+        return values.tuple([quotient, remainder]);
+      }
+      return values.numericCall(name, operands);
+    }
     if (keywords.length) python("TypeError", callable.name + "() does not accept keywords in this profile");
     if (callable.name === "callable") {
       if (args.length !== 1) python("TypeError", "callable() requires one positional argument.");

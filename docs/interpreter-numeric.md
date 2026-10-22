@@ -89,3 +89,14 @@ products stay within twice the admitted integer digit bound. Result allocation
 uses the ordinary arena and rolls back on OOM. Collection at every instruction
 boundary retains computed numeric results. Earlier value/function engines keep
 their prior integer-division and opcode admission gates.
+
+## Numeric helper checkpoint
+
+N2 adds the nine helper builtins and real power. All 154 pinned references pass;
+the selected source matrix has 88 comparisons and two explicit future refusals.
+The helper tests additionally compare 285 independently generated CPython
+rounding observations, including non-finite values, signed zero, subnormals,
+huge precisions and exact binary64 ties. Modular inverse and exponentiation
+poll the existing work/cancellation budget. Float divmod roots both owned
+results before tuple allocation; collection and OOM leave no leaked objects.
+Numeric/index callbacks remain the later N5 stage.

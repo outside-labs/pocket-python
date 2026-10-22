@@ -1,7 +1,7 @@
 // Independent Python values. Native Number is used only inside explicit floats.
 import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
-import {divideIntegers, powerIntegers} from "./numeric.mjs";
+import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -593,7 +593,8 @@ export class ValueRuntime {
     if (operation === "dict-delete") return this.remove(left, right);
     if (this.numeric && ["bit-and", "bit-or", "bit-xor", "left-shift", "right-shift", "power"].includes(operation)) {
       if (!["bigint", "boolean"].includes(typeof left) || !["bigint", "boolean"].includes(typeof right)) {
-        if (operation === "power" && numeric(left) && numeric(right)) this.fail("UnsupportedOperationError", "Real powers require the next numeric stage.", "UNSUPPORTED");
+        if (operation === "power" && numeric(left) && numeric(right))
+          return this.float(powerReals(this.number(left), this.number(right), {fail: this.fail}));
         this.fail("TypeError", "This operator requires adopted integers.");
       }
       const a = integer(left), b = integer(right);
@@ -653,6 +654,40 @@ export class ValueRuntime {
     if (quotient !== 0) { floor = Math.floor(quotient); if (quotient - floor > 0.5) floor++; }
     else floor = (a / b < 0 || Object.is(a / b, -0)) ? -0 : 0;
     return this.float(operation === "floor-divide" ? floor : remainder);
+  }
+  numericCall(name, args) {
+    const controls = {charge: this.charge, fail: this.fail};
+    const whole = value => {
+      if (!["bigint", "boolean"].includes(typeof value)) this.fail("TypeError", "An integer argument is required.");
+      return integer(value);
+    };
+    const text = value => this.string(Array.from(value, character => character.codePointAt(0)));
+    if (name === "abs") {
+      if (args[0] instanceof FloatValue) return this.float(Math.abs(args[0].value));
+      const value = whole(args[0]); return this.int(value < 0n ? -value : value);
+    }
+    if (name === "pow") {
+      if (args[2] === null) return this.binary("power", args[0], args[1]);
+      return this.int(modularPower(whole(args[0]), whole(args[1]), whole(args[2]), controls));
+    }
+    if (name === "round") {
+      const ndigits = args[1] === null ? null : whole(args[1]);
+      const result = args[0] instanceof FloatValue ? roundReal(args[0].value, ndigits, controls) : roundInteger(whole(args[0]), ndigits, controls);
+      return typeof result === "bigint" ? this.int(result) : this.float(result);
+    }
+    if (name === "ord") {
+      if (!(args[0] instanceof StringValue) || args[0].points.length !== 1) this.fail("TypeError", "ord() requires a one-character string.");
+      return this.int(BigInt(args[0].points[0]));
+    }
+    const value = whole(args[0]);
+    if (name === "chr") {
+      if (value < 0n || value > 0x10ffffn) this.fail("ValueError", "chr() argument is outside Unicode.");
+      return this.string([Number(value)]);
+    }
+    const absolute = value < 0n ? -value : value, base = {bin: 2, oct: 8, hex: 16}[name];
+    if (!base) this.fail("UnsupportedOperationError", "Unknown numeric builtin.", "UNSUPPORTED");
+    this.charge(absolute.toString(2).length);
+    return text((value < 0n ? "-" : "") + {bin: "0b", oct: "0o", hex: "0x"}[name] + absolute.toString(base));
   }
 }
 
