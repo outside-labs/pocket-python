@@ -118,3 +118,15 @@ the new numeric module, changed engine/receipt/UI and expanded example. The
 record includes per-file hashes and reproducible gzip totals; it makes no
 startup, performance or device claim. INT-NUM-01 remains open for constructors,
 complex values and owned conversion callbacks.
+
+## Real constructor checkpoint
+
+N3 implements primitive int/float construction in both source profiles. The
+parser pins Unicode 16.0.0 decimal blocks and numeric whitespace, rejects
+non-numeric letter normalization/BOM/control whitespace, and enforces Python's
+base/prefix/underscore and positional-only signatures. Integer accumulation is
+bounded before native computation and polls work/cancellation; float results
+use the existing owned binary64 layout and float(existing_float) preserves
+identity. The additional 482 independent CPython observations cover every
+admitted Unicode decimal block and numeric whitespace plus malformed input.
+Bytes and user conversion callbacks remain later stages.

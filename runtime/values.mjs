@@ -1,7 +1,7 @@
 // Independent Python values. Native Number is used only inside explicit floats.
 import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
-import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal} from "./numeric.mjs";
+import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -67,6 +67,35 @@ export class ValueRuntime {
     return this.memory ? this.memory.primitive(value) : value;
   }
   float(value) { return this.make(64, [], () => new FloatValue(bitsOf(value))); }
+  isPrimitive(value, name) {
+    return name === "int" ? typeof value === "bigint" || typeof value === "boolean" :
+      name === "bool" ? typeof value === "boolean" : name === "float" && value instanceof FloatValue;
+  }
+  realConstructor(name, args, explicitBase = false) {
+    const value = args.length ? args[0] : 0n, controls = {charge:this.charge, fail:this.fail, digits:VALUE_LIMITS.digits};
+    if (name === "int") {
+      let base = 10n;
+      if (explicitBase) {
+        base = args[1];
+        if (!["bigint", "boolean"].includes(typeof base)) this.fail("TypeError", "int() base must be an integer");
+        base = integer(base);
+        if (base !== 0n && (base < 2n || base > 36n)) this.fail("ValueError", "int() base must be 0 or 2-36");
+        if (!(value instanceof StringValue)) this.fail("TypeError", "int() cannot convert a non-string with explicit base");
+      }
+      if (value instanceof StringValue) return this.int(parseInteger(this.text(value), Number(base), controls));
+      if (value instanceof FloatValue) {
+        if (Number.isNaN(value.value)) this.fail("ValueError", "cannot convert float NaN to integer");
+        if (!Number.isFinite(value.value)) this.fail("OverflowError", "cannot convert float infinity to integer");
+        this.charge(1075); return this.int(BigInt(Math.trunc(value.value)));
+      }
+      if (["bigint", "boolean"].includes(typeof value)) return this.int(integer(value));
+    } else {
+      if (value instanceof FloatValue) return value;
+      if (value instanceof StringValue) return this.float(parseReal(this.text(value), controls));
+      if (["bigint", "boolean"].includes(typeof value)) return this.float(this.number(value));
+    }
+    this.fail("TypeError", name + "() argument has an unsupported type");
+  }
   string(points) {
     this.limit(points.length <= VALUE_LIMITS.text, "String length budget exceeded.");
     this.charge(points.length + 1); return this.make(64 + 4 * points.length, [], () => new StringValue(points));

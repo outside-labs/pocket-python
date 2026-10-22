@@ -104,7 +104,7 @@ Python coverage is inferred from these probe counts.
 | eval | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | exec | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | filter | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| float | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| float | partial | Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles. | Owned conversion callbacks follow N5; bytes and builtin subclasses require later value/object stages. |
 | format | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | frozenset | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | getattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -115,7 +115,7 @@ Python coverage is inferred from these probe counts.
 | hex | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | id | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | input | host-restricted | Not installed; availability probe only, never invoked. | Interactive/process/filesystem behavior needs an explicit target capability contract. |
-| int | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| int | partial | Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles. | Owned conversion callbacks follow N5; bytes and builtin subclasses require later value/object stages. |
 | isinstance | partial | isinstance(x, str/adopted exception class/user class). | Tuple/union classinfo and unadopted builtin families. |
 | issubclass | partial | issubclass(user_class, user_class/object). | Full builtin, tuple/union classinfo. |
 | iter | partial | Primitive iter(value); classes-source adds user __iter__, indexed fallback and iter(callable, sentinel). | Generator/async protocols and broader sequence APIs remain separate. |

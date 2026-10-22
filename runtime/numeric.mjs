@@ -151,3 +151,49 @@ export function roundReal(value, ndigits, controls) {
   const result = digits >= 0 ? divideIntegers(rounded, scale, controls) : divideIntegers(rounded * scale, 1n, controls);
   return negative ? -result : result;
 }
+
+// Decimal zero points from the pinned Unicode 16.0.0 database (CPython 3.14.7).
+const decimalZeros = [48, 1632, 1776, 1984, 2406, 2534, 2662, 2790, 2918, 3046, 3174, 3302, 3430, 3558, 3664, 3792, 3872, 4160, 4240, 6112, 6160, 6470, 6608, 6784, 6800, 6992, 7088, 7232, 7248, 42528, 43216, 43264, 43472, 43504, 43600, 44016, 65296, 66720, 68912, 68928, 69734, 69872, 69942, 70096, 70384, 70736, 70864, 71248, 71360, 71376, 71386, 71472, 71904, 72016, 72688, 72784, 73040, 73120, 73552, 90416, 92768, 92864, 93008, 93552, 118000, 120782, 120792, 120802, 120812, 120822, 123200, 123632, 124144, 124401, 125264, 130032];
+const numericSpaces = new Set([133,160,5760,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8232,8233,8239,8287,12288]);
+export function numericText(text, {charge}) {
+  let result = "";
+  for (const character of text) {
+    charge(1); const point = character.codePointAt(0);
+    if (point < 128) { result += character; continue; }
+    const zero = decimalZeros.find(start => point >= start && point < start + 10);
+    result += zero !== undefined ? String(point - zero) : numericSpaces.has(point) ? " " : character;
+  }
+  return result.replace(/^[\x09-\x0d ]+|[\x09-\x0d ]+$/g, "");
+}
+
+export function parseInteger(text, base, {charge, fail, digits}) {
+  let input = numericText(text, {charge}).replace(/[A-Z]/g, character => character.toLowerCase()), negative = false;
+  if (input[0] === "+" || input[0] === "-") { negative = input[0] === "-"; input = input.slice(1); }
+  const automatic = base === 0, prefix = /^0([box])/.exec(input), prefixBase = prefix ? {b:2,o:8,x:16}[prefix[1]] : 0;
+  if (base === 0) base = prefixBase || 10;
+  const prefixed = prefixBase === base;
+  if (prefixed) { input = input.slice(2); if (input[0] === "_") input = input.slice(1); }
+  const invalid = () => fail("ValueError", "invalid literal for int()");
+  if (!/^[0-9a-z](?:_?[0-9a-z])*$/.test(input)) invalid();
+  const clean = input.replaceAll("_", "");
+  const units = Array.from(clean, character => {
+    charge(1); const code = character.charCodeAt(0), value = code <= 57 ? code - 48 : code - 87;
+    if (value >= base) invalid(); return value;
+  });
+  if (automatic && !prefixed && clean[0] === "0" && units.some(value => value !== 0)) invalid();
+  const significant = clean.replace(/^0+/, "").length;
+  if (significant * Math.log10(base) > digits + 1) fail("ExecutionLimitError", "Integer conversion exceeds the digit budget.", "BUDGET");
+  let result = 0n;
+  for (const unit of units) { charge(result.toString().length + 1); result = result * BigInt(base) + BigInt(unit); }
+  return negative ? -result : result;
+}
+
+export function parseReal(text, controls) {
+  const input = numericText(text, controls), digit = "[0-9](?:_?[0-9])*";
+  const finite = new RegExp("^[+-]?(?:"+digit+"(?:\\.(?:"+digit+")?)?|\\."+digit+")(?:[eE][+-]?"+digit+")?$");
+  if (/^[+-]?(?:inf(?:inity)?|nan)$/i.test(input)) {
+    return /nan/i.test(input) ? NaN : input[0] === "-" ? -Infinity : Infinity;
+  }
+  if (!finite.test(input)) controls.fail("ValueError", "could not convert string to float");
+  controls.charge(input.length + 1); return Number(input.replaceAll("_", ""));
+}

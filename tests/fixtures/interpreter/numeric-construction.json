@@ -1,0 +1,2841 @@
+{
+  "reference_version": "3.14.7",
+  "unicode_version": "16.0.0",
+  "observation": "Independent int/float constructor observations from the pinned CPython oracle; NaNs use the existing canonical engine representation.",
+  "cases": [
+    {
+      "name": "int",
+      "text": "",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": " ",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": " ",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": " ",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": " ",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": " ",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": " ",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "+",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "+",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "+",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "+",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "+",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "+",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "-",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "-",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "-",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "-",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "-",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "-",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7",
+      "base": 0,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "7",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7",
+      "base": 8,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "7",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "7",
+      "base": 16,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "7",
+      "base": 36,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "-7",
+      "base": 0,
+      "integer": "-7"
+    },
+    {
+      "name": "int",
+      "text": "-7",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "-7",
+      "base": 8,
+      "integer": "-7"
+    },
+    {
+      "name": "int",
+      "text": "-7",
+      "base": 10,
+      "integer": "-7"
+    },
+    {
+      "name": "int",
+      "text": "-7",
+      "base": 16,
+      "integer": "-7"
+    },
+    {
+      "name": "int",
+      "text": "-7",
+      "base": 36,
+      "integer": "-7"
+    },
+    {
+      "name": "int",
+      "text": "+7",
+      "base": 0,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "+7",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "+7",
+      "base": 8,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "+7",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "+7",
+      "base": 16,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "+7",
+      "base": 36,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "1_000",
+      "base": 0,
+      "integer": "1000"
+    },
+    {
+      "name": "int",
+      "text": "1_000",
+      "base": 2,
+      "integer": "8"
+    },
+    {
+      "name": "int",
+      "text": "1_000",
+      "base": 8,
+      "integer": "512"
+    },
+    {
+      "name": "int",
+      "text": "1_000",
+      "base": 10,
+      "integer": "1000"
+    },
+    {
+      "name": "int",
+      "text": "1_000",
+      "base": 16,
+      "integer": "4096"
+    },
+    {
+      "name": "int",
+      "text": "1_000",
+      "base": 36,
+      "integer": "46656"
+    },
+    {
+      "name": "int",
+      "text": "1__0",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1__0",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1__0",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1__0",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1__0",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1__0",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "_1",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "_1",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "_1",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "_1",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "_1",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "_1",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1_",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1_",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1_",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1_",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1_",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "1_",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0",
+      "base": 0,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0",
+      "base": 2,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0",
+      "base": 8,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0",
+      "base": 10,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0",
+      "base": 16,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0",
+      "base": 36,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "00",
+      "base": 0,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "00",
+      "base": 2,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "00",
+      "base": 8,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "00",
+      "base": 10,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "00",
+      "base": 16,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "00",
+      "base": 36,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "012",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "012",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "012",
+      "base": 8,
+      "integer": "10"
+    },
+    {
+      "name": "int",
+      "text": "012",
+      "base": 10,
+      "integer": "12"
+    },
+    {
+      "name": "int",
+      "text": "012",
+      "base": 16,
+      "integer": "18"
+    },
+    {
+      "name": "int",
+      "text": "012",
+      "base": 36,
+      "integer": "38"
+    },
+    {
+      "name": "int",
+      "text": "0_0",
+      "base": 0,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0_0",
+      "base": 2,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0_0",
+      "base": 8,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0_0",
+      "base": 10,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0_0",
+      "base": 16,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0_0",
+      "base": 36,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0_1",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0_1",
+      "base": 2,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "0_1",
+      "base": 8,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "0_1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "0_1",
+      "base": 16,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "0_1",
+      "base": 36,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "0b101",
+      "base": 0,
+      "integer": "5"
+    },
+    {
+      "name": "int",
+      "text": "0b101",
+      "base": 2,
+      "integer": "5"
+    },
+    {
+      "name": "int",
+      "text": "0b101",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b101",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b101",
+      "base": 16,
+      "integer": "45313"
+    },
+    {
+      "name": "int",
+      "text": "0b101",
+      "base": 36,
+      "integer": "514513"
+    },
+    {
+      "name": "int",
+      "text": "0b_101",
+      "base": 0,
+      "integer": "5"
+    },
+    {
+      "name": "int",
+      "text": "0b_101",
+      "base": 2,
+      "integer": "5"
+    },
+    {
+      "name": "int",
+      "text": "0b_101",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b_101",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b_101",
+      "base": 16,
+      "integer": "45313"
+    },
+    {
+      "name": "int",
+      "text": "0b_101",
+      "base": 36,
+      "integer": "514513"
+    },
+    {
+      "name": "int",
+      "text": "0o77",
+      "base": 0,
+      "integer": "63"
+    },
+    {
+      "name": "int",
+      "text": "0o77",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0o77",
+      "base": 8,
+      "integer": "63"
+    },
+    {
+      "name": "int",
+      "text": "0o77",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0o77",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0o77",
+      "base": 36,
+      "integer": "31363"
+    },
+    {
+      "name": "int",
+      "text": "0x_ff",
+      "base": 0,
+      "integer": "255"
+    },
+    {
+      "name": "int",
+      "text": "0x_ff",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x_ff",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x_ff",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x_ff",
+      "base": 16,
+      "integer": "255"
+    },
+    {
+      "name": "int",
+      "text": "0x_ff",
+      "base": 36,
+      "integer": "43323"
+    },
+    {
+      "name": "int",
+      "text": "0x",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x",
+      "base": 36,
+      "integer": "33"
+    },
+    {
+      "name": "int",
+      "text": "0x_",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x_",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x_",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x_",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x_",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x_",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x__f",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x__f",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x__f",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x__f",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x__f",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0x__f",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0X_FF",
+      "base": 0,
+      "integer": "255"
+    },
+    {
+      "name": "int",
+      "text": "0X_FF",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0X_FF",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0X_FF",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0X_FF",
+      "base": 16,
+      "integer": "255"
+    },
+    {
+      "name": "int",
+      "text": "0X_FF",
+      "base": 36,
+      "integer": "43323"
+    },
+    {
+      "name": "int",
+      "text": "ff",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "ff",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "ff",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "ff",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "ff",
+      "base": 16,
+      "integer": "255"
+    },
+    {
+      "name": "int",
+      "text": "ff",
+      "base": 36,
+      "integer": "555"
+    },
+    {
+      "name": "int",
+      "text": "\uff26",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\uff26",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\uff26",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\uff26",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\uff26",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\uff26",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u212a",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u212a",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u212a",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u212a",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u212a",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u212a",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u0660x10",
+      "base": 0,
+      "integer": "16"
+    },
+    {
+      "name": "int",
+      "text": "\u0660x10",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u0660x10",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u0660x10",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u0660x10",
+      "base": 16,
+      "integer": "16"
+    },
+    {
+      "name": "int",
+      "text": "\u0660x10",
+      "base": 36,
+      "integer": "42804"
+    },
+    {
+      "name": "int",
+      "text": "\u0661_\u0662",
+      "base": 0,
+      "integer": "12"
+    },
+    {
+      "name": "int",
+      "text": "\u0661_\u0662",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u0661_\u0662",
+      "base": 8,
+      "integer": "10"
+    },
+    {
+      "name": "int",
+      "text": "\u0661_\u0662",
+      "base": 10,
+      "integer": "12"
+    },
+    {
+      "name": "int",
+      "text": "\u0661_\u0662",
+      "base": 16,
+      "integer": "18"
+    },
+    {
+      "name": "int",
+      "text": "\u0661_\u0662",
+      "base": 36,
+      "integer": "38"
+    },
+    {
+      "name": "int",
+      "text": "\u216b",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u216b",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u216b",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u216b",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u216b",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u216b",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u00b2",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u00b2",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u00b2",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u00b2",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u00b2",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u00b2",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u0000",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u0000",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u0000",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u0000",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u0000",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u0000",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u001c",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u001c",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u001c",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u001c",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u001c",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\u001c",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u001c7",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u001c7",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u001c7",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u001c7",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u001c7",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u001c7",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\ufeff7",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\ufeff7",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\ufeff7",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\ufeff7",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\ufeff7",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\ufeff7",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\n",
+      "base": 0,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "7\n",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "7\n",
+      "base": 8,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "7\n",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "7\n",
+      "base": 16,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "7\n",
+      "base": 36,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u000b7\f",
+      "base": 0,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u000b7\f",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "\u000b7\f",
+      "base": 8,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u000b7\f",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u000b7\f",
+      "base": 16,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u000b7\f",
+      "base": 36,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "-0",
+      "base": 0,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "-0",
+      "base": 2,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "-0",
+      "base": 8,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "-0",
+      "base": 10,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "-0",
+      "base": 16,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "-0",
+      "base": 36,
+      "integer": "0"
+    },
+    {
+      "name": "int",
+      "text": "0b101_",
+      "base": 0,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b101_",
+      "base": 2,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b101_",
+      "base": 8,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b101_",
+      "base": 10,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b101_",
+      "base": 16,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "0b101_",
+      "base": 36,
+      "error": "ValueError"
+    },
+    {
+      "name": "int",
+      "text": "01",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u00857",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u00a07",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u0660\u0661",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u06f0\u06f1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u07c0\u07c1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0966\u0967",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u09e6\u09e7",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0a66\u0a67",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0ae6\u0ae7",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0b66\u0b67",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0be6\u0be7",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0c66\u0c67",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0ce6\u0ce7",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0d66\u0d67",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0de6\u0de7",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0e50\u0e51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0ed0\u0ed1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u0f20\u0f21",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1040\u1041",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1090\u1091",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u16807",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u17e0\u17e1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1810\u1811",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1946\u1947",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u19d0\u19d1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1a80\u1a81",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1a90\u1a91",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1b50\u1b51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1bb0\u1bb1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1c40\u1c41",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u1c50\u1c51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\u20007",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20017",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20027",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20037",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20047",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20057",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20067",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20077",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20087",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20097",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u200a7",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20287",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u20297",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u202f7",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u205f7",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\u30007",
+      "base": 10,
+      "integer": "7"
+    },
+    {
+      "name": "int",
+      "text": "\ua620\ua621",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ua8d0\ua8d1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ua900\ua901",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ua9d0\ua9d1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ua9f0\ua9f1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\uaa50\uaa51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\uabf0\uabf1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\uff10\uff11",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud801\udca0\ud801\udca1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud803\udd30\ud803\udd31",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud803\udd40\ud803\udd41",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud804\udc66\ud804\udc67",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud804\udcf0\ud804\udcf1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud804\udd36\ud804\udd37",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud804\uddd0\ud804\uddd1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud804\udef0\ud804\udef1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud805\udc50\ud805\udc51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud805\udcd0\ud805\udcd1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud805\ude50\ud805\ude51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud805\udec0\ud805\udec1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud805\uded0\ud805\uded1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud805\udeda\ud805\udedb",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud805\udf30\ud805\udf31",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud806\udce0\ud806\udce1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud806\udd50\ud806\udd51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud806\udff0\ud806\udff1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud807\udc50\ud807\udc51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud807\udd50\ud807\udd51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud807\udda0\ud807\udda1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud807\udf50\ud807\udf51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud818\udd30\ud818\udd31",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud81a\ude60\ud81a\ude61",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud81a\udec0\ud81a\udec1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud81a\udf50\ud81a\udf51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud81b\udd70\ud81b\udd71",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud833\udcf0\ud833\udcf1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud835\udfce\ud835\udfcf",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud835\udfd8\ud835\udfd9",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud835\udfe2\ud835\udfe3",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud835\udfec\ud835\udfed",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud835\udff6\ud835\udff7",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud838\udd40\ud838\udd41",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud838\udef0\ud838\udef1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud839\udcf0\ud839\udcf1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud839\uddf1\ud839\uddf2",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud83a\udd50\ud83a\udd51",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "int",
+      "text": "\ud83e\udff0\ud83e\udff1",
+      "base": 10,
+      "integer": "1"
+    },
+    {
+      "name": "float",
+      "text": "01",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u00857",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u00a07",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0660\u0661",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u06f0\u06f1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u07c0\u07c1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0966\u0967",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u09e6\u09e7",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0a66\u0a67",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0ae6\u0ae7",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0b66\u0b67",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0be6\u0be7",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0c66\u0c67",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0ce6\u0ce7",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0d66\u0d67",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0de6\u0de7",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0e50\u0e51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0ed0\u0ed1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u0f20\u0f21",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1040\u1041",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1090\u1091",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u16807",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u17e0\u17e1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1810\u1811",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1946\u1947",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u19d0\u19d1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1a80\u1a81",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1a90\u1a91",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1b50\u1b51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1bb0\u1bb1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1c40\u1c41",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u1c50\u1c51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20007",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20017",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20027",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20037",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20047",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20057",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20067",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20077",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20087",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20097",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u200a7",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20287",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u20297",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u202f7",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u205f7",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u30007",
+      "base": 10,
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ua620\ua621",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ua8d0\ua8d1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ua900\ua901",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ua9d0\ua9d1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ua9f0\ua9f1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\uaa50\uaa51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\uabf0\uabf1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\uff10\uff11",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud801\udca0\ud801\udca1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud803\udd30\ud803\udd31",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud803\udd40\ud803\udd41",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud804\udc66\ud804\udc67",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud804\udcf0\ud804\udcf1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud804\udd36\ud804\udd37",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud804\uddd0\ud804\uddd1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud804\udef0\ud804\udef1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud805\udc50\ud805\udc51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud805\udcd0\ud805\udcd1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud805\ude50\ud805\ude51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud805\udec0\ud805\udec1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud805\uded0\ud805\uded1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud805\udeda\ud805\udedb",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud805\udf30\ud805\udf31",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud806\udce0\ud806\udce1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud806\udd50\ud806\udd51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud806\udff0\ud806\udff1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud807\udc50\ud807\udc51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud807\udd50\ud807\udd51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud807\udda0\ud807\udda1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud807\udf50\ud807\udf51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud818\udd30\ud818\udd31",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud81a\ude60\ud81a\ude61",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud81a\udec0\ud81a\udec1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud81a\udf50\ud81a\udf51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud81b\udd70\ud81b\udd71",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud833\udcf0\ud833\udcf1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud835\udfce\ud835\udfcf",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud835\udfd8\ud835\udfd9",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud835\udfe2\ud835\udfe3",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud835\udfec\ud835\udfed",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud835\udff6\ud835\udff7",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud838\udd40\ud838\udd41",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud838\udef0\ud838\udef1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud839\udcf0\ud839\udcf1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud839\uddf1\ud839\uddf2",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud83a\udd50\ud83a\udd51",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\ud83e\udff0\ud83e\udff1",
+      "base": 10,
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": " ",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "+",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "-",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "7",
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "-7",
+      "bits": "c01c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "+7",
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "1_000",
+      "bits": "408f400000000000"
+    },
+    {
+      "name": "float",
+      "text": "1__0",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "_1",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "1_",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "0",
+      "bits": "0000000000000000"
+    },
+    {
+      "name": "float",
+      "text": "00",
+      "bits": "0000000000000000"
+    },
+    {
+      "name": "float",
+      "text": "012",
+      "bits": "4028000000000000"
+    },
+    {
+      "name": "float",
+      "text": "0_0",
+      "bits": "0000000000000000"
+    },
+    {
+      "name": "float",
+      "text": "0_1",
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "0b101",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "0b_101",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "0o77",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "0x_ff",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "0x",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "0x_",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "0x__f",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "0X_FF",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "ff",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "\uff26",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "\u212a",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "\u0660x10",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "\u0661_\u0662",
+      "bits": "4028000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u216b",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "\u00b2",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "7\u0000",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "7\u001c",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "\u001c7",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "\ufeff7",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "7\n",
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "\u000b7\f",
+      "bits": "401c000000000000"
+    },
+    {
+      "name": "float",
+      "text": "-0",
+      "bits": "8000000000000000"
+    },
+    {
+      "name": "float",
+      "text": "0b101_",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": ".5",
+      "bits": "3fe0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "1.",
+      "bits": "3ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "1e3",
+      "bits": "408f400000000000"
+    },
+    {
+      "name": "float",
+      "text": "1e-3",
+      "bits": "3f50624dd2f1a9fc"
+    },
+    {
+      "name": "float",
+      "text": "1_2.5_0e+0_1",
+      "bits": "405f400000000000"
+    },
+    {
+      "name": "float",
+      "text": "_1.0",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "1._0",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "1e_1",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "1e",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "nan",
+      "bits": "7ff8000000000000"
+    },
+    {
+      "name": "float",
+      "text": "-NaN",
+      "bits": "7ff8000000000000"
+    },
+    {
+      "name": "float",
+      "text": "inF",
+      "bits": "7ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "+Infinity",
+      "bits": "7ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "1e10000",
+      "bits": "7ff0000000000000"
+    },
+    {
+      "name": "float",
+      "text": "-1e-10000",
+      "bits": "8000000000000000"
+    },
+    {
+      "name": "float",
+      "text": "0x1p2",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "\u0661.\u0662\u0665",
+      "bits": "3ff4000000000000"
+    },
+    {
+      "name": "float",
+      "text": "Infinity_",
+      "error": "ValueError"
+    },
+    {
+      "name": "float",
+      "text": "NaN(7)",
+      "error": "ValueError"
+    }
+  ]
+}
