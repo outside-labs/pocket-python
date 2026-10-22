@@ -36,5 +36,5 @@ export async function runExecutionRequest(request) {
     session?.close(); registry?.close();
     if (session) response.closed = session.stats();
   }
-  return {...response, boundaries};
+  return {...response, boundaries, transitions: {...session?.context.transitions}};
 }

@@ -1,14 +1,14 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, callTask, unaryTask, valueTask, operationRoots, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, controlRoots, retainTransfer} from "./operations.mjs";
 
-class Raised { constructor(value) { this.value = value; } }
+import {Raised, operationRuntime} from "./operation-runtime.mjs";
 const exceptionLeases = new WeakMap();
 export function releaseException(error) {
   const record = exceptionLeases.get(error);
@@ -37,7 +37,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       (inheritedException !== null && (!(inheritedException instanceof ExceptionValue) || moduleContext === null))) throw new TypeError("Version 4/5 requires a verified module execution context.");
   const execution = {};
   const state = {frames: [], outputLeases: [], builtins: new Map(), pool: null, globals: null,
-    temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null};
+    temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null,
+    transitions: moduleContext?.transitions || Object.create(null)};
   const hard = (code, name, message) => {
     const error = new ExecutionError(code, name, message, state.current?.instruction ?? null, null);
     error.location = state.current?.location || null;
@@ -166,215 +167,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
     block(frame, fn.body);
   };
-  const display = value => {
-    if (value === null) return "None";
-    if (typeof value === "boolean") return value ? "True" : "False";
-    if (typeof value === "bigint") return value.toString();
-    if (value instanceof ExceptionValue) return value.message;
-    const text = values.text(value);
-    if (text !== null) return text;
-    hard("UNSUPPORTED", "UnsupportedOperationError", "Formatting this value is outside the function stage.");
-  };
-  const builtin = (callable, args, keywords) => {
-    if (keywords.length) python("TypeError", callable.name + "() does not accept keywords in this profile");
-    if (callable.name === "callable") {
-      if (args.length !== 1) python("TypeError", "callable() requires one positional argument.");
-      return classes.callable(args[0]);
-    }
-    if (callable instanceof AppendValue) {
-      if (args.length !== 1) python("TypeError", "append() requires one argument in this profile");
-      return values.binary("append", callable.receiver, args[0]);
-    }
-    if (moduleContext && ["bool", "iter", "next"].includes(callable.name)) {
-      if (callable.name === "bool" && args.length === 0) return false;
-      if (args.length !== 1) hard("UNSUPPORTED", "UnsupportedOperationError", "This builtin call form is outside the source profile.");
-      return values.unary({bool: "truth", iter: "iter", next: "next"}[callable.name], args[0]);
-    }
-    if (Object.hasOwn(EXCEPTIONS, callable.name)) {
-      if (args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception arguments require the later repr profile.");
-      return allocate(ExceptionValue, callable.name, args, args.length ? display(args[0]) : "");
-    }
-    if (callable.name === "print") {
-      const text = args.map(display).join(" ") + "\n";
-      if (moduleContext) { moduleContext.write(text, hard); return null; }
-      if ((state.outputLength += text.length) > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
-      state.outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text); return null;
-    }
-    if (moduleContext && callable.name === "isinstance") {
-      if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
-      const type = args[1];
-      if (type instanceof ClassValue) return classes.isinstance(args[0], type);
-      if (type instanceof BuiltinValue && type.name === "str") return values.isString(args[0]);
-      if (type instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, type.name)) return args[0] instanceof ExceptionValue && matchesException(args[0].name, type.name);
-      hard("UNSUPPORTED", "UnsupportedOperationError", "isinstance supports str and the adopted exception classes in this profile.");
-    }
-    if (callable.name === "issubclass") {
-      if (args.length !== 2) python("TypeError", "issubclass requires two arguments.");
-      return classes.subclass(args[0], args[1]);
-    }
-    if (callable.name === "type") {
-      if (args.length !== 1 || !(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "type supports one user instance in C1.");
-      return args[0].type;
-    }
-    if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
-    return callable.name === "len" ? values.unary("len", args[0]) : values.string(Array.from(display(args[0]), char => char.codePointAt(0)));
-  };
-  const lengthResult = value => {
-    if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "__len__() must return an adopted integer");
-    if (typeof value === "boolean") value = values.int(BigInt(value));
-    if (value < 0n) python("ValueError", "__len__() should return >= 0");
-    if (value > 9223372036854775807n) python("OverflowError", "length exceeds the signed-64-bit maximum");
-    return value;
-  };
-  const bindingRecovery = (value, completion, site) => {
-    while (["init", "relay"].includes(completion?.kind)) completion = completion.after;
-    if (value.name !== "AttributeError" || !completion?.fallback) return null;
-    const {operation, receiver, after, depth, missing} = completion.fallback;
-    // Optional lookup suppresses binding AttributeError, never a method-body error.
-    return missing === "length" ? unaryTask(operation, receiver, site, after, depth, true) :
-      valueTask(operation !== "not", site, after, depth);
-  };
-  const deliver = (value, completion, site) => {
-    while (["init", "relay", "protocol-result"].includes(completion?.kind)) {
-      if (completion.kind === "init") {
-        if (value !== null) python("TypeError", "__init__() should return None");
-        value = completion.instance;
-      } else if (completion.kind === "protocol-result") {
-        if (completion.slot === "__bool__") {
-          if (typeof value !== "boolean") python("TypeError", "__bool__() should return bool");
-        } else value = lengthResult(value);
-        if (completion.operation !== "len") {
-          if (completion.slot === "__len__") value = value !== 0n;
-          if (completion.operation === "not") value = !value;
-        }
-      }
-      completion = completion.after;
-    }
-    if (completion?.kind === "optional-truth") return unaryTask(completion.operation, value, site,
-      completion.after, completion.depth);
-    if (completion?.kind === "invoke") return callTask(value, completion.args, completion.keywords,
-      completion.keywordValues, site, completion.after, completion.depth);
-    if (completion?.kind === "notify") return notifyNext(completion.type, completion.entries, completion.index, site);
-    if (completion?.kind === "condition") {
-      const frame = state.frames.at(-1), task = frame.tasks.at(-1);
-      if (completion.control === "if") block(frame, value ? completion.body : completion.otherwise);
-      else if (completion.control === "jump") { if (!value) task.pc = completion.target; }
-      else if (completion.control === "while") {
-        if (!value) { frame.tasks.pop(); block(frame, task.otherwise); }
-        else { task.phase = "body"; block(frame, task.body); }
-      }
-      return null;
-    }
-    state.frames.at(-1).tasks.at(-1).stack.push(completion?.kind === "discard" ? null : value);
-    return null;
-  };
-  const notifyNext = (type, entries, index, site) => {
-    state.temporaries.push(type, ...entries.map(entry => entry[1]));
-    while (index < entries.length) {
-      charge(1);
-      const [name, value] = entries[index++];
-      // Keep the name rooted while planning a bound callback can allocate.
-      const nameValue = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(nameValue);
-      const plan = classes.notification(value, type, nameValue);
-      if (!plan) continue;
-      return callTask(plan.callable, plan.args, [], [], site,
-        continuation("notify", {type, entries, index}));
-    }
-    return deliver(type, null, site);
-  };
-  const dispatch = task => {
-    while (task) {
-      let {callable, args, keywords, keywordValues, site, completion, depth} = task;
-      try {
-        if (task.kind === "value") { task = deliver(task.value, completion, site); continue; }
-        if (task.kind === "unary") {
-          const {operation, value, optionalLength} = task;
-          state.temporaries.push(...operationRoots(task));
-          if (!(value instanceof InstanceValue) || !["len", "truth", "not"].includes(operation)) {
-            task = deliver(values.unary(operation, value), completion, site); continue;
-          }
-          charge(1);
-          if (!optionalLength && ++depth > maxDepth) python("RecursionError", "maximum implicit protocol dispatch depth exceeded");
-          let slot = operation === "len" || optionalLength ? "__len__" : "__bool__";
-          const fallback = operation === "len" ? null : {operation, receiver: value, after: completion, depth,
-            missing: optionalLength ? "true" : "length"};
-          let plan;
-          try { plan = classes.special(value, slot); }
-          catch (error) {
-            const recovery = error instanceof Raised && bindingRecovery(error.value, {fallback}, site);
-            if (!recovery) throw error;
-            task = recovery; continue;
-          }
-          if (!plan && slot === "__bool__") { slot = "__len__"; plan = classes.special(value, slot); }
-          if (!plan) {
-            if (operation === "len") python("TypeError", "Instance has no length type slot");
-            task = deliver(operation !== "not", completion, site); continue;
-          }
-          const finish = optionalLength ? continuation("optional-truth", {operation, receiver: value, after: completion, depth}) :
-            continuation("protocol-result", {operation, slot, receiver: value, after: completion});
-          if (plan.kind === "value") task = callTask(plan.value, [], [], [], site, finish, depth);
-          else task = callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [],
-            keywordValues: [], after: finish, depth, fallback: slot === "__bool__" || optionalLength ? fallback : null}), depth);
-          continue;
-        }
-        state.temporaries.push(...operationRoots(task));
-        if (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod" || callable instanceof InstanceValue) {
-          charge(1);
-          if (callable instanceof InstanceValue) {
-            if (++depth > maxDepth) python("RecursionError", "maximum implicit call dispatch depth exceeded");
-            const plan = classes.special(callable, "__call__");
-            if (!plan) python("TypeError", "Instance has no callable type slot");
-            completion = continuation("relay", {after: completion, receiver: callable});
-            if (plan.kind === "value") task = callTask(plan.value, args, keywords, keywordValues, site, completion, depth);
-            else task = callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args, keywords, keywordValues, after: completion, depth}), depth);
-          } else {
-            if (callable instanceof BoundMethodValue) args = [callable.receiver, ...args];
-            task = callTask(callable.callable, args, keywords, keywordValues, site, completion, depth);
-          }
-          continue;
-        }
-        if (callable instanceof PropertyAccessorValue) {
-          if (args.length !== 1 || keywords.length) python("TypeError", "Property accessor copy requires one positional value.");
-          const fields = [callable.property.fget, callable.property.fset, callable.property.fdel];
-          fields[{getter: 0, setter: 1, deleter: 2}[callable.name]] = args[0];
-          task = deliver(allocate(PropertyValue, ...fields), completion, site); continue;
-        }
-        if (callable instanceof ClassValue) {
-          const instance = classes.instance(callable); state.temporaries.push(instance);
-          const initializer = classes.lookup(callable, "__init__");
-          if (!initializer.found) {
-            if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
-            task = deliver(instance, completion, site); continue;
-          }
-          const method = classes.get(instance, "__init__");
-          task = callTask(method, args, keywords, keywordValues, site,
-            continuation("init", {instance, after: completion}), depth); continue;
-        }
-        if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
-        if (callable instanceof BuiltinValue) {
-          if (["len", "bool"].includes(callable.name) && args.length === 1 && !keywords.length) {
-            task = unaryTask(callable.name === "bool" ? "truth" : "len", args[0], site, completion, depth); continue;
-          }
-          if (callable.name === "bool" && state.frames.at(-1).callable.pool.code.version === 5 &&
-              (args.length > 1 || keywords.length)) python("TypeError", "bool() accepts at most one positional argument");
-          let value;
-          if (callable.name === "property") value = classes.property(args, keywords, keywordValues);
-          else if (["staticmethod", "classmethod"].includes(callable.name)) {
-            if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
-            value = allocate(MethodWrapperValue, callable.name, args[0]);
-          } else value = builtin(callable, [...args, ...keywordValues], keywords);
-          task = deliver(value, completion, site); continue;
-        }
-        python("TypeError", "Value is not callable in this profile");
-      } catch (error) {
-        const recovery = error instanceof Raised && bindingRecovery(error.value, completion, site);
-        if (!recovery) throw error;
-        task = recovery;
-      }
-    }
-  };
-  const call = (callable, args, keywords, keywordValues, site, completion = null) =>
-    dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
+  const {dispatch, call, deliver, notifyNext, bindingRecovery} = operationRuntime({state, memory, values, classes,
+    moduleContext, maxDepth, allocate, python, hard, charge, enter, bind, block, onOutput});
   const unhandled = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
     // Copy diagnostics without exporting unleased VM objects or frame locals.
@@ -622,6 +416,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     work: moduleContext ? moduleContext.work : state.work,
     outputLength: moduleContext ? moduleContext.outputLength : state.outputLength,
     temporaryRoots: state.temporaries.length,
+    transitions: Object.freeze({...state.transitions}),
     source: state.current ? Object.freeze({...state.current, location: state.current.location ? Object.freeze({
       filename: state.current.location.filename, span: Object.freeze([...state.current.location.span])}) : null}) : null,
     frames: Object.freeze(state.frames.map(frame => Object.freeze({function: frame.fn.name,

@@ -132,3 +132,19 @@ those imports before claiming full import-machine consolidation. The test-only
 `execution_checks.mjs` harness and runner/worker are excluded from application
 assets. Node and browser CI exercise the adopted and refusal matrices through
 both draining and instruction-boundary drivers, without resetting quotas.
+
+## Shared operation phases
+
+`operation-runtime.mjs` now contains the closed call/unary/value phases, builtin
+execution and completion delivery. It uses the activation's ordinary frame
+entry, block stack, error carrier and unwinder; primitive value operations remain
+synchronous. Type-slot lookup, optional binding recovery, class notifications and
+constructor result checks retain their existing behavior and resource counters.
+
+Diagnostic transition counts include dispatch kinds, builtin names, completion
+destinations and original namespace entries. They do not charge a new Python
+budget. The [phase/payload record](measurements/2026-10-21-execution-phases.json)
+compares draining and instruction-boundary counts for the composed cases and
+lists every changed file in a complete source-console assembly. This extraction
+adds 2,548 uncompressed bytes for that fixture (326,305 to 328,853 bytes); it makes
+no execution-speed or logical-memory improvement claim.
