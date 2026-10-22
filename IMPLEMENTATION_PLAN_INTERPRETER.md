@@ -58,7 +58,7 @@ capability model, synchronous facade and fresh-run console remain the baseline.
 [INT-COMPAT-01](https://github.com/outside-labs/pocket-python/issues/99) tracks broad language/library
 coverage independently of game requirements. The delivered
 [inventory](docs/interpreter-compatibility.md) records 30 feature surfaces, all
-71 builtin-function names and 25 finite linked work packages, including functions/scopes, ordinary
+71 builtin-function names and 26 finite linked work packages, including functions/scopes, ordinary
 builtins, generators, comprehensions, context managers, pattern matching,
 coroutines/async generators, annotations, t-strings, object protocols and selected
 real pure-Python packages. Initial application-profile completion does not close
@@ -68,7 +68,12 @@ ABI promises separate; the pinned 3.14.7 oracle changes only deliberately.
 The [bounded repr/str slice](docs/interpreter-formatting.md), indexed objects and
 [iteration/containment](docs/interpreter-iteration.md) and
 [equality/hash protocols](docs/interpreter-equality.md) are implemented.
-Continue the numeric, sequence and object protocol work while the
+The [finite numeric contract](docs/interpreter-numeric.md) adds exact integer
+operators/helpers, real constructors, owned complex values and selected numeric
+conversion callbacks, with independently compiled Node/Chromium and offline
+acceptance. Remaining numeric methods and complex recovery families are tracked
+in [INT-NUM-02](https://github.com/outside-labs/pocket-python/issues/184).
+Continue the sequence and object protocol work while the
 persistent-session/host program advances through its own contracts. INT-09 and
 INT-10 stay open; the execution foundation is delivered, while their remaining
 protocols, parked ownership, events and host/async behavior still require

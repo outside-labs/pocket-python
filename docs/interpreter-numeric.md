@@ -175,3 +175,26 @@ teardown. All eight earlier composed resource observations remain unchanged.
 The source corpus now includes 180 references: 175 adopted comparisons and
 five explicit future refusals. General binary/reflected/in-place hooks,
 truncation fallback, builtin subclasses and broader numeric methods stay gated.
+
+## Integrated offline acceptance
+
+All 180 numeric cases run as independently compiled source in Node/Chromium
+and drain/instruction-stepped modes: 175 adopted comparisons and five explicit
+future refusals. The installed console compares 170 programs against CPython
+and passes 27 further acceptance groups, including fresh real/complex and
+callback source after offline reload, original binding/body/result locations,
+50 Stop/Restart cycles and a core-profile update retaining primitive APIs.
+Requests remain local static GETs and browser page errors remain absent.
+
+The [integrated payload record](measurements/2026-10-22-numeric-integrated.json)
+verifies the preceding immutable checkpoint and all 38 current artifact members.
+The complete core-only class example is 452,125 bytes, +21,917 from the operator
+checkpoint and +37,964 from the prior iteration/equality build. Per-file hashes
+and deterministic gzip totals are retained. No speed, startup, device or package
+coverage claim follows.
+
+[INT-NUM-02](https://github.com/outside-labs/pocket-python/issues/184) tracks
+remaining numeric methods and complex power/non-finite recovery families. Bytes
+remain under INT-VALUES-01, formatting under INT-TEXT-01, and builtin subclasses
+and general arithmetic/reflected hooks under INT-OBJECT-01. The class/async
+parent milestones and publication/hosting/native-target gates stay open.

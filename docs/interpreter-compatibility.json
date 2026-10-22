@@ -12,7 +12,7 @@
     "core-source/1",
     "classes-source/1"
   ],
-  "baseline_commit": "0bc222a7fd8a89c7695803bea09bef2aa7ba2cc6",
+  "baseline_commit": "32052c67a72fd29bd51f53959e0766c297bc83bb",
   "scope": "Versioned feature/API inventory. Status is scoped to the exact row; neither passing negative probes nor builtin-name availability measure overall Python coverage.",
   "references": [
     {
@@ -59,15 +59,17 @@
     {
       "id": "numeric-operations",
       "status": "partial",
-      "scope": "Arbitrary integers, floats and mixed arithmetic + - * / // %, comparisons; exact integer true division, bitwise/shift operators and bounded integer power. Floor/modulo follow Python signs. Primitive abs/divmod/pow/round and base/Unicode helpers are admitted with exact integer and binary64 rounding semantics. Real constructors and owned complex construction/literals/basic arithmetic, compatible equality/hash and bounded integer powers are admitted.",
-      "gaps": "Owned numeric callbacks follow N5; general complex powers, non-finite arithmetic/recovery families and numeric methods remain later work.",
+      "scope": "Arbitrary integers, binary64 real and owned complex values; exact integer true division, bounded powers, bitwise/shifts and primitive helpers; real/complex construction and selected numeric/index callbacks. Both source profiles admit primitive APIs; callbacks require classes-source/1.",
+      "gaps": "General complex powers, non-finite complex arithmetic/intermediate recovery and numeric methods remain INT-NUM-02. Broader class arithmetic and formatting remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-NUM-01"
+        "INT-NUM-02",
+        "INT-OBJECT-01",
+        "INT-TEXT-01"
       ],
       "probes": [
         "scalar-arithmetic",
@@ -75,7 +77,11 @@
         "power",
         "bitwise"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/numeric.json:int-defaults",
+        "tests/fixtures/interpreter/numeric.json:complex-dictionary",
+        "tests/fixtures/interpreter/numeric.json:conversion-explicit-hooks"
+      ]
     },
     {
       "id": "string-values",
@@ -1013,7 +1019,8 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-NUM-01"
+        "INT-NUM-02",
+        "INT-OBJECT-01"
       ],
       "probes": [
         "builtin-complex"
@@ -1077,15 +1084,15 @@
     {
       "id": "divmod",
       "status": "partial",
-      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
-      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
+      "scope": "Positional-only primitive int/float quotient and remainder with owned tuple results and Python sign/zero rules.",
+      "gaps": "General user arithmetic/reflected slots remain INT-OBJECT-01.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-NUM-01"
+        "INT-OBJECT-01"
       ],
       "probes": [
         "builtin-divmod"
@@ -1175,7 +1182,8 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-NUM-01"
+        "INT-VALUES-01",
+        "INT-OBJECT-01"
       ],
       "probes": [
         "builtin-float"
@@ -1375,7 +1383,8 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-NUM-01"
+        "INT-VALUES-01",
+        "INT-OBJECT-01"
       ],
       "probes": [
         "builtin-int"
@@ -1661,15 +1670,16 @@
     {
       "id": "pow",
       "status": "partial",
-      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
-      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
+      "scope": "Two-argument real/integer power, modular integer power/inverse, and complex integer powers from -100 to 100 with finite intermediates; named base/exp/mod keywords.",
+      "gaps": "Remaining complex power/recovery families are INT-NUM-02; user arithmetic slots are INT-OBJECT-01.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-NUM-01"
+        "INT-NUM-02",
+        "INT-OBJECT-01"
       ],
       "probes": [
         "builtin-pow"
@@ -2341,6 +2351,18 @@
       ],
       "dependencies": [],
       "order": 245
+    },
+    {
+      "id": "INT-NUM-02",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/184",
+      "scope": [
+        "Adopt remaining numeric methods, general complex powers, non-real results from real power and non-finite complex arithmetic/intermediate recovery as separate reference-backed families.",
+        "Select explicit precision/libm, signed-zero, overflow and bounded ownership expectations; retain refusals until independently compiled Node/Chromium and offline cases pass."
+      ],
+      "dependencies": [
+        "INT-NUM-01"
+      ],
+      "order": 235.9
     }
   ]
 }
