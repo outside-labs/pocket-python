@@ -34,8 +34,10 @@ issues and plans do not mean those features have shipped.
 The independent engine's continuing goal is broad Python 3.14+ language,
 builtin and useful standard-library/package coverage. Finite application profiles
 provide supported release milestones. The [execution and compatibility roadmap](docs/interpreter-roadmap.md)
-orders a five-PR consolidation batch, preserves the subsequent language queue,
-and tracks persistent applications and mobile feasibility separately.
+records the delivered execution consolidation. The
+[versioned inventory](docs/interpreter-compatibility.md) orders subsequent
+language and library work, while persistent applications and mobile feasibility
+retain separate acceptance tracks.
 
 The compiler and independent interpreter must work without MicroPython or
 Pyodide. An optional upstream CPython WebAssembly build is an existing-engine

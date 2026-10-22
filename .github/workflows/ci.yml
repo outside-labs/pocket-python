@@ -73,6 +73,7 @@ jobs:
       - run: uv run --no-sync python runtime/check_conformance.py --engine vm4 --target browser --report build/modules-browser-report.json
       - run: uv run --no-sync python runtime/check_source_tokens.py --target browser --report build/source-tokens-browser-report.json
       - run: uv run --no-sync python runtime/check_conformance.py --engine source --target browser --report build/source-browser-report.json
+      - run: uv run --no-sync python runtime/check_compatibility.py --target browser --report build/compatibility-browser-report.json
       - run: uv run --no-sync python runtime/check_library_profiles.py --target browser --report build/library-profiles-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --report build/classes-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --stepped --report build/classes-stepped-browser-report.json
@@ -151,6 +152,7 @@ jobs:
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/length-truth.json --stepped --report build/length-truth-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/execution.json --report build/execution-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/execution.json --stepped --report build/execution-stepped-node-report.json
+      - run: python runtime/check_compatibility.py --target node --report build/compatibility-node-report.json
       - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json
       - run: python scripts/interpreter_measurements.py --no-browser --repeats 3 --output build/interpreter-node-measurements
         env:

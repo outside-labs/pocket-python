@@ -1,0 +1,2310 @@
+{
+  "schema_version": 1,
+  "inventory": "interpreter-compatibility/1",
+  "reference_version": "3.14.7",
+  "documentation_version": "3.14.9",
+  "documentation_checked": "2026-10-22",
+  "targets": [
+    "node",
+    "browser"
+  ],
+  "profiles": [
+    "core-source/1",
+    "classes-source/1"
+  ],
+  "baseline_commit": "0bc222a7fd8a89c7695803bea09bef2aa7ba2cc6",
+  "scope": "Versioned feature/API inventory. Status is scoped to the exact row; neither passing negative probes nor builtin-name availability measure overall Python coverage.",
+  "references": [
+    {
+      "id": "language",
+      "url": "https://docs.python.org/3.14/reference/index.html"
+    },
+    {
+      "id": "grammar",
+      "url": "https://docs.python.org/3.14/reference/grammar.html"
+    },
+    {
+      "id": "builtins",
+      "url": "https://docs.python.org/3.14/builtins/functions.html"
+    },
+    {
+      "id": "data-model",
+      "url": "https://docs.python.org/3.14/reference/datamodel.html"
+    },
+    {
+      "id": "template-values",
+      "url": "https://docs.python.org/3.14/library/string.templatelib.html"
+    }
+  ],
+  "features": [
+    {
+      "id": "lexical-unicode",
+      "status": "supported",
+      "scope": "Unicode identifiers normalized with pinned Unicode data; Unicode strings, raw/triple strings, explicit/implicit line joining and indentation within core-source/1.",
+      "gaps": "The exact admitted grammar is documented in interpreter-language.md; other literal families have separate rows.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [],
+      "probes": [
+        "unicode-values"
+      ],
+      "evidence": [
+        "tests/fixtures/interpreter/source.json:raw-triple-continuation",
+        "tests/fixtures/interpreter/source.json:normalized-keyword-name"
+      ]
+    },
+    {
+      "id": "numeric-operations",
+      "status": "partial",
+      "scope": "Arbitrary integers, floats and mixed arithmetic + - * / // %, comparisons; integer // and % follow Python signs.",
+      "gaps": "Pure-integer true division, **, bitwise operators, complex values and numeric constructors are deferred.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "scalar-arithmetic",
+        "integer-true-division",
+        "power",
+        "bitwise"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "string-values",
+      "status": "partial",
+      "scope": "Unicode code-point length, concatenation, comparison, membership, indexing and slicing, including negative step.",
+      "gaps": "General string methods, formatting and bytes/encoding APIs are not adopted.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01",
+        "INT-TEXT-01"
+      ],
+      "probes": [
+        "unicode-values"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "container-values",
+      "status": "partial",
+      "scope": "List/tuple/dict literals, item access/mutation/deletion, slices, list append, aliases and bounded list += / *=; primitive-key dictionary equivalence/order.",
+      "gaps": "Constructors, broad method APIs, user hashing/equality, collection displays/unpacking, sets and buffers are deferred.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01",
+        "INT-EQ-01",
+        "INT-VALUES-01",
+        "INT-SYNTAX-01"
+      ],
+      "probes": [
+        "container-values",
+        "sets",
+        "bytes",
+        "complex"
+      ],
+      "evidence": [
+        "tests/fixtures/interpreter/source.json:list-inplace-aliases",
+        "tests/fixtures/interpreter/source.json:item-write-order",
+        "tests/fixtures/interpreter/source.json:key-delete"
+      ]
+    },
+    {
+      "id": "expression-order",
+      "status": "supported",
+      "scope": "Admitted expression evaluation, chained comparisons, identity/membership, short circuit and/or, not and conditional expressions.",
+      "gaps": "This row covers admitted value/protocol families, not every Python expression.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/source.json:chain-order",
+        "tests/fixtures/interpreter/source.json:conditional-order"
+      ]
+    },
+    {
+      "id": "ordinary-control",
+      "status": "supported",
+      "scope": "if/elif/else, while/for over adopted values, loop else/break/continue, return and finally control transfer.",
+      "gaps": "Generator, context-manager, match and async control are separate rows.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [],
+      "probes": [
+        "control-unwinding"
+      ],
+      "evidence": [
+        "tests/fixtures/interpreter/source.json:loop-else-outer-break"
+      ]
+    },
+    {
+      "id": "function-binding",
+      "status": "partial",
+      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; immutable literal/tuple defaults and lexical closures.",
+      "gaps": "Computed/mutable defaults, global/nonlocal writes, argument packing/unpacking and annotations remain deferred.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-FUNC-01",
+        "INT-ANNOT-01"
+      ],
+      "probes": [
+        "function-binding",
+        "computed-default",
+        "mutable-default",
+        "varargs",
+        "starred-call",
+        "global-write",
+        "nonlocal-write"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "ordinary-syntax-gaps",
+      "status": "deferred",
+      "scope": "assert, lambda, assignment expressions and tuple/list/starred assignment unpacking.",
+      "gaps": "No execution support. Assignment expressions currently receive SYNTAX instead of UNSUPPORTED; this divergence is recorded without support credit.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-DIAG-01",
+        "INT-SYNTAX-01"
+      ],
+      "probes": [
+        "assert-statement",
+        "lambda",
+        "walrus",
+        "unpacking"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "class-construction",
+      "status": "partial",
+      "scope": "Explicit classes-source/1 only: user classes, bounded C3 MRO, __init__, ordinary attributes/deletion and bound methods.",
+      "gaps": "Builtin subclassing, __new__, super, metaclasses, implicit __class__ cells and full reflective behavior are not adopted. Missing list currently makes the builtin-subclass probe fail with NameError.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "class-protocols",
+        "builtin-subclass",
+        "metaclass"
+      ],
+      "evidence": [
+        "tests/fixtures/interpreter/classes.json:diamond-mro",
+        "tests/fixtures/interpreter/classes.json:class-body-order",
+        "tests/fixtures/interpreter/classes.json:implicit-class-cell"
+      ]
+    },
+    {
+      "id": "private-names",
+      "status": "supported",
+      "scope": "Lexical private-name mangling in admitted class bodies, nested code, parameters/imports and metadata.",
+      "gaps": "No additional syntax beyond the explicit source profile.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/private-names.json:subclass-private-fields",
+        "tests/fixtures/interpreter/private-names.json:private-default-keyword-parameters",
+        "tests/fixtures/interpreter/private-names.json:private-module-import"
+      ]
+    },
+    {
+      "id": "descriptors-decorators",
+      "status": "partial",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1.",
+      "gaps": "Descriptor-valued setter/deleter/name-notification hooks and unrestricted reflection remain refused.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
+        "tests/fixtures/interpreter/descriptors.json:decorator-expression-and-application-order",
+        "tests/fixtures/interpreter/descriptors.json:descriptor-valued-setter-hook"
+      ]
+    },
+    {
+      "id": "call-length-truth",
+      "status": "supported",
+      "scope": "Type-level __call__/__len__/__bool__, callable(), len(), bool(), not and control tests in classes-source/1, including adopted descriptor binding and optional truth fallback.",
+      "gaps": "Length uses the explicit signed-64-bit contract; later protocols remain separate.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [],
+      "probes": [
+        "class-protocols"
+      ],
+      "evidence": [
+        "tests/fixtures/interpreter/execution.json:nested-binding-truth-finally"
+      ]
+    },
+    {
+      "id": "repr-str",
+      "status": "partial",
+      "scope": "print/str display None, bool, int, strings and adopted exception messages; print accepts positional arguments only.",
+      "gaps": "str(s) currently loses identity; str() and repr are unavailable. User __repr__/__str__, float/container/default-object output and format specs are not adopted.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-STR-01",
+        "INT-REPR-01",
+        "INT-REPR-02",
+        "INT-REPR-03",
+        "INT-TEXT-01"
+      ],
+      "probes": [
+        "str-identity",
+        "str-empty-constructor",
+        "repr-hook",
+        "str-hook",
+        "float-formatting",
+        "container-formatting",
+        "builtin-repr"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "indexed-user-objects",
+      "status": "deferred",
+      "scope": "__index__/__getitem__/__setitem__/__delitem__ on user instances, including slices.",
+      "gaps": "Primitive indexing exists; these custom slots are refused at bind.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-INDEX-01"
+      ],
+      "probes": [
+        "getitem-hook"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "iterated-user-objects",
+      "status": "deferred",
+      "scope": "__iter__/__next__/__contains__ and Python fallback chains for user objects.",
+      "gaps": "Built-in list/tuple/dict/string iterators exist; custom slots and richer iter/next forms do not.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-ITER-01"
+      ],
+      "probes": [
+        "iterator-hook",
+        "builtin-forms"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "user-equality-hash",
+      "status": "deferred",
+      "scope": "__eq__/__ne__/__hash__, NotImplemented, reflected priority and dictionary-key contracts.",
+      "gaps": "Primitive comparison and identity do not establish these user protocols.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-EQ-01"
+      ],
+      "probes": [
+        "equality-hook",
+        "builtin-hash"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "further-object-protocols",
+      "status": "deferred",
+      "scope": "Arithmetic/reflected/in-place slots, __new__, metaclasses, custom attribute hooks and builtin subclassing.",
+      "gaps": "Each slice requires an adopted reference and owned continuation contract.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "metaclass",
+        "builtin-super"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "exceptions",
+      "status": "partial",
+      "scope": "Adopted builtin exception classes, catch/raise/bare reraise, try/except/else/finally, active context and source tracebacks.",
+      "gaps": "Custom exception inheritance, explicit causes/suppression and exception groups/except* remain deferred.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-ERROR-01"
+      ],
+      "probes": [
+        "control-unwinding",
+        "exception-causes",
+        "exception-groups"
+      ],
+      "evidence": [
+        "tests/fixtures/interpreter/modules.json:exception-object-identity",
+        "tests/fixtures/interpreter/modules.json:import-inherits-exception-context"
+      ]
+    },
+    {
+      "id": "imports",
+      "status": "partial",
+      "scope": "Static absolute/relative imports from a finite granted source registry, packages, identity/cache, initialization order, cycles and failed-init retry.",
+      "gaps": "No ambient filesystem/sys.path/PyPI loader, dynamic __import__ or import hooks. Missing grants raise IMPORT/ImportError; that is an authority boundary, not proof of a missing language API.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01",
+        "INT-PKG-01"
+      ],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/modules.json:relative-imports",
+        "tests/fixtures/interpreter/modules.json:failed-init-retry",
+        "tests/fixtures/interpreter/modules.json:dotted-alias-package-shadow"
+      ]
+    },
+    {
+      "id": "generators-comprehensions",
+      "status": "deferred",
+      "scope": "yield/yield from, generator methods, list/dict/set/generator comprehensions and suspended ownership.",
+      "gaps": "No admitted generator or comprehension syntax.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-GEN-01"
+      ],
+      "probes": [
+        "generator",
+        "comprehension"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "context-patterns",
+      "status": "deferred",
+      "scope": "with and synchronous context manager protocols; match/case patterns and guards.",
+      "gaps": "No admitted source execution. Async context managers are a separate async gate.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-WITH-01"
+      ],
+      "probes": [
+        "context-manager",
+        "pattern-match"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "annotations-generics",
+      "status": "deferred",
+      "scope": "Python 3.14 annotation timing, type parameters, type aliases and required generic aliases.",
+      "gaps": "Annotations and generic syntax are not adopted. Type aliases currently receive SYNTAX instead of UNSUPPORTED.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-ANNOT-01",
+        "INT-DIAG-01"
+      ],
+      "probes": [
+        "annotations",
+        "type-parameters",
+        "type-alias"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "formatted-strings",
+      "status": "deferred",
+      "scope": "f-strings and formatting grammar; t-strings, Template/Interpolation and string.templatelib APIs.",
+      "gaps": "Tokenizer rejects these literal forms. Server-side t-string use by a consumer does not establish browser interpreter support.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-TEXT-01"
+      ],
+      "probes": [
+        "fstrings",
+        "tstrings",
+        "builtin-format",
+        "builtin-ascii"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "async-language",
+      "status": "deferred",
+      "scope": "Native coroutine/await semantics, async iteration/generators/context managers and bounded scheduling/cancellation.",
+      "gaps": "Owned instruction stepping is implemented, but multiple parked owners, persistent events and native coroutine syntax are not. Host Promises are not Python coroutines.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-10"
+      ],
+      "probes": [
+        "async-functions",
+        "async-generator"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "dynamic-code-reflection",
+      "status": "deferred",
+      "scope": "compile/eval/exec, dynamic imports and broader globals/locals/type/attribute reflection.",
+      "gaps": "Source admission, namespace/identity and target authority need separate explicit contracts.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-eval",
+        "builtin-exec",
+        "builtin-globals",
+        "builtin-getattr"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "selected-library-apis",
+      "status": "partial",
+      "scope": "core-only/1 has no library modules; operator/1 includes exactly add, sub, mul, floordiv, mod, eq, lt, neg, not_, truth, getitem from own Python source.",
+      "gaps": "No whole-stdlib claim. json/math/random and licensed pure-Python colorsys API pilots require qualification. collections/itertools/functools/dataclasses/typing remain later API-selection decisions.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-LIB-01"
+      ],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/modules.json:small-operator-profile"
+      ]
+    },
+    {
+      "id": "real-package-certification",
+      "status": "deferred",
+      "scope": "A pinned package and exact entry-point use with source/resource/license closure, original/reduced differential execution and offline checks.",
+      "gaps": "No general package certification. Shimify reachability is not interpreter compatibility; spatial_ui/expose_api and compiler integrations retain consumer-specific contracts.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-PKG-01"
+      ],
+      "probes": [],
+      "evidence": []
+    },
+    {
+      "id": "browser-capabilities",
+      "status": "host-restricted",
+      "scope": "Offline browser worker with explicit source/assets/import grants; no ambient Python process/filesystem/network/device capabilities.",
+      "gaps": "Durable sessions/storage, event/view adapters and one bounded awaited host capability remain under INT-10. Device inference needs separate real-device evidence in APP-MODEL-01.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-10",
+        "APP-MODEL-01"
+      ],
+      "probes": [
+        "builtin-open",
+        "builtin-input",
+        "builtin-breakpoint",
+        "builtin-help"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "native-abi",
+      "status": "host-restricted",
+      "scope": "Independent JavaScript values and VM, with a separately planned C/Rust-to-Wasm backend.",
+      "gaps": "No CPython C-extension ABI, native pointers, process/thread or arbitrary native module compatibility. A Wasm backend alone does not establish CPython ABI support.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-WASM-01"
+      ],
+      "probes": [],
+      "evidence": []
+    },
+    {
+      "id": "later-python-versions",
+      "status": "deferred",
+      "scope": "Reference oracle remains CPython 3.14.7; the live 3.14 documentation describes 3.14.9 at inventory adoption.",
+      "gaps": "A documentation or build-Python update does not upgrade language support. Semantic/Unicode deltas and profile decisions require explicit tested adoption.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-VERSION-01"
+      ],
+      "probes": [],
+      "evidence": []
+    }
+  ],
+  "builtin_reference_names": [
+    "abs",
+    "aiter",
+    "all",
+    "anext",
+    "any",
+    "ascii",
+    "bin",
+    "bool",
+    "breakpoint",
+    "bytearray",
+    "bytes",
+    "callable",
+    "chr",
+    "classmethod",
+    "compile",
+    "complex",
+    "delattr",
+    "dict",
+    "dir",
+    "divmod",
+    "enumerate",
+    "eval",
+    "exec",
+    "filter",
+    "float",
+    "format",
+    "frozenset",
+    "getattr",
+    "globals",
+    "hasattr",
+    "hash",
+    "help",
+    "hex",
+    "id",
+    "input",
+    "int",
+    "isinstance",
+    "issubclass",
+    "iter",
+    "len",
+    "list",
+    "locals",
+    "map",
+    "max",
+    "memoryview",
+    "min",
+    "next",
+    "object",
+    "oct",
+    "open",
+    "ord",
+    "pow",
+    "print",
+    "property",
+    "range",
+    "repr",
+    "reversed",
+    "round",
+    "set",
+    "setattr",
+    "slice",
+    "sorted",
+    "staticmethod",
+    "str",
+    "sum",
+    "super",
+    "tuple",
+    "type",
+    "vars",
+    "zip",
+    "__import__"
+  ],
+  "builtins": [
+    {
+      "id": "abs",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-abs"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "aiter",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-10"
+      ],
+      "probes": [
+        "builtin-aiter"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "all",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-all"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "anext",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-10"
+      ],
+      "probes": [
+        "builtin-anext"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "any",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-any"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "ascii",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-TEXT-01"
+      ],
+      "probes": [
+        "builtin-ascii"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "bin",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-bin"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "bool",
+      "status": "partial",
+      "scope": "bool() / bool(x) on admitted primitive/user values; classes truth protocols.",
+      "gaps": "Other unadopted value families.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-VALUES-01"
+      ],
+      "probes": [
+        "builtin-bool"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "breakpoint",
+      "status": "host-restricted",
+      "scope": "Not installed; availability probe only, never invoked.",
+      "gaps": "Interactive/process/filesystem behavior needs an explicit target capability contract.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-10"
+      ],
+      "probes": [
+        "builtin-breakpoint"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "bytearray",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-VALUES-01"
+      ],
+      "probes": [
+        "builtin-bytearray"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "bytes",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-VALUES-01"
+      ],
+      "probes": [
+        "builtin-bytes"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "callable",
+      "status": "partial",
+      "scope": "callable(x), exactly one positional argument, classes-source/1.",
+      "gaps": "Availability does not imply support for every Python callable kind.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-callable"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "chr",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-chr"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "classmethod",
+      "status": "partial",
+      "scope": "classmethod(callable), classes-source/1 and accessed-owner binding.",
+      "gaps": "Unrestricted wrapper introspection.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-classmethod"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "compile",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-compile"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "complex",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-complex"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "delattr",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-delattr"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "dict",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-dict"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "dir",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-dir"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "divmod",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-divmod"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "enumerate",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-enumerate"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "eval",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-eval"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "exec",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-exec"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "filter",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-filter"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "float",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-float"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "format",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-TEXT-01"
+      ],
+      "probes": [
+        "builtin-format"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "frozenset",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-VALUES-01"
+      ],
+      "probes": [
+        "builtin-frozenset"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "getattr",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-getattr"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "globals",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-globals"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "hasattr",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-hasattr"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "hash",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-EQ-01"
+      ],
+      "probes": [
+        "builtin-hash"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "help",
+      "status": "host-restricted",
+      "scope": "Not installed; availability probe only, never invoked.",
+      "gaps": "Interactive/process/filesystem behavior needs an explicit target capability contract.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-10"
+      ],
+      "probes": [
+        "builtin-help"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "hex",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-hex"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "id",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-id"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "input",
+      "status": "host-restricted",
+      "scope": "Not installed; availability probe only, never invoked.",
+      "gaps": "Interactive/process/filesystem behavior needs an explicit target capability contract.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-10"
+      ],
+      "probes": [
+        "builtin-input"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "int",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-int"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "isinstance",
+      "status": "partial",
+      "scope": "isinstance(x, str/adopted exception class/user class).",
+      "gaps": "Tuple/union classinfo and unadopted builtin families.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-isinstance"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "issubclass",
+      "status": "partial",
+      "scope": "issubclass(user_class, user_class/object).",
+      "gaps": "Full builtin, tuple/union classinfo.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-issubclass"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "iter",
+      "status": "partial",
+      "scope": "iter(admitted list/tuple/dict/str), one positional argument.",
+      "gaps": "Custom iteration and callable/sentinel form.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-ITER-01"
+      ],
+      "probes": [
+        "builtin-iter"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "len",
+      "status": "partial",
+      "scope": "len(admitted containers/str or classes-profile __len__).",
+      "gaps": "__index__ result conversion and unadopted value families.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-INDEX-01"
+      ],
+      "probes": [
+        "builtin-len"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "list",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-list"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "locals",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-locals"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "map",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-map"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "max",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-max"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "memoryview",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-VALUES-01"
+      ],
+      "probes": [
+        "builtin-memoryview"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "min",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-min"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "next",
+      "status": "partial",
+      "scope": "next(admitted iterator), one positional argument.",
+      "gaps": "Default parameter and custom __next__.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-ITER-01"
+      ],
+      "probes": [
+        "builtin-next"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "object",
+      "status": "partial",
+      "scope": "object() and root base in classes-source/1.",
+      "gaps": "Default displays, identity hashing, __new__ and richer object APIs.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01",
+        "INT-TEXT-01"
+      ],
+      "probes": [
+        "builtin-object"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "oct",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-oct"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "open",
+      "status": "host-restricted",
+      "scope": "Not installed; availability probe only, never invoked.",
+      "gaps": "Interactive/process/filesystem behavior needs an explicit target capability contract.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-10"
+      ],
+      "probes": [
+        "builtin-open"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "ord",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-ord"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "pow",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-pow"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "print",
+      "status": "partial",
+      "scope": "print(*values) for None/bool/int/str/adopted exception messages.",
+      "gaps": "Keywords, float/container/object displays and user formatting hooks.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-REPR-02",
+        "INT-TEXT-01"
+      ],
+      "probes": [
+        "builtin-print"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "property",
+      "status": "partial",
+      "scope": "property(fget=None,fset=None,fdel=None,doc=None) and accessor decorators; classes-source/1.",
+      "gaps": "General property reflection and arbitrary doc behavior.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-property"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "range",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-range"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "repr",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-REPR-02"
+      ],
+      "probes": [
+        "builtin-repr"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "reversed",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-reversed"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "round",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-NUM-01"
+      ],
+      "probes": [
+        "builtin-round"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "set",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-VALUES-01"
+      ],
+      "probes": [
+        "builtin-set"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "setattr",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-setattr"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "slice",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-slice"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "sorted",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-sorted"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "staticmethod",
+      "status": "partial",
+      "scope": "staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1.",
+      "gaps": "Unrestricted wrapper introspection.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-staticmethod"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "str",
+      "status": "partial",
+      "scope": "str(x), None/bool/int/str/adopted exception messages.",
+      "gaps": "Identity defect, zero-argument form, user/float/container formatting and encoding forms.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-STR-01",
+        "INT-REPR-02",
+        "INT-TEXT-01",
+        "INT-VALUES-01"
+      ],
+      "probes": [
+        "builtin-str"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "sum",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-sum"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "super",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-super"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "tuple",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-tuple"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "type",
+      "status": "partial",
+      "scope": "type(user_instance), one argument; classes-source/1.",
+      "gaps": "Full one-argument and three-argument type construction.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-type"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "vars",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-vars"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "zip",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-SEQ-01"
+      ],
+      "probes": [
+        "builtin-zip"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "__import__",
+      "status": "deferred",
+      "scope": "Not installed; resolving this builtin name raises Python NameError.",
+      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [
+        "builtin-__import__"
+      ],
+      "evidence": []
+    }
+  ],
+  "work_packages": [
+    {
+      "id": "INT-STR-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/107",
+      "scope": [
+        "Return an existing Python string unchanged from str(s), including closure-held and container-held aliases.",
+        "Compare source behavior with CPython 3.14.7 in Node and Chromium; cover rooting, resource failure and zero teardown. Update the compatibility observation and asset locks."
+      ],
+      "dependencies": [
+        "INT-COMPAT-01"
+      ],
+      "order": 227
+    },
+    {
+      "id": "INT-DIAG-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/111",
+      "scope": [
+        "Recognize assignment expressions and type aliases as valid but unadopted forms, with UNSUPPORTED diagnostics and source spans.",
+        "Preserve SyntaxError for malformed source, no partial execution, all existing parser checks and a pinned source/refusal comparison for each form."
+      ],
+      "dependencies": [
+        "INT-COMPAT-01"
+      ],
+      "order": 231
+    },
+    {
+      "id": "INT-VERSION-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/122",
+      "scope": [
+        "Compare current 3.14 maintenance documentation/changes with pinned CPython 3.14.7 and record relevant semantic deltas as executable cases.",
+        "Keep the existing oracle/profile until an explicit tested decision. Later Python minor versions require their own syntax, behavior, Unicode and profile decisions; documentation availability alone never upgrades support."
+      ],
+      "dependencies": [
+        "INT-COMPAT-01"
+      ],
+      "order": 251
+    },
+    {
+      "id": "INT-REPR-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/108",
+      "scope": [
+        "Specify type-slot lookup, descriptor binding, fallback precedence, actual-string return validation, print sequencing and nested output/error effects.",
+        "Author executable CPython 3.14.7 cases and explicit deferred cases for default object displays, float/container formatting and format specifications. Reference-only success must not claim engine support."
+      ],
+      "dependencies": [
+        "INT-STR-01"
+      ],
+      "order": 228
+    },
+    {
+      "id": "INT-REPR-02",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/109",
+      "scope": [
+        "Adopt __repr__/__str__ for user instances, repr(None/bool/int/str), str() and the existing scalar str forms; retain explicit refusals for unadopted value families.",
+        "Use the owned operation machine, ordinary callback frames and exhaustive roots. Preserve print argument order and callback output, Python exceptions/source frames, stepping, cancellation, OOM and zero teardown.",
+        "Pin Unicode printability for string repr; include its complete generator/data/license and asset closure."
+      ],
+      "dependencies": [
+        "INT-REPR-01"
+      ],
+      "order": 229
+    },
+    {
+      "id": "INT-REPR-03",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/110",
+      "scope": [
+        "Add newly entered formatting source after offline reload, binding/body/result failures, pending-hook Stop/Restart and profile-update acceptance.",
+        "Update the compatibility inventory, source matrices, engine/asset locks, payload evidence and implementation plans. Keep the parent class milestone open for later protocols."
+      ],
+      "dependencies": [
+        "INT-REPR-02"
+      ],
+      "order": 229.5
+    },
+    {
+      "id": "INT-INDEX-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/112",
+      "scope": [
+        "Specify and implement __index__, __getitem__, __setitem__ and __delitem__ through type lookup and owned continuations, including slice operands.",
+        "Test single evaluation, strict index results, mutation/alias effects, callback failures, resource interruption and teardown. Keep unadopted arithmetic slots refused."
+      ],
+      "dependencies": [
+        "INT-REPR-03"
+      ],
+      "order": 232
+    },
+    {
+      "id": "INT-ITER-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/113",
+      "scope": [
+        "Adopt __iter__, __next__, __contains__, StopIteration, iter(x), next(it, default), iter(callable, sentinel), for loops and indexed iteration fallback in a finite reference matrix.",
+        "Specify dispatch/fallback order and exception boundaries; verify paused loops, early exits, cancellation and roots. Async iteration is a separate milestone."
+      ],
+      "dependencies": [
+        "INT-INDEX-01"
+      ],
+      "order": 233
+    },
+    {
+      "id": "INT-NUM-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/115",
+      "scope": [
+        "Specify int/float/complex constructors and complex arithmetic, integer true division, power and bitwise operators; abs, divmod, pow, round, bin, oct, hex, chr and ord with explicit supported signatures.",
+        "Adopt each API only with overflow, rounding, mixed-value, invalid-input and Node/browser source evidence. Arbitrary integers must not silently pass through lossy JavaScript numbers."
+      ],
+      "dependencies": [
+        "INT-INDEX-01"
+      ],
+      "order": 235
+    },
+    {
+      "id": "INT-EQ-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/114",
+      "scope": [
+        "Adopt __eq__, __ne__, __hash__, NotImplemented and hash(), including subtype priority, hash disabling and dictionary invariants.",
+        "Separate identity hashing from serialized values; verify mutation, recursive callbacks, failed comparisons and resource teardown."
+      ],
+      "dependencies": [
+        "INT-ITER-01"
+      ],
+      "order": 234
+    },
+    {
+      "id": "INT-FUNC-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/118",
+      "scope": [
+        "Adopt definition-time computed/mutable defaults, global/nonlocal writes, *args/**kwargs parameters and starred calls.",
+        "Preserve default identity, closure cells, single evaluation/order, duplicate keyword/binding errors and exception cleanup; record every supported signature with source cases."
+      ],
+      "dependencies": [
+        "INT-ITER-01"
+      ],
+      "order": 238
+    },
+    {
+      "id": "INT-SEQ-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/116",
+      "scope": [
+        "Inventory and adopt exact signatures for list, tuple, dict, range, slice, enumerate, zip, reversed, all, any, sum, min, max, sorted, map and filter.",
+        "Add an explicit API table for string split/join/strip/replace/find, list append/extend/pop, tuple count/index and dict get/keys/values/items/update. Preserve aliasing, iteration order, callbacks and bounded work; anything outside that table remains deferred."
+      ],
+      "dependencies": [
+        "INT-ITER-01",
+        "INT-EQ-01"
+      ],
+      "order": 236
+    },
+    {
+      "id": "INT-VALUES-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/117",
+      "scope": [
+        "Specify set/frozenset and bytes/bytearray construction, literals and membership/index/slice behavior; explicitly scope memoryview to owned logical buffers.",
+        "Keep native memory addresses, process buffers and arbitrary host object access outside the value contract. Cover hashing, Unicode encoding errors, alias mutation and quotas."
+      ],
+      "dependencies": [
+        "INT-EQ-01",
+        "INT-NUM-01"
+      ],
+      "order": 237
+    },
+    {
+      "id": "INT-SYNTAX-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/119",
+      "scope": [
+        "Adopt assert, lambda, assignment expressions, tuple/list/starred assignment unpacking and starred collection displays.",
+        "Specify binding/evaluation order, short circuit behavior and malformed-versus-unsupported diagnostics; test actual source rather than fixture-only bytecode."
+      ],
+      "dependencies": [
+        "INT-FUNC-01",
+        "INT-DIAG-01"
+      ],
+      "order": 239
+    },
+    {
+      "id": "INT-GEN-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/120",
+      "scope": [
+        "Specify generator construction, yield/yield from, send/throw/close and suspended ownership before admitting the syntax.",
+        "Adopt list/dict/set/generator comprehensions with Python scope and evaluation order. Cover finally, exhaustion, exceptions and cancellation. Coordinate parked ownership with #34 without requiring the full async application milestone."
+      ],
+      "dependencies": [
+        "INT-ITER-01",
+        "INT-FUNC-01"
+      ],
+      "order": 241
+    },
+    {
+      "id": "INT-WITH-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/121",
+      "scope": [
+        "Adopt with/__enter__/__exit__, multi-item and nested contexts with suppression/unwinding cases.",
+        "Separately adopt literal/capture/sequence/mapping/class/OR patterns, guards and bindings. Async context managers remain under #34."
+      ],
+      "dependencies": [
+        "INT-INDEX-01",
+        "INT-ITER-01",
+        "INT-EQ-01"
+      ],
+      "order": 242
+    },
+    {
+      "id": "INT-OBJECT-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/123",
+      "scope": [
+        "Specify __new__, super, richer type/isinstance/issubclass, builtin subclassing and metaclass construction as separate reviewed protocol slices.",
+        "Adopt getattr/setattr/delattr/hasattr, dir/vars/globals/locals/id and arithmetic/reflected/in-place slots only through explicit type/identity/mutation contracts. Separate dynamic exec/eval/compile/__import__ source admission from host grants."
+      ],
+      "dependencies": [
+        "INT-EQ-01",
+        "INT-FUNC-01"
+      ],
+      "order": 244
+    },
+    {
+      "id": "INT-ERROR-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/124",
+      "scope": [
+        "Adopt exception subclasses, raise-from, cause/context/suppression metadata and bare reraises; preserve original source tracebacks.",
+        "Adopt ExceptionGroup/BaseExceptionGroup and except* splitting/merging only after a reference matrix, including finally interactions and resource interruption."
+      ],
+      "dependencies": [
+        "INT-OBJECT-01"
+      ],
+      "order": 243
+    },
+    {
+      "id": "INT-ANNOT-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/125",
+      "scope": [
+        "Adopt annotated assignments/functions, lazy annotation evaluation, type parameters, type aliases and required generic-alias behavior against CPython 3.14.7.",
+        "Specify namespace timing, errors and introspection; coordinate typing library APIs separately. Preserve deliberate version/profile decisions."
+      ],
+      "dependencies": [
+        "INT-FUNC-01",
+        "INT-OBJECT-01"
+      ],
+      "order": 246
+    },
+    {
+      "id": "INT-LIB-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/126",
+      "scope": [
+        "Create separate API profiles for json loads/dumps (basic JSON values and error behavior), math sqrt/floor/ceil/isfinite and random.Random seeded random/randrange/choice; do not imply whole-module support.",
+        "Evaluate licensed CPython colorsys rgb_to_hsv/hsv_to_rgb as a small pure-Python reuse pilot after its measured syntax/API prerequisites pass. Preserve source provenance/notices and run unreduced/reduced source independently.",
+        "Record collections/itertools/functools/dataclasses/typing as later API-selection decisions, not certified packages."
+      ],
+      "dependencies": [
+        "INT-NUM-01",
+        "INT-SEQ-01",
+        "INT-SYNTAX-01"
+      ],
+      "order": 248
+    },
+    {
+      "id": "INT-TEXT-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/127",
+      "scope": [
+        "Adopt Python float and recursive container repr/str, object defaults, ascii, format/__format__, f-strings and explicit format-spec grammar with exact API cases.",
+        "Adopt t-string Template/Interpolation values and string.templatelib APIs with interpolation evaluation/order/escaping cases. Link the spatial_ui browser pilot only after its actual syntax/API prerequisites pass."
+      ],
+      "dependencies": [
+        "INT-REPR-03",
+        "INT-SEQ-01",
+        "INT-ANNOT-01"
+      ],
+      "order": 247
+    },
+    {
+      "id": "INT-PKG-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/128",
+      "scope": [
+        "Select one small package/use and a pinned source/license only after a prerequisite probe; record exact entry points, dependency/source/resource closure and omitted APIs.",
+        "Execute the original and Shimify-reduced use on the independent engine in Node/Chromium, including offline behavior and complete notices. Keep spatial_ui, expose_api and Python-JavaScript integration claims separate until their consumer contracts pass."
+      ],
+      "dependencies": [
+        "INT-LIB-01"
+      ],
+      "order": 249
+    },
+    {
+      "id": "INT-10",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/34",
+      "scope": [
+        "Parked ownership/quanta; persistent callbacks/events; one awaited host capability; offline view/save application; native coroutine/async iterator/generator/context syntax through their own reference cases."
+      ],
+      "dependencies": [],
+      "order": 240
+    },
+    {
+      "id": "INT-WASM-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/40",
+      "scope": [
+        "Specify the later C/Rust-to-Wasm backend. No CPython ABI support is implied."
+      ],
+      "dependencies": [],
+      "order": 270
+    },
+    {
+      "id": "APP-MODEL-01",
+      "issue": "https://github.com/outside-labs/pocket-python/issues/100",
+      "scope": [
+        "Separate mobile inference/animation feasibility prototype with explicit device/assets/budget selection."
+      ],
+      "dependencies": [],
+      "order": 245
+    }
+  ]
+}

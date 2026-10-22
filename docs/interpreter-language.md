@@ -11,6 +11,8 @@ The [continuing compatibility roadmap](interpreter-roadmap.md) keeps broad Pytho
 3.14+ language/library coverage as a separate objective beyond the initial
 application profile. Staged restrictions below are current support boundaries;
 future adoption still requires exact contracts and independently executed cases.
+The [versioned inventory](interpreter-compatibility.md) records current exact
+API boundaries, known divergences and the finite follow-up queue.
 
 ## Stages and feature decisions
 

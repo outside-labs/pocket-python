@@ -1,0 +1,1734 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-compatibility/1",
+  "reference_version": "3.14.7",
+  "language_profile": "classes-source/1",
+  "cases": [
+    {
+      "id": "scalar-arithmetic",
+      "source": "print(9007199254740993+1, -7//3, -7%3, 1.5+2.5==4.0)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "9007199254740994 -3 2 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "9007199254740994 -3 2 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "unicode-values",
+      "source": "text=\"A\ud83d\ude00e\u0301\"\nprint(len(text),text[1],text[::-1],\"\ud83d\ude00\" in text)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "4 \ud83d\ude00 \u0301e\ud83d\ude00A True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "4 \ud83d\ude00 \u0301e\ud83d\ude00A True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-values",
+      "source": "a=[1,2]\nb=a\na+=[3]\nd={True:7,1:8}\nprint(a is b,len(a),a[-1],d[True])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 3 3 8\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 3 3 8\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "control-unwinding",
+      "source": "def f():\n for x in [1,2]:\n  try:\n   if x==1: continue\n   return x\n  finally: print(x)\nprint(f())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "1\n2\n2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "1\n2\n2\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-binding",
+      "source": "def outer(n):\n def f(a=2,/,*,b=3): return n+a+b\n return f\nprint(outer(7)(b=4))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "13\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "13\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-forms",
+      "source": "print(bool(),bool([]),len(\"\ud83d\ude00\"),next(iter([7])),isinstance(\"x\",str))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False False 1 7 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False False 1 7 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "class-protocols",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __call__(self,x): return self.n+x\n def __len__(self): return self.n\na=A(2)\nprint(a(5),len(a),bool(a),callable(a),isinstance(a,A),issubclass(A,object))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 2 True True True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 2 True True True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "str-identity",
+      "source": "s=\"hello\"\nprint(str(s) is s)\n",
+      "classification": "known-divergence",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "str-empty-constructor",
+      "source": "print(len(str()))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "TypeError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "integer-true-division",
+      "source": "print(7/2==3.5)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "float-formatting",
+      "source": "print(1.5)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "1.5\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "container-formatting",
+      "source": "print([1,2])\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "[1, 2]\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "repr-hook",
+      "source": "class A:\n def __repr__(self): return \"label\"\nprint(repr(A()))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "label\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "bind"
+      }
+    },
+    {
+      "id": "str-hook",
+      "source": "class A:\n def __str__(self): return \"label\"\nprint(str(A()))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "label\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "bind"
+      }
+    },
+    {
+      "id": "power",
+      "source": "print(2**8)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "256\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "bitwise",
+      "source": "print(7&3)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "3\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "bytes",
+      "source": "print(len(b\"a\"))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "1\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "tokenize"
+      }
+    },
+    {
+      "id": "complex",
+      "source": "print(1j==1j)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "tokenize"
+      }
+    },
+    {
+      "id": "sets",
+      "source": "print(len({1,2}))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "fstrings",
+      "source": "value=7\nprint(f\"x={value}\")\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "x=7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "tokenize"
+      }
+    },
+    {
+      "id": "tstrings",
+      "source": "value=7\nresult=t\"x={value}\"\nprint(result.strings[0])\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "x=\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "tokenize"
+      }
+    },
+    {
+      "id": "computed-default",
+      "source": "def f(x=1+2): return x\nprint(f())\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "3\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "bind"
+      }
+    },
+    {
+      "id": "mutable-default",
+      "source": "def f(x=[]): return x\nprint(len(f()))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "bind"
+      }
+    },
+    {
+      "id": "varargs",
+      "source": "def f(*args): return len(args)\nprint(f(1,2))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "starred-call",
+      "source": "def f(x): return x\nprint(f(*[7]))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "unpacking",
+      "source": "a,b=[1,2]\nprint(a+b)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "3\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "global-write",
+      "source": "x=1\ndef f():\n global x\n x=2\nf()\nprint(x)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "nonlocal-write",
+      "source": "def outer():\n x=1\n def f():\n  nonlocal x\n  x=2\n f()\n return x\nprint(outer())\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "assert-statement",
+      "source": "assert True\nprint(7)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "lambda",
+      "source": "f=lambda x:x+1\nprint(f(6))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "walrus",
+      "source": "print((x:=7))\n",
+      "classification": "known-divergence",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "SyntaxError",
+        "code": "SYNTAX",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "comprehension",
+      "source": "print(len([x+1 for x in [1,2]]))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "generator",
+      "source": "def f():\n yield 7\nprint(next(f()))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "context-manager",
+      "source": "class A:\n def __enter__(self): return 7\n def __exit__(self,a,b,c): return False\nwith A() as value: print(value)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "pattern-match",
+      "source": "match [1,2]:\n case [a,b]: print(a+b)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "3\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "annotations",
+      "source": "def f(x:int)->int: return x\nprint(f(7))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "type-parameters",
+      "source": "def f[T](x:T)->T: return x\nprint(f(7))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "type-alias",
+      "source": "type A=list[int]\nprint(7)\n",
+      "classification": "known-divergence",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "SyntaxError",
+        "code": "SYNTAX",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "async-functions",
+      "source": "async def f(): return 7\nprint(callable(f))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "async-generator",
+      "source": "async def f():\n yield 7\nprint(callable(f))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "exception-causes",
+      "source": "try:\n raise ValueError(\"bad\") from None\nexcept ValueError: print(\"caught\")\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "caught\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "exception-groups",
+      "source": "try:\n raise ExceptionGroup(\"g\",[ValueError(\"v\")])\nexcept* ValueError: print(\"caught\")\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "caught\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "builtin-subclass",
+      "source": "class A(list): pass\nprint(len(A()))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "metaclass",
+      "source": "class M(type): pass\nclass A(metaclass=M): pass\nprint(7)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "parse"
+      }
+    },
+    {
+      "id": "getitem-hook",
+      "source": "class A:\n def __getitem__(self,key): return key+1\nprint(A()[6])\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "bind"
+      }
+    },
+    {
+      "id": "iterator-hook",
+      "source": "class A:\n def __iter__(self): return iter([7])\nprint(next(iter(A())))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "bind"
+      }
+    },
+    {
+      "id": "equality-hook",
+      "source": "class A:\n def __eq__(self,other): return True\nprint(A()==A())\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": null,
+        "code": "UNSUPPORTED",
+        "phase": "bind"
+      }
+    },
+    {
+      "id": "builtin-abs",
+      "source": "print(callable(abs))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-aiter",
+      "source": "print(callable(aiter))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-all",
+      "source": "print(callable(all))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-anext",
+      "source": "print(callable(anext))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-any",
+      "source": "print(callable(any))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-ascii",
+      "source": "print(callable(ascii))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-bin",
+      "source": "print(callable(bin))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-bool",
+      "source": "print(callable(bool))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-breakpoint",
+      "source": "print(callable(breakpoint))\n",
+      "classification": "host-restricted",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-bytearray",
+      "source": "print(callable(bytearray))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-bytes",
+      "source": "print(callable(bytes))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-callable",
+      "source": "print(callable(callable))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-chr",
+      "source": "print(callable(chr))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-classmethod",
+      "source": "print(callable(classmethod))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-compile",
+      "source": "print(callable(compile))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-complex",
+      "source": "print(callable(complex))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-delattr",
+      "source": "print(callable(delattr))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-dict",
+      "source": "print(callable(dict))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-dir",
+      "source": "print(callable(dir))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-divmod",
+      "source": "print(callable(divmod))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-enumerate",
+      "source": "print(callable(enumerate))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-eval",
+      "source": "print(callable(eval))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-exec",
+      "source": "print(callable(exec))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-filter",
+      "source": "print(callable(filter))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-float",
+      "source": "print(callable(float))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-format",
+      "source": "print(callable(format))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-frozenset",
+      "source": "print(callable(frozenset))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-getattr",
+      "source": "print(callable(getattr))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-globals",
+      "source": "print(callable(globals))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-hasattr",
+      "source": "print(callable(hasattr))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-hash",
+      "source": "print(callable(hash))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-help",
+      "source": "print(callable(help))\n",
+      "classification": "host-restricted",
+      "reference": {
+        "stdout": "",
+        "error_type": "NameError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-hex",
+      "source": "print(callable(hex))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-id",
+      "source": "print(callable(id))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-input",
+      "source": "print(callable(input))\n",
+      "classification": "host-restricted",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-int",
+      "source": "print(callable(int))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-isinstance",
+      "source": "print(callable(isinstance))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-issubclass",
+      "source": "print(callable(issubclass))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-iter",
+      "source": "print(callable(iter))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-len",
+      "source": "print(callable(len))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-list",
+      "source": "print(callable(list))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-locals",
+      "source": "print(callable(locals))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-map",
+      "source": "print(callable(map))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-max",
+      "source": "print(callable(max))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-memoryview",
+      "source": "print(callable(memoryview))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-min",
+      "source": "print(callable(min))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-next",
+      "source": "print(callable(next))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-object",
+      "source": "print(callable(object))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-oct",
+      "source": "print(callable(oct))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-open",
+      "source": "print(callable(open))\n",
+      "classification": "host-restricted",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-ord",
+      "source": "print(callable(ord))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-pow",
+      "source": "print(callable(pow))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-print",
+      "source": "print(callable(print))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-property",
+      "source": "print(callable(property))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-range",
+      "source": "print(callable(range))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-repr",
+      "source": "print(callable(repr))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-reversed",
+      "source": "print(callable(reversed))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-round",
+      "source": "print(callable(round))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-set",
+      "source": "print(callable(set))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-setattr",
+      "source": "print(callable(setattr))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-slice",
+      "source": "print(callable(slice))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-sorted",
+      "source": "print(callable(sorted))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-staticmethod",
+      "source": "print(callable(staticmethod))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-str",
+      "source": "print(callable(str))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-sum",
+      "source": "print(callable(sum))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-super",
+      "source": "print(callable(super))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-tuple",
+      "source": "print(callable(tuple))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-type",
+      "source": "print(callable(type))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-vars",
+      "source": "print(callable(vars))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-zip",
+      "source": "print(callable(zip))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "builtin-__import__",
+      "source": "print(callable(__import__))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "NameError",
+        "code": "PYTHON",
+        "phase": "execute"
+      }
+    }
+  ]
+}
