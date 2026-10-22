@@ -21,7 +21,7 @@ class SliceValue {
   constructor(start, stop, step) { this.start = start; this.stop = stop; this.step = step; Object.freeze(this); }
 }
 class DictValue { constructor() { this.entries = []; this.version = 0; } }
-class IteratorValue {
+export class IteratorValue {
   constructor(value) {
     this.value = value; this.index = 0;
     if (value instanceof DictValue) { this.size = value.entries.length; this.version = value.version; }

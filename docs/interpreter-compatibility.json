@@ -344,8 +344,8 @@
     {
       "id": "iterated-user-objects",
       "status": "partial",
-      "scope": "Owned __iter__/__next__, indexed fallback and classes-source iter/next signatures.",
-      "gaps": "Containment awaits its next delivery slice; generators and async iteration remain separate.",
+      "scope": "Owned __iter__/__next__/__contains__, indexed fallback, iter/next signatures and iterator membership search in classes-source/1.",
+      "gaps": "Custom rich comparisons, generators/async protocols and broader iterable-consuming APIs remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -356,11 +356,13 @@
       ],
       "probes": [
         "iterator-hook",
-        "builtin-forms"
+        "builtin-forms",
+        "contains-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/iteration.json:iterator-identity-next-default",
-        "tests/fixtures/interpreter/iteration.json:indexed-sticky-exhaustion"
+        "tests/fixtures/interpreter/iteration.json:indexed-sticky-exhaustion",
+        "tests/fixtures/interpreter/iteration.json:contains-result-truth"
       ]
     },
     {

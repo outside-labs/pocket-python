@@ -93,3 +93,14 @@ recursive native/Python bindings, budgets, cancellation, callback OOM and paused
 collection/close. All 218 Node tests pass, including the eight unchanged composed
 resource baselines. T2 containment remains the next delivery slice. Earlier
 iteration refusal probes now record their implemented behavior.
+
+## Containment adoption
+
+T2 is implemented. The expanded 96-case matrix has 93 adopted comparisons and
+three explicit future refusals, including direct/raw contains results, primitive
+and callable iterators, indexed search, early exit and exact binding/body/truth
+exception boundaries. Search transfers roots to the next pending owner instead
+of retaining prior values. A native string-iterator search also passes under a
+32,000-byte logical arena limit. Seventeen focused units and all 224 Node tests
+pass; prior composed resource observations remain unchanged. Custom equality,
+generators and broader iterable RHS slice assignment remain deferred.

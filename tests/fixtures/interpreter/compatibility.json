@@ -1715,6 +1715,19 @@
         "code": "PYTHON",
         "phase": "execute"
       }
+    },
+    {
+      "id": "contains-hook",
+      "source": "class A:\n def __contains__(self,key): return key==7\nprint(7 in A(),8 not in A())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
     }
   ]
 }
