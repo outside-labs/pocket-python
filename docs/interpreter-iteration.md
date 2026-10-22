@@ -83,3 +83,13 @@ The [builtin signatures](https://docs.python.org/3.14/library/functions.html#ite
 and [data model](https://docs.python.org/3.14/reference/datamodel.html#object.__iter__)
 are documentation references; the executable oracle remains pinned independently
 of the live documentation maintenance version.
+
+## Owned iteration adoption
+
+T1 is implemented: 60 pinned comparisons and three T3 refusals pass in Node and
+Chromium with both drain and instruction-boundary drivers. Eleven focused units
+cover layouts/roots, original error frames, enclosing exception/finally control,
+recursive native/Python bindings, budgets, cancellation, callback OOM and paused
+collection/close. All 218 Node tests pass, including the eight unchanged composed
+resource baselines. T2 containment remains the next delivery slice. Earlier
+iteration refusal probes now record their implemented behavior.

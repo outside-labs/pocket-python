@@ -8,7 +8,8 @@
     "C3-length",
     "C3-truth",
     "C3-formatting",
-    "C3-indexing"
+    "C3-indexing",
+    "C3-iteration"
   ],
   "cases": [
     {
@@ -393,7 +394,7 @@
     },
     {
       "id": "future-iteration",
-      "stage": "C3-future",
+      "stage": "C3-iteration",
       "source": "class A:\n def __iter__(self): return iter([7])\nfor value in A(): print(value)\n",
       "stdout": "7\n"
     },

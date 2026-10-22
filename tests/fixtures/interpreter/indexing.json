@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "I1",
-    "I2"
+    "I2",
+    "C3-iteration"
   ],
   "cases": [
     {
@@ -509,7 +510,7 @@
     },
     {
       "id": "future-iteration",
-      "stage": "I3",
+      "stage": "C3-iteration",
       "source": "class A:\n def __iter__(self): return iter([7])\nprint(next(iter(A())))\n",
       "stdout": "7\n"
     },

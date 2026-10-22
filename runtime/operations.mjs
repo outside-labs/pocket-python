@@ -22,6 +22,9 @@ export function completion(kind, fields = {}) {
     case "relay": record = {kind, receiver: fields.receiver, after}; break;
     case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
+    case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
+    case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
+    case "for-iter": case "for-next": case "for-exhausted": record = {kind}; break;
     case "index-key": record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation ?? "get"), item: fields.item ?? null, after, depth: fields.depth}; depthCheck(record.depth); break;
     case "slice-index":
       record = {kind, receiver: fields.receiver, parts: operands(fields.parts), position: fields.position, operation: itemOperation(fields.operation ?? "get"), item: fields.item ?? null, after, depth: fields.depth};
@@ -56,9 +59,11 @@ export function completion(kind, fields = {}) {
 }
 function visit(record) {
   switch (record.kind) {
-    case "class": case "condition": case "discard": return [];
+    case "class": case "condition": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
+    case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
+    case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];

@@ -343,9 +343,9 @@
     },
     {
       "id": "iterated-user-objects",
-      "status": "deferred",
-      "scope": "__iter__/__next__/__contains__ and Python fallback chains for user objects.",
-      "gaps": "Built-in list/tuple/dict/string iterators exist; custom slots and richer iter/next forms do not.",
+      "status": "partial",
+      "scope": "Owned __iter__/__next__, indexed fallback and classes-source iter/next signatures.",
+      "gaps": "Containment awaits its next delivery slice; generators and async iteration remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -358,7 +358,10 @@
         "iterator-hook",
         "builtin-forms"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/iteration.json:iterator-identity-next-default",
+        "tests/fixtures/interpreter/iteration.json:indexed-sticky-exhaustion"
+      ]
     },
     {
       "id": "user-equality-hash",
@@ -1412,8 +1415,8 @@
     {
       "id": "iter",
       "status": "partial",
-      "scope": "iter(admitted list/tuple/dict/str), one positional argument.",
-      "gaps": "Custom iteration and callable/sentinel form.",
+      "scope": "Primitive iter(value); classes-source adds user __iter__, indexed fallback and iter(callable, sentinel).",
+      "gaps": "Generator/async protocols and broader sequence APIs remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1425,7 +1428,9 @@
       "probes": [
         "builtin-iter"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/iteration.json:callable-sentinel-loop"
+      ]
     },
     {
       "id": "len",
@@ -1559,8 +1564,8 @@
     {
       "id": "next",
       "status": "partial",
-      "scope": "next(admitted iterator), one positional argument.",
-      "gaps": "Default parameter and custom __next__.",
+      "scope": "Primitive next(iterator); classes-source adds user __next__ and next(iterator, default).",
+      "gaps": "Generator/async protocols and iterator reflection remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1572,7 +1577,9 @@
       "probes": [
         "builtin-next"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/iteration.json:iterator-identity-next-default"
+      ]
     },
     {
       "id": "object",
