@@ -31,6 +31,12 @@ issues and plans do not mean those features have shipped.
    The separate interpreter plan defines language stages, architecture decisions,
    native/browser delivery, conformance and resource limits.
 
+The independent engine's continuing goal is broad Python 3.14+ language,
+builtin and useful standard-library/package coverage. Finite application profiles
+provide supported release milestones. The [execution and compatibility roadmap](docs/interpreter-roadmap.md)
+orders a five-PR consolidation batch, preserves the subsequent language queue,
+and tracks persistent applications and mobile feasibility separately.
+
 The compiler and independent interpreter must work without MicroPython or
 Pyodide. An optional upstream CPython WebAssembly build is an existing-engine
 distribution, not the independent interpreter. MicroPython, Pyodide and PyScript
@@ -468,3 +474,16 @@ Next are individually adopted __repr__/__str__ formatting operations, followed b
 indexing, iteration/membership and equality/hash. INT-09 remains open. Async, the
 later C/Rust WebAssembly path, alpha publication and public console/dashboard
 hosting remain separate Project items.
+
+
+### Execution consolidation and broad compatibility (2026-10-21)
+
+Adopt the bounded execution-contract/ownership/machine/dispatcher/module batch in
+[the interpreter plan](IMPLEMENTATION_PLAN_INTERPRETER.md#consolidation-and-continuing-compatibility-adopted-2026-10-21).
+Its initial tasks are recorded in Project 13, with explicit dependencies. A broad
+compatibility inventory drives language-reference, builtin, library and package
+work beyond the first application profile. The existing class/descriptor/call/
+length/truth implementations remain delivered; the remaining C3 and async work
+use the consolidated execution foundation. Model/device feasibility and spatial
+UI/service integration are separately tracked product concerns. This roadmap
+changes no runtime behavior, dependency, published package or deployment.
