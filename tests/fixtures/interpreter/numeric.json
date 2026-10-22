@@ -1,0 +1,969 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-numeric/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "bitwise-signs",
+      "stage": "N1",
+      "source": "print((7 & 3)==3 and (7 | 8)==15 and (7 ^ 3)==4 and ~7==-8)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bitwise-negative",
+      "stage": "N1",
+      "source": "print((-7 & 3)==1 and (-7 | 3)==-5 and (-7 ^ 3)==-6)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bitwise-booleans",
+      "stage": "N1",
+      "source": "print((True & False) is False and (True | False) is True and (True ^ True) is False)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bitwise-mixed-bools",
+      "stage": "N1",
+      "source": "print((True & 7)==1 and (False | 7)==7 and (True ^ 7)==6)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bitwise-unbounded",
+      "stage": "N1",
+      "source": "print(((1 << 300) | 7) >> 300 == 1 and (1 << 300) & 7 == 0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bitwise-precedence",
+      "stage": "N1",
+      "source": "print(1 | 2 ^ 3 & 6 == 1 and 1 << 2+1 == 8)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "shift-signs",
+      "stage": "N1",
+      "source": "print((-7 >> 1)==-4 and (7 >> 1)==3 and (-7 << 2)==-28)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "shift-booleans",
+      "stage": "N1",
+      "source": "print(True << True == 2 and False >> True == 0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "shift-enormous-right",
+      "stage": "N1",
+      "source": "print(7 >> (1 << 300) == 0 and -7 >> (1 << 300) == -1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "shift-enormous-zero",
+      "stage": "N1",
+      "source": "print(0 << (1 << 300) == 0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-association",
+      "stage": "N1",
+      "source": "print(2 ** 3 ** 2 == 512 and (2 ** 3) ** 2 == 64)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-unary-precedence",
+      "stage": "N1",
+      "source": "print(-2 ** 2 == -4 and (-2) ** 2 == 4 and 2 ** -2 == 0.25 and ~2 ** 3 == -9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-booleans",
+      "stage": "N1",
+      "source": "print(True ** False == 1 and False ** True == 0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-zero",
+      "stage": "N1",
+      "source": "print(0 ** 0 == 1 and 0 ** 7 == 0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-signs",
+      "stage": "N1",
+      "source": "print((-3) ** 5 == -243 and (-3) ** 6 == 729)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-large",
+      "stage": "N1",
+      "source": "print(2 ** 300 == (1 << 300))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-enormous-unit",
+      "stage": "N1",
+      "source": "print(1 ** (1 << 300) == 1 and (-1) ** (1 << 300) == 1 and (-1) ** ((1 << 300)+1) == -1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-negative",
+      "stage": "N1",
+      "source": "print(3 ** -2 == 1/9 and (-2) ** -3 == -0.125)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "power-negative-underflow",
+      "stage": "N1",
+      "source": "print(2 ** -2000 == 0.0 and (-2) ** -2001 == 0.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-division-signs",
+      "stage": "N1",
+      "source": "print(7/2 == 3.5 and -7/2 == -3.5 and 7/-2 == -3.5 and -7/-2 == 3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-division-balanced-large",
+      "stage": "N1",
+      "source": "print((10 ** 400)/(10 ** 400) == 1.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-division-near-one",
+      "stage": "N1",
+      "source": "print(((10 ** 400)+1)/(10 ** 400) == 1.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-division-tie-even",
+      "stage": "N1",
+      "source": "print(((2 ** 53)+1)/(2 ** 53) == 1.0 and ((2 ** 53)+3)/(2 ** 53) == 1.0000000000000004)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-division-subnormal",
+      "stage": "N1",
+      "source": "print(1/(2 ** 1074) == 5e-324 and 1/(2 ** 1075) == 0.0 and 3/(2 ** 1075) == 1e-323)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-division-normal-boundary",
+      "stage": "N1",
+      "source": "print(((2 ** 53)-1)/(2 ** 1075) == 2.2250738585072014e-308)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-division-maximum",
+      "stage": "N1",
+      "source": "print(((2 ** 1024)-(2 ** 971))/1 == 1.7976931348623157e308)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-division-underflow",
+      "stage": "N1",
+      "source": "print(1/(2 ** 2000) == 0.0 and 0/-7 == 0.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "shift-negative-left",
+      "stage": "N1",
+      "source": "1 << -1\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "shift-negative-right",
+      "stage": "N1",
+      "source": "1 >> -1\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "shift-float",
+      "stage": "N1",
+      "source": "1 << 1.0\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bitwise-float",
+      "stage": "N1",
+      "source": "1.0 & 1\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invert-float",
+      "stage": "N1",
+      "source": "~1.0\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "division-zero",
+      "stage": "N1",
+      "source": "1/0\n",
+      "stdout": "",
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "division-zero-zero",
+      "stage": "N1",
+      "source": "0/0\n",
+      "stdout": "",
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "division-overflow",
+      "stage": "N1",
+      "source": "(2 ** 1024)/1\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "division-overflow-tie",
+      "stage": "N1",
+      "source": "((2 ** 1024)-(2 ** 970))/1\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "power-zero-negative",
+      "stage": "N1",
+      "source": "0 ** -1\n",
+      "stdout": "",
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "integer-augmented-operations",
+      "stage": "N1",
+      "source": "a=[7]\na[0] <<= 1\na[0] ^= 3\na[0] **= 2\na[0] >>= 2\nprint(a[0])\n",
+      "stdout": "42\n"
+    },
+    {
+      "id": "integer-augmented-evaluation",
+      "stage": "N1",
+      "source": "a=[7]\ndef target():\n print(\"target\")\n return a\ndef key():\n print(\"key\")\n return 0\ndef value():\n print(\"value\")\n return 1\ntarget()[key()] <<= value()\nprint(a[0])\n",
+      "stdout": "target\nkey\nvalue\n14\n"
+    },
+    {
+      "id": "abs-primitives",
+      "stage": "N2",
+      "source": "print(abs(-7)==7 and abs(True)==1 and abs(-3.5)==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "divmod-integers",
+      "stage": "N2",
+      "source": "print(divmod(-7,3)==(-3,2) and divmod(7,-3)==(-3,-2))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "divmod-floats",
+      "stage": "N2",
+      "source": "print(divmod(7.0,-3.0)==(-3.0,-2.0) and divmod(-7.0,3)==(-3.0,2.0))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "pow-modulus",
+      "stage": "N2",
+      "source": "print(pow(7,5,11)==10 and pow(7,5,-11)==-1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "pow-inverse",
+      "stage": "N2",
+      "source": "print(pow(3,-1,11)==4 and pow(3,-1,-11)==-7 and pow(0,-1,1)==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "pow-keywords",
+      "stage": "N2",
+      "source": "print(pow(base=2,exp=5,mod=7)==4 and pow(2,exp=5)==32)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "pow-float",
+      "stage": "N2",
+      "source": "print(pow(2.0,-3)==0.125 and 4 ** 0.5 == 2.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "pow-special",
+      "stage": "N2",
+      "source": "print((1e309-1e309) ** 0 == 1.0 and (-1.0) ** 1e309 == 1.0 and 0.5 ** 1e309 == 0.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "pow-huge-modular",
+      "stage": "N2",
+      "source": "print(pow(2,10000,7)==2 and pow(-2,10001,7)==3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "round-integer",
+      "stage": "N2",
+      "source": "print(round(125,-1)==120 and round(135,-1)==140 and round(-125,-1)==-120 and round(7,10000)==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "round-integer-large",
+      "stage": "N2",
+      "source": "print(round(12345,-3)==12000 and round(7,-10000)==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "round-float-integer",
+      "stage": "N2",
+      "source": "print(round(2.5)==2 and round(3.5)==4 and round(-2.5)==-2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "round-float-decimal",
+      "stage": "N2",
+      "source": "print(round(2.675,2)==2.67 and round(0.125,2)==0.12 and round(0.375,2)==0.38)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "round-float-negative",
+      "stage": "N2",
+      "source": "print(round(250.0,-2)==200.0 and round(350.0,-2)==400.0 and round(-250.0,-2)==-200.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "round-keyword",
+      "stage": "N2",
+      "source": "print(round(2.675,ndigits=2)==2.67 and round(7,ndigits=None)==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "round-extreme-digits",
+      "stage": "N2",
+      "source": "print(round(1.25,10000)==1.25 and round(-1.25,-10000)==0.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-base-strings",
+      "stage": "N2",
+      "source": "print(bin(-7)==\"-0b111\" and oct(64)==\"0o100\" and hex(-255)==\"-0xff\")\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-base-booleans",
+      "stage": "N2",
+      "source": "print(bin(True)==\"0b1\" and oct(False)==\"0o0\" and hex(True)==\"0x1\")\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "unicode-boundaries",
+      "stage": "N2",
+      "source": "print(ord(chr(0))==0 and ord(chr(0x10ffff))==0x10ffff and ord(chr(0xd800))==0xd800 and ord(\"\ud83d\ude00\")==0x1f600)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "abs-arity",
+      "stage": "N2",
+      "source": "abs()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "abs-keyword",
+      "stage": "N2",
+      "source": "abs(x=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "abs-string",
+      "stage": "N2",
+      "source": "abs(\"7\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "divmod-zero",
+      "stage": "N2",
+      "source": "divmod(7,0)\n",
+      "stdout": "",
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "divmod-arity",
+      "stage": "N2",
+      "source": "divmod(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "divmod-keyword",
+      "stage": "N2",
+      "source": "divmod(x=7,y=2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "pow-zero-modulus",
+      "stage": "N2",
+      "source": "pow(2,3,0)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "pow-noninvertible",
+      "stage": "N2",
+      "source": "pow(2,-1,4)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "pow-float-modulus",
+      "stage": "N2",
+      "source": "pow(2.0,3,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "pow-arity",
+      "stage": "N2",
+      "source": "pow(2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "pow-float-overflow",
+      "stage": "N2",
+      "source": "1e308 ** 2.0\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "pow-float-zero",
+      "stage": "N2",
+      "source": "0.0 ** -1.0\n",
+      "stdout": "",
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "round-arity",
+      "stage": "N2",
+      "source": "round()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "round-number-keyword",
+      "stage": "N2",
+      "source": "print(round(number=7)==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "round-digits-type",
+      "stage": "N2",
+      "source": "round(7,1.0)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "round-nan",
+      "stage": "N2",
+      "source": "round(1e309-1e309)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "round-infinity",
+      "stage": "N2",
+      "source": "round(1e309)\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "round-overflow",
+      "stage": "N2",
+      "source": "round(1.7e308,-308)\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "base-float",
+      "stage": "N2",
+      "source": "hex(1.0)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "base-keyword",
+      "stage": "N2",
+      "source": "bin(number=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "chr-negative",
+      "stage": "N2",
+      "source": "chr(-1)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "chr-large",
+      "stage": "N2",
+      "source": "chr(1114112)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "chr-float",
+      "stage": "N2",
+      "source": "chr(7.0)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "ord-empty",
+      "stage": "N2",
+      "source": "ord(\"\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "ord-two",
+      "stage": "N2",
+      "source": "ord(\"ab\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "int-defaults",
+      "stage": "N3",
+      "source": "print(int()==0 and int(True)==1 and int(-3.75)==-3 and int(\" +123 \")==123)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-base",
+      "stage": "N3",
+      "source": "print(int(\"ff\",16)==255 and int(\"0xff\",0)==255 and int(\"-0b101\",0)==-5 and int(\"101\",base=2)==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-underscores",
+      "stage": "N3",
+      "source": "print(int(\"0x_ff\",0)==255 and int(\"1_000\")==1000 and int(\"00_0\",0)==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-unicode",
+      "stage": "N3",
+      "source": "print(int(\" \u0661_\u0662\u2003\")==12)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-large",
+      "stage": "N3",
+      "source": "print(int(\"123456789012345678901234567890\")==123456789012345678901234567890)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-float-boundary",
+      "stage": "N3",
+      "source": "print(int(1e100)==10000000000000000159028911097599180468360808563945281389781327557747838772170381060813469985856815104)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-defaults",
+      "stage": "N3",
+      "source": "print(float()==0.0 and float(True)==1.0 and float(7)==7.0 and float(\"1_2.5e-1\")==1.25)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-unicode",
+      "stage": "N3",
+      "source": "print(float(\"\u2003\u0661.\u0662\u0665\u00a0\")==1.25)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-infinity",
+      "stage": "N3",
+      "source": "print(float(\"-InFiNiTy\")==-1e309 and float(\"1e10000\")==1e309)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-nan",
+      "stage": "N3",
+      "source": "print(float(\"nan\")!=float(\"nan\"))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-identity",
+      "stage": "N3",
+      "source": "print(float(1.25)==1.25)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "constructor-types",
+      "stage": "N3",
+      "source": "print(isinstance(int(),int) and isinstance(True,int) and isinstance(float(),float) and not isinstance(7,float))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-base-leading-zero",
+      "stage": "N3",
+      "source": "int(\"012\",0)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "int-base-bad",
+      "stage": "N3",
+      "source": "int(\"7\",1)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "int-base-large",
+      "stage": "N3",
+      "source": "int(\"7\",37)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "int-base-float",
+      "stage": "N3",
+      "source": "int(\"7\",2.0)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "int-explicit-base-number",
+      "stage": "N3",
+      "source": "int(7,10)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "int-invalid-digit",
+      "stage": "N3",
+      "source": "int(\"2\",2)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "int-invalid-underscore",
+      "stage": "N3",
+      "source": "int(\"1__0\")\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "int-invalid-unicode-letter",
+      "stage": "N3",
+      "source": "int(\"\uff26\",36)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "int-unicode-bom",
+      "stage": "N3",
+      "source": "int(\"\ufeff7\")\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "int-nan",
+      "stage": "N3",
+      "source": "int(1e309-1e309)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "int-infinity",
+      "stage": "N3",
+      "source": "int(1e309)\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "int-positional-only",
+      "stage": "N3",
+      "source": "int(x=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "float-integer-overflow",
+      "stage": "N3",
+      "source": "float(10 ** 400)\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "float-bad-text",
+      "stage": "N3",
+      "source": "float(\"1e\")\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "float-unicode-bom",
+      "stage": "N3",
+      "source": "float(\"\ufeff7\")\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "float-keyword",
+      "stage": "N3",
+      "source": "float(x=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "float-arity",
+      "stage": "N3",
+      "source": "float(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-defaults",
+      "stage": "N4",
+      "source": "print(complex()==0 and complex(7).real==7.0 and complex(7).imag==0.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-literals",
+      "stage": "N4",
+      "source": "print((3+4j).real==3.0 and (3+4j).imag==4.0 and 2J==2j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-text",
+      "stage": "N4",
+      "source": "print(complex(\" ( 3+4j ) \")==3+4j and complex(\"-j\")==-1j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-keywords",
+      "stage": "N4",
+      "source": "print(complex(real=3,imag=4)==3+4j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-mixed-constructor",
+      "stage": "N4",
+      "source": "print(complex(3+4j,5+6j)==-3+9j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-add-subtract",
+      "stage": "N4",
+      "source": "print((3+4j)+(2-1j)==5+3j and (3+4j)-2==1+4j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-multiply",
+      "stage": "N4",
+      "source": "print((3+4j)*(2-1j)==10+5j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-divide",
+      "stage": "N4",
+      "source": "print((3+4j)/(1-2j)==-1+2j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-power",
+      "stage": "N4",
+      "source": "print((1+1j)**4 == -4+0j and pow(1j,3)==-1j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-unary-truth",
+      "stage": "N4",
+      "source": "print(-(3+4j)==-3-4j and +(3+4j)==3+4j and bool(0j)==False and bool(1j))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-equality",
+      "stage": "N4",
+      "source": "print(complex(7)==7 and complex(7)==7.0 and complex(7,1)!=7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-dictionary",
+      "stage": "N4",
+      "source": "print({complex(7):3}[7]==3 and {7:3}[complex(7)]==3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-hash",
+      "stage": "N4",
+      "source": "print(hash(7+0j)==hash(7) and hash(3+4j)==hash(complex(3,4)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-abs",
+      "stage": "N4",
+      "source": "print(abs(3+4j)==5.0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-types",
+      "stage": "N4",
+      "source": "print(isinstance(3j,complex) and not isinstance(3j,float))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-zero-division",
+      "stage": "N4",
+      "source": "1j/0j\n",
+      "stdout": "",
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "complex-order",
+      "stage": "N4",
+      "source": "1j<2j\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-floor",
+      "stage": "N4",
+      "source": "1j//2\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-modulo",
+      "stage": "N4",
+      "source": "1j%2\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-int",
+      "stage": "N4",
+      "source": "int(1j)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-float",
+      "stage": "N4",
+      "source": "float(1j)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-round",
+      "stage": "N4",
+      "source": "round(1j)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-bad-text",
+      "stage": "N4",
+      "source": "complex(\"1 + 2j\")\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "complex-string-imag",
+      "stage": "N4",
+      "source": "complex(\"1\",2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "conversion-index-fallback",
+      "stage": "N5",
+      "source": "class A:\n def __index__(self): return 7\na=A()\nprint(int(a),float(a)==7.0,complex(a)==7,bin(a),oct(a),hex(a),ord(chr(a)),round(123,a)==123)\n",
+      "stdout": "7 True True 0b111 0o7 0x7 7 True\n"
+    },
+    {
+      "id": "conversion-explicit-hooks",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self): return 7\n def __float__(self): return 1.25\n def __complex__(self): return 3+4j\nprint(int(A()),float(A())==1.25,complex(A())==3+4j)\n",
+      "stdout": "7 True True\n"
+    },
+    {
+      "id": "conversion-type-not-instance",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self): return 7\na=A()\na.__int__=str\nprint(int(a))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "numeric-raw-hooks",
+      "stage": "N5",
+      "source": "class A:\n def __abs__(self): return \"abs\"\n def __round__(self,n=None): return \"round\"\nprint(abs(A()),round(A()),round(A(),2))\n",
+      "stdout": "abs round round\n"
+    },
+    {
+      "id": "numeric-private-binding",
+      "stage": "N5",
+      "source": "class A:\n def __init__(self): self.__value=7\n @property\n def __int__(self):\n  def use(): return self.__value\n  return use\nprint(int(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "conversion-int-result",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self): return 1.25\nint(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "conversion-float-result",
+      "stage": "N5",
+      "source": "class A:\n def __float__(self): return 7\nfloat(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "conversion-complex-result",
+      "stage": "N5",
+      "source": "class A:\n def __complex__(self): return 7\ncomplex(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "conversion-body-error",
+      "stage": "N5",
+      "source": "class A:\n def __int__(self): return 1//0\nint(A())\n",
+      "stdout": "",
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "conversion-binding-error",
+      "stage": "N5",
+      "source": "class A:\n @property\n def __float__(self): raise ValueError(\"bind\")\nfloat(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "conversion-disabled-int",
+      "stage": "N5",
+      "source": "class A:\n __int__=None\n def __index__(self): return 7\nint(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "future-binary-user-slot",
+      "stage": "Future",
+      "source": "class A:\n def __add__(self,other): return 7\nprint(A()+3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-truncation-hook",
+      "stage": "Future",
+      "source": "class A:\n def __trunc__(self): return 7\ntry: int(A())\nexcept TypeError: print(\"type\")\n",
+      "stdout": "type\n"
+    }
+  ]
+}
