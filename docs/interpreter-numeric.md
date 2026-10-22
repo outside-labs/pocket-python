@@ -1,0 +1,73 @@
+# Numeric construction and operators
+
+The semantic oracle is **CPython 3.14.7**. The independently authored
+[numeric matrix](../tests/fixtures/interpreter/numeric.json) separates integer
+operators (N1), numeric helpers (N2), real constructors (N3), complex values (N4),
+conversion callbacks (N5) and explicit later object boundaries (Future).
+Reference observations specify behavior. They do not establish adoption;
+`implemented_stages` and independently compiled source reports do that.
+
+## Delivery and signatures
+
+The numeric surface is additive in core-source/1 and classes-source/1. New
+primitive instructions require bytecode 4/5; earlier bytecode engines retain
+their feature gates. Callback slots require classes-source/1. Engine fingerprints
+identify the complete implementation; host grants and external packages retain
+their existing boundaries.
+
+| Stage | Finite API |
+| --- | --- |
+| N1 | `~`, `&`, `\|`, `^`, `<<`, `>>`, their augmented forms, `**`/`**=` and integer true division. Integer powers include negative exponents, zero/unit bases and underflow. |
+| N2 | `abs(x)`, `divmod(x,y)`, `pow(base,exp,mod=None)`, `round(number,ndigits=None)`, `bin(x)`, `oct(x)`, `hex(x)`, `chr(i)` and `ord(c)`. `pow` and `round` accept their named keywords; other helper arguments are positional-only. |
+| N3 | `int()`, `int(x)`, `int(text,base)`/`int(text,base=...)`, `float()` and `float(x)`. Constructor value arguments are positional-only. Explicit bases are 0 or 2–36. |
+| N4 | Complex literals, `complex()`/one/two-argument construction and real/imaginary keywords; basic arithmetic, finite integer powers, equality/truth, real/imaginary attributes and compatible dictionary hashes. |
+| N5 | Type/MRO-selected `__int__`, `__float__`, `__complex__`, `__abs__`, `__round__` and the adopted `__index__` consumers, with ordinary descriptor binding and explicit result rules. |
+
+All expressions evaluate once in Python order. Power associates to the right;
+unary signs bind outside the left power operand and inside its exponent.
+Bitwise precedence sits between arithmetic and comparisons. Bool/bool bitwise
+operations return bool; other integer arithmetic returns integer values.
+Negative shifts raise ValueError. Huge right shifts and zero left shifts avoid
+unnecessary allocation; other huge results hit the existing integer/work quota.
+
+Integer true division rounds an exact BigInt ratio to binary64, including
+ties-to-even, subnormals, signed zero and overflow. It must not convert arbitrary
+numerators and denominators separately through Number. Explicit int-to-float
+coercion has its own correctly rounded conversion and OverflowError boundary.
+Integer power and modular power keep integer intermediates, with bounded work
+and cancellation polls; negative modular powers require an inverse.
+
+Round uses nearest/even ties. Integer rounding remains exact; float rounding
+must use the actual binary64 input rather than a decimal string approximation.
+Non-finite, overflow, mixed-type, invalid-input and signature cases are explicit
+matrix rows. Floating power retains binary64/libm precision rather than claiming
+portable last-bit agreement for all transcendental inputs.
+
+Numeric string conversion adopts decimal Unicode digits and Python's numeric
+whitespace rules, ASCII signs, finite prefix/base rules and valid underscores.
+It does not normalize arbitrary letters or accept a BOM as whitespace. Input
+and result bounds are checked before unbounded native computation; resource
+refusals remain distinct from Python type/value errors.
+
+## Ownership and later boundaries
+
+Callbacks enter ordinary VM frames and keep receiver, arguments, pending result
+and outer destination rooted until transfer. Result validation and original
+binding/body errors remain at source locations. Require forced collection while
+paused, recursive callbacks, work/instruction/output limits, actual OOM,
+cancellation and idempotent close with zero logical teardown. Preserve the eight
+existing composed resource observations.
+
+Complex values need an explicit immutable layout and tagged representation;
+mixed equality and hashing must agree with equal real numbers. Numeric methods,
+broader formatting, builtin subclasses, general arithmetic/reflected slots and
+unadopted complex power/special-value families remain separately gated. In
+particular, int no longer falls back to `__trunc__` in Python 3.14.
+
+## Contract checkpoint
+
+There are 149 authored reference cases. Initially, only N1 and Future run through
+the independent engine, with explicit refusals; N2–N5 remain reference-only and
+are listed as omitted stages in source reports. Each delivery expands the
+selected stages and changes `implemented_stages` only after its own tests pass.
+The first checkpoint does not close INT-NUM-01, INT-09 or async work.
