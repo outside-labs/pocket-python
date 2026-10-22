@@ -143,6 +143,7 @@ jobs:
       - run: python runtime/check_conformance.py --engine source --report build/source-node-report.json
       - run: python scripts/lock_library_profiles.py
       - run: python runtime/check_classes.py --reference-only --report build/classes-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/iteration.json --report build/iteration-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-reference-report.json
