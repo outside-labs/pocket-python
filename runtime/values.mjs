@@ -211,6 +211,8 @@ export class ValueRuntime {
   }
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof SliceValue || right instanceof SliceValue)
+      this.fail("UnsupportedOperationError", "Slice comparisons require the later equality/sequence profile.", "UNSUPPORTED");
     if (numeric(left) && numeric(right)) {
       this.charge(Math.max(left instanceof FloatValue ? 16 : integer(left).toString().length,
                            right instanceof FloatValue ? 16 : integer(right).toString().length));
@@ -242,6 +244,8 @@ export class ValueRuntime {
   }
   less(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof SliceValue || right instanceof SliceValue)
+      this.fail("UnsupportedOperationError", "Slice comparisons require the later equality/sequence profile.", "UNSUPPORTED");
     if (numeric(left) && numeric(right)) {
       this.charge(Math.max(left instanceof FloatValue ? 16 : integer(left).toString().length,
                            right instanceof FloatValue ? 16 : integer(right).toString().length));

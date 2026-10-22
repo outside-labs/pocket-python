@@ -174,3 +174,13 @@ test('paused setters, deleters and converted slice mutations retain otherwise te
     }}finally{registry.close();}
   }
 });
+
+
+test('deferred slice comparisons refuse before returning a misleading value',async()=>{
+  for(const expression of ['slice(1,7)==slice(1,7)','slice(1,7)!=slice(1,7)','slice(1,7)<slice(2,7)',
+    '[slice(1,7)]==[slice(1,7)]','slice(1,7) in [slice(1,7)]']){
+    const result=await run('print('+expression+')\n');assert.equal(result.error.code,'UNSUPPORTED');assert.equal(result.stdout,'');closed(result);
+  }
+  const identity=await run('s=slice(1,7)\nprint(s is s,bool(s),[s]==[s])\n');
+  assert.equal(identity.stdout,'True True True\n');assert.equal(identity.error,undefined);closed(identity);
+});

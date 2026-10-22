@@ -578,6 +578,36 @@
       "stage": "I2",
       "source": "class A:\n @staticmethod\n def __setitem__(key,value): print(key,value)\n @classmethod\n def __delitem__(cls,key): print(cls.__name__,key)\na=A()\na[1]=7\ndel a[2]\n",
       "stdout": "1 7\nA 2\n"
+    },
+    {
+      "id": "future-slice-equality",
+      "stage": "I3",
+      "source": "print(slice(1,7)==slice(1,7))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-slice-inequality",
+      "stage": "I3",
+      "source": "print(slice(1,7)!=slice(1,7))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "future-slice-ordering",
+      "stage": "I3",
+      "source": "print(slice(1,7)<slice(2,7))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-slice-nested-equality",
+      "stage": "I3",
+      "source": "print([slice(1,7)]==[slice(1,7)])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-slice-containment",
+      "stage": "I3",
+      "source": "print(slice(1,7) in [slice(1,7)])\n",
+      "stdout": "True\n"
     }
   ]
 }
