@@ -188,7 +188,7 @@
       "id": "ordinary-syntax-gaps",
       "status": "deferred",
       "scope": "assert, lambda, assignment expressions and tuple/list/starred assignment unpacking.",
-      "gaps": "No execution support. Assignment expressions currently receive SYNTAX instead of UNSUPPORTED; this divergence is recorded without support credit.",
+      "gaps": "No execution support. Recognized assignment expressions receive UNSUPPORTED without execution support.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -475,7 +475,7 @@
       "id": "annotations-generics",
       "status": "deferred",
       "scope": "Python 3.14 annotation timing, type parameters, type aliases and required generic aliases.",
-      "gaps": "Annotations and generic syntax are not adopted. Type aliases currently receive SYNTAX instead of UNSUPPORTED.",
+      "gaps": "Annotations and generic syntax are not adopted. Recognized type aliases receive UNSUPPORTED without execution support.",
       "reference_version": "3.14.7",
       "targets": [
         "node",

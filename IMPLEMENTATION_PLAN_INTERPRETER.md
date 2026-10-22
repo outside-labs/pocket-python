@@ -722,3 +722,15 @@ and adopt indexed-object protocols in
 [INT-INDEX-01](https://github.com/outside-labs/pocket-python/issues/112).
 General function/value/library work remains ordered in the inventory. INT-09,
 INT-10, the mobile feasibility decision and the later C/Rust/Wasm path stay open.
+
+### Unsupported-syntax diagnostic checkpoint
+
+INT-DIAG-01 recognizes valid assignment expressions and type aliases without
+adopting execution. Eighty source/refusal cases cover both source profiles,
+malformed forms, UTF-8 spans, generic-alias parameters and no application effects;
+the existing source matrix also checks type as an ordinary identifier. Deferred
+nodes never leave parsing. Other unadopted grammar keeps its own refusal boundary.
+The inventory's two diagnostic divergences are now deferred observations with
+UNSUPPORTED, earning no execution support credit. The next task is INT-INDEX-01,
+through a pinned contract, owned read/conversion and mutation/slice operations,
+then offline-console acceptance. The semantic oracle remains CPython 3.14.7.

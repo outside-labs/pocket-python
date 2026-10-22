@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {compileSource} from "./source-compiler.mjs";
 import {parseSource} from "./source-parser.mjs";
 import {SourceError, tokenize} from "./source-tokens.mjs";
@@ -116,4 +117,19 @@ test("seeded source mutations produce verified programs or explicit source diagn
     try { verifyFunctions(compileSource(source, {maxWork: 20000}).program); }
     catch (e) { assert.ok(e instanceof SourceError, e.stack); }
   }
+});
+
+
+test("recognized deferred forms validate syntax, UTF-8 spans and profile boundaries before execution", async () => {
+  const corpus = JSON.parse(readFileSync(new URL("../tests/fixtures/interpreter/source.json", import.meta.url)));
+  const cases = [...corpus.boundaries.filter(c => c.span), ...corpus.malformed_source.filter(c => c.id.startsWith("syntax-new-forms-"))];
+  for (const item of cases) {
+    const result = await run(item.source, {compileOptions: item.compileOptions});
+    assert.equal(result.error.code, item.code, item.id);
+    assert.equal(result.error.phase, "parse", item.id);
+    if (item.span) assert.deepEqual(result.error.location.span, item.span, item.id);
+    assert.equal(result.stdout, ""); assert.equal(result.compilation, null); assert.equal(result.stats, null);
+  }
+  error("print((x:=7))", "COMPILE_BUDGET", {maxNodes: 2});
+  error("type A[T] = list[T]", "COMPILE_BUDGET", {maxWork: tokenize("type A[T] = list[T]").stats.work});
 });

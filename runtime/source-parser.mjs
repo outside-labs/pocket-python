@@ -25,6 +25,7 @@ class Parser {
     this.tokens = this.lexed.tokens; this.filename = this.lexed.filename; this.index = 0;
     this.previous = this.tokens[0]; this.work = this.lexed.stats.work; this.nodes = 0; this.depth = 0;
     this.functionDepth = 0; this.loopDepth = 0; this.heights = new WeakMap();
+    this.refusal = null; this.typeExpression = false; this.grouped = new WeakSet();
     this.maxNodes = options.maxNodes ?? PARSER_LIMITS.nodes;
     this.maxDepth = options.maxParseDepth ?? PARSER_LIMITS.depth;
     for (const [value, cap] of [[this.maxNodes, PARSER_LIMITS.nodes], [this.maxDepth, PARSER_LIMITS.depth]])
@@ -34,6 +35,7 @@ class Parser {
     throw new SourceError(code, message, {filename: this.filename, span: token.span, phase: "parse", name});
   }
   unsupported(message, token) { this.fail(message, token, "UNSUPPORTED"); }
+  defer(message, node) { this.refusal ??= {message, node}; return node; }
   charge() {
     if (++this.work > (this.options.maxWork ?? SOURCE_LIMITS.work)) this.fail("Source work budget exceeded.", this.peek(), "COMPILE_BUDGET");
     if (this.options.shouldCancel?.()) this.fail("Compilation cancelled.", this.peek(), "CANCELLED");
@@ -80,6 +82,7 @@ class Parser {
       if (this.kind("newline")) { this.take(); continue; }
       body.push(...this.statement());
     }
+    if (this.refusal) this.unsupported(this.refusal.message, this.refusal.node);
     const module = this.node("Module", start, {body});
     return freezeSourceTree({module, source: this.lexed.source, filename: this.filename, languageProfile: this.languageProfile,
       stats: {...this.lexed.stats, work: this.work, nodes: this.nodes}});
@@ -140,6 +143,7 @@ class Parser {
       targets.forEach(value => this.target(value, true)); return this.node("Delete", start, {targets});
     }
     if (this.at("import") || this.at("from")) return this.imports();
+    if (this.kind("name") && start.value === "type" && this.peek(1).kind === "name") return this.typeAlias();
     let value = this.expressionList();
     if (this.at(":")) this.unsupported("Annotations and pattern statements are not adopted.", start);
     if (this.eat("=")) {
@@ -156,8 +160,38 @@ class Parser {
       if (!operator) this.unsupported("Augmented operator is not adopted.", token);
       return this.node("Augment", start, {target: value, operator, value: this.expressionList()});
     }
-    if (this.at(":=")) this.unsupported("Assignment expressions are not adopted.");
+    if (this.at(":=")) this.fail("Assignment expressions require a permitted expression context.");
     return this.node("Expr", start, {value});
+  }
+  typeAlias() {
+    const start = this.take(), name = this.name();
+    if (name.value === "__debug__") this.fail("Cannot bind __debug__.", name);
+    const before = this.typeExpression; this.typeExpression = true;
+    let value;
+    try {
+      if (this.eat("[")) {
+        const names = new Set(); let defaultSeen = false;
+        do {
+          const variadic = this.eat("*") || this.eat("**"), parameter = this.name();
+          if (parameter.value === "__debug__") this.fail("Cannot bind __debug__.", parameter);
+          if (names.has(parameter.value)) this.fail("Duplicate type parameter.", parameter);
+          names.add(parameter.value);
+          if (this.eat(":")) {
+            if (variadic) this.fail("A variadic type parameter cannot have a bound.", parameter);
+            this.expression();
+          }
+          if (this.eat("=")) {
+            defaultSeen = true;
+            if (variadic?.value === "*") this.eat("*");
+            this.expression();
+          } else if (defaultSeen) this.fail("A required type parameter follows a default.", parameter);
+          if (!this.eat(",")) break;
+        } while (!this.at("]"));
+        this.expect("]");
+      }
+      this.expect("="); value = this.expression();
+    } finally { this.typeExpression = before; }
+    return this.defer("Type aliases are not adopted.", this.node("TypeAlias", start, {name: name.value, value}));
   }
   qualified() {
     let name = this.name().value;
@@ -253,7 +287,7 @@ class Parser {
     return this.node("Class", start, {name, bases, body, ...(decorators.length ? {decorators} : {})}, body.at(-1));
   }
   branch(keyword = "if") {
-    const start = this.expect(keyword), test = this.expression(), body = this.suite();
+    const start = this.expect(keyword), test = this.namedExpression(), body = this.suite();
     let otherwise = [];
     if (this.at("elif")) otherwise = [this.guard(() => this.branch("elif"))];
     else if (this.eat("else")) otherwise = this.suite();
@@ -267,7 +301,7 @@ class Parser {
       const token = this.name(); target = this.node("Name", token, {name: token.value}, token);
       if (!this.at("in")) this.unsupported("For loops require a simple name target.");
       this.take(); iterable = this.expressionList();
-    } else test = this.expression();
+    } else test = this.namedExpression();
     this.loopDepth++; let body;
     try { body = this.suite(); } finally { this.loopDepth--; }
     const otherwise = this.eat("else") ? this.suite() : [];
@@ -297,14 +331,27 @@ class Parser {
     if (!handlers.length && !final.length) this.fail("Try requires except or finally.");
     return this.node("Try", start, {body, handlers, otherwise, final}, final.at(-1) || otherwise.at(-1) || handlers.at(-1) || body.at(-1));
   }
-  expressionList() {
-    const start = this.peek(), items = [this.expression()]; let tuple = false;
+  expressionList(named = false) {
+    const expression = () => named ? this.namedExpression() : this.expression();
+    const start = this.peek(), items = [expression()]; let tuple = false;
     while (this.eat(",")) {
       tuple = true;
       if (this.ending() || [")", "]", "}", ":", "="].some(value => this.at(value))) break;
-      items.push(this.expression());
+      items.push(expression());
     }
     return tuple ? this.node("Tuple", start, {items}) : items[0];
+  }
+  namedExpression() {
+    if (this.kind("name") && this.peek(1).value === ":=") {
+      const start = this.take(); this.expect(":=");
+      if (this.typeExpression) this.fail("Assignment expressions cannot occur in type expressions.", start);
+      if (start.value === "__debug__") this.fail("Cannot bind __debug__.", start);
+      const value = this.expression();
+      return this.defer("Assignment expressions are not adopted.", this.node("NamedExpression", start, {name: start.value, value}));
+    }
+    const value = this.expression();
+    if (this.at(":=")) this.fail("An assignment expression requires a bare identifier target.");
+    return value;
   }
   expression() {
     return this.guard(() => {
@@ -358,6 +405,7 @@ class Parser {
       const start = this.take(), value = this.guard(() => this.unary());
       return this.node("Unary", start, {operator: start.value === "+" ? "positive" : "negative", value}, value);
     }
+    if (this.typeExpression && (this.at("yield") || this.at("await"))) this.fail("Yield and await cannot occur in type expressions.");
     if (["~", "await", "lambda", "yield"].some(value => this.at(value))) this.unsupported("This unary/generator/async expression is not adopted.");
     const value = this.primary();
     if (this.at("**")) this.unsupported("Exponentiation is not adopted.");
@@ -377,20 +425,21 @@ class Parser {
             seen.add(token.value); keywords.push({name: token.value, value: this.expression()});
           } else {
             if (keywords.length) this.fail("A positional argument follows a keyword argument.");
-            args.push(this.expression());
+            args.push(this.namedExpression());
           }
           if (this.at("for")) this.unsupported("Generator/comprehension expressions are not adopted.");
           if (!this.eat(",")) break;
         }
         this.expect(")"); value = this.node("Call", value, {callable: value, args, keywords});
       } else if (this.eat("[")) {
-        const start = this.peek(); let index = this.at(":") ? null : this.expression();
+        const start = this.peek(); let index = this.at(":") ? null : this.namedExpression();
         if (this.eat(":")) {
+          if (index?.kind === "NamedExpression" && !this.grouped.has(index)) this.fail("A slice-bound assignment expression requires parentheses.", index);
           const stop = this.at(":") || this.at("]") ? null : this.expression();
           const step = this.eat(":") ? this.at("]") ? null : this.expression() : null;
           index = this.node("Slice", start, {start: index, stop, step});
         } else if (this.eat(",")) {
-          const items = [index]; while (!this.at("]")) { items.push(this.expression()); if (!this.eat(",")) break; }
+          const items = [index]; while (!this.at("]")) { items.push(this.namedExpression()); if (!this.eat(",")) break; }
           index = this.node("Tuple", start, {items});
         }
         this.expect("]"); value = this.node("Subscript", value, {value, index});
@@ -416,15 +465,15 @@ class Parser {
     }
     if (this.eat("(")) {
       if (this.eat(")")) return this.node("Tuple", start, {items: []});
-      const value = this.expressionList();
+      const value = this.expressionList(true);
       if (this.at("for")) this.unsupported("Generator expressions are not adopted.");
-      this.expect(")"); return value.kind === "Tuple" ? this.node("Tuple", start, {items: value.items}) : value;
+      this.expect(")"); this.grouped.add(value); return value.kind === "Tuple" ? this.node("Tuple", start, {items: value.items}) : value;
     }
     if (this.eat("[")) {
       const items = [];
       while (!this.at("]")) {
         if (this.at("*")) this.unsupported("Starred container construction is not adopted.");
-        items.push(this.expression());
+        items.push(this.namedExpression());
         if (this.at("for")) this.unsupported("Comprehensions are not adopted.");
         if (!this.eat(",")) break;
       }

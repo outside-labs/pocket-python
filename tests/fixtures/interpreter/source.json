@@ -14,14 +14,14 @@
     },
     {
       "id": "literal-precedence",
-      "source": "\u03c0=(1+2*3)\nprint(\u03c0,-7//3,-7%3,not 0==1,'a' '\ud83d\ude00')\n",
+      "source": "π=(1+2*3)\nprint(π,-7//3,-7%3,not 0==1,'a' '😀')\n",
       "features": [
         "source.grammar"
       ]
     },
     {
       "id": "unicode-closure",
-      "source": "cafe\u0301=3\ndef outer(\u03c0,/,*,\u53d8\u91cf=2):\n    caf\u00e9=\u03c0+\u53d8\u91cf\n    def middle():\n        def inner(\u212a=1):\n            return caf\u00e9+K\n        return inner\n    return middle\nprint(outer(4,\u53d8\u91cf=3)()(),caf\u00e9)\n",
+      "source": "café=3\ndef outer(π,/,*,变量=2):\n    café=π+变量\n    def middle():\n        def inner(K=1):\n            return café+K\n        return inner\n    return middle\nprint(outer(4,变量=3)()(),café)\n",
       "features": [
         "source.grammar"
       ]
@@ -56,7 +56,7 @@
     },
     {
       "id": "slice",
-      "source": "s='A\ud83d\ude00bc'\nprint(s[::-1],s[1:3],s[:2],s[2:])\n",
+      "source": "s='A😀bc'\nprint(s[::-1],s[1:3],s[:2],s[2:])\n",
       "features": [
         "source.grammar"
       ]
@@ -84,7 +84,7 @@
     },
     {
       "id": "normalized-keyword-name",
-      "source": "\ud835\udcf2\ud835\udc87=7\nprint(\ud835\udcf2\ud835\udc87)\n",
+      "source": "𝓲𝒇=7\nprint(𝓲𝒇)\n",
       "features": [
         "source.grammar"
       ]
@@ -98,7 +98,7 @@
     },
     {
       "id": "raw-triple-continuation",
-      "source": "value=(r'\\n' '\ud83d\ude00'\n       '''a\nb''')\nprint(len(value),value[2],value[-1])\n",
+      "source": "value=(r'\\n' '😀'\n       '''a\nb''')\nprint(len(value),value[2],value[-1])\n",
       "features": [
         "source.grammar"
       ]
@@ -134,7 +134,7 @@
     },
     {
       "id": "unicode-source-error",
-      "source": "\u03c0=3\ndef caf\u00e9():\n    return \u03c0//0\ncaf\u00e9()\n",
+      "source": "π=3\ndef café():\n    return π//0\ncafé()\n",
       "features": [
         "source.grammar"
       ]
@@ -180,7 +180,7 @@
         "source.augmented-assignment",
         "value.identity"
       ],
-      "source": "a=[1]\nb=a\na+=a\nprint(a is b,len(b),b[0],b[1])\na*=2\nprint(a is b,len(b))\na+=(3,4)\na+='\ud83d\ude00'\na+={'x':1}\nprint(len(a),a[-2],a[-1])\na*=0\nprint(a is b,len(b))\nx=[[1]]\nchild=x[0]\nx[0]+=[2]\nprint(child is x[0],len(child))\n"
+      "source": "a=[1]\nb=a\na+=a\nprint(a is b,len(b),b[0],b[1])\na*=2\nprint(a is b,len(b))\na+=(3,4)\na+='😀'\na+={'x':1}\nprint(len(a),a[-2],a[-1])\na*=0\nprint(a is b,len(b))\nx=[[1]]\nchild=x[0]\nx[0]+=[2]\nprint(child is x[0],len(child))\n"
     },
     {
       "id": "private-temporary-module",
@@ -244,9 +244,16 @@
     },
     {
       "id": "str-preserves-identity",
-      "source": "def make():\n text=\"A\ud83d\ude00e\u0301\"\n held=[text]\n def read(): return held[0]\n return read\nread=make()\noriginal=read()\nconverted=str(original)\nprint(converted is original,str(converted) is read(),str(converted) is converted)\nprint(str(None),str(True),str(7),str(ValueError(\"bad\")))\ni=0\nwhile i<20:\n converted=str(converted)\n i+=1\nprint(converted is read(),converted)\n",
+      "source": "def make():\n text=\"A😀é\"\n held=[text]\n def read(): return held[0]\n return read\nread=make()\noriginal=read()\nconverted=str(original)\nprint(converted is original,str(converted) is read(),str(converted) is converted)\nprint(str(None),str(True),str(7),str(ValueError(\"bad\")))\ni=0\nwhile i<20:\n converted=str(converted)\n i+=1\nprint(converted is read(),converted)\n",
       "features": [
         "source.builtin.str.identity"
+      ]
+    },
+    {
+      "id": "type-soft-identifier",
+      "source": "type=7\ndef f(type): return type+1\nprint(type,f(8))\n",
+      "features": [
+        "source.grammar"
       ]
     }
   ],
@@ -434,6 +441,438 @@
       "features": [
         "source.feature-boundary"
       ]
+    },
+    {
+      "id": "unsupported-walrus-group-core",
+      "source": "print('must not run')\nprint((x:=7))\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        8,
+        2,
+        12
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-call-core",
+      "source": "print('must not run')\nprint(x:=7)\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        7,
+        2,
+        11
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-unicode-core",
+      "source": "print('must not run')\nprint((π:=7))\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        8,
+        2,
+        13
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-if-core",
+      "source": "print('must not run')\nif x:=7: print(x)\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        4,
+        2,
+        8
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-while-core",
+      "source": "print('must not run')\nwhile x:=0: pass\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        7,
+        2,
+        11
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-list-core",
+      "source": "print('must not run')\nx=[a:=7]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        4,
+        2,
+        8
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-subscript-core",
+      "source": "print('must not run')\nx=[7][a:=0]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        7,
+        2,
+        11
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-slice-core",
+      "source": "print('must not run')\nx=[7][(a:=0):]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        8,
+        2,
+        12
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-nested-core",
+      "source": "print('must not run')\nprint((x:=(y:=7)))\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        12,
+        2,
+        16
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-type-alias-core",
+      "source": "print('must not run')\ntype A=list[int]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        1,
+        2,
+        17
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-type-generic-core",
+      "source": "print('must not run')\ntype A[T: int = str] = list[T]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        1,
+        2,
+        31
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-type-variadic-core",
+      "source": "print('must not run')\ntype A[*Ts = int, **P = [int]] = tuple[Ts,P]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        1,
+        2,
+        45
+      ],
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-group-classes",
+      "source": "print('must not run')\nprint((x:=7))\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        8,
+        2,
+        12
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-call-classes",
+      "source": "print('must not run')\nprint(x:=7)\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        7,
+        2,
+        11
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-unicode-classes",
+      "source": "print('must not run')\nprint((π:=7))\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        8,
+        2,
+        13
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-if-classes",
+      "source": "print('must not run')\nif x:=7: print(x)\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        4,
+        2,
+        8
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-while-classes",
+      "source": "print('must not run')\nwhile x:=0: pass\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        7,
+        2,
+        11
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-list-classes",
+      "source": "print('must not run')\nx=[a:=7]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        4,
+        2,
+        8
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-subscript-classes",
+      "source": "print('must not run')\nx=[7][a:=0]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        7,
+        2,
+        11
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-slice-classes",
+      "source": "print('must not run')\nx=[7][(a:=0):]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        8,
+        2,
+        12
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-walrus-nested-classes",
+      "source": "print('must not run')\nprint((x:=(y:=7)))\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        12,
+        2,
+        16
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-type-alias-classes",
+      "source": "print('must not run')\ntype A=list[int]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        1,
+        2,
+        17
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-type-generic-classes",
+      "source": "print('must not run')\ntype A[T: int = str] = list[T]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        1,
+        2,
+        31
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
+    },
+    {
+      "id": "unsupported-type-variadic-classes",
+      "source": "print('must not run')\ntype A[*Ts = int, **P = [int]] = tuple[Ts,P]\n",
+      "code": "UNSUPPORTED",
+      "phase": "parse",
+      "span": [
+        2,
+        1,
+        2,
+        45
+      ],
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.feature-boundary"
+      ]
     }
   ],
   "malformed_source": [
@@ -588,6 +1027,678 @@
       "features": [
         "source.syntax-error"
       ]
+    },
+    {
+      "id": "syntax-new-forms-core-0",
+      "source": "print('must not run')\nx:=1\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-1",
+      "source": "print('must not run')\nx=y:=1\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-2",
+      "source": "print('must not run')\nprint(x= y:=1)\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-3",
+      "source": "print('must not run')\nprint((x:=))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-4",
+      "source": "print('must not run')\nprint((x:=y:=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-5",
+      "source": "print('must not run')\nprint(((x):=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-6",
+      "source": "print('must not run')\nprint((x.a:=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-7",
+      "source": "print('must not run')\nprint((x[0]:=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-8",
+      "source": "print('must not run')\nprint((__debug__:=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-9",
+      "source": "print('must not run')\nx=[7][a:=0:]\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-10",
+      "source": "print('must not run')\nprint((x:=1))\ny=\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-11",
+      "source": "print('must not run')\ntype A=\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-12",
+      "source": "print('must not run')\ntype A = int int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-13",
+      "source": "print('must not run')\ntype A() = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-14",
+      "source": "print('must not run')\ntype A[] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-15",
+      "source": "print('must not run')\ntype A[T,T] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-16",
+      "source": "print('must not run')\ntype A[T=int,U] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-17",
+      "source": "print('must not run')\ntype A[*Ts:int] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-18",
+      "source": "print('must not run')\ntype A[T:] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-19",
+      "source": "print('must not run')\ntype A[T=] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-20",
+      "source": "print('must not run')\ntype A[__debug__] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-21",
+      "source": "print('must not run')\ntype __debug__ = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-22",
+      "source": "print('must not run')\ntype A = (x:=1)\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-23",
+      "source": "print('must not run')\ntype A[T:(x:=1)] = T\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-24",
+      "source": "print('must not run')\ntype A[T=(x:=1)] = T\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-25",
+      "source": "print('must not run')\ntype A = (yield 1)\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-26",
+      "source": "print('must not run')\ntype A = (await f())\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-core-27",
+      "source": "print('must not run')\ntype A = int\nx =\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-0",
+      "source": "print('must not run')\nx:=1\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-1",
+      "source": "print('must not run')\nx=y:=1\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-2",
+      "source": "print('must not run')\nprint(x= y:=1)\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-3",
+      "source": "print('must not run')\nprint((x:=))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-4",
+      "source": "print('must not run')\nprint((x:=y:=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-5",
+      "source": "print('must not run')\nprint(((x):=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-6",
+      "source": "print('must not run')\nprint((x.a:=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-7",
+      "source": "print('must not run')\nprint((x[0]:=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-8",
+      "source": "print('must not run')\nprint((__debug__:=1))\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-9",
+      "source": "print('must not run')\nx=[7][a:=0:]\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-10",
+      "source": "print('must not run')\nprint((x:=1))\ny=\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-11",
+      "source": "print('must not run')\ntype A=\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-12",
+      "source": "print('must not run')\ntype A = int int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-13",
+      "source": "print('must not run')\ntype A() = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-14",
+      "source": "print('must not run')\ntype A[] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-15",
+      "source": "print('must not run')\ntype A[T,T] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-16",
+      "source": "print('must not run')\ntype A[T=int,U] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-17",
+      "source": "print('must not run')\ntype A[*Ts:int] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-18",
+      "source": "print('must not run')\ntype A[T:] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-19",
+      "source": "print('must not run')\ntype A[T=] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-20",
+      "source": "print('must not run')\ntype A[__debug__] = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-21",
+      "source": "print('must not run')\ntype __debug__ = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-22",
+      "source": "print('must not run')\ntype A = (x:=1)\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-23",
+      "source": "print('must not run')\ntype A[T:(x:=1)] = T\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-24",
+      "source": "print('must not run')\ntype A[T=(x:=1)] = T\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-25",
+      "source": "print('must not run')\ntype A = (yield 1)\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-26",
+      "source": "print('must not run')\ntype A = (await f())\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-classes-27",
+      "source": "print('must not run')\ntype A = int\nx =\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error"
+      ]
     }
   ],
   "limits": [
@@ -704,7 +1815,7 @@
     },
     {
       "id": "normalized-constant-name",
-      "source": "\ud835\udce3\ud835\udcfb\ud835\udcfe\ud835\udcee=1\n",
+      "source": "𝓣𝓻𝓾𝓮=1\n",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"

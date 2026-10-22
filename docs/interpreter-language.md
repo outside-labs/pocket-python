@@ -102,3 +102,17 @@ through version 3. INT-08 now compiles new source through the independent front 
 [rooted allocation accounting and explicit host handles](interpreter-memory.md). Pure-int
 true division and equal-size dictionary key mutation during iteration are
 explicitly deferred. The published 0.2.0 assembler excludes this development engine.
+
+## Deferred-syntax diagnostics
+
+Recognized assignment expressions and type-alias statements are validated only
+for diagnostics, then refused with UNSUPPORTED and a UTF-8 source span before
+compilation or application effects. No executable tree or bytecode is returned.
+The diagnostic grammar covers named-expression contexts in grouping, conditions,
+positional arguments, list elements and subscripts, and type-alias names,
+parameters/bounds/defaults and right-hand expressions in the existing expression
+grammar. Bare assignment expressions, invalid targets, missing operands,
+duplicate/default-order type parameters, and yield/await/assignment expressions
+inside type expressions retain SyntaxError. Other independently deferred syntax
+can still stop parsing at its own refusal; this is not a complete Python parser.
+Both core-source/1 and classes-source/1 retain their execution-admission boundary.
