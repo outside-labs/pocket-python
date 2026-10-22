@@ -30,6 +30,8 @@ export class ClassRuntime {
     this.touch(root);
     this.bounded(bases.length <= CLASS_LIMITS.bases && namespace.size <= CLASS_LIMITS.attributes, "Class base/namespace budget exceeded.");
     bases = bases.length ? [...bases] : [root]; namespace = new Map(namespace);
+    if (namespace.has("__eq__") && !namespace.has("__hash__")) namespace.set("__hash__", null);
+    this.bounded(namespace.size <= CLASS_LIMITS.attributes, "Class namespace budget exceeded.");
     for (const base of bases) {
       this.charge(1);
       if (base instanceof BuiltinValue && (["str", "bool", "type", "property", "staticmethod", "classmethod"].includes(base.name) || Object.hasOwn(EXCEPTIONS, base.name)))
@@ -75,6 +77,13 @@ export class ClassRuntime {
     for (const base of type.mro) {
       this.charge(1);
       if (base.namespace.has(name)) return {found: true, value: base.namespace.get(name)};
+      if (base.root && name === "__hash__") {
+        const value = this.make(BuiltinValue, "object.__hash__");
+        base.namespace.set(name, value);
+        try { const layout = valueLayout(base); this.memory?.resize(base, layout.bytes, layout.children); }
+        catch (error) { base.namespace.delete(name); throw error; }
+        return {found: true, value};
+      }
     }
     return {found: false, value: null};
   }
@@ -140,7 +149,8 @@ export class ClassRuntime {
     if (descriptor?.get.found) return {kind: "call", callable: descriptor.get.value, args: [value, receiver, owner]};
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner)};
-    return {kind: "value", value: receiver !== null && value instanceof FunctionValue ? this.make(BoundMethodValue, value, receiver) : value};
+    return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
+      value instanceof BuiltinValue && value.name === "object.__hash__") ? this.make(BoundMethodValue, value, receiver) : value};
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);

@@ -55,7 +55,7 @@ stable hashes and equal-value invariants; their concrete implementation-dependen
 hash numbers are not a cross-process or CPython-address promise. Identity hashes
 belong to owned VM objects, not serialized representations or host addresses.
 Hashing mutable list/dict values fails with TypeError. Tuple keys containing user
-objects remain explicitly deferred in this slice.
+instances or bound methods remain explicitly deferred in this slice.
 
 At class creation, an own `__eq__` without an own `__hash__` installs a None hash
 slot, even when a parent supplies a hash. Inherited disabling remains effective.
@@ -81,7 +81,7 @@ and a subsequent read sees it. Structural key mutation during a pending key
 comparison is an explicit UNSUPPORTED boundary after those callback effects,
 before a success/missing result is delivered. Broader structural reentry needs
 its own table-version/restart contract. Dictionary methods/constructors and
-general tuple-with-user hashing remain separate sequence/value API work.
+general tuple-with-instance hashing remain separate sequence/value API work.
 
 ## Ownership and delivery
 
@@ -120,3 +120,21 @@ limits, actual OOM/output failure, paused collection/cancel/close, and deep/cycl
 protocol discovery without host recursion. All 234 Node tests pass, including
 the eight unchanged composed resource baselines. Earlier equality refusal probes
 now record their adopted behavior.
+
+## Hashing and dictionary adoption
+
+E2 is implemented. The expanded 103-case source matrix has 97 comparisons and
+six explicit refusals. It covers numeric widths/subnormals, signed zero and
+infinity, definition-time hash disabling, inherited/explicit restoration, stable
+default descriptor identity, cross-module identity, stored hashes, collisions,
+mixed primitive/default/user keys and observable callback failures/mutation.
+Functions, classes, modules and other admitted default identity objects use the
+same owned key path; user and native bound-method hashing remains deferred.
+
+Identity labels belong to the arena and are cleared on close. Dictionary queries
+hash once, preserve stored-key identity and insertion order, and retain original
+items/candidate keys through binding, comparison and truth. Native default-key
+construction transfers operands between insertions; a 100-key source literal
+passes within a 262,144-byte logical arena. Ten focused hashing units and all
+244 Node tests pass, including atomic resize failure, paused collection/cancel/
+close, callback OOM and the unchanged eight composed resource baselines.

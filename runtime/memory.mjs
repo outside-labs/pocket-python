@@ -20,6 +20,8 @@ export class MemoryArena {
   #reclaimed = 0;
   #collections = 0;
   #leases = new WeakSet();
+  #identityHashes = new WeakMap();
+  #nextIdentityHash = 1n;
 
   constructor(options = {}) {
     const limits = {...MEMORY_LIMITS, ...options};
@@ -141,6 +143,12 @@ export class MemoryArena {
     return lease;
   }
   owns(lease) { return this.#leases.has(lease); }
+  identityHash(value) {
+    this.active();
+    if (!this.#records.has(value)) throw new TypeError("Identity hashes require a live arena object.");
+    if (!this.#identityHashes.has(value)) this.#identityHashes.set(value, this.#nextIdentityHash++);
+    return this.#identityHashes.get(value);
+  }
 
   external(bytes) {
     this.active();
@@ -167,5 +175,6 @@ export class MemoryArena {
     this.#closed = true;
     this.#reclaimed += this.#records.size;
     this.#records.clear(); this.#pins.clear(); this.#external.clear(); this.#scopes.length = 0; this.#bytes = 0;
+    this.#identityHashes = new WeakMap(); this.#nextIdentityHash = 1n;
   }
 }

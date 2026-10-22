@@ -20,7 +20,7 @@ class ListValue { constructor(items) { this.items = [...items]; } }
 class SliceValue {
   constructor(start, stop, step) { this.start = start; this.stop = stop; this.step = step; Object.freeze(this); }
 }
-class DictValue { constructor() { this.entries = []; this.version = 0; } }
+class DictValue { constructor() { this.entries = []; this.version = 0; this.ownedKeys = false; } }
 export class IteratorValue {
   constructor(value) {
     this.value = value; this.index = 0;
@@ -51,6 +51,7 @@ export class ValueRuntime {
       const error = new Error(message); error.name = name; error.code = code; throw error;
     });
     this.nanIds = new WeakMap(); this.nextNan = 1;
+    this.identityIds = new WeakMap(); this.nextIdentity = 1n;
   }
   make(bytes, children, create) { return this.memory ? this.memory.allocate(bytes, children, create) : create(); }
   resize(value, bytes, children) { this.memory?.resize(value, bytes, children); }
@@ -117,6 +118,7 @@ export class ValueRuntime {
     while (pending.length) {
       const item = pending.pop();
       if (item instanceof InstanceValue) return true;
+      if (item instanceof DictValue && item.ownedKeys) return true;
       if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;
       seen.add(item); this.charge(1);
       pending.push(...(item instanceof DictValue ? item.entries.flatMap(entry => [entry.key, entry.value]) : item.items));
@@ -307,6 +309,87 @@ export class ValueRuntime {
       this.fail("TypeError", "cannot use '" + type + "' as a dict key (unhashable type: '" + type + "')");
     }
     this.fail("UnsupportedOperationError", "Hashing this value is deferred.", "UNSUPPORTED");
+  }
+  identityHash(value) {
+    this.charge(1);
+    if (this.memory) return this.int(this.memory.identityHash(value));
+    if (!this.identityIds.has(value)) this.identityIds.set(value, this.nextIdentity++);
+    return this.int(this.identityIds.get(value));
+  }
+  hashResult(value) {
+    if (typeof value !== "bigint" && typeof value !== "boolean") this.fail("TypeError", "__hash__ must return an integer");
+    value = integer(value);
+    if (value < -9223372036854775808n || value > 9223372036854775807n) value %= 2305843009213693951n;
+    return this.int(value === -1n ? -2n : value);
+  }
+  pythonHash(value, depth = 0) {
+    this.depth(depth); this.charge(1);
+    const modulus = 2305843009213693951n;
+    if (typeof value === "bigint" || typeof value === "boolean") {
+      const number = integer(value); this.charge(number.toString().length);
+      return this.hashResult(number % modulus);
+    }
+    if (value instanceof FloatValue) {
+      if (Number.isNaN(value.value)) return this.identityHash(value);
+      if (!Number.isFinite(value.value)) return this.int(value.value < 0 ? -314159n : 314159n);
+      const bits = BigInt('0x' + value.bits), exponent = Number((bits >> 52n) & 2047n);
+      const mantissa = (bits & ((1n << 52n) - 1n)) | (exponent ? 1n << 52n : 0n);
+      const power = exponent ? exponent - 1075 : -1074;
+      const shift = BigInt((power % 61 + 61) % 61);
+      let hash = (mantissa % modulus) * (1n << shift) % modulus;
+      if (bits >> 63n) hash = -hash;
+      return this.hashResult(hash);
+    }
+    if (value === null) return this.hashResult(BigInt.asIntN(64, 0x9e3779b97f4a7c15n));
+    if (value instanceof StringValue || value instanceof TupleValue) {
+      let hash = 14695981039346656037n;
+      const parts = value instanceof StringValue ? value.points : value.items;
+      for (const part of parts) {
+        this.charge(1);
+        const item = value instanceof StringValue ? BigInt(part) : this.pythonHash(part, depth + 1);
+        hash = BigInt.asUintN(64, (hash ^ BigInt.asUintN(64, item)) * 1099511628211n);
+      }
+      return this.hashResult(BigInt.asIntN(64, hash ^ BigInt(parts.length)));
+    }
+    if (value instanceof ListValue || value instanceof DictValue) this.fail("TypeError", "unhashable mutable value");
+    if (value instanceof SliceValue || value instanceof InstanceValue || value instanceof BoundMethodValue ||
+        value instanceof AppendValue || value instanceof PropertyAccessorValue)
+      this.fail("UnsupportedOperationError", "This hash value family requires its separate protocol stage.", "UNSUPPORTED");
+    return this.identityHash(value);
+  }
+  needsOwnedHash(value) {
+    const pending = [value], seen = new Set();
+    while (pending.length) {
+      const item = pending.pop();
+      if (item instanceof InstanceValue || item instanceof ClassValue || item instanceof FunctionValue || item instanceof BuiltinValue ||
+          item instanceof BoundMethodValue || item instanceof PropertyValue || item instanceof MethodWrapperValue ||
+          item instanceof NotImplementedValue || item instanceof ModuleValue || item instanceof ProtocolIteratorValue || item instanceof IteratorValue ||
+          item instanceof ExceptionValue || item instanceof FloatValue && Number.isNaN(item.value)) return true;
+      if (item instanceof TupleValue && !seen.has(item)) { seen.add(item); this.charge(1); pending.push(...item.items); }
+    }
+    return false;
+  }
+  dictionaryNeedsProtocol(dict, key) { return dict instanceof DictValue && (dict.ownedKeys || this.needsOwnedHash(key)); }
+  dictionaryEntryHash(entry) { return entry.hash.startsWith('p:') ? this.int(BigInt(entry.hash.slice(2))) : this.pythonHash(entry.key); }
+  commitDictionary(dict, key, item, hash, position, remove = false) {
+    this.charge(1);
+    if (remove) {
+      const entries = dict.entries.filter((_, index) => index !== position);
+      const bytes = 96 + entries.reduce((sum, entry) => sum + 48 + 2 * entry.hash.length, 0);
+      this.resize(dict, bytes, entries.flatMap(entry => [entry.key, entry.value]));
+      dict.entries = entries; dict.version++; return null;
+    }
+    if (position >= 0) {
+      this.resize(dict, valueLayout(dict).bytes, dict.entries.flatMap((entry, index) => [entry.key, index === position ? item : entry.value]));
+      dict.entries[position].value = item;
+    } else {
+      this.limit(dict.entries.length < VALUE_LIMITS.items, "Container length budget exceeded.");
+      const bucket = 'p:' + hash;
+      this.resize(dict, valueLayout(dict).bytes + 48 + 2 * bucket.length,
+        [...dict.entries.flatMap(entry => [entry.key, entry.value]), key, item]);
+      dict.entries.push({hash: bucket, key, value: item}); dict.version++;
+    }
+    dict.ownedKeys = true; return null;
   }
   find(dict, key) {
     const hash = this.hash(key);

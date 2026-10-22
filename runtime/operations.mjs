@@ -5,6 +5,10 @@ const itemOperation = value => {
   if (!["get", "set", "delete"].includes(value)) throw new TypeError("Invalid item operation.");
   return value;
 };
+const dictionaryOperation = value => {
+  if (!["get", "set", "delete", "contains", "probe"].includes(value)) throw new TypeError("Invalid dictionary operation.");
+  return value;
+};
 const operands = values => {
   if (!Array.isArray(values) || values.length > 131072) throw new TypeError("Invalid operation operands.");
   return Object.freeze([...values]);
@@ -22,6 +26,28 @@ export function completion(kind, fields = {}) {
     case "relay": record = {kind, receiver: fields.receiver, after}; break;
     case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
+    case "hash-result": record = {kind, receiver: fields.receiver, after}; break;
+    case "dict-hash": case "dict-key": case "dict-truth":
+      record = {kind, receiver: fields.receiver, key: fields.key, item: fields.item, operation: dictionaryOperation(fields.operation), depth: fields.depth, after,
+        hash: fields.hash ?? null, position: fields.position ?? 0, version: fields.version ?? 0, candidate: fields.candidate ?? null};
+      depthCheck(record.depth);
+      if (record.hash !== null && typeof record.hash !== "bigint" || kind !== "dict-hash" && record.hash === null ||
+          !Number.isSafeInteger(record.position) || record.position < 0 || record.position > 1024 ||
+          !Number.isSafeInteger(record.version) || record.version < 0) throw new TypeError("Invalid dictionary continuation phase.");
+      break;
+    case "dict-build":
+      record = {kind, receiver: fields.receiver, parts: operands(fields.parts), position: fields.position, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (record.parts.length > 2048 || record.parts.length % 2 || !Number.isSafeInteger(record.position) || record.position < 0 || record.position >= record.parts.length || record.position % 2)
+        throw new TypeError("Invalid dictionary build phase.");
+      break;
+    case "dict-pair": case "dict-value": case "dict-value-truth":
+      record = {kind, left: fields.left, right: fields.right, value: fields.value, operation: fields.operation, position: fields.position, depth: fields.depth,
+        version: fields.version, otherVersion: fields.otherVersion, after};
+      depthCheck(record.depth); comparisonCheck(record.operation, record.position);
+      if (!Number.isSafeInteger(record.version) || record.version < 0 || !Number.isSafeInteger(record.otherVersion) || record.otherVersion < 0)
+        throw new TypeError("Invalid dictionary comparison versions.");
+      break;
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
     case "contains-result": case "search-iter": case "search-next":
@@ -70,6 +96,11 @@ function visit(record) {
     case "class": case "condition": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
+    case "hash-result": return [record.receiver, ...completionRoots(record.after)];
+    case "dict-hash": case "dict-key": case "dict-truth": return [record.receiver, record.key, record.hash, record.candidate,
+      ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
+    case "dict-build": return [record.receiver, ...record.parts, ...completionRoots(record.after)];
+    case "dict-pair": case "dict-value": case "dict-value-truth": return [record.left, record.right, record.value, ...completionRoots(record.after)];
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "contains-result": case "search-iter": case "search-next": case "search-equal": case "search-truth": return [record.receiver, record.key, ...completionRoots(record.after)];
@@ -132,12 +163,26 @@ export function containsTask(receiver, key, site, after = null, depth = 0, searc
   if (typeof search !== "boolean") throw new TypeError("Invalid membership phase.");
   return Object.freeze({kind: "contains", receiver, key, site, completion: after, depth, search});
 }
+export function dictionaryTask(receiver, key, site, after = null, depth = 0, operation = "get", item = null, hash = null, position = 0) {
+  depthCheck(depth); completionRoots(after);
+  if (hash !== null && typeof hash !== "bigint" || !Number.isSafeInteger(position) || position < 0 || position > 1024)
+    throw new TypeError("Invalid dictionary lookup phase.");
+  return Object.freeze({kind: "dict", receiver, key, item, operation: dictionaryOperation(operation), hash, position, site, completion: after, depth});
+}
+export function dictionaryBuildTask(receiver, parts, site, after = null, depth = 0, position = 0) {
+  depthCheck(depth); completionRoots(after);
+  if (parts.length > 2048 || parts.length % 2 || !Number.isSafeInteger(position) || position < 0 || position > parts.length || position % 2)
+    throw new TypeError("Invalid dictionary build phase.");
+  return Object.freeze({kind: "dict-build", receiver, parts: operands(parts), position, site, completion: after, depth});
+}
 export function operationRoots(task) {
   switch (task.kind) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "contains": return [task.receiver, task.key, ...completionRoots(task.completion)];
     case "compare": return [task.left, task.right, ...completionRoots(task.completion)];
+    case "dict": return [task.receiver, task.key, task.hash, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
+    case "dict-build": return [task.receiver, ...task.parts, ...completionRoots(task.completion)];
     case "slice": return [task.receiver, ...task.parts, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "unary": case "value": return [task.value, ...completionRoots(task.completion)];
     default: throw new TypeError("Unknown operation task.");

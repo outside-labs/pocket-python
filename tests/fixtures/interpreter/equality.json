@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "E1"
+    "E1",
+    "E2"
   ],
   "cases": [
     {
@@ -567,6 +568,101 @@
       "stage": "E3",
       "source": "class A:\n def __eq__(self,other): return True\nprint([A()]<[A()])\n",
       "stdout": "False\n"
+    },
+    {
+      "id": "hash-subnormal-and-infinity",
+      "stage": "E2",
+      "source": "print(hash(5e-324),hash(0.125),hash(1e309),hash(-1e309))\n",
+      "stdout": "16777216 288230376151711744 314159 -314159\n"
+    },
+    {
+      "id": "hash-signed-width-boundary",
+      "stage": "E2",
+      "source": "class A:\n def __hash__(self): return -9223372036854775808\nclass B:\n def __hash__(self): return 9223372036854775808\nprint(hash(A()),hash(B()))\n",
+      "stdout": "-9223372036854775808 4\n"
+    },
+    {
+      "id": "dictionary-equality-uses-stored-hashes",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  return 7\n def __eq__(self,other): return True\nleft={K():7}\nright={K():7}\nprint(left==right)\n",
+      "stdout": "hash\nhash\nTrue\n"
+    },
+    {
+      "id": "dictionary-hash-callback-updates-table",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self):\n  d[7]=9\n  return 7\n def __eq__(self,other): return other==7\nd={}\nprint(d[K()],len(d))\n",
+      "stdout": "9 1\n"
+    },
+    {
+      "id": "dictionary-failed-literal-keeps-previous-name",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self): raise ValueError(\"hash\")\nd={1:7}\ntry: d={K():8}\nexcept ValueError: print(d[1],len(d))\n",
+      "stdout": "7 1\n"
+    },
+    {
+      "id": "dictionary-failed-truth-keeps-storage",
+      "stage": "E2",
+      "source": "class R:\n def __bool__(self): raise ValueError(\"truth\")\nclass K:\n def __hash__(self): return 7\n def __eq__(self,other): return R()\na=K()\nd={a:7}\ntry: d[K()]=8\nexcept ValueError: print(d[a],len(d))\n",
+      "stdout": "7 1\n"
+    },
+    {
+      "id": "dictionary-mixed-tuple-hash",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self): return hash((7,\"a\"))\n def __eq__(self,other): return other==(7,\"a\")\nd={(7,\"a\"):9}\nprint(d[K()])\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "dictionary-iterator-version",
+      "stage": "E2",
+      "source": "class K:\n def __init__(self,n): self.n=n\n def __hash__(self): return 7\n def __eq__(self,other): return self.n==other.n\na=K(1)\nd={a:7}\nit=iter(d)\nd[a]=9\nprint(next(it) is a)\nd[K(2)]=8\ntry: next(it)\nexcept RuntimeError: print(\"changed\")\n",
+      "stdout": "True\nchanged\n"
+    },
+    {
+      "id": "hash-identity-across-modules",
+      "stage": "E2",
+      "source": "class A: pass\na=A()\nb=A()\nhash(a)\nbefore=hash(b)\nimport helper\nprint(helper.lookup(b)==before)\nd={helper:7}\nprint(d[helper])\n",
+      "stdout": "True\n7\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def lookup(value): return hash(value)\n"
+        }
+      ]
+    },
+    {
+      "id": "hash-default-descriptor-identity",
+      "stage": "E2",
+      "source": "class A: pass\nclass B(A): pass\nprint(A.__hash__ is object.__hash__,B.__hash__ is A.__hash__)\na=A()\nprint(a.__hash__()==hash(a))\n",
+      "stdout": "True True\nTrue\n"
+    },
+    {
+      "id": "dictionary-default-owned-keys",
+      "stage": "E2",
+      "source": "def use(): return 7\nclass A: pass\nfor key in (use,A,print,iter([]),ValueError(\"x\"),NotImplemented):\n d={key:7}\n print(d[key],key in d)\n",
+      "stdout": "7 True\n7 True\n7 True\n7 True\n7 True\n7 True\n"
+    },
+    {
+      "id": "future-bound-method-hash",
+      "stage": "E3",
+      "source": "class A:\n def use(self): return 7\na=A()\nprint(hash(a.use)==hash(a.use))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dictionary-default-key-empty-lookup",
+      "stage": "E2",
+      "source": "def use(): return 7\nprint(use in {},use not in {})\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "future-native-bound-method-hash",
+      "stage": "E3",
+      "source": "a=[]\nprint(hash(a.append)==hash(a.append))\n",
+      "stdout": "True\n"
     }
   ]
 }
