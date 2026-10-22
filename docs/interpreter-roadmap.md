@@ -2,8 +2,9 @@
 
 Adopted direction: 2026-10-21. Runtime baseline:
 [`56b99ff08b469eae38d023d8bee9b9f8bbd9877a`](https://github.com/outside-labs/pocket-python/commit/56b99ff08b469eae38d023d8bee9b9f8bbd9877a).
-Issues and Project fields record current delivery state. This roadmap adopts the
-next work; the runtime at this baseline is unchanged.
+Issues and Project fields record current delivery state. The execution
+consolidation below is implemented; the linked baseline records the preceding
+engine used for compatibility comparisons.
 
 ## Continuing objective
 
@@ -28,9 +29,9 @@ different promise from the Python syntax and behavior the client can execute.
 ## Execution foundation adopted
 
 Retain the JavaScript VM, independent parser/compiler, verified bytecode, Python
-values, class model, explicit capabilities and offline assembly. Consolidate the
-existing iterative dispatcher into an owned execution machine. The C/Rust-to-Wasm
-path remains separately planned in [INT-WASM-01 #40](https://github.com/outside-labs/pocket-python/issues/40)
+values, class model, explicit capabilities and offline assembly. The iterative
+dispatcher now runs as an owned execution machine. The C/Rust-to-Wasm path remains
+separately planned in [INT-WASM-01 #40](https://github.com/outside-labs/pocket-python/issues/40)
 and its implementation/integration tasks.
 
 An execution owns frames, block/loop/try state, pending operation records, source
@@ -38,7 +39,7 @@ cursors, exceptions, counters and temporary roots. A control completion, an
 operation continuation and a scheduling suspension have distinct meanings. User
 protocol callbacks use ordinary Python frames; primitive operations stay direct
 and synchronous. The existing synchronous execute API and fresh-run console remain
-compatibility entry points while the owned machine is introduced.
+compatibility entry points for the owned machine.
 
 Give pending operations exhaustive transition/root handling. Ownership transfers
 retain the new owner before releasing the old owner. Root enumeration, metadata
@@ -56,7 +57,7 @@ engine remains outside released Python distributions until its release gate.
 The [execution contract](execution-contract.md) maps the existing owners and
 transitions; its composed fixtures pin the initial accounting rules.
 
-## Next five focused PRs
+## Five-part execution consolidation
 
 | Task | Reviewable result | Dependency |
 | --- | --- | --- |
@@ -65,6 +66,12 @@ transitions; its composed fixtures pin the initial accounting rules.
 | [INT-EXEC-03](https://github.com/outside-labs/pocket-python/issues/96) | Owned Execution and synchronous facade; test-only safe-boundary stepping and idempotent close. | INT-EXEC-02. |
 | [INT-EXEC-04](https://github.com/outside-labs/pocket-python/issues/97) | Shared call/unary/builtin phases and destinations on the same machine and unwinder. | INT-EXEC-03. |
 | [INT-EXEC-05](https://github.com/outside-labs/pocket-python/issues/98) | Module initialization scheduled as owned records/frames; existing import/cache/cycle behavior retained. | INT-EXEC-04. |
+
+The batch implements all five tasks. The [execution contract](execution-contract.md#owned-module-initialization)
+and [compatibility/payload record](measurements/2026-10-22-execution-consolidation.json)
+describe instruction stepping, owned module plans and retained resource rules.
+The existing eight composed cases retain every recorded resource field, and
+Node/browser CI runs all adopted/refusal matrices with both execution drivers.
 
 Each PR preserves observed evaluation order, single evaluation, exception classes
 and original source locations, descriptor binding, truth-specific optional lookup,
@@ -77,8 +84,9 @@ unexplained semantic or accounting change before broadening the migration.
 The parent [INT-09 #33](https://github.com/outside-labs/pocket-python/issues/33)
 retains its delivered class/call/length/truth checkpoints. Remaining protocol
 implementation and [INT-10 #34](https://github.com/outside-labs/pocket-python/issues/34)
-use the shared foundation after this bounded batch. Updating the architecture
-does not complete either parent milestone.
+use the shared foundation. The completed consolidation does not complete either
+parent milestone; repr/str and the remaining protocol slices, persistent events,
+parked ownership and host/async work retain their own acceptance criteria.
 
 ## Broader language and library program
 

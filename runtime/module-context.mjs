@@ -74,18 +74,29 @@ export class ModuleContext {
     if (cell) return cell.value;
     const value = create(); this.binding(this.builtins, name, value); return value;
   }
-  ensure(name, invoke, parent = false) {
+  prepareInitialization(name, parent = false) {
     this.active();
     const existing = this.module(name);
-    if (existing?.status === "ready") return existing;
+    if (existing?.status === "ready") return {module: existing, ready: true};
     if (existing) {
-      if (parent) return existing;
+      if (parent) return {module: existing, ready: true};
       throw new RegistryError("Cyclic imports are outside module-profile/1: " + [...this.chain, name].join(" -> "), "ImportError", "IMPORT");
     }
     if (this.chain.length >= 16) failure("BUDGET", "ExecutionLimitError", "Module initialization depth exceeds 16.");
     const record = this.registry.record(name), roots = [];
     const leave = this.memory.enter(() => roots, {charge: amount => this.charge(amount)});
-    let module = null;
+    let module = null, closed = false;
+    const release = () => {
+      if (closed) return;
+      closed = true;
+      if (this.chain.at(-1) === name) this.chain.pop();
+      leave();
+    };
+    const abort = () => {
+      if (closed) return;
+      if (module) { this.cache.cells.delete(name); module.status = "failed"; }
+      release();
+    };
     try {
       const environment = this.memory.allocate(64, [], () => new Environment()); roots.push(environment);
       module = this.memory.allocate(112 + 2 * name.length, [environment, null], () => new ModuleValue(name, record.package, environment)); roots.push(module);
@@ -93,32 +104,33 @@ export class ModuleContext {
       const values = new ValueRuntime({memory: this.memory, charge: amount => this.charge(amount)});
       for (const [key, text] of Object.entries({__name__: name, __package__: record.package ? name : name.split(".").slice(0, -1).join("."),
         __file__: (record.source || record.bytecode).path})) this.binding(environment, key, values.string(Array.from(text, char => char.codePointAt(0))));
-      invoke(module, this.registry.program(name));
-      module.status = "ready";
-      const parts = name.split("."), parentName = parts.slice(0, -1).join("."), namespace = this.module(parentName);
-      if (namespace) this.binding(namespace.environment, parts.at(-1), module);
-      return module;
-    } catch (error) {
-      if (module) { this.cache.cells.delete(name); module.status = "failed"; }
-      throw error;
-    } finally {
-      if (this.chain.at(-1) === name) this.chain.pop();
-      leave();
-    }
+      return {module, ready: false, program: this.registry.program(name), abort,
+        complete: () => {
+          if (closed) throw new TypeError("Module initialization already settled.");
+          try {
+            module.status = "ready";
+            const parts = name.split("."), namespace = this.module(parts.slice(0, -1).join("."));
+            if (namespace) this.binding(namespace.environment, parts.at(-1), module);
+          } catch (error) { abort(); throw error; }
+          release();
+        }};
+    } catch (error) { abort(); throw error; }
   }
-  load(importer, specifier, level, root, invoke) {
-    const target = this.registry.resolve(importer, specifier, level);
-    for (const name of this.registry.parents(target)) this.ensure(name, invoke, true);
-    const module = this.ensure(target, invoke);
-    return root ? this.module(target.split(".")[0]) : module;
+  entryPlan() { return this.initializationPlan(this.registry.entry, false); }
+  initializationPlan(target, root) {
+    return Object.freeze({names: Object.freeze([...this.registry.parents(target).map(name => Object.freeze({name, parent: true})),
+      Object.freeze({name: target, parent: false})]), result: root ? target.split(".")[0] : target});
   }
-  attribute(module, name, fromImport, importer, invoke) {
+  planLoad(importer, specifier, level, root) {
+    return this.initializationPlan(this.registry.resolve(importer, specifier, level), root);
+  }
+  planAttribute(module, name, fromImport, importer) {
     if (!(module instanceof ModuleValue)) throw new RegistryError("Only module attributes are adopted in this profile.", "UnsupportedOperationError", "UNSUPPORTED");
     const cell = module.environment.cells.get(name);
-    if (cell?.bound) return cell.value;
+    if (cell?.bound) return {kind: "value", value: cell.value};
     if (fromImport && module.package) {
       const child = module.name + "." + name;
-      if (this.registry.names.includes(child)) return this.load(importer, child, 0, false, invoke);
+      if (this.registry.names.includes(child)) return {kind: "load", plan: this.planLoad(importer, child, 0, false)};
     }
     throw new RegistryError(fromImport ? "cannot import name '" + name + "' from '" + module.name + "'" :
       "module '" + module.name + "' has no attribute '" + name + "'", fromImport ? "ImportError" : "AttributeError", "IMPORT");

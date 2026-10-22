@@ -1,5 +1,5 @@
 import {ModuleContext} from "./module-context.mjs";
-import {execute, releaseException} from "./functions.mjs";
+import {Execution} from "./functions.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {encodeValue} from "./values.mjs";
 
@@ -13,16 +13,13 @@ export class ModuleSession {
   run(options = {}, onOutput = () => {}) {
     this.context.begin(options, onOutput);
     try {
-      const invoke = (module, program) => execute(program, {...this.context.options, arena: this.memory,
-        moduleContext: this.context, module});
+      const execution = Execution.modules(this.context);
+      try { execution.drain(); } finally { execution.close(); }
       const name = this.context.registry.entry;
-      for (const parent of this.context.registry.parents(name)) this.context.ensure(parent, invoke, true);
-      this.context.ensure(name, invoke);
       if (!this.#receipt) this.#receipt = Object.freeze({module: name, status: "ready",
         bytecode_sha256: this.context.registry.record(name).bytecode.sha256});
       return this.#receipt;
-    } catch (error) { releaseException(error); throw error; }
-    finally { this.context.finish(); }
+    } finally { this.context.finish(); }
   }
   read(name) {
     this.context.active();

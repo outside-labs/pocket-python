@@ -9,11 +9,7 @@ import {RegistryError} from "./module-registry.mjs";
 import {completion as continuation, completionRoots, unaryTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
-const exceptionLeases = new WeakMap();
-export function releaseException(error) {
-  const record = exceptionLeases.get(error);
-  if (record) { exceptionLeases.delete(error); record.lease.release(false); }
-}
+class Unhandled { constructor(value) { this.value = value; } }
 const builtinNames = new Set(["print", "str", "len", ...Object.keys(EXCEPTIONS)]);
 const summary = (frame, cursor) => Object.freeze({function: frame.fn.name,
   location: cursor.block.source ? Object.freeze({filename: cursor.block.source.filename,
@@ -35,9 +31,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         !(module instanceof ModuleValue) || moduleContext.module(module.name) !== module || moduleContext.registry.program(module.name) !== program)) ||
       (verified.code.version >= 4 && moduleContext === null) ||
       (inheritedException !== null && (!(inheritedException instanceof ExceptionValue) || moduleContext === null))) throw new TypeError("Version 4/5 requires a verified module execution context.");
-  const execution = {};
   const state = {frames: [], outputLeases: [], builtins: new Map(), pool: null, globals: null,
-    temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null,
+    temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null, pendingImport: null,
     transitions: moduleContext?.transitions || Object.create(null)};
   const hard = (code, name, message) => {
     const error = new ExecutionError(code, name, message, state.current?.instruction ?? null, null);
@@ -169,14 +164,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const {dispatch, call, deliver, notifyNext, bindingRecovery} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, python, hard, charge, enter, bind, block, onOutput});
-  const unhandled = value => {
+  const diagnostic = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
     // Copy diagnostics without exporting unleased VM objects or frame locals.
     error.traceback = value.traceback.map(frame => ({function: frame.function, location: frame.location}));
     error.location = error.traceback.at(-1)?.location || null;
     error.context = value.context ? {type: value.context.name, message: value.context.message} : null;
-    if (moduleContext) exceptionLeases.set(error, {lease: memory.pin([value]), owner: execution});
-    throw error;
+    return error;
   };
   const settle = signal => {
     while (state.frames.length) {
@@ -254,7 +248,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       state.temporaries = [returned, frame.callable];
       const parent = state.frames.at(-2);
       if (!parent) {
-        if (signal.kind === "raise") unhandled(returned);
+        if (signal.kind === "raise") throw new Unhandled(returned);
         state.result = retainResult ? memory.pin([returned]) : returned;
         frame.leave(); state.frames.pop(); return;
       }
@@ -338,17 +332,20 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
         const owner = frame.callable.pool.module;
         if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
-        const invoke = (target, unit) => execute(unit, {...moduleContext.options, arena: memory, moduleContext, module: target,
-          inheritedException: frame.activeException});
-        if (op === "import") stack.push(moduleContext.load(owner.name, arg, extra, fourth, invoke));
+        if (op === "import") state.pendingImport = {plan: moduleContext.planLoad(owner.name, arg, extra, fourth),
+          inheritedException: frame.activeException};
         else {
           const receiver = stack.pop();
           if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             const plan = classes.read(receiver, arg);
             if (plan.kind === "value") stack.push(plan.value);
             else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }
-          } else stack.push(["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
-            moduleContext.attribute(receiver, arg, op === "import-from", owner.name, invoke));
+          } else if (["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver)) stack.push(allocate(AppendValue, receiver));
+          else {
+            const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
+            if (result.kind === "value") stack.push(result.value);
+            else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};
+          }
         }
       } else if (op === "if") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
         continuation("condition", {control: "if", body: arg, otherwise: extra})));
@@ -387,20 +384,17 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
-    } catch (error) {
-      const forwarded = exceptionLeases.get(error);
-      if (forwarded && forwarded.owner !== execution) {
-        const value = forwarded.lease.get()[0]; state.temporaries.push(value); releaseException(error);
-        addTrace(value, {function: state.current.function, location: state.current.location}); error = new Raised(value);
-      } else if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(exception(error.name, error.message));
-      else if (error instanceof RegistryError && error.code === "UNSUPPORTED") hard(error.code, error.name, error.message);
-      if (!(error instanceof Raised)) throw error;
-      // Handler matching or iterator setup can itself raise while unwinding.
-      let pending = error;
-      while (true) {
-        try { state.temporaries.push(pending.value); settle({kind: "raise", value: pending.value}); break; }
-        catch (next) { if (!(next instanceof Raised)) throw next; pending = next; }
-      }
+    } catch (error) { handle(error); }
+  };
+  const handle = error => {
+    if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(exception(error.name, error.message));
+    else if (error instanceof RegistryError && error.code === "UNSUPPORTED") hard(error.code, error.name, error.message);
+    if (!(error instanceof Raised)) throw error;
+    // Handler matching or iterator setup can itself raise while unwinding.
+    let pending = error;
+    while (true) {
+      try { state.temporaries.push(pending.value); settle({kind: "raise", value: pending.value}); break; }
+      catch (next) { if (!(next instanceof Raised)) throw next; pending = next; }
     }
   };
   const close = () => {
@@ -408,7 +402,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     for (const release of state.outputLeases) release(false);
     state.outputLeases.length = 0;
     state.rootLeave?.(); state.rootLeave = null;
-    state.pool = null; state.globals = null; state.temporaries = []; state.builtins.clear();
+    state.pool = null; state.globals = null; state.temporaries = []; state.builtins.clear(); state.pendingImport = null;
     if (arena === null) memory.close();
   };
   const snapshot = () => Object.freeze({
@@ -428,9 +422,118 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }))),
     memory: memory.stats()
   });
-  return {memory, start, step, close, snapshot, done: () => state.frames.length === 0, result: () => state.result};
+  return {memory, start, step, close, snapshot, diagnostic, context: moduleContext,
+    done: () => state.frames.length === 0, result: () => state.result,
+    pending: () => { const pending = state.pendingImport; state.pendingImport = null; return pending; },
+    resume: value => state.frames.at(-1).tasks.at(-1).stack.push(value),
+    resumeError: (error, lease = null) => {
+      if (error instanceof Unhandled) {
+        state.temporaries.push(error.value); lease?.release(false);
+        addTrace(error.value, {function: state.current.function, location: state.current.location});
+        error = new Raised(error.value);
+      }
+      handle(error);
+    }};
 }
 
+
+// One controller owns module load plans and activation frames. A module opcode
+// schedules a child unit; it never calls execute/drain recursively.
+function executionMachine(program, options, context) {
+  if (context !== null && (!isModuleContext(context) || !context.activeRun)) throw new TypeError("An active module context is required.");
+  const root = context === null ? activation(program, options) : null;
+  context = context || root.context;
+  const memory = root?.memory || context.memory, stack = [];
+  let result = null, last = null, failureLease = null, started = false;
+  const loadRecord = (plan, owner, inheritedException = null) => ({kind: "load", plan, owner, inheritedException, index: 0});
+  const pump = () => {
+    while (stack.length) {
+      const top = stack.at(-1);
+      if (top.kind === "unit") {
+        const pending = top.machine.pending();
+        if (pending) { stack.push(loadRecord(pending.plan, top, pending.inheritedException)); continue; }
+        if (!top.machine.done()) return;
+        if (!top.initialization) result = top.machine.result();
+        top.machine.close(); last = top.machine.snapshot(); stack.pop();
+        if (top.initialization) { top.initialization.complete(); stack.at(-1).index++; }
+        continue;
+      }
+      if (top.index === top.plan.names.length) {
+        const value = context.module(top.plan.result);
+        stack.pop();
+        if (top.owner) top.owner.machine.resume(value);
+        continue;
+      }
+      const item = top.plan.names[top.index], initialization = context.prepareInitialization(item.name, item.parent);
+      if (initialization.ready) { top.index++; continue; }
+      const unit = {kind: "unit", initialization, machine: null}; stack.push(unit);
+      unit.machine = activation(initialization.program, {...context.options, arena: memory, moduleContext: context,
+        module: initialization.module, inheritedException: top.inheritedException});
+      unit.machine.start();
+    }
+  };
+  const unwind = original => {
+    let error = original, lease = null, diagnostic = original;
+    while (stack.length) {
+      const top = stack.at(-1);
+      if (top.kind === "unit") {
+        diagnostic = error instanceof Unhandled ? top.machine.diagnostic(error.value) : error;
+        if (error instanceof Unhandled && context) {
+          // The explicit error owner replaces the native imported-error bridge.
+          // Keep the legacy pin charge and transfer order during consolidation.
+          try { lease = memory.pin([error.value]); }
+          catch (hardError) { error = diagnostic = hardError; }
+        }
+        top.machine?.close(); last = top.machine?.snapshot() || last;
+        top.initialization?.abort(); stack.pop();
+        continue;
+      }
+      stack.pop();
+      if (top.owner) {
+        try { top.owner.machine.resumeError(error, lease); lease = null; return; }
+        catch (next) { lease?.release(false); lease = null; error = next; }
+      }
+    }
+    failureLease = lease;
+    throw diagnostic;
+  };
+  const guarded = action => {
+    // A failed preparation or imported handler can itself raise. Keep unwinding
+    // on this controller instead of entering another native evaluator.
+    try { action(); }
+    catch (error) { unwind(error); }
+  };
+  const start = () => {
+    started = true;
+    if (root) stack.push({kind: "unit", machine: root, initialization: null});
+    else stack.push(loadRecord(context.entryPlan(), null));
+    guarded(() => { if (root) root.start(); pump(); });
+  };
+  const step = () => { guarded(() => { stack.at(-1).machine.step(); pump(); }); };
+  const close = () => {
+    while (stack.length) {
+      const top = stack.at(-1);
+      if (top.kind === "unit") { top.machine?.close(); last = top.machine?.snapshot() || last; top.initialization?.abort(); }
+      stack.pop();
+    }
+    if (!started) root?.close();
+    failureLease?.release(false); failureLease = null;
+  };
+  const snapshot = () => {
+    const units = stack.filter(item => item.kind === "unit" && item.machine), snapshots = units.map(item => item.machine.snapshot());
+    const current = snapshots.at(-1) || last || {steps: 0, work: 0, outputLength: 0, temporaryRoots: 0, transitions: {}, source: null};
+    return Object.freeze({...current,
+      steps: context?.steps ?? current.steps, work: context?.work ?? current.work,
+      outputLength: context?.outputLength ?? current.outputLength,
+      transitions: Object.freeze({...context?.transitions, ...current.transitions}),
+      frames: Object.freeze(snapshots.flatMap((entry, index) => entry.frames.map(frame => Object.freeze({...frame,
+        module: units[index].initialization?.module.name ?? null})))),
+      imports: Object.freeze(stack.filter(item => item.kind === "load").map(item => Object.freeze({
+        result: item.plan.result, index: item.index, names: Object.freeze(item.plan.names.map(item => item.name))}))),
+      memory: memory.stats()});
+  };
+  return {memory, start, step, close, snapshot, done: () => stack.length === 0, result: () => result};
+}
 
 const activeExecutions = new WeakMap();
 
@@ -443,7 +546,11 @@ export class Execution {
   #error = null;
   #draining = false;
   #claimed = false;
-  constructor(program, options = {}) { this.#machine = activation(program, options); }
+  constructor(program, options = {}, context = null) { this.#machine = executionMachine(program, options, context); }
+  static modules(context) {
+    if (!isModuleContext(context) || !context.activeRun) throw new TypeError("An active module context is required.");
+    return new Execution(null, {}, context);
+  }
   get state() { return this.#state; }
   get result() {
     if (this.#state !== "completed") throw new TypeError("Execution has no completed result.");
@@ -462,7 +569,7 @@ export class Execution {
     if (!["ready", "paused"].includes(this.#state)) throw new TypeError("Execution cannot advance from " + this.#state + ".");
     if (!Number.isSafeInteger(instructions) || instructions < 1 || instructions > 1000000) throw new TypeError("Invalid execution quantum.");
     const owners = activeExecutions.get(this.#machine.memory) || [];
-    if (owners.length && owners.at(-1) !== this && !(this.#draining && owners.at(-1).state === "running"))
+    if (owners.length && owners.at(-1) !== this)
       throw new TypeError("A paused execution owns this arena.");
     const initial = this.#state === "ready";
     if (initial) { owners.push(this); activeExecutions.set(this.#machine.memory, owners); this.#claimed = true; }
@@ -490,7 +597,6 @@ export class Execution {
     if (this.#state === "running") throw new TypeError("Cannot close a running execution.");
     if (this.#state === "closed") return;
     this.#release();
-    if (this.#error && !exceptionLeases.get(this.#error)?.forwarded) releaseException(this.#error);
     this.#state = "closed";
   }
 }
@@ -498,9 +604,5 @@ export class Execution {
 export function execute(program, options = {}) {
   const execution = new Execution(program, options);
   try { return execution.drain(); }
-  catch (error) {
-    const record = exceptionLeases.get(error);
-    if (record) record.forwarded = true;
-    throw error;
-  } finally { execution.close(); }
+  finally { execution.close(); }
 }

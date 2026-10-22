@@ -51,15 +51,15 @@ then use only an explicit optional-bool/optional-length **binding** fallback.
 The corresponding method-body error is never suppressed. Other protocols do not
 inherit that policy. Frame-free callable/binding cycles remain depth/work bounded.
 
-## Current owner map
+## Baseline owner map
 
 | Owner | Roots and lifetime | Transfer / failure rule |
 | --- | --- | --- |
 | execution scope | Code pool, globals, inherited exception, non-module builtins and temporaries. | Enter before allocation; leave after all Python frames. Temporaries bridge popped operands/results until destination roots are installed. |
 | Python frame scope | Callable; local cells; active exception; block stacks; control iterator, pending value, caught and previous exceptions; completion bases, instance and roots. | New frame is rooted before binding allocates cells. Return/raise/class transfer first places the value, namespace and continuation roots in execution temporaries, then leaves the frame. |
-| pending operation | Named operands and closed continuation. Existing completion `roots` includes copied ancestor roots. | A callback frame retains its completion. Dispatch first adds operands to temporaries, before planning can allocate. Do not discard ancestors during extraction. |
+| pending operation | Named operands and closed continuation. The extracted visitor preserves copied ancestor roots. | A callback frame retains its completion. Dispatch first adds operands to temporaries, before planning can allocate. Do not discard ancestors during extraction. |
 | class notification | Type and original namespace entry snapshot. | Retain all snapshot values before each callback; mutation does not alter which entries are notified. |
-| module initialization scope | New environment/module, cache entry, active import chain. Each recursive module execution currently has its own execution/frame scopes. | Mark ready and bind parent on success. Remove failed initializer from cache, keep already observable effects, pop chain and unwind in LIFO order. |
+| module initialization scope | New environment/module, cache entry, active import chain. At the baseline, each recursive module execution has its own execution/frame scopes; the consolidated controller preserves these scopes as owned units. | Mark ready and bind parent on success. Remove failed initializer from cache, keep already observable effects, pop chain and unwind in LIFO order. |
 | imported Python error lease | Exception and context/trace graph while native import stack unwinds. | Importer roots the value before releasing the lease and appending its own source location. Remove the bridge only after machine-owned import errors replace it. |
 | module session | Pinned cache, shared builtin objects, registry bytes and output leases. | Shared instruction/work/output totals across imports. Finish releases transient output; close releases cache/registry ownership. |
 | retained result lease | Result plus its transitive value graph. | Pin before leaving final frame; caller explicitly releases it. No unleased VM object is exported in diagnostics. |
@@ -125,10 +125,8 @@ advance; running reentry/close and completed/failed/closed advance are rejected.
 Close is idempotent and leaves explicit result leases with their caller.
 
 The single paused activation retains its mutable LIFO scopes. Another activation
-cannot interleave on that arena; synchronous nested import execution can drain
-and unwind before control returns. At this stage imported initializers still use
-that native nesting. The module-scheduling task must add safe boundaries inside
-those imports before claiming full import-machine consolidation. The test-only
+cannot interleave on that arena. Imported initializers now run on the same
+controller and can pause between their own verified instructions. The test-only
 `execution_checks.mjs` harness and runner/worker are excluded from application
 assets. Node and browser CI exercise the adopted and refusal matrices through
 both draining and instruction-boundary drivers, without resetting quotas.
@@ -148,3 +146,40 @@ compares draining and instruction-boundary counts for the composed cases and
 lists every changed file in a complete source-console assembly. This extraction
 adds 2,548 uncompressed bytes for that fixture (326,305 to 328,853 bytes); it makes
 no execution-speed or logical-memory improvement claim.
+
+## Owned module initialization
+
+`Execution.modules(context)` owns the entry/package initialization plan and all
+nested import plans. Each plan names its bounded parent/target sequence, current
+index, result destination and inherited active exception. Initialization records
+own the new module/environment, cache insertion and chain position until complete
+or abort. `complete` marks ready and binds the package parent; `abort` removes a
+failed initializer while preserving earlier observable effects. Cached modules
+keep their identity and initialize once. The existing explicit cycle refusal,
+16-module depth limit, grants and shared budgets remain in force.
+
+An import opcode queues a plan. The controller pushes ordinary activation units
+and drives their verified instructions, without recursively entering `execute`
+or `drain`. Diagnostic snapshots include the pending import plans and every unit's
+Python frames. One-instruction advancement counts imported instructions in the
+same total; it does not reset an activation's allowance. Close, cancellation and
+hard limits unwind units and initialization records in arena order.
+
+Imported Python errors use a temporary pin owned by the controller while a child
+unit is released. The importer roots the error before releasing that pin, adds
+its source location and passes it through the existing Python unwinder. A failed
+pin preflight leaves the old frame owner intact until hard-failure cleanup. The
+global imported-error lease map and exported release side channel are removed.
+The pin's logical charge and transfer order remain identical to the baseline;
+no root deduplication or new operation-metadata charge is introduced.
+
+The [consolidation record](measurements/2026-10-22-execution-consolidation.json)
+checks every field of the eight original resource observations and the shared
+phase counts. Node/browser matrices exercise both drivers; focused tests inspect
+paused imports, force collection, verify cache identity and relative parents,
+retry failures, and interrupt error transfer with OOM/cancellation. Closed sessions
+retain zero bytes, objects, roots, frames and external leases. The complete
+measured console fixture grows from 316,222 to 334,337 uncompressed bytes across
+the batch (+18,115), including 5,484 bytes for module scheduling. This is structural
+and compatibility evidence; multi-task parking, host waiting, coroutines and
+additional Python features remain separately planned.
