@@ -41,7 +41,7 @@ function sourceInfo(source, count) {
   return Object.freeze({filename: source.filename, spans: Object.freeze(spans)});
 }
 
-export function verify(program) {
+export function verify(program, {numeric = false} = {}) {
   if (!object(program) || program.format !== "pocket-python-bytecode" || ![1, 2].includes(program.version)) {
     fail("Expected pocket-python-bytecode version 1 or 2.");
   }
@@ -49,7 +49,7 @@ export function verify(program) {
     fail("Constant pool exceeds its bounded array format.");
   }
   let inputWork = 0;
-  const values = new ValueRuntime({charge: amount => {
+  const values = new ValueRuntime({numeric, charge: amount => {
     if ((inputWork += amount) > 1_000_000) fail("Constant decoding work exceeds one million units.");
   }, fail: (name, message) => fail(message)});
   const constants = Array.from(program.constants, constant => {

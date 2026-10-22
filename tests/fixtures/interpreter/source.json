@@ -297,6 +297,13 @@
       "features": [
         "source.grammar"
       ]
+    },
+    {
+      "id": "complex-values-core",
+      "source": "z=3+4j\nd={complex(7):3}\nprint(z.real==3.0,z.imag==4.0,z/(1-2j)==-1+2j,abs(z)==5.0,1j**3==-1j,d[7],isinstance(z,complex))\n",
+      "features": [
+        "source.grammar"
+      ]
     }
   ],
   "boundaries": [

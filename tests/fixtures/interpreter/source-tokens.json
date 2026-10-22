@@ -139,9 +139,9 @@
       "code": "UNSUPPORTED"
     },
     {
-      "id": "complex",
-      "source": "2j",
-      "code": "UNSUPPORTED"
+      "id": "invalid-complex-hex",
+      "source": "0x1j",
+      "code": "SYNTAX"
     },
     {
       "id": "invalid-utf8",

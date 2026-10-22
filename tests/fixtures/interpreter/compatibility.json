@@ -233,17 +233,15 @@
     },
     {
       "id": "complex",
-      "source": "print(1j==1j)\n",
-      "classification": "deferred",
+      "source": "z=3+4j\nprint(z.real==3.0,z.imag==4.0,z/complex(1,-2)==-1+2j)\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "True True True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "tokenize"
+        "stdout": "True True True\n",
+        "error_type": null
       }
     },
     {
@@ -890,17 +888,15 @@
     },
     {
       "id": "builtin-complex",
-      "source": "print(callable(complex))\n",
-      "classification": "deferred",
+      "source": "print(complex(\" (3+4j) \")==3+4j,isinstance(1j,complex))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "True True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True True\n",
+        "error_type": null
       }
     },
     {

@@ -95,7 +95,7 @@ Python coverage is inferred from these probe counts.
 | chr | partial | Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract. | Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05. |
 | classmethod | partial | classmethod(callable), classes-source/1 and accessed-owner binding. | Unrestricted wrapper introspection. |
 | compile | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| complex | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| complex | partial | Owned immutable Cartesian values, literal/text/real/complex construction, real/imag keywords and attributes, finite basic arithmetic, equality/truth/hash and bounded integer powers. | User conversion callbacks follow N5; general powers, non-finite arithmetic/recovery families, numeric methods and formatting remain explicit later boundaries. |
 | delattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | dict | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | dir | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |

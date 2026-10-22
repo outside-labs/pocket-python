@@ -6,7 +6,8 @@
   "implemented_stages": [
     "N1",
     "N2",
-    "N3"
+    "N3",
+    "N4"
   ],
   "cases": [
     {
@@ -1001,6 +1002,24 @@
       "source": "0 ** -(10 ** 400)\n",
       "stdout": "",
       "error_type": "OverflowError"
+    },
+    {
+      "id": "complex-power-recovery-later",
+      "stage": "Future",
+      "source": "print((complex(1e308,1e308)**-3)==complex(-0.0,-0.0))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-power-range-later",
+      "stage": "Future",
+      "source": "print((1j**101).real<1e-10)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-nonfinite-arithmetic-later",
+      "stage": "Future",
+      "source": "print((complex(1e309,0)+1).real==1e309)\n",
+      "stdout": "True\n"
     }
   ]
 }

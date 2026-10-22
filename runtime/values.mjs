@@ -1,7 +1,7 @@
 // Independent Python values. Native Number is used only inside explicit floats.
 import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
-import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal} from "./numeric.mjs";
+import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
 class FloatValue {
@@ -13,6 +13,9 @@ class FloatValue {
 }
 class StringValue {
   constructor(points) { this.points = Object.freeze([...points]); Object.freeze(this); }
+}
+class ComplexValue {
+  constructor(real, imag) { this.real = real; this.imag = imag; Object.freeze(this); }
 }
 class TupleValue {
   constructor(items) { this.items = Object.freeze([...items]); Object.freeze(this); }
@@ -67,9 +70,30 @@ export class ValueRuntime {
     return this.memory ? this.memory.primitive(value) : value;
   }
   float(value) { return this.make(64, [], () => new FloatValue(bitsOf(value))); }
+  complex(real, imag) { return this.make(80, [], () => new ComplexValue(real, imag)); }
+  isComplex(value) { return value instanceof ComplexValue; }
+  complexAttribute(value, name) {
+    if (["real", "imag"].includes(name)) return this.float(value[name]);
+    this.fail("UnsupportedOperationError", "This complex attribute requires a later numeric stage.", "UNSUPPORTED");
+  }
+  complexConstructor(args) {
+    if (!args.length) return this.complex(0, 0);
+    const first = args[0];
+    if (args.length === 1) {
+      if (first instanceof ComplexValue) return first;
+      if (first instanceof StringValue) return this.complex(...parseComplex(this.text(first), {charge:this.charge,fail:this.fail}));
+      return this.complex(this.number(first), 0);
+    }
+    const second = args[1];
+    if (first instanceof StringValue || second instanceof StringValue) this.fail("TypeError", "complex() with two arguments requires numbers");
+    const real = first instanceof ComplexValue ? first.real : this.number(first);
+    const imag = second instanceof ComplexValue ? second.real : this.number(second);
+    return this.complex(second instanceof ComplexValue ? real - second.imag : real,
+      first instanceof ComplexValue ? first.imag + imag : imag);
+  }
   isPrimitive(value, name) {
     return name === "int" ? typeof value === "bigint" || typeof value === "boolean" :
-      name === "bool" ? typeof value === "boolean" : name === "float" && value instanceof FloatValue;
+      name === "bool" ? typeof value === "boolean" : name === "complex" ? value instanceof ComplexValue : name === "float" && value instanceof FloatValue;
   }
   realConstructor(name, args, explicitBase = false) {
     const value = args.length ? args[0] : 0n, controls = {charge:this.charge, fail:this.fail, digits:VALUE_LIMITS.digits};
@@ -197,7 +221,7 @@ export class ValueRuntime {
     this.depth(depth); this.charge(1);
     if (!record || typeof record !== "object" || Array.isArray(record)) this.fail("TypeError", "Expected a tagged Python value.");
     const fields = {none: ["type"], bool: ["type", "value"], int: ["type", "value"],
-      float: ["type", "bits"], str: ["type", "codepoints"], tuple: ["type", "items"], list: ["type", "items"], dict: ["type", "entries"]};
+      float: ["type", "bits"], complex: ["type", "real_bits", "imag_bits"], str: ["type", "codepoints"], tuple: ["type", "items"], list: ["type", "items"], dict: ["type", "entries"]};
     const keys = typeof record.type === "string" && Object.hasOwn(fields, record.type) ? fields[record.type] : null;
     if (!keys || Object.keys(record).length !== keys.length || !keys.every(key => Object.hasOwn(record, key))) this.fail("TypeError", "Invalid tagged value fields.");
     if (record.type === "none") return null;
@@ -207,6 +231,10 @@ export class ValueRuntime {
       this.charge(record.value.length); return this.int(BigInt(record.value));
     }
     if (record.type === "float" && typeof record.bits === "string" && /^[0-9a-f]{16}$/.test(record.bits)) return this.make(64, [], () => new FloatValue(record.bits));
+    if (record.type === "complex" && this.numeric && [record.real_bits, record.imag_bits].every(bits => typeof bits === "string" && /^[0-9a-f]{16}$/.test(bits))) {
+      const number = bits => { const view = new DataView(new ArrayBuffer(8)); view.setBigUint64(0,BigInt('0x'+bits)); return view.getFloat64(0); };
+      return this.complex(number(record.real_bits), number(record.imag_bits));
+    }
     if (record.type === "str" && Array.isArray(record.codepoints) && record.codepoints.length <= VALUE_LIMITS.text &&
         Array.from(record.codepoints).every(point => Number.isInteger(point) && point >= 0 && point <= 0x10ffff)) return this.string(record.codepoints);
     if (["tuple", "list"].includes(record.type) && Array.isArray(record.items) && record.items.length <= VALUE_LIMITS.items) {
@@ -229,6 +257,7 @@ export class ValueRuntime {
     if (typeof value === "boolean") return {type: "bool", value};
     if (typeof value === "bigint") { const text = value.toString(); this.charge(text.length); return {type: "int", value: text}; }
     if (value instanceof FloatValue) return {type: "float", bits: value.bits};
+    if (value instanceof ComplexValue) return {type: "complex", real_bits: bitsOf(value.real), imag_bits: bitsOf(value.imag)};
     if (value instanceof StringValue) { this.charge(value.points.length); return {type: "str", codepoints: [...value.points]}; }
     if (active.has(value)) this.fail("ValueError", "Cyclic values require a handle transport.");
     active.add(value);
@@ -251,6 +280,7 @@ export class ValueRuntime {
     this.charge(1);
     if (value instanceof NotImplementedValue) this.fail("TypeError", "NotImplemented should not be used in a boolean context");
     if (value === null) return false;
+    if (value instanceof ComplexValue) return value.real !== 0 || value.imag !== 0;
     if (numeric(value)) return value instanceof FloatValue ? value.value !== 0 : integer(value) !== 0n;
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
@@ -261,6 +291,13 @@ export class ValueRuntime {
   }
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof ComplexValue || right instanceof ComplexValue) {
+      if (left instanceof ComplexValue && right instanceof ComplexValue) return left.real === right.real && left.imag === right.imag;
+      const value = left instanceof ComplexValue ? left : right, other = left instanceof ComplexValue ? right : left;
+      if (value.imag !== 0 || !numeric(other)) return false;
+      if (other instanceof FloatValue) return value.real === other.value;
+      return Number.isFinite(value.real) && Number.isInteger(value.real) && BigInt(value.real) === integer(other);
+    }
     if (left instanceof SliceValue || right instanceof SliceValue)
       this.fail("UnsupportedOperationError", "Slice comparisons require the later equality/sequence profile.", "UNSUPPORTED");
     if (numeric(left) && numeric(right)) {
@@ -318,6 +355,14 @@ export class ValueRuntime {
     if (value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue)
       this.fail("UnsupportedOperationError", "Object dictionary keys require the later identity-hash profile.", "UNSUPPORTED");
     if (value === null) return "none";
+    if (value instanceof ComplexValue) {
+      if (Number.isNaN(value.real) || Number.isNaN(value.imag)) {
+        if (!this.nanIds.has(value)) this.nanIds.set(value, this.nextNan++);
+        return 'nan:' + this.nanIds.get(value);
+      }
+      const part = number => Number.isFinite(number) && Number.isInteger(number) ? 'n:' + BigInt(number) % 2305843009213693951n : 'f:' + bitsOf(number);
+      return value.imag === 0 ? part(value.real) : 'c:' + part(value.real) + ':' + part(value.imag);
+    }
     if (typeof value === "bigint" || typeof value === "boolean") {
       const integral = integer(value); this.charge(integral.toString().length);
       return "n:" + integral % 2305843009213693951n;
@@ -357,6 +402,18 @@ export class ValueRuntime {
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
     const modulus = 2305843009213693951n;
+    if (value instanceof ComplexValue) {
+      const part = number => {
+        if (Number.isNaN(number)) return this.identityHash(value);
+        if (!Number.isFinite(number)) return number < 0 ? -314159n : 314159n;
+        const bits = BigInt('0x'+bitsOf(number)), exponent = Number((bits>>52n)&2047n);
+        const mantissa = (bits&((1n<<52n)-1n)) | (exponent ? 1n<<52n : 0n), power = exponent ? exponent-1075 : -1074;
+        let hash = (mantissa%modulus)*(1n<<BigInt((power%61+61)%61))%modulus;
+        if (bits>>63n) hash = -hash;
+        return hash === -1n ? -2n : hash;
+      };
+      return this.hashResult(BigInt.asIntN(64,part(value.real)+1000003n*part(value.imag)));
+    }
     if (typeof value === "bigint" || typeof value === "boolean") {
       const number = integer(value); this.charge(number.toString().length);
       return this.hashResult(number % modulus);
@@ -396,7 +453,8 @@ export class ValueRuntime {
       if (item instanceof InstanceValue || item instanceof ClassValue || item instanceof FunctionValue || item instanceof BuiltinValue ||
           item instanceof BoundMethodValue || item instanceof PropertyValue || item instanceof MethodWrapperValue ||
           item instanceof NotImplementedValue || item instanceof ModuleValue || item instanceof ProtocolIteratorValue || item instanceof IteratorValue ||
-          item instanceof ExceptionValue || item instanceof FloatValue && Number.isNaN(item.value)) return true;
+          item instanceof ExceptionValue || item instanceof FloatValue && Number.isNaN(item.value) ||
+          item instanceof ComplexValue && (Number.isNaN(item.real) || Number.isNaN(item.imag))) return true;
       if (item instanceof TupleValue && !seen.has(item)) { seen.add(item); this.charge(1); pending.push(...item.items); }
     }
     return false;
@@ -600,6 +658,7 @@ export class ValueRuntime {
       this.charge(integer(value).toString().length); return this.int(~integer(value));
     }
     if (!["negative", "positive"].includes(operation)) this.fail("UnsupportedOperationError", "Unknown unary operation.", "UNSUPPORTED");
+    if (value instanceof ComplexValue) return operation === "positive" ? value : this.complex(-value.real, -value.imag);
     if (!numeric(value)) this.fail("TypeError", "Unary numeric operation requires a number.");
     return value instanceof FloatValue ? this.float(operation === "negative" ? -value.value : value.value) :
       this.int(operation === "negative" ? -integer(value) : integer(value));
@@ -620,6 +679,33 @@ export class ValueRuntime {
     if (operation === "getitem") return this.index(left, right);
     if (operation === "append") return this.append(left, right);
     if (operation === "dict-delete") return this.remove(left, right);
+    if (left instanceof ComplexValue || right instanceof ComplexValue) {
+      if (!["add", "subtract", "multiply", "divide", "power"].includes(operation)) this.fail("TypeError", "This operator does not accept complex values");
+      const parts = value => value instanceof ComplexValue ? [value.real,value.imag] : [this.number(value),0];
+      const a = parts(left), b = parts(right), controls = {charge:this.charge,fail:this.fail};
+      if (operation === "power") {
+        if (b[1] !== 0) this.fail("UnsupportedOperationError", "Non-real complex exponents require a later numeric stage.", "UNSUPPORTED");
+        return this.complex(...complexPower(a,b[0],controls));
+      }
+      if (!(left instanceof ComplexValue) || !(right instanceof ComplexValue)) {
+        if (![...a,...b].every(Number.isFinite)) this.fail("UnsupportedOperationError", "Non-finite complex arithmetic requires a later numeric stage.", "UNSUPPORTED");
+        if (operation === "add") return this.complex(a[0]+b[0],left instanceof ComplexValue ? a[1] : b[1]);
+        if (operation === "subtract") return this.complex(a[0]-b[0],left instanceof ComplexValue ? a[1] : -b[1]);
+        if (operation === "multiply") return this.complex(a[0]*b[0],left instanceof ComplexValue ? a[1]*b[0] : a[0]*b[1]);
+        if (!(right instanceof ComplexValue)) {
+          if (b[0] === 0) this.fail("ZeroDivisionError", "complex division by zero", "ZERO_DIVISION");
+          return this.complex(a[0]/b[0],a[1]/b[0]);
+        }
+        if (b[0] === 0 && b[1] === 0) this.fail("ZeroDivisionError", "complex division by zero", "ZERO_DIVISION");
+        if (Math.abs(b[0]) >= Math.abs(b[1])) {
+          const ratio = b[1]/b[0], scale = b[0]+b[1]*ratio;
+          return this.complex(a[0]/scale,-a[0]*ratio/scale);
+        }
+        const ratio = b[0]/b[1], scale = b[0]*ratio+b[1];
+        return this.complex(a[0]*ratio/scale,-a[0]/scale);
+      }
+      return this.complex(...complexArithmetic(operation,a,b,controls));
+    }
     if (this.numeric && ["bit-and", "bit-or", "bit-xor", "left-shift", "right-shift", "power"].includes(operation)) {
       if (!["bigint", "boolean"].includes(typeof left) || !["bigint", "boolean"].includes(typeof right)) {
         if (operation === "power" && numeric(left) && numeric(right))
@@ -692,6 +778,11 @@ export class ValueRuntime {
     };
     const text = value => this.string(Array.from(value, character => character.codePointAt(0)));
     if (name === "abs") {
+      if (args[0] instanceof ComplexValue) {
+        const result = Math.hypot(args[0].real,args[0].imag);
+        if (!Number.isFinite(result) && Number.isFinite(args[0].real) && Number.isFinite(args[0].imag)) this.fail("OverflowError", "absolute value too large");
+        return this.float(result);
+      }
       if (args[0] instanceof FloatValue) return this.float(Math.abs(args[0].value));
       const value = whole(args[0]); return this.int(value < 0n ? -value : value);
     }
@@ -738,6 +829,7 @@ export function valueLayout(value) {
     return {bytes: 24 + 2 * digits, children: [], work: digits};
   }
   if (value instanceof FloatValue) return {bytes: 64, children: []};
+  if (value instanceof ComplexValue) return {bytes: 80, children: []};
   if (value instanceof StringValue) return {bytes: 64 + 4 * value.points.length, children: []};
   if (value instanceof TupleValue || value instanceof ListValue) return {bytes: 64 + 8 * value.items.length, children: value.items};
   if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),

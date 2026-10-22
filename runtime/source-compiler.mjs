@@ -136,6 +136,10 @@ class Compiler {
       const literal = this.literal(node.value);
       if (literal.type === "int") return {type: "int", value: (node.operator === "negative" ? -BigInt(literal.value) : BigInt(literal.value)).toString()};
       if (literal.type === "float") return {...literal, bits: node.operator === "negative" ? (BigInt("0x" + literal.bits) ^ (1n << 63n)).toString(16).padStart(16, "0") : literal.bits};
+      if (literal.type === "complex") {
+        const signed = bits => node.operator === "negative" ? (BigInt('0x'+bits)^(1n<<63n)).toString(16).padStart(16,'0') : bits;
+        return {...literal,real_bits:signed(literal.real_bits),imag_bits:signed(literal.imag_bits)};
+      }
     }
     this.fail("Defaults require immutable literals or literal tuples.", node, "UNSUPPORTED", "bind");
   }
