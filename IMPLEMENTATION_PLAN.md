@@ -532,3 +532,13 @@ and formatting, builtin subclasses and further protocols remain deferred.
 General Python 3.14+ compatibility beyond applications/games remains the goal;
 INT-09 and INT-10 stay open. The later C/Rust/Wasm path, mobile inference, consumer
 adapters, independent-engine publication and hosting retain separate gates.
+
+
+The follow-up slice-comparison boundary adds five explicit refusals, bringing the
+indexing matrix to 94 cases (81 comparisons/13 refusals) and the eight source
+matrices to 1,868 drain/step executions across Node and Chromium. All 207 Node
+tests retain the previous resource accounting. The unchanged expanded console
+now totals 372,545 bytes (+388); the
+[follow-up payload](docs/measurements/2026-10-22-slice-refusals.json) preserves the
+preceding measurement and records current hashes. General slice comparisons
+remain deferred and cannot silently produce a misleading scalar.

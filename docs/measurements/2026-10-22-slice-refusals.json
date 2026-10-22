@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-22",
+  "measurement": "Complete offline console after explicit slice-comparison refusal; prior indexed console source remains fixed.",
+  "previous_measurement": "2026-10-22-indexing.json",
+  "baseline_revision": "e623bf368f8d8ddd44a4a5891a3facbcaf808deb",
+  "language_profile": "classes-source/1",
+  "library_profile": "core-only/1",
+  "engine": {
+    "implementation": "pocket-python-source",
+    "version": "1",
+    "backend": "javascript-vm",
+    "bytecode_version": 5,
+    "language_profile": "classes-source/1",
+    "fingerprint": "3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf",
+    "entrypoint": "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/interpreter-worker.mjs"
+  },
+  "source_sha256": "867dab7cfced5fc662ad4757268607f0cc2cc802f5cb72cfca1f244a8b659dd6",
+  "size": {
+    "source_bytes": 1787,
+    "engine_bytes": 321996,
+    "library_bytes": 0,
+    "notice_bytes": 4127,
+    "data_bytes": 5405,
+    "assembly_module_bytes": 14663,
+    "receipt_bytes": 24567,
+    "artifact_bytes": 372545
+  },
+  "previous_size": {
+    "source_bytes": 1787,
+    "engine_bytes": 321608,
+    "library_bytes": 0,
+    "notice_bytes": 4127,
+    "data_bytes": 5405,
+    "assembly_module_bytes": 14663,
+    "receipt_bytes": 24567,
+    "artifact_bytes": 372157
+  },
+  "growth_bytes": 388,
+  "files": {
+    "POCKET-PYTHON.json": {
+      "bytes": 24567,
+      "gzip_bytes": 3432,
+      "sha256": "987b71cfe0ee9517720ffcbeebce88e4af3301beb02d8e5d7104fd10b1dcac20"
+    },
+    "app-2bea8dd01f8f608b3b32c393dab72bf5a6b4f2188495a85099ae47d1954d7cd5.js": {
+      "bytes": 6068,
+      "gzip_bytes": 2317,
+      "sha256": "2bea8dd01f8f608b3b32c393dab72bf5a6b4f2188495a85099ae47d1954d7cd5"
+    },
+    "app-config-f688cc902d2910c8bce636fd4c138ccd2793ead57e259a36406b8a40f2db2fd2.json": {
+      "bytes": 1214,
+      "gzip_bytes": 561,
+      "sha256": "f688cc902d2910c8bce636fd4c138ccd2793ead57e259a36406b8a40f2db2fd2"
+    },
+    "application/a33bbbe092768595baa8f8bfb3dac131cbc5658c542f7a72873668a129d11584/APPLICATION.json": {
+      "bytes": 1431,
+      "gzip_bytes": 710,
+      "sha256": "a33bbbe092768595baa8f8bfb3dac131cbc5658c542f7a72873668a129d11584"
+    },
+    "application/a33bbbe092768595baa8f8bfb3dac131cbc5658c542f7a72873668a129d11584/LICENSES/application.txt": {
+      "bytes": 1066,
+      "gzip_bytes": 646,
+      "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85"
+    },
+    "application/a33bbbe092768595baa8f8bfb3dac131cbc5658c542f7a72873668a129d11584/sources/app.py": {
+      "bytes": 1787,
+      "gzip_bytes": 592,
+      "sha256": "867dab7cfced5fc662ad4757268607f0cc2cc802f5cb72cfca1f244a8b659dd6"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/browser-protocol.mjs": {
+      "bytes": 10589,
+      "gzip_bytes": 3464,
+      "sha256": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/bytecode.mjs": {
+      "bytes": 6803,
+      "gzip_bytes": 2337,
+      "sha256": "631241161ce44b8196655f0772b13a34479e5212577519fdafb78cf0d657be09"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/class-policy.mjs": {
+      "bytes": 1214,
+      "gzip_bytes": 573,
+      "sha256": "a2e6828028f1684e9f5e209bcc3a92201b0075bd56c3f8440ecf74edfe40c1ca"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/class-values.mjs": {
+      "bytes": 14661,
+      "gzip_bytes": 3727,
+      "sha256": "203d3177c888f5ce1755b232ee9be1172c865399db7300d47f62bcfd0acfe993"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/function-bytecode.mjs": {
+      "bytes": 15532,
+      "gzip_bytes": 4469,
+      "sha256": "c04f4ecede3f26f34708191b9d663311c3648e661531d8bc42ea9d8d949447e7"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/function-objects.mjs": {
+      "bytes": 2966,
+      "gzip_bytes": 1017,
+      "sha256": "02374b88f9a3943b5bf97bd7b2f7e886131cd09830f147b511591d8259957b36"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/functions.mjs": {
+      "bytes": 38795,
+      "gzip_bytes": 9875,
+      "sha256": "c99ab60d4f21ba1db8f9cca82054427aab0a9553a2c5fcae1ed7aa4c4e5f230c"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/interpreter-host.mjs": {
+      "bytes": 7019,
+      "gzip_bytes": 2417,
+      "sha256": "0bb0a64faffcf77e0064258e4cfcaa7a937c4372129849f76901bee91b5a5ae2"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/interpreter-worker.mjs": {
+      "bytes": 8282,
+      "gzip_bytes": 2739,
+      "sha256": "937a97cc49d987492de0bc16021a4a804ef51e4ea5b398f79c92e5d30ac82558"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/library-catalog.mjs": {
+      "bytes": 907,
+      "gzip_bytes": 504,
+      "sha256": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/library-selection.mjs": {
+      "bytes": 3661,
+      "gzip_bytes": 1469,
+      "sha256": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/licenses/POCKET-PYTHON.txt": {
+      "bytes": 1066,
+      "gzip_bytes": 646,
+      "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/licenses/UNICODE.txt": {
+      "bytes": 1995,
+      "gzip_bytes": 1063,
+      "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/memory.mjs": {
+      "bytes": 7163,
+      "gzip_bytes": 2325,
+      "sha256": "d0d718867a0543c9025767158b2a07a58bc368b3ae6ad1153ee3b8fea6896ea8"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/module-context.mjs": {
+      "bytes": 8319,
+      "gzip_bytes": 2697,
+      "sha256": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/module-registry.mjs": {
+      "bytes": 9963,
+      "gzip_bytes": 3349,
+      "sha256": "7fd479684fb43a71e06bd7365ab2bba4eb971a65bc156f199c5b95ff0a232ddc"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/module-session.mjs": {
+      "bytes": 1470,
+      "gzip_bytes": 612,
+      "sha256": "08e4ccf16361299c15b99621fdfcef0d9ef93de50d28d738158c7bc85a7c23a3"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/operation-runtime.mjs": {
+      "bytes": 23886,
+      "gzip_bytes": 5213,
+      "sha256": "85f3c32d51abdb2a4a83ace1504346c516555a3aff21321dbbf0f589dd6f5704"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/operations.mjs": {
+      "bytes": 8193,
+      "gzip_bytes": 2076,
+      "sha256": "ed298bc868b6862d3e353faf07d6452f740dce07add35c344a50247dbfa568f9"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/source-compiler.mjs": {
+      "bytes": 24016,
+      "gzip_bytes": 5882,
+      "sha256": "ab12225b3039bbeddaa1884166252451b7b4ec9e715657783dcb108cdb36c3f7"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/source-identifiers.mjs": {
+      "bytes": 25949,
+      "gzip_bytes": 6247,
+      "sha256": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/source-modules.mjs": {
+      "bytes": 5115,
+      "gzip_bytes": 1866,
+      "sha256": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/source-parser.mjs": {
+      "bytes": 27103,
+      "gzip_bytes": 6601,
+      "sha256": "5200649afae75b9b0d3e1c55a427f33442c3bc8b31cad9517fdb686f8fa664e3"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/source-tokens.mjs": {
+      "bytes": 14394,
+      "gzip_bytes": 4333,
+      "sha256": "181e3f906cc17b8aed9104ef3d5162b33b29093015b407a53994e5c140ebac3c"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/string-printability.mjs": {
+      "bytes": 13287,
+      "gzip_bytes": 3903,
+      "sha256": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/values.mjs": {
+      "bytes": 36629,
+      "gzip_bytes": 8270,
+      "sha256": "d63ab3690cf568629bde68972631e13fe822ea47f7e28cbdcec8d2c97bee646c"
+    },
+    "engine/3faaf3ee5a29cf6912f46d8638cc9fdceaa35826d56a59beff581b893ace8fcf/vm.mjs": {
+      "bytes": 6080,
+      "gzip_bytes": 1920,
+      "sha256": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d"
+    },
+    "icon.svg": {
+      "bytes": 214,
+      "gzip_bytes": 183,
+      "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691"
+    },
+    "index.html": {
+      "bytes": 2220,
+      "gzip_bytes": 1139,
+      "sha256": "3d84dca88e475f8d91442767cc965b541d9346856baa9c9e90aa5f99e3e22650"
+    },
+    "manifest.webmanifest": {
+      "bytes": 326,
+      "gzip_bytes": 205,
+      "sha256": "68e4e17b5368895a6d939d16e6f1867311289172c6919cfbc9bbf5c50aef9104"
+    },
+    "service-worker.js": {
+      "bytes": 8595,
+      "gzip_bytes": 2968,
+      "sha256": "90a602f1af676edb370f76403e0269fbc9ba810aeecf63246fafa72cbf5fe519"
+    }
+  },
+  "gzip_bytes_sum": 102347,
+  "inputs_sha256": {
+    "runtime/values.mjs": "d63ab3690cf568629bde68972631e13fe822ea47f7e28cbdcec8d2c97bee646c",
+    "src/pocket_python/_interpreter_lock.py": "8f1b81e832494d5a9e2d483ef1e00a0d002df067d26b0fc0e859831d23d75952",
+    "src/pocket_python/interpreter_templates.py": "3fcb88d0230f9769f7f4e2c12e35ac3072040e7492a359a0b60f4bd526b14485",
+    "examples/interpreter_classes.py": "8edf3ff54f80db691cdb1ae958e01d7e6fb219a8f7cb20c4ca8c5e2440d8516f",
+    "scripts/classes_console_browser_smoke.py": "0e60da9c1fa23b134439abe24a35597fb1bb33ec891e4d0b1f82e0aa45ee2b50",
+    "tests/fixtures/interpreter/indexing.json": "d456bad575e13f22d8f182da87bb8fe772ab315e8ed9cb42aee37d415595b62b",
+    "tests/fixtures/interpreter/execution-resources.json": "1efa15cde7472dc4f3346a825a244f15cadc39cfc9b0b82f2458d9da1529ed72"
+  },
+  "limits": "Uncompressed complete artifact and per-file gzip sum; no startup/speed/device-inference/package claim. Runtime remains excluded from released distributions."
+}

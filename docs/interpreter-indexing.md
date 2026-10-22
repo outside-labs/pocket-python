@@ -1,8 +1,8 @@
 # Integer conversion and indexed objects
 
 The semantic oracle is **CPython 3.14.7**. The executable contract is
-[89 independent source cases](../tests/fixtures/interpreter/indexing.json):
-46 read/conversion cases (I1), 35 mutation cases (I2), and eight future boundaries
+[94 independent source cases](../tests/fixtures/interpreter/indexing.json):
+46 read/conversion cases (I1), 35 mutation cases (I2), and 13 future boundaries
 (I3). Reference-only success records Python behavior; it does not prove engine
 support. `implemented_stages` and exact source-mode reports determine adoption.
 
@@ -130,3 +130,17 @@ source bytes, totaling 372,157 bytes across 37 files. These are uncompressed
 complete applications, with per-file gzip sums recorded separately. Earlier
 formatting/consolidation measurements retain their original fixtures and scope.
 No startup, speed, device-inference or package-support claim follows from size.
+
+
+## Slice comparison boundary
+
+Five additional I3 comparisons pin equality, inequality, ordering, nested
+sequence equality and containment involving distinct slices. These forms now
+refuse with UNSUPPORTED before producing a misleading scalar. Ordinary identity,
+truth and existing container alias fast paths remain available; general slice
+comparison is still deferred. The current matrix has 94 cases: 81 comparisons and
+13 explicit future refusals. Node has 207 tests; the eight drain/step matrices
+cover 1,868 executions across Node and Chromium. The earlier 89-case and payload
+records above describe the preceding checkpoint; the separate
+[boundary payload record](measurements/2026-10-22-slice-refusals.json) records this
+small follow-up against that unchanged console source.
