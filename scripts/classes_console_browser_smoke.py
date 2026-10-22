@@ -182,6 +182,8 @@ def smoke(channel=None):
                     assert page.locator('#result').inner_text() == ''
                     refused("print('never')\ntype A=list[int]\n", 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
+                    refused("print('never')\nｔｙｐｅ Alias=int\n", 'SyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
                     run(SOURCE, cases[0]['stdout'])
                     checks.append('index-item-result-binding-body-shape-and-deferred-source-errors')
                     context.set_offline(True)

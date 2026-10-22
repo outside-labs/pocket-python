@@ -251,7 +251,7 @@
     },
     {
       "id": "type-soft-identifier",
-      "source": "type=7\ndef f(type): return type+1\nprint(type,f(8))\n",
+      "source": "ｔｙｐｅ=7\ndef f(type): return type+1\nprint(type,f(8))\n",
       "features": [
         "source.grammar"
       ]
@@ -1698,6 +1698,32 @@
       },
       "features": [
         "source.syntax-error"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-soft-type-core",
+      "source": "print('must not run')\nｔｙｐｅ Alias = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.syntax-error",
+        "source.unicode-identifiers"
+      ]
+    },
+    {
+      "id": "syntax-new-forms-soft-type-classes",
+      "source": "print('must not run')\nｔｙｐｅ Alias = int\n",
+      "code": "SYNTAX",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.syntax-error",
+        "source.unicode-identifiers"
       ]
     }
   ],
