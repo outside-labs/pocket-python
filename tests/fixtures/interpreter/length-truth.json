@@ -6,7 +6,8 @@
     "C3-length",
     "C3-truth",
     "C3-control",
-    "C3-formatting"
+    "C3-formatting",
+    "C3-indexing"
   ],
   "cases": [
     {
@@ -571,7 +572,7 @@
     },
     {
       "id": "future-index-return",
-      "stage": "C3-future",
+      "stage": "C3-indexing",
       "source": "class Index:\n def __index__(self): return 7\nclass A:\n def __len__(self): return Index()\nprint(len(A()))\n",
       "stdout": "7\n"
     },
@@ -583,7 +584,7 @@
     },
     {
       "id": "future-getitem",
-      "stage": "C3-future",
+      "stage": "C3-indexing",
       "source": "class Index:\n def __getitem__(self,key): return 7\nprint(Index()[0])\n",
       "stdout": "7\n"
     },

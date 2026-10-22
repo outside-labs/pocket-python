@@ -90,3 +90,13 @@ protocols. See the [data model](https://docs.python.org/3.14/reference/datamodel
 [slice constructor](https://docs.python.org/3.14/library/functions.html#slice), and
 [pinned slice implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/sliceobject.c).
 The live documentation version is separate from the pinned executable oracle.
+
+## Read/conversion adoption
+
+I1 is implemented: 46 reference comparisons and eight I3 refusals pass as source
+in Node and Chromium through both drain and instruction-boundary drivers. I2 is
+omitted from these reports until the separate mutation step. Nine focused units
+cover roots/layout, original frames, active exceptions, recursion, budget/output
+limits, actual callback OOM, paused collection, cancellation and close. The full
+Node suite has 200 passing tests; all eight existing resource baselines are
+unchanged. Index-result and raw-slice continuations use the shared machine.

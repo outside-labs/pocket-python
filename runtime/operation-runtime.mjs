@@ -1,5 +1,5 @@
 import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
-import {completion as continuation, callTask, unaryTask, valueTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -84,17 +84,23 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       valueTask(operation !== "not", site, after, depth);
   };
   const deliver = (value, completion, site) => {
-    while (["init", "relay", "protocol-result", "format-result"].includes(completion?.kind)) {
+    while (["init", "relay", "protocol-result", "format-result", "index-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
         value = completion.instance;
+      } else if (completion.kind === "index-result") {
+        if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "__index__ returned a non-integer value");
+        if (typeof value === "boolean") value = values.int(BigInt(value));
       } else if (completion.kind === "format-result") {
         if (!values.isString(value)) python("TypeError", completion.slot + " returned a non-string value");
       } else if (completion.kind === "protocol-result") {
         if (completion.slot === "__bool__") {
           if (typeof value !== "boolean") python("TypeError", "__bool__() should return bool");
-        } else value = lengthResult(value);
+        } else {
+          if (value instanceof InstanceValue) return unaryTask("index", value, site, completion, completion.depth);
+          value = lengthResult(value);
+        }
         if (completion.operation !== "len") {
           if (completion.slot === "__len__") value = value !== 0n;
           if (completion.operation === "not") value = !value;
@@ -103,6 +109,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "index-key") return itemTask(completion.receiver, value, site, completion.after, completion.depth);
+    if (completion?.kind === "slice-index") {
+      const parts = [...completion.parts]; parts[[2, 0, 1][completion.position]] = value;
+      return sliceNext(completion.receiver, parts, completion.position, site, completion.after, completion.depth);
+    }
     if (completion?.kind === "print-argument") return printNext(completion.args, completion.index + 1,
       site, completion.after, completion.depth, values.text(value));
     if (completion?.kind === "optional-truth") return unaryTask(completion.operation, value, site,
@@ -153,15 +164,69 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     write(text + "\n"); return deliver(null, after, site);
   };
+  const sliceNext = (receiver, parts, position, site, after, depth) => {
+    state.temporaries.push(receiver, ...parts);
+    for (; position < 3; position++) {
+      charge(1);
+      const index = [2, 0, 1][position], value = parts[index];
+      if (value instanceof InstanceValue) return unaryTask("index", value, site,
+        continuation("slice-index", {receiver, parts, position, after, depth}), depth);
+      if (value !== null && typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "slice indices must be integers or None");
+      if (index === 2 && (value === 0n || value === false)) python("ValueError", "slice step cannot be zero");
+    }
+    return valueTask(values.slice(receiver, ...parts), site, after, depth);
+  };
   const dispatch = task => {
     while (task) {
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "item" || task.kind === "slice") {
+          state.temporaries.push(...operationRoots(task));
+          const {receiver} = task;
+          if (task.kind === "slice") {
+            if (receiver instanceof InstanceValue) {
+              const key = values.sliceKey(...task.parts); state.temporaries.push(key);
+              task = itemTask(receiver, key, site, completion, depth);
+            } else task = sliceNext(receiver, task.parts, 0, site, completion, depth);
+            continue;
+          }
+          const {key} = task;
+          if (receiver instanceof InstanceValue) {
+            charge(1);
+            if (++depth > maxDepth) python("RecursionError", "maximum implicit item dispatch depth exceeded");
+            const plan = classes.special(receiver, "__getitem__");
+            if (!plan) python("TypeError", "Instance has no item-read type slot");
+            const finish = continuation("relay", {receiver, after: completion});
+            if (plan.kind === "value") task = callTask(plan.value, [key], [], [], site, finish, depth);
+            else task = callTask(plan.callable, plan.args, [], [], site,
+              continuation("invoke", {args: [key], keywords: [], keywordValues: [], after: finish, depth}), depth);
+          } else if (values.isSlice(key) && values.isSequence(receiver)) {
+            task = sliceTask(receiver, [key.start, key.stop, key.step], site, completion, depth);
+          } else if (key instanceof InstanceValue && values.isSequence(receiver)) {
+            task = unaryTask("index", key, site, continuation("index-key", {receiver, key, after: completion, depth}), depth);
+          } else task = deliver(values.binary("getitem", receiver, key), completion, site);
+          continue;
+        }
         if (task.kind === "value") { task = deliver(task.value, completion, site); continue; }
         if (task.kind === "unary") {
           const {operation, value, optionalLength} = task;
           state.temporaries.push(...operationRoots(task));
+          if (operation === "index") {
+            if (!(value instanceof InstanceValue)) {
+              if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "An integer index is required");
+              task = deliver(typeof value === "boolean" ? values.int(BigInt(value)) : value, completion, site); continue;
+            }
+            charge(1);
+            if (++depth > maxDepth) python("RecursionError", "maximum implicit index dispatch depth exceeded");
+            const plan = classes.special(value, "__index__");
+            if (!plan) python("TypeError", "Instance has no integer-index type slot");
+            const finish = continuation("index-result", {receiver: value, after: completion});
+            if (plan.kind === "value") task = callTask(plan.value, [], [], [], site, finish, depth);
+            else task = callTask(plan.callable, plan.args, [], [], site,
+              continuation("invoke", {args: [], keywords: [], keywordValues: [], after: finish, depth}), depth);
+            continue;
+          }
           if (["repr", "str", "repr-default"].includes(operation)) {
             if (operation === "repr-default") hard("UNSUPPORTED", "UnsupportedOperationError", "Default object representations require a later formatting stage.");
             if (!(value instanceof InstanceValue)) {
@@ -208,7 +273,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = deliver(operation !== "not", completion, site); continue;
           }
           const finish = optionalLength ? continuation("optional-truth", {operation, receiver: value, after: completion, depth}) :
-            continuation("protocol-result", {operation, slot, receiver: value, after: completion});
+            continuation("protocol-result", {operation, slot, receiver: value, after: completion, depth});
           if (plan.kind === "value") task = callTask(plan.value, [], [], [], site, finish, depth);
           else task = callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [],
             keywordValues: [], after: finish, depth, fallback: slot === "__bool__" || optionalLength ? fallback : null}), depth);
@@ -249,6 +314,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "slice") {
+            if (args.length < 1 || args.length > 3 || keywords.length) python("TypeError", "slice() requires one to three positional arguments");
+            task = deliver(args.length === 1 ? values.sliceKey(null, args[0], null) : values.sliceKey(args[0], args[1], args[2] ?? null), completion, site); continue;
+          }
           if (callable.name === "repr") {
             count("builtin:repr");
             if (args.length !== 1 || keywords.length) python("TypeError", "repr() requires one positional argument");

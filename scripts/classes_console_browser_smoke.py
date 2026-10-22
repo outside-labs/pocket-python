@@ -108,7 +108,7 @@ def smoke(channel=None):
                     refused('class A:\n def fail(self): return 1//0\nA().fail()\n', 'ZeroDivisionError:')
                     assert 'sources/app.py:2' in page.locator('#status').inner_text()
                     assert 'fail at sources/app.py:2' in page.locator('#diagnostic').inner_text()
-                    refused("print('never')\nclass A:\n def __index__(self): return 7\n", 'UnsupportedSyntaxError:')
+                    refused("print('never')\nclass A:\n def __add__(self,other): return 7\n", 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     refused('A()\n', 'NameError:')
                     refused('import browser\n', 'ImportError:')

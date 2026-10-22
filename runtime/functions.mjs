@@ -6,7 +6,7 @@ import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -96,7 +96,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable"].includes(key))) {
+        (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -326,7 +326,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         call(callable, args, extra, kwargs, summary(frame, cursor));
       } else if (["attribute-set", "attribute-delete"].includes(op)) {
         const value = op === "attribute-set" ? stack.pop() : null;
-        const plan = classes.write(stack.pop(), arg, value, op === "attribute-delete");
+        const receiver = stack.pop();
+        if (values.isSlice(receiver)) python("AttributeError", "Slice attributes are read-only");
+        const plan = classes.write(receiver, arg, value, op === "attribute-delete");
         if (plan.kind === "value") stack.push(plan.value);
         else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("discard")); }
       } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
@@ -336,7 +338,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           inheritedException: frame.activeException};
         else {
           const receiver = stack.pop();
-          if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+          if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
+          else if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             const plan = classes.read(receiver, arg);
             if (plan.kind === "value") stack.push(plan.value);
             else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }
@@ -380,7 +383,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         stack.push(op === "build-dict" ? values.dict(Array.from({length: arg}, (_, index) => items.slice(index * 2, index * 2 + 2))) :
           op === "build-list" ? values.list(items) : values.tuple(items));
       } else if (op === "setitem") { const item = stack.pop(), key = stack.pop(); stack.push(values.set(stack.pop(), key, item)); }
-      else if (op === "slice") { const step = stack.pop(), stop = stack.pop(), start = stack.pop(); stack.push(values.slice(stack.pop(), start, stop, step)); }
+      else if (op === "slice") {
+        const step = stack.pop(), stop = stack.pop(), start = stack.pop(), receiver = stack.pop();
+        if ([receiver, start, stop, step].some(value => value instanceof InstanceValue))
+          dispatch(sliceTask(receiver, [start, stop, step], summary(frame, cursor)));
+        else stack.push(values.slice(receiver, start, stop, step));
+      } else if (op === "getitem" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)))) {
+        const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor)));
+      }
       else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }

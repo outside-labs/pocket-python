@@ -645,16 +645,14 @@
     {
       "id": "getitem-hook",
       "source": "class A:\n def __getitem__(self,key): return key+1\nprint(A()[6])\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "bind"
+        "stdout": "7\n",
+        "error_type": null
       }
     },
     {
@@ -1566,16 +1564,14 @@
     {
       "id": "builtin-slice",
       "source": "print(callable(slice))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
