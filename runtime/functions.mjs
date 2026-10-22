@@ -382,7 +382,16 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const items = stack.splice(stack.length - arg * (op === "build-dict" ? 2 : 1));
         stack.push(op === "build-dict" ? values.dict(Array.from({length: arg}, (_, index) => items.slice(index * 2, index * 2 + 2))) :
           op === "build-list" ? values.list(items) : values.tuple(items));
-      } else if (op === "setitem") { const item = stack.pop(), key = stack.pop(); stack.push(values.set(stack.pop(), key, item)); }
+      } else if (op === "build-slice") {
+        const step = stack.pop(), stop = stack.pop(), start = stack.pop(); stack.push(values.sliceKey(start, stop, step));
+      } else if (op === "setitem") {
+        const item = stack.pop(), key = stack.pop(), receiver = stack.pop();
+        if (receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key))
+          dispatch(itemTask(receiver, key, summary(frame, cursor), null, 0, "set", item));
+        else stack.push(values.set(receiver, key, item));
+      } else if (op === "dict-delete" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)))) {
+        const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor), null, 0, "delete"));
+      }
       else if (op === "slice") {
         const step = stack.pop(), stop = stack.pop(), start = stack.pop(), receiver = stack.pop();
         if ([receiver, start, stop, step].some(value => value instanceof InstanceValue))
