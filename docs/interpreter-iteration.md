@@ -146,7 +146,7 @@ produce an explicit UnsupportedOperationError before binding or consuming their
 hooks. A missing iterable protocol or `__iter__ = None` keeps ordinary TypeError;
 the disabled slot prevents indexed fallback. Neither path mutates the list.
 
-Six source regressions bring the matrix to 104 cases: 98 comparisons and six
+Six source regressions bring the matrix to 104 cases: 99 comparisons and five
 explicit refusals, passing in Node and Chromium through drain/stepped execution.
 All 245 Node tests pass, including unchanged resource baselines and refusal
 before inherited descriptor effects. The separate
