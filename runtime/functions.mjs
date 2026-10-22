@@ -19,7 +19,7 @@ const summary = (frame, cursor) => Object.freeze({function: frame.fn.name,
   location: cursor.block.source ? Object.freeze({filename: cursor.block.source.filename,
     span: cursor.block.source.spans[Math.max(0, cursor.pc - 1)]}) : null});
 
-export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth = 48,
+function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth = 48,
   shouldCancel = null, memoryLimits = {}, arena = null, retainResult = false, onOutput = () => {},
   moduleContext = null, module = null, inheritedException = null} = {}) {
   if (!Number.isSafeInteger(maxSteps) || maxSteps < 1 || maxSteps > 1_000_000 ||
@@ -35,20 +35,20 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         !(module instanceof ModuleValue) || moduleContext.module(module.name) !== module || moduleContext.registry.program(module.name) !== program)) ||
       (verified.code.version >= 4 && moduleContext === null) ||
       (inheritedException !== null && (!(inheritedException instanceof ExceptionValue) || moduleContext === null))) throw new TypeError("Version 4/5 requires a verified module execution context.");
-  const frames = [], outputLeases = [], builtins = new Map();
   const execution = {};
-  let pool = null, globals = null, temporaries = [], steps = 0, work = 0, outputLength = 0, current = null, result = null;
+  const state = {frames: [], outputLeases: [], builtins: new Map(), pool: null, globals: null,
+    temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null};
   const hard = (code, name, message) => {
-    const error = new ExecutionError(code, name, message, current?.instruction ?? null, null);
-    error.location = current?.location || null;
+    const error = new ExecutionError(code, name, message, state.current?.instruction ?? null, null);
+    error.location = state.current?.location || null;
     throw error;
   };
   const charge = amount => {
     if (moduleContext) { moduleContext.charge(amount, hard); return; }
-    if ((work += amount) > maxWork) hard("BUDGET", "ExecutionLimitError", "Value work budget exceeded.");
+    if ((state.work += amount) > maxWork) hard("BUDGET", "ExecutionLimitError", "Value work budget exceeded.");
     if (shouldCancel?.()) hard("CANCELLED", "ExecutionCancelled", "Execution cancelled.");
   };
-  const rootLeave = memory.enter(() => [pool, globals, inheritedException, ...builtins.values(), ...temporaries], {charge, fail: hard});
+
   const allocate = (Type, ...args) => {
     const value = new Type(...args), layout = valueLayout(value);
     return memory.allocate(layout.bytes, layout.children, () => value);
@@ -68,10 +68,10 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   };
   const exception = (name, message, args = []) => {
     const error = allocate(ExceptionValue, name, args, message);
-    const active = frames.at(-1)?.activeException;
+    const active = state.frames.at(-1)?.activeException;
     mutate(error, () => {
       error.context = active && active !== error ? active : null;
-      if (current) error.traceback.push(Object.freeze({function: current.function, location: current.location}));
+      if (state.current) error.traceback.push(Object.freeze({function: state.current.function, location: state.current.location}));
       return () => { error.context = null; error.traceback = []; };
     });
     return error;
@@ -102,8 +102,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
         (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
-      if (!builtins.has(key)) builtins.set(key, allocate(BuiltinValue, key));
-      return builtins.get(key);
+      if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
+      return state.builtins.get(key);
     }
     python("NameError", "name '" + key + "' is not defined");
   };
@@ -148,14 +148,14 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     return bindings;
   };
   const enter = (callable, bindings, callsite = null, completion = null) => {
-    if (frames.length >= Math.min(maxDepth, memory.limits.maxFrames - 1) || memory.stats().frames >= memory.limits.maxFrames) python("RecursionError", "maximum recursion depth exceeded");
+    if (state.frames.length >= Math.min(maxDepth, memory.limits.maxFrames - 1) || memory.stats().frames >= memory.limits.maxFrames) python("RecursionError", "maximum recursion depth exceeded");
     const fn = callable.pool.code.functions[callable.index];
     const frame = {fn, callable, closure: callable.closure, locals: callable.index === 0 ? callable.globals.cells : new Map(),
-      tasks: [], activeException: frames.at(-1)?.activeException || inheritedException, callsite,
-      completion, namespaceOrder: fn.kind === "class" ? new Set() : null, returnInstruction: current?.instruction ?? null};
+      tasks: [], activeException: state.frames.at(-1)?.activeException || inheritedException, callsite,
+      completion, namespaceOrder: fn.kind === "class" ? new Set() : null, returnInstruction: state.current?.instruction ?? null};
     frame.leave = memory.enter(() => [callable, ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
       ...frame.tasks.flatMap(controlRoots), ...completionRoots(completion, true)], {charge, fail: hard});
-    frames.push(frame);
+    state.frames.push(frame);
     for (const key of fn.locals) {
       let cell = frame.locals.get(key);
       if (!cell) {
@@ -197,8 +197,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     if (callable.name === "print") {
       const text = args.map(display).join(" ") + "\n";
       if (moduleContext) { moduleContext.write(text, hard); return null; }
-      if ((outputLength += text.length) > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
-      outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text); return null;
+      if ((state.outputLength += text.length) > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
+      state.outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text); return null;
     }
     if (moduleContext && callable.name === "isinstance") {
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
@@ -256,7 +256,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       completion.keywordValues, site, completion.after, completion.depth);
     if (completion?.kind === "notify") return notifyNext(completion.type, completion.entries, completion.index, site);
     if (completion?.kind === "condition") {
-      const frame = frames.at(-1), task = frame.tasks.at(-1);
+      const frame = state.frames.at(-1), task = frame.tasks.at(-1);
       if (completion.control === "if") block(frame, value ? completion.body : completion.otherwise);
       else if (completion.control === "jump") { if (!value) task.pc = completion.target; }
       else if (completion.control === "while") {
@@ -265,16 +265,16 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       }
       return null;
     }
-    frames.at(-1).tasks.at(-1).stack.push(completion?.kind === "discard" ? null : value);
+    state.frames.at(-1).tasks.at(-1).stack.push(completion?.kind === "discard" ? null : value);
     return null;
   };
   const notifyNext = (type, entries, index, site) => {
-    temporaries.push(type, ...entries.map(entry => entry[1]));
+    state.temporaries.push(type, ...entries.map(entry => entry[1]));
     while (index < entries.length) {
       charge(1);
       const [name, value] = entries[index++];
       // Keep the name rooted while planning a bound callback can allocate.
-      const nameValue = values.string(Array.from(name, char => char.codePointAt(0))); temporaries.push(nameValue);
+      const nameValue = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(nameValue);
       const plan = classes.notification(value, type, nameValue);
       if (!plan) continue;
       return callTask(plan.callable, plan.args, [], [], site,
@@ -289,7 +289,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
         if (task.kind === "value") { task = deliver(task.value, completion, site); continue; }
         if (task.kind === "unary") {
           const {operation, value, optionalLength} = task;
-          temporaries.push(...operationRoots(task));
+          state.temporaries.push(...operationRoots(task));
           if (!(value instanceof InstanceValue) || !["len", "truth", "not"].includes(operation)) {
             task = deliver(values.unary(operation, value), completion, site); continue;
           }
@@ -317,7 +317,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
             keywordValues: [], after: finish, depth, fallback: slot === "__bool__" || optionalLength ? fallback : null}), depth);
           continue;
         }
-        temporaries.push(...operationRoots(task));
+        state.temporaries.push(...operationRoots(task));
         if (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod" || callable instanceof InstanceValue) {
           charge(1);
           if (callable instanceof InstanceValue) {
@@ -340,7 +340,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           task = deliver(allocate(PropertyValue, ...fields), completion, site); continue;
         }
         if (callable instanceof ClassValue) {
-          const instance = classes.instance(callable); temporaries.push(instance);
+          const instance = classes.instance(callable); state.temporaries.push(instance);
           const initializer = classes.lookup(callable, "__init__");
           if (!initializer.found) {
             if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
@@ -355,7 +355,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           if (["len", "bool"].includes(callable.name) && args.length === 1 && !keywords.length) {
             task = unaryTask(callable.name === "bool" ? "truth" : "len", args[0], site, completion, depth); continue;
           }
-          if (callable.name === "bool" && frames.at(-1).callable.pool.code.version === 5 &&
+          if (callable.name === "bool" && state.frames.at(-1).callable.pool.code.version === 5 &&
               (args.length > 1 || keywords.length)) python("TypeError", "bool() accepts at most one positional argument");
           let value;
           if (callable.name === "property") value = classes.property(args, keywords, keywordValues);
@@ -376,7 +376,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
   const unhandled = value => {
-    const error = new ExecutionError("PYTHON", value.name, value.message, current?.instruction ?? null, null);
+    const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
     // Copy diagnostics without exporting unleased VM objects or frame locals.
     error.traceback = value.traceback.map(frame => ({function: frame.function, location: frame.location}));
     error.location = error.traceback.at(-1)?.location || null;
@@ -385,8 +385,8 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
     throw error;
   };
   const settle = signal => {
-    while (frames.length) {
-      const frame = frames.at(-1);
+    while (state.frames.length) {
+      const frame = state.frames.at(-1);
       if (frame.tasks.at(-1)?.type === "block") frame.tasks.pop();
       while (frame.tasks.length) {
         const task = frame.tasks.at(-1);
@@ -419,7 +419,7 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
           if (task.phase === "body" && signal.kind === "raise") {
             task.phase = "matching"; task.caught = signal.value; frame.activeException = signal.value;
             const clause = handlers.find(([types, , , span]) => {
-              current = {...current, location: task.site ? {filename: task.site.filename, span} : null};
+              state.current = {...state.current, location: task.site ? {filename: task.site.filename, span} : null};
               const resolved = types.map(type => {
                 const expected = load(frame, type);
                 if (!(expected instanceof BuiltinValue) || !Object.hasOwn(EXCEPTIONS, expected.name)) {
@@ -457,161 +457,255 @@ export function execute(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDep
       }
       if (["break", "continue"].includes(signal.kind)) hard("BYTECODE", "BytecodeError", "Loop control outside a loop.");
       const returned = signal.kind === "normal" ? null : signal.value;
-      temporaries = [returned, frame.callable];
-      const parent = frames.at(-2);
+      state.temporaries = [returned, frame.callable];
+      const parent = state.frames.at(-2);
       if (!parent) {
         if (signal.kind === "raise") unhandled(returned);
-        result = retainResult ? memory.pin([returned]) : returned;
-        frame.leave(); frames.pop(); return;
+        state.result = retainResult ? memory.pin([returned]) : returned;
+        frame.leave(); state.frames.pop(); return;
       }
       if (signal.kind === "raise") {
         const recovery = bindingRecovery(returned, frame.completion, frame.callsite);
         if (recovery) {
-          retainTransfer(temporaries, [], frame.completion);
-          current = {...frame.callsite, instruction: frame.returnInstruction};
-          frame.leave(); frames.pop(); dispatch(recovery); return;
+          retainTransfer(state.temporaries, [], frame.completion);
+          state.current = {...frame.callsite, instruction: frame.returnInstruction};
+          frame.leave(); state.frames.pop(); dispatch(recovery); return;
         }
         addTrace(returned, frame.callsite);
-        frame.leave(); frames.pop();
+        frame.leave(); state.frames.pop();
         continue;
       }
       if (frame.completion?.kind === "class") {
         const namespace = new Map([...frame.namespaceOrder].filter(key => frame.locals.get(key).bound && !key.startsWith("@source:"))
           .map(key => [key, frame.locals.get(key).value]));
         const completion = frame.completion;
-        temporaries.push(...namespace.values(), ...completion.bases);
-        current = {...frame.callsite, instruction: frame.returnInstruction};
-        frame.leave(); frames.pop();
+        state.temporaries.push(...namespace.values(), ...completion.bases);
+        state.current = {...frame.callsite, instruction: frame.returnInstruction};
+        frame.leave(); state.frames.pop();
         const type = classes.create(frame.fn.name, frame.fn.qualname, completion.module, completion.bases, namespace, objectType());
         dispatch(notifyNext(type, [...namespace], 0, frame.callsite)); return;
       }
       const completion = frame.completion;
-      retainTransfer(temporaries, [], completion);
-      current = {...frame.callsite, instruction: frame.returnInstruction};
-      frame.leave(); frames.pop(); dispatch(deliver(returned, completion, frame.callsite)); return;
+      retainTransfer(state.temporaries, [], completion);
+      state.current = {...frame.callsite, instruction: frame.returnInstruction};
+      frame.leave(); state.frames.pop(); dispatch(deliver(returned, completion, frame.callsite)); return;
     }
   };
-  try {
-    pool = allocate(CodePool, verified.code, verified.bytes, module);
-    globals = module ? module.environment : allocate(Environment);
-    if (module) mutate(module, () => { const before = module.pool; module.pool = pool; return () => { module.pool = before; }; });
-    const entry = allocate(FunctionValue, pool, 0, globals, new Map());
-    temporaries = [entry]; enter(entry, new Map());
-    while (frames.length) {
-      if (moduleContext) moduleContext.tick(hard);
-      else if (++steps > maxSteps) hard("BUDGET", "ExecutionLimitError", "Instruction budget exceeded.");
-      charge(1); temporaries = []; memory.collect();
-      const frame = frames.at(-1), cursor = frame.tasks.at(-1), stack = cursor.stack;
-      current = {...summary(frame, cursor), instruction: cursor.pc};
-      const [op, arg, extra, fourth, fifth] = cursor.block.instructions[cursor.pc++];
-      current = {...summary(frame, cursor), instruction: cursor.pc - 1};
-      temporaries = stack.slice();
-      try {
-        if (op === "const") stack.push(frame.callable.pool.code.constants[arg]);
-        else if (op === "load") stack.push(load(frame, arg));
-        else if (op === "store") store(frame, arg, stack.pop());
-        else if (op === "delete") {
-          if (!frame.locals.get(arg).bound) {
-            if (frame.callable.index === 0) python("NameError", "name '" + arg + "' is not defined");
-            python("UnboundLocalError", "cannot access local variable '" + arg + "' where it is not associated with a value");
-          }
-          store(frame, arg, null, false);
+  const start = () => {
+    state.rootLeave = memory.enter(() => [state.pool, state.globals, inheritedException, ...state.builtins.values(), ...state.temporaries], {charge, fail: hard});
+    state.pool = allocate(CodePool, verified.code, verified.bytes, module);
+    state.globals = module ? module.environment : allocate(Environment);
+    if (module) mutate(module, () => { const before = module.pool; module.pool = state.pool; return () => { module.pool = before; }; });
+    const entry = allocate(FunctionValue, state.pool, 0, state.globals, new Map());
+    state.temporaries = [entry]; enter(entry, new Map());
+  };
+  const step = () => {
+    if (moduleContext) moduleContext.tick(hard);
+    else if (++state.steps > maxSteps) hard("BUDGET", "ExecutionLimitError", "Instruction budget exceeded.");
+    charge(1); state.temporaries = []; memory.collect();
+    const frame = state.frames.at(-1), cursor = frame.tasks.at(-1), stack = cursor.stack;
+    state.current = {...summary(frame, cursor), instruction: cursor.pc};
+    const [op, arg, extra, fourth, fifth] = cursor.block.instructions[cursor.pc++];
+    state.current = {...summary(frame, cursor), instruction: cursor.pc - 1};
+    state.temporaries = stack.slice();
+    try {
+      if (op === "const") stack.push(frame.callable.pool.code.constants[arg]);
+      else if (op === "load") stack.push(load(frame, arg));
+      else if (op === "store") store(frame, arg, stack.pop());
+      else if (op === "delete") {
+        if (!frame.locals.get(arg).bound) {
+          if (frame.callable.index === 0) python("NameError", "name '" + arg + "' is not defined");
+          python("UnboundLocalError", "cannot access local variable '" + arg + "' where it is not associated with a value");
         }
-        else if (op === "function" || op === "class") {
-          const owner = frame.callable.pool;
-          const closure = new Map(owner.code.functions[arg].free.map(key => [key,
-            frame.fn.kind === "class" ? frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
-          const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure);
-          if (op === "function") stack.push(callable);
-          else {
-            const bases = stack.splice(stack.length - extra), name = values.text(frame.callable.globals.cells.get("__name__")?.value);
-            temporaries.push(callable);
-            if (name === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Class module metadata requires text in C1.");
-            enter(callable, new Map(), summary(frame, cursor), continuation("class", {bases, module: name}));
-            store(frames.at(-1), "__module__", values.string(Array.from(name, char => char.codePointAt(0))));
-            store(frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
-          }
-        } else if (op === "call") {
-          const kwargs = stack.splice(stack.length - extra.length), args = stack.splice(stack.length - arg), callable = stack.pop();
-          call(callable, args, extra, kwargs, summary(frame, cursor));
-        } else if (["attribute-set", "attribute-delete"].includes(op)) {
-          const value = op === "attribute-set" ? stack.pop() : null;
-          const plan = classes.write(stack.pop(), arg, value, op === "attribute-delete");
-          if (plan.kind === "value") stack.push(plan.value);
-          else { temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("discard")); }
-        } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
-          const owner = frame.callable.pool.module;
-          if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
-          const invoke = (target, unit) => execute(unit, {...moduleContext.options, arena: memory, moduleContext, module: target,
-            inheritedException: frame.activeException});
-          if (op === "import") stack.push(moduleContext.load(owner.name, arg, extra, fourth, invoke));
-          else {
-            const receiver = stack.pop();
-            if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
-              const plan = classes.read(receiver, arg);
-              if (plan.kind === "value") stack.push(plan.value);
-              else { temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }
-            } else stack.push(["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
-              moduleContext.attribute(receiver, arg, op === "import-from", owner.name, invoke));
-          }
-        } else if (op === "if") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
-          continuation("condition", {control: "if", body: arg, otherwise: extra})));
-        else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth, site: summary(frame, cursor)}); block(frame, arg); }
-        else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null}); block(frame, extra); }
-        else if (op === "try") {
-          frame.tasks.push({type: "try", phase: "body", instruction: cursor.block.instructions[cursor.pc - 1], previous: frame.activeException,
-            caught: null, pending: null, alias: null, site: current.location}); block(frame, arg);
-        } else if (["end", "return", "break", "continue"].includes(op)) {
-          settle({kind: op === "end" ? "normal" : op, value: op === "return" || cursor.block.kind === "expression" ? stack.pop() : null});
-        } else if (op === "raise" || op === "reraise") {
-          let value = op === "raise" ? stack.pop() : frame.activeException;
-          if (!value) python("RuntimeError", "No active exception to reraise");
-          if (value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name)) value = allocate(ExceptionValue, value.name, [], "");
-          if (!(value instanceof ExceptionValue)) python("TypeError", "exceptions must derive from BaseException");
-          if (op === "raise") {
-            addTrace(value, {function: current.function, location: current.location});
-            if (frame.activeException && frame.activeException !== value) mutate(value, () => {
-              const previous = value.context; value.context = frame.activeException;
-              return () => { value.context = previous; };
-            });
-          }
-          throw new Raised(value);
-        } else if (op === "pop") stack.pop();
-        else if (op === "dup") stack.push(stack.at(-1));
-        else if (op === "swap") { const right = stack.pop(), left = stack.pop(); stack.push(right, left); }
-        else if (op === "jump") cursor.pc = arg;
-        else if (op === "jump-if-false") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
-          continuation("condition", {control: "jump", target: arg})));
-        else if (["build-list", "build-tuple", "build-dict"].includes(op)) {
-          const items = stack.splice(stack.length - arg * (op === "build-dict" ? 2 : 1));
-          stack.push(op === "build-dict" ? values.dict(Array.from({length: arg}, (_, index) => items.slice(index * 2, index * 2 + 2))) :
-            op === "build-list" ? values.list(items) : values.tuple(items));
-        } else if (op === "setitem") { const item = stack.pop(), key = stack.pop(); stack.push(values.set(stack.pop(), key, item)); }
-        else if (op === "slice") { const step = stack.pop(), stop = stack.pop(), start = stack.pop(); stack.push(values.slice(stack.pop(), start, stop, step)); }
-        else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op))
-          dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
-        else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
-      } catch (error) {
-        const forwarded = exceptionLeases.get(error);
-        if (forwarded && forwarded.owner !== execution) {
-          const value = forwarded.lease.get()[0]; temporaries.push(value); releaseException(error);
-          addTrace(value, {function: current.function, location: current.location}); error = new Raised(value);
-        } else if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(exception(error.name, error.message));
-        else if (error instanceof RegistryError && error.code === "UNSUPPORTED") hard(error.code, error.name, error.message);
-        if (!(error instanceof Raised)) throw error;
-        // Handler matching or iterator setup can itself raise while unwinding.
-        let pending = error;
-        while (true) {
-          try { temporaries.push(pending.value); settle({kind: "raise", value: pending.value}); break; }
-          catch (next) { if (!(next instanceof Raised)) throw next; pending = next; }
+        store(frame, arg, null, false);
+      }
+      else if (op === "function" || op === "class") {
+        const owner = frame.callable.pool;
+        const closure = new Map(owner.code.functions[arg].free.map(key => [key,
+          frame.fn.kind === "class" ? frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
+        const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure);
+        if (op === "function") stack.push(callable);
+        else {
+          const bases = stack.splice(stack.length - extra), name = values.text(frame.callable.globals.cells.get("__name__")?.value);
+          state.temporaries.push(callable);
+          if (name === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Class module metadata requires text in C1.");
+          enter(callable, new Map(), summary(frame, cursor), continuation("class", {bases, module: name}));
+          store(state.frames.at(-1), "__module__", values.string(Array.from(name, char => char.codePointAt(0))));
+          store(state.frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
         }
+      } else if (op === "call") {
+        const kwargs = stack.splice(stack.length - extra.length), args = stack.splice(stack.length - arg), callable = stack.pop();
+        call(callable, args, extra, kwargs, summary(frame, cursor));
+      } else if (["attribute-set", "attribute-delete"].includes(op)) {
+        const value = op === "attribute-set" ? stack.pop() : null;
+        const plan = classes.write(stack.pop(), arg, value, op === "attribute-delete");
+        if (plan.kind === "value") stack.push(plan.value);
+        else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("discard")); }
+      } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
+        const owner = frame.callable.pool.module;
+        if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
+        const invoke = (target, unit) => execute(unit, {...moduleContext.options, arena: memory, moduleContext, module: target,
+          inheritedException: frame.activeException});
+        if (op === "import") stack.push(moduleContext.load(owner.name, arg, extra, fourth, invoke));
+        else {
+          const receiver = stack.pop();
+          if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+            const plan = classes.read(receiver, arg);
+            if (plan.kind === "value") stack.push(plan.value);
+            else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }
+          } else stack.push(["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver) ? allocate(AppendValue, receiver) :
+            moduleContext.attribute(receiver, arg, op === "import-from", owner.name, invoke));
+        }
+      } else if (op === "if") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
+        continuation("condition", {control: "if", body: arg, otherwise: extra})));
+      else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth, site: summary(frame, cursor)}); block(frame, arg); }
+      else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null}); block(frame, extra); }
+      else if (op === "try") {
+        frame.tasks.push({type: "try", phase: "body", instruction: cursor.block.instructions[cursor.pc - 1], previous: frame.activeException,
+          caught: null, pending: null, alias: null, site: state.current.location}); block(frame, arg);
+      } else if (["end", "return", "break", "continue"].includes(op)) {
+        settle({kind: op === "end" ? "normal" : op, value: op === "return" || cursor.block.kind === "expression" ? stack.pop() : null});
+      } else if (op === "raise" || op === "reraise") {
+        let value = op === "raise" ? stack.pop() : frame.activeException;
+        if (!value) python("RuntimeError", "No active exception to reraise");
+        if (value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name)) value = allocate(ExceptionValue, value.name, [], "");
+        if (!(value instanceof ExceptionValue)) python("TypeError", "exceptions must derive from BaseException");
+        if (op === "raise") {
+          addTrace(value, {function: state.current.function, location: state.current.location});
+          if (frame.activeException && frame.activeException !== value) mutate(value, () => {
+            const previous = value.context; value.context = frame.activeException;
+            return () => { value.context = previous; };
+          });
+        }
+        throw new Raised(value);
+      } else if (op === "pop") stack.pop();
+      else if (op === "dup") stack.push(stack.at(-1));
+      else if (op === "swap") { const right = stack.pop(), left = stack.pop(); stack.push(right, left); }
+      else if (op === "jump") cursor.pc = arg;
+      else if (op === "jump-if-false") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
+        continuation("condition", {control: "jump", target: arg})));
+      else if (["build-list", "build-tuple", "build-dict"].includes(op)) {
+        const items = stack.splice(stack.length - arg * (op === "build-dict" ? 2 : 1));
+        stack.push(op === "build-dict" ? values.dict(Array.from({length: arg}, (_, index) => items.slice(index * 2, index * 2 + 2))) :
+          op === "build-list" ? values.list(items) : values.tuple(items));
+      } else if (op === "setitem") { const item = stack.pop(), key = stack.pop(); stack.push(values.set(stack.pop(), key, item)); }
+      else if (op === "slice") { const step = stack.pop(), stop = stack.pop(), start = stack.pop(); stack.push(values.slice(stack.pop(), start, stop, step)); }
+      else if (["truth", "not", "len", "negative", "positive", "iter", "next"].includes(op))
+        dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
+      else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
+    } catch (error) {
+      const forwarded = exceptionLeases.get(error);
+      if (forwarded && forwarded.owner !== execution) {
+        const value = forwarded.lease.get()[0]; state.temporaries.push(value); releaseException(error);
+        addTrace(value, {function: state.current.function, location: state.current.location}); error = new Raised(value);
+      } else if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(exception(error.name, error.message));
+      else if (error instanceof RegistryError && error.code === "UNSUPPORTED") hard(error.code, error.name, error.message);
+      if (!(error instanceof Raised)) throw error;
+      // Handler matching or iterator setup can itself raise while unwinding.
+      let pending = error;
+      while (true) {
+        try { state.temporaries.push(pending.value); settle({kind: "raise", value: pending.value}); break; }
+        catch (next) { if (!(next instanceof Raised)) throw next; pending = next; }
       }
     }
-    return result;
-  } finally {
-    while (frames.length) frames.pop().leave();
-    for (const release of outputLeases) release(false);
-    rootLeave();
+  };
+  const close = () => {
+    while (state.frames.length) state.frames.pop().leave();
+    for (const release of state.outputLeases) release(false);
+    state.outputLeases.length = 0;
+    state.rootLeave?.(); state.rootLeave = null;
+    state.pool = null; state.globals = null; state.temporaries = []; state.builtins.clear();
     if (arena === null) memory.close();
+  };
+  const snapshot = () => Object.freeze({
+    steps: moduleContext ? moduleContext.steps : state.steps,
+    work: moduleContext ? moduleContext.work : state.work,
+    outputLength: moduleContext ? moduleContext.outputLength : state.outputLength,
+    temporaryRoots: state.temporaries.length,
+    source: state.current ? Object.freeze({...state.current, location: state.current.location ? Object.freeze({
+      filename: state.current.location.filename, span: Object.freeze([...state.current.location.span])}) : null}) : null,
+    frames: Object.freeze(state.frames.map(frame => Object.freeze({function: frame.fn.name,
+      activeException: frame.activeException?.name ?? null,
+      completion: frame.completion?.kind ?? null,
+      controls: Object.freeze(frame.tasks.map(task => Object.freeze({type: task.type,
+        phase: task.phase ?? null, pc: task.pc ?? null, stack: task.stack?.length ?? null,
+        pending: task.pending?.kind ?? null})))
+    }))),
+    memory: memory.stats()
+  });
+  return {memory, start, step, close, snapshot, done: () => state.frames.length === 0, result: () => state.result};
+}
+
+
+const activeExecutions = new WeakMap();
+
+// Internal instruction-boundary driver. Public source sessions still drain
+// synchronously; this is not a scheduler, coroutine or host-waiting API.
+export class Execution {
+  #machine;
+  #state = "ready";
+  #result;
+  #error = null;
+  #draining = false;
+  #claimed = false;
+  constructor(program, options = {}) { this.#machine = activation(program, options); }
+  get state() { return this.#state; }
+  get result() {
+    if (this.#state !== "completed") throw new TypeError("Execution has no completed result.");
+    return this.#result;
   }
+  get error() { return this.#error; }
+  snapshot() { return Object.freeze({state: this.#state, ...this.#machine.snapshot()}); }
+  #release() {
+    if (!this.#claimed) { this.#machine.close(); return; }
+    const stack = activeExecutions.get(this.#machine.memory);
+    if (stack?.at(-1) !== this) throw new TypeError("Executions must release in arena order.");
+    try { this.#machine.close(); }
+    finally { stack.pop(); this.#claimed = false; if (!stack.length) activeExecutions.delete(this.#machine.memory); }
+  }
+  advance(instructions = 1) {
+    if (!["ready", "paused"].includes(this.#state)) throw new TypeError("Execution cannot advance from " + this.#state + ".");
+    if (!Number.isSafeInteger(instructions) || instructions < 1 || instructions > 1000000) throw new TypeError("Invalid execution quantum.");
+    const owners = activeExecutions.get(this.#machine.memory) || [];
+    if (owners.length && owners.at(-1) !== this && !(this.#draining && owners.at(-1).state === "running"))
+      throw new TypeError("A paused execution owns this arena.");
+    const initial = this.#state === "ready";
+    if (initial) { owners.push(this); activeExecutions.set(this.#machine.memory, owners); this.#claimed = true; }
+    this.#state = "running";
+    try {
+      if (initial) this.#machine.start();
+      for (let count = 0; count < instructions && !this.#machine.done(); count++) this.#machine.step();
+      if (this.#machine.done()) {
+        this.#result = this.#machine.result(); this.#release(); this.#state = "completed";
+      } else this.#state = "paused";
+      return this.snapshot();
+    } catch (error) {
+      this.#error = error;
+      try { this.#release(); } finally { this.#state = "failed"; }
+      throw error;
+    }
+  }
+  drain() {
+    if (this.#draining || !["ready", "paused"].includes(this.#state)) throw new TypeError("Execution cannot drain from " + this.#state + ".");
+    this.#draining = true;
+    try { do { this.advance(1000000); } while (this.#state === "paused"); return this.result; }
+    finally { this.#draining = false; }
+  }
+  close() {
+    if (this.#state === "running") throw new TypeError("Cannot close a running execution.");
+    if (this.#state === "closed") return;
+    this.#release();
+    if (this.#error && !exceptionLeases.get(this.#error)?.forwarded) releaseException(this.#error);
+    this.#state = "closed";
+  }
+}
+
+export function execute(program, options = {}) {
+  const execution = new Execution(program, options);
+  try { return execution.drain(); }
+  catch (error) {
+    const record = exceptionLeases.get(error);
+    if (record) record.forwarded = true;
+    throw error;
+  } finally { execution.close(); }
 }
