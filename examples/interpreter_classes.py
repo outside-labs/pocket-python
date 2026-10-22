@@ -79,12 +79,38 @@ class Shelf:
     def __len__(self):
         return len(self.__items)
 
+    def __iter__(self):
+        return Cursor(self.__items)
+
+    def __contains__(self, item):
+        return item in self.__items
+
+class Cursor:
+    def __init__(self, items):
+        self.__items = items
+        self.__position = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.__position == len(self.__items):
+            raise StopIteration
+        item = self.__items[self.__position]
+        self.__position += 1
+        return item
+
 shelf = Shelf([10, 20, 30])
 index = Counter.from_start(1)
 shelf[index] += 5
 shelf[::2] = (7, 9)
 del shelf[-1]
 print("Indexed:", shelf[0], shelf[index], "Size:", len(shelf))
+for item in shelf:
+    print("Item:", item)
+print("Contains:", 25 in shelf, 9 not in shelf)
+cursor = iter(shelf)
+print("Next:", next(cursor), next(cursor), next(cursor, "done"))
 '''
 
 if __name__ == '__main__':

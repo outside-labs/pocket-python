@@ -69,13 +69,14 @@ methods and inheritance hooks must not silently behave as ordinary attributes.
 The [selected protocol sequence and call contract](interpreter-special-methods.md)
 start with the delivered __call__/callable() and __len__/__bool__ milestones,
 followed by the delivered [bounded repr/str slice](interpreter-formatting.md)
-and [integer conversion/item/slice contract](interpreter-indexing.md).
+and [integer conversion/item/slice contract](interpreter-indexing.md), then
+[owned iteration and containment](interpreter-iteration.md).
 Length/truth and formatting resume operations through ordinary VM callbacks and
 validated results; pending print arguments have explicit owned completions.
 Choose and test an explicit special-method matrix before each extension. Cover
 implicit lookup on the type, return-type validation, exception transport and
 bounded recursive dispatch. __new__, arithmetic/comparison overrides,
-__getattribute__/__getattr__, attribute mutation hooks, iteration and further formatting
+__getattribute__/__getattr__, attribute mutation hooks and further formatting
 remain refused until their individual cases and resource rules are adopted.
 Metaclasses, __prepare__, __mro_entries__, __init_subclass__, __classcell__/zero-
 argument super, reflection and arbitrary builtin subclassing retain separate gates.

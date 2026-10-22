@@ -70,6 +70,7 @@ def smoke(channel=None):
                     assert 'classes-source/1' in page.locator('#language').inner_text()
                     assert 'private names' in page.locator('#language').inner_text()
                     assert 'integer indices and item/slice access and mutation' in page.locator('#language').inner_text()
+                    assert 'iteration and containment' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -109,6 +110,11 @@ def smoke(channel=None):
                                      'tuple-slice-keys', 'slice-grow-shrink-self', 'slice-extended-negative',
                                      'slice-shape-error-no-mutation', 'augmented-slice-converts-twice']
                                     and 'error_type' not in c)
+                    iteration = json.loads((ROOT / 'tests/fixtures/interpreter/iteration.json').read_bytes())
+                    programs.extend(c['source'] for c in iteration['cases'] if c['id'] in
+                                    ['iterator-loop-else', 'iterator-loop-control', 'iterator-identity-next-default',
+                                     'indexed-loop', 'callable-sentinel-loop', 'contains-result-truth',
+                                     'contains-iterator-search', 'contains-optional-binding-iter'])
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -186,6 +192,15 @@ def smoke(channel=None):
                     assert page.locator('#result').inner_text() == ''
                     run(SOURCE, cases[0]['stdout'])
                     checks.append('index-item-result-binding-body-shape-and-deferred-source-errors')
+                    refused('class A:\n def __iter__(self): return [7]\niter(A())\n', 'TypeError:')
+                    assert 'sources/app.py:3' in page.locator('#status').inner_text()
+                    refused('class A:\n def __next__(self):\n  return 1//0\nnext(A(),7)\n', 'ZeroDivisionError:')
+                    assert '__next__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n @property\n def __contains__(self):\n  raise ValueError("binding")\nprint(7 in A())\n', 'ValueError:')
+                    assert '__contains__ at sources/app.py:4' in page.locator('#diagnostic').inner_text()
+                    refused('class R:\n def __bool__(self): return 7\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A())\n', 'TypeError:')
+                    run(SOURCE, cases[0]['stdout'])
+                    checks.append('iteration-result-next-and-membership-binding-truth-source-errors')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -197,6 +212,10 @@ def smoke(channel=None):
                     checks.append('new-formatting-binding-and-unicode-source-after-offline-reload')
                     run('class Key:\n def __index__(self): return -1\nclass Store:\n def __init__(self): self.__items=[3,4,5]\n @property\n def __getitem__(self):\n  def read(key): return self.__items[key]\n  return read\n def __setitem__(self,key,value): self.__items[key]=value\n def __delitem__(self,key): del self.__items[key]\nstore=Store()\nstore[Key()]+=2\nstore[::2]=(7,9)\ndel store[1]\nprint(store[0],store[Key()])\n', '7 9\n')
                     checks.append('new-index-conversion-item-binding-and-slice-mutation-source-after-offline-reload')
+                    run('class OfflineStream:\n def __init__(self): self.__value=0\n def __iter__(self): return self\n @property\n def __next__(self):\n  def take():\n   if self.__value==3: raise StopIteration\n   self.__value+=1\n   return self.__value\n  return take\nstream=OfflineStream()\nprint(2 in stream,next(stream),next(stream,"done"))\nclass OfflineShelf:\n def __getitem__(self,key): return (3,7)[key]\nprint(7 in OfflineShelf(),8 not in OfflineShelf())\n', 'True 3 done\nTrue True\n')
+                    checks.append('new-iterator-binding-default-and-indexed-membership-source-offline')
+                    run('class OfflineContains:\n @property\n def __contains__(self):\n  def use(key): return key==7\n  return use\nclass Supply:\n def __init__(self): self.i=0\n def __call__(self):\n  self.i+=1\n  return self.i\nprint(7 in OfflineContains(),8 not in OfflineContains())\nfor x in iter(Supply(),3): print(x)\n', 'True True\n1\n2\n')
+                    checks.append('new-contains-binding-and-callable-sentinel-source-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -214,6 +233,16 @@ def smoke(channel=None):
                         'class Spin:\n @property\n def __getitem__(self):\n  while True: pass\nSpin()[:[7]]\n',
                         'class Spin:\n def __setitem__(self,key,value):\n  while True: pass\nSpin()[:]=[[7]]\n',
                         'class Spin:\n @property\n def __delitem__(self):\n  while True: pass\ndel Spin()[:[7]]\n'])
+                    for slot, invocation in [('__iter__', 'for x in Spin(): pass'),
+                                             ('__next__', 'next(Spin(),[7])'),
+                                             ('__contains__', '[7] in Spin()'),
+                                             ('__call__', 'next(iter(Spin(),[3]),[7])')]:
+                        for binding in [False, True]:
+                            busy.append('class Spin:\n '+('@property\n ' if binding else '')+
+                                        'def '+slot+'(self'+(',key' if slot=='__contains__' and not binding else '')+'):\n  while True: pass\n'+invocation+'\n')
+                    busy.extend([
+                        'class Spin:\n def __getitem__(self,key):\n  while True: pass\nfor x in Spin(): pass\n',
+                        'class R:\n def __bool__(self):\n  while True: pass\nclass Spin:\n def __contains__(self,key): return R()\n[7] in Spin()\n'])
                     stopped = []
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
@@ -229,7 +258,7 @@ def smoke(channel=None):
                         page.click('#restart')
                         ready()
                         run(SOURCE, cases[0]['stdout'])
-                    checks.append('call-length-truth-formatting-index-mutation-and-pending-bindings-stop-with-fresh-restarts')
+                    checks.append('call-length-truth-format-index-iteration-containment-and-pending-bindings-stop-with-fresh-restarts')
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/nested/classes')
                     shutil.copytree(root / 'reduced', root / 'site/nested/classes')
@@ -255,6 +284,8 @@ def smoke(channel=None):
                     refused('import operator\n', 'ImportError:')
                     refused('callable(print)\n', 'NameError:')
                     refused('slice(7)\n', 'NameError:')
+                    refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
+                    refused('iter(str,7)\n', 'UnsupportedOperationError:')
                     run('print(len("okay"),bool([]))\n', '4 False\n')
                     run('print(repr("A😀"),len(str()))\n', "'A😀' 0\n")
                     run('print(7)\n', '7\n')
