@@ -345,10 +345,54 @@ export class ValueRuntime {
     value.items.push(item); return null;
   }
   remove(value, key) {
+    if (value instanceof ListValue) {
+      key = integer(key);
+      if (typeof key !== "bigint") this.fail("TypeError", "List indices must be integers.");
+      if (key < 0n) key += BigInt(value.items.length);
+      if (key < 0n || key >= BigInt(value.items.length)) this.fail("IndexError", "list assignment index out of range");
+      this.charge(value.items.length);
+      const items = value.items.filter((_, index) => index !== Number(key));
+      this.resize(value, 64 + 8 * items.length, items); value.items = items; return null;
+    }
     if (!(value instanceof DictValue)) this.fail("TypeError", "Dictionary deletion requires a dict.");
     const found = this.find(value, key);
     if (found < 0) this.fail("KeyError", "Dictionary key not found.");
     this.charge(value.entries.length); value.entries.splice(found, 1); value.version++; return null;
+  }
+  mutateSlice(value, start, stop, step, item, remove = false) {
+    if (!(value instanceof ListValue)) this.fail("TypeError", "Slice mutation requires a list.");
+    step = step === null ? 1n : integer(step);
+    if (typeof step !== "bigint") this.fail("TypeError", "slice indices must be integers or None");
+    if (step === 0n) this.fail("ValueError", "slice step cannot be zero");
+    const length = BigInt(value.items.length), positive = step > 0n;
+    const low = positive ? 0n : -1n, high = positive ? length : length - 1n;
+    const normalize = (index, fallback) => {
+      if (index === null) return fallback;
+      index = integer(index);
+      if (typeof index !== "bigint") this.fail("TypeError", "slice indices must be integers or None");
+      if (index < 0n) index += length;
+      return index < low ? low : index > high ? high : index;
+    };
+    start = normalize(start, positive ? 0n : length - 1n); stop = normalize(stop, positive ? length : -1n);
+    const positions = [];
+    for (let index = start; positive ? index < stop : index > stop; index += step) { this.charge(1); positions.push(Number(index)); }
+    let replacement = [];
+    if (!remove) {
+      if (item instanceof ListValue || item instanceof TupleValue) { this.charge(item.items.length); replacement = item.items.slice(); }
+      else if (sequence(item) || item instanceof DictValue || item instanceof IteratorValue || item instanceof InstanceValue)
+        this.fail("UnsupportedOperationError", "This slice-assignment iterable requires a later iteration stage.", "UNSUPPORTED");
+      else this.fail("TypeError", "can only assign an iterable");
+      if (step !== 1n && replacement.length !== positions.length) this.fail("ValueError", "Extended slice assignment requires equal sizes.");
+    }
+    let items;
+    if (!remove && step === 1n) items = [...value.items.slice(0, Number(start)), ...replacement, ...value.items.slice(Number(stop < start ? start : stop))];
+    else {
+      const selected = new Set(positions);
+      items = remove ? value.items.filter((_, index) => !selected.has(index)) : value.items.slice();
+      if (!remove) positions.forEach((index, offset) => { items[index] = replacement[offset]; });
+    }
+    this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(value.items.length + items.length);
+    this.resize(value, 64 + 8 * items.length, items); value.items = items; return null;
   }
   slice(value, start, stop, step) {
     if (!sequence(value)) this.fail("TypeError", "Slicing requires an adopted sequence.");

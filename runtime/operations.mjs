@@ -1,6 +1,10 @@
 // Closed internal records. Root order and multiplicity implement the initial
 // resource contract, including copied ancestor roots and the extra init root.
 const records = new WeakSet(), roots = new WeakMap(), heights = new WeakMap();
+const itemOperation = value => {
+  if (!["get", "set", "delete"].includes(value)) throw new TypeError("Invalid item operation.");
+  return value;
+};
 const operands = values => {
   if (!Array.isArray(values) || values.length > 131072) throw new TypeError("Invalid operation operands.");
   return Object.freeze([...values]);
@@ -16,10 +20,11 @@ export function completion(kind, fields = {}) {
     case "class": record = {kind, bases: operands(fields.bases), module: fields.module}; break;
     case "init": record = {kind, instance: fields.instance, after}; break;
     case "relay": record = {kind, receiver: fields.receiver, after}; break;
+    case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
-    case "index-key": record = {kind, receiver: fields.receiver, key: fields.key, after, depth: fields.depth}; depthCheck(record.depth); break;
+    case "index-key": record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation ?? "get"), item: fields.item ?? null, after, depth: fields.depth}; depthCheck(record.depth); break;
     case "slice-index":
-      record = {kind, receiver: fields.receiver, parts: operands(fields.parts), position: fields.position, after, depth: fields.depth};
+      record = {kind, receiver: fields.receiver, parts: operands(fields.parts), position: fields.position, operation: itemOperation(fields.operation ?? "get"), item: fields.item ?? null, after, depth: fields.depth};
       depthCheck(record.depth);
       if (record.parts.length !== 3 || !Number.isSafeInteger(record.position) || record.position < 0 || record.position > 2)
         throw new TypeError("Invalid slice conversion position.");
@@ -53,9 +58,9 @@ function visit(record) {
   switch (record.kind) {
     case "class": case "condition": case "discard": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
-    case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": return [record.receiver, ...completionRoots(record.after)];
-    case "index-key": return [record.receiver, record.key, ...completionRoots(record.after)];
-    case "slice-index": return [record.receiver, ...record.parts, ...completionRoots(record.after)];
+    case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
+    case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
+    case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "notify": return [record.type, ...record.entries.map(entry => entry[1])];
@@ -88,20 +93,20 @@ export function valueTask(value, site, after = null, depth = 0) {
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "value", value, site, completion: after, depth});
 }
-export function itemTask(receiver, key, site, after = null, depth = 0) {
+export function itemTask(receiver, key, site, after = null, depth = 0, operation = "get", item = null) {
   depthCheck(depth); completionRoots(after);
-  return Object.freeze({kind: "item", receiver, key, site, completion: after, depth});
+  return Object.freeze({kind: "item", receiver, key, operation: itemOperation(operation), item, site, completion: after, depth});
 }
-export function sliceTask(receiver, parts, site, after = null, depth = 0) {
+export function sliceTask(receiver, parts, site, after = null, depth = 0, operation = "get", item = null) {
   depthCheck(depth); completionRoots(after);
   if (parts.length !== 3) throw new TypeError("A slice requires three parts.");
-  return Object.freeze({kind: "slice", receiver, parts: operands(parts), site, completion: after, depth});
+  return Object.freeze({kind: "slice", receiver, parts: operands(parts), operation: itemOperation(operation), item, site, completion: after, depth});
 }
 export function operationRoots(task) {
   switch (task.kind) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
-    case "item": return [task.receiver, task.key, ...completionRoots(task.completion)];
-    case "slice": return [task.receiver, ...task.parts, ...completionRoots(task.completion)];
+    case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
+    case "slice": return [task.receiver, ...task.parts, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "unary": case "value": return [task.value, ...completionRoots(task.completion)];
     default: throw new TypeError("Unknown operation task.");
   }

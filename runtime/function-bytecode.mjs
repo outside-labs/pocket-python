@@ -119,7 +119,7 @@ export function verifyFunctions(program) {
           });
           if (instruction[3] !== null) blockRef(instruction[3], "statement");
           if (instruction[4] !== null) blockRef(instruction[4], "statement");
-        } else if (!(BINARY.has(op) || UNARY.has(op) || ["pop", "dup", "swap", "setitem", "slice", "end", "return", "raise", "reraise", "break", "continue"].includes(op))) fail("Unknown function opcode.");
+        } else if (!(BINARY.has(op) || UNARY.has(op) || (classes && op === "build-slice") || ["pop", "dup", "swap", "setitem", "slice", "end", "return", "raise", "reraise", "break", "continue"].includes(op))) fail("Unknown function opcode.");
         if (instruction.length !== length || (kind === "class" && op === "return") ||
             (block.kind === "expression" && ["return", "break", "continue", "if", "while", "for", "try"].includes(op))) fail("Invalid operands or expression control flow.");
         return Object.freeze(instruction.map((value, index) => op === "try" && index === 2 ?
@@ -129,7 +129,7 @@ export function verifyFunctions(program) {
       const heights = new Map([[0, 0]]), pending = [0];
       for (let cursor = 0; cursor < pending.length; cursor++) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
-        const needs = op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : op === "setitem" ? 3 : op === "slice" ? 4 :
+        const needs = op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
           UNARY.has(op) || ["attribute-get", "attribute-delete", "module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
@@ -138,7 +138,7 @@ export function verifyFunctions(program) {
           continue;
         }
         const after = before + (op === "class" ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
-          BINARY.has(op) || CONSTRUCT.has(op) || ["call", "setitem", "slice"].includes(op) ? 1 - needs :
+          BINARY.has(op) || CONSTRUCT.has(op) || ["call", "setitem", "slice", "build-slice"].includes(op) ? 1 - needs :
           ["store", "pop", "if", "jump-if-false"].includes(op) ? -1 : 0);
         if (after > FUNCTION_LIMITS.stack) fail("Function stack exceeds 256 values.");
         const targets = op === "jump" ? [arg] : op === "jump-if-false" ? [arg, at + 1] : [at + 1];

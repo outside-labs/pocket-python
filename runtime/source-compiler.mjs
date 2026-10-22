@@ -217,6 +217,11 @@ class Compiler {
         } else if (value.kind === "Attribute") {
           expr(value.value); emit(value, this.classes ? "attribute-get" : "module-get", attribute(value));
         }
+        else if (value.kind === "Slice") {
+          if (!this.classes) this.fail("Slice-key construction requires classes-source/1.", value);
+          for (const part of [value.start, value.stop, value.step]) part ? expr(part) : pushNone(value);
+          emit(value, "build-slice");
+        }
         else if (value.kind === "Subscript") {
           expr(value.value);
           if (value.index.kind === "Slice") {

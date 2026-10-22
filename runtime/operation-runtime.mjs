@@ -84,12 +84,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       valueTask(operation !== "not", site, after, depth);
   };
   const deliver = (value, completion, site) => {
-    while (["init", "relay", "protocol-result", "format-result", "index-result"].includes(completion?.kind)) {
+    while (["init", "relay", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
         value = completion.instance;
-      } else if (completion.kind === "index-result") {
+      } else if (completion.kind === "item-result") value = null;
+      else if (completion.kind === "index-result") {
         if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "__index__ returned a non-integer value");
         if (typeof value === "boolean") value = values.int(BigInt(value));
       } else if (completion.kind === "format-result") {
@@ -109,10 +110,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
-    if (completion?.kind === "index-key") return itemTask(completion.receiver, value, site, completion.after, completion.depth);
+    if (completion?.kind === "index-key") return itemTask(completion.receiver, value, site, completion.after, completion.depth, completion.operation, completion.item);
     if (completion?.kind === "slice-index") {
       const parts = [...completion.parts]; parts[[2, 0, 1][completion.position]] = value;
-      return sliceNext(completion.receiver, parts, completion.position, site, completion.after, completion.depth);
+      return sliceNext(completion.receiver, parts, completion.position, site, completion.after, completion.depth, completion.operation, completion.item);
     }
     if (completion?.kind === "print-argument") return printNext(completion.args, completion.index + 1,
       site, completion.after, completion.depth, values.text(value));
@@ -164,17 +165,20 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     write(text + "\n"); return deliver(null, after, site);
   };
-  const sliceNext = (receiver, parts, position, site, after, depth) => {
-    state.temporaries.push(receiver, ...parts);
+  const sliceNext = (receiver, parts, position, site, after, depth, operation = "get", item = null) => {
+    state.temporaries.push(receiver, ...parts, ...(operation === "set" ? [item] : []));
+    if (!values.isSequence(receiver)) python("TypeError", "Slicing requires an adopted sequence");
+    if (operation !== "get" && !values.isList(receiver)) python("TypeError", "Slice mutation requires a list");
     for (; position < 3; position++) {
       charge(1);
       const index = [2, 0, 1][position], value = parts[index];
       if (value instanceof InstanceValue) return unaryTask("index", value, site,
-        continuation("slice-index", {receiver, parts, position, after, depth}), depth);
+        continuation("slice-index", {receiver, parts, position, after, depth, operation, item}), depth);
       if (value !== null && typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "slice indices must be integers or None");
       if (index === 2 && (value === 0n || value === false)) python("ValueError", "slice step cannot be zero");
     }
-    return valueTask(values.slice(receiver, ...parts), site, after, depth);
+    return valueTask(operation === "get" ? values.slice(receiver, ...parts) :
+      values.mutateSlice(receiver, ...parts, item, operation === "delete"), site, after, depth);
   };
   const dispatch = task => {
     while (task) {
@@ -183,29 +187,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       try {
         if (task.kind === "item" || task.kind === "slice") {
           state.temporaries.push(...operationRoots(task));
-          const {receiver} = task;
+          const {receiver, operation, item} = task;
           if (task.kind === "slice") {
             if (receiver instanceof InstanceValue) {
               const key = values.sliceKey(...task.parts); state.temporaries.push(key);
-              task = itemTask(receiver, key, site, completion, depth);
-            } else task = sliceNext(receiver, task.parts, 0, site, completion, depth);
+              task = itemTask(receiver, key, site, completion, depth, operation, item);
+            } else task = sliceNext(receiver, task.parts, 0, site, completion, depth, operation, item);
             continue;
           }
           const {key} = task;
           if (receiver instanceof InstanceValue) {
             charge(1);
             if (++depth > maxDepth) python("RecursionError", "maximum implicit item dispatch depth exceeded");
-            const plan = classes.special(receiver, "__getitem__");
-            if (!plan) python("TypeError", "Instance has no item-read type slot");
-            const finish = continuation("relay", {receiver, after: completion});
-            if (plan.kind === "value") task = callTask(plan.value, [key], [], [], site, finish, depth);
+            const slot = {get: "__getitem__", set: "__setitem__", delete: "__delitem__"}[operation];
+            const plan = classes.special(receiver, slot);
+            if (!plan) python("TypeError", "Instance has no " + slot + " type slot");
+            const finish = continuation(operation === "get" ? "relay" : "item-result", {receiver, after: completion});
+            const args = operation === "set" ? [key, item] : [key];
+            if (plan.kind === "value") task = callTask(plan.value, args, [], [], site, finish, depth);
             else task = callTask(plan.callable, plan.args, [], [], site,
-              continuation("invoke", {args: [key], keywords: [], keywordValues: [], after: finish, depth}), depth);
-          } else if (values.isSlice(key) && values.isSequence(receiver)) {
-            task = sliceTask(receiver, [key.start, key.stop, key.step], site, completion, depth);
+              continuation("invoke", {args, keywords: [], keywordValues: [], after: finish, depth}), depth);
+          } else if (values.isSlice(key) && (operation === "get" ? values.isSequence(receiver) : values.isList(receiver))) {
+            task = sliceTask(receiver, [key.start, key.stop, key.step], site, completion, depth, operation, item);
           } else if (key instanceof InstanceValue && values.isSequence(receiver)) {
-            task = unaryTask("index", key, site, continuation("index-key", {receiver, key, after: completion, depth}), depth);
-          } else task = deliver(values.binary("getitem", receiver, key), completion, site);
+            task = unaryTask("index", key, site, continuation("index-key", {receiver, key, after: completion, depth, operation, item}), depth);
+          } else task = deliver(operation === "get" ? values.binary("getitem", receiver, key) :
+            operation === "set" ? values.set(receiver, key, item) : values.binary("dict-delete", receiver, key), completion, site);
           continue;
         }
         if (task.kind === "value") { task = deliver(task.value, completion, site); continue; }

@@ -102,3 +102,75 @@ test('default source profile keeps class and slice-constructor admission explici
   const refused=await runSourceRequest({modules:[unit('slice(7)\n')]}); assert.equal(refused.error.type,'NameError'); closed(refused);
   const future=await run('print("never")\nclass A:\n def __add__(self,other): return 7\n'); assert.equal(future.error.code,'UNSUPPORTED'); assert.equal(future.stdout,'');
 });
+
+test('mutation continuations retain the RHS and outer completion with exhaustive roots', () => {
+  const receiver={},key={},item={},after=completion('relay',{receiver:key});
+  assert.deepEqual(operationRoots(itemTask(receiver,key,null,after,0,'set',item)),[receiver,key,item,key]);
+  assert.deepEqual(operationRoots(sliceTask(receiver,[key,null,null],null,after,0,'set',item)),[receiver,key,null,null,item,key]);
+  assert.deepEqual(completionRoots(completion('index-key',{receiver,key,item,operation:'set',depth:0,after})),[receiver,key,item,key]);
+  assert.deepEqual(completionRoots(completion('slice-index',{receiver,parts:[key,null,null],position:0,item,operation:'set',depth:0,after})),[receiver,key,null,null,item,key]);
+  assert.deepEqual(completionRoots(completion('item-result',{receiver,after})),[receiver,key]);
+  assert.throws(()=>itemTask(receiver,key,null,null,0,'future'),TypeError);
+});
+
+test('slice construction has explicit class bytecode admission and checked stack effects', async () => {
+  const {compileSource}=await import('./source-compiler.mjs');
+  const {verifyFunctions}=await import('./function-bytecode.mjs');
+  const code=compileSource('a=[1]\na[:]=[7]\n',profile).program;
+  assert.ok(code.functions[0].blocks.flatMap(b=>b.instructions).some(i=>i[0]==='build-slice'));
+  const legacy=structuredClone(code);legacy.version=4;legacy.functions.forEach(f=>{delete f.kind;});
+  assert.throws(()=>verifyFunctions(legacy),{code:'BYTECODE'});
+  const invalid=structuredClone(code);const block=invalid.functions[0].blocks.find(b=>b.instructions.some(i=>i[0]==='build-slice'));
+  const index=block.instructions.findIndex(i=>i[0]==='build-slice');block.instructions[index].push(1);
+  assert.throws(()=>verifyFunctions(invalid),{code:'BYTECODE'});
+  assert.throws(()=>compileSource('a=[1]\na[:]=[7]\n'),{code:'UNSUPPORTED'});
+});
+
+for(const slot of ['__setitem__','__delitem__']) test(slot+' failures preserve original frames and resource cleanup',async()=>{
+  const params=slot==='__setitem__'?'key,value':'key',statement=slot==='__setitem__'?'a[0]=[7]':'del a[0]';
+  const error=await run('class A:\n def '+slot+'(self,'+params+'):\n  return 1//0\na=A()\n'+statement+'\n');
+  assert.equal(error.error.type,'ZeroDivisionError');
+  assert.deepEqual(error.error.traceback.map(f=>[f.function,f.location.span[0]]),[['<module>',5],[slot,3]]);closed(error);
+  for(const binding of [false,true]){
+    const source='class A:\n '+(binding?'@property\n ':'')+'def '+slot+'(self'+(binding?'':','+params)+'):\n  print("entered")\n  while True: pass\na=A()\n'+statement+'\n';
+    const budget=await run(source,{maxSteps:500});assert.equal(budget.error.code,'BUDGET');assert.equal(budget.stdout,'entered\n');closed(budget);
+    let polls=0;const cancel=await run(source,{shouldCancel:()=>++polls>12000});assert.equal(cancel.error.code,'CANCELLED');closed(cancel);
+  }
+  const oom=await run('class A:\n def '+slot+'(self,'+params+'):\n  print("entered")\n  held=[]\n  while True: held.append([1,2,3])\na=A()\n'+statement+'\n',{maxSteps:100000,maxWork:20000000},{maxBytes:32000});
+  assert.equal(oom.error.code,'OOM');assert.equal(oom.stdout,'entered\n');closed(oom);
+});
+
+test('slice shape and item limits fail before committing destination storage',async()=>{
+  const values=new ValueRuntime(),list=values.list([1n,2n]),alias=list;
+  assert.throws(()=>values.mutateSlice(list,0n,null,2n,values.list([7n,8n])),{name:'ValueError'});
+  assert.deepEqual(values.encode(list),{type:'list',items:[{type:'int',value:'1'},{type:'int',value:'2'}]});
+  const large=values.list(Array(1024).fill(7n));
+  assert.throws(()=>values.mutateSlice(list,1n,1n,null,large),{code:'BUDGET'});assert.equal(alias.items.length,2);
+  const {MemoryArena}=await import('./memory.mjs');const arena=new MemoryArena({maxBytes:2200});
+  const owned=new ValueRuntime({memory:arena}),target=owned.list([1n]);let replacement=null;
+  const leave=arena.enter(()=>[target,replacement]);replacement=owned.list(Array(40).fill(2n));
+  try{assert.throws(()=>owned.mutateSlice(target,0n,0n,null,replacement),{code:'OOM'});assert.equal(target.items.length,1);}
+  finally{leave();arena.close();}assert.equal(arena.stats().bytes,0);
+});
+
+test('paused setters, deleters and converted slice mutations retain otherwise temporary graphs',async()=>{
+  const sources=[
+    'class A:\n @property\n def __setitem__(self):\n  print("entered")\n  def use(key,value): print(key.start[0]+value[0][0])\n  return use\nA()[[3]:]=[[4]]\n',
+    'class A:\n @property\n def __delitem__(self):\n  print("entered")\n  def use(key): print(key.start[0])\n  return use\ndel A()[[7]:]\n',
+    'class K:\n @property\n def __index__(self):\n  print("entered")\n  def use(): return 0\n  return use\na=[0]\na[K()]=[7]\nprint(a[0][0])\n',
+    'class K:\n @property\n def __index__(self):\n  print("entered")\n  def use(): return 0\n  return use\na=[0]\na[K():]=[[7]]\nprint(a[0][0])\n'
+  ];
+  for(const source of sources){const {registry}=await compileSourceModules([unit(source)],profile);
+    try{for(const mode of ['finish','cancel','close']){
+      const session=new ModuleSession(registry);let output='',cancel=false,reached=false;
+      session.context.begin({shouldCancel:()=>cancel},text=>{output+=text;});const execution=Execution.modules(session.context);
+      try{while(execution.state!=='completed'){
+        const snapshot=execution.advance();if(execution.state==='paused')session.memory.collect([],{cleanup:true});
+        if(output==='entered\n'&&snapshot.frames.some(f=>f.completion==='invoke')){
+          reached=true;if(mode==='cancel'){cancel=true;assert.throws(()=>execution.advance(),{code:'CANCELLED'});break;}if(mode==='close')break;
+        }
+      }assert.ok(reached);if(mode==='finish')assert.equal(output,'entered\n7\n');}
+      finally{execution.close();execution.close();session.context.finish();session.close();}closed({closed:session.stats()});
+    }}finally{registry.close();}
+  }
+});

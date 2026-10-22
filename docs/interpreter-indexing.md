@@ -1,8 +1,8 @@
 # Integer conversion and indexed objects
 
 The semantic oracle is **CPython 3.14.7**. The executable contract is
-[84 independent source cases](../tests/fixtures/interpreter/indexing.json):
-46 read/conversion cases (I1), 30 mutation cases (I2), and eight future boundaries
+[89 independent source cases](../tests/fixtures/interpreter/indexing.json):
+46 read/conversion cases (I1), 35 mutation cases (I2), and eight future boundaries
 (I3). Reference-only success records Python behavior; it does not prove engine
 support. `implemented_stages` and exact source-mode reports determine adoption.
 
@@ -100,3 +100,15 @@ cover roots/layout, original frames, active exceptions, recursion, budget/output
 limits, actual callback OOM, paused collection, cancellation and close. The full
 Node suite has 200 passing tests; all eight existing resource baselines are
 unchanged. Index-result and raw-slice continuations use the shared machine.
+
+
+## Mutation adoption
+
+I2 adds current type slots for setters/deleters, ignored syntax results, scalar
+list deletion and bounded list/tuple slice replacement. Five further reference
+cases pin immutable-target scalar conversion, repeated index conversion during
+augmented slicing, RHS snapshots after conversion callbacks, mixed slice keys
+and static/class method binding. The complete matrix now has 81 comparisons and
+eight future refusals. A class-only build-slice opcode constructs first-class
+keys for mutation and mixed subscripts; legacy bytecode versions 1–4 reject it.
+Existing single-slice read bytecode and core admission remain unchanged.

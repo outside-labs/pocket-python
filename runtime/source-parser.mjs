@@ -72,7 +72,7 @@ class Parser {
   target(value, deletion = false) {
     if (value.kind === "Name") return;
     if (this.classes && value.kind === "Attribute") return;
-    if (value.kind === "Subscript" && value.index.kind !== "Slice") return;
+    if (value.kind === "Subscript" && (this.classes || value.index.kind !== "Slice")) return;
     if (["Tuple", "List", "Attribute", "Subscript"].includes(value.kind)) this.unsupported(deletion ? "This deletion target is not adopted." : "Unpacking, attribute and slice assignment are not adopted.", value);
     this.fail("Invalid assignment/deletion target.", value);
   }
@@ -432,20 +432,21 @@ class Parser {
         }
         this.expect(")"); value = this.node("Call", value, {callable: value, args, keywords});
       } else if (this.eat("[")) {
-        const start = this.peek(); let index = this.at(":") ? null : this.namedExpression();
-        if (this.eat(":")) {
-          if (index?.kind === "NamedExpression" && !this.grouped.has(index)) this.fail("A slice-bound assignment expression requires parentheses.", index);
-          const stop = this.at(":") || this.at("]") ? null : this.expression();
-          const step = this.eat(":") ? this.at("]") ? null : this.expression() : null;
-          index = this.node("Slice", start, {start: index, stop, step});
-        } else if (this.eat(",")) {
-          const items = [index]; while (!this.at("]")) { items.push(this.namedExpression()); if (!this.eat(",")) break; }
-          index = this.node("Tuple", start, {items});
-        }
+        const start = this.peek(), items = [this.subscript()]; let tuple = false;
+        while (this.eat(",")) { tuple = true; if (this.at("]")) break; items.push(this.subscript()); }
+        const index = tuple ? this.node("Tuple", start, {items}) : items[0];
         this.expect("]"); value = this.node("Subscript", value, {value, index});
       } else break;
     }
     return value;
+  }
+  subscript() {
+    const start = this.peek(); let index = this.at(":") ? null : this.namedExpression();
+    if (!this.eat(":")) return index;
+    if (index?.kind === "NamedExpression" && !this.grouped.has(index)) this.fail("A slice-bound assignment expression requires parentheses.", index);
+    const stop = [":", ",", "]"].some(value => this.at(value)) ? null : this.expression();
+    const step = this.eat(":") ? [",", "]"].some(value => this.at(value)) ? null : this.expression() : null;
+    return this.node("Slice", start, {start: index, stop, step});
   }
   atom() {
     const start = this.peek();

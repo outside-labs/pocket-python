@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "I1"
+    "I1",
+    "I2"
   ],
   "cases": [
     {
@@ -547,6 +548,36 @@
       "stage": "I3",
       "source": "s=slice(1,7)\nd={s:7}\nprint(d[s])\n",
       "stdout": "7\n"
+    },
+    {
+      "id": "immutable-target-scalar-conversion",
+      "stage": "I2",
+      "source": "class K:\n def __index__(self):\n  print(\"not used\")\n  return 0\na=(1,)\ntry: a[K()]=7\nexcept TypeError: print(\"set error\")\ntry: del a[K():]\nexcept TypeError: print(\"delete error\")\n",
+      "stdout": "not used\nset error\ndelete error\n"
+    },
+    {
+      "id": "augmented-slice-converts-twice",
+      "stage": "I2",
+      "source": "class K:\n def __index__(self):\n  print(\"index\")\n  return 0\ndef key():\n print(\"key\")\n return K()\na=[1]\na[key():]+=[7]\nprint(len(a),a[0],a[1])\n",
+      "stdout": "key\nindex\nindex\n2 1 7\n"
+    },
+    {
+      "id": "slice-rhs-snapshot-after-index",
+      "stage": "I2",
+      "source": "rhs=[7]\nclass K:\n def __index__(self):\n  rhs.append(8)\n  return 0\na=[1]\na[K():]=rhs\nprint(len(a),a[0],a[1],len(rhs))\n",
+      "stdout": "2 7 8 2\n"
+    },
+    {
+      "id": "tuple-trailing-slice-key",
+      "stage": "I2",
+      "source": "class A:\n def __getitem__(self,key): return key[0]+key[1].stop\nprint(A()[3,:4])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "mutation-static-and-class-method",
+      "stage": "I2",
+      "source": "class A:\n @staticmethod\n def __setitem__(key,value): print(key,value)\n @classmethod\n def __delitem__(cls,key): print(cls.__name__,key)\na=A()\na[1]=7\ndel a[2]\n",
+      "stdout": "1 7\nA 2\n"
     }
   ]
 }
