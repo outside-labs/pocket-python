@@ -1,6 +1,6 @@
 """Known source-console assets, canonical LF bytes; refresh with scripts/lock_interpreter.py."""
 
-ENGINE_FINGERPRINT = 'd97cb93dde94975b62dd4225095e95507ec6e84b313921ae6951cebf661ad123'
+ENGINE_FINGERPRINT = 'a33249f12d4e9aa04aeb7c9e6926c53e2e8a464d2d9907e66fd89fee166add37'
 ENGINE_FILES = (
     ('browser-protocol.mjs', 10589, '920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76'),
     ('bytecode.mjs', 6803, '631241161ce44b8196655f0772b13a34479e5212577519fdafb78cf0d657be09'),
@@ -8,7 +8,7 @@ ENGINE_FILES = (
     ('class-values.mjs', 14661, '203d3177c888f5ce1755b232ee9be1172c865399db7300d47f62bcfd0acfe993'),
     ('function-bytecode.mjs', 15457, '9733b6decfcd59dccff4deb5b9d1f801e07ff191fe1c80f99910fcd6eebcc135'),
     ('function-objects.mjs', 2966, '02374b88f9a3943b5bf97bd7b2f7e886131cd09830f147b511591d8259957b36'),
-    ('functions.mjs', 40952, '5f9161e703a1a3134cd85293a8e5c46f1aace079a8e6c1963cc5cf4b9ccf742a'),
+    ('functions.mjs', 40289, 'b688152b138f635aae8bdf5451e5f62b59da8140bde5b24be2b0c2a2fb188257'),
     ('interpreter-host.mjs', 7019, '0bb0a64faffcf77e0064258e4cfcaa7a937c4372129849f76901bee91b5a5ae2'),
     ('interpreter-worker.mjs', 8282, '937a97cc49d987492de0bc16021a4a804ef51e4ea5b398f79c92e5d30ac82558'),
     ('library-catalog.mjs', 907, '0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c'),
@@ -19,6 +19,7 @@ ENGINE_FILES = (
     ('module-context.mjs', 7639, 'd753b293b89d7b0c56614e23df98521344f6fca50d19355c1f317534ca8c3036'),
     ('module-registry.mjs', 9963, '7fd479684fb43a71e06bd7365ab2bba4eb971a65bc156f199c5b95ff0a232ddc'),
     ('module-session.mjs', 1725, '4e1ffd700cc3468b4c4c19902daed2289e8a48b25c8d7c339f0945c51c4b7e69'),
+    ('operations.mjs', 5314, '6bdad2a64746d64281e153d2cc1cebe8848a3299e8f0e186ffe5f55b6a5c25f6'),
     ('source-compiler.mjs', 23720, '23d1d6a925c3959e7ff7a23926ee1271a6891ef55fea74f77295eca9a5bcf73e'),
     ('source-identifiers.mjs', 25949, '1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914'),
     ('source-modules.mjs', 5115, '3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef'),
@@ -44,6 +45,7 @@ ENGINE_IMPORTS = (
     ('functions.mjs', 'memory.mjs'),
     ('functions.mjs', 'module-context.mjs'),
     ('functions.mjs', 'module-registry.mjs'),
+    ('functions.mjs', 'operations.mjs'),
     ('functions.mjs', 'values.mjs'),
     ('functions.mjs', 'vm.mjs'),
     ('interpreter-host.mjs', 'browser-protocol.mjs'),

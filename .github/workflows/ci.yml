@@ -115,6 +115,7 @@ jobs:
       - run: node --test runtime/memory.test.mjs
       - run: node --test runtime/functions.test.mjs
       - run: node --test runtime/execution.test.mjs
+      - run: node --test runtime/operations.test.mjs
       - run: node --test runtime/module-registry.test.mjs
       - run: node --test runtime/modules.test.mjs
       - run: node --test runtime/source-tokens.test.mjs

@@ -108,3 +108,9 @@ owners, changed collection boundaries or import scope/depth rules require an
 explicit resource-contract revision. Record old/new counters, threshold behavior
 and full payload closure; structural extraction alone makes no speed or memory
 improvement claim. Bytecode 4/5 and core-source/1/classes-source/1 remain unchanged.
+
+The initial operation extraction uses closed immutable records in `operations.mjs`
+and an exhaustive cached root visitor. It copies operand/snapshot arrays and
+preserves the recorded multiset, including duplicate init/ancestor roots.
+Structural transfers retain destination temporaries before releasing a frame.
+These records add no logical metadata charge under the initial contract.
