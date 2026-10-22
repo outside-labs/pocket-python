@@ -542,3 +542,12 @@ now totals 372,545 bytes (+388); the
 [follow-up payload](docs/measurements/2026-10-22-slice-refusals.json) preserves the
 preceding measurement and records current hashes. General slice comparisons
 remain deferred and cannot silently produce a misleading scalar.
+
+
+A raw soft-keyword spelling correction preserves ordinary NFKC identifiers and
+SyntaxError for lookalike type-alias keywords in both profiles. The source matrix
+now has 373 cases; the 207 Node tests, 94-case indexing contract and 1,868 class
+matrix executions retain their existing scope. The unchanged console source
+totals 372,607 bytes (+62); its
+[diagnostic payload record](docs/measurements/2026-10-22-soft-keyword.json) retains
+all hashes and preceding measurements. No execution feature is added.

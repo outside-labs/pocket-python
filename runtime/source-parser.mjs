@@ -143,7 +143,7 @@ class Parser {
       targets.forEach(value => this.target(value, true)); return this.node("Delete", start, {targets});
     }
     if (this.at("import") || this.at("from")) return this.imports();
-    if (this.kind("name") && start.value === "type" && this.peek(1).kind === "name") return this.typeAlias();
+    if (this.kind("name") && start.value === "type" && this.lexed.source.slice(start.start, start.end) === "type" && this.peek(1).kind === "name") return this.typeAlias();
     let value = this.expressionList();
     if (this.at(":")) this.unsupported("Annotations and pattern statements are not adopted.", start);
     if (this.eat("=")) {

@@ -116,3 +116,10 @@ duplicate/default-order type parameters, and yield/await/assignment expressions
 inside type expressions retain SyntaxError. Other independently deferred syntax
 can still stop parsing at its own refusal; this is not a complete Python parser.
 Both core-source/1 and classes-source/1 retain their execution-admission boundary.
+
+
+The type soft keyword matches its original ASCII spelling. NFKC-normalized
+lookalikes remain ordinary identifiers: assigning to a full-width spelling and
+reading type is valid, while using that spelling as a type-alias keyword retains
+SyntaxError in both profiles before effects. This diagnostic fix adds no alias
+execution support.
