@@ -66,3 +66,88 @@ export function powerIntegers(base, exponent, controls) {
   }
   return result;
 }
+
+export function powerReals(base, exponent, {fail}) {
+  if (exponent === 0) return 1;
+  if (Number.isNaN(base)) return NaN;
+  if (Number.isNaN(exponent)) return base === 1 ? 1 : NaN;
+  const absolute = Math.abs(base), odd = Number.isInteger(exponent) && Math.abs(exponent) % 2 === 1;
+  if (!Number.isFinite(exponent)) return absolute === 1 ? 1 :
+    (absolute > 1) === (exponent > 0) ? Infinity : 0;
+  if (!Number.isFinite(base)) { const value = exponent > 0 ? Infinity : 0; return base < 0 && odd ? -value : value; }
+  if (base === 0) {
+    if (exponent < 0) fail("ZeroDivisionError", "zero cannot be raised to a negative power", "ZERO_DIVISION");
+    return Object.is(base, -0) && odd ? -0 : 0;
+  }
+  if (base < 0 && !Number.isInteger(exponent)) fail("UnsupportedOperationError", "Non-real powers require the complex numeric stage.", "UNSUPPORTED");
+  const value = Math.pow(absolute, exponent);
+  if (!Number.isFinite(value)) fail("OverflowError", "numerical result out of range");
+  return base < 0 && odd ? -value : value;
+}
+
+export function modularPower(base, exponent, modulus, {charge, fail}) {
+  if (modulus === 0n) fail("ValueError", "pow() modulus cannot be zero");
+  const positive = modulus < 0n ? -modulus : modulus;
+  if (positive === 1n) return 0n;
+  const reduce = value => { const remainder = value % positive; return remainder < 0n ? remainder + positive : remainder; };
+  const cost = value => value.toString().replace(/^-/, "").length;
+  const multiply = (left, right) => { charge(cost(left) * cost(right)); return reduce(left * right); };
+  charge(cost(base) * cost(positive));
+  let factor = reduce(base), remaining = exponent;
+  if (remaining < 0n) {
+    let previous = factor, current = positive, coefficient = 1n, next = 0n;
+    while (current) {
+      charge(cost(previous) * cost(current) + cost(coefficient) + cost(next));
+      const quotient = previous / current;
+      [previous, current] = [current, previous - quotient * current];
+      [coefficient, next] = [next, coefficient - quotient * next];
+    }
+    if (previous !== 1n) fail("ValueError", "base is not invertible for the given modulus");
+    factor = reduce(coefficient); remaining = -remaining;
+  }
+  let result = 1n;
+  while (remaining) {
+    charge(1);
+    if (remaining & 1n) result = multiply(result, factor);
+    remaining >>= 1n;
+    if (remaining) factor = multiply(factor, factor);
+  }
+  return modulus < 0n && result !== 0n ? result - positive : result;
+}
+
+export function roundInteger(value, ndigits, {charge}) {
+  if (ndigits === null || ndigits >= 0n || value === 0n) return value;
+  const negative = value < 0n, absolute = negative ? -value : value, digits = absolute.toString().length;
+  if (-ndigits > BigInt(digits)) return 0n;
+  const count = Number(-ndigits); charge(digits * count + count * count);
+  const scale = 10n ** BigInt(count), result = roundQuotient(absolute, scale) * scale;
+  return negative ? -result : result;
+}
+
+export function floatRatio(value) {
+  const view = new DataView(new ArrayBuffer(8)); view.setFloat64(0, value);
+  const bits = view.getBigUint64(0), exponent = Number((bits >> 52n) & 2047n), fraction = bits & ((1n << 52n) - 1n);
+  let numerator = exponent ? fraction + (1n << 52n) : fraction, denominator = 1n;
+  const shift = exponent ? exponent - 1023 - 52 : -1074;
+  if (shift >= 0) numerator <<= BigInt(shift); else denominator <<= BigInt(-shift);
+  return {numerator, denominator};
+}
+
+export function roundReal(value, ndigits, controls) {
+  const {charge, fail} = controls, negative = value < 0 || Object.is(value, -0);
+  if (ndigits === null) {
+    if (Number.isNaN(value)) fail("ValueError", "cannot convert float NaN to integer");
+    if (!Number.isFinite(value)) fail("OverflowError", "cannot convert float infinity to integer");
+    const {numerator, denominator} = floatRatio(value); charge(denominator.toString(2).length + 53);
+    const result = roundQuotient(numerator, denominator); return negative ? -result : result;
+  }
+  if (!Number.isFinite(value) || ndigits > 323n) return value;
+  if (ndigits < -308n) return negative ? -0 : 0;
+  const digits = Number(ndigits), scale = 10n ** BigInt(Math.abs(digits));
+  charge(digits * digits + 1075);
+  let {numerator, denominator} = floatRatio(value);
+  if (digits >= 0) numerator *= scale; else denominator *= scale;
+  const rounded = roundQuotient(numerator, denominator);
+  const result = digits >= 0 ? divideIntegers(rounded, scale, controls) : divideIntegers(rounded * scale, 1n, controls);
+  return negative ? -result : result;
+}

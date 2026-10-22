@@ -276,6 +276,20 @@
       "features": [
         "source.grammar"
       ]
+    },
+    {
+      "id": "numeric-helper-core",
+      "source": "pair=divmod(-7,3)\nprint(abs(-7),pair[0],pair[1],pow(3,-1,11),round(250,-2),bin(-3),oct(15),hex(255),ord(chr(128013)))\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "numeric-helper-real-core",
+      "source": "pair=divmod(-7.5,2.0)\nprint(pair[0]==-4.0,pair[1]==0.5,round(number=2.675,ndigits=2)==2.67,pow(exp=3,base=2))\n",
+      "features": [
+        "source.grammar"
+      ]
     }
   ],
   "boundaries": [

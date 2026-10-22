@@ -59,8 +59,8 @@
     {
       "id": "numeric-operations",
       "status": "partial",
-      "scope": "Arbitrary integers, floats and mixed arithmetic + - * / // %, comparisons; exact integer true division, bitwise/shift operators and bounded integer power. Floor/modulo follow Python signs.",
-      "gaps": "Real power, numeric constructors, helper builtins and complex values follow the remaining numeric stages.",
+      "scope": "Arbitrary integers, floats and mixed arithmetic + - * / // %, comparisons; exact integer true division, bitwise/shift operators and bounded integer power. Floor/modulo follow Python signs. Primitive abs/divmod/pow/round and base/Unicode helpers are admitted with exact integer and binary64 rounding semantics.",
+      "gaps": "Real/complex constructors, owned numeric callbacks and complex values follow the remaining numeric stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -740,9 +740,9 @@
   "builtins": [
     {
       "id": "abs",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -848,9 +848,9 @@
     },
     {
       "id": "bin",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -956,9 +956,9 @@
     },
     {
       "id": "chr",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1082,9 +1082,9 @@
     },
     {
       "id": "divmod",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1320,9 +1320,9 @@
     },
     {
       "id": "hex",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1618,9 +1618,9 @@
     },
     {
       "id": "oct",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1654,17 +1654,15 @@
     },
     {
       "id": "ord",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "supported",
+      "scope": "One-character Unicode strings, including non-BMP code points and lone surrogate values; positional-only argument.",
+      "gaps": "",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-NUM-01"
-      ],
+      "next_tasks": [],
       "probes": [
         "builtin-ord"
       ],
@@ -1672,9 +1670,9 @@
     },
     {
       "id": "pow",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1780,9 +1778,9 @@
     },
     {
       "id": "round",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Primitive numeric helper signatures and values in core-source/1 and classes-source/1; see interpreter-numeric.md for the finite contract.",
+      "gaps": "Owned numeric/index callbacks and later numeric families follow INT-NUM-01; general arithmetic slots remain INT-OBJ-05.",
       "reference_version": "3.14.7",
       "targets": [
         "node",

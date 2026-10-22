@@ -677,17 +677,15 @@
     },
     {
       "id": "builtin-abs",
-      "source": "print(callable(abs))\n",
-      "classification": "deferred",
+      "source": "print(abs(-7), abs(-0.5)==0.5)\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "7 True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "7 True\n",
+        "error_type": null
       }
     },
     {
@@ -767,17 +765,15 @@
     },
     {
       "id": "builtin-bin",
-      "source": "print(callable(bin))\n",
-      "classification": "deferred",
+      "source": "print(bin(-7))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "-0b111\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "-0b111\n",
+        "error_type": null
       }
     },
     {
@@ -853,17 +849,15 @@
     },
     {
       "id": "builtin-chr",
-      "source": "print(callable(chr))\n",
-      "classification": "deferred",
+      "source": "print(ord(chr(128013)))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "128013\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "128013\n",
+        "error_type": null
       }
     },
     {
@@ -956,17 +950,15 @@
     },
     {
       "id": "builtin-divmod",
-      "source": "print(callable(divmod))\n",
-      "classification": "deferred",
+      "source": "pair=divmod(-7,3)\nprint(pair[0],pair[1])\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "-3 2\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "-3 2\n",
+        "error_type": null
       }
     },
     {
@@ -1149,17 +1141,15 @@
     },
     {
       "id": "builtin-hex",
-      "source": "print(callable(hex))\n",
-      "classification": "deferred",
+      "source": "print(hex(255))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "0xff\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "0xff\n",
+        "error_type": null
       }
     },
     {
@@ -1377,17 +1367,15 @@
     },
     {
       "id": "builtin-oct",
-      "source": "print(callable(oct))\n",
-      "classification": "deferred",
+      "source": "print(oct(15))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "0o17\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "0o17\n",
+        "error_type": null
       }
     },
     {
@@ -1407,32 +1395,28 @@
     },
     {
       "id": "builtin-ord",
-      "source": "print(callable(ord))\n",
-      "classification": "deferred",
+      "source": "print(ord(\"\u00e9\"))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "233\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "233\n",
+        "error_type": null
       }
     },
     {
       "id": "builtin-pow",
-      "source": "print(callable(pow))\n",
-      "classification": "deferred",
+      "source": "print(pow(3,-1,11),pow(2,10))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "4 1024\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "4 1024\n",
+        "error_type": null
       }
     },
     {
@@ -1506,17 +1490,15 @@
     },
     {
       "id": "builtin-round",
-      "source": "print(callable(round))\n",
-      "classification": "deferred",
+      "source": "print(round(2.5),round(2.675,2)==2.67)\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "2 True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "2 True\n",
+        "error_type": null
       }
     },
     {

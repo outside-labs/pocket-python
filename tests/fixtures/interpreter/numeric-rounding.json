@@ -1,0 +1,1431 @@
+{
+  "reference_version": "3.14.7",
+  "observation": "Independently generated CPython round results; input/output binary64 bits use struct.pack('>d').",
+  "cases": [
+    {
+      "bits": "0000000000000000",
+      "ndigits": null,
+      "integer": "0"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "0",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "16",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "22",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "323",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "324",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": null,
+      "integer": "0"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "-309",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "-308",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "-2",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "-1",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "0",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "1",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "2",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "16",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "22",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "308",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "323",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "324",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": null,
+      "integer": "0"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "0",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "1",
+      "result_bits": "3fe0000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "2",
+      "result_bits": "3fe0000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "16",
+      "result_bits": "3fe0000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "22",
+      "result_bits": "3fe0000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "308",
+      "result_bits": "3fe0000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "323",
+      "result_bits": "3fe0000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "324",
+      "result_bits": "3fe0000000000000"
+    },
+    {
+      "bits": "3fe0000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "3fe0000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": null,
+      "integer": "0"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "-309",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "-308",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "-2",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "-1",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "0",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "1",
+      "result_bits": "bfe0000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "2",
+      "result_bits": "bfe0000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "16",
+      "result_bits": "bfe0000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "22",
+      "result_bits": "bfe0000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "308",
+      "result_bits": "bfe0000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "323",
+      "result_bits": "bfe0000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "324",
+      "result_bits": "bfe0000000000000"
+    },
+    {
+      "bits": "bfe0000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "bfe0000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": null,
+      "integer": "2"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "0",
+      "result_bits": "4000000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "1",
+      "result_bits": "3ff8000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "2",
+      "result_bits": "3ff8000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "16",
+      "result_bits": "3ff8000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "22",
+      "result_bits": "3ff8000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "308",
+      "result_bits": "3ff8000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "323",
+      "result_bits": "3ff8000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "324",
+      "result_bits": "3ff8000000000000"
+    },
+    {
+      "bits": "3ff8000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "3ff8000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": null,
+      "integer": "2"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "0",
+      "result_bits": "4000000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "1",
+      "result_bits": "4004000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "2",
+      "result_bits": "4004000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "16",
+      "result_bits": "4004000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "22",
+      "result_bits": "4004000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "308",
+      "result_bits": "4004000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "323",
+      "result_bits": "4004000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "324",
+      "result_bits": "4004000000000000"
+    },
+    {
+      "bits": "4004000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "4004000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": null,
+      "integer": "-2"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "-309",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "-308",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "-2",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "-1",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "0",
+      "result_bits": "c000000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "1",
+      "result_bits": "c004000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "2",
+      "result_bits": "c004000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "16",
+      "result_bits": "c004000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "22",
+      "result_bits": "c004000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "308",
+      "result_bits": "c004000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "323",
+      "result_bits": "c004000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "324",
+      "result_bits": "c004000000000000"
+    },
+    {
+      "bits": "c004000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "c004000000000000"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": null,
+      "integer": "3"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "0",
+      "result_bits": "4008000000000000"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "1",
+      "result_bits": "400599999999999a"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "2",
+      "result_bits": "40055c28f5c28f5c"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "16",
+      "result_bits": "4005666666666666"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "22",
+      "result_bits": "4005666666666666"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "308",
+      "result_bits": "4005666666666666"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "323",
+      "result_bits": "4005666666666666"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "324",
+      "result_bits": "4005666666666666"
+    },
+    {
+      "bits": "4005666666666666",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "4005666666666666"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": null,
+      "integer": "1"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "0",
+      "result_bits": "3ff0000000000000"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "1",
+      "result_bits": "3ff0000000000000"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "2",
+      "result_bits": "3ff0000000000000"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "16",
+      "result_bits": "3ff0147ae147ae14"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "22",
+      "result_bits": "3ff0147ae147ae14"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "308",
+      "result_bits": "3ff0147ae147ae14"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "323",
+      "result_bits": "3ff0147ae147ae14"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "324",
+      "result_bits": "3ff0147ae147ae14"
+    },
+    {
+      "bits": "3ff0147ae147ae14",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "3ff0147ae147ae14"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": null,
+      "integer": "1"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "0",
+      "result_bits": "3ff0000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "1",
+      "result_bits": "3ff3333333333333"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "2",
+      "result_bits": "3ff4000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "16",
+      "result_bits": "3ff4000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "22",
+      "result_bits": "3ff4000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "308",
+      "result_bits": "3ff4000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "323",
+      "result_bits": "3ff4000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "324",
+      "result_bits": "3ff4000000000000"
+    },
+    {
+      "bits": "3ff4000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "3ff4000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": null,
+      "integer": "-1"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "-309",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "-308",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "-2",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "-1",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "0",
+      "result_bits": "bff0000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "1",
+      "result_bits": "bff3333333333333"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "2",
+      "result_bits": "bff4000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "16",
+      "result_bits": "bff4000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "22",
+      "result_bits": "bff4000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "308",
+      "result_bits": "bff4000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "323",
+      "result_bits": "bff4000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "324",
+      "result_bits": "bff4000000000000"
+    },
+    {
+      "bits": "bff4000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "bff4000000000000"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": null,
+      "integer": "100000000000000001097906362944045541740492309677311846336810682903157585404911491537163328978494688899061249669721172515611590283743140088328307009198146046031271664502933027185697489699588559043338384466165001178426897626212945177628091195786707458122783970171784415105291802893207873272974885715430223118336"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "-308",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "-2",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "-1",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "0",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "1",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "2",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "16",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "22",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "308",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "323",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "324",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fe1ccf385ebc8a0",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "7fe1ccf385ebc8a0"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": null,
+      "integer": "179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "-308",
+      "error": "OverflowError"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "-2",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "-1",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "0",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "1",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "2",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "16",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "22",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "308",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "323",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "324",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "7fefffffffffffff",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "7fefffffffffffff"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": null,
+      "integer": "0"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "0",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "16",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "22",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "323",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "324",
+      "result_bits": "0000000000000001"
+    },
+    {
+      "bits": "0000000000000001",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "0000000000000001"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": null,
+      "integer": "0"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "-309",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "-308",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "-2",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "-1",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "0",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "1",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "2",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "16",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "22",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "308",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "323",
+      "result_bits": "8000000000000000"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "324",
+      "result_bits": "8000000000000001"
+    },
+    {
+      "bits": "8000000000000001",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "8000000000000001"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": null,
+      "integer": "0"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "-309",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "-308",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "-2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "-1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "0",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "1",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "2",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "16",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "22",
+      "result_bits": "0000000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "308",
+      "result_bits": "000e61acf033d1a4"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "323",
+      "result_bits": "000fffffffffffff"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "324",
+      "result_bits": "0010000000000000"
+    },
+    {
+      "bits": "0010000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "0010000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": null,
+      "error": "OverflowError"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "-309",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "-308",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "-2",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "-1",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "0",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "1",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "2",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "16",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "22",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "308",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "323",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "324",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "7ff0000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "7ff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": null,
+      "error": "OverflowError"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "-309",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "-308",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "-2",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "-1",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "0",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "1",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "2",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "16",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "22",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "308",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "323",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "324",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "fff0000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "fff0000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": null,
+      "error": "ValueError"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "-1000000000000000000000000000000",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "-309",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "-308",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "-2",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "-1",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "0",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "1",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "2",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "16",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "22",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "308",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "323",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "324",
+      "result_bits": "7ff8000000000000"
+    },
+    {
+      "bits": "7ff8000000000000",
+      "ndigits": "1000000000000000000000000000000",
+      "result_bits": "7ff8000000000000"
+    }
+  ]
+}
