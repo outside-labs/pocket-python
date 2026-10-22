@@ -100,3 +100,21 @@ huge precisions and exact binary64 ties. Modular inverse and exponentiation
 poll the existing work/cancellation budget. Float divmod roots both owned
 results before tuple allocation; collection and OOM leave no leaked objects.
 Numeric/index callbacks remain the later N5 stage.
+
+## Offline operator checkpoint
+
+The installed nested-path console compares 127 programs with CPython and passes
+24 additional acceptance groups, including fresh operator/helper source after
+offline reload, numeric error prefixes/locations, bounded failures, unchanged
+static-only host grants and class-to-core updates that retain primitive numeric
+APIs. All 37 Stop/Restart cycles complete within the existing three-second bound.
+The expanded class example demonstrates exact division, shifts/bitwise power,
+modular inverse, rounding and Unicode helpers.
+
+The [complete payload record](measurements/2026-10-22-numeric-operators.json)
+verifies the immutable prior inputs and all 38 current artifact members. The
+core-only class example grows from 414,161 to 430,208 bytes (+16,047), including
+the new numeric module, changed engine/receipt/UI and expanded example. The
+record includes per-file hashes and reproducible gzip totals; it makes no
+startup, performance or device claim. INT-NUM-01 remains open for constructors,
+complex values and owned conversion callbacks.

@@ -131,6 +131,13 @@ labels[same] = 7
 print("Equal:", first == same, first != Label("beta"))
 print("Key:", labels[same], "Count:", len(labels))
 print("Original key:", next(iter(labels)) is first)
+
+mask = (1 << 8) - 1
+print("Bits:", hex(mask), mask & 7, ~7, 2**3**2)
+parts = divmod(-7, 3)
+print("Numbers:", parts[0], parts[1], pow(3, -1, 11), round(250, -2))
+print("Real checks:", (10**400)/(10**400) == 1.0, round(2.675, 2) == 2.67)
+print("Unicode:", ord(chr(128013)))
 '''
 
 if __name__ == '__main__':

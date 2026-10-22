@@ -125,6 +125,9 @@ def smoke(channel=None):
                                      'hash-restore-object', 'dictionary-primitive-and-user-key',
                                      'dictionary-value-mutation-during-eq', 'hash-default-descriptor-identity'])
                     programs.append('import operator\nclass Key:\n def __hash__(self): return 7\n def __eq__(self,other): return other==7\nd={7:9}\nprint(operator.eq(Key(),7),operator.getitem(d,Key()))\n')
+                    numeric = json.loads((ROOT / 'tests/fixtures/interpreter/numeric.json').read_bytes())
+                    programs.extend(c['source'] for c in numeric['cases']
+                                    if c['stage'] in ['N1', 'N2'] and 'error_type' not in c)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -221,6 +224,14 @@ def smoke(channel=None):
                     refused('class K:\n def __hash__(self): return 7\nhash((K(),))\n', 'UnsupportedOperationError:')
                     run(SOURCE, cases[0]['stdout'])
                     checks.append('equality-binding-body-hash-result-disabling-and-explicit-future-errors')
+                    refused('print("entered")\npow(6,-1,12)\n', 'ValueError:')
+                    assert page.locator('#result').inner_text() == 'entered\n'
+                    assert 'sources/app.py:2' in page.locator('#status').inner_text()
+                    refused('print("entered")\n1<<-1\n', 'ValueError:')
+                    assert page.locator('#result').inner_text() == 'entered\n'
+                    refused('print("entered")\n2**100000000000000000000\n', 'ExecutionLimitError:')
+                    assert page.locator('#result').inner_text() == 'entered\n'
+                    checks.append('numeric-signature-inverse-shift-and-resource-errors-preserve-prefix')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -240,6 +251,9 @@ def smoke(channel=None):
                     checks.append('new-equality-binding-fallback-and-membership-source-offline')
                     run('class OfflineKey:\n def __init__(self,name): self.__name=name\n def __hash__(self): return 7\n def __eq__(self,other):\n  if not isinstance(other,OfflineKey): return NotImplemented\n  return self.__name==other.__name\na=OfflineKey("a")\nb=OfflineKey("b")\nd={a:3,b:8}\nd[OfflineKey("a")]=7\nprint(len(d),d[a],d[b],OfflineKey("a") in d)\nprint(next(iter(d)) is a)\ndel d[OfflineKey("b")]\nprint(len(d),d[a])\n', '2 7 8 True\nTrue\n1 7\n')
                     checks.append('new-hash-collision-update-key-identity-and-delete-source-offline')
+                    run('mask=(1<<12)-1\nmask^=7\nparts=divmod(-41,7)\nprint(hex(mask),bin(9),oct(9),parts[0],parts[1])\nprint(pow(7,-1,19),round(1250,-2),round(1.25,1)==1.2,(10**390)/(10**390)==1.0,ord(chr(128013)))\n',
+                        '0xff8 0b1001 0o11 -6 1\n11 1200 True True 128013\n')
+                    checks.append('new-exact-operators-helper-rounding-and-unicode-source-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -274,6 +288,8 @@ def smoke(channel=None):
                             busy.append('class Spin:\n '+('@property\n ' if binding else '')+
                                         'def '+slot+'(self'+(',other' if slot!='__hash__' and not binding else '')+'):\n  while True: pass\n'+invocation+'\n')
                     busy.extend([
+                        'while True:\n x=pow(123456789,1234567,1000000007)\n',
+                        'while True:\n x=round(2.675,2)\n',
                         'class Sentinel:\n def __eq__(self,other):\n  while True: pass\ndef supply(): return [7]\nnext(iter(supply,Sentinel()),[3])\n',
                         'class K:\n def __hash__(self): return 7\n def __eq__(self,other):\n  while True: pass\nd={K():[3]}\nd[K()]=[7]\n',
                         'class R:\n def __bool__(self):\n  while True: pass\nclass K:\n def __hash__(self): return 7\n def __eq__(self,other): return R()\nd={K():[3]}\nd[K()]=[7]\n',
@@ -318,6 +334,8 @@ def smoke(channel=None):
                     assert page.locator('#result').inner_text() == ''
                     refused('import operator\n', 'ImportError:')
                     refused('callable(print)\n', 'NameError:')
+                    run('parts=divmod(-41,7)\nprint(pow(7,-1,19),parts[0],parts[1],hex((1<<12)-1),round(1250,-2))\n', '11 -6 1 0xfff 1200\n')
+                    checks.append('numeric-operators-and-helpers-retained-by-offline-core-profile-update')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')
