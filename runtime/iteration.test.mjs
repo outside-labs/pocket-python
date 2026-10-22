@@ -157,3 +157,19 @@ test('contains callback OOM and endless truth callbacks release pending operands
   const truth=await run('class R:\n def __bool__(self):\n  while True: pass\nclass A:\n def __contains__(self,key): return R()\nprint(7 in A())\n',{maxSteps:500});
   assert.equal(truth.error.code,'BUDGET');closed(truth);
 });
+
+test('reentrant callable exhaustion retains active closures while discarding the outer result',async()=>{
+  const source='class Supply:\n @property\n def __call__(self):\n  def invoke():\n   if self.inner:\n    print("entered")\n    raise StopIteration\n   self.inner=True\n   print(next(it,[3])[0])\n   return [7]\n  return invoke\nsupply=Supply()\nsupply.inner=False\nit=iter(supply,[9])\ndel supply\nprint(next(it,[5])[0],next(it,[6])[0])\n';
+  const {registry}=await compileSourceModules([unit(source)],profile);
+  try{for(const mode of ['finish','cancel','close']){
+    const session=new ModuleSession(registry);let output='',cancel=false,reached=false;
+    session.context.begin({shouldCancel:()=>cancel},text=>{output+=text;});const execution=Execution.modules(session.context);
+    try{while(execution.state!=='completed'){
+      execution.advance();if(execution.state==='paused')session.memory.collect([],{cleanup:true});
+      if(output==='entered\n'){
+        reached=true;if(mode==='cancel'){cancel=true;assert.throws(()=>execution.advance(),{code:'CANCELLED'});break;}if(mode==='close')break;
+      }
+    }assert.ok(reached);if(mode==='finish')assert.equal(output,'entered\n3\n5 6\n');}
+    finally{execution.close();execution.close();session.context.finish();session.close();}closed({closed:session.stats()});
+  }}finally{registry.close();}
+});

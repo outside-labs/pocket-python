@@ -114,7 +114,8 @@ def smoke(channel=None):
                     programs.extend(c['source'] for c in iteration['cases'] if c['id'] in
                                     ['iterator-loop-else', 'iterator-loop-control', 'iterator-identity-next-default',
                                      'indexed-loop', 'callable-sentinel-loop', 'contains-result-truth',
-                                     'contains-iterator-search', 'contains-optional-binding-iter'])
+                                     'contains-iterator-search', 'contains-optional-binding-iter',
+                                     'callable-reentrant-exhaustion'])
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)

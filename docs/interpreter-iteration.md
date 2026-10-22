@@ -122,3 +122,17 @@ and expanded-example applications. With the old source, complete bytes grow from
 adds 658 source bytes, totaling 384,996 bytes across 37 files. Every file, hash,
 notice and per-file gzip size is recorded. These are payload observations, with
 no startup, speed, device-inference or package-support claim.
+
+## Reentrant exhaustion correction
+
+When a callable recursively advances and exhausts its own sentinel iterator,
+discard its outer result as well. Indexed iteration keeps its distinct rule:
+an already successful outer item read is returned even if a nested read exhausts
+the iterator. Two authored reference regressions distinguish these paths.
+The current matrix has 98 cases: 95 comparisons and three future refusals.
+All 225 Node tests pass, including forced collection/cancel/close during a
+reentrant closure callback. The console now has 63 comparisons and 18 groups,
+with the same 25 Stop/Restart cycles. The separate
+[correction payload](measurements/2026-10-22-iteration-reentry.json) records
+385,018 bytes, a 22-byte increase with the same example source. Earlier counts
+and the original payload remain evidence for the preceding checkpoint.
