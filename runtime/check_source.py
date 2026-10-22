@@ -86,6 +86,10 @@ def check(target, channel=None):
             if case["id"].startswith("unsupported-"):
                 compile(case["source"], "boundary.py", "exec")
             passed = not actual["ok"] and actual.get("error", {}).get("code") == case["code"]
+            if "span" in case:
+                passed = passed and actual["error"].get("location", {}).get("span") == case["span"]
+            if "phase" in case:
+                passed = passed and actual["error"].get("phase") == case["phase"]
             if "message_contains" in case:
                 passed = passed and case["message_contains"] in actual["error"]["message"]
             if "stdout" in case:

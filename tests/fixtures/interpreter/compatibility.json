@@ -19,14 +19,14 @@
     },
     {
       "id": "unicode-values",
-      "source": "text=\"A\ud83d\ude00e\u0301\"\nprint(len(text),text[1],text[::-1],\"\ud83d\ude00\" in text)\n",
+      "source": "text=\"A😀é\"\nprint(len(text),text[1],text[::-1],\"😀\" in text)\n",
       "classification": "supported",
       "reference": {
-        "stdout": "4 \ud83d\ude00 \u0301e\ud83d\ude00A True\n",
+        "stdout": "4 😀 ́e😀A True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "4 \ud83d\ude00 \u0301e\ud83d\ude00A True\n",
+        "stdout": "4 😀 ́e😀A True\n",
         "error_type": null
       }
     },
@@ -71,7 +71,7 @@
     },
     {
       "id": "builtin-forms",
-      "source": "print(bool(),bool([]),len(\"\ud83d\ude00\"),next(iter([7])),isinstance(\"x\",str))\n",
+      "source": "print(bool(),bool([]),len(\"😀\"),next(iter([7])),isinstance(\"x\",str))\n",
       "classification": "supported",
       "reference": {
         "stdout": "False False 1 7 True\n",
@@ -435,15 +435,15 @@
     {
       "id": "walrus",
       "source": "print((x:=7))\n",
-      "classification": "known-divergence",
+      "classification": "deferred",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "error_type": "SyntaxError",
-        "code": "SYNTAX",
+        "error_type": "UnsupportedSyntaxError",
+        "code": "UNSUPPORTED",
         "phase": "parse"
       }
     },
@@ -540,15 +540,15 @@
     {
       "id": "type-alias",
       "source": "type A=list[int]\nprint(7)\n",
-      "classification": "known-divergence",
+      "classification": "deferred",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "error_type": "SyntaxError",
-        "code": "SYNTAX",
+        "error_type": "UnsupportedSyntaxError",
+        "code": "UNSUPPORTED",
         "phase": "parse"
       }
     },

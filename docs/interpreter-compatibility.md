@@ -35,9 +35,10 @@ python runtime/check_compatibility.py --target browser --report build/compatibil
 Each report hashes its inventory, corpus and implementation inputs, records the
 actual source output/diagnostic/phase and checks logical teardown. A passing
 observation means the recorded behavior was reproduced. Only supported positive
-cases earn support credit. str(s) now preserves the existing string identity. Valid but unadopted assignment
-expressions/type aliases reported as SyntaxError remain explicit known
-divergences until their own fixes pass. No overall percentage of
+cases earn support credit. str(s) now preserves the existing string identity. Recognized valid assignment
+expressions and type aliases receive UNSUPPORTED before execution; malformed
+forms in the diagnostic grammar retain SyntaxError. Both remain deferred and
+earn no execution support credit. No overall percentage of
 Python coverage is inferred from these probe counts.
 
 ## Language and platform surfaces
@@ -51,7 +52,7 @@ Python coverage is inferred from these probe counts.
 | expression-order | supported | Admitted expression evaluation, chained comparisons, identity/membership, short circuit and/or, not and conditional expressions. This row covers admitted value/protocol families, not every Python expression. |
 | ordinary-control | supported | if/elif/else, while/for over adopted values, loop else/break/continue, return and finally control transfer. Generator, context-manager, match and async control are separate rows. |
 | function-binding | partial | def, recursion, positional-only/ordinary/keyword-only parameters; immutable literal/tuple defaults and lexical closures. Computed/mutable defaults, global/nonlocal writes, argument packing/unpacking and annotations remain deferred. |
-| ordinary-syntax-gaps | deferred | assert, lambda, assignment expressions and tuple/list/starred assignment unpacking. No execution support. Assignment expressions currently receive SYNTAX instead of UNSUPPORTED; this divergence is recorded without support credit. |
+| ordinary-syntax-gaps | deferred | assert, lambda, assignment expressions and tuple/list/starred assignment unpacking. No execution support. Recognized assignment expressions receive UNSUPPORTED without execution support. |
 | class-construction | partial | Explicit classes-source/1 only: user classes, bounded C3 MRO, __init__, ordinary attributes/deletion and bound methods. Builtin subclassing, __new__, super, metaclasses, implicit __class__ cells and full reflective behavior are not adopted. Missing list currently makes the builtin-subclass probe fail with NameError. |
 | private-names | supported | Lexical private-name mangling in admitted class bodies, nested code, parameters/imports and metadata. No additional syntax beyond the explicit source profile. |
 | descriptors-decorators | partial | Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Descriptor-valued setter/deleter/name-notification hooks and unrestricted reflection remain refused. |
@@ -65,7 +66,7 @@ Python coverage is inferred from these probe counts.
 | imports | partial | Static absolute/relative imports from a finite granted source registry, packages, identity/cache, initialization order, cycles and failed-init retry. No ambient filesystem/sys.path/PyPI loader, dynamic __import__ or import hooks. Missing grants raise IMPORT/ImportError; that is an authority boundary, not proof of a missing language API. |
 | generators-comprehensions | deferred | yield/yield from, generator methods, list/dict/set/generator comprehensions and suspended ownership. No admitted generator or comprehension syntax. |
 | context-patterns | deferred | with and synchronous context manager protocols; match/case patterns and guards. No admitted source execution. Async context managers are a separate async gate. |
-| annotations-generics | deferred | Python 3.14 annotation timing, type parameters, type aliases and required generic aliases. Annotations and generic syntax are not adopted. Type aliases currently receive SYNTAX instead of UNSUPPORTED. |
+| annotations-generics | deferred | Python 3.14 annotation timing, type parameters, type aliases and required generic aliases. Annotations and generic syntax are not adopted. Recognized type aliases receive UNSUPPORTED without execution support. |
 | formatted-strings | deferred | f-strings and formatting grammar; t-strings, Template/Interpolation and string.templatelib APIs. Tokenizer rejects these literal forms. Server-side t-string use by a consumer does not establish browser interpreter support. |
 | async-language | deferred | Native coroutine/await semantics, async iteration/generators/context managers and bounded scheduling/cancellation. Owned instruction stepping is implemented, but multiple parked owners, persistent events and native coroutine syntax are not. Host Promises are not Python coroutines. |
 | dynamic-code-reflection | deferred | compile/eval/exec, dynamic imports and broader globals/locals/type/attribute reflection. Source admission, namespace/identity and target authority need separate explicit contracts. |
