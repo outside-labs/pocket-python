@@ -1,0 +1,564 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-equality/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "identity-defaults",
+      "stage": "E1",
+      "source": "class A: pass\na=A()\nb=A()\nprint(a==a,a!=a,a==b,a!=b,a==7,7==a)\n",
+      "stdout": "True False False True False False\n"
+    },
+    {
+      "id": "eq-raw-result",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): return \"raw\"\na=A()\nprint(a==7,7==a,a.__eq__(7))\n",
+      "stdout": "raw raw raw\n"
+    },
+    {
+      "id": "ne-raw-result",
+      "stage": "E1",
+      "source": "class A:\n def __ne__(self,other): return \"raw\"\na=A()\nprint(a!=7,7!=a,a.__ne__(7))\n",
+      "stdout": "raw raw raw\n"
+    },
+    {
+      "id": "eq-same-object-invokes",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"eq\")\n  return False\na=A()\nprint(a==a,a in [a],[a]==[a])\n",
+      "stdout": "eq\nFalse True True\n"
+    },
+    {
+      "id": "notimplemented-identity-display",
+      "stage": "E1",
+      "source": "print(NotImplemented is NotImplemented,str(NotImplemented),repr(NotImplemented))\n",
+      "stdout": "True NotImplemented NotImplemented\n"
+    },
+    {
+      "id": "notimplemented-truth",
+      "stage": "E1",
+      "source": "print(bool(NotImplemented))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notimplemented-default-fallback",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): return NotImplemented\na=A()\nb=A()\nprint(a==a,a==b,a!=a,a!=b)\n",
+      "stdout": "True False False True\n"
+    },
+    {
+      "id": "same-type-two-attempts",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(self.label)\n  return NotImplemented\na=A()\na.label=\"a\"\nb=A()\nb.label=\"b\"\nprint(a==b)\n",
+      "stdout": "a\nb\nFalse\n"
+    },
+    {
+      "id": "subtype-reflected-first",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"base\")\n  return True\nclass B(A):\n def __eq__(self,other):\n  print(\"child\")\n  return False\nprint(A()==B(),B()==A())\n",
+      "stdout": "child\nchild\nFalse False\n"
+    },
+    {
+      "id": "subtype-inherited-priority",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(type(self).__name__)\n  return NotImplemented\nclass B(A): pass\nprint(A()==B())\n",
+      "stdout": "B\nA\nFalse\n"
+    },
+    {
+      "id": "unrelated-reflected-fallback",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"left\")\n  return NotImplemented\nclass B:\n def __eq__(self,other):\n  print(\"right\")\n  return 7\nprint(A()==B())\n",
+      "stdout": "left\nright\n7\n"
+    },
+    {
+      "id": "ne-default-inverts-eq",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"eq\")\n  return []\nprint(A()!=7)\n",
+      "stdout": "eq\nTrue\n"
+    },
+    {
+      "id": "ne-default-result-truth",
+      "stage": "E1",
+      "source": "class R:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass A:\n def __eq__(self,other): return R()\nprint(A()!=7)\n",
+      "stdout": "truth\nFalse\n"
+    },
+    {
+      "id": "ne-notimplemented-skips-eq",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"bad\")\n  return True\n def __ne__(self,other): return NotImplemented\na=A()\nprint(a!=A(),a!=a)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "eq-instance-shadow-mutation",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): return True\na=A()\na.__eq__=None\nprint(a==7)\ndef other(self,value): return False\nA.__eq__=other\nprint(a==7)\ndel A.__eq__\nprint(a==7)\n",
+      "stdout": "True\nFalse\nFalse\n"
+    },
+    {
+      "id": "eq-none-is-not-fallback",
+      "stage": "E1",
+      "source": "class A:\n __eq__=None\nprint(A()==7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__eq__-staticmethod",
+      "stage": "E1",
+      "source": "class A:\n @staticmethod\n def __eq__(other): return 7\nprint(A()==3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__eq__-classmethod",
+      "stage": "E1",
+      "source": "class A:\n @classmethod\n def __eq__(cls,other): return 7\nprint(A()==3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__eq__-property",
+      "stage": "E1",
+      "source": "class A:\n @property\n def __eq__(self):\n  print(\"binding\")\n  def use(other): return other+1\n  return use\nprint(A()==6)\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "__eq__-binding-attribute-error",
+      "stage": "E1",
+      "source": "class A:\n @property\n def __eq__(self): raise AttributeError(\"binding\")\nprint(A()==7)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "__eq__-body-ValueError",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): raise ValueError(\"body\")\nprint(A()==7)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__eq__-body-StopIteration",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): raise StopIteration(\"body\")\nprint(A()==7)\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "__eq__-body-AttributeError",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): raise AttributeError(\"body\")\nprint(A()==7)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__ne__-staticmethod",
+      "stage": "E1",
+      "source": "class A:\n @staticmethod\n def __ne__(other): return 7\nprint(A()!=3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__ne__-classmethod",
+      "stage": "E1",
+      "source": "class A:\n @classmethod\n def __ne__(cls,other): return 7\nprint(A()!=3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "__ne__-property",
+      "stage": "E1",
+      "source": "class A:\n @property\n def __ne__(self):\n  print(\"binding\")\n  def use(other): return other+1\n  return use\nprint(A()!=6)\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "__ne__-binding-attribute-error",
+      "stage": "E1",
+      "source": "class A:\n @property\n def __ne__(self): raise AttributeError(\"binding\")\nprint(A()!=7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "__ne__-body-ValueError",
+      "stage": "E1",
+      "source": "class A:\n def __ne__(self,other): raise ValueError(\"body\")\nprint(A()!=7)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__ne__-body-StopIteration",
+      "stage": "E1",
+      "source": "class A:\n def __ne__(self,other): raise StopIteration(\"body\")\nprint(A()!=7)\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "__ne__-body-AttributeError",
+      "stage": "E1",
+      "source": "class A:\n def __ne__(self,other): raise AttributeError(\"body\")\nprint(A()!=7)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "eq-custom-descriptor",
+      "stage": "E1",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(owner.__name__)\n  def use(other): return other==7\n  return use\nclass A:\n __eq__=D()\nprint(A()==7)\n",
+      "stdout": "A\nTrue\n"
+    },
+    {
+      "id": "eq-raw-key-order",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): return other is original\noriginal=[]\nprint(A()==original)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "conditional-chained-comparison",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(other)\n  return True\na=A()\nprint(1==a==2)\nprint(\"yes\" if a==3 else \"no\")\n",
+      "stdout": "1\n2\nTrue\n3\nyes\n"
+    },
+    {
+      "id": "membership-rich-eq-truth",
+      "stage": "E1",
+      "source": "class R:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass A:\n def __eq__(self,other):\n  print(\"eq\",other)\n  return R()\nprint(7 in [A()],7 not in (A(),))\n",
+      "stdout": "eq 7\ntruth\neq 7\ntruth\nTrue False\n"
+    },
+    {
+      "id": "membership-iterator-rich-eq",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): return other==7\nclass B:\n def __iter__(self): return iter([A()])\nprint(7 in B(),8 not in B())\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "sentinel-rich-equality",
+      "stage": "E1",
+      "source": "class Sentinel:\n def __eq__(self,other):\n  print(\"compare\",other)\n  return other==2\nclass Supply:\n def __init__(self): self.i=0\n def __call__(self):\n  self.i+=1\n  return self.i\nit=iter(Supply(),Sentinel())\nprint(next(it),next(it,7),next(it,8))\n",
+      "stdout": "compare 1\ncompare 2\n1 7 8\n"
+    },
+    {
+      "id": "sentinel-comparison-stop-is-not-sticky",
+      "stage": "E1",
+      "source": "class Sentinel:\n def __eq__(self,other):\n  self.n+=1\n  raise StopIteration(\"compare\")\ndef use(): return 1\nsentinel=Sentinel()\nsentinel.n=0\nit=iter(use,sentinel)\nprint(next(it,7),next(it,8),sentinel.n)\n",
+      "stdout": "7 8 2\n"
+    },
+    {
+      "id": "membership-comparison-stop-propagates",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): raise StopIteration(\"compare\")\nprint(7 in [A()])\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "container-nested-rich-equality",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"eq\",other)\n  return other==7\nprint([[A()]]==[[7]],(A(),)!=(8,),[A()]==(7,))\n",
+      "stdout": "eq 7\neq 8\nTrue True False\n"
+    },
+    {
+      "id": "container-length-shortcut",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"bad\")\n  return True\nprint([A()]==[],(A(),)==())\n",
+      "stdout": "False False\n"
+    },
+    {
+      "id": "list-equality-callback-mutation",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other):\n  left.append(9)\n  right.append(9)\n  return True\nleft=[A()]\nright=[7]\nprint(left==right,len(left),len(right))\n",
+      "stdout": "True 2 2\n"
+    },
+    {
+      "id": "notimplemented-eq-raw",
+      "stage": "E1",
+      "source": "class A:\n def __eq__(self,other): return NotImplemented\na=A()\nprint(a.__eq__(7) is NotImplemented,a==7)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "hash-scalar-invariants",
+      "stage": "E2",
+      "source": "print(hash(7)==hash(7.0),hash(True)==hash(1),hash(-0.0)==hash(0),hash(\"a\")==hash(\"a\"),hash((7,\"a\"))==hash((7,\"a\")))\n",
+      "stdout": "True True True True True\n"
+    },
+    {
+      "id": "hash-integer-normalization",
+      "stage": "E2",
+      "source": "print(hash(-1),hash(2305843009213693952),hash(1208925819614629174706179))\n",
+      "stdout": "-2 1 524291\n"
+    },
+    {
+      "id": "hash-float-numeric",
+      "stage": "E2",
+      "source": "print(hash(0.5),hash(1.5),hash(-1.0))\n",
+      "stdout": "1152921504606846976 1152921504606846977 -2\n"
+    },
+    {
+      "id": "hash-default-identity",
+      "stage": "E2",
+      "source": "class A: pass\na=A()\nprint(hash(a)==hash(a))\nd={a:7}\nprint(d[a],a in d)\n",
+      "stdout": "True\n7 True\n"
+    },
+    {
+      "id": "hash-disabled-by-own-eq",
+      "stage": "E2",
+      "source": "class A:\n def __eq__(self,other): return True\nprint(A.__hash__ is None)\nhash(A())\n",
+      "stdout": "True\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-inherited-disabled",
+      "stage": "E2",
+      "source": "class A:\n def __eq__(self,other): return True\nclass B(A): pass\nhash(B())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-restore-object",
+      "stage": "E2",
+      "source": "class A:\n def __eq__(self,other): return True\n __hash__=object.__hash__\na=A()\nprint(hash(a)==hash(a),{a:7}[a])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "hash-own-eq-disables-inherited-hash",
+      "stage": "E2",
+      "source": "class A:\n def __hash__(self): return 7\nclass B(A):\n def __eq__(self,other): return True\nprint(B.__hash__ is None)\nhash(B())\n",
+      "stdout": "True\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-inherits-explicit",
+      "stage": "E2",
+      "source": "class A:\n def __hash__(self): return 7\nclass B(A): pass\nprint(hash(B()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "hash-dynamic-eq-does-not-disable",
+      "stage": "E2",
+      "source": "class A: pass\na=A()\nbefore=hash(a)\ndef equal(self,other): return True\nA.__eq__=equal\nprint(hash(a)==before)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-remove-disabled-slot",
+      "stage": "E2",
+      "source": "class A:\n def __eq__(self,other): return True\ndel A.__hash__\na=A()\nprint(hash(a)==hash(a))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-result-True",
+      "stage": "E2",
+      "source": "class A:\n def __hash__(self): return True\nprint(hash(A()))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "hash-result--1",
+      "stage": "E2",
+      "source": "class A:\n def __hash__(self): return -1\nprint(hash(A()))\n",
+      "stdout": "-2\n"
+    },
+    {
+      "id": "hash-result-2305843009213693952",
+      "stage": "E2",
+      "source": "class A:\n def __hash__(self): return 2305843009213693952\nprint(hash(A()))\n",
+      "stdout": "2305843009213693952\n"
+    },
+    {
+      "id": "hash-result-1208925819614629174706179",
+      "stage": "E2",
+      "source": "class A:\n def __hash__(self): return 1208925819614629174706179\nprint(hash(A()))\n",
+      "stdout": "524291\n"
+    },
+    {
+      "id": "hash-invalid-none",
+      "stage": "E2",
+      "source": "class K:\n def __index__(self): return 7\nclass A:\n def __hash__(self): return None\nprint(hash(A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-float",
+      "stage": "E2",
+      "source": "class K:\n def __index__(self): return 7\nclass A:\n def __hash__(self): return 1.0\nprint(hash(A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-string",
+      "stage": "E2",
+      "source": "class K:\n def __index__(self): return 7\nclass A:\n def __hash__(self): return \"1\"\nprint(hash(A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-notimplemented",
+      "stage": "E2",
+      "source": "class K:\n def __index__(self): return 7\nclass A:\n def __hash__(self): return NotImplemented\nprint(hash(A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-index-object",
+      "stage": "E2",
+      "source": "class K:\n def __index__(self): return 7\nclass A:\n def __hash__(self): return K()\nprint(hash(A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-staticmethod",
+      "stage": "E2",
+      "source": "class A:\n @staticmethod\n def __hash__(): return 7\nprint(hash(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "hash-classmethod",
+      "stage": "E2",
+      "source": "class A:\n @classmethod\n def __hash__(cls): return 7\nprint(hash(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "hash-property",
+      "stage": "E2",
+      "source": "class A:\n @property\n def __hash__(self):\n  print(\"binding\")\n  def use(): return 7\n  return use\nprint(hash(A()))\n",
+      "stdout": "binding\n7\n"
+    },
+    {
+      "id": "hash-binding-attribute-error",
+      "stage": "E2",
+      "source": "class A:\n @property\n def __hash__(self): raise AttributeError(\"binding\")\nhash(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-body-attribute-error",
+      "stage": "E2",
+      "source": "class A:\n def __hash__(self): raise AttributeError(\"body\")\nhash(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "hash-none",
+      "stage": "E2",
+      "source": "class A:\n __hash__=None\nhash(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-call-zero",
+      "stage": "E2",
+      "source": "hash()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-call-two",
+      "stage": "E2",
+      "source": "hash(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-call-keyword",
+      "stage": "E2",
+      "source": "hash(object=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-call-list",
+      "stage": "E2",
+      "source": "hash([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-invalid-call-dict",
+      "stage": "E2",
+      "source": "hash({})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dictionary-collision-update-delete",
+      "stage": "E2",
+      "source": "class K:\n def __init__(self,n): self.n=n\n def __hash__(self): return 7\n def __eq__(self,other): return self.n==other.n\na=K(1)\nb=K(1)\nc=K(2)\nd={a:3,c:8}\nd[b]=7\nprint(len(d),d[a],d[b],d[c],b in d)\nprint(next(iter(d)) is a)\ndel d[b]\nprint(len(d),a not in d,d[c])\n",
+      "stdout": "2 7 7 8 True\nTrue\n1 True 8\n"
+    },
+    {
+      "id": "dictionary-hash-once-per-operation",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  return 7\nk=K()\nd={k:3}\nd[k]=7\nprint(d[k],k in d)\ndel d[k]\n",
+      "stdout": "hash\nhash\nhash\nhash\n7 True\nhash\n"
+    },
+    {
+      "id": "dictionary-identity-skips-eq",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other): raise ValueError(\"bad\")\nk=K()\nd={k:7}\nprint(d[k],k in d)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "dictionary-primitive-and-user-key",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self): return hash(7)\n def __eq__(self,other): return other==7\nk=K()\nd={7:3}\nd[k]=8\nprint(len(d),d[7],d[k])\ne={k:3}\ne[7]=9\nprint(len(e),e[k],e[7])\n",
+      "stdout": "1 8 8\n1 9 9\n"
+    },
+    {
+      "id": "dictionary-minus-one-hash-collision",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self): return -1\n def __eq__(self,other): return other==-1\nk=K()\nd={-1:7}\nprint(d[k])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "dictionary-hash-error-atomic",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self): raise ValueError(\"hash\")\nd={1:7}\ntry: d[K()]=8\nexcept ValueError: print(len(d),d[1])\n",
+      "stdout": "1 7\n"
+    },
+    {
+      "id": "dictionary-eq-error-atomic",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other): raise ValueError(\"eq\")\na=K()\nd={a:7}\ntry: d[K()]=8\nexcept ValueError: print(len(d),d[a])\n",
+      "stdout": "1 7\n"
+    },
+    {
+      "id": "dictionary-value-mutation-during-eq",
+      "stage": "E2",
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other):\n  d[self]=9\n  return True\na=K()\nd={a:7}\nprint(d[K()],len(d))\n",
+      "stdout": "9 1\n"
+    },
+    {
+      "id": "dictionary-equality-custom-values",
+      "stage": "E2",
+      "source": "class A:\n def __eq__(self,other): return other==7\nprint({\"x\":A()}=={\"x\":7},{\"x\":A()}!={\"x\":8})\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "dictionary-equality-custom-keys",
+      "stage": "E2",
+      "source": "class K:\n def __init__(self,n): self.n=n\n def __hash__(self): return 7\n def __eq__(self,other): return self.n==other.n\nprint({K(1):7}=={K(1):7},{K(1):7}=={K(2):7})\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "dictionary-unhashable-even-empty",
+      "stage": "E2",
+      "source": "class A:\n def __eq__(self,other): return True\nprint(A() in {})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dictionary-failed-key-error",
+      "stage": "E2",
+      "source": "class K:\n def __init__(self,n): self.n=n\n def __hash__(self): return 7\n def __eq__(self,other): return self.n==other.n\nd={K(1):7}\nprint(d[K(2)])\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "future-structural-key-mutation",
+      "stage": "E3",
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other):\n  del d[self]\n  return True\na=K()\nd={a:7}\nprint(K() in d,len(d))\n",
+      "stdout": "False 0\n"
+    },
+    {
+      "id": "future-tuple-user-key",
+      "stage": "E3",
+      "source": "class K:\n def __init__(self,n): self.n=n\n def __hash__(self): return 7\n def __eq__(self,other): return self.n==other.n\na=K(1)\nd={(a,):7}\nprint(d[(K(1),)])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-ordering-slot",
+      "stage": "E3",
+      "source": "class A:\n def __lt__(self,other): return True\nprint(A()<7)\n",
+      "stdout": "True\n"
+    }
+  ]
+}
