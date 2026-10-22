@@ -671,16 +671,14 @@
     {
       "id": "equality-hook",
       "source": "class A:\n def __eq__(self,other): return True\nprint(A()==A())\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "bind"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {

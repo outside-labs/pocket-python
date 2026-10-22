@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
@@ -74,6 +74,7 @@ export class ValueRuntime {
   }
   isString(value) { this.charge(1); return value instanceof StringValue; }
   repr(value) {
+    if (value instanceof NotImplementedValue) return this.string(Array.from('NotImplemented', char => char.codePointAt(0)));
     if (value instanceof StringValue) {
       this.charge(2 * value.points.length + 1);
       const quote = value.points.includes(39) && !value.points.includes(34) ? 34 : 39, points = [];
@@ -108,6 +109,20 @@ export class ValueRuntime {
     this.fail("UnsupportedOperationError", "This slice attribute requires a later sequence stage.", "UNSUPPORTED");
   }
   isList(value) { this.charge(1); return value instanceof ListValue; }
+  isDict(value) { return value instanceof DictValue; }
+  comparisonSequence(value) { return value instanceof ListValue || value instanceof TupleValue ? value.items : null; }
+  sameSequenceKind(left, right) { return this.comparisonSequence(left) !== null && left.constructor === right?.constructor; }
+  hasUserEquality(value) {
+    const pending = [value], seen = new Set();
+    while (pending.length) {
+      const item = pending.pop();
+      if (item instanceof InstanceValue) return true;
+      if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;
+      seen.add(item); this.charge(1);
+      pending.push(...(item instanceof DictValue ? item.entries.flatMap(entry => [entry.key, entry.value]) : item.items));
+    }
+    return false;
+  }
   inplace(operation, left, right) {
     this.charge(1);
     if (!(left instanceof ListValue)) return this.binary(operation, left, right);
@@ -200,6 +215,7 @@ export class ValueRuntime {
   }
   truth(value) {
     this.charge(1);
+    if (value instanceof NotImplementedValue) this.fail("TypeError", "NotImplemented should not be used in a boolean context");
     if (value === null) return false;
     if (numeric(value)) return value instanceof FloatValue ? value.value !== 0 : integer(value) !== 0n;
     if (sequence(value)) return elements(value).length !== 0;
@@ -548,6 +564,7 @@ export function valueLayout(value) {
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
   if (value instanceof IteratorValue) return {bytes: 64, children: [value.value]};
   if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};
+  if (value instanceof NotImplementedValue) return {bytes: 48, children: []};
   if (value instanceof SliceValue) return {bytes: 88, children: [value.start, value.stop, value.step]};
   if (value instanceof Cell) return {bytes: 48, children: value.bound ? [value.value] : []};
   if (value instanceof Environment) return {bytes: 64 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [...value.cells.values()]};

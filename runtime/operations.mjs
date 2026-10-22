@@ -25,7 +25,13 @@ export function completion(kind, fields = {}) {
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
     case "contains-result": case "search-iter": case "search-next":
+    case "search-equal": case "search-truth":
       record = {kind, receiver: fields.receiver, key: fields.key, after, depth: fields.depth}; depthCheck(record.depth); break;
+    case "sentinel-equal": case "sentinel-truth":
+      record = {kind, receiver: fields.receiver, value: fields.value, after, depth: fields.depth}; depthCheck(record.depth); break;
+    case "compare-result": case "ne-result": case "sequence-item": case "sequence-truth":
+      record = {kind, left: fields.left, right: fields.right, operation: fields.operation, position: fields.position, depth: fields.depth, after};
+      depthCheck(record.depth); comparisonCheck(record.operation, record.position); break;
     case "for-iter": case "for-next": case "for-exhausted": record = {kind}; break;
     case "index-key": record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation ?? "get"), item: fields.item ?? null, after, depth: fields.depth}; depthCheck(record.depth); break;
     case "slice-index":
@@ -66,7 +72,9 @@ function visit(record) {
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
-    case "contains-result": case "search-iter": case "search-next": return [record.receiver, record.key, ...completionRoots(record.after)];
+    case "contains-result": case "search-iter": case "search-next": case "search-equal": case "search-truth": return [record.receiver, record.key, ...completionRoots(record.after)];
+    case "sentinel-equal": case "sentinel-truth": return [record.receiver, record.value, ...completionRoots(record.after)];
+    case "compare-result": case "ne-result": case "sequence-item": case "sequence-truth": return [record.left, record.right, ...completionRoots(record.after)];
     case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
@@ -88,6 +96,15 @@ export function completionRoots(record, frame = false) {
 const depthCheck = depth => {
   if (!Number.isSafeInteger(depth) || depth < 0 || depth > 256) throw new TypeError("Invalid operation depth.");
 };
+const comparisonCheck = (operation, position) => {
+  if (!["equal", "not-equal"].includes(operation) || !Number.isSafeInteger(position) || position < 0 || position > 1024)
+    throw new TypeError("Invalid comparison phase.");
+};
+export function compareTask(operation, left, right, site, after = null, depth = 0, position = 0) {
+  depthCheck(depth); completionRoots(after); comparisonCheck(operation, position);
+  if (position > 2) throw new TypeError("Invalid comparison candidate.");
+  return Object.freeze({kind: "compare", operation, left, right, site, completion: after, depth, position});
+}
 export function callTask(callable, args, keywords, keywordValues, site, after = null, depth = 0) {
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "call", callable, args: operands(args), keywords: operands(keywords),
@@ -120,6 +137,7 @@ export function operationRoots(task) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "contains": return [task.receiver, task.key, ...completionRoots(task.completion)];
+    case "compare": return [task.left, task.right, ...completionRoots(task.completion)];
     case "slice": return [task.receiver, ...task.parts, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "unary": case "value": return [task.value, ...completionRoots(task.completion)];
     default: throw new TypeError("Unknown operation task.");

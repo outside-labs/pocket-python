@@ -55,6 +55,7 @@ export class ProtocolIteratorValue {
     this.index = 0n; this.exhausted = false;
   }
 }
+export class NotImplementedValue {}
 export class ExceptionValue {
   constructor(name, args, message) {
     this.name = name; this.args = args; this.message = message;

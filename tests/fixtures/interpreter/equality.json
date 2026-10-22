@@ -3,7 +3,9 @@
   "suite": "interpreter-equality/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "E1"
+  ],
   "cases": [
     {
       "id": "identity-defaults",
@@ -559,6 +561,12 @@
       "stage": "E3",
       "source": "class A:\n def __lt__(self,other): return True\nprint(A()<7)\n",
       "stdout": "True\n"
+    },
+    {
+      "id": "future-container-ordering",
+      "stage": "E3",
+      "source": "class A:\n def __eq__(self,other): return True\nprint([A()]<[A()])\n",
+      "stdout": "False\n"
     }
   ]
 }
