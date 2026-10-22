@@ -210,3 +210,20 @@ removed imports. The output-only host boundary and local static GETs remain.
 C3 length/truth is complete for this adopted matrix. Formatting, indexed objects,
 iteration/membership and equality/hash remain future milestones, so INT-09 stays
 open. This checkpoint adds no package publication or public deployment.
+
+
+## Formatting execution checkpoint
+
+The [bounded formatting slice](interpreter-formatting.md) now uses owned unary
+phases, strict string-result completions and pending print-argument owners.
+Primitive repr and str() work in the core profile; custom __repr__/__str__ stays
+in classes-source/1. Unicode 16 printability is generated reproducibly from the
+pinned oracle and included with the existing notice in the engine closure.
+
+The 67-case formatting matrix has 58 CPython comparisons and nine explicit future
+refusals. Earlier call/length matrices promote their formatting examples; other
+future protocols remain refused. Instruction stepping and draining retain output
+order and teardown. Dedicated checks cover source frames, forced collection while
+paused, recursion/native redirects, work/output limits, cancellation and real OOM.
+Existing composed resource baselines stay unchanged. Offline-console acceptance
+is the next delivery step; indexing, iteration and equality/hash remain open.

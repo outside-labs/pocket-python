@@ -12,7 +12,7 @@ NAMES = sorted(['browser-protocol.mjs', 'bytecode.mjs', 'class-policy.mjs', 'cla
     'function-objects.mjs', 'functions.mjs', 'interpreter-host.mjs', 'interpreter-worker.mjs',
     'memory.mjs', 'operation-runtime.mjs', 'operations.mjs', 'module-context.mjs', 'module-registry.mjs', 'module-session.mjs',
     'source-compiler.mjs', 'source-identifiers.mjs', 'source-modules.mjs',
-    'source-parser.mjs', 'source-tokens.mjs', 'values.mjs', 'vm.mjs',
+    'source-parser.mjs', 'source-tokens.mjs', 'string-printability.mjs', 'values.mjs', 'vm.mjs',
     'library-selection.mjs', 'library-catalog.mjs',
     'licenses/POCKET-PYTHON.txt', 'licenses/UNICODE.txt'])
 

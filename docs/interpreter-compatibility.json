@@ -289,16 +289,14 @@
     {
       "id": "repr-str",
       "status": "partial",
-      "scope": "print/str display None, bool, int, strings and adopted exception messages; print accepts positional arguments only. str(s) preserves existing string identity.",
-      "gaps": "str() and repr are unavailable. User __repr__/__str__, float/container/default-object output and format specs are not adopted.",
+      "scope": "print/str display None, bool, int, strings and adopted exception messages; str() and str(s) preserve the adopted identity rules. repr covers None/bool/int/str and explicit user __repr__; type-level __str__/__repr__ callbacks and print sequencing run on the owned machine.",
+      "gaps": "Float/container/default-object displays, exception repr, format specifications and unadopted str/print keyword or encoding forms remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-REPR-01",
-        "INT-REPR-02",
         "INT-REPR-03",
         "INT-TEXT-01"
       ],
@@ -312,7 +310,9 @@
         "builtin-repr"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/source.json:str-preserves-identity"
+        "tests/fixtures/interpreter/source.json:str-preserves-identity",
+        "tests/fixtures/interpreter/formatting.json:hook-precedence",
+        "tests/fixtures/interpreter/formatting.json:print-nested-output"
       ]
     },
     {
@@ -1657,15 +1657,15 @@
     {
       "id": "print",
       "status": "partial",
-      "scope": "print(*values) for None/bool/int/str/adopted exception messages.",
-      "gaps": "Keywords, float/container/object displays and user formatting hooks.",
+      "scope": "print(*values) with default space/newline; admitted scalar/exception displays and user __str__/__repr__ callbacks.",
+      "gaps": "Keyword forms and unadopted value displays.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-REPR-02",
+        "INT-REPR-03",
         "INT-TEXT-01"
       ],
       "probes": [
@@ -1711,16 +1711,16 @@
     },
     {
       "id": "repr",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "repr(x), exactly one positional argument: None/bool/int/str or adopted user __repr__.",
+      "gaps": "Float/container/default-object and exception representations.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-REPR-02"
+        "INT-TEXT-01"
       ],
       "probes": [
         "builtin-repr"
@@ -1856,15 +1856,14 @@
     {
       "id": "str",
       "status": "partial",
-      "scope": "str(x), None/bool/int/str/adopted exception messages. Existing strings retain identity.",
-      "gaps": "Zero-argument form, user/float/container formatting and encoding forms.",
+      "scope": "str() and str(x) for None/bool/int/str/adopted exceptions and user slots; existing/returned strings retain identity.",
+      "gaps": "Float/container/default-object displays, object= keyword and encoding forms.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-REPR-02",
         "INT-TEXT-01",
         "INT-VALUES-01"
       ],

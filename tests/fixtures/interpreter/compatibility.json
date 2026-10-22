@@ -111,16 +111,14 @@
     {
       "id": "str-empty-constructor",
       "source": "print(len(str()))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "0\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "TypeError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "0\n",
+        "error_type": null
       }
     },
     {
@@ -171,31 +169,27 @@
     {
       "id": "repr-hook",
       "source": "class A:\n def __repr__(self): return \"label\"\nprint(repr(A()))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "label\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "bind"
+        "stdout": "label\n",
+        "error_type": null
       }
     },
     {
       "id": "str-hook",
       "source": "class A:\n def __str__(self): return \"label\"\nprint(str(A()))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "label\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "bind"
+        "stdout": "label\n",
+        "error_type": null
       }
     },
     {
@@ -1499,16 +1493,14 @@
     {
       "id": "builtin-repr",
       "source": "print(callable(repr))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {

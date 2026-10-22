@@ -5,7 +5,8 @@
   "implemented_stages": [
     "C3-length",
     "C3-truth",
-    "C3-control"
+    "C3-control",
+    "C3-formatting"
   ],
   "cases": [
     {
@@ -576,7 +577,7 @@
     },
     {
       "id": "future-format",
-      "stage": "C3-future",
+      "stage": "C3-formatting",
       "source": "class Index:\n def __str__(self): return \"seven\"\nprint(str(Index()))\n",
       "stdout": "seven\n"
     },

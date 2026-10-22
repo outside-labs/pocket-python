@@ -16,6 +16,13 @@ export function completion(kind, fields = {}) {
     case "class": record = {kind, bases: operands(fields.bases), module: fields.module}; break;
     case "init": record = {kind, instance: fields.instance, after}; break;
     case "relay": record = {kind, receiver: fields.receiver, after}; break;
+    case "format-result": record = {kind, receiver: fields.receiver, slot: fields.slot, after}; break;
+    case "print-argument":
+      record = {kind, args: operands(fields.args), index: fields.index, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (!Number.isSafeInteger(record.index) || record.index < 0 || record.index >= record.args.length)
+        throw new TypeError("Invalid print position.");
+      break;
     case "protocol-result": record = {kind, receiver: fields.receiver, operation: fields.operation, slot: fields.slot, after}; break;
     case "optional-truth": record = {kind, receiver: fields.receiver, operation: fields.operation, depth: fields.depth, after}; break;
     case "invoke": record = {kind, args: operands(fields.args), keywords: operands(fields.keywords),
@@ -38,7 +45,8 @@ function visit(record) {
   switch (record.kind) {
     case "class": case "condition": case "discard": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
-    case "relay": case "protocol-result": case "optional-truth": return [record.receiver, ...completionRoots(record.after)];
+    case "relay": case "protocol-result": case "optional-truth": case "format-result": return [record.receiver, ...completionRoots(record.after)];
+    case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "notify": return [record.type, ...record.entries.map(entry => entry[1])];
     default: throw new TypeError("Unknown operation root owner.");

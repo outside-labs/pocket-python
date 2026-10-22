@@ -17,6 +17,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (text !== null) return text;
     hard("UNSUPPORTED", "UnsupportedOperationError", "Formatting this value is outside the function stage.");
   };
+  const write = text => {
+    if (moduleContext) { moduleContext.write(text, hard); return; }
+    if ((state.outputLength += text.length) > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
+    state.outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text);
+  };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
     if (keywords.length) python("TypeError", callable.name + "() does not accept keywords in this profile");
@@ -39,9 +44,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (callable.name === "print") {
       const text = args.map(display).join(" ") + "\n";
-      if (moduleContext) { moduleContext.write(text, hard); return null; }
-      if ((state.outputLength += text.length) > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
-      state.outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text); return null;
+      write(text); return null;
     }
     if (moduleContext && callable.name === "isinstance") {
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
@@ -59,6 +62,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (args.length !== 1 || !(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "type supports one user instance in C1.");
       return args[0].type;
     }
+    if (callable.name === "str" && args.length === 0) return values.string([]);
     if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
     if (callable.name === "str" && values.text(args[0]) !== null) return args[0];
     return callable.name === "len" ? values.unary("len", args[0]) : values.string(Array.from(display(args[0]), char => char.codePointAt(0)));
@@ -74,16 +78,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     while (["init", "relay"].includes(completion?.kind)) completion = completion.after;
     if (value.name !== "AttributeError" || !completion?.fallback) return null;
     const {operation, receiver, after, depth, missing} = completion.fallback;
+    if (operation === "repr-default") return unaryTask(operation, receiver, site, after, depth);
     // Optional lookup suppresses binding AttributeError, never a method-body error.
     return missing === "length" ? unaryTask(operation, receiver, site, after, depth, true) :
       valueTask(operation !== "not", site, after, depth);
   };
   const deliver = (value, completion, site) => {
-    while (["init", "relay", "protocol-result"].includes(completion?.kind)) {
+    while (["init", "relay", "protocol-result", "format-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
         value = completion.instance;
+      } else if (completion.kind === "format-result") {
+        if (!values.isString(value)) python("TypeError", completion.slot + " returned a non-string value");
       } else if (completion.kind === "protocol-result") {
         if (completion.slot === "__bool__") {
           if (typeof value !== "boolean") python("TypeError", "__bool__() should return bool");
@@ -96,6 +103,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "print-argument") return printNext(completion.args, completion.index + 1,
+      site, completion.after, completion.depth, values.text(value));
     if (completion?.kind === "optional-truth") return unaryTask(completion.operation, value, site,
       completion.after, completion.depth);
     if (completion?.kind === "invoke") return callTask(value, completion.args, completion.keywords,
@@ -129,6 +138,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     return deliver(type, null, site);
   };
+  const printNext = (args, index, site, after, depth, prefix = "") => {
+    state.temporaries.push(...args);
+    let text = prefix;
+    for (; index < args.length; index++) {
+      if (index) text += " ";
+      if (args[index] instanceof InstanceValue) {
+        if (text) write(text);
+        return unaryTask("str", args[index], site, continuation("print-argument", {args, index, depth, after}), depth);
+      }
+      const part = display(args[index]);
+      if (text.length + part.length > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
+      text += part;
+    }
+    write(text + "\n"); return deliver(null, after, site);
+  };
   const dispatch = task => {
     while (task) {
       count("dispatch:" + task.kind);
@@ -138,6 +162,31 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "unary") {
           const {operation, value, optionalLength} = task;
           state.temporaries.push(...operationRoots(task));
+          if (["repr", "str", "repr-default"].includes(operation)) {
+            if (operation === "repr-default") hard("UNSUPPORTED", "UnsupportedOperationError", "Default object representations require a later formatting stage.");
+            if (!(value instanceof InstanceValue)) {
+              const result = operation === "repr" ? values.repr(value) :
+                values.text(value) !== null ? value : values.string(Array.from(display(value), char => char.codePointAt(0)));
+              task = deliver(result, completion, site); continue;
+            }
+            charge(1);
+            if (++depth > maxDepth) python("RecursionError", "maximum implicit formatting dispatch depth exceeded");
+            let slot = operation === "repr" ? "__repr__" : "__str__", plan;
+            try {
+              plan = classes.special(value, slot);
+              if (!plan && slot === "__str__") { slot = "__repr__"; plan = classes.special(value, slot); }
+            } catch (error) {
+              if (!(error instanceof Raised) || slot !== "__repr__" || error.value.name !== "AttributeError") throw error;
+              task = unaryTask("repr-default", value, site, completion, depth); continue;
+            }
+            if (!plan) { task = unaryTask("repr-default", value, site, completion, depth); continue; }
+            const finish = continuation("format-result", {receiver: value, slot, after: completion});
+            if (plan.kind === "value") task = callTask(plan.value, [], [], [], site, finish, depth);
+            else task = callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [],
+              keywordValues: [], after: finish, depth, fallback: slot === "__repr__" ?
+                {operation: "repr-default", receiver: value, after: completion, depth} : null}), depth);
+            continue;
+          }
           if (!(value instanceof InstanceValue) || !["len", "truth", "not"].includes(operation)) {
             task = deliver(values.unary(operation, value), completion, site); continue;
           }
@@ -200,6 +249,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "repr") {
+            count("builtin:repr");
+            if (args.length !== 1 || keywords.length) python("TypeError", "repr() requires one positional argument");
+            task = unaryTask("repr", args[0], site, completion, depth); continue;
+          }
+          if (callable.name === "str" && args.length === 1 && !keywords.length && args[0] instanceof InstanceValue) {
+            count("builtin:str"); task = unaryTask("str", args[0], site, completion, depth); continue;
+          }
+          if (callable.name === "print" && !keywords.length && args.some(value => value instanceof InstanceValue)) {
+            count("builtin:print"); task = printNext(args, 0, site, completion, depth); continue;
+          }
           if (["len", "bool"].includes(callable.name) && args.length === 1 && !keywords.length) {
             task = unaryTask(callable.name === "bool" ? "truth" : "len", args[0], site, completion, depth); continue;
           }
