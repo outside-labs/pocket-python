@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
 
@@ -204,7 +204,7 @@ export class ValueRuntime {
     if (numeric(value)) return value instanceof FloatValue ? value.value !== 0 : integer(value) !== 0n;
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
-    if (value instanceof IteratorValue || value instanceof SliceValue) return true;
+    if (value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
         value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
@@ -422,6 +422,7 @@ export class ValueRuntime {
     if (!sequence(value) && !(value instanceof DictValue)) this.fail("TypeError", "Value is not iterable in this stage.");
     this.charge(1); return this.make(64, [value], () => new IteratorValue(value));
   }
+  isIterator(value) { this.charge(1); return value instanceof IteratorValue || value instanceof ProtocolIteratorValue; }
   next(iterator) {
     if (!(iterator instanceof IteratorValue)) this.fail("TypeError", "next requires an iterator.");
     const value = iterator.value; this.charge(1);
@@ -546,6 +547,7 @@ export function valueLayout(value) {
   if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
   if (value instanceof IteratorValue) return {bytes: 64, children: [value.value]};
+  if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};
   if (value instanceof SliceValue) return {bytes: 88, children: [value.start, value.stop, value.step]};
   if (value instanceof Cell) return {bytes: 48, children: value.bound ? [value.value] : []};
   if (value instanceof Environment) return {bytes: 64 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [...value.cells.values()]};

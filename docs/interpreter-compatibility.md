@@ -59,7 +59,7 @@ Python coverage is inferred from these probe counts.
 | call-length-truth | supported | Type-level __call__/__len__/__bool__, callable(), len(), bool(), not and control tests in classes-source/1, including adopted descriptor binding and optional truth fallback. Length uses the explicit signed-64-bit contract; later protocols remain separate. |
 | repr-str | partial | print/str display None, bool, int, strings and adopted exception messages; str() and str(s) preserve the adopted identity rules. repr covers None/bool/int/str and explicit user __repr__; type-level __str__/__repr__ callbacks and print sequencing run on the owned machine. Float/container/default-object displays, exception repr, format specifications and unadopted str/print keyword or encoding forms remain deferred. |
 | indexed-user-objects | partial | __index__/__getitem__/__setitem__/__delitem__, raw scalar/tuple/slice keys, builtin conversion and bounded list/tuple RHS slice mutation use owned callbacks. Other iterable RHS forms, slice reflection/formatting/hash, builtin subclasses and wider numeric/sequence APIs remain deferred. |
-| iterated-user-objects | deferred | __iter__/__next__/__contains__ and Python fallback chains for user objects. Built-in list/tuple/dict/string iterators exist; custom slots and richer iter/next forms do not. |
+| iterated-user-objects | partial | Owned __iter__/__next__, indexed fallback and classes-source iter/next signatures. Containment awaits its next delivery slice; generators and async iteration remain separate. |
 | user-equality-hash | deferred | __eq__/__ne__/__hash__, NotImplemented, reflected priority and dictionary-key contracts. Primitive comparison and identity do not establish these user protocols. |
 | further-object-protocols | deferred | Arithmetic/reflected/in-place slots, __new__, metaclasses, custom attribute hooks and builtin subclassing. Each slice requires an adopted reference and owned continuation contract. |
 | exceptions | partial | Adopted builtin exception classes, catch/raise/bare reraise, try/except/else/finally, active context and source tracebacks. Custom exception inheritance, explicit causes/suppression and exception groups/except* remain deferred. |
@@ -118,7 +118,7 @@ Python coverage is inferred from these probe counts.
 | int | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | isinstance | partial | isinstance(x, str/adopted exception class/user class). | Tuple/union classinfo and unadopted builtin families. |
 | issubclass | partial | issubclass(user_class, user_class/object). | Full builtin, tuple/union classinfo. |
-| iter | partial | iter(admitted list/tuple/dict/str), one positional argument. | Custom iteration and callable/sentinel form. |
+| iter | partial | Primitive iter(value); classes-source adds user __iter__, indexed fallback and iter(callable, sentinel). | Generator/async protocols and broader sequence APIs remain separate. |
 | len | partial | len(admitted containers/str or classes-profile __len__). | __index__ result conversion and unadopted value families. |
 | list | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | locals | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -126,7 +126,7 @@ Python coverage is inferred from these probe counts.
 | max | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | memoryview | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | min | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| next | partial | next(admitted iterator), one positional argument. | Default parameter and custom __next__. |
+| next | partial | Primitive next(iterator); classes-source adds user __next__ and next(iterator, default). | Generator/async protocols and iterator reflection remain separate. |
 | object | partial | object() and root base in classes-source/1. | Default displays, identity hashing, __new__ and richer object APIs. |
 | oct | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | open | host-restricted | Not installed; availability probe only, never invoked. | Interactive/process/filesystem behavior needs an explicit target capability contract. |

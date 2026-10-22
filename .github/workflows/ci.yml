@@ -76,6 +76,8 @@ jobs:
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/formatting.json --report build/formatting-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/formatting.json --stepped --report build/formatting-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/iteration.json --stages T1 T3 --report build/iteration-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/iteration.json --stages T1 T3 --stepped --report build/iteration-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/indexing.json --stepped --report build/indexing-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_compatibility.py --target browser --report build/compatibility-browser-report.json
       - run: uv run --no-sync python runtime/check_library_profiles.py --target browser --report build/library-profiles-browser-report.json
@@ -124,6 +126,7 @@ jobs:
       - run: node --test runtime/special-calls.test.mjs
       - run: node --test runtime/length-truth.test.mjs
       - run: node --test runtime/indexing.test.mjs
+      - run: node --test runtime/iteration.test.mjs
       - run: node --test runtime/formatting.test.mjs
       - run: node --test runtime/memory.test.mjs
       - run: node --test runtime/functions.test.mjs
@@ -166,6 +169,8 @@ jobs:
       - run: python runtime/check_classes.py --corpus tests/fixtures/interpreter/formatting.json --report build/formatting-node-report.json
       - run: python runtime/check_classes.py --corpus tests/fixtures/interpreter/formatting.json --stepped --report build/formatting-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/iteration.json --stages T1 T3 --report build/iteration-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/iteration.json --stages T1 T3 --stepped --report build/iteration-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/indexing.json --stepped --report build/indexing-stepped-node-report.json
       - run: python runtime/check_compatibility.py --target node --report build/compatibility-node-report.json
       - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json

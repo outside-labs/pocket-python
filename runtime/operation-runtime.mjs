@@ -1,4 +1,4 @@
-import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
+import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue} from "./function-objects.mjs";
 import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -6,7 +6,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, python, hard, charge, enter, bind, block, onOutput}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value === null) return "None";
@@ -78,10 +78,31 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     while (["init", "relay"].includes(completion?.kind)) completion = completion.after;
     if (value.name !== "AttributeError" || !completion?.fallback) return null;
     const {operation, receiver, after, depth, missing} = completion.fallback;
+    if (operation === "iter-indexed") return unaryTask(operation, receiver, site, after, depth);
     if (operation === "repr-default") return unaryTask(operation, receiver, site, after, depth);
     // Optional lookup suppresses binding AttributeError, never a method-body error.
     return missing === "length" ? unaryTask(operation, receiver, site, after, depth, true) :
       valueTask(operation !== "not", site, after, depth);
+  };
+  const exhaust = iterator => mutate(iterator, () => {
+    const before = [iterator.source, iterator.sentinel, iterator.exhausted];
+    iterator.source = null; iterator.sentinel = null; iterator.exhausted = true;
+    return () => { [iterator.source, iterator.sentinel, iterator.exhausted] = before; };
+  });
+  const recover = (value, completion, site) => {
+    const binding = bindingRecovery(value, completion, site);
+    if (binding) return binding;
+    for (let current = completion; current; current = current.after) {
+      if (current.kind === "indexed-result" && ["IndexError", "StopIteration"].includes(value.name) ||
+          current.kind === "callable-result" && value.name === "StopIteration") {
+        exhaust(current.receiver);
+        return unaryTask("iterator-stop", current.receiver, site, current.after);
+      }
+      if (value.name !== "StopIteration") continue;
+      if (current.kind === "next-default") return valueTask(current.default, site, current.after);
+      if (current.kind === "for-next") return valueTask(null, site, continuation("for-exhausted"));
+    }
+    return null;
   };
   const deliver = (value, completion, site) => {
     while (["init", "relay", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
@@ -110,6 +131,35 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "iter-result") {
+      if (!(values.isIterator(value) || value instanceof InstanceValue && classes.lookup(value.type, "__next__").found))
+        python("TypeError", "__iter__ returned a non-iterator");
+      return valueTask(value, site, completion.after);
+    }
+    if (completion?.kind === "indexed-result") {
+      const iterator = completion.receiver, before = iterator.index, index = values.int(before + 1n);
+      state.temporaries.push(value);
+      mutate(iterator, () => { iterator.index = index; return () => { iterator.index = before; }; });
+      return valueTask(value, site, completion.after);
+    }
+    if (completion?.kind === "callable-result") {
+      const iterator = completion.receiver;
+      if (value === iterator.sentinel || values.equal(iterator.sentinel, value)) {
+        exhaust(iterator); return unaryTask("iterator-stop", iterator, site, completion.after);
+      }
+      return valueTask(value, site, completion.after);
+    }
+    if (completion?.kind === "next-default") return valueTask(value, site, completion.after);
+    if (["for-iter", "for-next", "for-exhausted"].includes(completion?.kind)) {
+      const frame = state.frames.at(-1), task = frame.tasks.at(-1);
+      if (completion.kind === "for-iter") {
+        task.iterator = value; task.phase = "body";
+        return unaryTask("next", value, task.site, continuation("for-next"));
+      }
+      if (completion.kind === "for-exhausted") { frame.tasks.pop(); block(frame, task.otherwise); }
+      else { store(frame, task.target, value); block(frame, task.body); }
+      return null;
+    }
     if (completion?.kind === "index-key") return itemTask(completion.receiver, value, site, completion.after, completion.depth, completion.operation, completion.item);
     if (completion?.kind === "slice-index") {
       const parts = [...completion.parts]; parts[[2, 0, 1][completion.position]] = value;
@@ -219,6 +269,41 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "unary") {
           const {operation, value, optionalLength} = task;
           state.temporaries.push(...operationRoots(task));
+          if (["iter", "iter-indexed", "next", "iterator-stop"].includes(operation)) {
+            if (operation === "iterator-stop") python("StopIteration", "");
+            if (value instanceof ProtocolIteratorValue) {
+              if (operation === "iter") { task = deliver(value, completion, site); continue; }
+              if (value.exhausted) python("StopIteration", "");
+              const finish = continuation(value.kind === "indexed" ? "indexed-result" : "callable-result", {receiver: value, after: completion});
+              task = value.kind === "indexed" ? itemTask(value.source, value.index, site, finish, depth) :
+                callTask(value.source, [], [], [], site, finish, depth);
+              continue;
+            }
+            if (!(value instanceof InstanceValue)) { task = deliver(values.unary(operation, value), completion, site); continue; }
+            charge(1);
+            if (++depth > maxDepth) python("RecursionError", "maximum implicit iteration dispatch depth exceeded");
+            if (operation === "iter-indexed") {
+              if (!classes.lookup(value.type, "__getitem__").found) python("TypeError", "Instance is not iterable");
+              task = deliver(allocate(ProtocolIteratorValue, "indexed", value), completion, site); continue;
+            }
+            const slot = operation === "iter" ? "__iter__" : "__next__";
+            const fallback = operation === "iter" ? {operation: "iter-indexed", receiver: value, after: completion, depth} : null;
+            let plan;
+            try { plan = classes.special(value, slot); }
+            catch (error) {
+              const recovery = error instanceof Raised && bindingRecovery(error.value, {fallback}, site);
+              if (!recovery) throw error;
+              task = recovery; continue;
+            }
+            if (!plan) {
+              if (operation === "next") python("TypeError", "Instance is not an iterator");
+              task = unaryTask("iter-indexed", value, site, completion, depth); continue;
+            }
+            const finish = continuation(operation === "iter" ? "iter-result" : "relay", {receiver: value, after: completion});
+            task = plan.kind === "value" ? callTask(plan.value, [], [], [], site, finish, depth) :
+              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: finish, depth, fallback}), depth);
+            continue;
+          }
           if (operation === "index") {
             if (!(value instanceof InstanceValue)) {
               if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "An integer index is required");
@@ -321,6 +406,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (["iter", "next"].includes(callable.name) && state.frames.at(-1).callable.pool.code.version === 5) {
+            count("builtin:" + callable.name);
+            if (args.length < 1 || args.length > 2 || keywords.length) python("TypeError", callable.name + "() requires one or two positional arguments");
+            if (callable.name === "iter" && args.length === 2) {
+              if (!classes.callable(args[0])) python("TypeError", "iter() first argument must be callable");
+              task = deliver(allocate(ProtocolIteratorValue, "callable", args[0], args[1]), completion, site); continue;
+            }
+            const finish = callable.name === "next" && args.length === 2 ?
+              continuation("next-default", {receiver: args[0], default: args[1], after: completion}) : completion;
+            task = unaryTask(callable.name, args[0], site, finish, depth); continue;
+          }
           if (callable.name === "slice") {
             if (args.length < 1 || args.length > 3 || keywords.length) python("TypeError", "slice() requires one to three positional arguments");
             task = deliver(args.length === 1 ? values.sliceKey(null, args[0], null) : values.sliceKey(args[0], args[1], args[2] ?? null), completion, site); continue;
@@ -351,7 +447,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         python("TypeError", "Value is not callable in this profile");
       } catch (error) {
-        const recovery = error instanceof Raised && bindingRecovery(error.value, completion, site);
+        const recovery = error instanceof Raised && recover(error.value, completion, site);
         if (!recovery) throw error;
         task = recovery;
       }
@@ -359,5 +455,5 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
-  return Object.freeze({dispatch, call, deliver, notifyNext, bindingRecovery});
+  return Object.freeze({dispatch, call, deliver, notifyNext, recover});
 }

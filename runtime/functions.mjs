@@ -1,5 +1,5 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -162,8 +162,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
     block(frame, fn.body);
   };
-  const {dispatch, call, deliver, notifyNext, bindingRecovery} = operationRuntime({state, memory, values, classes,
-    moduleContext, maxDepth, allocate, python, hard, charge, enter, bind, block, onOutput});
+  const {dispatch, call, deliver, notifyNext, recover} = operationRuntime({state, memory, values, classes,
+    moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput});
   const diagnostic = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
     // Copy diagnostics without exporting unleased VM objects or frame locals.
@@ -192,6 +192,11 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             }
             task.phase = "test"; block(frame, task.test); return;
           }
+          if (task.phase === "iterable" && (signal.value instanceof InstanceValue || signal.value instanceof ProtocolIteratorValue)) {
+            task.owned = true; task.phase = "acquire";
+            dispatch(unaryTask("iter", signal.value, task.site, continuation("for-iter"))); return;
+          }
+          if (task.owned) { dispatch(unaryTask("next", task.iterator, task.site, continuation("for-next"))); return; }
           if (task.phase === "iterable") { task.iterator = values.iterator(signal.value); task.phase = "body"; }
           let item;
           try { item = values.next(task.iterator); }
@@ -253,7 +258,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         frame.leave(); state.frames.pop(); return;
       }
       if (signal.kind === "raise") {
-        const recovery = bindingRecovery(returned, frame.completion, frame.callsite);
+        const recovery = recover(returned, frame.completion, frame.callsite);
         if (recovery) {
           retainTransfer(state.temporaries, [], frame.completion);
           state.current = {...frame.callsite, instruction: frame.returnInstruction};
@@ -353,7 +358,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (op === "if") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
         continuation("condition", {control: "if", body: arg, otherwise: extra})));
       else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth, site: summary(frame, cursor)}); block(frame, arg); }
-      else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null}); block(frame, extra); }
+      else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null, site: summary(frame, cursor)}); block(frame, extra); }
       else if (op === "try") {
         frame.tasks.push({type: "try", phase: "body", instruction: cursor.block.instructions[cursor.pc - 1], previous: frame.activeException,
           caught: null, pending: null, alias: null, site: state.current.location}); block(frame, arg);
