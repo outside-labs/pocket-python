@@ -34,8 +34,10 @@ Integer true division rounds an exact BigInt ratio to binary64, including
 ties-to-even, subnormals, signed zero and overflow. It must not convert arbitrary
 numerators and denominators separately through Number. Explicit int-to-float
 coercion has its own correctly rounded conversion and OverflowError boundary.
-Integer power and modular power keep integer intermediates, with bounded work
-and cancellation polls; negative modular powers require an inverse.
+Nonnegative integer power and modular power keep integer intermediates, with
+bounded work and cancellation polls; negative modular powers require an inverse.
+Negative integer exponents follow Python's real coercion before power, including
+coercion overflow and the rounded floating exponent's parity.
 
 Round uses nearest/even ties. Integer rounding remains exact; float rounding
 must use the actual binary64 input rather than a decimal string approximation.
@@ -71,3 +73,19 @@ the independent engine, with explicit refusals; N2–N5 remain reference-only an
 are listed as omitted stages in source reports. Each delivery expands the
 selected stages and changes `implemented_stages` only after its own tests pass.
 The first checkpoint does not close INT-NUM-01, INT-09 or async work.
+
+## Integer operator checkpoint
+
+N1 is implemented. Five added coercion regressions bring the complete reference
+corpus to 154 cases; the selected source matrix has 44 comparisons and two
+explicit future refusals in Node/Chromium drain/stepped execution. Other numeric
+stages remain omitted until implemented. All 252 Node tests pass, including 103
+independent CPython binary64 division observations and the unchanged eight
+composed resource baselines. The expanded core source corpus also passes.
+
+Oversized shifts and powers refuse before unbounded native allocation. Each
+power multiplication charges work and polls cancellation; its native scratch
+products stay within twice the admitted integer digit bound. Result allocation
+uses the ordinary arena and rolls back on OOM. Collection at every instruction
+boundary retains computed numeric results. Earlier value/function engines keep
+their prior integer-division and opcode admission gates.

@@ -20,7 +20,7 @@ API boundaries, known divergences and the finite follow-up queue.
 | --- | --- | --- |
 | Scalars | None, bool, arbitrary-precision int, binary64 float and Unicode str; Python truthiness and comparison rules. | Complex and bytes/buffer operations need separate cases. |
 | Containers | Staged list, tuple and dict with Python identity, mutation, equality, key/hash and iteration behavior. | Sets, custom hash/equality and arbitrary user objects follow class support. |
-| Expressions | Literals, names, arithmetic including floor division/modulo, boolean short-circuiting, comparisons, indexing/slicing and calls as their value operations land. | Unsupported operators fail explicitly; no JavaScript coercion. |
+| Expressions | Literals, names, arithmetic including floor division/modulo, integer true division/power and bitwise/shift operators, boolean short-circuiting, comparisons, indexing/slicing and calls as their value operations land. | Unsupported operators fail explicitly; no JavaScript coercion. |
 | Control flow | Assignment, expression statements, if/elif/else, while/for, break/continue and return, with defined evaluation order. | Comprehensions, generators, pattern matching and exception groups are deferred. |
 | Functions | Positional/keyword binding, immutable literal defaults, lexical locals/globals/closures and recursion; normal error behavior. | Starred argument expansion, mutable/computed defaults, global/nonlocal mutation and annotations require later adoption. |
 | Errors | Adopted builtin exception classes, raise, try/except/finally, propagation, unwinding and original source locations. | Arbitrary exception subclasses follow class support. |
@@ -40,7 +40,7 @@ implementation, negative tests and feature-tagged native/browser conformance lan
 Integers must preserve Python precision, including values beyond 2**53. A
 resource-limited operation may raise an explicit budget error; it must not return
 a rounded JavaScript Number or silently wrap a C integer. Floats preserve the
-adopted signed-zero, NaN/infinity and division/error behavior. Bool is distinct
+adopted signed-zero, NaN/infinity and division/error behavior. The [numeric contract](interpreter-numeric.md) adds exact integer-ratio division, integer power and bitwise/shift operations in source bytecode 4/5. Bool is distinct
 in transport even where Python numeric equality treats it as an integer.
 
 Strings count/index Unicode code points, with no implicit normalization; astral

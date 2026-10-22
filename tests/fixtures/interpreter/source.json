@@ -255,6 +255,27 @@
       "features": [
         "source.grammar"
       ]
+    },
+    {
+      "id": "numeric-power",
+      "source": "print(-2**2,2**-2==0.25,2**3**2)\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "numeric-bitwise",
+      "source": "print((7&3)|(8^2),~7,(-7>>1),1<<3)\n",
+      "features": [
+        "source.grammar"
+      ]
+    },
+    {
+      "id": "numeric-integer-division",
+      "source": "print((10**400)/(10**400)==1.0,1/(2**1074)==5e-324)\n",
+      "features": [
+        "source.grammar"
+      ]
     }
   ],
   "boundaries": [
@@ -317,22 +338,6 @@
     {
       "id": "unsupported-set",
       "source": "print('must not run')\nx={1,2}",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-power",
-      "source": "print('must not run')\nx=2**3",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-bitwise",
-      "source": "print('must not run')\nx=1<<2",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"

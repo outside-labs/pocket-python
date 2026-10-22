@@ -59,8 +59,8 @@
     {
       "id": "numeric-operations",
       "status": "partial",
-      "scope": "Arbitrary integers, floats and mixed arithmetic + - * / // %, comparisons; integer // and % follow Python signs.",
-      "gaps": "Pure-integer true division, **, bitwise operators, complex values and numeric constructors are deferred.",
+      "scope": "Arbitrary integers, floats and mixed arithmetic + - * / // %, comparisons; exact integer true division, bitwise/shift operators and bounded integer power. Floor/modulo follow Python signs.",
+      "gaps": "Real power, numeric constructors, helper builtins and complex values follow the remaining numeric stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
