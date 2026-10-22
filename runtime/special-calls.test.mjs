@@ -57,7 +57,7 @@ test('busy callable work and cancellation unwind the same owned graphs', async (
 });
 
 test('later protocols still refuse before effects and default core selection stays unchanged', async () => {
-  const later = await run('print("never")\nclass A:\n def __index__(self): return 7\n');
+  const later = await run('print("never")\nclass A:\n def __add__(self,other): return 7\n');
   assert.equal(later.error.code, 'UNSUPPORTED'); assert.equal(later.stdout, ''); assert.equal(later.stats, null);
   const core = await runSourceRequest({modules: [unit('class A:\n def __call__(self): return 7\n')]});
   assert.equal(core.error.code, 'UNSUPPORTED'); assert.equal(core.stats, null);

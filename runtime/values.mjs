@@ -17,6 +17,9 @@ class TupleValue {
   constructor(items) { this.items = Object.freeze([...items]); Object.freeze(this); }
 }
 class ListValue { constructor(items) { this.items = [...items]; } }
+class SliceValue {
+  constructor(start, stop, step) { this.start = start; this.stop = stop; this.step = step; Object.freeze(this); }
+}
 class DictValue { constructor() { this.entries = []; this.version = 0; } }
 class IteratorValue {
   constructor(value) {
@@ -95,6 +98,14 @@ export class ValueRuntime {
       typeof value === "bigint" ? value.toString() : null;
     if (text === null) this.fail("UnsupportedOperationError", "Representation of this value is outside the adopted profile.", "UNSUPPORTED");
     return this.string(Array.from(text, char => char.codePointAt(0)));
+  }
+  isSlice(value) { return value instanceof SliceValue; }
+  isSequence(value) { return sequence(value); }
+  sliceKey(start, stop, step) { return this.make(88, [start, stop, step], () => new SliceValue(start, stop, step)); }
+  sliceAttribute(value, name) {
+    this.charge(1);
+    if (["start", "stop", "step"].includes(name)) return value[name];
+    this.fail("UnsupportedOperationError", "This slice attribute requires a later sequence stage.", "UNSUPPORTED");
   }
   isList(value) { this.charge(1); return value instanceof ListValue; }
   inplace(operation, left, right) {
@@ -193,7 +204,7 @@ export class ValueRuntime {
     if (numeric(value)) return value instanceof FloatValue ? value.value !== 0 : integer(value) !== 0n;
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
-    if (value instanceof IteratorValue) return true;
+    if (value instanceof IteratorValue || value instanceof SliceValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
         value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
@@ -487,6 +498,7 @@ export function valueLayout(value) {
   if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
   if (value instanceof IteratorValue) return {bytes: 64, children: [value.value]};
+  if (value instanceof SliceValue) return {bytes: 88, children: [value.start, value.stop, value.step]};
   if (value instanceof Cell) return {bytes: 48, children: value.bound ? [value.value] : []};
   if (value instanceof Environment) return {bytes: 64 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [...value.cells.values()]};
   if (value instanceof CodePool) return {bytes: value.bytes, children: [...value.code.constants, ...(value.module ? [value.module] : [])]};

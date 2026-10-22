@@ -16,6 +16,14 @@ export function completion(kind, fields = {}) {
     case "class": record = {kind, bases: operands(fields.bases), module: fields.module}; break;
     case "init": record = {kind, instance: fields.instance, after}; break;
     case "relay": record = {kind, receiver: fields.receiver, after}; break;
+    case "index-result": record = {kind, receiver: fields.receiver, after}; break;
+    case "index-key": record = {kind, receiver: fields.receiver, key: fields.key, after, depth: fields.depth}; depthCheck(record.depth); break;
+    case "slice-index":
+      record = {kind, receiver: fields.receiver, parts: operands(fields.parts), position: fields.position, after, depth: fields.depth};
+      depthCheck(record.depth);
+      if (record.parts.length !== 3 || !Number.isSafeInteger(record.position) || record.position < 0 || record.position > 2)
+        throw new TypeError("Invalid slice conversion position.");
+      break;
     case "format-result": record = {kind, receiver: fields.receiver, slot: fields.slot, after}; break;
     case "print-argument":
       record = {kind, args: operands(fields.args), index: fields.index, depth: fields.depth, after};
@@ -23,7 +31,7 @@ export function completion(kind, fields = {}) {
       if (!Number.isSafeInteger(record.index) || record.index < 0 || record.index >= record.args.length)
         throw new TypeError("Invalid print position.");
       break;
-    case "protocol-result": record = {kind, receiver: fields.receiver, operation: fields.operation, slot: fields.slot, after}; break;
+    case "protocol-result": record = {kind, receiver: fields.receiver, operation: fields.operation, slot: fields.slot, depth: fields.depth ?? 0, after}; break;
     case "optional-truth": record = {kind, receiver: fields.receiver, operation: fields.operation, depth: fields.depth, after}; break;
     case "invoke": record = {kind, args: operands(fields.args), keywords: operands(fields.keywords),
       keywordValues: operands(fields.keywordValues), depth: fields.depth, fallback: fields.fallback ?? null, after}; break;
@@ -45,7 +53,9 @@ function visit(record) {
   switch (record.kind) {
     case "class": case "condition": case "discard": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
-    case "relay": case "protocol-result": case "optional-truth": case "format-result": return [record.receiver, ...completionRoots(record.after)];
+    case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": return [record.receiver, ...completionRoots(record.after)];
+    case "index-key": return [record.receiver, record.key, ...completionRoots(record.after)];
+    case "slice-index": return [record.receiver, ...record.parts, ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "notify": return [record.type, ...record.entries.map(entry => entry[1])];
@@ -78,9 +88,20 @@ export function valueTask(value, site, after = null, depth = 0) {
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "value", value, site, completion: after, depth});
 }
+export function itemTask(receiver, key, site, after = null, depth = 0) {
+  depthCheck(depth); completionRoots(after);
+  return Object.freeze({kind: "item", receiver, key, site, completion: after, depth});
+}
+export function sliceTask(receiver, parts, site, after = null, depth = 0) {
+  depthCheck(depth); completionRoots(after);
+  if (parts.length !== 3) throw new TypeError("A slice requires three parts.");
+  return Object.freeze({kind: "slice", receiver, parts: operands(parts), site, completion: after, depth});
+}
 export function operationRoots(task) {
   switch (task.kind) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
+    case "item": return [task.receiver, task.key, ...completionRoots(task.completion)];
+    case "slice": return [task.receiver, ...task.parts, ...completionRoots(task.completion)];
     case "unary": case "value": return [task.value, ...completionRoots(task.completion)];
     default: throw new TypeError("Unknown operation task.");
   }
