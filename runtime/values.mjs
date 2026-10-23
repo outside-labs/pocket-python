@@ -189,6 +189,16 @@ export class ValueRuntime {
     this.fail("UnsupportedOperationError", "This slice attribute requires a later sequence stage.", "UNSUPPORTED");
   }
   isList(value) { this.charge(1); return value instanceof ListValue; }
+  isSequenceType(value, name) {
+    return name === "list" ? value instanceof ListValue : name === "tuple" ? value instanceof TupleValue :
+      name === "range" && value instanceof RangeValue;
+  }
+  checkConstructionHint(value) {
+    const range = value instanceof IteratorValue && value.value instanceof RangeValue ? value.value : value;
+    if (!(range instanceof RangeValue)) return;
+    const length = value instanceof IteratorValue ? value.exhausted ? 0n : range.length - value.index : range.length;
+    if (length > 9223372036854775807n) this.fail("OverflowError", "Python int too large to convert to length hint");
+  }
   isDict(value) { return value instanceof DictValue; }
   comparisonSequence(value) { return value instanceof ListValue || value instanceof TupleValue ? value.items : null; }
   sameSequenceKind(left, right) { return this.comparisonSequence(left) !== null && left.constructor === right?.constructor; }

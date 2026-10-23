@@ -53,7 +53,7 @@ Python coverage is inferred from these probe counts.
 | ordinary-control | supported | if/elif/else, while/for over adopted values, loop else/break/continue, return and finally control transfer. Generator, context-manager, match and async control are separate rows. |
 | function-binding | partial | def, recursion, positional-only/ordinary/keyword-only parameters; immutable literal/tuple defaults and lexical closures. Computed/mutable defaults, global/nonlocal writes, argument packing/unpacking and annotations remain deferred. |
 | ordinary-syntax-gaps | deferred | assert, lambda, assignment expressions and tuple/list/starred assignment unpacking. No execution support. Recognized assignment expressions receive UNSUPPORTED without execution support. |
-| class-construction | partial | Explicit classes-source/1 only: user classes, bounded C3 MRO, __init__, ordinary attributes/deletion and bound methods. Builtin subclassing, __new__, super, metaclasses, implicit __class__ cells and full reflective behavior are not adopted. Missing list currently makes the builtin-subclass probe fail with NameError. |
+| class-construction | partial | Explicit classes-source/1 only: user classes, bounded C3 MRO, __init__, ordinary attributes/deletion and bound methods. Builtin subclassing, __new__, super, metaclasses, implicit __class__ cells and full reflective behavior are not adopted. Builtin list/tuple bases are explicitly refused with UNSUPPORTED. |
 | private-names | supported | Lexical private-name mangling in admitted class bodies, nested code, parameters/imports and metadata. No additional syntax beyond the explicit source profile. |
 | descriptors-decorators | partial | Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Descriptor-valued setter/deleter/name-notification hooks and unrestricted reflection remain refused. |
 | call-length-truth | supported | Type-level __call__/__len__/__bool__, callable(), len(), bool(), not and control tests in classes-source/1, including adopted descriptor binding and optional truth fallback. Length uses the explicit signed-64-bit contract; later protocols remain separate. |
@@ -120,7 +120,7 @@ Python coverage is inferred from these probe counts.
 | issubclass | partial | issubclass(user_class, user_class/object). | Full builtin, tuple/union classinfo. |
 | iter | partial | Primitive iter(value); classes-source adds user __iter__, indexed fallback and iter(callable, sentinel). | Generator/async protocols and broader sequence APIs remain separate. |
 | len | partial | len(admitted containers/str or classes-profile __len__). | __index__ result conversion and unadopted value families. |
-| list | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| list | partial | Zero or one positional adopted primitive iterable; shallow elements, dictionary order and Unicode points. | User iterables/length hints, methods, builtin subclasses and reflection. |
 | locals | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | map | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | max | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -146,7 +146,7 @@ Python coverage is inferred from these probe counts.
 | str | partial | str() and str(x) for None/bool/int/str/adopted exceptions and user slots; existing/returned strings retain identity. | Float/container/default-object displays, object= keyword and encoding forms. |
 | sum | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | super | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| tuple | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| tuple | partial | Zero or one positional adopted primitive iterable; shallow elements, dictionary order and Unicode points. | User iterables/length hints, methods, builtin subclasses and reflection. |
 | type | partial | type(user_instance), one argument; classes-source/1. | Full one-argument and three-argument type construction. |
 | vars | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | zip | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
