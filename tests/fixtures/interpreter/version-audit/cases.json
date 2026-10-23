@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-version-audit/1",
+  "oracle": {
+    "implementation": "CPython",
+    "version": "3.14.7",
+    "unicode": "16.0.0"
+  },
+  "cases": [
+    {
+      "id": "list-delete-alias",
+      "source_file": "list-delete-alias.py",
+      "kind": "control",
+      "category": "implementation",
+      "affected_api": "del list[index]",
+      "purpose": "Controls logical deletion and aliasing; does not observe native array shrinking.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Misc/NEWS.d/3.14.9.rst"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "True 2 10 30\n"
+      }
+    },
+    {
+      "id": "unicode-identifiers",
+      "source_file": "unicode-identifiers.py",
+      "kind": "control",
+      "category": "unicode",
+      "affected_api": "NFKC identifier binding",
+      "purpose": "Controls adopted Unicode 16 normalization; does not test StringPrep.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Modules/unicodedata_db.h"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "7 4\n"
+      }
+    },
+    {
+      "id": "unicode-numeric",
+      "source_file": "unicode-numeric.py",
+      "kind": "control",
+      "category": "unicode",
+      "affected_api": "int(str), float(str)",
+      "purpose": "Controls adopted decimal Unicode digits; does not admit Unicode 3.2 codecs.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Modules/unicodedata_db.h"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "12 3.5\n"
+      }
+    },
+    {
+      "id": "float-format-small",
+      "source_file": "float-format-small.py",
+      "kind": "control",
+      "category": "builtin",
+      "affected_api": "format(float, spec)",
+      "purpose": "Small precision control only; cannot establish the near-INT_MAX safety fix.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_format.py"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "1.25\n"
+      }
+    },
+    {
+      "id": "dict-reverse-mutation",
+      "source_file": "dict-reverse-mutation.py",
+      "kind": "semantic-delta",
+      "category": "builtin",
+      "affected_api": "reversed(dict), next(iterator)",
+      "purpose": "Same-size key replacement during bounded reverse traversal.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_dict.py"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "9\n2\n1\n0\n"
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": false,
+          "stdout": "9\n2\n1\n",
+          "error": {
+            "type": "RuntimeError"
+          }
+        }
+      }
+    },
+    {
+      "id": "template-whitespace",
+      "source_file": "template-whitespace.py",
+      "kind": "semantic-delta",
+      "category": "language",
+      "affected_api": "Interpolation.expression",
+      "purpose": "Observe trailing expression whitespace.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_tstring.py"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "'value'\n"
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": true,
+          "stdout": "'value   '\n"
+        }
+      }
+    },
+    {
+      "id": "template-debug",
+      "source_file": "template-debug.py",
+      "kind": "semantic-delta",
+      "category": "language",
+      "affected_api": "debug Interpolation.expression",
+      "purpose": "Observe whitespace preceding the debug delimiter.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_tstring.py"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "'value'\n"
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": true,
+          "stdout": "'value '\n"
+        }
+      }
+    },
+    {
+      "id": "stringprep-mapping",
+      "source_file": "stringprep-mapping.py",
+      "kind": "semantic-delta",
+      "category": "unicode-library",
+      "affected_api": "stringprep.map_table_b2",
+      "purpose": "U+1E9E was unassigned in Unicode 3.2 and must not use a later lowercase mapping.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/stringprep.py"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "'ss'\n"
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": true,
+          "stdout": "'\u1e9e'\n"
+        }
+      }
+    },
+    {
+      "id": "idna-mapping",
+      "source_file": "idna-mapping.py",
+      "kind": "semantic-delta",
+      "category": "unicode-library",
+      "affected_api": "encodings.idna.nameprep",
+      "purpose": "Separate IDNA name preparation from the engine Unicode identifier profile.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/stringprep.py"
+      ],
+      "pinned_expected": {
+        "ok": true,
+        "stdout": "'ss'\n"
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": true,
+          "stdout": "'\u1e9e'\n"
+        }
+      }
+    },
+    {
+      "id": "bytes-lookup-error",
+      "source_file": "bytes-lookup-error.py",
+      "kind": "semantic-delta",
+      "category": "builtin",
+      "affected_api": "bytes percent formatting / __bytes__ descriptor",
+      "purpose": "Record lookup exception propagation without native buffer faults.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Lib/test/test_bytes.py"
+      ],
+      "pinned_expected": {
+        "ok": false,
+        "stdout": "",
+        "error": {
+          "type": "SystemError"
+        }
+      },
+      "later": {
+        "since": "3.14.9",
+        "verification": "source-only",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "ZeroDivisionError"
+          }
+        }
+      }
+    },
+    {
+      "id": "nonascii-syntax-range",
+      "source_file": "nonascii-syntax-range.py",
+      "kind": "diagnostic-delta",
+      "category": "language",
+      "affected_api": "SyntaxError.offset/end_offset",
+      "purpose": "Non-ASCII prefix preceding a ranged leading-zero error.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_exceptions.py"
+      ],
+      "pinned_expected": {
+        "ok": false,
+        "stdout": "",
+        "error": {
+          "type": "SyntaxError",
+          "diagnostic": {
+            "msg": "leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers",
+            "lineno": 1,
+            "offset": 12,
+            "end_lineno": 1,
+            "end_offset": 15
+          }
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "SyntaxError",
+            "diagnostic": {
+              "lineno": 1,
+              "offset": 8,
+              "end_lineno": 1,
+              "end_offset": 11
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "obsolete-not-equal",
+      "source_file": "obsolete-not-equal.py",
+      "kind": "diagnostic-delta",
+      "category": "language",
+      "affected_api": "SyntaxError message for <>",
+      "purpose": "Invalid obsolete operator retains rejection and gains a replacement suggestion.",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_syntax.py",
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Grammar/python.gram"
+      ],
+      "pinned_expected": {
+        "ok": false,
+        "stdout": "",
+        "error": {
+          "type": "SyntaxError",
+          "diagnostic": {
+            "msg": "invalid syntax",
+            "lineno": 1,
+            "offset": 3,
+            "end_lineno": 1,
+            "end_offset": 5
+          }
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "SyntaxError",
+            "diagnostic": {
+              "lineno": 1,
+              "offset": 3,
+              "end_lineno": 1,
+              "end_offset": 5,
+              "msg": "invalid syntax.  Maybe you meant '!=' instead of '<>'?"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unexecuted": [
+    {
+      "id": "near-int-max-precision",
+      "upstream": "https://github.com/python/cpython/issues/158446",
+      "reason": "Pinned CPython can crash or allocate excessively; no vulnerable precision is executed."
+    },
+    {
+      "id": "dynamic-percent-width-overflow",
+      "upstream": "https://github.com/python/cpython/issues/159739",
+      "reason": "Native word-size overflow and potentially huge output; percent formatting remains outside the adopted profile."
+    },
+    {
+      "id": "stale-errno-complex-abs",
+      "upstream": "https://github.com/python/cpython/issues/155526",
+      "reason": "Needs native errno preconditioning; an ordinary NaN test would not verify this change."
+    },
+    {
+      "id": "deep-comprehension-block-limit",
+      "upstream": "https://github.com/python/cpython/issues/156091",
+      "reason": "Do not invoke the pinned compiler crash; comprehension admission remains separate."
+    },
+    {
+      "id": "invalid-source-byte-offset",
+      "upstream": "https://github.com/python/cpython/issues/157378",
+      "reason": "Requires raw undecodable source bytes, outside this Unicode-text corpus and the engine text input contract."
+    },
+    {
+      "id": "pure-python-datetime-iso",
+      "upstream": "https://github.com/python/cpython/issues/152204",
+      "reason": "Requires selecting the pure Python fallback, not the default C module; no datetime library profile is claimed."
+    }
+  ]
+}
