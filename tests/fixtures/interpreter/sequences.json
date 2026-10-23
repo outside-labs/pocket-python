@@ -1,0 +1,363 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-sequences/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "Q1"
+  ],
+  "cases": [
+    {
+      "id": "range-empty",
+      "stage": "Q1",
+      "source": "print(len(range(0)),bool(range(0)),bool(range(3,1)),len(range(4,4,-2)))\n",
+      "stdout": "0 False False 0\n"
+    },
+    {
+      "id": "range-forms",
+      "stage": "Q1",
+      "source": "print(len(range(5)),len(range(2,9)),len(range(9,1,-2)))\nfor x in range(2,9,3): print(x)\n",
+      "stdout": "5 7 4\n2\n5\n8\n"
+    },
+    {
+      "id": "range-bool",
+      "stage": "Q1",
+      "source": "print(len(range(True)),range(False,True)[0])\n",
+      "stdout": "1 0\n"
+    },
+    {
+      "id": "range-index",
+      "stage": "Q1",
+      "source": "r=range(2,12,3)\nprint(r[0],r[-1],r[True],r.start,r.stop,r.step)\n",
+      "stdout": "2 11 5 2 12 3\n"
+    },
+    {
+      "id": "range-index-error",
+      "stage": "Q1",
+      "source": "range(2)[2]\n",
+      "stdout": "",
+      "error_type": "IndexError"
+    },
+    {
+      "id": "range-negative-index-error",
+      "stage": "Q1",
+      "source": "range(2)[-3]\n",
+      "stdout": "",
+      "error_type": "IndexError"
+    },
+    {
+      "id": "range-slices",
+      "stage": "Q1",
+      "source": "r=range(2,30,3)\ns=r[::-2]\nprint(len(s),s[0],s[-1],s.start,s.stop,s.step,len(r[3:3]))\n",
+      "stdout": "5 29 5 29 -1 -6 0\n"
+    },
+    {
+      "id": "range-membership",
+      "stage": "Q1",
+      "source": "r=range(2,12,3)\nprint(2 in r,11 in r,4 in r,2.0 in r,True in range(3),\"2\" in r)\n",
+      "stdout": "True True False True True False\n"
+    },
+    {
+      "id": "range-equality",
+      "stage": "Q1",
+      "source": "print(range(0)==range(4,4,7),range(2,3,8)==range(2,4,9),range(0,4,2)==range(0,3,2),range(3)==[0,1,2])\n",
+      "stdout": "True True True False\n"
+    },
+    {
+      "id": "range-large",
+      "stage": "Q1",
+      "source": "r=range(10**100,10**100+5)\nprint(r[-1]==10**100+4,len(r),10**100+2 in r)\ns=range(10**100)[-3:]\nprint(s[0]==10**100-3,len(s))\n",
+      "stdout": "True 5 True\nTrue 3\n"
+    },
+    {
+      "id": "range-huge-length",
+      "stage": "Q1",
+      "source": "r=range(10**100)\nprint(bool(r),r[0],r[-1]==10**100-1)\nlen(r)\n",
+      "stdout": "True 0 True\n",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "range-exhaustion",
+      "stage": "Q1",
+      "source": "it=iter(range(3,5))\nprint(iter(it) is it,next(it),next(it))\ntry: next(it)\nexcept StopIteration: print(\"done\")\ntry: next(it)\nexcept StopIteration: print(\"still done\")\n",
+      "stdout": "True 3 4\ndone\nstill done\n"
+    },
+    {
+      "id": "range-arity",
+      "stage": "Q1",
+      "source": "range()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-too-many",
+      "stage": "Q1",
+      "source": "range(1,2,3,4)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-keyword",
+      "stage": "Q1",
+      "source": "range(stop=3)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-zero-step",
+      "stage": "Q1",
+      "source": "range(1,2,0)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "range-float",
+      "stage": "Q1",
+      "source": "range(3.0)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-string",
+      "stage": "Q1",
+      "source": "range(\"3\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-bad-index",
+      "stage": "Q1",
+      "source": "range(3)[1.0]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-zero-slice",
+      "stage": "Q1",
+      "source": "range(3)[::0]\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "range-index-callbacks",
+      "stage": "Q1",
+      "source": "class I:\n def __index__(self):\n  print(self.x)\n  return self.x\na=I()\na.x=2\nb=I()\nb.x=7\nc=I()\nc.x=2\nr=range(a,b,c)\nprint(len(r),r[a])\n",
+      "stdout": "2\n7\n2\n2\n3 6\n"
+    },
+    {
+      "id": "range-bad-index-result",
+      "stage": "Q1",
+      "source": "class I:\n def __index__(self): return \"bad\"\nrange(I())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-index-error-order",
+      "stage": "Q1",
+      "source": "class I:\n def __index__(self):\n  print(\"entered\")\n  raise ValueError(\"index\")\nrange(I(),I())\n",
+      "stdout": "entered\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "range-index-descriptor",
+      "stage": "Q1",
+      "source": "class I:\n @property\n def __index__(self):\n  print(\"bound\")\n  def use(): return 4\n  return use\nprint(len(range(I())))\n",
+      "stdout": "bound\n4\n"
+    },
+    {
+      "id": "construct-empty",
+      "stage": "Q2",
+      "source": "a=list()\na.append(7)\nprint(a[0],len(tuple()),len(list()),isinstance(a,list),isinstance((),tuple),isinstance(range(1),range))\n",
+      "stdout": "7 0 0 True True True\n"
+    },
+    {
+      "id": "construct-shallow",
+      "stage": "Q2",
+      "source": "held=[7]\na=[held]\nb=list(a)\nc=tuple(a)\nprint(a is b,a[0] is b[0],c[0] is held,tuple(c) is c)\nheld.append(9)\nprint(len(b[0]),len(c[0]))\n",
+      "stdout": "False True True True\n2 2\n"
+    },
+    {
+      "id": "construct-unicode",
+      "stage": "Q2",
+      "source": "a=list(\"A\\U0001f680e\\u0301\")\nb=tuple(\"\\U0001f680\")\nprint(len(a),a[1],len(b),b[0])\n",
+      "stdout": "4 🚀 1 🚀\n"
+    },
+    {
+      "id": "construct-dictionary",
+      "stage": "Q2",
+      "source": "d={\"b\":2,\"a\":1}\na=list(d)\nb=tuple(d)\nprint(a[0],a[1],b[0],b[1])\n",
+      "stdout": "b a b a\n"
+    },
+    {
+      "id": "construct-range",
+      "stage": "Q2",
+      "source": "a=list(range(4,-2,-2))\nb=tuple(range(3))\nprint(len(a),a[0],a[2],len(b),b[-1])\n",
+      "stdout": "3 4 0 3 2\n"
+    },
+    {
+      "id": "construct-iterator",
+      "stage": "Q2",
+      "source": "it=iter([7,8,9])\nprint(next(it))\na=list(it)\nb=tuple(it)\nprint(len(a),a[0],a[1],len(b))\n",
+      "stdout": "7\n2 8 9 0\n"
+    },
+    {
+      "id": "list-none",
+      "stage": "Q2",
+      "source": "list(None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-arity",
+      "stage": "Q2",
+      "source": "list(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-keyword",
+      "stage": "Q2",
+      "source": "list(iterable=[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-none",
+      "stage": "Q2",
+      "source": "tuple(None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-arity",
+      "stage": "Q2",
+      "source": "tuple(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-keyword",
+      "stage": "Q2",
+      "source": "tuple(iterable=[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "construct-user",
+      "stage": "Q3",
+      "source": "class A:\n def __iter__(self):\n  print(\"iter\")\n  return iter([[7],[8]])\na=list(A())\nb=tuple(A())\nprint(a[0][0],b[1][0])\n",
+      "stdout": "iter\niter\n7 8\n"
+    },
+    {
+      "id": "construct-indexed",
+      "stage": "Q3",
+      "source": "class A:\n def __getitem__(self,key):\n  print(key)\n  if key==2: raise IndexError\n  return key+7\na=list(A())\nprint(a[0],a[1])\n",
+      "stdout": "0\n1\n2\n7 8\n"
+    },
+    {
+      "id": "construct-source-error",
+      "stage": "Q3",
+      "source": "class A:\n def __iter__(self): return self\n def __next__(self):\n  print(\"next\")\n  raise ValueError(\"body\")\nlist(A())\n",
+      "stdout": "next\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "construct-stop",
+      "stage": "Q3",
+      "source": "class A:\n def __iter__(self): return self\n def __next__(self): raise StopIteration\nprint(len(list(A())),len(tuple(A())))\n",
+      "stdout": "0 0\n"
+    },
+    {
+      "id": "construct-descriptor",
+      "stage": "Q3",
+      "source": "class A:\n @property\n def __iter__(self):\n  print(\"bound\")\n  def use(): return iter([[7]])\n  return use\nprint(list(A())[0][0])\n",
+      "stdout": "bound\n7\n"
+    },
+    {
+      "id": "all-any-primitives",
+      "stage": "Q3",
+      "source": "print(all([]),any([]),all([1,2]),all([1,0,2]),any([0,2]),all(range(1,4)),any(range(0)),all(\"ab\"))\n",
+      "stdout": "True False True False True True False True\n"
+    },
+    {
+      "id": "all-any-consumption",
+      "stage": "Q3",
+      "source": "it=iter([0,2,3])\nprint(all(it),next(it),any(it))\nit=iter([1,0,3])\nprint(any(it),next(it))\n",
+      "stdout": "False 2 True\nTrue 0\n"
+    },
+    {
+      "id": "all-any-truth",
+      "stage": "Q3",
+      "source": "class V:\n def __bool__(self):\n  print(self.n)\n  return self.n>0\na=V()\na.n=0\nb=V()\nb.n=2\nprint(all([a,b]),any([a,b]))\n",
+      "stdout": "0\n0\n2\nFalse True\n"
+    },
+    {
+      "id": "all-any-indexed",
+      "stage": "Q3",
+      "source": "class A:\n def __getitem__(self,key):\n  print(key)\n  if key==2: raise IndexError\n  return key\nprint(all(A()),any(A()))\n",
+      "stdout": "0\n0\n1\nFalse True\n"
+    },
+    {
+      "id": "all-truth-stop",
+      "stage": "Q3",
+      "source": "class V:\n def __bool__(self): raise StopIteration(\"truth\")\nall([V()])\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "any-iter-stop",
+      "stage": "Q3",
+      "source": "class A:\n def __iter__(self): raise StopIteration(\"iter\")\nany(A())\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "all-none",
+      "stage": "Q3",
+      "source": "all(None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "all-missing",
+      "stage": "Q3",
+      "source": "all()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "all-keyword",
+      "stage": "Q3",
+      "source": "all(iterable=[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "any-none",
+      "stage": "Q3",
+      "source": "any(None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "any-missing",
+      "stage": "Q3",
+      "source": "any()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "any-keyword",
+      "stage": "Q3",
+      "source": "any(iterable=[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "construct-length-hint",
+      "stage": "Hints",
+      "source": "class A:\n def __iter__(self):\n  print(\"iter\")\n  return iter([7])\n def __len__(self):\n  print(\"len\")\n  return 1\nprint(list(A())[0])\n",
+      "stdout": "iter\nlen\n7\n"
+    }
+  ]
+}

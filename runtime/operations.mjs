@@ -14,11 +14,11 @@ const operands = values => {
   return Object.freeze([...values]);
 };
 const numericName = value => {
-  if (!["int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"].includes(value)) throw new TypeError("Invalid numeric operation.");
+  if (!["range","int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"].includes(value)) throw new TypeError("Invalid numeric operation.");
   return value;
 };
 const numericPosition = value => {
-  if (!Number.isSafeInteger(value) || value < 0 || value > 2) throw new TypeError("Invalid numeric operand position.");
+  if (!Number.isSafeInteger(value) || value < 0 || value > 3) throw new TypeError("Invalid numeric operand position.");
   return value;
 };
 export function completion(kind, fields = {}) {
@@ -162,7 +162,7 @@ export function unaryTask(operation, value, site, after = null, depth = 0, optio
 }
 export function numericTask(name, args, site, after = null, depth = 0, position = 0) {
   depthCheck(depth); completionRoots(after); numericPosition(position);
-  if (args.length > 3) throw new TypeError("Invalid numeric operands.");
+  if (args.length > 3 || position > (name === "range" ? 3 : 2)) throw new TypeError("Invalid numeric operands.");
   return Object.freeze({kind:"numeric", name:numericName(name), args:operands(args), position, site, completion:after, depth});
 }
 export function valueTask(value, site, after = null, depth = 0) {

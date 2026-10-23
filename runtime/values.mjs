@@ -25,9 +25,14 @@ class SliceValue {
   constructor(start, stop, step) { this.start = start; this.stop = stop; this.step = step; Object.freeze(this); }
 }
 class DictValue { constructor() { this.entries = []; this.version = 0; this.ownedKeys = false; } }
+class RangeValue {
+  constructor(start, stop, step, length) {
+    this.start = start; this.stop = stop; this.step = step; this.length = length; Object.freeze(this);
+  }
+}
 export class IteratorValue {
   constructor(value) {
-    this.value = value; this.index = 0;
+    this.value = value; this.index = value instanceof RangeValue ? 0n : 0;
     if (value instanceof DictValue) { this.size = value.entries.length; this.version = value.version; }
   }
 }
@@ -72,6 +77,24 @@ export class ValueRuntime {
   float(value) { return this.make(64, [], () => new FloatValue(bitsOf(value))); }
   complex(real, imag) { return this.make(80, [], () => new ComplexValue(real, imag)); }
   isComplex(value) { return value instanceof ComplexValue; }
+  isRange(value) { return value instanceof RangeValue; }
+  range(args) {
+    if (!args.length || args.length > 3 || args.some(value => !["bigint", "boolean"].includes(typeof value)))
+      this.fail("TypeError", "range() requires one to three integer arguments");
+    const parts = args.map(integer), start = parts.length === 1 ? 0n : parts[0],
+      stop = parts.length === 1 ? parts[0] : parts[1], step = parts.length === 3 ? parts[2] : 1n;
+    if (step === 0n) this.fail("ValueError", "range() arg 3 must not be zero");
+    this.charge(parts.reduce((size, value) => size + value.toString().length, 1));
+    const distance = step > 0n ? stop - start : start - stop, stride = step > 0n ? step : -step;
+    this.charge(distance.toString().length * stride.toString().length);
+    const length = this.int(distance <= 0n ? 0n : (distance - 1n) / stride + 1n);
+    return this.make(112, [start, stop, step, length], () => new RangeValue(start, stop, step, length));
+  }
+  rangeAttribute(value, name) {
+    this.charge(1);
+    if (["start", "stop", "step"].includes(name)) return value[name];
+    this.fail("UnsupportedOperationError", "This range attribute requires a later sequence stage.", "UNSUPPORTED");
+  }
   complexAttribute(value, name) {
     if (["real", "imag"].includes(name)) return this.float(value[name]);
     this.fail("UnsupportedOperationError", "This complex attribute requires a later numeric stage.", "UNSUPPORTED");
@@ -158,7 +181,7 @@ export class ValueRuntime {
     return this.string(Array.from(text, char => char.codePointAt(0)));
   }
   isSlice(value) { return value instanceof SliceValue; }
-  isSequence(value) { return sequence(value); }
+  isSequence(value) { return sequence(value) || value instanceof RangeValue; }
   sliceKey(start, stop, step) { return this.make(88, [start, stop, step], () => new SliceValue(start, stop, step)); }
   sliceAttribute(value, name) {
     this.charge(1);
@@ -280,6 +303,7 @@ export class ValueRuntime {
     this.charge(1);
     if (value instanceof NotImplementedValue) this.fail("TypeError", "NotImplemented should not be used in a boolean context");
     if (value === null) return false;
+    if (value instanceof RangeValue) return value.length !== 0n;
     if (value instanceof ComplexValue) return value.real !== 0 || value.imag !== 0;
     if (numeric(value)) return value instanceof FloatValue ? value.value !== 0 : integer(value) !== 0n;
     if (sequence(value)) return elements(value).length !== 0;
@@ -291,6 +315,8 @@ export class ValueRuntime {
   }
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof RangeValue || right instanceof RangeValue) return left instanceof RangeValue && right instanceof RangeValue &&
+      left.length === right.length && (left.length === 0n || left.start === right.start && (left.length === 1n || left.step === right.step));
     if (left instanceof ComplexValue || right instanceof ComplexValue) {
       if (left instanceof ComplexValue && right instanceof ComplexValue) return left.real === right.real && left.imag === right.imag;
       const value = left instanceof ComplexValue ? left : right, other = left instanceof ComplexValue ? right : left;
@@ -401,6 +427,7 @@ export class ValueRuntime {
   }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof RangeValue) this.fail("UnsupportedOperationError", "Range hashing requires a later sequence stage.", "UNSUPPORTED");
     const modulus = 2305843009213693951n;
     if (value instanceof ComplexValue) {
       const part = number => {
@@ -495,13 +522,17 @@ export class ValueRuntime {
       if (found < 0) this.fail("KeyError", "Dictionary key not found.");
       return value.entries[found].value;
     }
-    if (!sequence(value)) this.fail("TypeError", "Value is not subscriptable in this stage.");
+    if (!sequence(value) && !(value instanceof RangeValue)) this.fail("TypeError", "Value is not subscriptable in this stage.");
     index = integer(index);
     if (typeof index !== "bigint") this.fail("TypeError", "Sequence indices must be integers.");
-    const items = elements(value), size = BigInt(items.length);
+    const items = value instanceof RangeValue ? null : elements(value), size = value instanceof RangeValue ? value.length : BigInt(items.length);
     if (index < 0n) index += size;
     if (index < 0n || index >= size) this.fail("IndexError", (value instanceof StringValue ? "string" : value instanceof ListValue ? "list" : "tuple") + " index out of range");
     this.charge(1);
+    if (value instanceof RangeValue) {
+      this.charge(value.start.toString().length + value.step.toString().length * index.toString().length);
+      return this.int(value.start + value.step * index);
+    }
     return value instanceof StringValue ? this.string([items[Number(index)]]) : items[Number(index)];
   }
   set(value, key, item) {
@@ -588,8 +619,8 @@ export class ValueRuntime {
     this.resize(value, 64 + 8 * items.length, items); value.items = items; return null;
   }
   slice(value, start, stop, step) {
-    if (!sequence(value)) this.fail("TypeError", "Slicing requires an adopted sequence.");
-    const items = elements(value), length = BigInt(items.length);
+    if (!sequence(value) && !(value instanceof RangeValue)) this.fail("TypeError", "Slicing requires an adopted sequence.");
+    const items = value instanceof RangeValue ? null : elements(value), length = value instanceof RangeValue ? value.length : BigInt(items.length);
     step = step === null ? 1n : integer(step);
     if (typeof step !== "bigint") this.fail("TypeError", "slice indices must be integers or None");
     if (step === 0n) this.fail("ValueError", "slice step cannot be zero");
@@ -602,12 +633,17 @@ export class ValueRuntime {
       return index < low ? low : index > high ? high : index;
     };
     start = normalize(start, positive ? 0n : length - 1n); stop = normalize(stop, positive ? length : -1n);
+    if (value instanceof RangeValue) {
+      this.charge((value.step.toString().length + 1) * (start.toString().length + stop.toString().length + step.toString().length));
+      return this.range([this.int(value.start + value.step * start), this.int(value.start + value.step * stop), this.int(value.step * step)]);
+    }
     const result = [];
     for (let index = start; positive ? index < stop : index > stop; index += step) { this.charge(1); result.push(items[Number(index)]); }
     return value instanceof StringValue ? this.string(result) : value instanceof TupleValue ? this.tuple(result) : this.list(result);
   }
   iterator(value) {
     if (value instanceof IteratorValue) return value;
+    if (value instanceof RangeValue) { this.charge(1); return this.make(80, [value, 0n], () => new IteratorValue(value)); }
     if (!sequence(value) && !(value instanceof DictValue)) this.fail("TypeError", "Value is not iterable in this stage.");
     this.charge(1); return this.make(64, [value], () => new IteratorValue(value));
   }
@@ -616,6 +652,13 @@ export class ValueRuntime {
     if (!(iterator instanceof IteratorValue)) this.fail("TypeError", "next requires an iterator.");
     const value = iterator.value; this.charge(1);
     if (iterator.exhausted) this.fail("StopIteration", "");
+    if (value instanceof RangeValue) {
+      if (iterator.index >= value.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
+      this.charge(value.start.toString().length + value.step.toString().length * iterator.index.toString().length);
+      const item = value.start + value.step * iterator.index, index = this.int(iterator.index + 1n);
+      this.resize(iterator, 80, [value, index]); iterator.index = index;
+      return this.int(item);
+    }
     if (value instanceof DictValue) {
       if (iterator.invalidated || iterator.size !== value.entries.length) {
         iterator.invalidated = true; this.fail("RuntimeError", "dictionary changed size during iteration");
@@ -630,6 +673,16 @@ export class ValueRuntime {
     return value instanceof StringValue ? this.string([item]) : item;
   }
   contains(key, value) {
+    if (value instanceof RangeValue) {
+      if (key instanceof ComplexValue) { if (key.imag !== 0) return false; key = key.real; }
+      else if (key instanceof FloatValue) key = key.value;
+      if (typeof key === "number") { if (!Number.isFinite(key) || !Number.isInteger(key)) return false; key = BigInt(key); }
+      key = integer(key);
+      if (typeof key !== "bigint" || value.length === 0n) return false;
+      this.charge(key.toString().length + value.start.toString().length + value.step.toString().length);
+      const offset = key - value.start;
+      return offset % value.step === 0n && offset / value.step >= 0n && offset / value.step < value.length;
+    }
     if (value instanceof DictValue) return this.find(value, key) >= 0;
     if (value instanceof TupleValue || value instanceof ListValue) return value.items.some(item => {
       this.charge(1); return item === key || this.equal(item, key);
@@ -647,6 +700,10 @@ export class ValueRuntime {
     if (operation === "truth") return this.truth(value);
     if (operation === "not") return !this.truth(value);
     if (operation === "len") {
+      if (value instanceof RangeValue) {
+        if (value.length > 9223372036854775807n) this.fail("OverflowError", "Python int too large to convert to length");
+        return value.length;
+      }
       if (sequence(value)) return BigInt(elements(value).length);
       if (value instanceof DictValue) return BigInt(value.entries.length);
       this.fail("TypeError", "Value has no len() in this stage.");
@@ -830,11 +887,12 @@ export function valueLayout(value) {
   }
   if (value instanceof FloatValue) return {bytes: 64, children: []};
   if (value instanceof ComplexValue) return {bytes: 80, children: []};
+  if (value instanceof RangeValue) return {bytes: 112, children: [value.start, value.stop, value.step, value.length]};
   if (value instanceof StringValue) return {bytes: 64 + 4 * value.points.length, children: []};
   if (value instanceof TupleValue || value instanceof ListValue) return {bytes: 64 + 8 * value.items.length, children: value.items};
   if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
-  if (value instanceof IteratorValue) return {bytes: 64, children: [value.value]};
+  if (value instanceof IteratorValue) return value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
   if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};
   if (value instanceof NotImplementedValue) return {bytes: 48, children: []};
   if (value instanceof SliceValue) return {bytes: 88, children: [value.start, value.stop, value.step]};
