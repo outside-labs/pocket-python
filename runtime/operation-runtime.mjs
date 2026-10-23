@@ -23,8 +23,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if ((state.outputLength += text.length) > 65536) hard("BUDGET", "ExecutionLimitError", "Output budget exceeded.");
     state.outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text);
   };
-  const numericNames = new Set(["int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"]);
+  const numericNames = new Set(["range","int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"]);
   const bindNumeric = (name, args, keywords, keywordValues) => {
+    if (name === "range") {
+      if (args.length < 1 || args.length > 3 || keywords.length) python("TypeError", "range() requires one to three positional arguments");
+      return args;
+    }
     if (["int","float"].includes(name)) {
       if (args.length + keywords.length > (name === "int" ? 2 : 1) ||
           keywords.some(key => name !== "int" || key !== "base") || keywords.length && args.length !== 1)
@@ -173,7 +177,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           python("TypeError",slot + " returned an invalid numeric value");
       }
       const converted = args.map((argument,index)=>index === position ? value : argument);
-      return numericTask(name,converted,site,after,depth,name === "complex" ? position+1 : 0);
+      return numericTask(name,converted,site,after,depth,["complex", "range"].includes(name) ? position+1 : 0);
     }
     if (completion?.kind === "hash-result") return valueTask(values.hashResult(value), site, completion.after);
     if (completion?.kind === "dict-hash") return dictionaryTask(completion.receiver, completion.key, site, completion.after,
@@ -381,6 +385,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries = operationRoots(task);
           const name = task.name;
           let position = task.position;
+          if (name === "range") {
+            while (position < args.length && !(args[position] instanceof InstanceValue)) {
+              if (!["bigint", "boolean"].includes(typeof args[position])) python("TypeError", "range() argument cannot be interpreted as an integer");
+              position++;
+            }
+            task = position === args.length ? valueTask(values.range(args), site, completion) :
+              unaryTask("index", args[position], site, continuation("numeric-index", {name, args, position, depth, after: completion}), depth);
+            continue;
+          }
           if (name === "complex" && args.length === 2 && values.isString(args[0])) python("TypeError", "complex() first argument cannot be a string with two arguments");
           if (name === "round" && !(args[0] instanceof InstanceValue) && !values.isPrimitive(args[0],"int") && !values.isPrimitive(args[0],"float"))
             python("TypeError", "round() argument has no numeric type slot");
@@ -488,7 +501,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries.push(...operationRoots(task));
           const {receiver, key} = task;
           if (values.dictionaryNeedsProtocol(receiver, key)) { task = dictionaryTask(receiver, key, site, completion, depth, "contains"); continue; }
-          if (task.search || values.isIterator(receiver)) {
+          if (task.search || values.isIterator(receiver) || values.isRange(receiver) && key instanceof InstanceValue) {
             task = unaryTask("iter", receiver, site, continuation("search-iter", {receiver, key, after: completion, depth}), depth); continue;
           }
           if (!(receiver instanceof InstanceValue)) {
