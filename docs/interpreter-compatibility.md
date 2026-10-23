@@ -48,7 +48,7 @@ Python coverage is inferred from these probe counts.
 | lexical-unicode | supported | Unicode identifiers normalized with pinned Unicode data; Unicode strings, raw/triple strings, explicit/implicit line joining and indentation within core-source/1. The exact admitted grammar is documented in interpreter-language.md; other literal families have separate rows. |
 | numeric-operations | partial | Arbitrary integers, binary64 real and owned complex values; exact integer true division, bounded powers, bitwise/shifts and primitive helpers; real/complex construction and selected numeric/index callbacks. Both source profiles admit primitive APIs; callbacks require classes-source/1. General complex powers, non-finite complex arithmetic/intermediate recovery and numeric methods remain INT-NUM-02. Broader class arithmetic and formatting remain separate. |
 | string-values | partial | Unicode code-point length, concatenation, comparison, membership, indexing and slicing, including negative step. General string methods, formatting and bytes/encoding APIs are not adopted. |
-| container-values | partial | List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred. |
+| container-values | partial | List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Dictionary constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred. |
 | expression-order | supported | Admitted expression evaluation, chained comparisons, identity/membership, short circuit and/or, not and conditional expressions. This row covers admitted value/protocol families, not every Python expression. |
 | ordinary-control | supported | if/elif/else, while/for over adopted values, loop else/break/continue, return and finally control transfer. Generator, context-manager, match and async control are separate rows. |
 | function-binding | partial | def, recursion, positional-only/ordinary/keyword-only parameters; immutable literal/tuple defaults and lexical closures. Computed/mutable defaults, global/nonlocal writes, argument packing/unpacking and annotations remain deferred. |
@@ -82,9 +82,9 @@ Python coverage is inferred from these probe counts.
 | --- | --- | --- | --- |
 | abs | supported | Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract. |  |
 | aiter | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| all | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| all | partial | One positional adopted iterable; owned iteration and short-circuit truth callbacks. | Unadopted iterable/value families, including generators. |
 | anext | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| any | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| any | partial | One positional adopted iterable; owned iteration and short-circuit truth callbacks. | Unadopted iterable/value families, including generators. |
 | ascii | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | bin | supported | Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract. |  |
 | bool | partial | bool() / bool(x) on admitted primitive/user values; classes truth protocols. | Other unadopted value families. |
@@ -120,7 +120,7 @@ Python coverage is inferred from these probe counts.
 | issubclass | partial | issubclass(user_class, user_class/object). | Full builtin, tuple/union classinfo. |
 | iter | partial | Primitive iter(value); classes-source adds user __iter__, indexed fallback and iter(callable, sentinel). | Generator/async protocols and broader sequence APIs remain separate. |
 | len | partial | len(admitted containers/str or classes-profile __len__). | __index__ result conversion and unadopted value families. |
-| list | partial | Zero or one positional adopted primitive iterable; shallow elements, dictionary order and Unicode points. | User iterables/length hints, methods, builtin subclasses and reflection. |
+| list | partial | Zero or one positional adopted iterable; owned user iteration without user length hints, shallow elements and tuple identity. | User length hints, methods, builtin subclasses and reflection. |
 | locals | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | map | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | max | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -146,7 +146,7 @@ Python coverage is inferred from these probe counts.
 | str | partial | str() and str(x) for None/bool/int/str/adopted exceptions and user slots; existing/returned strings retain identity. | Float/container/default-object displays, object= keyword and encoding forms. |
 | sum | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | super | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| tuple | partial | Zero or one positional adopted primitive iterable; shallow elements, dictionary order and Unicode points. | User iterables/length hints, methods, builtin subclasses and reflection. |
+| tuple | partial | Zero or one positional adopted iterable; owned user iteration without user length hints, shallow elements and tuple identity. | User length hints, methods, builtin subclasses and reflection. |
 | type | partial | type(user_instance), one argument; classes-source/1. | Full one-argument and three-argument type construction. |
 | vars | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | zip | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |

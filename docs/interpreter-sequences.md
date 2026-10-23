@@ -15,7 +15,7 @@ Both core-source/1 and classes-source/1 retain bytecode versions 4 and 5.
 | Hints | User `__len__` / `__length_hint__` during list/tuple construction remains a separate, reference-only adoption. Refuse this source family before binding/consuming callbacks; do not silently ignore observable hooks. |
 
 The machine-readable corpus records which stages are implemented. At contract
-adoption none was implemented; Q1 and Q2 are now delivered. Source reports select only delivered stages;
+adoption none was implemented; Q1, Q2 and Q3 are now delivered. Source reports select only delivered stages;
 reference reports validate the complete corpus. Both Node and Chromium must
 execute delivered source independently, including instruction-boundary stepping.
 
@@ -51,3 +51,8 @@ Run reference validation with:
 ```sh
 python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/sequences.json
 ```
+
+Owned consumers retain their iterator and partial result in closed operation records.
+Only advancement exhaustion ends consumption: StopIteration from acquisition or
+truth callbacks propagates. Short circuit releases prior elements; user hints on
+the original source or an indexed iterator owner are refused before callbacks.

@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "Q1",
-    "Q2"
+    "Q2",
+    "Q3"
   ],
   "cases": [
     {

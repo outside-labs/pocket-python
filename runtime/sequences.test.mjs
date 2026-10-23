@@ -5,6 +5,7 @@ import {runSourceRequest} from './source-request.mjs';
 import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
+import {completion, completionRoots, consumeTask, operationRoots} from './operations.mjs';
 
 const profile={languageProfile:'classes-source/1'};
 const unit=source=>({name:'app',source,imports:[],package:false,notice:'Synthetic sequence notice'});
@@ -128,4 +129,77 @@ test('primitive results survive collection after construction and iterator exhau
   try{while(execution.state!=='completed'){execution.advance();session.memory.collect([],{cleanup:true});}
     assert.equal(output,'A 🚀 2\n');}
   finally{execution.close();session.context.finish();session.close();registry.close();}closed({closed:session.stats()});
+});
+
+test('owned consumers retain partial results and outer destinations in every phase',()=>{
+  const receiver={},result={},outer={},after=completion('relay',{receiver:outer});
+  for(const kind of ['consume-iter','consume-next','consume-truth'])
+    assert.deepEqual(completionRoots(completion(kind,{name:'list',receiver,result,after,depth:0})),[receiver,result,outer]);
+  assert.deepEqual(operationRoots(consumeTask('all',receiver,null,after)),[receiver,outer]);
+  assert.throws(()=>consumeTask('sorted',receiver,null),TypeError);
+  assert.throws(()=>completion('consume-next',{name:'list',receiver,result,depth:-1}),TypeError);
+});
+
+test('construction refuses user length hints before binding or consuming source hooks',async()=>{
+  for(const name of ['list','tuple'])for(const slot of ['__len__','__length_hint__']){
+    const result=await run('class A:\n @property\n def __iter__(self):\n  print("bad iter")\n  return str\n @property\n def '+slot+'(self):\n  print("bad hint")\n  return str\n'+name+'(A())\n');
+    assert.equal(result.error.code,'UNSUPPORTED');assert.equal(result.stdout,'');
+    if(result.closed)closed(result);else{assert.equal(result.error.phase,'bind');assert.equal(result.stats,null);}
+  }
+  const predicates=await run('class A:\n def __iter__(self): return iter([1])\n def __len__(self):\n  print("bad hint")\n  return 1\nprint(all(A()),any(A()))\n');
+  assert.equal(predicates.error,undefined,JSON.stringify(predicates.error));assert.equal(predicates.stdout,'True True\n');closed(predicates);
+});
+
+test('short circuit, sentinel iteration and callback errors keep distinct boundaries',async()=>{
+  const source='class A:\n def __iter__(self): return self\n def __next__(self):\n  self.n+=1\n  if self.n>1: raise ValueError("late")\n  return self.item\na=A()\na.n=0\na.item=0\nprint(all(a),a.n)\na.n=0\na.item=7\nprint(any(a),a.n)\n'+
+    'def supply():\n saved[0]+=1\n return saved[0]\nsaved=[0]\na=tuple(iter(supply,4))\nprint(len(a),a[-1])\n';
+  const result=await run(source);assert.equal(result.error,undefined,JSON.stringify(result.error));assert.equal(result.stdout,'False 1\nTrue 1\n3 3\n');closed(result);
+  for(const name of ['all','any']){
+    const truth=await run('class V:\n def __bool__(self): raise StopIteration("truth")\n'+name+'([V()])\n');
+    assert.equal(truth.error.type,'StopIteration');assert.equal(truth.error.traceback.at(-1).function,'__bool__');closed(truth);
+    const acquire=await run('class A:\n def __iter__(self): raise StopIteration("acquire")\n'+name+'(A())\n');
+    assert.equal(acquire.error.type,'StopIteration');closed(acquire);
+  }
+});
+
+test('long consumers release prior transient elements under a small arena budget',async()=>{
+  const result=await run('class A:\n def __iter__(self): return self\n def __next__(self):\n  self.n+=1\n  if self.n>3000: raise StopIteration\n  return [1]\na=A()\na.n=0\nprint(all(a),a.n)\n',
+    {maxSteps:100000,maxWork:20000000},{maxBytes:22000});
+  assert.equal(result.error,undefined,JSON.stringify(result.error));assert.equal(result.stdout,'True 3001\n');closed(result);
+});
+
+test('consumer acquisition, advancement and truth keep roots across pause/cancel/close',async()=>{
+  const sources=[
+    'class A:\n @property\n def __iter__(self):\n  print("entered")\n  def use(): return iter([[7],[8]])\n  return use\na=list(A())\nprint(a[0][0],a[1][0])\n',
+    'class A:\n def __iter__(self): return self\n @property\n def __next__(self):\n  print("entered")\n  def use():\n   self.n+=1\n   if self.n>2: raise StopIteration\n   return [self.n]\n  return use\na=A()\na.n=0\nb=tuple(a)\nprint(b[0][0],b[1][0])\n',
+    'class V:\n @property\n def __bool__(self):\n  print("entered")\n  def use(): return True\n  return use\nprint(all([V()]))\n'
+  ];
+  const outputs=['entered\n7 8\n','entered\nentered\nentered\n1 2\n','entered\nTrue\n'];
+  for(let index=0;index<sources.length;index++){
+    const {registry}=await compileSourceModules([unit(sources[index])],profile);
+    try{for(const mode of ['finish','cancel','close']){
+      const session=new ModuleSession(registry);let output='',cancel=false,reached=false;
+      session.context.begin({shouldCancel:()=>cancel},text=>{output+=text;});const execution=Execution.modules(session.context);
+      try{while(execution.state!=='completed'){
+        const snapshot=execution.advance();if(execution.state==='paused')session.memory.collect([],{cleanup:true});
+        if(output==='entered\n'&&snapshot.frames.some(frame=>frame.completion==='invoke')){
+          reached=true;
+          if(mode==='cancel'){cancel=true;assert.throws(()=>execution.advance(),{code:'CANCELLED'});break;}
+          if(mode==='close')break;
+        }
+      }assert.ok(reached);if(mode==='finish')assert.equal(output,outputs[index]);}
+      finally{execution.close();execution.close();session.context.finish();session.close();}closed({closed:session.stats()});
+    }}finally{registry.close();}
+  }
+});
+
+test('consumer callback allocation, output and work failures release partial results',async()=>{
+  const prefix='class A:\n def __iter__(self): return self\n def __next__(self): return [7]\n';
+  const oom=await run(prefix+'tuple(A())\n',{maxSteps:100000,maxWork:20000000},{maxBytes:24000});
+  assert.equal(oom.error.code,'OOM');closed(oom);
+  const budget=await run(prefix+'all(A())\n',{maxSteps:500});assert.equal(budget.error.code,'BUDGET');closed(budget);
+  let polls=0;const cancel=await run('all(range(1,10**100))\n',{shouldCancel:()=>++polls>12000});
+  assert.equal(cancel.error.code,'CANCELLED');closed(cancel);
+  const output=await run('class V:\n def __bool__(self):\n  while True: print("1234567890")\nall([V()])\n',{maxSteps:100000,maxWork:20000000});
+  assert.equal(output.error.code,'BUDGET');assert.match(output.error.message,/output/i);closed(output);
 });

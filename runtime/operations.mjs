@@ -21,6 +21,10 @@ const numericPosition = value => {
   if (!Number.isSafeInteger(value) || value < 0 || value > 3) throw new TypeError("Invalid numeric operand position.");
   return value;
 };
+const consumerName = value => {
+  if (!["list", "tuple", "all", "any"].includes(value)) throw new TypeError("Invalid iterable consumer.");
+  return value;
+};
 export function completion(kind, fields = {}) {
   const after = fields.after ?? null;
   if (after !== null && !records.has(after)) throw new TypeError("Invalid outer completion.");
@@ -64,6 +68,9 @@ export function completion(kind, fields = {}) {
       break;
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
+    case "consume-iter": case "consume-next": case "consume-truth":
+      record = {kind, name: consumerName(fields.name), receiver: fields.receiver, result: fields.result ?? null, depth: fields.depth, after};
+      depthCheck(record.depth); break;
     case "contains-result": case "search-iter": case "search-next":
     case "search-equal": case "search-truth":
       record = {kind, receiver: fields.receiver, key: fields.key, after, depth: fields.depth}; depthCheck(record.depth); break;
@@ -118,6 +125,7 @@ function visit(record) {
     case "dict-pair": case "dict-value": case "dict-value-truth": return [record.left, record.right, record.value, ...completionRoots(record.after)];
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
+    case "consume-iter": case "consume-next": case "consume-truth": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "contains-result": case "search-iter": case "search-next": case "search-equal": case "search-truth": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "sentinel-equal": case "sentinel-truth": return [record.receiver, record.value, ...completionRoots(record.after)];
     case "compare-result": case "ne-result": case "sequence-item": case "sequence-truth": return [record.left, record.right, ...completionRoots(record.after)];
@@ -165,6 +173,10 @@ export function numericTask(name, args, site, after = null, depth = 0, position 
   if (args.length > 3 || position > (name === "range" ? 3 : 2)) throw new TypeError("Invalid numeric operands.");
   return Object.freeze({kind:"numeric", name:numericName(name), args:operands(args), position, site, completion:after, depth});
 }
+export function consumeTask(name, receiver, site, after = null, depth = 0) {
+  depthCheck(depth); completionRoots(after);
+  return Object.freeze({kind: "consume", name: consumerName(name), receiver, site, completion: after, depth});
+}
 export function valueTask(value, site, after = null, depth = 0) {
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "value", value, site, completion: after, depth});
@@ -199,6 +211,7 @@ export function operationRoots(task) {
   switch (task.kind) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "numeric": return [...task.args, ...completionRoots(task.completion)];
+    case "consume": return [task.receiver, ...completionRoots(task.completion)];
     case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "contains": return [task.receiver, task.key, ...completionRoots(task.completion)];
     case "compare": return [task.left, task.right, ...completionRoots(task.completion)];
