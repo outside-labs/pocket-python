@@ -20,6 +20,13 @@
       "pinned_expected": {
         "ok": true,
         "stdout": "True 2 10 30\n"
+      },
+      "engine_expectation": {
+        "classification": "supported",
+        "expected": {
+          "ok": true,
+          "stdout": "True 2 10 30\n"
+        }
       }
     },
     {
@@ -35,6 +42,13 @@
       "pinned_expected": {
         "ok": true,
         "stdout": "7 4\n"
+      },
+      "engine_expectation": {
+        "classification": "supported",
+        "expected": {
+          "ok": true,
+          "stdout": "7 4\n"
+        }
       }
     },
     {
@@ -43,13 +57,20 @@
       "kind": "control",
       "category": "unicode",
       "affected_api": "int(str), float(str)",
-      "purpose": "Controls adopted decimal Unicode digits; does not admit Unicode 3.2 codecs.",
+      "purpose": "Controls adopted decimal Unicode conversion using equality; float printing has a separate profile boundary.",
       "upstream": [
         "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Modules/unicodedata_db.h"
       ],
       "pinned_expected": {
         "ok": true,
-        "stdout": "12 3.5\n"
+        "stdout": "True True\n"
+      },
+      "engine_expectation": {
+        "classification": "supported",
+        "expected": {
+          "ok": true,
+          "stdout": "True True\n"
+        }
       }
     },
     {
@@ -65,6 +86,19 @@
       "pinned_expected": {
         "ok": true,
         "stdout": "1.25\n"
+      },
+      "engine_expectation": {
+        "classification": "unavailable-builtin",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "PYTHON",
+            "type": "NameError",
+            "phase": "execute",
+            "message": "name 'format' is not defined"
+          }
+        }
       }
     },
     {
@@ -91,6 +125,19 @@
             "type": "RuntimeError"
           }
         }
+      },
+      "engine_expectation": {
+        "classification": "unavailable-builtin",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "PYTHON",
+            "type": "NameError",
+            "phase": "execute",
+            "message": "name 'reversed' is not defined"
+          }
+        }
       }
     },
     {
@@ -113,6 +160,18 @@
         "expected": {
           "ok": true,
           "stdout": "'value   '\n"
+        }
+      },
+      "engine_expectation": {
+        "classification": "unsupported",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "UNSUPPORTED",
+            "phase": "tokenize",
+            "type": "UnsupportedSyntaxError"
+          }
         }
       }
     },
@@ -137,6 +196,18 @@
           "ok": true,
           "stdout": "'value '\n"
         }
+      },
+      "engine_expectation": {
+        "classification": "unsupported",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "UNSUPPORTED",
+            "phase": "tokenize",
+            "type": "UnsupportedSyntaxError"
+          }
+        }
       }
     },
     {
@@ -160,6 +231,19 @@
           "ok": true,
           "stdout": "'\u1e9e'\n"
         }
+      },
+      "engine_expectation": {
+        "classification": "denied-import",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "PYTHON",
+            "type": "ImportError",
+            "phase": "execute",
+            "message": "Import is not declared for app: stringprep"
+          }
+        }
       }
     },
     {
@@ -182,6 +266,19 @@
         "expected": {
           "ok": true,
           "stdout": "'\u1e9e'\n"
+        }
+      },
+      "engine_expectation": {
+        "classification": "denied-import",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "PYTHON",
+            "type": "ImportError",
+            "phase": "execute",
+            "message": "Import is not declared for app: encodings.idna"
+          }
         }
       }
     },
@@ -210,6 +307,18 @@
           "stdout": "",
           "error": {
             "type": "ZeroDivisionError"
+          }
+        }
+      },
+      "engine_expectation": {
+        "classification": "unsupported",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "UNSUPPORTED",
+            "phase": "tokenize",
+            "type": "UnsupportedSyntaxError"
           }
         }
       }
@@ -254,6 +363,18 @@
             }
           }
         }
+      },
+      "engine_expectation": {
+        "classification": "syntax-rejection",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "SYNTAX",
+            "type": "SyntaxError",
+            "phase": "tokenize"
+          }
+        }
       }
     },
     {
@@ -296,6 +417,18 @@
               "end_offset": 5,
               "msg": "invalid syntax.  Maybe you meant '!=' instead of '<>'?"
             }
+          }
+        }
+      },
+      "engine_expectation": {
+        "classification": "syntax-rejection",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "code": "SYNTAX",
+            "type": "SyntaxError",
+            "phase": "parse"
           }
         }
       }
