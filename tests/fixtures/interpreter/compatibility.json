@@ -703,16 +703,13 @@
     {
       "id": "builtin-all",
       "source": "print(callable(all))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n"
       }
     },
     {
@@ -733,16 +730,13 @@
     {
       "id": "builtin-any",
       "source": "print(callable(any))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n"
       }
     },
     {

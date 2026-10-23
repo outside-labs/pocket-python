@@ -105,8 +105,8 @@
     {
       "id": "container-values",
       "status": "partial",
-      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality.",
-      "gaps": "Constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred.",
+      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Finite list/tuple construction preserves primitive and owned iterable elements; user length hints remain refused.",
+      "gaps": "Dictionary constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -780,9 +780,9 @@
     },
     {
       "id": "all",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Exactly one positional adopted iterable; owned iteration and short-circuit truth callbacks in classes-source/1, primitive execution in core-source/1.",
+      "gaps": "Unadopted iterable/value families, including generators, remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -816,9 +816,9 @@
     },
     {
       "id": "any",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Exactly one positional adopted iterable; owned iteration and short-circuit truth callbacks in classes-source/1, primitive execution in core-source/1.",
+      "gaps": "Unadopted iterable/value families, including generators, remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1472,8 +1472,8 @@
     {
       "id": "list",
       "status": "partial",
-      "scope": "list() or one positional adopted primitive iterable, preserving shallow elements, dictionary order and Unicode points. Tuple inputs retain identity under tuple().",
-      "gaps": "User iterables/length hints, methods, builtin subclassing and broader reflection remain separate stages.",
+      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Shallow references and tuple(existing_tuple) identity are preserved.",
+      "gaps": "User length hints, methods, builtin subclassing and broader reflection remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1940,8 +1940,8 @@
     {
       "id": "tuple",
       "status": "partial",
-      "scope": "tuple() or one positional adopted primitive iterable, preserving shallow elements, dictionary order and Unicode points. Tuple inputs retain identity under tuple().",
-      "gaps": "User iterables/length hints, methods, builtin subclassing and broader reflection remain separate stages.",
+      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Shallow references and tuple(existing_tuple) identity are preserved.",
+      "gaps": "User length hints, methods, builtin subclassing and broader reflection remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",

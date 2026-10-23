@@ -1,5 +1,5 @@
 import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, numericTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -124,6 +124,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     iterator.source = null; iterator.sentinel = null; iterator.exhausted = true;
     return () => { [iterator.source, iterator.sentinel, iterator.exhausted] = before; };
   });
+  const consumeNext = (name, iterator, result, site, after, depth) => {
+    const task = unaryTask("next", iterator, site, continuation("consume-next", {name, receiver: iterator, result, after, depth}), depth);
+    state.temporaries = operationRoots(task); return task;
+  };
+  const consumeFinish = (name, result, site, after) => {
+    state.temporaries.push(result);
+    const value = name === "tuple" ? values.tuple(result.items) : name === "list" ? result : name === "all";
+    state.temporaries.push(value); return valueTask(value, site, after);
+  };
   const recover = (value, completion, site) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
@@ -137,6 +146,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "next-default") return valueTask(current.default, site, current.after);
       if (current.kind === "for-next") return valueTask(null, site, continuation("for-exhausted"));
       if (current.kind === "search-next") return valueTask(false, site, current.after);
+      if (current.kind === "consume-next") return consumeFinish(current.name, current.result, site, current.after);
     }
     return null;
   };
@@ -167,6 +177,20 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "consume-iter") return consumeNext(completion.name, value, completion.result, site, completion.after, completion.depth);
+    if (completion?.kind === "consume-next") {
+      const {name, receiver, result, after, depth} = completion;
+      state.temporaries.push(value);
+      if (["list", "tuple"].includes(name)) {
+        values.append(result, value); return consumeNext(name, receiver, result, site, after, depth);
+      }
+      return unaryTask("truth", value, site, continuation("consume-truth", {name, receiver, result, after, depth}), depth);
+    }
+    if (completion?.kind === "consume-truth") {
+      const {name, receiver, result, after, depth} = completion;
+      if (value === (name === "any")) return valueTask(value, site, after);
+      return consumeNext(name, receiver, result, site, after, depth);
+    }
     if (["numeric-result","numeric-index"].includes(completion?.kind)) {
       const {name,args,position,slot,after,depth} = completion;
       if (completion.kind === "numeric-result") {
@@ -382,6 +406,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "consume") {
+          state.temporaries = operationRoots(task);
+          const {name, receiver} = task, building = ["list", "tuple"].includes(name);
+          const hintOwner = receiver instanceof ProtocolIteratorValue && receiver.kind === "indexed" ? receiver.source : receiver;
+          if (building && hintOwner instanceof InstanceValue &&
+              ["__len__", "__length_hint__"].some(slot => classes.lookup(hintOwner.type, slot).found))
+            hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
+          const result = building ? values.list([]) : null; state.temporaries.push(result);
+          task = unaryTask("iter", receiver, site, continuation("consume-iter", {name, receiver, result, after: completion, depth}), depth);
+          continue;
+        }
         if (task.kind === "numeric") {
           state.temporaries = operationRoots(task);
           const name = task.name;
@@ -719,8 +754,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             count("builtin:" + callable.name);
             if (args.length > 1 || keywords.length) python("TypeError", callable.name + "() accepts at most one positional argument");
             const source = args[0];
-            if (args.length && (source instanceof InstanceValue || source instanceof ProtocolIteratorValue))
-              hard("UNSUPPORTED", "UnsupportedOperationError", "User iterable construction requires the owned consumer stage.");
+            if (args.length && (source instanceof InstanceValue || source instanceof ProtocolIteratorValue)) {
+              task = consumeTask(callable.name, source, site, completion, depth); continue;
+            }
             if (callable.name === "tuple" && values.isSequenceType(source, "tuple")) { task = valueTask(source, site, completion); continue; }
             if (args.length) values.checkConstructionHint(source);
             const result = values.list([]); state.temporaries.push(result);
@@ -734,6 +770,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               }
             }
             task = valueTask(callable.name === "tuple" ? values.tuple(result.items) : result, site, completion); continue;
+          }
+          if (["all", "any"].includes(callable.name)) {
+            count("builtin:" + callable.name);
+            if (args.length !== 1 || keywords.length) python("TypeError", callable.name + "() requires one positional iterable");
+            task = consumeTask(callable.name, args[0], site, completion, depth); continue;
           }
           if (values.numeric && numericNames.has(callable.name)) {
             count("builtin:"+callable.name);
