@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-10-23",
+  "task": "https://github.com/outside-labs/pocket-python/issues/122",
+  "project": "https://github.com/orgs/outside-labs/projects/13",
+  "engine_base_commit": "266c4fcc94773f2bae180d026d374bb035729d33",
+  "documentation": {
+    "url": "https://docs.python.org/3.14/",
+    "observed_version": "3.14.9",
+    "last_updated_utc": "2026-10-23 10:04"
+  },
+  "semantic_oracle": {
+    "implementation": "CPython",
+    "version": "3.14.7",
+    "unicode": "16.0.0"
+  },
+  "source_verification": "Official annotated tags and peeled commits checked with git ls-remote; version headers and immutable source files hashed. No signature verification or later interpreter execution claimed.",
+  "releases": {
+    "3.14.7": {
+      "commit": "823f0323ee6ec1402088b73bce1a38473cac36dc",
+      "files": {
+        "Include/patchlevel.h": {
+          "url": "https://raw.githubusercontent.com/python/cpython/823f0323ee6ec1402088b73bce1a38473cac36dc/Include/patchlevel.h",
+          "sha256": "16a8955952cbaefd16f85909b73a0a6c182ec813f9544a12c28897c95b8d3f22",
+          "identity": [
+            "#define PY_VERSION              \"3.14.7\""
+          ]
+        },
+        "Modules/unicodedata_db.h": {
+          "url": "https://raw.githubusercontent.com/python/cpython/823f0323ee6ec1402088b73bce1a38473cac36dc/Modules/unicodedata_db.h",
+          "sha256": "00a5ed9e602bb55e9f080333ac8cbc360352eea9de960eec69efdb0c3d68b110",
+          "identity": [
+            "#define UNIDATA_VERSION \"16.0.0\""
+          ]
+        }
+      },
+      "tag": "v3.14.7",
+      "tag_object": "dccefbc14adf6cd13693f3b6b2802945c4e23e01",
+      "release_date": "2026-08-05",
+      "release_url": "https://www.python.org/downloads/release/python-3147/"
+    },
+    "3.14.8": {
+      "commit": "8e6e75d9102e39bed2a2b279203a396741180f12",
+      "files": {
+        "Include/patchlevel.h": {
+          "url": "https://raw.githubusercontent.com/python/cpython/8e6e75d9102e39bed2a2b279203a396741180f12/Include/patchlevel.h",
+          "sha256": "3c6ae425793fdfde91e3e0b777e81805b71f20c085c31de5ed4c586a3328b388",
+          "identity": [
+            "#define PY_VERSION              \"3.14.8\""
+          ]
+        },
+        "Modules/unicodedata_db.h": {
+          "url": "https://raw.githubusercontent.com/python/cpython/8e6e75d9102e39bed2a2b279203a396741180f12/Modules/unicodedata_db.h",
+          "sha256": "00a5ed9e602bb55e9f080333ac8cbc360352eea9de960eec69efdb0c3d68b110",
+          "identity": [
+            "#define UNIDATA_VERSION \"16.0.0\""
+          ]
+        },
+        "Misc/NEWS.d/3.14.8.rst": {
+          "url": "https://raw.githubusercontent.com/python/cpython/8e6e75d9102e39bed2a2b279203a396741180f12/Misc/NEWS.d/3.14.8.rst",
+          "sha256": "39c47ab66955ae683f26f9a6d227e1f1977f1913ea58fe9a898fe4d906c70f5a"
+        }
+      },
+      "tag": "v3.14.8",
+      "tag_object": "992560c2cc62d47b308cec662feb485456847931",
+      "release_date": "2026-09-30",
+      "release_url": "https://www.python.org/downloads/release/python-3148/",
+      "news_section_counts": {
+        "Build": 7,
+        "C API": 3,
+        "Core and Builtins": 26,
+        "Documentation": 1,
+        "IDLE": 30,
+        "Library": 85,
+        "Security": 9,
+        "Tests": 4,
+        "Tools/Demos": 3,
+        "Windows": 5,
+        "macOS": 1
+      }
+    },
+    "3.14.9": {
+      "commit": "ead82c07db1f111d613926ed1b6667411d768125",
+      "files": {
+        "Include/patchlevel.h": {
+          "url": "https://raw.githubusercontent.com/python/cpython/ead82c07db1f111d613926ed1b6667411d768125/Include/patchlevel.h",
+          "sha256": "f0ba21fa5390ca9ac79f7bb8e03a3caec930558b8fca80125582148a4663c5db",
+          "identity": [
+            "#define PY_VERSION              \"3.14.9\""
+          ]
+        },
+        "Modules/unicodedata_db.h": {
+          "url": "https://raw.githubusercontent.com/python/cpython/ead82c07db1f111d613926ed1b6667411d768125/Modules/unicodedata_db.h",
+          "sha256": "00a5ed9e602bb55e9f080333ac8cbc360352eea9de960eec69efdb0c3d68b110",
+          "identity": [
+            "#define UNIDATA_VERSION \"16.0.0\""
+          ]
+        },
+        "Misc/NEWS.d/3.14.9.rst": {
+          "url": "https://raw.githubusercontent.com/python/cpython/ead82c07db1f111d613926ed1b6667411d768125/Misc/NEWS.d/3.14.9.rst",
+          "sha256": "8ddb088cecb03099281f0aff13730cc6ffd450e97a3f0c36ef9bd7d52930c0b7"
+        }
+      },
+      "tag": "v3.14.9",
+      "tag_object": "17acf00d155cb8536eca1c3af3a8404db648e37f",
+      "release_date": "2026-10-21",
+      "release_url": "https://www.python.org/downloads/release/python-3149/",
+      "news_section_counts": {
+        "Build": 3,
+        "C API": 6,
+        "Core and Builtins": 24,
+        "Documentation": 1,
+        "IDLE": 1,
+        "Library": 56,
+        "Security": 5,
+        "Tests": 4,
+        "Windows": 3,
+        "macOS": 1
+      }
+    }
+  }
+}
