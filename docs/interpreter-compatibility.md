@@ -39,7 +39,9 @@ cases earn support credit. str(s) now preserves the existing string identity. Re
 expressions and type aliases receive UNSUPPORTED before execution; malformed
 forms in the diagnostic grammar retain SyntaxError. Both remain deferred and
 earn no execution support credit. No overall percentage of
-Python coverage is inferred from these probe counts.
+Python coverage is inferred from these probe counts. The sequence slice supplies
+53 semantic source observations and one explicit hint refusal in classes-source/1;
+40 shared cases independently execute in core-source/1.
 
 ## Language and platform surfaces
 
@@ -48,7 +50,7 @@ Python coverage is inferred from these probe counts.
 | lexical-unicode | supported | Unicode identifiers normalized with pinned Unicode data; Unicode strings, raw/triple strings, explicit/implicit line joining and indentation within core-source/1. The exact admitted grammar is documented in interpreter-language.md; other literal families have separate rows. |
 | numeric-operations | partial | Arbitrary integers, binary64 real and owned complex values; exact integer true division, bounded powers, bitwise/shifts and primitive helpers; real/complex construction and selected numeric/index callbacks. Both source profiles admit primitive APIs; callbacks require classes-source/1. General complex powers, non-finite complex arithmetic/intermediate recovery and numeric methods remain INT-NUM-02. Broader class arithmetic and formatting remain separate. |
 | string-values | partial | Unicode code-point length, concatenation, comparison, membership, indexing and slicing, including negative step. General string methods, formatting and bytes/encoding APIs are not adopted. |
-| container-values | partial | List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Dictionary constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred. |
+| container-values | partial | List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Finite list/tuple construction preserves primitive and owned iterable elements; user length hints remain refused. Dictionary constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred. |
 | expression-order | supported | Admitted expression evaluation, chained comparisons, identity/membership, short circuit and/or, not and conditional expressions. This row covers admitted value/protocol families, not every Python expression. |
 | ordinary-control | supported | if/elif/else, while/for over adopted values, loop else/break/continue, return and finally control transfer. Generator, context-manager, match and async control are separate rows. |
 | function-binding | partial | def, recursion, positional-only/ordinary/keyword-only parameters; immutable literal/tuple defaults and lexical closures. Computed/mutable defaults, global/nonlocal writes, argument packing/unpacking and annotations remain deferred. |
@@ -58,7 +60,7 @@ Python coverage is inferred from these probe counts.
 | descriptors-decorators | partial | Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Descriptor-valued setter/deleter/name-notification hooks and unrestricted reflection remain refused. |
 | call-length-truth | supported | Type-level __call__/__len__/__bool__, callable(), len(), bool(), not and control tests in classes-source/1, including adopted descriptor binding and optional truth fallback. Length uses the explicit signed-64-bit contract; later protocols remain separate. |
 | repr-str | partial | print/str display None, bool, int, strings and adopted exception messages; str() and str(s) preserve the adopted identity rules. repr covers None/bool/int/str and explicit user __repr__; type-level __str__/__repr__ callbacks and print sequencing run on the owned machine. Float/container/default-object displays, exception repr, format specifications and unadopted str/print keyword or encoding forms remain deferred. |
-| indexed-user-objects | partial | __index__/__getitem__/__setitem__/__delitem__, raw scalar/tuple/slice keys, builtin conversion and bounded list/tuple RHS slice mutation use owned callbacks. Other iterable RHS forms, slice reflection/formatting/hash, builtin subclasses and wider numeric/sequence APIs remain deferred. |
+| indexed-user-objects | partial | __index__/__getitem__/__setitem__/__delitem__ through current type lookup and owned callbacks; raw scalar/tuple/slice keys, builtin sequence conversion, __len__ index results and bounded list/tuple RHS slice mutation. Other iterable RHS slice assignment, slice repr/hash/indices, builtin subclasses and broader numeric/sequence APIs remain deferred. |
 | iterated-user-objects | partial | Owned __iter__/__next__/__contains__, indexed fallback, iter/next signatures and iterator membership search in classes-source/1. Generators/async protocols, broader iterable-consuming APIs and ordering remain separate. |
 | user-equality-hash | partial | Owned __eq__/__ne__/__hash__, NotImplemented, reflected priority, bounded container equality and user dictionary keys. Structural dictionary mutation during comparison, tuples containing user instances, bound-method/slice hashing and ordering remain separately gated. |
 | further-object-protocols | deferred | Arithmetic/reflected/in-place slots, __new__, metaclasses, custom attribute hooks and builtin subclassing. Each slice requires an adopted reference and owned continuation contract. |
@@ -82,9 +84,9 @@ Python coverage is inferred from these probe counts.
 | --- | --- | --- | --- |
 | abs | supported | Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract. |  |
 | aiter | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| all | partial | One positional adopted iterable; owned iteration and short-circuit truth callbacks. | Unadopted iterable/value families, including generators. |
+| all | partial | Exactly one positional adopted iterable; owned iteration and short-circuit truth callbacks in classes-source/1, primitive execution in core-source/1. | Unadopted iterable/value families, including generators, remain separately gated. |
 | anext | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| any | partial | One positional adopted iterable; owned iteration and short-circuit truth callbacks. | Unadopted iterable/value families, including generators. |
+| any | partial | Exactly one positional adopted iterable; owned iteration and short-circuit truth callbacks in classes-source/1, primitive execution in core-source/1. | Unadopted iterable/value families, including generators, remain separately gated. |
 | ascii | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | bin | supported | Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract. |  |
 | bool | partial | bool() / bool(x) on admitted primitive/user values; classes truth protocols. | Other unadopted value families. |
@@ -119,8 +121,8 @@ Python coverage is inferred from these probe counts.
 | isinstance | partial | isinstance(x, str/adopted exception class/user class). | Tuple/union classinfo and unadopted builtin families. |
 | issubclass | partial | issubclass(user_class, user_class/object). | Full builtin, tuple/union classinfo. |
 | iter | partial | Primitive iter(value); classes-source adds user __iter__, indexed fallback and iter(callable, sentinel). | Generator/async protocols and broader sequence APIs remain separate. |
-| len | partial | len(admitted containers/str or classes-profile __len__). | __index__ result conversion and unadopted value families. |
-| list | partial | Zero or one positional adopted iterable; owned user iteration without user length hints, shallow elements and tuple identity. | User length hints, methods, builtin subclasses and reflection. |
+| len | partial | len(admitted containers/str or classes-profile __len__). | Unadopted value families and builtin subclasses remain deferred; user index results are validated through owned conversion. |
+| list | partial | Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Lists are fresh shallow containers. | User length hints, methods, builtin subclassing and broader reflection remain separate stages. |
 | locals | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | map | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | max | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -134,19 +136,19 @@ Python coverage is inferred from these probe counts.
 | pow | partial | Two-argument real/integer power, modular integer power/inverse, and complex integer powers from -100 to 100 with finite intermediates; named base/exp/mod keywords. | Remaining complex power/recovery families are INT-NUM-02; user arithmetic slots are INT-OBJECT-01. |
 | print | partial | print(*values) with default space/newline; admitted scalar/exception displays and user __str__/__repr__ callbacks. | Keyword forms and unadopted value displays. |
 | property | partial | property(fget=None,fset=None,fdel=None,doc=None) and accessor decorators; classes-source/1. | General property reflection and arbitrary doc behavior. |
-| range | partial | One to three positional integer/index arguments; attributes, truth, length, indexing, slicing, equality and iteration in both source profiles. | Range methods, hashing, repr and broader reflection. |
+| range | partial | One to three positional integer/index arguments; bounded range values with attributes, truth, length, indexing, slicing, equality and iteration in both source profiles. Class index/equality callbacks use owned frames. | Range methods, hashing, repr and broader reflection remain separately gated. |
 | repr | partial | repr(x), exactly one positional argument: None/bool/int/str or adopted user __repr__. | Float/container/default-object and exception representations. |
 | reversed | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | round | supported | Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract. |  |
 | set | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | setattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| slice | partial | classes-source/1 positional constructor with raw read-only start/stop/step. Core constructor, indices(), repr, equality/hash and broader reflection remain deferred. |
+| slice | partial | classes-source/1: slice(stop), slice(start,stop), slice(start,stop,step), positional only; immutable raw start/stop/step fields. | Core constructor, slice.indices, repr, equality/hash and other reflection are deferred. |
 | sorted | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | staticmethod | partial | staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1. | Unrestricted wrapper introspection. |
 | str | partial | str() and str(x) for None/bool/int/str/adopted exceptions and user slots; existing/returned strings retain identity. | Float/container/default-object displays, object= keyword and encoding forms. |
 | sum | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | super | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| tuple | partial | Zero or one positional adopted iterable; owned user iteration without user length hints, shallow elements and tuple identity. | User length hints, methods, builtin subclasses and reflection. |
+| tuple | partial | Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Existing tuple identity and shallow elements are preserved. | User length hints, methods, builtin subclassing and broader reflection remain separate stages. |
 | type | partial | type(user_instance), one argument; classes-source/1. | Full one-argument and three-argument type construction. |
 | vars | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | zip | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |

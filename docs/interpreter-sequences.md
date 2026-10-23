@@ -3,7 +3,7 @@
 This finite slice of INT-SEQ-01 uses CPython 3.14.7 as its semantic oracle.
 The synthetic `sequences.json` corpus separates reference observations from
 independent source execution. A reference-only report earns no engine support.
-Both core-source/1 and classes-source/1 retain bytecode versions 4 and 5.
+Core-source/1 and classes-source/1 retain bytecode versions 4 and 5, respectively.
 
 ## Adopted slices
 
@@ -12,12 +12,14 @@ Both core-source/1 and classes-source/1 retain bytecode versions 4 and 5.
 | Q1 | `range(stop)`, `range(start, stop[, step])`, positional-only integer/index arguments; start/stop/step attributes, truth, signed-64-bit len, integer indexing, slicing, equality and iteration. Construction and slicing retain integer parameters rather than materializing elements. Class index callbacks use the owned machine. |
 | Q2 | `list()` / `tuple()` and one positional adopted primitive iterable: str, list, tuple, dict keys, range or its primitive iterator. Lists are fresh shallow containers; tuple(existing_tuple) preserves identity. Unicode iteration uses code points. |
 | Q3 | List/tuple construction from adopted class iterables/indexed fallback without user length hints; `all(iterable, /)` / `any(iterable, /)` over adopted iterables, with short-circuit truth callbacks. Argument, iterator acquisition, next and truth errors retain distinct boundaries. |
-| Hints | User `__len__` / `__length_hint__` during list/tuple construction remains a separate, reference-only adoption. Refuse this source family before binding/consuming callbacks; do not silently ignore observable hooks. |
+| Hints | User `__len__` / `__length_hint__` during list/tuple construction remains deferred. Reference observations and explicit refusals keep this boundary visible before binding/consuming callbacks. |
 
-The machine-readable corpus records which stages are implemented. At contract
-adoption none was implemented; Q1, Q2 and Q3 are now delivered. Source reports select only delivered stages;
-reference reports validate the complete corpus. Both Node and Chromium must
-execute delivered source independently, including instruction-boundary stepping.
+The machine-readable corpus records Q1, Q2 and Q3 as implemented and Hints as
+deferred. Source reports distinguish semantic execution from explicit refusals;
+reference reports validate the complete corpus. Node and Chromium execute all
+54 class-profile observations (53 semantic cases and one hint refusal), plus
+40 explicitly shared core-profile cases, in drain and instruction-boundary modes.
+Profile selection never credits omitted cases.
 
 ## Values and resource rules
 
@@ -56,3 +58,9 @@ Owned consumers retain their iterator and partial result in closed operation rec
 Only advancement exhaustion ends consumption: StopIteration from acquisition or
 truth callbacks propagates. Short circuit releases prior elements; user hints on
 the original source or an indexed iterator owner are refused before callbacks.
+
+The source console accepts newly entered sequence programs after offline reload,
+checks source errors and prefix preservation, interrupts pending index/iterator/
+truth callbacks, and retains primitive sequence APIs after a class-to-core update.
+[Payload evidence](measurements/2026-10-23-sequences.json) records exact fixture
+bytes and engine identity; it makes no mobile-device or host-memory promise.

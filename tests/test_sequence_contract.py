@@ -21,4 +21,3 @@ class SequenceContractTests(unittest.TestCase):
             cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=30,
         )
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
-

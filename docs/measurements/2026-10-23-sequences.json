@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "scope": "Finite range, list/tuple and all/any source slice; no whole-Python, mobile or host-RSS claim.",
+  "baseline_commit": "266c4fcc94773f2bae180d026d374bb035729d33",
+  "measurement_source_revision": "e7240261aece444e27da723bf50892773776fb11",
+  "working_tree_modified": true,
+  "corpus": {
+    "path": "tests/fixtures/interpreter/sequences.json",
+    "sha256": "75c7f78128eaf9a7d8b014134b0023c89851058c7d944260627ec292664c5b95",
+    "classes_cases": 54,
+    "core_cases": 40,
+    "deferred_class_cases": 1
+  },
+  "resource_baseline": {
+    "path": "tests/fixtures/interpreter/execution-resources.json",
+    "sha256": "1efa15cde7472dc4f3346a825a244f15cadc39cfc9b0b82f2458d9da1529ed72",
+    "unchanged_cases": 8
+  },
+  "console_acceptance": {
+    "script": "scripts/classes_console_browser_smoke.py",
+    "checks_passed": 225,
+    "browser": "156.0.8078.4"
+  },
+  "payload": {
+    "fixture": {
+      "body": "for text in ('', 'A\ud83d\ude00 e\u0301\\nline two', 'a\\xa0b'):\n    result=metrics(text)\n    print(result[0],result[1],result[2])\n",
+      "computation_sha256": "cd0fc16e047b4c81230a1272446b0257ef741f937b1ea0857d2a94bb3d0bb350",
+      "expected_stdout": "0 0 0\n14 4 2\n3 1 1\n",
+      "inputs": [
+        "",
+        "A\ud83d\ude00 e\u0301\nline two",
+        "a\u00a0b"
+      ],
+      "source": "def character_count(text):\n    return len(text)\n\n\n\nSEPARATORS = \" \\t\\n\\r\\v\\f\"\n\n\ndef metrics(text):\n    if not isinstance(text, str):\n        raise TypeError(\"text must be str\")\n    characters = character_count(text)\n    words = 0\n    lines = 0\n    inside_word = False\n    if text:\n        lines = 1\n    for character in text:\n        if character == \"\\n\":\n            lines = lines + 1\n        if character in SEPARATORS:\n            inside_word = False\n        elif not inside_word:\n            words = words + 1\n            inside_word = True\n    return characters, words, lines\n\nfor text in ('', 'A\ud83d\ude00 e\u0301\\nline two', 'a\\xa0b'):\n    result=metrics(text)\n    print(result[0],result[1],result[2])\n",
+      "source_sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0"
+    },
+    "measurement_command": "python scripts/interpreter_measurements.py --no-browser --repeats 3 --output build/sequence-node-measurements",
+    "compression": {
+      "archive": "canonical sorted USTAR mode0644 mtime0 then gzip level9 mtime0",
+      "files": "independent gzip level9 mtime0; payload bytes only, no HTTP/TLS framing",
+      "zlib": "1.2.12"
+    },
+    "profiles": [
+      {
+        "id": "source-core",
+        "engine": {
+          "backend": "javascript-vm",
+          "bytecode_version": 4,
+          "entrypoint": "engine/716fef9bc32f3dbecb72ac34ce3745d6bad7b2797783e110d0f18eac8ebdee65/interpreter-worker.mjs",
+          "fingerprint": "716fef9bc32f3dbecb72ac34ce3745d6bad7b2797783e110d0f18eac8ebdee65",
+          "implementation": "pocket-python-source",
+          "language_profile": "core-source/1",
+          "version": "1"
+        },
+        "library_profile": {
+          "fingerprint": "0658bf184744e21e6a2eb0901a55c5f71e640eb5dbd4f5b5297c83ffd57782c9",
+          "id": "core-only/1"
+        },
+        "sizes": {
+          "application_source_bytes": 699,
+          "assembly_module_bytes": 15241,
+          "bridge_bytes": 30458,
+          "canonical_tar_bytes": 491520,
+          "complete_payload_bytes": 460450,
+          "data_bytes": 5416,
+          "engine_bytes": 379486,
+          "generated_module_bytes": 0,
+          "gzip_file_transfer_bytes": 119828,
+          "gzip_tar_bytes": 109776,
+          "gzip_tar_sha256": "9e16a5b81bf65b3c0a450a1998bacb3ee6a31f02b3953e49af1476317a911b52",
+          "helper_bytes": 0,
+          "library_bytes": 0,
+          "notice_bytes": 4127,
+          "receipt_bytes": 25023,
+          "source_map_bytes": 0
+        }
+      },
+      {
+        "id": "source-operator",
+        "engine": {
+          "backend": "javascript-vm",
+          "bytecode_version": 4,
+          "entrypoint": "engine/716fef9bc32f3dbecb72ac34ce3745d6bad7b2797783e110d0f18eac8ebdee65/interpreter-worker.mjs",
+          "fingerprint": "716fef9bc32f3dbecb72ac34ce3745d6bad7b2797783e110d0f18eac8ebdee65",
+          "implementation": "pocket-python-source",
+          "language_profile": "core-source/1",
+          "version": "1"
+        },
+        "library_profile": {
+          "fingerprint": "8fae1499faa7ae0fe071de23902082c4a7c979cdc71990d877ca537e941cae40",
+          "id": "operator/1"
+        },
+        "sizes": {
+          "application_source_bytes": 699,
+          "assembly_module_bytes": 15443,
+          "bridge_bytes": 30458,
+          "canonical_tar_bytes": 501760,
+          "complete_payload_bytes": 463351,
+          "data_bytes": 6488,
+          "engine_bytes": 379486,
+          "generated_module_bytes": 0,
+          "gzip_file_transfer_bytes": 120631,
+          "gzip_tar_bytes": 110318,
+          "gzip_tar_sha256": "ecfe429e800d82e014164e0138f0305ae9854f70fd940c334192565bfea68add",
+          "helper_bytes": 0,
+          "library_bytes": 457,
+          "notice_bytes": 4127,
+          "receipt_bytes": 26193,
+          "source_map_bytes": 0
+        }
+      }
+    ],
+    "baseline_source": "GitHub Actions run 39875084168, source-core fixture on main at the numeric baseline.",
+    "baseline_source_core": {
+      "engine_bytes": 368246,
+      "complete_payload_bytes": 449045,
+      "gzip_file_transfer_bytes": 117894
+    },
+    "source_core_delta_bytes": {
+      "engine_bytes": 11240,
+      "complete_payload_bytes": 11405,
+      "gzip_file_transfer_bytes": 1934
+    }
+  }
+}

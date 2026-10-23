@@ -73,6 +73,9 @@ operators/helpers, real constructors, owned complex values and selected numeric
 conversion callbacks, with independently compiled Node/Chromium and offline
 acceptance. Remaining numeric methods and complex recovery families are tracked
 in [INT-NUM-02](https://github.com/outside-labs/pocket-python/issues/184).
+The first finite [sequence slice](docs/interpreter-sequences.md) adds bounded range,
+list/tuple construction and owned all/any consumers, with both source profiles and
+offline acceptance. Other sequence APIs and user length hints remain open under #116.
 Continue the sequence and object protocol work while the
 persistent-session/host program advances through its own contracts. INT-09 and
 INT-10 stay open; the execution foundation is delivered, while their remaining
