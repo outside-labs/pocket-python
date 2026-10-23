@@ -134,7 +134,7 @@ Python coverage is inferred from these probe counts.
 | pow | partial | Two-argument real/integer power, modular integer power/inverse, and complex integer powers from -100 to 100 with finite intermediates; named base/exp/mod keywords. | Remaining complex power/recovery families are INT-NUM-02; user arithmetic slots are INT-OBJECT-01. |
 | print | partial | print(*values) with default space/newline; admitted scalar/exception displays and user __str__/__repr__ callbacks. | Keyword forms and unadopted value displays. |
 | property | partial | property(fget=None,fset=None,fdel=None,doc=None) and accessor decorators; classes-source/1. | General property reflection and arbitrary doc behavior. |
-| range | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| range | partial | One to three positional integer/index arguments; attributes, truth, length, indexing, slicing, equality and iteration in both source profiles. | Range methods, hashing, repr and broader reflection. |
 | repr | partial | repr(x), exactly one positional argument: None/bool/int/str or adopted user __repr__. | Float/container/default-object and exception representations. |
 | reversed | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | round | supported | Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract. |  |

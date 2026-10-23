@@ -97,7 +97,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.callable.pool.code.version >= 4 && ["int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
+        (frame.callable.pool.code.version >= 4 && ["range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
         (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
@@ -334,7 +334,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (["attribute-set", "attribute-delete"].includes(op)) {
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
-        if (values.isSlice(receiver) || values.isComplex(receiver)) python("AttributeError", "Value attributes are read-only");
+        if (values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
         const plan = classes.write(receiver, arg, value, op === "attribute-delete");
         if (plan.kind === "value") stack.push(plan.value);
         else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("discard")); }
@@ -346,6 +346,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         else {
           const receiver = stack.pop();
           if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
+          else if (op === "attribute-get" && values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
           else if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             const plan = classes.read(receiver, arg);
