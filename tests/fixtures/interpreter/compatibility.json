@@ -614,8 +614,7 @@
       },
       "engine": {
         "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
+        "code": "UNSUPPORTED",
         "phase": "execute"
       }
     },
@@ -1244,16 +1243,13 @@
     {
       "id": "builtin-list",
       "source": "print(callable(list))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n"
       }
     },
     {
@@ -1607,16 +1603,13 @@
     {
       "id": "builtin-tuple",
       "source": "print(callable(tuple))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n"
       }
     },
     {

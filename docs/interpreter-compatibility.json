@@ -216,7 +216,7 @@
       "id": "class-construction",
       "status": "partial",
       "scope": "Explicit classes-source/1 only: user classes, bounded C3 MRO, __init__, ordinary attributes/deletion and bound methods.",
-      "gaps": "Builtin subclassing, __new__, super, metaclasses, implicit __class__ cells and full reflective behavior are not adopted. Missing list currently makes the builtin-subclass probe fail with NameError.",
+      "gaps": "Builtin subclassing, __new__, super, metaclasses, implicit __class__ cells and full reflective behavior are not adopted. Builtin list/tuple bases are explicitly refused with UNSUPPORTED.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1471,9 +1471,9 @@
     },
     {
       "id": "list",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "list() or one positional adopted primitive iterable, preserving shallow elements, dictionary order and Unicode points. Tuple inputs retain identity under tuple().",
+      "gaps": "User iterables/length hints, methods, builtin subclassing and broader reflection remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1939,9 +1939,9 @@
     },
     {
       "id": "tuple",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "tuple() or one positional adopted primitive iterable, preserving shallow elements, dictionary order and Unicode points. Tuple inputs retain identity under tuple().",
+      "gaps": "User iterables/length hints, methods, builtin subclassing and broader reflection remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",

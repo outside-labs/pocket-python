@@ -77,6 +77,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
       const type = args[1];
       if (type instanceof ClassValue) return classes.isinstance(args[0], type);
+      if (values.numeric && type instanceof BuiltinValue && ["list", "tuple", "range"].includes(type.name)) return values.isSequenceType(args[0], type.name);
       if (values.numeric && type instanceof BuiltinValue && ["int", "float", "complex", "bool"].includes(type.name)) return values.isPrimitive(args[0], type.name);
       if (type instanceof BuiltinValue && type.name === "str") return values.isString(args[0]);
       if (type instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, type.name)) return args[0] instanceof ExceptionValue && matchesException(args[0].name, type.name);
@@ -714,6 +715,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (["list", "tuple"].includes(callable.name)) {
+            count("builtin:" + callable.name);
+            if (args.length > 1 || keywords.length) python("TypeError", callable.name + "() accepts at most one positional argument");
+            const source = args[0];
+            if (args.length && (source instanceof InstanceValue || source instanceof ProtocolIteratorValue))
+              hard("UNSUPPORTED", "UnsupportedOperationError", "User iterable construction requires the owned consumer stage.");
+            if (callable.name === "tuple" && values.isSequenceType(source, "tuple")) { task = valueTask(source, site, completion); continue; }
+            if (args.length) values.checkConstructionHint(source);
+            const result = values.list([]); state.temporaries.push(result);
+            if (args.length) {
+              const iterator = values.iterator(source); state.temporaries.push(iterator);
+              while (true) {
+                let item;
+                try { item = values.next(iterator); }
+                catch (error) { if (error instanceof Raised && error.value.name === "StopIteration") break; throw error; }
+                state.temporaries.push(item); values.append(result, item); state.temporaries.pop();
+              }
+            }
+            task = valueTask(callable.name === "tuple" ? values.tuple(result.items) : result, site, completion); continue;
+          }
           if (values.numeric && numericNames.has(callable.name)) {
             count("builtin:"+callable.name);
             task = numericTask(callable.name,bindNumeric(callable.name,args,keywords,keywordValues),site,completion,depth); continue;

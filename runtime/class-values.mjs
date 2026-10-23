@@ -34,7 +34,7 @@ export class ClassRuntime {
     this.bounded(namespace.size <= CLASS_LIMITS.attributes, "Class namespace budget exceeded.");
     for (const base of bases) {
       this.charge(1);
-      if (base instanceof BuiltinValue && (["str", "bool", "type", "property", "staticmethod", "classmethod"].includes(base.name) || Object.hasOwn(EXCEPTIONS, base.name)))
+      if (base instanceof BuiltinValue && (["list", "tuple", "str", "bool", "type", "property", "staticmethod", "classmethod"].includes(base.name) || Object.hasOwn(EXCEPTIONS, base.name)))
         this.fail("UnsupportedOperationError", "Builtin subclassing is outside classes-source/1.", "UNSUPPORTED");
       if (!(base instanceof ClassValue)) this.fail("TypeError", "Class bases must be adopted class values.");
       this.touch(base);

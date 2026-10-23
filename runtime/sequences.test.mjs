@@ -94,3 +94,38 @@ test('range work, allocation and cancellation failures release owned values',asy
     const result=await run(source);assert.equal(result.error.code,'UNSUPPORTED');closed(result);
   }
 });
+
+test('primitive constructors preserve aliases, iterator state and empty/fresh containers',async()=>{
+  const result=await run('saved=[7]\na=[saved]\nb=list(a)\nt=tuple(a)\nprint(b is a,b[0] is saved,t[0] is saved,tuple(t) is t)\n'+
+    'a.append(9)\nsaved.append(3)\nprint(len(b),len(b[0]),len(list()),len(tuple()))\nit=iter(range(2,5))\nprint(next(it),list(it)[-1],len(tuple(it)))\n');
+  assert.equal(result.error,undefined,JSON.stringify(result.error));
+  assert.equal(result.stdout,'False True True True\n1 2 0 0\n2 4 0\n');closed(result);
+});
+
+test('constructor limits and huge range hints fail without leaking partial containers',async()=>{
+  for(const source of ['list(range(1025))\n','tuple("'+'x'.repeat(1025)+'")\n']){
+    const result=await run(source);assert.equal(result.error.code,'BUDGET');closed(result);
+  }
+  for(const source of ['list(range(10**100))\n','tuple(iter(range(10**100)))\n']){
+    const result=await run(source);assert.equal(result.error.type,'OverflowError');closed(result);
+  }
+  const oom=await run('a=list("'+'x'.repeat(800)+'")\n',{maxWork:20000000},{maxBytes:16000});
+  assert.equal(oom.error.code,'OOM');closed(oom);
+});
+
+test('primitive construction polls cancellation within one builtin call',async()=>{
+  let entered=false,polls=0;
+  const {registry}=await compileSourceModules([unit('print("entered")\nlist("'+'x'.repeat(1000)+'")\n')],profile);
+  const session=new ModuleSession(registry);
+  try{assert.throws(()=>session.run({shouldCancel:()=>entered&&++polls>100},()=>{entered=true;}),{code:'CANCELLED'});}
+  finally{session.close();registry.close();}assert.ok(entered);closed({closed:session.stats()});
+});
+
+test('primitive results survive collection after construction and iterator exhaustion',async()=>{
+  const source='a=list("A🚀")\nb=tuple(a)\nc=list(iter(b))\ndel a\ndel b\nprint(c[0],c[1],len(c))\n';
+  const {registry}=await compileSourceModules([unit(source)],profile),session=new ModuleSession(registry);let output='';
+  session.context.begin({},text=>{output+=text;});const execution=Execution.modules(session.context);
+  try{while(execution.state!=='completed'){execution.advance();session.memory.collect([],{cleanup:true});}
+    assert.equal(output,'A 🚀 2\n');}
+  finally{execution.close();session.context.finish();session.close();registry.close();}closed({closed:session.stats()});
+});
