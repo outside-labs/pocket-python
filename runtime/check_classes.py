@@ -53,15 +53,20 @@ def references(corpus_path=CORPUS):
                                         for status in ['pass', 'fail']}}
 
 
-def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False):
+def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, profile=None):
     report = references(corpus_path)
     if report['summary']['fail']:
         raise AssertionError('The class reference corpus differs from its recorded expectations.')
     corpus = json.loads(corpus_path.read_bytes())
+    selected_profile = profile or corpus['profile']
     available = {case['stage'] for case in corpus['cases']}
     if stages and not set(stages) <= available:
         raise ValueError('Unknown corpus stage selection.')
-    cases = [case for case in corpus['cases'] if not stages or case['stage'] in stages]
+    cases = [case for case in corpus['cases'] if (not stages or case['stage'] in stages) and
+             selected_profile in case.get('profiles', [corpus['profile']])]
+    if not cases:
+        raise ValueError('No source cases belong to the selected profile/stages.')
+    report['profile'] = selected_profile
     reference_by_id = {case['id']: case['reference'] for case in report['cases']}
     adopted = corpus.get('implemented_stages', ['C1'])
     requests = [{'id': case['id'], 'modules': [{'name': 'app', 'package': False, 'imports': case.get('imports', []),
@@ -97,10 +102,11 @@ def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False):
                         'status': 'pass' if passed else 'fail', 'reference': expected, 'actual': actual})
     files = [p for p in ROOT.glob('*.mjs') if not p.name.endswith('.test.mjs')]
     return {**report, 'mode': 'source', 'source_execution': True, 'target': target, 'execution_driver': 'instruction-boundary' if stepped else 'drain',
-            'host_version': host, 'bytecode_version': 5,
+            'host_version': host, 'bytecode_version': 4 if selected_profile == 'core-source/1' else 5,
             'corpus_cases': len(corpus['cases']), 'source_cases': len(cases),
             'selected_stages': sorted({case['stage'] for case in cases}),
             'omitted_stages': sorted(available - {case['stage'] for case in cases}),
+            'omitted_profile_cases': [case['id'] for case in corpus['cases'] if selected_profile not in case.get('profiles', [corpus['profile']])],
             'reference_summary': report['summary'],
             'implementation_status': 'Implemented stages: ' + ', '.join(adopted) + '. Other recorded stages must refuse.',
             'comparison': 'Adopted stdout and error types match CPython; messages/repr identity are not compared. Later stages must refuse explicitly.',
@@ -117,9 +123,10 @@ if __name__ == '__main__':
     parser.add_argument('--stepped', action='store_true', help='Advance the internal owned execution one instruction at a time.')
     parser.add_argument('--corpus', type=Path, default=CORPUS)
     parser.add_argument('--stages', nargs='+', help='Execute only these source stages; reference validation still covers the complete corpus.')
+    parser.add_argument('--profile', choices=['core-source/1', 'classes-source/1'], help='Select explicitly profiled source cases from the corpus.')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
-    report = references(args.corpus) if args.reference_only else check(args.target, args.channel, args.corpus, args.stages, args.stepped)
+    report = references(args.corpus) if args.reference_only else check(args.target, args.channel, args.corpus, args.stages, args.stepped, args.profile)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

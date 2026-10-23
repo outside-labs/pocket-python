@@ -128,6 +128,9 @@ def smoke(channel=None):
                     numeric = json.loads((ROOT / 'tests/fixtures/interpreter/numeric.json').read_bytes())
                     programs.extend(c['source'] for c in numeric['cases']
                                     if c['stage'] in numeric['implemented_stages'] and 'error_type' not in c)
+                    sequences = json.loads((ROOT / 'tests/fixtures/interpreter/sequences.json').read_bytes())
+                    programs.extend(c['source'] for c in sequences['cases']
+                                    if c['stage'] in sequences['implemented_stages'] and 'error_type' not in c)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -242,6 +245,19 @@ def smoke(channel=None):
                     assert page.locator('#result').inner_text() == 'entered\n'
                     refused('pow(1j,101)\n', 'UnsupportedOperationError:')
                     checks.append('numeric-conversion-binding-body-result-text-and-explicit-power-errors')
+                    refused('class I:\n def __index__(self): return "bad"\nrange(I())\n', 'TypeError:')
+                    assert 'sources/app.py:3' in page.locator('#status').inner_text()
+                    refused('print("entered")\nlen(range(10**100))\n', 'OverflowError:')
+                    assert page.locator('#result').inner_text() == 'entered\n'
+                    refused('class A:\n def __iter__(self):\n  print("bad")\n  return iter([1])\n def __len__(self): return 1\nlist(A())\n', 'UnsupportedOperationError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused('class V:\n def __bool__(self): raise StopIteration("truth")\nall([V()])\n', 'StopIteration:')
+                    assert '__bool__ at sources/app.py:2' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n def __iter__(self): return self\n def __next__(self): return 1//0\nlist(A())\n', 'ZeroDivisionError:')
+                    assert '__next__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    refused('print("entered")\nlist(range(1025))\n', 'ExecutionLimitError:')
+                    assert page.locator('#result').inner_text() == 'entered\n'
+                    checks.append('sequence-signatures-hints-callback-errors-and-resource-prefixes')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -268,6 +284,9 @@ def smoke(channel=None):
                         '7 True True 7 7 0x7 7\n12 True True\n')
                     run('class OfflineRound:\n @property\n def __round__(self):\n  def use(digits): return digits[0][0]\n  return use\nclass OfflineImaginary:\n @property\n def __float__(self):\n  def use(): return 1.25\n  return use\nprint(round(OfflineRound(),[[7]]),complex(3+4j,OfflineImaginary())==3+5.25j)\nprint({7+0j:3}[7],hash(7+0j)==hash(7),abs(3+4j)==5.0)\n', '7 True\n3 True True\n')
                     checks.append('new-real-complex-and-owned-numeric-binding-source-offline')
+                    run('class OfflineStream:\n def __init__(self): self.n=0\n def __iter__(self): return self\n def __next__(self):\n  self.n+=1\n  if self.n>3: raise StopIteration\n  return [self.n]\nsaved=tuple(OfflineStream())\na=list(range(2,10,3))\nprint(len(saved),saved[-1][0],a[1],all([1,2]),any([0,0,3]))\n', '3 3 5 True True\n')
+                    run('class OfflineIndex:\n @property\n def __index__(self):\n  def use(): return 3\n  return use\nr=range(OfflineIndex(),10,OfflineIndex())\nprint(r.start,r.stop,r.step,tuple(r)[-1],any(range(1,10**100)),any([]))\n', '3 10 3 9 True False\n')
+                    checks.append('new-range-construction-and-owned-consumer-source-after-offline-reload')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -318,6 +337,14 @@ def smoke(channel=None):
                                         'def '+slot+'(self'+params+'):\n  while True: pass\n'+invocation+'\n')
                     for invocation in ['int("ff",base=Spin())','bin(Spin())','round(1.25,Spin())']:
                         busy.append('class Spin:\n @property\n def __index__(self):\n  while True: pass\n'+invocation+'\n')
+                    for binding in [False, True]:
+                        decoration = '@property\n ' if binding else ''
+                        busy.append('class Spin:\n '+decoration+'def __index__(self):\n  while True: pass\nrange(Spin())\n')
+                        for consumer in ['list', 'tuple']:
+                            busy.append('class Spin:\n '+decoration+'def __iter__(self):\n  while True: pass\n'+consumer+'(Spin())\n')
+                            busy.append('class Spin:\n def __iter__(self): return self\n '+decoration+'def __next__(self):\n  while True: pass\n'+consumer+'(Spin())\n')
+                        for consumer in ['all', 'any']:
+                            busy.append('class Spin:\n '+decoration+'def __bool__(self):\n  while True: pass\n'+consumer+'([Spin()])\n')
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
@@ -361,6 +388,8 @@ def smoke(channel=None):
                     checks.append('numeric-operators-and-helpers-retained-by-offline-core-profile-update')
                     run('a=float("١.٢٥")\nz=complex("3+4j")\nprint(int("0x_ff",0),a==1.25,z.real==3.0,z.imag==4.0,z/(1-2j)==-1+2j,isinstance(z,complex))\n', '255 True True True True True\n')
                     checks.append('real-and-complex-values-retained-by-offline-core-profile-update')
+                    run('r=range(2,10,3)\na=list(r[::-1])\nb=tuple(iter(a))\nprint(r.start,r.stop,r.step,len(b),b[0],b[-1],all(b),any([0,0,3]))\n', '2 10 3 3 8 2 True True\n')
+                    checks.append('range-and-primitive-consumers-retained-by-offline-core-profile-update')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

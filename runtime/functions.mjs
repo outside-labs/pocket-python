@@ -346,7 +346,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         else {
           const receiver = stack.pop();
           if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
-          else if (op === "attribute-get" && values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));
+          else if (values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
           else if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             const plan = classes.read(receiver, arg);

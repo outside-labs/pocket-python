@@ -16,8 +16,9 @@ Both core-source/1 and classes-source/1 retain bytecode versions 4 and 5.
 
 The machine-readable corpus records which stages are implemented. At contract
 adoption none was implemented; Q1, Q2 and Q3 are now delivered. Source reports select only delivered stages;
-reference reports validate the complete corpus. Both Node and Chromium must
-execute delivered source independently, including instruction-boundary stepping.
+reference reports validate the complete corpus. Node and Chromium execute all 54 class-profile observations (53 semantic cases
+and one hint refusal), plus 40 explicitly shared core-profile cases, in drain and
+instruction-boundary modes. Profile selection never credits omitted cases.
 
 ## Values and resource rules
 
@@ -56,3 +57,9 @@ Owned consumers retain their iterator and partial result in closed operation rec
 Only advancement exhaustion ends consumption: StopIteration from acquisition or
 truth callbacks propagates. Short circuit releases prior elements; user hints on
 the original source or an indexed iterator owner are refused before callbacks.
+
+The source console accepts newly entered sequence programs after offline reload,
+checks source errors and prefix preservation, interrupts pending index/iterator/
+truth callbacks, and retains primitive sequence APIs after a class-to-core update.
+[Payload evidence](measurements/2026-10-23-sequences.json) records exact fixture
+bytes and engine identity; it makes no mobile-device or host-memory promise.

@@ -794,7 +794,9 @@
       "probes": [
         "builtin-all"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/sequences.json:all-any-truth"
+      ]
     },
     {
       "id": "anext",
@@ -830,7 +832,9 @@
       "probes": [
         "builtin-any"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/sequences.json:all-any-consumption"
+      ]
     },
     {
       "id": "ascii",
@@ -1472,7 +1476,7 @@
     {
       "id": "list",
       "status": "partial",
-      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Shallow references and tuple(existing_tuple) identity are preserved.",
+      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Lists are fresh shallow containers.",
       "gaps": "User length hints, methods, builtin subclassing and broader reflection remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1485,7 +1489,10 @@
       "probes": [
         "builtin-list"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/sequences.json:construct-shallow",
+        "tests/fixtures/interpreter/sequences.json:construct-user"
+      ]
     },
     {
       "id": "locals",
@@ -1738,7 +1745,9 @@
       "probes": [
         "builtin-range"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/sequences.json:range-large"
+      ]
     },
     {
       "id": "repr",
@@ -1940,7 +1949,7 @@
     {
       "id": "tuple",
       "status": "partial",
-      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Shallow references and tuple(existing_tuple) identity are preserved.",
+      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Existing tuple identity and shallow elements are preserved.",
       "gaps": "User length hints, methods, builtin subclassing and broader reflection remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1953,7 +1962,10 @@
       "probes": [
         "builtin-tuple"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/sequences.json:construct-shallow",
+        "tests/fixtures/interpreter/sequences.json:construct-user"
+      ]
     },
     {
       "id": "type",
@@ -2191,7 +2203,29 @@
         "INT-ITER-01",
         "INT-EQ-01"
       ],
-      "order": 236
+      "order": 236,
+      "implementation_steps": [
+        {
+          "id": "INT-SEQ-01A",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/186"
+        },
+        {
+          "id": "INT-SEQ-01B",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/187"
+        },
+        {
+          "id": "INT-SEQ-01C",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/188"
+        },
+        {
+          "id": "INT-SEQ-01D",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/189"
+        },
+        {
+          "id": "INT-SEQ-01E",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/190"
+        }
+      ]
     },
     {
       "id": "INT-VALUES-01",
