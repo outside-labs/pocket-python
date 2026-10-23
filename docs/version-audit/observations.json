@@ -1,0 +1,2750 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-version-audit/1",
+  "mode": "source-matrix",
+  "source_execution": true,
+  "oracle": {
+    "implementation": "CPython",
+    "version": "3.14.7",
+    "unicode": "16.0.0",
+    "build": "3.14.7 (main, Aug  5 2026, 10:29:49) [Clang 21.0.0 (clang-2100.1.1.101)]"
+  },
+  "identities": {
+    "corpus_sha256": "a1cd4eb109765d7e6aa9bf84a3985b6b42402f11be9d9a287cae50c8d9933149",
+    "harness_sha256": "da7fde2a87ef27a93569749f6ceaa6ef7882dccd383408a7e54ff86e5cd20daa",
+    "source_ledger_sha256": "caccb073d11fb0992b668c834a282da8660c51e342fd11c992be8a7e9d09b043",
+    "checkout_commits": {
+      "node": "1f7ce839c17c10439656a8b3969154177f5e2370",
+      "browser": "1f7ce839c17c10439656a8b3969154177f5e2370"
+    },
+    "engine_inputs_sha256": {
+      "runtime/browser-protocol.mjs": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76",
+      "runtime/bytecode.mjs": "e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4",
+      "runtime/class-policy.mjs": "f64f7a453d55d0bbf0fcf11a933d6c171cf307d95a649c00adbf96896b2f96c7",
+      "runtime/class-values.mjs": "3264dd06498b2f4637d3131c781e5ff42bcfddd651713a7631656cc81299e13d",
+      "runtime/conformance.mjs": "c4c853f9f7eea6fe19fe36d745bfbcddf9987563f2d80f5182b8305064dd68ea",
+      "runtime/execution-runner.mjs": "b8c2f7b1e26c770a38b370a472417d64388781d23ceceb04672e91b38a98106a",
+      "runtime/execution-worker.mjs": "b28fc73f6ec1dd9bb1054e9a7da1e22bb44ab091d0582c619952e08126fa1213",
+      "runtime/execution_checks.mjs": "9ca376ca848e12fe8da1baf4e6ba0dded41e59487b80ee34a432cac9c69f8383",
+      "runtime/function-bytecode.mjs": "3f44b554877a3841e8061473aecfbd77fdbcfb70fc5025fa477ec7ffe52e1533",
+      "runtime/function-objects.mjs": "219bb1e8ef260d0168849cc9328057696a82bf9fef060286428dce31201f59e7",
+      "runtime/function-request.mjs": "02a4095ab94c328f79227221ccb44668f2fa0d9114f651e2686437d075214d00",
+      "runtime/function-runner.mjs": "982476b6f8f8f608aa816ca19ca94ab4a5209ee67f18928348fa1921195d731d",
+      "runtime/function-worker.mjs": "f082af2850354ed96923d660f2a78fe92e9235aee4c33b36cc7102e9d479ac50",
+      "runtime/functions.mjs": "d8841122bec504c3bb715d948d7bc5d495c8eec092d1fc12b2f2486c8e21fa09",
+      "runtime/interpreter-host.mjs": "0bb0a64faffcf77e0064258e4cfcaa7a937c4372129849f76901bee91b5a5ae2",
+      "runtime/interpreter-worker.mjs": "937a97cc49d987492de0bc16021a4a804ef51e4ea5b398f79c92e5d30ac82558",
+      "runtime/library-catalog.mjs": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c",
+      "runtime/library-profile-request.mjs": "0117e804abe311f78ea1b1a3042dd061cd5723e5f70972054104a21096c05008",
+      "runtime/library-profile-runner.mjs": "e16ab4a21eef76bf28faa7a2f9e4e9d4f43cad06d5287a5fb15877cccd4771d6",
+      "runtime/library-profile-worker.mjs": "c526295d5477204b37db4e96278d7383883cc52aac24f99eda3bb94dcd97a091",
+      "runtime/library-profiles.mjs": "666f0fc23f8b300b1b05a373b5bcc6237cdae3cf63b5e1cefe7cbe6af82c50f1",
+      "runtime/library-selection.mjs": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a",
+      "runtime/measure-profiles.mjs": "7fe2edfb4c0662762448779271611209a3c5b82338afc822c3109a97dcc6eb86",
+      "runtime/memory-worker.mjs": "903a8ad0ad9254823f17a7be4fad07adb50faedf1b78604a50fd0d8bb60c3bd7",
+      "runtime/memory.mjs": "240775fe3521e88dc2f004f6a7af4f3507fb573d1dc0b7551c5b70bc91df884e",
+      "runtime/memory_checks.mjs": "8c1e0645742ee82c97d6f2656a22f3bd3a89f9b0e622ab969088d0ced05b57ea",
+      "runtime/module-context.mjs": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca",
+      "runtime/module-registry.mjs": "7fd479684fb43a71e06bd7365ab2bba4eb971a65bc156f199c5b95ff0a232ddc",
+      "runtime/module-request.mjs": "b701b19268e6fa05bf2f92389d13f8ee2d5b32298bc67ba4cfb3421f5769b9e5",
+      "runtime/module-runner.mjs": "48b7aff3f88392573b79ce4a75cea8e931d6a76a27826b80e11b7b1c488d9891",
+      "runtime/module-session.mjs": "08e4ccf16361299c15b99621fdfcef0d9ef93de50d28d738158c7bc85a7c23a3",
+      "runtime/module-worker.mjs": "b674e42c997add29d713fc90eb43d4ac7f50910b22f7d5bcddf19d67f2f49dc8",
+      "runtime/numeric.mjs": "2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad",
+      "runtime/operation-runtime.mjs": "532d284c680b91535ed96dee7284b90921a71b57a311952ffa88bd174ade4e65",
+      "runtime/operations.mjs": "1b0d21bb0ceeb36ca47cb9a136d17038745924acc488332fd4d7d51108aa411e",
+      "runtime/prototype.mjs": "2dced15d3d339996eb3ed14a908f471243b8ecb4f4878e800a6f7480c33d314c",
+      "runtime/session.mjs": "456c306703b66d0ad1025ba82925ba579465e5a25423c256e9a315285c30a8d1",
+      "runtime/source-compiler.mjs": "a56e0c7621ff357951db98ff2b26f7a05ad3f417d87848601d57751f59d87f87",
+      "runtime/source-identifiers.mjs": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914",
+      "runtime/source-modules.mjs": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef",
+      "runtime/source-parser.mjs": "8bd95aacd6809c3d10c669ca7fc24f18863f1279ef04e71fdde8c38545757a41",
+      "runtime/source-request.mjs": "d3c53adad526a46b006c00f51828f3e03b47602d81aa17448d2e9070cf1f7bb8",
+      "runtime/source-runner.mjs": "a2d34cccba6c7091ed3f0ee9315b29b04e14f8b8f3d3f406f6982274efb0bfed",
+      "runtime/source-token-request.mjs": "17bb6567379db29bad6ddc161fcf3ca2696395bdd9237de2c532e27edc96d7f6",
+      "runtime/source-token-runner.mjs": "f9f9a4f44fbce938e8e4fd8d84cecf60eb8dd6fbceec6e47f4dd13b4174d0600",
+      "runtime/source-token-worker.mjs": "5cd5f6aac560fd4d56803e3fc5a7daa5187e984c579dce7ac9bbda2a55db405f",
+      "runtime/source-tokens.mjs": "16f70d80081f73a1b8539b4d34425108e33e953d06927f68ef6bd344e1f9cecf",
+      "runtime/source-worker.mjs": "0d6f8c02ede3991db00f083085a484a5fa9316d51006471210c17b9d192d3ded",
+      "runtime/string-printability.mjs": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f",
+      "runtime/values.mjs": "8c2ad04e475e3d6a839de12d565d2b452206cb45df1a7b9d1818366cf2214980",
+      "runtime/vm-worker.mjs": "9ec68ffaf3a7b11d83c0bdf2684fda3883dc4028ce486b75bf17fd0088c2a2b0",
+      "runtime/vm.mjs": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d",
+      "runtime/worker.mjs": "5f662ef42989fbf16f5d643ce9c2e5b263274fba69c51664325bf80c90ae7a22",
+      "runtime/check_conformance.py": "4bf3415c8d6c9a533717f88f37582e8c31471205f53842f1fa078db1ca52ffc6",
+      "runtime/browser_smoke.py": "e091f7b8908637b319591ccaaf1efa8a857c635488f6db30ddec9ed40979b2b0",
+      "runtime/licenses/UNICODE.txt": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+    }
+  },
+  "hosts": {
+    "node": "v24.19.0",
+    "chromium": "156.0.8078.4",
+    "browser_driver": {
+      "name": "playwright",
+      "version": "1.64.0",
+      "channel": "chromium"
+    }
+  },
+  "profiles": [
+    "core-source/1",
+    "classes-source/1"
+  ],
+  "cases": [
+    {
+      "id": "list-delete-alias",
+      "kind": "control",
+      "category": "implementation",
+      "affected_api": "del list[index]",
+      "source_file": "list-delete-alias.py",
+      "source_sha256": "2ee942516a3c5887dce5b3571a6881194376d45c685472ae6fd6cce256c873f0",
+      "upstream": [
+        "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Misc/NEWS.d/3.14.9.rst"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "True 2 10 30\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "True 2 10 30\n"
+        }
+      },
+      "later": {
+        "status": "control-only",
+        "reason": "Controls logical deletion and aliasing; does not observe native array shrinking."
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "True 2 10 30\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 125,
+                  "sha256": "2ee942516a3c5887dce5b3571a6881194376d45c685472ae6fd6cce256c873f0"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 1346,
+                  "sha256": "c10f22f30732a2095b32984ddc6cf8fbce1503ef4b46c6e084ad67fa2c2414f9"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "True 2 10 30\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 125,
+                  "sha256": "2ee942516a3c5887dce5b3571a6881194376d45c685472ae6fd6cce256c873f0"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 1346,
+                  "sha256": "c10f22f30732a2095b32984ddc6cf8fbce1503ef4b46c6e084ad67fa2c2414f9"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "True 2 10 30\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 125,
+                  "sha256": "2ee942516a3c5887dce5b3571a6881194376d45c685472ae6fd6cce256c873f0"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 1362,
+                  "sha256": "a630936b026bf0a7d0a4b53f094710a4397f17c8a72d06ff2ae8f9a64b404bec"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "True 2 10 30\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 125,
+                  "sha256": "2ee942516a3c5887dce5b3571a6881194376d45c685472ae6fd6cce256c873f0"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 1362,
+                  "sha256": "a630936b026bf0a7d0a4b53f094710a4397f17c8a72d06ff2ae8f9a64b404bec"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "unicode-identifiers",
+      "kind": "control",
+      "category": "unicode",
+      "affected_api": "NFKC identifier binding",
+      "source_file": "unicode-identifiers.py",
+      "source_sha256": "7b961ca2f6efa469c37524d21c08ea70280a569b52b148438ff1f7bda34bc40f",
+      "upstream": [
+        "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Modules/unicodedata_db.h"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "7 4\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "7 4\n"
+        }
+      },
+      "later": {
+        "status": "control-only",
+        "reason": "Controls adopted Unicode 16 normalization; does not test StringPrep."
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "7 4\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 35,
+                  "sha256": "7b961ca2f6efa469c37524d21c08ea70280a569b52b148438ff1f7bda34bc40f"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 633,
+                  "sha256": "b5412934f58e9606a3aff107c78fbe0e5d3de8ecae49adb9bc2a04a53a69964d"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "7 4\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 35,
+                  "sha256": "7b961ca2f6efa469c37524d21c08ea70280a569b52b148438ff1f7bda34bc40f"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 633,
+                  "sha256": "b5412934f58e9606a3aff107c78fbe0e5d3de8ecae49adb9bc2a04a53a69964d"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "7 4\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 35,
+                  "sha256": "7b961ca2f6efa469c37524d21c08ea70280a569b52b148438ff1f7bda34bc40f"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 649,
+                  "sha256": "9cc4160a9caa54d53e2f700c8f29daf1ad5f22b7ca2416e66661b193f6ce3626"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "7 4\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 35,
+                  "sha256": "7b961ca2f6efa469c37524d21c08ea70280a569b52b148438ff1f7bda34bc40f"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 649,
+                  "sha256": "9cc4160a9caa54d53e2f700c8f29daf1ad5f22b7ca2416e66661b193f6ce3626"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "unicode-numeric",
+      "kind": "control",
+      "category": "unicode",
+      "affected_api": "int(str), float(str)",
+      "source_file": "unicode-numeric.py",
+      "source_sha256": "fdbf990537e68acc3ea32d031e400f27d7a3bb92fec7d60bb51db0a126d6703e",
+      "upstream": [
+        "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Modules/unicodedata_db.h"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "True True\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "True True\n"
+        }
+      },
+      "later": {
+        "status": "control-only",
+        "reason": "Controls adopted decimal Unicode conversion using equality; float printing has a separate profile boundary."
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "True True\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 48,
+                  "sha256": "fdbf990537e68acc3ea32d031e400f27d7a3bb92fec7d60bb51db0a126d6703e"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 817,
+                  "sha256": "13186d4c0ac9a1bbf13873b2b3e5a0d7548421ecd1411bb35e7fcbc572a86eb1"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "True True\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 48,
+                  "sha256": "fdbf990537e68acc3ea32d031e400f27d7a3bb92fec7d60bb51db0a126d6703e"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 817,
+                  "sha256": "13186d4c0ac9a1bbf13873b2b3e5a0d7548421ecd1411bb35e7fcbc572a86eb1"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "True True\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 48,
+                  "sha256": "fdbf990537e68acc3ea32d031e400f27d7a3bb92fec7d60bb51db0a126d6703e"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 833,
+                  "sha256": "71ff8ed78276877b3583e67b131fc800395459d0ae9857683092033f140a975d"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "supported",
+            "status": "observed",
+            "compatibility_credit": true,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": true,
+            "stdout": "True True\n",
+            "error": null,
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 48,
+                  "sha256": "fdbf990537e68acc3ea32d031e400f27d7a3bb92fec7d60bb51db0a126d6703e"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 833,
+                  "sha256": "71ff8ed78276877b3583e67b131fc800395459d0ae9857683092033f140a975d"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "float-format-small",
+      "kind": "control",
+      "category": "builtin",
+      "affected_api": "format(float, spec)",
+      "source_file": "float-format-small.py",
+      "source_sha256": "705772c3bfa8aefb76114f4fedf4d01e4c658eaa2ddc8777ff12d84e2f55d111",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_format.py"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "1.25\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "1.25\n"
+        }
+      },
+      "later": {
+        "status": "control-only",
+        "reason": "Small precision control only; cannot establish the near-INT_MAX safety fix."
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "unavailable-builtin",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "NameError",
+              "phase": "execute",
+              "message": "name 'format' is not defined",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  7,
+                  1,
+                  13
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      7,
+                      1,
+                      13
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 27,
+                  "sha256": "705772c3bfa8aefb76114f4fedf4d01e4c658eaa2ddc8777ff12d84e2f55d111"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 603,
+                  "sha256": "5b1cbf8bd379cac0328790745684c3257f42fd05ba010c6db6caae28d98a8313"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "unavailable-builtin",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "NameError",
+              "phase": "execute",
+              "message": "name 'format' is not defined",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  7,
+                  1,
+                  13
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      7,
+                      1,
+                      13
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 27,
+                  "sha256": "705772c3bfa8aefb76114f4fedf4d01e4c658eaa2ddc8777ff12d84e2f55d111"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 603,
+                  "sha256": "5b1cbf8bd379cac0328790745684c3257f42fd05ba010c6db6caae28d98a8313"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "unavailable-builtin",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "NameError",
+              "phase": "execute",
+              "message": "name 'format' is not defined",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  7,
+                  1,
+                  13
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      7,
+                      1,
+                      13
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 27,
+                  "sha256": "705772c3bfa8aefb76114f4fedf4d01e4c658eaa2ddc8777ff12d84e2f55d111"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 619,
+                  "sha256": "d4f7b98d976f79ed89e4e5be16618c5da3e965d1f03888eefb9e93fc89b09719"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "unavailable-builtin",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "NameError",
+              "phase": "execute",
+              "message": "name 'format' is not defined",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  7,
+                  1,
+                  13
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      7,
+                      1,
+                      13
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 27,
+                  "sha256": "705772c3bfa8aefb76114f4fedf4d01e4c658eaa2ddc8777ff12d84e2f55d111"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 619,
+                  "sha256": "d4f7b98d976f79ed89e4e5be16618c5da3e965d1f03888eefb9e93fc89b09719"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "dict-reverse-mutation",
+      "kind": "semantic-delta",
+      "category": "builtin",
+      "affected_api": "reversed(dict), next(iterator)",
+      "source_file": "dict-reverse-mutation.py",
+      "source_sha256": "e9624e1abb354d81c9029f6f46d75d07dc19ae0a902c04b12722c41065788e49",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_dict.py"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "9\n2\n1\n0\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "9\n2\n1\n0\n"
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": false,
+          "stdout": "9\n2\n1\n",
+          "error": {
+            "type": "RuntimeError"
+          }
+        },
+        "status": "not-independently-verified",
+        "reason": "Later interpreter unavailable; expectation comes from official source, not execution"
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "unavailable-builtin",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "NameError",
+              "phase": "execute",
+              "message": "name 'reversed' is not defined",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  4,
+                  10,
+                  4,
+                  18
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      4,
+                      10,
+                      4,
+                      18
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 384,
+                  "sha256": "e9624e1abb354d81c9029f6f46d75d07dc19ae0a902c04b12722c41065788e49"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 4847,
+                  "sha256": "feefc6027b4476a7b1476c7a8468bc8a518c2dfd0477ff395ebd59424184105b"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "unavailable-builtin",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "NameError",
+              "phase": "execute",
+              "message": "name 'reversed' is not defined",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  4,
+                  10,
+                  4,
+                  18
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      4,
+                      10,
+                      4,
+                      18
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 384,
+                  "sha256": "e9624e1abb354d81c9029f6f46d75d07dc19ae0a902c04b12722c41065788e49"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 4847,
+                  "sha256": "feefc6027b4476a7b1476c7a8468bc8a518c2dfd0477ff395ebd59424184105b"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "unavailable-builtin",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "NameError",
+              "phase": "execute",
+              "message": "name 'reversed' is not defined",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  4,
+                  10,
+                  4,
+                  18
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      4,
+                      10,
+                      4,
+                      18
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 384,
+                  "sha256": "e9624e1abb354d81c9029f6f46d75d07dc19ae0a902c04b12722c41065788e49"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 4863,
+                  "sha256": "0ad627671fb11248d3d5b98c1753e8a5a99dd8a0995bf11075b89f09979f7bce"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "unavailable-builtin",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "NameError",
+              "phase": "execute",
+              "message": "name 'reversed' is not defined",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  4,
+                  10,
+                  4,
+                  18
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      4,
+                      10,
+                      4,
+                      18
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 384,
+                  "sha256": "e9624e1abb354d81c9029f6f46d75d07dc19ae0a902c04b12722c41065788e49"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 4863,
+                  "sha256": "0ad627671fb11248d3d5b98c1753e8a5a99dd8a0995bf11075b89f09979f7bce"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "template-whitespace",
+      "kind": "semantic-delta",
+      "category": "language",
+      "affected_api": "Interpolation.expression",
+      "source_file": "template-whitespace.py",
+      "source_sha256": "b4ffa20c095c80168489aeffa0b64509bb0f2cf737f20e6e2c3e1daadc1ef5ba",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_tstring.py"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "'value'\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "'value'\n"
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": true,
+          "stdout": "'value   '\n"
+        },
+        "status": "not-independently-verified",
+        "reason": "Later interpreter unavailable; expectation comes from official source, not execution"
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  2,
+                  12,
+                  2,
+                  13
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  2,
+                  12,
+                  2,
+                  13
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  2,
+                  12,
+                  2,
+                  13
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  2,
+                  12,
+                  2,
+                  13
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        }
+      }
+    },
+    {
+      "id": "template-debug",
+      "kind": "semantic-delta",
+      "category": "language",
+      "affected_api": "debug Interpolation.expression",
+      "source_file": "template-debug.py",
+      "source_sha256": "6be101ce5a408c170bae4054333a2f8f31692c9fed98a81fc32dae1318ee646f",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_tstring.py"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "'value'\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "'value'\n"
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": true,
+          "stdout": "'value '\n"
+        },
+        "status": "not-independently-verified",
+        "reason": "Later interpreter unavailable; expectation comes from official source, not execution"
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  2,
+                  12,
+                  2,
+                  13
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  2,
+                  12,
+                  2,
+                  13
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  2,
+                  12,
+                  2,
+                  13
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  2,
+                  12,
+                  2,
+                  13
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        }
+      }
+    },
+    {
+      "id": "stringprep-mapping",
+      "kind": "semantic-delta",
+      "category": "unicode-library",
+      "affected_api": "stringprep.map_table_b2",
+      "source_file": "stringprep-mapping.py",
+      "source_sha256": "9b290fd578847127a03c7619553affc80ddb293313fc311ad304664386872449",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/stringprep.py"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "'ss'\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "'ss'\n"
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": true,
+          "stdout": "'\u1e9e'\n"
+        },
+        "status": "not-independently-verified",
+        "reason": "Later interpreter unavailable; expectation comes from official source, not execution"
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "denied-import",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "ImportError",
+              "phase": "execute",
+              "message": "Import is not declared for app: stringprep",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  1,
+                  1,
+                  18
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      1,
+                      1,
+                      18
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 65,
+                  "sha256": "9b290fd578847127a03c7619553affc80ddb293313fc311ad304664386872449"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 719,
+                  "sha256": "643bb013de4471e93d8047d1cc6343d44fe711effc3924d393d0bddf42d102f5"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "denied-import",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "ImportError",
+              "phase": "execute",
+              "message": "Import is not declared for app: stringprep",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  1,
+                  1,
+                  18
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      1,
+                      1,
+                      18
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 65,
+                  "sha256": "9b290fd578847127a03c7619553affc80ddb293313fc311ad304664386872449"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 719,
+                  "sha256": "643bb013de4471e93d8047d1cc6343d44fe711effc3924d393d0bddf42d102f5"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "denied-import",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "ImportError",
+              "phase": "execute",
+              "message": "Import is not declared for app: stringprep",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  1,
+                  1,
+                  18
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      1,
+                      1,
+                      18
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 65,
+                  "sha256": "9b290fd578847127a03c7619553affc80ddb293313fc311ad304664386872449"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 738,
+                  "sha256": "a4974b9753530758440d0739767873b5d4437543c079876d38048b03e61dd840"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "denied-import",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "ImportError",
+              "phase": "execute",
+              "message": "Import is not declared for app: stringprep",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  1,
+                  1,
+                  18
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      1,
+                      1,
+                      18
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 65,
+                  "sha256": "9b290fd578847127a03c7619553affc80ddb293313fc311ad304664386872449"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 738,
+                  "sha256": "a4974b9753530758440d0739767873b5d4437543c079876d38048b03e61dd840"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "idna-mapping",
+      "kind": "semantic-delta",
+      "category": "unicode-library",
+      "affected_api": "encodings.idna.nameprep",
+      "source_file": "idna-mapping.py",
+      "source_sha256": "e603e85782b3dd3ca27df789e1751ed06f51ee2c2317a57d00ae01b1a280039e",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/stringprep.py"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": true,
+          "stdout": "'ss'\n"
+        },
+        "actual": {
+          "ok": true,
+          "stdout": "'ss'\n"
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": true,
+          "stdout": "'\u1e9e'\n"
+        },
+        "status": "not-independently-verified",
+        "reason": "Later interpreter unavailable; expectation comes from official source, not execution"
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "denied-import",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "ImportError",
+              "phase": "execute",
+              "message": "Import is not declared for app: encodings.idna",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  1,
+                  1,
+                  22
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      1,
+                      1,
+                      22
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 69,
+                  "sha256": "e603e85782b3dd3ca27df789e1751ed06f51ee2c2317a57d00ae01b1a280039e"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 750,
+                  "sha256": "1ccb67fdbf3b35c034ea8677442aa79dc1eb3267023b5dc2157f0ed5f85a62a4"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "denied-import",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "ImportError",
+              "phase": "execute",
+              "message": "Import is not declared for app: encodings.idna",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  1,
+                  1,
+                  22
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      1,
+                      1,
+                      22
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "core-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 69,
+                  "sha256": "e603e85782b3dd3ca27df789e1751ed06f51ee2c2317a57d00ae01b1a280039e"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 750,
+                  "sha256": "1ccb67fdbf3b35c034ea8677442aa79dc1eb3267023b5dc2157f0ed5f85a62a4"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "denied-import",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "ImportError",
+              "phase": "execute",
+              "message": "Import is not declared for app: encodings.idna",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  1,
+                  1,
+                  22
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      1,
+                      1,
+                      22
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 69,
+                  "sha256": "e603e85782b3dd3ca27df789e1751ed06f51ee2c2317a57d00ae01b1a280039e"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 772,
+                  "sha256": "a4c2a79ca92dd697ea223bdba02d604df32a1c7a4954dfc44fb3083780d5e7f3"
+                }
+              }
+            ],
+            "live_frames": 0
+          },
+          "browser": {
+            "classification": "denied-import",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "zero",
+              "zero_teardown_measured": true,
+              "closed": {
+                "bytes": 0,
+                "objects": 0,
+                "roots": 0,
+                "frames": 0,
+                "external": 0
+              }
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "PYTHON",
+              "type": "ImportError",
+              "phase": "execute",
+              "message": "Import is not declared for app: encodings.idna",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  1,
+                  1,
+                  22
+                ]
+              },
+              "traceback": [
+                {
+                  "function": "<module>",
+                  "location": {
+                    "filename": "sources/app.py",
+                    "span": [
+                      1,
+                      1,
+                      1,
+                      22
+                    ]
+                  }
+                }
+              ],
+              "context": null
+            },
+            "compilation": [
+              {
+                "module": "app",
+                "language_profile": "classes-source/1",
+                "source": {
+                  "path": "sources/app.py",
+                  "size_bytes": 69,
+                  "sha256": "e603e85782b3dd3ca27df789e1751ed06f51ee2c2317a57d00ae01b1a280039e"
+                },
+                "bytecode": {
+                  "path": "code/app.pbc.json",
+                  "size_bytes": 772,
+                  "sha256": "a4c2a79ca92dd697ea223bdba02d604df32a1c7a4954dfc44fb3083780d5e7f3"
+                }
+              }
+            ],
+            "live_frames": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "bytes-lookup-error",
+      "kind": "semantic-delta",
+      "category": "builtin",
+      "affected_api": "bytes percent formatting / __bytes__ descriptor",
+      "source_file": "bytes-lookup-error.py",
+      "source_sha256": "67a3fd01f55c9994a7193658a41bb808c7469dc8991101de4669a95fdbf2d657",
+      "upstream": [
+        "https://github.com/python/cpython/blob/ead82c07db1f111d613926ed1b6667411d768125/Lib/test/test_bytes.py"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "SystemError"
+          }
+        },
+        "actual": {
+          "ok": false,
+          "error": {
+            "type": "SystemError",
+            "message": "<class 'memoryview'> returned a result with an exception set"
+          },
+          "stdout": ""
+        }
+      },
+      "later": {
+        "since": "3.14.9",
+        "verification": "source-only",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "ZeroDivisionError"
+          }
+        },
+        "status": "not-independently-verified",
+        "reason": "Later interpreter unavailable; expectation comes from official source, not execution"
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  6,
+                  27,
+                  6,
+                  28
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  6,
+                  27,
+                  6,
+                  28
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  6,
+                  27,
+                  6,
+                  28
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "unsupported",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "UNSUPPORTED",
+              "type": "UnsupportedSyntaxError",
+              "phase": "tokenize",
+              "message": "Bytes, formatted and template strings are outside this source profile.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  6,
+                  27,
+                  6,
+                  28
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        }
+      }
+    },
+    {
+      "id": "nonascii-syntax-range",
+      "kind": "diagnostic-delta",
+      "category": "language",
+      "affected_api": "SyntaxError.offset/end_offset",
+      "source_file": "nonascii-syntax-range.py",
+      "source_sha256": "bb069719fa1770ac0e9a5ac5afe9626d651644505f6ffee5a9ccccc160b510aa",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_exceptions.py"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "SyntaxError",
+            "diagnostic": {
+              "msg": "leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers",
+              "lineno": 1,
+              "offset": 12,
+              "end_lineno": 1,
+              "end_offset": 15
+            }
+          }
+        },
+        "actual": {
+          "ok": false,
+          "error": {
+            "type": "SyntaxError",
+            "message": "leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers (app.py, line 1)",
+            "diagnostic": {
+              "msg": "leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers",
+              "lineno": 1,
+              "offset": 12,
+              "end_lineno": 1,
+              "end_offset": 15
+            }
+          },
+          "stdout": ""
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "SyntaxError",
+            "diagnostic": {
+              "lineno": 1,
+              "offset": 8,
+              "end_lineno": 1,
+              "end_offset": 11
+            }
+          }
+        },
+        "status": "not-independently-verified",
+        "reason": "Later interpreter unavailable; expectation comes from official source, not execution"
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "syntax-rejection",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "SYNTAX",
+              "type": "SyntaxError",
+              "phase": "tokenize",
+              "message": "Leading zeros in decimal integer literals are not permitted.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  12,
+                  1,
+                  17
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "syntax-rejection",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "SYNTAX",
+              "type": "SyntaxError",
+              "phase": "tokenize",
+              "message": "Leading zeros in decimal integer literals are not permitted.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  12,
+                  1,
+                  17
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "syntax-rejection",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "SYNTAX",
+              "type": "SyntaxError",
+              "phase": "tokenize",
+              "message": "Leading zeros in decimal integer literals are not permitted.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  12,
+                  1,
+                  17
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "syntax-rejection",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "SYNTAX",
+              "type": "SyntaxError",
+              "phase": "tokenize",
+              "message": "Leading zeros in decimal integer literals are not permitted.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  12,
+                  1,
+                  17
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        }
+      }
+    },
+    {
+      "id": "obsolete-not-equal",
+      "kind": "diagnostic-delta",
+      "category": "language",
+      "affected_api": "SyntaxError message for <>",
+      "source_file": "obsolete-not-equal.py",
+      "source_sha256": "bc0e898cf75cf0cc2297c07bd1e4522870f0f494de66493a5e95bea665184d95",
+      "upstream": [
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Lib/test/test_syntax.py",
+        "https://github.com/python/cpython/blob/8e6e75d9102e39bed2a2b279203a396741180f12/Grammar/python.gram"
+      ],
+      "oracle": {
+        "status": "verified",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "SyntaxError",
+            "diagnostic": {
+              "msg": "invalid syntax",
+              "lineno": 1,
+              "offset": 3,
+              "end_lineno": 1,
+              "end_offset": 5
+            }
+          }
+        },
+        "actual": {
+          "ok": false,
+          "error": {
+            "type": "SyntaxError",
+            "message": "invalid syntax (app.py, line 1)",
+            "diagnostic": {
+              "msg": "invalid syntax",
+              "lineno": 1,
+              "offset": 3,
+              "end_lineno": 1,
+              "end_offset": 5
+            }
+          },
+          "stdout": ""
+        }
+      },
+      "later": {
+        "since": "3.14.8",
+        "verification": "source-only",
+        "expected": {
+          "ok": false,
+          "stdout": "",
+          "error": {
+            "type": "SyntaxError",
+            "diagnostic": {
+              "lineno": 1,
+              "offset": 3,
+              "end_lineno": 1,
+              "end_offset": 5,
+              "msg": "invalid syntax.  Maybe you meant '!=' instead of '<>'?"
+            }
+          }
+        },
+        "status": "not-independently-verified",
+        "reason": "Later interpreter unavailable; expectation comes from official source, not execution"
+      },
+      "observations": {
+        "core-source/1": {
+          "node": {
+            "classification": "syntax-rejection",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "SYNTAX",
+              "type": "SyntaxError",
+              "phase": "parse",
+              "message": "Expected an expression.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  4,
+                  1,
+                  5
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "syntax-rejection",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "SYNTAX",
+              "type": "SyntaxError",
+              "phase": "parse",
+              "message": "Expected an expression.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  4,
+                  1,
+                  5
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        },
+        "classes-source/1": {
+          "node": {
+            "classification": "syntax-rejection",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "SYNTAX",
+              "type": "SyntaxError",
+              "phase": "parse",
+              "message": "Expected an expression.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  4,
+                  1,
+                  5
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          },
+          "browser": {
+            "classification": "syntax-rejection",
+            "status": "observed",
+            "compatibility_credit": false,
+            "teardown": {
+              "status": "session-not-created",
+              "zero_teardown_measured": false
+            },
+            "ok": false,
+            "stdout": "",
+            "error": {
+              "code": "SYNTAX",
+              "type": "SyntaxError",
+              "phase": "parse",
+              "message": "Expected an expression.",
+              "location": {
+                "filename": "sources/app.py",
+                "span": [
+                  1,
+                  4,
+                  1,
+                  5
+                ]
+              },
+              "traceback": [],
+              "context": null
+            },
+            "compilation": null,
+            "live_frames": null
+          }
+        }
+      }
+    }
+  ],
+  "unexecuted": [
+    {
+      "id": "near-int-max-precision",
+      "upstream": "https://github.com/python/cpython/issues/158446",
+      "reason": "Pinned CPython can crash or allocate excessively; no vulnerable precision is executed."
+    },
+    {
+      "id": "dynamic-percent-width-overflow",
+      "upstream": "https://github.com/python/cpython/issues/159739",
+      "reason": "Native word-size overflow and potentially huge output; percent formatting remains outside the adopted profile."
+    },
+    {
+      "id": "stale-errno-complex-abs",
+      "upstream": "https://github.com/python/cpython/issues/155526",
+      "reason": "Needs native errno preconditioning; an ordinary NaN test would not verify this change."
+    },
+    {
+      "id": "deep-comprehension-block-limit",
+      "upstream": "https://github.com/python/cpython/issues/156091",
+      "reason": "Do not invoke the pinned compiler crash; comprehension admission remains separate."
+    },
+    {
+      "id": "invalid-source-byte-offset",
+      "upstream": "https://github.com/python/cpython/issues/157378",
+      "reason": "Requires raw undecodable source bytes, outside this Unicode-text corpus and the engine text input contract."
+    },
+    {
+      "id": "pure-python-datetime-iso",
+      "upstream": "https://github.com/python/cpython/issues/152204",
+      "reason": "Requires selecting the pure Python fallback, not the default C module; no datetime library profile is claimed."
+    }
+  ],
+  "summary": {
+    "reference_verified": 12,
+    "reference_mismatch": 0,
+    "later_unverified": 8,
+    "hosts_agree": true,
+    "engine_mismatch": 0,
+    "per_host": {
+      "node": {
+        "reference_verified": 12,
+        "reference_mismatch": 0,
+        "later_unverified": 8,
+        "engine_executed": 14,
+        "engine_source_requests": 24,
+        "engine_mismatch": 0,
+        "supported_observations": 6,
+        "zero_teardown": 14,
+        "session_not_created": 10,
+        "classifications": {
+          "denied-import": 4,
+          "supported": 6,
+          "syntax-rejection": 4,
+          "unavailable-builtin": 4,
+          "unsupported": 6
+        }
+      },
+      "browser": {
+        "reference_verified": 12,
+        "reference_mismatch": 0,
+        "later_unverified": 8,
+        "engine_executed": 14,
+        "engine_source_requests": 24,
+        "engine_mismatch": 0,
+        "supported_observations": 6,
+        "zero_teardown": 14,
+        "session_not_created": 10,
+        "classifications": {
+          "denied-import": 4,
+          "supported": 6,
+          "syntax-rejection": 4,
+          "unavailable-builtin": 4,
+          "unsupported": 6
+        }
+      }
+    }
+  }
+}
