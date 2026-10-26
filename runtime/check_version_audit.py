@@ -192,7 +192,7 @@ def teardown_observation(actual):
     if actual.get("stats") is None:
         valid = (actual.get("ok") is False and actual.get("compilation") is None
                  and actual.get("closed") is None and actual.get("stdout") == ""
-                 and actual.get("error", {}).get("phase") in {"tokenize", "parse", "compile"})
+                 and actual.get("error", {}).get("phase") in {"tokenize", "parse", "bind", "compile"})
         return {"status": "session-not-created" if valid else "invalid-session-evidence",
                 "zero_teardown_measured": False}, valid
     closed = actual.get("closed") or {}

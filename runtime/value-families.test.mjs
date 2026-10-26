@@ -176,3 +176,8 @@ test('bytes user length hints refuse before hooks while bytearray ignores them',
   const bytearray = await run(source + 'print(len(bytearray(I())))\n');
   assert.equal(bytearray.ok, true, JSON.stringify(bytearray.error)); assert.equal(bytearray.stdout, 'iter\n1\n'); closed(bytearray);
 });
+
+test('deferred bytearray slice mutation reaches its explicit boundary', async () => {
+  const result = await run('a=bytearray(b"abc"); a[1:]=b"d"\n');
+  assert.equal(result.error.code, 'UNSUPPORTED'); closed(result);
+});

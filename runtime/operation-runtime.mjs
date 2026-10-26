@@ -839,7 +839,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (plan.kind === "value") task = callTask(plan.value, args, [], [], site, finish, depth);
             else task = callTask(plan.callable, plan.args, [], [], site,
               continuation("invoke", {args, keywords: [], keywordValues: [], after: finish, depth}), depth);
-          } else if (values.isSlice(key) && (operation === "get" ? values.isSequence(receiver) : values.isList(receiver))) {
+          } else if (values.isSlice(key) && (operation === "get" ? values.isSequence(receiver) : values.isList(receiver) || values.isBinary(receiver))) {
             task = sliceTask(receiver, [key.start, key.stop, key.step], site, completion, depth, operation, item);
           } else if (key instanceof InstanceValue && values.isSequence(receiver)) {
             task = unaryTask("index", key, site, continuation("index-key", {receiver, key, after: completion, depth, operation, item}), depth);
