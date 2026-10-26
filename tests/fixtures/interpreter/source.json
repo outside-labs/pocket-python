@@ -551,6 +551,13 @@
       "features": [
         "source.functions"
       ]
+    },
+    {
+      "id": "unpacking",
+      "source": "a,b=(1,2)\nprint(a,b)\n",
+      "features": [
+        "source.unpacking"
+      ]
     }
   ],
   "boundaries": [
@@ -573,14 +580,6 @@
     {
       "id": "unsupported-comprehension",
       "source": "print('must not run')\nx=[n for n in []]",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-unpacking",
-      "source": "print('must not run')\na,b=(1,2)",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"

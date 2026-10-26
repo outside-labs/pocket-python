@@ -24,6 +24,23 @@ observations selected for execution. Tests cover nested/default lambdas,
 late-bound cells, private parameters, precedence, metadata, tracebacks, collection,
 recursion, cancellation and allocation failure.
 
+Unpack and Display are implemented. The matrix now has 98 observations (75 in
+the core selection), including six future refusals in the class selection.
+Regular unpacking reads one extra value before rejecting excess cardinality;
+starred unpacking reacquires the remaining iterator after its fixed prefix.
+Nested targets assign left to right after each level has validated cardinality.
+Loop targets, attribute/item targets and sequence deletion share those bindings.
+
+Starred sequence displays own a partial list, converting to a tuple only after
+all parts complete. Dictionary displays preserve insertion order and overwrite
+existing values, accept non-string keys and propagate mapping KeyError normally.
+Custom mappings materialize keys before reads; native dictionaries reuse hashes.
+Primitive core dictionaries retain their ordinary lookup/mutation representation.
+Targets are bounded to 128 parts per level and containers to 1024 items, subject
+also to source/name/work/memory budgets. User construction hints and set values
+retain their separate #116/#117 gates. These limits do not imply full Python
+value or formatting coverage.
+
 Modern bytecode adds a verified assertion-exception instruction. It uses the
 canonical builtin directly, while ordinary calls still honor name shadowing.
 Assignment expressions lower to ordinary duplicated values and writable cells.

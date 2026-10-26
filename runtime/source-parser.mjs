@@ -70,11 +70,19 @@ class Parser {
   expectKind(kind, message = "Expected " + kind + ".") { if (!this.kind(kind)) this.fail(message); return this.take(); }
   name() { return this.expectKind("name", "Expected an identifier."); }
   ending() { return ["newline", "dedent", "eof"].includes(this.peek().kind) || this.at(";"); }
-  target(value, deletion = false) {
+  target(value, deletion = false, nested = false) {
     if (value.kind === "Name") return;
+    if (["Tuple", "List"].includes(value.kind)) {
+      if (value.items.filter(item => item.kind === "Starred").length > 1) this.fail("Multiple starred targets in one assignment level.", value);
+      value.items.forEach(item => this.target(item, deletion, true)); return;
+    }
+    if (value.kind === "Starred") {
+      if (deletion || !nested) this.fail("A starred target requires an assignment sequence.", value);
+      this.target(value.value, false, false); return;
+    }
     if (this.classes && value.kind === "Attribute") return;
     if (value.kind === "Subscript" && (this.classes || value.index.kind !== "Slice")) return;
-    if (["Tuple", "List", "Attribute", "Subscript"].includes(value.kind)) this.unsupported(deletion ? "This deletion target is not adopted." : "Unpacking, attribute and slice assignment are not adopted.", value);
+    if (["Attribute", "Subscript"].includes(value.kind)) this.unsupported("This attribute or slice target is not adopted.", value);
     this.fail("Invalid assignment/deletion target.", value);
   }
   file() {
@@ -166,7 +174,9 @@ class Parser {
       return this.node("Assign", start, {targets, value});
     }
     if (AUGMENT.has(this.peek().value) && this.kind("op")) {
-      this.target(value); const token = this.take(), operator = BINARY.get(token.value.slice(0, -1));
+      this.target(value);
+      if (!["Name", "Attribute", "Subscript"].includes(value.kind)) this.fail("Invalid augmented assignment target.", value);
+      const token = this.take(), operator = BINARY.get(token.value.slice(0, -1));
       if (!operator) this.unsupported("Augmented operator is not adopted.", token);
       return this.node("Augment", start, {target: value, operator, value: this.expressionList()});
     }
@@ -330,10 +340,8 @@ class Parser {
     const start = this.take(), kind = start.value === "for" ? "For" : "While";
     let test = null, target = null, iterable = null;
     if (kind === "For") {
-      if (this.at("(") || this.at("[")) this.unsupported("For loop unpacking targets are not adopted.");
-      const token = this.name(); target = this.node("Name", token, {name: token.value}, token);
-      if (!this.at("in")) this.unsupported("For loops require a simple name target.");
-      this.take(); iterable = this.expressionList();
+      target = this.expressionList(false, true); this.target(target);
+      this.expect("in"); iterable = this.expressionList();
     } else test = this.namedExpression();
     this.loopDepth++; let body;
     try { body = this.suite(); } finally { this.loopDepth--; }
@@ -364,14 +372,22 @@ class Parser {
     if (!handlers.length && !final.length) this.fail("Try requires except or finally.");
     return this.node("Try", start, {body, handlers, otherwise, final}, final.at(-1) || otherwise.at(-1) || handlers.at(-1) || body.at(-1));
   }
-  expressionList(named = false) {
-    const expression = () => named ? this.namedExpression() : this.expression();
+  starredExpression(named = false, target = false) {
+    if (this.eat("*")) {
+      const start = this.previous, value = this.bitwiseOr();
+      return this.node("Starred", start, {value}, value);
+    }
+    return target ? this.bitwiseOr() : named ? this.namedExpression() : this.expression();
+  }
+  expressionList(named = false, target = false) {
+    const expression = () => this.starredExpression(named, target);
     const start = this.peek(), items = [expression()]; let tuple = false;
     while (this.eat(",")) {
       tuple = true;
-      if (this.ending() || [")", "]", "}", ":", "="].some(value => this.at(value))) break;
+      if (this.ending() || [")", "]", "}", ":", "="].some(value => this.at(value)) || target && this.at("in")) break;
       items.push(expression());
     }
+    if (!tuple && items[0].kind === "Starred") this.fail("A starred expression requires a sequence display.", items[0]);
     return tuple ? this.node("Tuple", start, {items}) : items[0];
   }
   namedExpression() {
@@ -525,8 +541,7 @@ class Parser {
     if (this.eat("[")) {
       const items = [];
       while (!this.at("]")) {
-        if (this.at("*")) this.unsupported("Starred container construction is not adopted.");
-        items.push(this.namedExpression());
+        items.push(this.starredExpression(true));
         if (this.at("for")) this.unsupported("Comprehensions are not adopted.");
         if (!this.eat(",")) break;
       }
@@ -535,10 +550,13 @@ class Parser {
     if (this.eat("{")) {
       const entries = [];
       while (!this.at("}")) {
-        if (this.at("**")) this.unsupported("Dictionary unpacking is not adopted.");
-        const key = this.expression();
-        if (!this.eat(":")) this.unsupported("Set literals are not adopted.");
-        const value = this.expression(); entries.push([key, value]);
+        if (this.at("*")) this.unsupported("Set displays require the separate set-value profile.");
+        if (this.eat("**")) entries.push([null, this.bitwiseOr()]);
+        else {
+          const key = this.expression();
+          if (!this.eat(":")) this.unsupported("Set literals are not adopted.");
+          const value = this.expression(); entries.push([key, value]);
+        }
         if (this.at("for")) this.unsupported("Comprehensions are not adopted.");
         if (!this.eat(",")) break;
       }

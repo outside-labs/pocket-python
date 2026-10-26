@@ -6,7 +6,7 @@ import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, dictionaryBuildTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -186,7 +186,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
     block(frame, fn.body);
   };
-  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments} = operationRuntime({state, memory, values, classes,
+  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput});
   const diagnostic = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
@@ -433,6 +433,22 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           op === "build-list" ? values.list(items) : values.tuple(items));
       } else if (op === "build-slice") {
         const step = stack.pop(), stop = stack.pop(), start = stack.pop(); stack.push(values.sliceKey(start, stop, step));
+      } else if (op === "unpack") dispatch(expandUnpack(stack.pop(), arg, extra, summary(frame, cursor)));
+      else if (op === "list-to-tuple") {
+        const receiver = stack.pop();
+        if (!values.isList(receiver)) hard("BYTECODE", "BytecodeError", "Tuple display requires a list result.");
+        stack.push(values.tuple(receiver.items));
+      } else if (["list-push", "list-extend", "dict-merge"].includes(op)) {
+        const value = stack.pop(), receiver = stack.pop();
+        if (op === "list-extend") dispatch(expandDisplay(receiver, value, summary(frame, cursor)));
+        else if (op === "dict-merge") dispatch(expandMapping(receiver, value, summary(frame, cursor), "display"));
+        else { values.append(receiver, value); stack.push(receiver); }
+      } else if (op === "dict-insert") {
+        const item = stack.pop(), key = stack.pop(), receiver = stack.pop();
+        if (!values.isDict(receiver)) hard("BYTECODE", "BytecodeError", "Dictionary display requires a dictionary result.");
+        if (values.dictionaryNeedsProtocol(receiver, key)) dispatch(dictionaryTask(receiver, key, summary(frame, cursor),
+          continuation("display-insert", {receiver}), 0, "set", item));
+        else { values.set(receiver, key, item); stack.push(receiver); }
       } else if (op === "setitem") {
         const item = stack.pop(), key = stack.pop(), receiver = stack.pop();
         if (receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key) ||

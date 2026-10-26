@@ -126,6 +126,11 @@ export function verifyFunctions(program) {
           length = 3;
           if (!integer(arg, program.functions.length - 1) || arg === 0 || program.functions[arg]?.kind !== "class" || !integer(extra, 16)) fail("Invalid class body or base count.");
         }
+        else if (modern && op === "unpack") {
+          length = 3;
+          if (!integer(arg, 128) || extra !== null && (!integer(extra, 128) || arg + extra + 1 > 128)) fail("Invalid unpacking counts.");
+        }
+        else if (modern && ["list-push", "list-extend", "list-to-tuple", "dict-merge", "dict-insert"].includes(op)) {}
         else if (modern && op === "assertion-error") { length = 2; if (typeof arg !== "boolean") fail("Invalid assertion message flag."); }
         else if (modern && op === "call-keyword") { length = 2; if (!validName(arg)) fail("Invalid assembled keyword name."); }
         else if (modern && ["call-start", "call-argument", "call-star", "call-mapping", "call-expanded"].includes(op)) {}
@@ -160,7 +165,7 @@ export function verifyFunctions(program) {
       const heights = new Map([[0, 0]]), pending = [0];
       for (let cursor = 0; cursor < pending.length; cursor++) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
-        const needs = op === "assertion-error" ? Number(arg) : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? 2 : ["call-start", "call-expanded"].includes(op) ? 1 : op === "function-defaults" ? extra + instructions[at][3].length : op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
+        const needs = op === "dict-insert" ? 3 : ["list-push", "list-extend", "dict-merge"].includes(op) ? 2 : ["unpack", "list-to-tuple"].includes(op) ? 1 : op === "assertion-error" ? Number(arg) : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? 2 : ["call-start", "call-expanded"].includes(op) ? 1 : op === "function-defaults" ? extra + instructions[at][3].length : op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
           UNARY.has(op) || ["attribute-get", "attribute-delete", "module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
@@ -168,7 +173,7 @@ export function verifyFunctions(program) {
           if (before !== (op === "end" ? Number(block.kind === "expression") : needs)) fail("Block completion requires an exact stack height.");
           continue;
         }
-        const after = before + (op === "assertion-error" ? 1 - needs : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? -1 : ["class", "function-defaults"].includes(op) ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
+        const after = before + (op === "dict-insert" ? -2 : ["list-push", "list-extend", "dict-merge"].includes(op) ? -1 : op === "assertion-error" ? 1 - needs : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? -1 : ["class", "function-defaults"].includes(op) ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
           BINARY.has(op) || CONSTRUCT.has(op) || ["call", "setitem", "slice", "build-slice"].includes(op) ? 1 - needs :
           ["store", "pop", "if", "jump-if-false"].includes(op) ? -1 : 0);
         if (after > FUNCTION_LIMITS.stack) fail("Function stack exceeds 256 values.");
