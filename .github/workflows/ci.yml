@@ -172,6 +172,7 @@ jobs:
       - run: python runtime/check_classes.py --reference-only --report build/classes-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/ordinary-syntax.json --report build/ordinary-syntax-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/value-families.json --report build/value-families-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/iteration.json --report build/iteration-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/equality.json --report build/equality-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-reference-report.json
@@ -239,6 +240,7 @@ jobs:
             build/classes-reference-report.json
             build/function-binding-reference-report.json
             build/ordinary-syntax-reference-report.json
+            build/value-families-reference-report.json
             build/iteration-reference-report.json
             build/equality-reference-report.json
             build/numeric-reference-report.json
