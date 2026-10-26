@@ -156,6 +156,10 @@ Both profiles support [expanded function binding](docs/interpreter-function-bind
 computed/mutable defaults, global/nonlocal state, variadic parameters and owned
 starred calls. Run `uv run python -m examples.interpreter_functions` for a class
 mapping example, or add `--core` for dictionary forwarding without class syntax.
+The [ordinary syntax profile](docs/interpreter-ordinary-syntax.md) adds assertions,
+assignment expressions, lambda functions, unpacking targets and starred sequence/
+dictionary displays. Try `uv run python -m examples.interpreter_syntax`, with
+`--core` available for ordinary row values.
 
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership

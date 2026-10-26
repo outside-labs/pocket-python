@@ -113,17 +113,17 @@ module dispatch. Arbitrary object/host attributes remain unavailable.
 Print/str retain the None/bool/int/str/exception-message subset; str() is empty
 and str(s) preserves identity. repr(x) covers None/bool/int/str. The explicit class
 profile adds the [bounded repr/str protocols](interpreter-formatting.md).
-Float/container/default-object formatting, format specifications, float
-constructors, range and unlisted builtins remain deferred. Unavailable names raise
-the profile's lookup error.
-Integer true division, ordinary sequence repetition and existing value/transport
-limits remain explicit staged boundaries. The independent source grammar does
+Float/container/default-object formatting and full format specifications remain
+deferred. Numeric constructors and finite range/list/tuple/all/any APIs use their
+[adopted contracts](interpreter-sequences.md). Unlisted names retain the profile's
+lookup error.
+Numeric behavior follows the [numeric contract](interpreter-numeric.md). Ordinary
+sequence repetition and existing value/transport limits retain explicit boundaries. The independent source grammar does
 not imply full Python builtin/stdlib coverage.
 
 Classes/descriptors/decorators, async/await, generators/comprehensions,
 annotations, future directives, pattern matching, context managers,
-exception groups/explicit causes, power/bitwise/set forms, bytes/complex/formatted
-or template strings, named Unicode escapes, dynamic imports and implicit host
+exception groups/explicit causes, set values, bytes and formatted/template strings, named Unicode escapes, dynamic imports and implicit host
 capabilities remain outside this profile. Function/module reflection and
 unlisted implicit metadata are not adopted. Assertions, assignment expressions, lambda functions and finite unpacking/display forms
 are adopted through the [ordinary syntax contract](interpreter-ordinary-syntax.md).

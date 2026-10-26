@@ -113,7 +113,10 @@ source selections. The function console example combines mutable defaults,
 global/nonlocal state and variadic forwarding; its class selection adds a custom
 keyword mapping. Offline acceptance covers new source, original callback errors,
 pending default/iteration/mapping Stop and fresh Restart, and primitive forwarding
-after a class-to-core update. Construction hints and annotations remain separate.
+after a class-to-core update. Construction hints and annotations remain separate. The ordinary syntax example
+combines assertions, assignment expressions, lambdas, unpacking targets and starred
+sequence/dictionary displays in either selection. General assertion-message
+values, comprehensions and set values retain their own gates.
 
 ## Host protocol subset
 

@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from examples.interpreter_classes import SOURCE
 from examples.interpreter_functions import SOURCE as FUNCTION_SOURCE, CORE_SOURCE as CORE_FUNCTION_SOURCE
+from examples.interpreter_syntax import SOURCE as SYNTAX_SOURCE, CORE_SOURCE as CORE_SYNTAX_SOURCE
 
 
 def smoke(channel=None):
@@ -136,6 +137,10 @@ def smoke(channel=None):
                     programs.extend(c['source'] for c in functions['cases']
                                     if c['stage'] in functions['implemented_stages'] and 'error_type' not in c)
                     programs.append(FUNCTION_SOURCE)
+                    syntax = json.loads((ROOT / 'tests/fixtures/interpreter/ordinary-syntax.json').read_bytes())
+                    programs.extend(c['source'] for c in syntax['cases']
+                                    if c['stage'] in syntax['implemented_stages'] and 'error_type' not in c)
+                    programs.append(SYNTAX_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -205,8 +210,7 @@ def smoke(channel=None):
                     refused('a=[1]\na[:]=iter((7,))\n', 'UnsupportedOperationError:')
                     refused('print(slice(1,7)==slice(1,7))\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == ''
-                    refused("print('never')\nprint((x:=7))\n", 'UnsupportedSyntaxError:')
-                    assert page.locator('#result').inner_text() == ''
+                    run('print((x:=7),x)\n', '7 7\n')
                     refused("print('never')\ntype A=list[int]\n", 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     refused("print('never')\nｔｙｐｅ Alias=int\n", 'SyntaxError:')
@@ -270,6 +274,16 @@ def smoke(channel=None):
                     refused('print("never")\ndef f(x):\n global x\n', 'SyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     checks.append('function-default-mapping-source-errors-and-declaration-validation')
+                    refused('assert False,"message"\n', 'AssertionError:')
+                    assert 'sources/app.py:1' in page.locator('#status').inner_text()
+                    refused('f=lambda:1//0\nf()\n', 'ZeroDivisionError:')
+                    assert '<lambda> at sources/app.py:1' in page.locator('#diagnostic').inner_text()
+                    refused('a,b=[1]\n', 'ValueError:')
+                    assert 'sources/app.py:1' in page.locator('#status').inner_text()
+                    refused('print("never")\na,*b,*c=[1,2,3]\n', 'SyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused('assert False,[1]\n', 'UnsupportedOperationError:')
+                    checks.append('assert-lambda-unpack-original-errors-and-explicit-message-boundary')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -301,6 +315,8 @@ def smoke(channel=None):
                     checks.append('new-range-construction-and-owned-consumer-source-after-offline-reload')
                     run(FUNCTION_SOURCE, '19 21 True 2 1\n23 3\n')
                     checks.append('new-default-scope-variadic-and-mapping-source-after-offline-reload')
+                    run(SYNTAX_SOURCE, 'alpha 6\nbeta 6\n2 alpha 1 done\n')
+                    checks.append('new-assert-walrus-lambda-unpack-and-display-source-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -367,6 +383,16 @@ def smoke(channel=None):
                         'class Spin:\n def keys(self): return ["x"]\n @property\n def __getitem__(self):\n  while True: pass\ndef f(**kwargs): pass\nf(**Spin())\n',
                         'class K:\n def __hash__(self):\n  while True: pass\nclass M:\n def keys(self): return [K()]\n def __getitem__(self,key): return 7\ndef f(**kwargs): pass\nf(**M())\n'
                     ])
+                    busy.extend([
+                        'class Spin:\n @property\n def __bool__(self):\n  while True: pass\nassert Spin()\n',
+                        'def busy():\n while True: pass\nf=lambda x=busy(): x\n',
+                        'def busy():\n while True: pass\nf=lambda:busy()\nf()\n',
+                        'class Spin:\n def __iter__(self): return self\n def __next__(self):\n  while True: pass\na,b=Spin()\n',
+                        'class Spin:\n def __iter__(self):\n  self.n+=1\n  if self.n>1:\n   while True: pass\n  return self\n def __next__(self): return 7\ns=Spin()\ns.n=0\na,*b=s\n',
+                        'class Spin:\n def __iter__(self): return self\n @property\n def __next__(self):\n  while True: pass\na=[0,*Spin()]\n',
+                        'class M:\n @property\n def keys(self):\n  while True: pass\na={"x":1,**M()}\n',
+                        'class K:\n def __hash__(self):\n  while True: pass\nclass M:\n def keys(self): return [K()]\n def __getitem__(self,key): return [7]\na={"start":[3],**M()}\n'
+                    ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
@@ -414,6 +440,8 @@ def smoke(channel=None):
                     checks.append('range-and-primitive-consumers-retained-by-offline-core-profile-update')
                     run(CORE_FUNCTION_SOURCE, '19 21 True 2 1\n23 3\n')
                     checks.append('functions-and-primitive-mapping-forwarding-retained-after-core-profile-update')
+                    run(CORE_SYNTAX_SOURCE, 'alpha 6\nbeta 6\n2 alpha 1 done\n')
+                    checks.append('ordinary-syntax-retained-after-core-profile-update')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

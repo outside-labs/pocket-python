@@ -210,8 +210,11 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-DIAG-01",
-        "INT-SYNTAX-01"
+        "INT-SEQ-01",
+        "INT-VALUES-01",
+        "INT-ERROR-01",
+        "INT-TEXT-01",
+        "INT-GEN-01"
       ],
       "probes": [
         "assert-statement",

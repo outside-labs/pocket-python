@@ -41,6 +41,16 @@ also to source/name/work/memory budgets. User construction hints and set values
 retain their separate #116/#117 gates. These limits do not imply full Python
 value or formatting coverage.
 
+Integrated acceptance runs the 98 class and 75 core observations in Node and
+Chromium with draining and instruction stepping. The console has 358 checks and
+78 Stop/Restart cycles, including new source after offline reload and ordinary
+syntax after a waiting class-to-core update. Wheel/source allowlists and isolated
+default/compiled installations pass; the independent engine remains supplied
+explicitly from checkout. The [payload record](measurements/2026-10-26-ordinary-syntax.json)
+retains the preceding application fixture and separates complete/compressed bytes
+from performance. General assertion messages remain under #124/#127, construction
+hints under #116, set values under #117 and comprehensions under #120.
+
 Modern bytecode adds a verified assertion-exception instruction. It uses the
 canonical builtin directly, while ordinary calls still honor name shadowing.
 Assignment expressions lower to ordinary duplicated values and writable cells.
