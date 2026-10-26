@@ -4,7 +4,8 @@
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
   "implemented_stages": [
-    "Control"
+    "Control",
+    "Lambda"
   ],
   "cases": [
     {
@@ -603,6 +604,68 @@
       "stage": "Future",
       "source": "print(len([x for x in range(3)]))\n",
       "stdout": "3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-default-lambda",
+      "stage": "Lambda",
+      "source": "f=lambda x=lambda y=3:y:x()\nprint(f())\n",
+      "stdout": "3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-tuple-precedence",
+      "stage": "Lambda",
+      "source": "f=lambda:1,2\nprint(f[0](),f[1])\n",
+      "stdout": "1 2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-late-binding",
+      "stage": "Lambda",
+      "source": "def outer():\n fs=[]\n for x in [1,2]: fs.append(lambda:x)\n return fs\na=outer()\nprint(a[0](),a[1]())\n",
+      "stdout": "2 2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-body-error",
+      "stage": "Lambda",
+      "source": "f=lambda:1//0\nf()\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "lambda-missing-parameter",
+      "stage": "Lambda",
+      "source": "f=lambda x:x\nf()\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "lambda-default-namespace",
+      "stage": "Lambda",
+      "source": "x=1\nf=lambda y=(x:=3):y\nprint(x,f())\n",
+      "stdout": "3 3\n",
       "profiles": [
         "core-source/1",
         "classes-source/1"

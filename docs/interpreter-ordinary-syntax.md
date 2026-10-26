@@ -18,6 +18,12 @@ is implemented first: 29 semantic/error observations plus three future refusals.
 Malformed assignment-expression targets and declaration order remain SyntaxError;
 type aliases and comprehensions retain separate syntax gates.
 
+Lambda is now implemented through the shared parameter parser and function
+creation instructions. The matrix has 65 programs, with 49 Control/Lambda/Future
+observations selected for execution. Tests cover nested/default lambdas,
+late-bound cells, private parameters, precedence, metadata, tracebacks, collection,
+recursion, cancellation and allocation failure.
+
 Modern bytecode adds a verified assertion-exception instruction. It uses the
 canonical builtin directly, while ordinary calls still honor name shadowing.
 Assignment expressions lower to ordinary duplicated values and writable cells.

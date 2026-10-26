@@ -247,15 +247,23 @@ class Parser {
     const start = this.expect("def"), name = this.name().value;
     if (this.at("[")) this.unsupported("Generic functions are not adopted.");
     this.expect("(");
+    const params = this.parameters(")"); this.expect(")");
+    if (this.at("->")) this.unsupported("Return annotations are not adopted.");
+    const before = [this.functionDepth, this.loopDepth]; this.functionDepth++; this.loopDepth = 0;
+    let body;
+    try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
+    return this.node("Function", start, {name, params, body, ...(decorators.length ? {decorators} : {})}, body.at(-1));
+  }
+  parameters(end) {
     let positional = [], posonly = [], kwonly = [], vararg = [], kwarg = [], slash = false, star = false, defaultSeen = false;
     const seen = new Set();
-    while (!this.at(")")) {
+    while (!this.at(end)) {
       if (kwarg.length) this.fail("No parameter may follow a variadic keyword parameter.");
       if (this.eat("**")) {
         const token = this.name();
         if (seen.has(token.value)) this.fail("Duplicate function parameter.", token);
         seen.add(token.value); kwarg.push({name: token.value, value: null, span: token.span});
-        if (this.at(":")) this.unsupported("Parameter annotations are not adopted.");
+        if (end !== ":" && this.at(":")) this.unsupported("Parameter annotations are not adopted.");
         if (this.at("=")) this.fail("A variadic keyword parameter cannot have a default.");
       } else
       if (this.eat("/")) {
@@ -267,7 +275,7 @@ class Parser {
           const token = this.take();
           if (seen.has(token.value)) this.fail("Duplicate function parameter.", token);
           seen.add(token.value); vararg.push({name: token.value, value: null, span: token.span});
-          if (this.at(":")) this.unsupported("Parameter annotations are not adopted.");
+          if (end !== ":" && this.at(":")) this.unsupported("Parameter annotations are not adopted.");
           if (this.at("=")) this.fail("A variadic positional parameter cannot have a default.");
         }
         star = true;
@@ -275,22 +283,24 @@ class Parser {
         const token = this.name();
         if (seen.has(token.value)) this.fail("Duplicate function parameter.", token);
         seen.add(token.value);
-        if (this.at(":")) this.unsupported("Parameter annotations are not adopted.");
+        if (end !== ":" && this.at(":")) this.unsupported("Parameter annotations are not adopted.");
         const value = this.eat("=") ? this.expression() : null;
         if (!star && defaultSeen && value === null) this.fail("A required positional parameter follows a default.", token);
         if (!star && value !== null) defaultSeen = true;
         (star ? kwonly : positional).push({name: token.value, value, span: token.span});
       }
-      if (this.at(")")) break;
+      if (this.at(end)) break;
       this.expect(",");
     }
-    this.expect(")");
     if (star && !kwonly.length && !vararg.length) this.fail("A named keyword-only parameter must follow '*'.");
-    if (this.at("->")) this.unsupported("Return annotations are not adopted.");
+    return {posonly, positional, kwonly, ...(vararg.length ? {vararg} : {}), ...(kwarg.length ? {kwarg} : {})};
+  }
+  lambda() {
+    const start = this.expect("lambda"), params = this.parameters(":"); this.expect(":");
     const before = [this.functionDepth, this.loopDepth]; this.functionDepth++; this.loopDepth = 0;
-    let body;
-    try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
-    return this.node("Function", start, {name, params: {posonly, positional, kwonly, ...(vararg.length ? {vararg} : {}), ...(kwarg.length ? {kwarg} : {})}, body, ...(decorators.length ? {decorators} : {})}, body.at(-1));
+    let value;
+    try { value = this.expression(); } finally { [this.functionDepth, this.loopDepth] = before; }
+    return this.node("Lambda", start, {name: "<lambda>", params, body: [this.node("Return", value, {value}, value)]}, value);
   }
   classDefinition(decorators = []) {
     const start = this.expect("class"), name = this.name().value, bases = [];
@@ -378,6 +388,7 @@ class Parser {
   }
   expression() {
     return this.guard(() => {
+      if (this.at("lambda")) return this.lambda();
       const body = this.disjunction();
       if (!this.eat("if")) return body;
       const test = this.disjunction(); this.expect("else"); const otherwise = this.expression();
@@ -440,7 +451,7 @@ class Parser {
       return this.node("Unary", start, {operator: {"+": "positive", "-": "negative", "~": "invert"}[start.value], value}, value);
     }
     if (this.typeExpression && (this.at("yield") || this.at("await"))) this.fail("Yield and await cannot occur in type expressions.");
-    if (["await", "lambda", "yield"].some(value => this.at(value))) this.unsupported("This generator/async expression is not adopted.");
+    if (["await", "yield"].some(value => this.at(value))) this.unsupported("This generator/async expression is not adopted.");
     const value = this.primary();
     if (this.eat("**")) {
       const right = this.guard(() => this.unary());

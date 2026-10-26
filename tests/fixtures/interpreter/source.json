@@ -544,6 +544,13 @@
       "features": [
         "source.named-expression"
       ]
+    },
+    {
+      "id": "lambda",
+      "source": "f=lambda x: x+1\nprint(f(3))\n",
+      "features": [
+        "source.functions"
+      ]
     }
   ],
   "boundaries": [
@@ -558,14 +565,6 @@
     {
       "id": "unsupported-async",
       "source": "print('must not run')\nasync def f(): pass",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-lambda",
-      "source": "print('must not run')\nx=lambda:1",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"
