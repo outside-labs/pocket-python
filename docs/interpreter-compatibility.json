@@ -485,9 +485,9 @@
     },
     {
       "id": "generators-comprehensions",
-      "status": "deferred",
-      "scope": "yield/yield from, generator methods, list/dict/set/generator comprehensions and suspended ownership.",
-      "gaps": "No admitted generator or comprehension syntax.",
+      "status": "partial",
+      "scope": "Generator functions, yield/yield from, next/send/one-argument throw/close with owned suspended frames and shared budgets.",
+      "gaps": "Comprehensions, async generators, reflective frames and multi-argument throw remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -500,7 +500,10 @@
         "generator",
         "comprehension"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/generators.json:send-return",
+        "tests/fixtures/interpreter/generators.json:delegation-throw-close"
+      ]
     },
     {
       "id": "context-patterns",

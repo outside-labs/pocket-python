@@ -139,7 +139,6 @@ class Parser {
       const test = this.expression(), message = this.eat(",") ? this.expression() : null;
       return this.node("Assert", start, {test, message});
     }
-    if (this.at("yield")) this.unsupported("Generators are not adopted.");
     if (this.eat("pass")) return this.node("Pass", start);
     if (this.at("break") || this.at("continue")) {
       const op = this.take().value;
@@ -404,6 +403,13 @@ class Parser {
   }
   expression() {
     return this.guard(() => {
+      if (this.at("yield")) {
+        const start = this.take();
+        if (!this.functionDepth) this.fail("Yield outside a function.", start);
+        const delegate = !!this.eat("from");
+        const value = !delegate && (this.ending() || this.at(")")) ? null : this.expressionList();
+        return this.node("Yield", start, {value, delegate});
+      }
       if (this.at("lambda")) return this.lambda();
       const body = this.disjunction();
       if (!this.eat("if")) return body;

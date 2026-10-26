@@ -1,4 +1,5 @@
 import {DESCRIPTOR_HOOKS} from "./class-policy.mjs";
+import {controlRoots} from "./operations.mjs";
 // VM-owned edges are explicit so closed-over cells and recursive graphs are rooted.
 export class Cell {
   constructor() { this.bound = false; this.value = null; }
@@ -20,6 +21,17 @@ export class FunctionValue {
     this.pool = pool; this.index = index; this.globals = globals; this.closure = closure;
     this.defaults = defaults === null ? null : Object.freeze([...defaults]);
   }
+}
+export class GeneratorValue {
+  constructor(callable, bindings) {
+    this.callable = callable; this.bindings = bindings; this.frame = null;
+    this.status = "created";
+  }
+}
+export function generatorRoots(value) {
+  const frame = value.frame;
+  return [value.callable, ...value.bindings.values(), ...(frame ?
+    [...frame.locals.values(), frame.activeException, ...frame.tasks.flatMap(controlRoots)] : [])];
 }
 export class CallArguments {
   constructor(callable) { this.callable = callable; this.args = []; this.keywords = []; this.keywordValues = []; this.keywordMap = null; }
@@ -70,7 +82,7 @@ export class ExceptionValue {
   }
 }
 export const EXCEPTIONS = Object.freeze({
-  BaseException: null, Exception: "BaseException", AssertionError: "Exception", ArithmeticError: "Exception",
+  BaseException: null, GeneratorExit: "BaseException", Exception: "BaseException", AssertionError: "Exception", ArithmeticError: "Exception",
   ZeroDivisionError: "ArithmeticError", OverflowError: "ArithmeticError", LookupError: "Exception", IndexError: "LookupError",
   KeyError: "LookupError", ValueError: "Exception", TypeError: "Exception", UnicodeError: "ValueError",
   UnicodeEncodeError: "UnicodeError", UnicodeDecodeError: "UnicodeError", UnicodeTranslateError: "UnicodeError",

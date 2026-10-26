@@ -2,7 +2,7 @@
 
 INT-GEN-01 uses the pinned CPython 3.14.7 executable reference. The authored
 `generators.json` corpus separates reference-only evidence from independently
-compiled source. G1 and G2 require Node and Chromium, both profiles and both
+compiled source. G1 is implemented; G2 remains the next stage. Both require Node and Chromium, both profiles and both
 draining and instruction-boundary execution before acceptance.
 
 | Stage | Finite contract |
@@ -29,7 +29,8 @@ executing arbitrary Python finalizers, as with existing hard interruption.
 Garbage collection does not promise CPython reference-count finalization timing.
 
 Generator aliases and cycles survive collection at any instruction boundary.
-Repeated close and session teardown must release logical objects, bytes, frames,+roots and external leases. These logical observations make no host RSS claim.
+Repeated close and session teardown must release logical objects, bytes, frames,
+roots and external leases. These logical observations make no host RSS claim.
 
 No new host capability, runtime dependency, publication or deployment is included.
 See the [yield expression and generator method reference](https://docs.python.org/3.14/reference/expressions.html#yield-expressions).
