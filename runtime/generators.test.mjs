@@ -65,3 +65,38 @@ test('delegation to user iterators forwards send, throw, close and return values
   assert.equal(result.error, undefined, JSON.stringify(result.error));
   assert.equal(result.stdout, '1 5 8\nfinal\nNone\nclose\nfinal\n1 None\n'); closed(result.closed);
 });
+
+test('comprehensions acquire the outer iterator once, eagerly, without resolving a shadowed iter', async () => {
+  const source = 'class I:\n def __iter__(self):\n  print("acquire")\n  return self\n def __next__(self):\n  self.n+=1\n  if self.n>2: raise StopIteration\n  return self.n\ndef iter(x): raise ValueError("shadow")\na=I()\na.n=0\ng=(x+3 for x in a)\nprint("made")\nb=list(g)\nprint(b[0],b[1],a.n)\n';
+  const result = await run(source);
+  assert.equal(result.error, undefined, JSON.stringify(result.error));
+  assert.equal(result.stdout, 'acquire\nmade\n4 5 3\n'); closed(result.closed);
+});
+
+test('nested comprehensions preserve lexical cells, private names and isolated targets', async () => {
+  const result = await run('class A:\n def __init__(self): self.__values=[2,3]\n def rows(self): return [[self.__values[x]+y for y in range(2)] for x in range(2)]\na=A().rows()\nb=[list(x for x in range(i)) for i in range(3)]\nprint(a[1][1],len(b[2]))\ntry: print(x)\nexcept NameError: print("isolated")\n');
+  assert.equal(result.error, undefined, JSON.stringify(result.error));
+  assert.equal(result.stdout, '4 2\nisolated\n'); closed(result.closed);
+});
+
+test('comprehension partial results survive collection, cancellation and repeated close', async () => {
+  const source = 'class V:\n def __hash__(self):\n  print("hash")\n  return 7\n def __eq__(self,other): return True\na={V() for i in range(2)}\nprint(len(a))\n';
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  try { for (const mode of ['finish', 'cancel', 'close']) {
+    const session = new ModuleSession(registry); let output = '', cancel = false, entered = false;
+    session.context.begin({shouldCancel: () => cancel}, text => { output += text; });
+    const execution = Execution.modules(session.context);
+    try {
+      while (execution.state !== 'completed') {
+        execution.advance(); session.memory.collect([], {cleanup: true});
+        if (output === 'hash\n') {
+          entered = true;
+          if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+          if (mode === 'close') break;
+        }
+      }
+      assert.ok(entered); if (mode === 'finish') assert.equal(output, 'hash\nhash\n1\n');
+    } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+    closed(session.stats());
+  } } finally { registry.close(); }
+});

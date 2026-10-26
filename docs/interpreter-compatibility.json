@@ -486,8 +486,8 @@
     {
       "id": "generators-comprehensions",
       "status": "partial",
-      "scope": "Generator functions, yield/yield from, next/send/one-argument throw/close with owned suspended frames and shared budgets.",
-      "gaps": "Comprehensions, async generators, reflective frames and multi-argument throw remain separate stages.",
+      "scope": "Generator functions, yield/yield from, next/send/one-argument throw/close with owned suspended frames and shared budgets. Scoped list/dict/set/generator comprehensions with eager outer iterator acquisition.",
+      "gaps": "Async generators, reflective frames, multi-argument throw and comprehension assignment expressions remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -502,7 +502,8 @@
       ],
       "evidence": [
         "tests/fixtures/interpreter/generators.json:send-return",
-        "tests/fixtures/interpreter/generators.json:delegation-throw-close"
+        "tests/fixtures/interpreter/generators.json:delegation-throw-close",
+        "tests/fixtures/interpreter/generators.json:comprehension-class-scope"
       ]
     },
     {

@@ -855,7 +855,7 @@
     },
     {
       "id": "future-set-comprehension",
-      "stage": "Future",
+      "stage": "V1",
       "source": "s={x for x in range(3)}\n",
       "profiles": [
         "core-source/1",

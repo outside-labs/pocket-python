@@ -124,8 +124,44 @@ class Compiler {
     };
     node.body.forEach(visit); return scope;
   }
+  comprehensions(root) {
+    const lower = value => {
+      if (!value || typeof value !== "object") return value;
+      if (Array.isArray(value)) return value.map(lower);
+      if (value.kind) this.charge(value);
+      const node = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, key === "span" ? child : lower(child)]));
+      if (node.kind !== "Comprehension") return node;
+      const forbidden = child => {
+        if (!child || typeof child !== "object") return;
+        if (child.kind === "Lambda") return;
+        if (["NamedExpression", "Yield"].includes(child.kind)) this.fail("Yield and assignment expressions in comprehensions require a separate scope stage.", child);
+        Object.values(child).forEach(forbidden);
+      };
+      forbidden(node);
+      const make = (kind, fields = {}) => ({kind, span: node.span, ...fields});
+      const name = key => make("Name", {name: key});
+      const parameter = "@source:" + this.tempSerial++, result = "@source:" + this.tempSerial++;
+      let body;
+      if (node.form === "generator") body = [make("Expr", {value: make("Yield", {value: node.element, delegate: false})})];
+      else if (node.form === "dict") body = [make("ComprehensionInsert", {receiver: name(result), key: node.key, value: node.element})];
+      else body = [make("ComprehensionInsert", {receiver: name(result), key: null, value: node.element, form: node.form})];
+      for (let index = node.clauses.length - 1; index >= 0; index--) {
+        const clause = node.clauses[index];
+        for (const test of clause.filters.toReversed()) body = [make("If", {test, body, otherwise: []})];
+        body = [make("For", {target: clause.target, iterable: index ? clause.iterable : name(parameter),
+          acquired: index === 0, body, otherwise: []})];
+      }
+      if (node.form !== "generator") body = [make("Assign", {targets: [name(result)], value: make(node.form === "dict" ? "Dict" : node.form === "set" ? "Set" : "List", node.form === "dict" ? {entries: []} : {items: []})}),
+        ...body, make("Return", {value: name(result)})];
+      const callable = make("Lambda", {name: {list: "<listcomp>", dict: "<dictcomp>", set: "<setcomp>", generator: "<genexpr>"}[node.form],
+        params: {posonly: [{name: parameter, value: null, span: node.span}], positional: [], kwonly: [], vararg: [], kwarg: []}, body});
+      return make("ComprehensionCall", {callable, iterable: node.clauses[0].iterable});
+    };
+    return lower(root);
+  }
   resolve() {
-    this.bind(this.classes ? this.privateNames(this.parsed.module) : this.parsed.module);
+    const root = this.comprehensions(this.parsed.module);
+    this.bind(this.classes ? this.privateNames(root) : root);
     for (const scope of this.scopes) {
       if (scope.locals.has("__debug__") || scope.assigned.has("__debug__")) this.fail("Cannot assign to or delete __debug__.", scope.node, "SYNTAX", "bind");
       if ([...scope.locals, ...scope.uses].some(name => ["None", "True", "False"].includes(name)))
@@ -235,6 +271,7 @@ class Compiler {
         else if (value.kind === "Yield") { value.value ? expr(value.value) : pushNone(value); emit(value, value.delegate ? "yield-from" : "yield"); }
         else if (value.kind === "NamedExpression") { expr(value.value); emit(value, "dup"); emit(value, "store", value.name); }
         else if (value.kind === "Lambda") makeFunction(value);
+        else if (value.kind === "ComprehensionCall") { makeFunction(value.callable); expr(value.iterable); emit(value, "iter"); emit(value, "call", 1, []); }
         else if (value.kind === "Name") value.name === "__debug__" ? emit(value, "const", this.constant({type: "bool", value: true}, value)) : emit(value, "load", value.name);
         else if (["List", "Tuple"].includes(value.kind)) {
           if (value.items.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
@@ -407,18 +444,24 @@ class Compiler {
           }
           emit(value, "store", value.bindingName ?? value.name);
         }
+        else if (value.kind === "ComprehensionInsert") {
+          expr(value.receiver);
+          if (value.key) expr(value.key);
+          expr(value.value);
+          emit(value, value.key ? "dict-insert" : value.form === "set" ? "set-insert" : "list-push"); emit(value, "pop");
+        }
         else if (value.kind === "Return") { value.value ? expr(value.value) : pushNone(value); emit(value, "return"); }
         else if (value.kind === "Raise") { if (value.value) { expr(value.value); emit(value, "raise"); } else emit(value, "reraise"); }
         else if (value.kind === "Break" || value.kind === "Continue") emit(value, value.kind.toLowerCase());
         else if (value.kind === "If") { expr(value.test); emit(value, "if", makeBlock(value.body), makeBlock(value.otherwise)); }
         else if (value.kind === "While") emit(value, "while", makeBlock([value.test], true), makeBlock(value.body), makeBlock(value.otherwise));
         else if (value.kind === "For") {
-          if (value.target.kind === "Name") emit(value, "for", value.target.name, makeBlock([value.iterable], true), makeBlock(value.body), makeBlock(value.otherwise));
+          if (value.target.kind === "Name") emit(value, value.acquired ? "for-iterator" : "for", value.target.name, makeBlock([value.iterable], true), makeBlock(value.body), makeBlock(value.otherwise));
           else {
             const item = this.temporary(scope, value.target), span = value.target.span;
             const assignItem = {kind: "Assign", span, targets: [value.target], value: {kind: "Name", span, name: item}};
             const clearItem = {kind: "Delete", span, targets: [{kind: "Name", span, name: item}]};
-            emit(value, "for", item, makeBlock([value.iterable], true), makeBlock([assignItem, clearItem, ...value.body]), makeBlock(value.otherwise));
+            emit(value, value.acquired ? "for-iterator" : "for", item, makeBlock([value.iterable], true), makeBlock([assignItem, clearItem, ...value.body]), makeBlock(value.otherwise));
           }
         }
         else if (value.kind === "Try") {

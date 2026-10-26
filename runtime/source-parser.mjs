@@ -501,7 +501,11 @@ class Parser {
             if (keywords.length) this.fail("A positional argument follows a keyword argument.");
             args.push(this.namedExpression());
           }
-          if (this.at("for")) this.unsupported("Generator/comprehension expressions are not adopted.");
+          if (this.at("for")) {
+            if (args.length !== 1 || keywords.length || args[0].kind === "StarredArgument") this.fail("A generator expression must be the sole unparenthesized argument.");
+            args[0] = this.comprehension(args[0], "generator", args[0]);
+            if (!this.at(")")) this.fail("A generator expression requires parentheses in this call.");
+          }
           if (!this.eat(",")) break;
         }
         this.expect(")"); value = this.node("Call", value, {callable: value, args, keywords});
@@ -522,6 +526,18 @@ class Parser {
     const step = this.eat(":") ? [",", "]"].some(value => this.at(value)) ? null : this.expression() : null;
     return this.node("Slice", start, {start: index, stop, step});
   }
+  comprehension(start, form, element, key = null) {
+    if (element.kind === "Starred") this.fail("Comprehensions cannot unpack their element.", element);
+    const clauses = [];
+    while (this.eat("for")) {
+      const target = this.expressionList(false, true); this.target(target); this.expect("in");
+      const iterable = this.disjunction(), filters = [];
+      while (this.eat("if")) filters.push(this.disjunction());
+      clauses.push({target, iterable, filters});
+    }
+    if (this.at("async")) this.unsupported("Async comprehensions require a separate stage.");
+    return this.node("Comprehension", start, {form, element, key, clauses});
+  }
   atom() {
     const start = this.peek();
     if (this.kind("name")) { this.take(); return this.node("Name", start, {name: start.value}); }
@@ -541,15 +557,21 @@ class Parser {
     }
     if (this.eat("(")) {
       if (this.eat(")")) return this.node("Tuple", start, {items: []});
-      const value = this.expressionList(true);
-      if (this.at("for")) this.unsupported("Generator expressions are not adopted.");
+      let value = this.expressionList(true);
+      if (this.at("for")) {
+        if (value.kind === "Tuple" && !this.grouped.has(value)) this.fail("A comprehension element cannot be an unparenthesized tuple.", value);
+        value = this.comprehension(start, "generator", value);
+      }
       this.expect(")"); this.grouped.add(value); return value.kind === "Tuple" ? this.node("Tuple", start, {items: value.items}) : value;
     }
     if (this.eat("[")) {
       const items = [];
       while (!this.at("]")) {
         items.push(this.starredExpression(true));
-        if (this.at("for")) this.unsupported("Comprehensions are not adopted.");
+        if (this.at("for")) {
+          if (items.length !== 1) this.fail("A comprehension requires one element.");
+          const result = this.comprehension(start, "list", items[0]); this.expect("]"); return result;
+        }
         if (!this.eat(",")) break;
       }
       this.expect("]"); return this.node("List", start, {items});
@@ -575,7 +597,11 @@ class Parser {
             form = "set"; items.push(key);
           }
         }
-        if (this.at("for")) this.unsupported("Comprehensions are not adopted.");
+        if (this.at("for")) {
+          if (items.length + entries.length !== 1 || entries[0]?.[0] === null) this.fail("A comprehension requires one element or pair.");
+          const result = this.comprehension(start, form, form === "set" ? items[0] : entries[0][1], form === "dict" ? entries[0][0] : null);
+          this.expect("}"); return result;
+        }
         if (!this.eat(",")) break;
       }
       this.expect("}"); return this.node(form === "set" ? "Set" : "Dict", start, form === "set" ? {items} : {entries});

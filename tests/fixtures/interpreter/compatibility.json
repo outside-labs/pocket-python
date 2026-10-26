@@ -438,16 +438,14 @@
     {
       "id": "comprehension",
       "source": "print(len([x+1 for x in [1,2]]))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "2\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "stdout": "2\n",
+        "error_type": null
       }
     },
     {
