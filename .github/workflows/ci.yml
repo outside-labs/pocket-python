@@ -90,8 +90,10 @@ jobs:
       - run: uv run --no-sync python runtime/check_compatibility.py --target browser --report build/compatibility-browser-report.json
       - run: uv run --no-sync python runtime/check_library_profiles.py --target browser --report build/library-profiles-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --report build/classes-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --stages Control Lambda Unpack Display Future --report build/ordinary-syntax-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --stages Control Lambda Unpack Display Future --stepped --report build/ordinary-syntax-browser-stepped-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --report build/ordinary-syntax-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --stepped --report build/ordinary-syntax-browser-stepped-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --profile core-source/1 --report build/ordinary-syntax-core-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --profile core-source/1 --stepped --report build/ordinary-syntax-core-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --stepped --report build/function-binding-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --report build/function-binding-core-browser-report.json
@@ -179,8 +181,10 @@ jobs:
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/execution.json --report build/execution-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/formatting.json --report build/formatting-reference-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --stages Control Lambda Unpack Display Future --report build/ordinary-syntax-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --stages Control Lambda Unpack Display Future --stepped --report build/ordinary-syntax-node-stepped-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --report build/ordinary-syntax-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --stepped --report build/ordinary-syntax-node-stepped-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --profile core-source/1 --report build/ordinary-syntax-core-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --profile core-source/1 --stepped --report build/ordinary-syntax-core-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --stepped --report build/function-binding-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --report build/function-binding-core-node-report.json
