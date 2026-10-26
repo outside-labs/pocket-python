@@ -105,9 +105,17 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
     python("NameError", "name '" + key + "' is not defined");
   };
+  const targetCell = (frame, key, create = false) => {
+    if (frame.fn.nonlocals?.includes(key)) return frame.closure.get(key);
+    if (!frame.fn.globals?.includes(key)) return frame.locals.get(key);
+    const environment = frame.callable.globals;
+    let cell = environment.cells.get(key);
+    if (!cell && create) { cell = allocate(Cell); state.temporaries.push(cell); addCell(environment, key, cell); }
+    return cell;
+  };
   const store = (frame, key, value, bound = true) => {
-    setCell(frame.locals.get(key), value, bound);
-    if (frame.namespaceOrder) { if (bound) frame.namespaceOrder.add(key); else frame.namespaceOrder.delete(key); }
+    setCell(targetCell(frame, key, bound), value, bound);
+    if (frame.namespaceOrder && frame.locals.has(key)) { if (bound) frame.namespaceOrder.add(key); else frame.namespaceOrder.delete(key); }
   };
   const bind = (callable, positional, keywordNames, keywordValues) => {
     const fn = callable.pool.code.functions[callable.index], constants = callable.pool.code.constants;
@@ -308,8 +316,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (op === "load") stack.push(load(frame, arg));
       else if (op === "store") store(frame, arg, stack.pop());
       else if (op === "delete") {
-        if (!frame.locals.get(arg).bound) {
-          if (frame.callable.index === 0) python("NameError", "name '" + arg + "' is not defined");
+        if (!targetCell(frame, arg)?.bound) {
+          if (frame.fn.nonlocals?.includes(arg)) python("NameError", "cannot access free variable '" + arg + "' where it is not associated with a value in enclosing scope");
+          if (frame.callable.index === 0 || frame.fn.globals?.includes(arg)) python("NameError", "name '" + arg + "' is not defined");
           python("UnboundLocalError", "cannot access local variable '" + arg + "' where it is not associated with a value");
         }
         store(frame, arg, null, false);

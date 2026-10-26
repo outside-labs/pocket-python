@@ -43,7 +43,8 @@ export function verifyFunctions(program) {
   const storageName = value => validName(value) || privateName(value);
   let count = 0, blockCount = 0;
   const functions = Array.from(program.functions, (fn, functionIndex) => {
-    fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : [])]);
+    const scopeFields = modern ? ["globals", "nonlocals"].filter(key => Object.hasOwn(fn, key)) : [];
+    fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : []), ...scopeFields]);
     const kind = classes ? fn.kind : functionIndex === 0 ? "module" : "function";
     if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
     if (!(fn.name === "<module>" && functionIndex === 0) && !validName(fn.name)) fail("Invalid function name.");
@@ -52,6 +53,11 @@ export function verifyFunctions(program) {
     const params = Object.fromEntries(["posonly", "positional", "kwonly"].map(key => [key, names(fn.params[key], validName)]));
     const allParams = [...params.posonly, ...params.positional, ...params.kwonly];
     const locals = names(fn.locals, storageName), free = names(fn.free, validName);
+    const globals = names(Object.hasOwn(fn, "globals") ? fn.globals : [], validName), nonlocals = names(Object.hasOwn(fn, "nonlocals") ? fn.nonlocals : [], validName);
+    if (globals.some(key => locals.includes(key) || free.includes(key)) ||
+        nonlocals.some(key => !free.includes(key) || locals.includes(key)) || functionIndex === 0 && nonlocals.length)
+      fail("Invalid explicit scope binding.");
+    const writable = key => locals.includes(key) || globals.includes(key) || nonlocals.includes(key);
     if (new Set(allParams).size !== allParams.length || allParams.length > FUNCTION_LIMITS.names ||
         allParams.some(key => !locals.includes(key)) || (kind !== "class" && free.some(key => locals.includes(key)))) fail("Parameter, local and free names conflict.");
     if (kind === "class" && (allParams.length || !["__module__", "__qualname__"].every(key => locals.includes(key)))) fail("Class bodies require metadata locals and no parameters.");
@@ -93,7 +99,7 @@ export function verifyFunctions(program) {
           length = 2;
           const storage = ["load", "store", "delete"].includes(op);
           if (!(storage ? storageName(arg) : validName(arg)) || (storage && privateName(arg) && !locals.includes(arg)) ||
-              (["store", "delete"].includes(op) && !locals.includes(arg))) fail("Store/delete requires a declared local.");
+              (["store", "delete"].includes(op) && !writable(arg))) fail("Store/delete requires a declared local.");
         } else if (modern && op === "import") {
           length = 4;
           if (typeof arg !== "string" || arg.length > 192 || (!arg && !extra) ||
@@ -122,7 +128,7 @@ export function verifyFunctions(program) {
         else if (op === "if") { length = 3; blockRef(arg, "statement"); blockRef(extra, "statement"); }
         else if (op === "while") { length = 4; blockRef(arg, "expression"); blockRef(extra, "statement"); blockRef(instruction[3], "statement"); }
         else if (op === "for") {
-          length = 5; if (!locals.includes(arg)) fail("For target requires a local.");
+          length = 5; if (!writable(arg)) fail("For target requires a writable binding.");
           blockRef(extra, "expression"); blockRef(instruction[3], "statement"); blockRef(instruction[4], "statement");
         } else if (op === "try") {
           length = 5; blockRef(arg, "statement");
@@ -130,7 +136,7 @@ export function verifyFunctions(program) {
           extra.forEach((handler, index) => {
             if (!Array.isArray(handler) || handler.length !== 4 || !Array.isArray(handler[0]) || handler[0].length > 16 ||
                 !Array.from(handler[0]).every(type => Object.hasOwn(EXCEPTIONS, type)) ||
-                (!handler[0].length && index !== extra.length - 1) || (handler[1] !== null && !locals.includes(handler[1]))) fail("Invalid exception clause.");
+                (!handler[0].length && index !== extra.length - 1) || (handler[1] !== null && !writable(handler[1]))) fail("Invalid exception clause.");
             blockRef(handler[2], "statement");
             sourceSpan(handler[3]);
           });
@@ -201,7 +207,7 @@ export function verifyFunctions(program) {
     };
     control(fn.body, false);
     if (reached.size !== blocks.length) fail("Function contains an unreferenced block.");
-    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {})});
+    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {}), ...Object.fromEntries(scopeFields.map(key => [key, key === "globals" ? globals : nonlocals]))});
   });
   for (const fn of functions) for (const block of fn.blocks) for (const [op, target] of block.instructions) {
     if (op === "function" && [...functions[target].params.defaults, ...Object.values(functions[target].params.kwdefaults)].some(value => value === null))

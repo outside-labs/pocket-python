@@ -61,6 +61,7 @@ class Compiler {
       const result = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, key === "span" ? child : rewrite(child, owner)]));
       if (["Name", "Attribute"].includes(value.kind)) result.name = name(value.name, owner, value);
       if (value.kind === "Handler" && value.alias) result.alias = name(value.alias, owner, value);
+      if (value.kind === "Declaration") result.names = value.names.map(key => name(key, owner, value));
       return result;
     };
     return rewrite(root);
@@ -68,7 +69,7 @@ class Compiler {
   bind(node, parent = null) {
     this.charge(node);
     if (this.scopes.length >= FUNCTION_LIMITS.functions) this.fail("Function budget exceeded.", node, "COMPILE_BUDGET", "bind");
-    const scope = {node, parent, locals: new Set(), uses: new Set(), free: new Set(), index: this.scopes.length,
+    const scope = {node, parent, locals: new Set(), uses: new Set(), free: new Set(), globals: new Set(), nonlocals: new Set(), assigned: new Set(), index: this.scopes.length,
       qualname: parent === null ? "<module>" : !parent.parent ? node.name :
         parent.qualname + (parent.node.kind === "Class" ? "." : ".<locals>.") + node.name};
     this.scopes.push(scope); this.scopeOf.set(node, scope);
@@ -79,11 +80,25 @@ class Compiler {
     const binding = (name, site) => {
       if (node.kind === "Class" && ["__module__", "__qualname__"].includes(name))
         this.fail("Class metadata overrides are outside C1.", site, "UNSUPPORTED", "bind");
-      scope.locals.add(name);
+      scope.assigned.add(name);
+      if (!scope.globals.has(name) && !scope.nonlocals.has(name)) scope.locals.add(name);
     };
     const target = value => { if (value.kind === "Name") binding(value.name, value); };
     const visit = value => {
       this.charge(value);
+      if (value.kind === "Declaration") {
+        for (const key of value.names) {
+          const global = value.declaration === "global";
+          if (!global && !scope.parent) this.fail("Nonlocal declaration is not allowed at module level.", value, "SYNTAX", "bind");
+          if (node.kind === "Function" && Object.values(node.params).flat().some(param => param.name === key))
+            this.fail("A parameter conflicts with a scope declaration.", value, "SYNTAX", "bind");
+          if ((global ? scope.nonlocals : scope.globals).has(key)) this.fail("A name is both global and nonlocal.", value, "SYNTAX", "bind");
+          if (scope.uses.has(key) || scope.assigned.has(key)) this.fail("A name is used or assigned before its scope declaration.", value, "SYNTAX", "bind");
+          if (node.kind === "Class" && ["__module__", "__qualname__"].includes(key)) this.fail("Class metadata declarations require a later construction stage.", value, "UNSUPPORTED", "bind");
+          (global ? scope.globals : scope.nonlocals).add(key); scope.locals.delete(key);
+        }
+        return;
+      }
       if (["Function", "Class"].includes(value.kind)) {
         (value.decorators || []).forEach(visit);
         binding(value.bindingName ?? value.name, value);
@@ -107,21 +122,32 @@ class Compiler {
   resolve() {
     this.bind(this.classes ? this.privateNames(this.parsed.module) : this.parsed.module);
     for (const scope of this.scopes) {
-      if (scope.locals.has("__debug__")) this.fail("Cannot assign to or delete __debug__.", scope.node, "SYNTAX", "bind");
+      if (scope.locals.has("__debug__") || scope.assigned.has("__debug__")) this.fail("Cannot assign to or delete __debug__.", scope.node, "SYNTAX", "bind");
       if ([...scope.locals, ...scope.uses].some(name => ["None", "True", "False"].includes(name)))
         this.fail("A normalized identifier cannot name a reserved constant.", scope.node, "UNSUPPORTED", "bind");
       if (scope.node.kind === "Class" && [...scope.locals].some(name => !allowsClassSpecial(name, "define")))
         this.fail("Custom special methods require a later class stage.", scope.node, "UNSUPPORTED", "bind");
     }
-    for (const scope of this.scopes.slice(1)) for (const name of scope.uses) {
+    for (const scope of this.scopes.slice(1)) for (const name of new Set([...scope.uses, ...scope.nonlocals])) {
       this.charge(scope.node);
-      if (scope.locals.has(name)) continue;
+      if (scope.locals.has(name) || scope.globals.has(name)) continue;
       let owner = scope.parent;
-      while (owner?.parent && (owner.node.kind === "Class" || !owner.locals.has(name))) { this.charge(scope.node); owner = owner.parent; }
-      if (!owner?.parent) continue;
+      while (owner?.parent) {
+        this.charge(scope.node);
+        if (owner.node.kind !== "Class") {
+          if (owner.globals.has(name)) { owner = null; break; }
+          if (owner.locals.has(name)) break;
+        }
+        owner = owner.parent;
+      }
+      if (!owner?.parent) {
+        if (scope.nonlocals.has(name)) this.fail("No binding for nonlocal name in an enclosing function.", scope.node, "SYNTAX", "bind");
+        continue;
+      }
       for (let current = scope; current !== owner; current = current.parent) { this.charge(scope.node); current.free.add(name); }
     }
   }
+
   constant(record, node) {
     this.charge(node);
     const key = JSON.stringify(record);
@@ -168,7 +194,9 @@ class Compiler {
     }
     const fn = {name: isModule ? "<module>" : node.name, qualname: scope.qualname, params,
       locals: [], free: [...scope.free].sort(), body: null, blocks: [],
-      ...(this.classes ? {kind: isModule ? "module" : isClass ? "class" : "function"} : {})};
+      ...(this.classes ? {kind: isModule ? "module" : isClass ? "class" : "function"} : {}),
+      ...(scope.globals.size ? {globals: [...scope.globals].sort()} : {}),
+      ...(scope.nonlocals.size ? {nonlocals: [...scope.nonlocals].sort()} : {})};
     this.program.functions[scope.index] = fn;
     const makeBlock = (nodes, expression = false) => {
       this.charge(node);
@@ -256,7 +284,7 @@ class Compiler {
       };
       const statement = value => {
         this.charge(value);
-        if (value.kind === "Pass") return;
+        if (value.kind === "Pass" || value.kind === "Declaration") return;
         if (value.kind === "Expr") { expr(value.value); emit(value, "pop"); }
         else if (value.kind === "Assign") {
           expr(value.value);

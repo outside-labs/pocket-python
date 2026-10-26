@@ -122,7 +122,12 @@ class Parser {
   }
   small() {
     const start = this.peek();
-    if (["global", "nonlocal", "assert", "yield"].some(value => this.at(value))) this.unsupported("Global/nonlocal mutation, assertions and generators are not adopted.");
+    if (this.at("global") || this.at("nonlocal")) {
+      const declaration = this.take().value, names = [this.name().value];
+      while (this.eat(",")) names.push(this.name().value);
+      return this.node("Declaration", start, {declaration, names});
+    }
+    if (["assert", "yield"].some(value => this.at(value))) this.unsupported("Assertions and generators are not adopted.");
     if (this.eat("pass")) return this.node("Pass", start);
     if (this.at("break") || this.at("continue")) {
       const op = this.take().value;
