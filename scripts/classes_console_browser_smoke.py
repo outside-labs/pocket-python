@@ -205,8 +205,7 @@ def smoke(channel=None):
                     refused('a=[1]\na[:]=iter((7,))\n', 'UnsupportedOperationError:')
                     refused('print(slice(1,7)==slice(1,7))\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == ''
-                    refused("print('never')\nprint((x:=7))\n", 'UnsupportedSyntaxError:')
-                    assert page.locator('#result').inner_text() == ''
+                    run('print((x:=7),x)\n', '7 7\n')
                     refused("print('never')\ntype A=list[int]\n", 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     refused("print('never')\nｔｙｐｅ Alias=int\n", 'SyntaxError:')
