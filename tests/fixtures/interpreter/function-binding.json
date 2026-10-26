@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "Defaults",
-    "Scope"
+    "Scope",
+    "Variadic"
   ],
   "cases": [
     {
@@ -488,7 +489,7 @@
     {
       "id": "kwargs-order-alias",
       "stage": "Variadic",
-      "source": "saved=[]\ndef f(**kw):\n for k in kw: print(k,kw[k] is saved)\nf(b=saved,a=3)\n",
+      "source": "saved=[]\ndef f(**kw):\n for k in kw: print(k,kw[k] is saved)\nf(b=saved,a={})\n",
       "stdout": "b True\na False\n",
       "profiles": [
         "core-source/1",

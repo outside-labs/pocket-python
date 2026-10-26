@@ -188,6 +188,7 @@ class Compiler {
     const params = {posonly: [], positional: [], kwonly: [], defaults: [], kwdefaults: {}};
     if (!isModule && !isClass) {
       for (const key of ["posonly", "positional", "kwonly"]) params[key] = node.params[key].map(param => param.name);
+      for (const key of ["vararg", "kwarg"]) if (node.params[key]?.length) params[key] = node.params[key][0].name;
       const runtime = this.runtimeDefaults(node);
       params.defaults = [...node.params.posonly, ...node.params.positional].filter(param => param.value !== null).map(param => runtime ? null : this.constant(this.literal(param.value), param.value));
       params.kwdefaults = Object.fromEntries(node.params.kwonly.filter(param => param.value !== null).map(param => [param.name, runtime ? null : this.constant(this.literal(param.value), param.value)]));

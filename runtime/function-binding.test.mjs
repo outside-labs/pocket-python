@@ -94,3 +94,27 @@ test('nonlocal rebinding and global creation retain new graphs across every paus
     finally{execution.close();session.context.finish();session.close();}closed({closed:session.stats()});
   }}finally{registry.close();}
 });
+
+test('variadic packs preserve aliases, lexical cells and fresh keyword dictionaries',async()=>{
+  const result=await run('saved=[]\nheld=[]\ndef f(x,/,*a,y=3,**kw):\n held.append(kw)\n def read(): return a[0] is saved and kw["x"] is saved\n return read\ng=f(1,saved,x=saved)\nh=f(1,saved,x=saved)\nprint(g(),h(),held[0] is held[1])\n');
+  assert.equal(result.error,undefined,JSON.stringify(result.error));assert.equal(result.stdout,'True True False\n');closed(result);
+});
+
+test('variadic signatures verify parameter conflicts and reject malformed grammar',()=>{
+  const input=structuredClone(compileSource('def f(a,*args,**kw): pass\n').program);verifyFunctions(input);
+  for(const change of [p=>p.vararg='a',p=>p.kwarg='args',p=>p.vararg=[],p=>p.kwarg='@source:0']){
+    const mutated=structuredClone(input);change(mutated.functions[1].params);assert.throws(()=>verifyFunctions(mutated),{code:'BYTECODE'});
+  }
+  for(const source of ['def f(*a,*b): pass','def f(**a,b): pass','def f(*,**kw): pass','def f(*args=1): pass'])
+    assert.throws(()=>compileSource(source),{code:'SYNTAX'});
+});
+
+test('packed parameters survive every instruction pause and fail quotas cleanly',async()=>{
+  const source='def f(*a,**kw):\n print("entered")\n return a[0][0]+kw["x"][0]\nprint(f([3],x=[4]))\n';
+  const {registry}=await compileSourceModules([unit(source)]),session=new ModuleSession(registry);let output='';
+  session.context.begin({},text=>{output+=text;});const execution=Execution.modules(session.context);
+  try{while(execution.state!=='completed'){execution.advance();session.memory.collect([],{cleanup:true});}assert.equal(output,'entered\n7\n');}
+  finally{execution.close();session.context.finish();session.close();registry.close();}closed({closed:session.stats()});
+  const oom=await run('held=[]\ndef f(*a,**kw):\n held.append(a)\n held.append(kw)\nwhile True: f([7],x=[8])\n',
+    {maxSteps:100000,maxWork:20000000},{maxBytes:18000});assert.equal(oom.error.code,'OOM');closed(oom);
+});

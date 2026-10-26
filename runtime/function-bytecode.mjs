@@ -49,9 +49,14 @@ export function verifyFunctions(program) {
     if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
     if (!(fn.name === "<module>" && functionIndex === 0) && !validName(fn.name)) fail("Invalid function name.");
     if (typeof fn.qualname !== "string" || !fn.qualname || fn.qualname.length > 256) fail("Invalid qualified function name.");
-    fields(fn.params, ["posonly", "positional", "kwonly", "defaults", "kwdefaults"]);
+    const variadic = modern ? ["vararg", "kwarg"].filter(key => Object.hasOwn(fn.params, key)) : [];
+    fields(fn.params, ["posonly", "positional", "kwonly", "defaults", "kwdefaults", ...variadic]);
     const params = Object.fromEntries(["posonly", "positional", "kwonly"].map(key => [key, names(fn.params[key], validName)]));
-    const allParams = [...params.posonly, ...params.positional, ...params.kwonly];
+    for (const key of variadic) {
+      if (!validName(fn.params[key])) fail("Invalid variadic parameter name.");
+      params[key] = fn.params[key];
+    }
+    const allParams = [...params.posonly, ...params.positional, ...params.kwonly, ...variadic.map(key => params[key])];
     const locals = names(fn.locals, storageName), free = names(fn.free, validName);
     const globals = names(Object.hasOwn(fn, "globals") ? fn.globals : [], validName), nonlocals = names(Object.hasOwn(fn, "nonlocals") ? fn.nonlocals : [], validName);
     if (globals.some(key => locals.includes(key) || free.includes(key)) ||

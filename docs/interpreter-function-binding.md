@@ -55,6 +55,10 @@ pass in the class profile; ordinary cases also run in the core profile. Optional
 verified scope metadata survives registry normalization. Scope declaration errors
 are compilation errors, including declarations inside unreachable suites.
 
+The Variadic stage adopts extra positional/keyword packs. Sixty-five selected
+class observations and the profiled core subset pass; focused units exercise
+fresh dictionaries, aliasing/capture, malformed signatures, collection and OOM.
+
 The authored corpus is `tests/fixtures/interpreter/function-binding.json`.
 Implemented stages advance with each execution PR. Unimplemented stages are
 selected only for reference checks until their source behavior is adopted.
