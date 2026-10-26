@@ -22,7 +22,7 @@ const numericPosition = value => {
   return value;
 };
 const consumerName = value => {
-  if (!["list", "tuple", "all", "any", "set", "frozenset", "set-update"].includes(value)) throw new TypeError("Invalid iterable consumer.");
+  if (!["list", "tuple", "all", "any", "set", "frozenset", "set-update", "bytes", "bytearray"].includes(value)) throw new TypeError("Invalid iterable consumer.");
   return value;
 };
 export function completion(kind, fields = {}) {
@@ -68,6 +68,9 @@ export function completion(kind, fields = {}) {
       break;
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
+    case "binary-result": case "binary-count": case "binary-member":
+      record = {kind, receiver: fields.receiver, mutable: fields.mutable === true, after}; break;
+    case "byte-assignment": record = {kind, receiver: fields.receiver, key: fields.key, after}; break;
     case "display-iter": case "display-next":
       record = {kind, receiver: fields.receiver, iterator: fields.iterator ?? null, after}; break;
     case "display-insert": record = {kind, receiver: fields.receiver, after}; break;
@@ -90,7 +93,7 @@ export function completion(kind, fields = {}) {
       break;
     case "call-star-iter": case "call-star-next":
       record = {kind, receiver: fields.receiver, iterator: fields.iterator ?? null, after}; break;
-    case "consume-iter": case "consume-next": case "consume-truth": case "consume-stored":
+    case "consume-iter": case "consume-next": case "consume-truth": case "consume-stored": case "consume-byte":
       record = {kind, name: consumerName(fields.name), receiver: fields.receiver, result: fields.result ?? null, depth: fields.depth, after};
       depthCheck(record.depth); break;
     case "contains-result": case "search-iter": case "search-next":
@@ -147,6 +150,8 @@ function visit(record) {
     case "dict-pair": case "dict-value": case "dict-value-truth": return [record.left, record.right, record.value, ...completionRoots(record.after)];
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
+    case "binary-result": case "binary-count": case "binary-member": return [record.receiver, ...completionRoots(record.after)];
+    case "byte-assignment": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "display-iter": case "display-next": return [record.receiver, record.iterator, ...completionRoots(record.after)];
     case "display-insert": return [record.receiver, ...completionRoots(record.after)];
     case "unpack-iter": case "unpack-next": case "unpack-rest-iter": case "unpack-rest-next": return [record.receiver, record.iterator, record.sourceIterator, record.result, ...completionRoots(record.after)];
@@ -155,7 +160,7 @@ function visit(record) {
     case "call-map-probe": case "call-map-value": case "call-map-insert": case "call-map-stored":
       return [record.receiver, record.mapping, record.keys, record.key, record.item, record.hash, ...completionRoots(record.after)];
     case "call-star-iter": case "call-star-next": return [record.receiver, record.iterator, ...completionRoots(record.after)];
-    case "consume-iter": case "consume-next": case "consume-truth": case "consume-stored": return [record.receiver, record.result, ...completionRoots(record.after)];
+    case "consume-iter": case "consume-next": case "consume-truth": case "consume-stored": case "consume-byte": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "contains-result": case "search-iter": case "search-next": case "search-equal": case "search-truth": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "sentinel-equal": case "sentinel-truth": return [record.receiver, record.value, ...completionRoots(record.after)];
     case "compare-result": case "ne-result": case "sequence-item": case "sequence-truth": return [record.left, record.right, ...completionRoots(record.after)];

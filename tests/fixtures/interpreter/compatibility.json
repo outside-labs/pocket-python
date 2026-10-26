@@ -219,16 +219,14 @@
     {
       "id": "bytes",
       "source": "print(len(b\"a\"))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "1\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "tokenize"
+        "stdout": "1\n",
+        "error_type": null
       }
     },
     {
@@ -796,31 +794,27 @@
     {
       "id": "builtin-bytearray",
       "source": "print(callable(bytearray))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
       "id": "builtin-bytes",
       "source": "print(callable(bytes))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {

@@ -28,6 +28,9 @@ class DictValue { constructor() { this.entries = []; this.version = 0; this.owne
 class SetValue {
   constructor(storage, frozen) { this.storage = storage; this.frozen = frozen; Object.freeze(this); }
 }
+class BinaryValue {
+  constructor(items, mutable) { this.items = mutable ? [...items] : Object.freeze([...items]); this.mutable = mutable; }
+}
 class RangeValue {
   constructor(start, stop, step, length) {
     this.start = start; this.stop = stop; this.step = step; this.length = length; Object.freeze(this);
@@ -45,7 +48,7 @@ export class IteratorValue {
 
 const numeric = value => typeof value === "bigint" || typeof value === "boolean" || value instanceof FloatValue;
 const integer = value => typeof value === "boolean" ? BigInt(value) : value;
-const sequence = value => value instanceof StringValue || value instanceof TupleValue || value instanceof ListValue;
+const sequence = value => value instanceof StringValue || value instanceof TupleValue || value instanceof ListValue || value instanceof BinaryValue;
 const elements = value => value instanceof StringValue ? value.points : value.items;
 const hashUnits = units => {
   let hash = 2166136261;
@@ -159,7 +162,97 @@ export class ValueRuntime {
     return value.points.map(point => String.fromCodePoint(point)).join("");
   }
   isString(value) { this.charge(1); return value instanceof StringValue; }
+  isBinary(value) { return value instanceof BinaryValue; }
+  binaryValue(items, mutable = false) {
+    this.limit(items.length <= VALUE_LIMITS.text, "Binary length budget exceeded."); this.charge(items.length + 1);
+    return this.make(64 + items.length, [], () => new BinaryValue(items, mutable));
+  }
+  binaryCount(count, mutable = false) {
+    count = integer(count);
+    if (typeof count !== "bigint") this.fail("TypeError", "Binary length requires an integer");
+    if (count < -9223372036854775808n || count > 9223372036854775807n) this.fail("OverflowError", "cannot fit count into an index-sized integer");
+    if (count < 0n) this.fail("ValueError", "negative count");
+    this.limit(count <= BigInt(VALUE_LIMITS.text), "Binary length budget exceeded.");
+    return this.binaryValue(new Array(Number(count)).fill(0), mutable);
+  }
+  byte(value) {
+    value = integer(value);
+    if (typeof value !== "bigint") this.fail("TypeError", "A byte value requires an integer");
+    if (value < 0n || value > 255n) this.fail("ValueError", "byte must be in range(0, 256)");
+    return Number(value);
+  }
+  appendByte(value, item) {
+    const byte = this.byte(item);
+    this.limit(value.items.length < VALUE_LIMITS.text, "Binary length budget exceeded."); this.charge(1);
+    this.resize(value, 65 + value.items.length, []); value.items.push(byte); return null;
+  }
+  binaryMethod(value, name) {
+    if (name === "decode") return;
+    if (value.mutable && ["append", "extend", "insert", "pop", "remove", "clear", "reverse", "resize"].includes(name) ||
+        ["hex", "fromhex", "join", "split", "replace", "strip", "find", "count", "index", "startswith", "endswith"].includes(name))
+      this.fail("UnsupportedOperationError", "This binary method requires a later value stage.", "UNSUPPORTED");
+    this.fail("AttributeError", "Binary value has no attribute '" + name + "'");
+  }
+  codecName(encoding, errors) {
+    if (errors !== undefined) {
+      const policy = this.text(errors);
+      if (policy === null) this.fail("TypeError", "errors must be a string");
+      if (policy !== "strict") this.fail("UnsupportedOperationError", "This codec error policy requires a later value stage.", "UNSUPPORTED");
+    }
+    const name = encoding === undefined ? "utf8" : this.text(encoding);
+    if (name === null) this.fail("TypeError", "encoding must be a string");
+    this.charge(name.length + 1);
+    const normalized = name.toLowerCase().replace(/[-_ ]/g, "");
+    if (["utf8", "utf", "u8"].includes(normalized)) return "utf8";
+    if (["ascii", "usascii", "646"].includes(normalized)) return "ascii";
+    if (["latin1", "latin", "l1", "iso88591", "isoir100", "cp819", "8859"].includes(normalized)) return "latin1";
+    if (/^(utf|cp|iso|unicode|rawunicode|koi8|shift|euc|gb|big5|hz|mac|rot13|punycode|idna)/.test(normalized))
+      this.fail("UnsupportedOperationError", "This encoding requires a later codec profile.", "UNSUPPORTED");
+    this.fail("LookupError", "unknown encoding: " + name);
+  }
+  encodeText(value, encoding, errors, mutable = false) {
+    const codec = this.codecName(encoding, errors), result = [];
+    if (!(value instanceof StringValue)) this.fail("TypeError", "Encoding requires a string");
+    for (const point of value.points) {
+      this.charge(1);
+      if (point >= 0xd800 && point <= 0xdfff || codec === "ascii" && point > 127 || codec === "latin1" && point > 255)
+        this.fail("UnicodeEncodeError", "Character cannot be encoded by the selected strict codec");
+      const bytes = codec !== "utf8" || point < 128 ? [point] : point < 2048 ? [192 | point >> 6, 128 | point & 63] :
+        point < 65536 ? [224 | point >> 12, 128 | point >> 6 & 63, 128 | point & 63] :
+        [240 | point >> 18, 128 | point >> 12 & 63, 128 | point >> 6 & 63, 128 | point & 63];
+      this.limit(result.length + bytes.length <= VALUE_LIMITS.text, "Binary length budget exceeded."); result.push(...bytes);
+    }
+    return this.binaryValue(result, mutable);
+  }
+  decodeBinary(value, encoding, errors) {
+    const codec = this.codecName(encoding, errors), points = [], bytes = value.items;
+    const invalid = () => this.fail("UnicodeDecodeError", "Invalid input for the selected strict codec");
+    for (let index = 0; index < bytes.length;) {
+      this.charge(1); const byte = bytes[index++];
+      if (codec === "latin1" || byte < 128) { points.push(byte); continue; }
+      if (codec === "ascii") invalid();
+      const count = byte >= 194 && byte <= 223 ? 1 : byte >= 224 && byte <= 239 ? 2 : byte >= 240 && byte <= 244 ? 3 : 0;
+      if (!count || index + count > bytes.length) invalid();
+      let point = byte & (count === 1 ? 31 : count === 2 ? 15 : 7);
+      for (let offset = 0; offset < count; offset++) {
+        this.charge(1); const next = bytes[index++]; if (next < 128 || next > 191) invalid(); point = point * 64 + (next & 63);
+      }
+      if (point < [0, 128, 2048, 65536][count] || point > 0x10ffff || point >= 0xd800 && point <= 0xdfff) invalid();
+      points.push(point);
+    }
+    return this.string(points);
+  }
   repr(value) {
+    if (value instanceof BinaryValue) {
+      const quote = value.items.includes(39) && !value.items.includes(34) ? "\"" : "'", parts = [value.mutable ? "bytearray(b" : "b", quote];
+      this.charge(value.items.length + 1);
+      for (const byte of value.items) {
+        parts.push(byte === 92 || byte === quote.charCodeAt(0) ? "\\" + String.fromCharCode(byte) :
+          [9, 10, 13].includes(byte) ? "\\" + {9: "t", 10: "n", 13: "r"}[byte] :
+          byte >= 32 && byte < 127 ? String.fromCharCode(byte) : "\\x" + byte.toString(16).padStart(2, "0"));
+      }
+      parts.push(quote, value.mutable ? ")" : ""); return this.string(Array.from(parts.join(""), char => char.charCodeAt(0)));
+    }
     if (value instanceof NotImplementedValue) return this.string(Array.from('NotImplemented', char => char.codePointAt(0)));
     if (value instanceof StringValue) {
       this.charge(2 * value.points.length + 1);
@@ -276,6 +369,8 @@ export class ValueRuntime {
   }
   inplace(operation, left, right) {
     this.charge(1);
+    if (left instanceof BinaryValue && left.mutable && ["add", "multiply"].includes(operation))
+      this.fail("UnsupportedOperationError", "Bytearray resizing requires a later value stage.", "UNSUPPORTED");
     if (left instanceof SetValue && ["bit-or", "bit-and", "bit-xor", "subtract"].includes(operation))
       return this.setAlgebra(operation, left, right, !left.frozen);
     if (!(left instanceof ListValue)) return this.binary(operation, left, right);
@@ -316,7 +411,7 @@ export class ValueRuntime {
     this.depth(depth); this.charge(1);
     if (!record || typeof record !== "object" || Array.isArray(record)) this.fail("TypeError", "Expected a tagged Python value.");
     const fields = {none: ["type"], bool: ["type", "value"], int: ["type", "value"],
-      float: ["type", "bits"], complex: ["type", "real_bits", "imag_bits"], str: ["type", "codepoints"], tuple: ["type", "items"], list: ["type", "items"], dict: ["type", "entries"]};
+      float: ["type", "bits"], complex: ["type", "real_bits", "imag_bits"], str: ["type", "codepoints"], bytes: ["type", "bytes"], bytearray: ["type", "bytes"], tuple: ["type", "items"], list: ["type", "items"], dict: ["type", "entries"]};
     const keys = typeof record.type === "string" && Object.hasOwn(fields, record.type) ? fields[record.type] : null;
     if (!keys || Object.keys(record).length !== keys.length || !keys.every(key => Object.hasOwn(record, key))) this.fail("TypeError", "Invalid tagged value fields.");
     if (record.type === "none") return null;
@@ -332,6 +427,11 @@ export class ValueRuntime {
     }
     if (record.type === "str" && Array.isArray(record.codepoints) && record.codepoints.length <= VALUE_LIMITS.text &&
         Array.from(record.codepoints).every(point => Number.isInteger(point) && point >= 0 && point <= 0x10ffff)) return this.string(record.codepoints);
+    if (["bytes", "bytearray"].includes(record.type) && this.numeric && Array.isArray(record.bytes) && record.bytes.length <= VALUE_LIMITS.text &&
+        Array.from(record.bytes).every(byte => Number.isInteger(byte) && byte >= 0 && byte <= 255)) {
+      if (immutable && record.type === "bytearray") this.fail("TypeError", "Mutable constants require construction instructions.");
+      return this.binaryValue(record.bytes, record.type === "bytearray");
+    }
     if (["tuple", "list"].includes(record.type) && Array.isArray(record.items) && record.items.length <= VALUE_LIMITS.items) {
       if (immutable && record.type === "list") this.fail("TypeError", "Mutable constants require construction instructions.");
       const items = Array.from(record.items, item => this.decode(item, {immutable, depth: depth + 1}));
@@ -354,6 +454,7 @@ export class ValueRuntime {
     if (value instanceof FloatValue) return {type: "float", bits: value.bits};
     if (value instanceof ComplexValue) return {type: "complex", real_bits: bitsOf(value.real), imag_bits: bitsOf(value.imag)};
     if (value instanceof StringValue) { this.charge(value.points.length); return {type: "str", codepoints: [...value.points]}; }
+    if (value instanceof BinaryValue) { this.charge(value.items.length); return {type: value.mutable ? "bytearray" : "bytes", bytes: [...value.items]}; }
     if (active.has(value)) this.fail("ValueError", "Cyclic values require a handle transport.");
     active.add(value);
     try {
@@ -388,6 +489,11 @@ export class ValueRuntime {
   }
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof BinaryValue || right instanceof BinaryValue) {
+      if (!(left instanceof BinaryValue && right instanceof BinaryValue)) return false;
+      this.charge(Math.min(left.items.length, right.items.length) + 1);
+      return left.items.length === right.items.length && left.items.every((byte, index) => byte === right.items[index]);
+    }
     if (left instanceof SetValue || right instanceof SetValue) {
       if (!(left instanceof SetValue && right instanceof SetValue)) return false;
       this.primitiveSet(left); this.primitiveSet(right);
@@ -435,6 +541,13 @@ export class ValueRuntime {
   }
   less(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof BinaryValue || right instanceof BinaryValue) {
+      if (!(left instanceof BinaryValue && right instanceof BinaryValue)) this.fail("TypeError", "Binary ordering requires binary operands");
+      for (let index = 0; index < Math.min(left.items.length, right.items.length); index++) {
+        this.charge(1); if (left.items[index] !== right.items[index]) return left.items[index] < right.items[index];
+      }
+      return left.items.length < right.items.length;
+    }
     if (left instanceof SetValue || right instanceof SetValue) {
       if (!(left instanceof SetValue && right instanceof SetValue)) this.fail("TypeError", "Set ordering requires sets");
       this.primitiveSet(left); this.primitiveSet(right);
@@ -461,6 +574,7 @@ export class ValueRuntime {
   }
   hash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof BinaryValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof SetValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue)
       this.fail("UnsupportedOperationError", "Object dictionary keys require the later identity-hash profile.", "UNSUPPORTED");
@@ -511,6 +625,7 @@ export class ValueRuntime {
   }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof BinaryValue && value.mutable) this.fail("TypeError", "unhashable type: 'bytearray'");
     if (value instanceof SetValue) {
       if (!value.frozen) this.fail("TypeError", "unhashable type: 'set'");
       this.primitiveSet(value);
@@ -551,12 +666,12 @@ export class ValueRuntime {
       return this.hashResult(hash);
     }
     if (value === null) return this.hashResult(BigInt.asIntN(64, 0x9e3779b97f4a7c15n));
-    if (value instanceof StringValue || value instanceof TupleValue) {
+    if (value instanceof StringValue || value instanceof TupleValue || value instanceof BinaryValue) {
       let hash = 14695981039346656037n;
       const parts = value instanceof StringValue ? value.points : value.items;
       for (const part of parts) {
         this.charge(1);
-        const item = value instanceof StringValue ? BigInt(part) : this.pythonHash(part, depth + 1);
+        const item = value instanceof StringValue || value instanceof BinaryValue ? BigInt(part) : this.pythonHash(part, depth + 1);
         hash = BigInt.asUintN(64, (hash ^ BigInt.asUintN(64, item)) * 1099511628211n);
       }
       return this.hashResult(BigInt.asIntN(64, hash ^ BigInt(parts.length)));
@@ -627,9 +742,17 @@ export class ValueRuntime {
       this.charge(value.start.toString().length + value.step.toString().length * index.toString().length);
       return this.int(value.start + value.step * index);
     }
-    return value instanceof StringValue ? this.string([items[Number(index)]]) : items[Number(index)];
+    return value instanceof StringValue ? this.string([items[Number(index)]]) : value instanceof BinaryValue ? this.int(BigInt(items[Number(index)])) : items[Number(index)];
   }
   set(value, key, item) {
+    if (value instanceof BinaryValue) {
+      if (!value.mutable) this.fail("TypeError", "bytes object does not support item assignment");
+      key = integer(key);
+      if (typeof key !== "bigint") this.fail("TypeError", "Byte indices must be integers");
+      if (key < 0n) key += BigInt(value.items.length);
+      if (key < 0n || key >= BigInt(value.items.length)) this.fail("IndexError", "bytearray index out of range");
+      const byte = this.byte(item); this.charge(1); value.items[Number(key)] = byte; return null;
+    }
     if (value instanceof DictValue) {
       const hash = this.hash(key), found = this.find(value, key);
       if (found >= 0) {
@@ -663,6 +786,7 @@ export class ValueRuntime {
     value.items.push(item); return null;
   }
   remove(value, key) {
+    if (value instanceof BinaryValue && value.mutable) this.fail("UnsupportedOperationError", "Bytearray deletion requires a later value stage.", "UNSUPPORTED");
     if (value instanceof ListValue) {
       key = integer(key);
       if (typeof key !== "bigint") this.fail("TypeError", "List indices must be integers.");
@@ -678,6 +802,10 @@ export class ValueRuntime {
     this.charge(value.entries.length); value.entries.splice(found, 1); value.version++; return null;
   }
   mutateSlice(value, start, stop, step, item, remove = false) {
+    if (value instanceof BinaryValue) {
+      if (!value.mutable) this.fail("TypeError", "bytes object does not support item assignment");
+      this.fail("UnsupportedOperationError", "Bytearray resizing and slice mutation require a later value stage.", "UNSUPPORTED");
+    }
     if (!(value instanceof ListValue)) this.fail("TypeError", "Slice mutation requires a list.");
     step = step === null ? 1n : integer(step);
     if (typeof step !== "bigint") this.fail("TypeError", "slice indices must be integers or None");
@@ -733,7 +861,7 @@ export class ValueRuntime {
     }
     const result = [];
     for (let index = start; positive ? index < stop : index > stop; index += step) { this.charge(1); result.push(items[Number(index)]); }
-    return value instanceof StringValue ? this.string(result) : value instanceof TupleValue ? this.tuple(result) : this.list(result);
+    return value instanceof StringValue ? this.string(result) : value instanceof BinaryValue ? this.binaryValue(result, value.mutable) : value instanceof TupleValue ? this.tuple(result) : this.list(result);
   }
   iterator(value) {
     if (value instanceof IteratorValue) return value;
@@ -765,9 +893,17 @@ export class ValueRuntime {
     const items = elements(value);
     if (iterator.index >= items.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
     const item = items[iterator.index++];
-    return value instanceof StringValue ? this.string([item]) : item;
+    return value instanceof StringValue ? this.string([item]) : value instanceof BinaryValue ? this.int(BigInt(item)) : item;
   }
   contains(key, value) {
+    if (value instanceof BinaryValue) {
+      if (["bigint", "boolean"].includes(typeof key)) { const byte = this.byte(key); this.charge(value.items.length + 1); return value.items.includes(byte); }
+      if (!(key instanceof BinaryValue)) this.fail("TypeError", "Binary membership requires a byte integer or binary sequence");
+      this.charge((value.items.length + 1) * (key.items.length + 1));
+      for (let index = 0; index <= value.items.length - key.items.length; index++)
+        if (key.items.every((byte, offset) => byte === value.items[index + offset])) return true;
+      return false;
+    }
     if (value instanceof SetValue) return this.findSet(value, key) >= 0;
     if (value instanceof RangeValue) {
       if (key instanceof ComplexValue) { if (key.imag !== 0) return false; key = key.real; }
@@ -833,6 +969,16 @@ export class ValueRuntime {
     if (operation === "getitem") return this.index(left, right);
     if (operation === "append") return this.append(left, right);
     if (operation === "dict-delete") return this.remove(left, right);
+    if (left instanceof BinaryValue && operation === "add" && right instanceof BinaryValue)
+      return this.binaryValue([...left.items, ...right.items], left.mutable);
+    if (operation === "multiply" && (left instanceof BinaryValue || right instanceof BinaryValue)) {
+      const value = left instanceof BinaryValue ? left : right, count = integer(value === left ? right : left);
+      if (typeof count !== "bigint") this.fail("TypeError", "Binary repetition requires an integer");
+      if (count < -9223372036854775808n || count > 9223372036854775807n) this.fail("OverflowError", "cannot fit repetition into an index-sized integer");
+      this.charge(count.toString().length); const size = BigInt(value.items.length) * (count < 0n ? 0n : count);
+      this.limit(size <= BigInt(VALUE_LIMITS.text), "Binary length budget exceeded.");
+      this.charge(Number(size)); return this.binaryValue(Array.from({length: Number(size)}, (_, index) => value.items[index % value.items.length]), value.mutable);
+    }
     if ((left instanceof SetValue || right instanceof SetValue) && ["bit-and", "bit-or", "bit-xor", "subtract"].includes(operation))
       return this.setAlgebra(operation, left, right);
     if (left instanceof ComplexValue || right instanceof ComplexValue) {
@@ -952,6 +1098,10 @@ export class ValueRuntime {
       return typeof result === "bigint" ? this.int(result) : this.float(result);
     }
     if (name === "ord") {
+      if (args[0] instanceof BinaryValue) {
+        if (args[0].items.length !== 1) this.fail("TypeError", "ord() requires a one-byte binary value");
+        return this.int(BigInt(args[0].items[0]));
+      }
       if (!(args[0] instanceof StringValue) || args[0].points.length !== 1) this.fail("TypeError", "ord() requires a one-character string.");
       return this.int(BigInt(args[0].points[0]));
     }
@@ -988,6 +1138,7 @@ export function valueLayout(value) {
   if (value instanceof ComplexValue) return {bytes: 80, children: []};
   if (value instanceof RangeValue) return {bytes: 112, children: [value.start, value.stop, value.step, value.length]};
   if (value instanceof StringValue) return {bytes: 64 + 4 * value.points.length, children: []};
+  if (value instanceof BinaryValue) return {bytes: 64 + value.items.length, children: []};
   if (value instanceof TupleValue || value instanceof ListValue) return {bytes: 64 + 8 * value.items.length, children: value.items};
   if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};

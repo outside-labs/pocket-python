@@ -105,7 +105,7 @@
     {
       "id": "container-values",
       "status": "partial",
-      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Finite list/tuple construction preserves primitive and owned iterable elements; user length hints remain refused. Set/frozenset construction, displays, owned membership/equality, finite mutation APIs and primitive algebra are adopted.",
+      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Finite list/tuple construction preserves primitive and owned iterable elements; user length hints remain refused. Set/frozenset construction, displays, owned membership/equality, finite mutation APIs and primitive algebra are adopted. Bytes/bytearray values adopt a finite binary-sequence/codec surface.",
       "gaps": "Dictionary constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred.",
       "reference_version": "3.14.7",
       "targets": [
@@ -928,9 +928,9 @@
     },
     {
       "id": "bytearray",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Finite binary construction, ASCII literals, indexing/slicing/iteration/membership, scalar bytearray writes, strict UTF-8/ASCII/Latin-1 conversion and binary repr/str.",
+      "gaps": "Broader methods/codecs, non-strict errors, bytes user length hints and bytearray resizing remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -942,13 +942,16 @@
       "probes": [
         "builtin-bytearray"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/value-families.json:bytes-utf8",
+        "tests/fixtures/interpreter/value-families.json:bytes-index-protocol"
+      ]
     },
     {
       "id": "bytes",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Finite binary construction, ASCII literals, indexing/slicing/iteration/membership, scalar bytearray writes, strict UTF-8/ASCII/Latin-1 conversion and binary repr/str.",
+      "gaps": "Broader methods/codecs, non-strict errors, bytes user length hints and bytearray resizing remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -960,7 +963,10 @@
       "probes": [
         "builtin-bytes"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/value-families.json:bytes-utf8",
+        "tests/fixtures/interpreter/value-families.json:bytes-index-protocol"
+      ]
     },
     {
       "id": "callable",

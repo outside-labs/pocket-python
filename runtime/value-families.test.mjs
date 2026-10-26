@@ -101,3 +101,78 @@ test('deferred set algebra and structural key mutation fail without leaking call
   const mutation = await run('class K:\n def __hash__(self): return 1\n def __eq__(self,o):\n  s.clear()\n  return True\ns={K()}; K() in s\n');
   assert.equal(mutation.error.code, 'UNSUPPORTED'); closed(mutation);
 });
+
+test('binary constants snapshot bytes, preserve scalar transport and reject malformed or mutable constants', () => {
+  const values = new ValueRuntime({numeric: true}), bytes = [0, 97, 255];
+  const immutable = values.decode({type: 'bytes', bytes}, {immutable: true}); bytes[0] = 9;
+  assert.equal(values.index(immutable, 0n), 0n);
+  assert.deepEqual(values.encode(immutable), {type: 'bytes', bytes: [0, 97, 255]});
+  const mutable = values.decode({type: 'bytearray', bytes: [1, 2]});
+  values.set(mutable, 1n, 255n); assert.equal(values.index(mutable, 1n), 255n);
+  assert.equal(valueLayout(mutable).bytes, 66); assert.deepEqual(valueLayout(mutable).children, []);
+  for (const record of [{type: 'bytes', bytes: [256]}, {type: 'bytes', bytes: [-1]}, {type: 'bytes', bytes: [1.5]},
+    {type: 'bytes', bytes: [null]}, {type: 'bytes', bytes: [], extra: 0}, {type: 'bytearray', bytes: []}])
+    assert.throws(() => values.decode(record, {immutable: true}), {name: 'TypeError'});
+  assert.throws(() => new ValueRuntime().decode({type: 'bytes', bytes: []}), {name: 'TypeError'});
+});
+
+test('strict UTF-8 matches scalar encoding and rejects malformed input without replacement', () => {
+  const values = new ValueRuntime({numeric: true});
+  const points = [0, 127, 128, 2047, 2048, 0xd7ff, 0xe000, 0xffff, 0x10000, 0x10ffff, 0xfeff];
+  for (let point = 0; point <= 0x10ffff; point += 251) if (point < 0xd800 || point > 0xdfff) points.push(point);
+  const string = values.string(points), bytes = values.encodeText(string);
+  assert.deepEqual(bytes.items, [...new TextEncoder().encode(String.fromCodePoint(...points))]);
+  assert.equal(values.equal(values.decodeBinary(bytes), string), true);
+  for (const invalid of [[128], [192, 175], [224, 128, 128], [237, 160, 128], [244, 144, 128, 128],
+    [245, 128, 128, 128], [240, 159], [226, 40, 161], [255]])
+    assert.throws(() => values.decodeBinary(values.binaryValue(invalid)), {name: 'UnicodeDecodeError'});
+  for (const surrogate of [0xd800, 0xdbff, 0xdc00, 0xdfff])
+    assert.throws(() => values.encodeText(values.string([surrogate])), {name: 'UnicodeEncodeError'});
+});
+
+test('binary growth limits are checked before repetition and count allocation', async () => {
+  const values = new ValueRuntime({numeric: true});
+  assert.throws(() => values.binaryCount(65537n), {code: 'BUDGET'});
+  assert.throws(() => values.binary('multiply', values.binaryValue([1]), 65537n), {code: 'BUDGET'});
+  assert.throws(() => values.binary('multiply', values.binaryValue([]), 10n ** 100n), {name: 'OverflowError'});
+  assert.throws(() => values.binaryCount(-(10n ** 100n)), {name: 'OverflowError'});
+  for (const [source, options, limits, code] of [
+    ['bytes(range(256))\n', {maxWork: 500}, undefined, 'BUDGET'],
+    ['bytes(65536)\n', {}, {maxBytes: 12000}, 'OOM']
+  ]) {
+    const result = await run(source, options, limits); assert.equal(result.error.code, code); closed(result);
+  }
+});
+
+test('binary type conversions retain operands across pause, collection, cancellation and close', async () => {
+  for (const source of [
+    'class I:\n def __index__(self): print("entered"); return 2\na=bytes([I()]); b=bytearray(b"abc"); b[I()]=I(); print(a[0],b[2])\n',
+    'class B:\n @property\n def __bytes__(self):\n  print("entered")\n  return lambda: b"ok"\nprint(bytes(B())==b"ok")\n'
+  ]) {
+    const {registry} = await compileSourceModules([unit(source)], profile);
+    try { for (const mode of ['finish', 'cancel', 'close']) {
+      const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+      session.context.begin({shouldCancel: () => cancel}, text => { output += text; }); const execution = Execution.modules(session.context);
+      try {
+        while (execution.state !== 'completed') {
+          execution.advance(); session.memory.collect([], {cleanup: true});
+          if (output.includes('entered\n') && !reached) {
+            reached = true;
+            if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+            if (mode === 'close') break;
+          }
+        }
+        assert.equal(reached, true); if (mode === 'finish') assert.match(output, /(2 2|True)\n$/);
+      } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+      closed({closed: session.stats()});
+    } } finally { registry.close(); }
+  }
+});
+
+test('bytes user length hints refuse before hooks while bytearray ignores them', async () => {
+  const source = 'class I:\n def __iter__(self): print("iter"); return iter([1])\n def __len__(self): print("hint"); return 1\n';
+  const bytes = await run(source + 'bytes(I())\n');
+  assert.equal(bytes.error.code, 'UNSUPPORTED'); assert.equal(bytes.stdout, ''); closed(bytes);
+  const bytearray = await run(source + 'print(len(bytearray(I())))\n');
+  assert.equal(bytearray.ok, true, JSON.stringify(bytearray.error)); assert.equal(bytearray.stdout, 'iter\n1\n'); closed(bytearray);
+});

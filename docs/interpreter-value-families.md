@@ -5,7 +5,7 @@ The staged `value-families.json` corpus separates reference observations from
 independent source execution. A reference-only result never establishes support.
 Core-source/1 and classes-source/1 retain bytecode versions 4 and 5.
 
-V1 is implemented. V2/V3 remain reference-only until their implementation PRs.
+V1/V2 are implemented. V3 remains reference-only until its implementation PR.
 
 ## Finite delivery contract
 
@@ -18,9 +18,11 @@ V1 is implemented. V2/V3 remain reference-only until their implementation PRs.
 
 Construction, set membership and selected set mutations use the existing owned
 iterator/hash/equality dispatch for user objects in classes-source/1. Byte
-construction and indexing use type-level integer conversion. Callback exceptions
+construction and indexing use type-level integer conversion; `bytes` additionally
+adopts type-level `__bytes__` with a validated immutable bytes result. Callback exceptions
 propagate through ordinary frames; only iterator advancement exhaustion completes
-construction. No user length hints are needed for the new constructors.
+construction. Set and bytearray construction do not consult user length hints;
+bytes construction with a user length hint explicitly refuses before callbacks.
 
 Set order is deliberately unspecified; cases compare membership and counts rather
 than CPython's incidental iteration order. Equal numeric keys retain one element.

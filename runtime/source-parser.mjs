@@ -524,13 +524,14 @@ class Parser {
     }
     if (this.kind("number")) { this.take(); return this.node("Literal", start, {literal: start.literal}); }
     if (this.kind("string")) {
-      const points = [];
+      const points = [], type = start.literal.type, field = type === "bytes" ? "bytes" : "codepoints";
       while (this.kind("string")) {
         const token = this.take();
-        if (points.length + token.literal.codepoints.length > SOURCE_LIMITS.text) this.fail("Adjacent string literal budget exceeded.", start, "COMPILE_BUDGET");
-        for (const point of token.literal.codepoints) points.push(point);
+        if (token.literal.type !== type) this.fail("Cannot mix bytes and nonbytes literals.", token);
+        if (points.length + token.literal[field].length > SOURCE_LIMITS.text) this.fail("Adjacent string literal budget exceeded.", start, "COMPILE_BUDGET");
+        for (const point of token.literal[field]) points.push(point);
       }
-      return this.node("Literal", start, {literal: {type: "str", codepoints: points}});
+      return this.node("Literal", start, {literal: {type, [field]: points}});
     }
     if (this.eat("(")) {
       if (this.eat(")")) return this.node("Tuple", start, {items: []});

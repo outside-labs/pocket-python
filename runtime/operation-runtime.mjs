@@ -14,6 +14,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (typeof value === "boolean") return value ? "True" : "False";
     if (typeof value === "bigint") return value.toString();
     if (value instanceof ExceptionValue) return value.message;
+    if (values.isBinary(value)) return values.text(values.repr(value));
     const text = values.text(value);
     if (text !== null) return text;
     hard("UNSUPPORTED", "UnsupportedOperationError", "Formatting this value is outside the function stage.");
@@ -24,6 +25,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     state.outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text);
   };
   const numericNames = new Set(["range","int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"]);
+  const bindNamed = (labels, args, keywords, keywordValues) => {
+    if (args.length > labels.length) python("TypeError", "Too many positional arguments");
+    const bound = new Map(labels.slice(0, args.length).map((name, index) => [name, args[index]]));
+    for (let index = 0; index < keywords.length; index++) {
+      const name = keywords[index];
+      if (!labels.includes(name) || bound.has(name)) python("TypeError", "Invalid or duplicate keyword argument");
+      bound.set(name, keywordValues[index]);
+    }
+    return bound;
+  };
   const bindNumeric = (name, args, keywords, keywordValues) => {
     if (name === "range") {
       if (args.length < 1 || args.length > 3 || keywords.length) python("TypeError", "range() requires one to three positional arguments");
@@ -77,6 +88,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
       const type = args[1];
       if (type instanceof ClassValue) return classes.isinstance(args[0], type);
+      if (type instanceof BuiltinValue && ["bytes", "bytearray"].includes(type.name))
+        return values.isBinary(args[0]) && args[0].mutable === (type.name === "bytearray");
       if (type instanceof BuiltinValue && ["set", "frozenset"].includes(type.name))
         return values.isSet(args[0]) && args[0].frozen === (type.name === "frozenset");
       if (values.numeric && type instanceof BuiltinValue && ["list", "tuple", "range"].includes(type.name)) return values.isSequenceType(args[0], type.name);
@@ -132,7 +145,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const consumeFinish = (name, result, site, after) => {
     state.temporaries.push(result);
-    const value = name === "tuple" ? values.tuple(result.items) : ["list", "set", "frozenset", "set-update"].includes(name) ? result : name === "all";
+    const value = name === "bytes" ? values.binaryValue(result.items) : name === "tuple" ? values.tuple(result.items) :
+      ["bytearray", "list", "set", "frozenset", "set-update"].includes(name) ? result : name === "all";
     state.temporaries.push(value); return valueTask(value, site, after);
   };
   const argumentOwner = receiver => {
@@ -389,10 +403,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       if (values.isSet(result)) return dictionaryTask(result.storage, value, site,
         continuation("consume-stored", completion), depth, "set", null);
+      if (values.isBinary(result)) return unaryTask("index", value, site, continuation("consume-byte", completion), depth);
       return unaryTask("truth", value, site, continuation("consume-truth", {name, receiver, result, after, depth}), depth);
     }
     if (completion?.kind === "consume-stored") return consumeNext(completion.name, completion.receiver,
       completion.result, site, completion.after, completion.depth);
+    if (completion?.kind === "consume-byte") {
+      values.appendByte(completion.result, value);
+      return consumeNext(completion.name, completion.receiver, completion.result, site, completion.after, completion.depth);
+    }
+    if (completion?.kind === "binary-count") return valueTask(values.binaryCount(value, completion.mutable), site, completion.after);
+    if (completion?.kind === "binary-result") {
+      if (!values.isBinary(value) || value.mutable) python("TypeError", "__bytes__ returned a non-bytes value");
+      return valueTask(value, site, completion.after);
+    }
+    if (completion?.kind === "binary-member") return valueTask(values.contains(value, completion.receiver), site, completion.after);
+    if (completion?.kind === "byte-assignment") return valueTask(values.set(completion.receiver, completion.key, value), site, completion.after);
     if (completion?.kind === "consume-truth") {
       const {name, receiver, result, after, depth} = completion;
       if (value === (name === "any")) return valueTask(value, site, after);
@@ -547,6 +573,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     write(text + "\n"); return deliver(null, after, site);
   };
   const sliceNext = (receiver, parts, position, site, after, depth, operation = "get", item = null) => {
+    if (operation !== "get" && values.isBinary(receiver)) {
+      if (!receiver.mutable) python("TypeError", "bytes object does not support item assignment");
+      hard("UNSUPPORTED", "UnsupportedOperationError", "Bytearray resizing and slice mutation require a later value stage.");
+    }
     state.temporaries.push(receiver, ...parts, ...(operation === "set" ? [item] : []));
     if (!values.isSequence(receiver)) python("TypeError", "Slicing requires an adopted sequence");
     if (operation !== "get" && !values.isList(receiver)) python("TypeError", "Slice mutation requires a list");
@@ -625,10 +655,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries = operationRoots(task);
           const {name, receiver} = task, building = ["list", "tuple"].includes(name);
           const hintOwner = receiver instanceof ProtocolIteratorValue && receiver.kind === "indexed" ? receiver.source : receiver;
-          if (building && hintOwner instanceof InstanceValue &&
+          if ((building || name === "bytes") && hintOwner instanceof InstanceValue &&
               ["__len__", "__length_hint__"].some(slot => classes.lookup(hintOwner.type, slot).found))
             hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
-          const result = task.result ?? (building ? values.list([]) : ["set", "frozenset"].includes(name) ? values.newSet(name === "frozenset") : null);
+          const result = task.result ?? (building ? values.list([]) : ["bytes", "bytearray"].includes(name) ? values.binaryValue([], true) :
+            ["set", "frozenset"].includes(name) ? values.newSet(name === "frozenset") : null);
           state.temporaries.push(result);
           task = unaryTask("iter", receiver, site, continuation("consume-iter", {name, receiver, result, after: completion, depth}), depth);
           continue;
@@ -754,6 +785,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "contains") {
           state.temporaries.push(...operationRoots(task));
           let {receiver, key} = task;
+          if (values.isBinary(receiver) && key instanceof InstanceValue) {
+            task = unaryTask("index", key, site, continuation("binary-member", {receiver, after: completion}), depth); continue;
+          }
           if (values.isSet(receiver)) {
             key = values.setLookupKey(key); state.temporaries.push(key);
             task = dictionaryTask(receiver.storage, key, site, completion, depth, "contains"); continue;
@@ -809,6 +843,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = sliceTask(receiver, [key.start, key.stop, key.step], site, completion, depth, operation, item);
           } else if (key instanceof InstanceValue && values.isSequence(receiver)) {
             task = unaryTask("index", key, site, continuation("index-key", {receiver, key, after: completion, depth, operation, item}), depth);
+          } else if (operation === "set" && values.isBinary(receiver) && receiver.mutable && item instanceof InstanceValue) {
+            task = unaryTask("index", item, site, continuation("byte-assignment", {receiver, key, after: completion}), depth);
           } else task = deliver(operation === "get" ? values.binary("getitem", receiver, key) :
             operation === "set" ? values.set(receiver, key, item) : values.binary("dict-delete", receiver, key), completion, site);
           continue;
@@ -972,6 +1008,37 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (callable instanceof ValueMethod && ["encode", "decode"].includes(callable.name) &&
+              (values.isString(callable.receiver) || values.isBinary(callable.receiver))) {
+            const bound = bindNamed(["encoding", "errors"], args, keywords, keywordValues);
+            task = valueTask(callable.name === "encode" ? values.encodeText(callable.receiver, bound.get("encoding"), bound.get("errors")) :
+              values.decodeBinary(callable.receiver, bound.get("encoding"), bound.get("errors")), site, completion); continue;
+          }
+          if (["bytes", "bytearray"].includes(callable.name)) {
+            count("builtin:" + callable.name);
+            const bound = bindNamed(["source", "encoding", "errors"], args, keywords, keywordValues), source = bound.get("source"), mutable = callable.name === "bytearray";
+            if (bound.has("encoding") || bound.has("errors")) {
+              if (!values.isString(source) || !bound.has("encoding")) python("TypeError", "encoding/errors require a string source and encoding");
+              task = valueTask(values.encodeText(source, bound.get("encoding"), bound.get("errors"), mutable), site, completion); continue;
+            }
+            if (!bound.has("source")) { task = valueTask(values.binaryValue([], mutable), site, completion); continue; }
+            if (values.isString(source)) python("TypeError", "string argument without an encoding");
+            if (values.isBinary(source)) { task = valueTask(!mutable && !source.mutable ? source : values.binaryValue(source.items, mutable), site, completion); continue; }
+            if (source instanceof InstanceValue) {
+              const plan = !mutable ? classes.special(source, "__bytes__") : null;
+              if (plan) {
+                const finish = continuation("binary-result", {receiver: source, after: completion});
+                task = plan.kind === "value" ? callTask(plan.value, [], [], [], site, finish, depth) :
+                  callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: finish, depth}), depth);
+                continue;
+              }
+              if (classes.lookup(source.type, "__index__").found) {
+                task = unaryTask("index", source, site, continuation("binary-count", {receiver: source, mutable, after: completion}), depth); continue;
+              }
+            }
+            task = ["bigint", "boolean"].includes(typeof source) ? valueTask(values.binaryCount(source, mutable), site, completion) :
+              consumeTask(callable.name, source, site, completion, depth); continue;
+          }
           if (callable instanceof ValueMethod && values.isSet(callable.receiver)) {
             const receiver = callable.receiver, name = callable.name;
             if (keywords.length || args.length !== (["add", "discard", "remove"].includes(name) ? 1 : 0))

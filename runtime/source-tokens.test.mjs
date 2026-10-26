@@ -60,7 +60,7 @@ test("string scanning preserves code points, raw escapes, triples and lone-surro
     Array.from("first\nsecond", c => c.codePointAt(0)), [92, 113], [97, 98]]);
   assert.deepEqual(significant("r'\\\"' \"\\\\\" '\\777'").map(t => t.literal.codepoints), [[92, 34], [92], [511]]);
   for (const source of ["'unterminated", "'line\nbreak'", "'\\x0'", "'\\u123'", "'\\U00110000'", "r'odd\\'"]) fails(source, "SYNTAX");
-  for (const source of ["b'bytes'", "f'{x}'", "rf'{x}'", "t'{x}'", "'\\N{LATIN CAPITAL LETTER A}'"]) fails(source, "UNSUPPORTED");
+  for (const source of ["f'{x}'", "rf'{x}'", "t'{x}'", "'\\N{LATIN CAPITAL LETTER A}'"]) fails(source, "UNSUPPORTED");
 });
 
 test("accepts UTF-8 bytes and refuses malformed Unicode, nulls and illegal characters", () => {
