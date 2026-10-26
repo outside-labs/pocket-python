@@ -122,14 +122,18 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const p = fn.params, ordered = [...p.posonly, ...p.positional], bindings = new Map();
     const label = fn.qualname + "()";
     positional.slice(0, ordered.length).forEach((value, index) => bindings.set(ordered[index], value));
-    const positionalOnly = keywordNames.filter(key => p.posonly.includes(key));
+    const positionalOnly = p.kwarg ? [] : keywordNames.filter(key => p.posonly.includes(key));
+    const extraKeywords = [];
     keywordNames.forEach((key, index) => {
       if (positionalOnly.length) python("TypeError", label + " got some positional-only arguments passed as keyword arguments: '" + positionalOnly.join(", ") + "'");
-      if (!p.positional.includes(key) && !p.kwonly.includes(key)) python("TypeError", label + " got an unexpected keyword argument '" + key + "'");
+      if (!p.positional.includes(key) && !p.kwonly.includes(key)) {
+        if (p.kwarg) { extraKeywords.push([key, keywordValues[index]]); return; }
+        python("TypeError", label + " got an unexpected keyword argument '" + key + "'");
+      }
       if (bindings.has(key)) python("TypeError", label + " got multiple values for argument '" + key + "'");
       bindings.set(key, keywordValues[index]);
     });
-    if (positional.length > ordered.length) {
+    if (positional.length > ordered.length && !p.vararg) {
       const range = p.defaults.length ? "from " + (ordered.length - p.defaults.length) + " to " + ordered.length : String(ordered.length);
       const kw = keywordNames.filter(key => p.kwonly.includes(key)).length;
       python("TypeError", label + " takes " + range + " positional argument" + (ordered.length === 1 && !p.defaults.length ? "" : "s") +
@@ -151,6 +155,16 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       if (!bindings.has(key) && Object.hasOwn(p.kwdefaults, key)) bindings.set(key, callable.defaults ? callable.defaults[p.defaults.length + Object.keys(p.kwdefaults).indexOf(key)] : constants[p.kwdefaults[key]]);
     }
     missing(p.kwonly.filter(key => !bindings.has(key)), "keyword-only");
+    if (p.vararg) {
+      const packed = values.tuple(positional.slice(ordered.length)); state.temporaries.push(packed); bindings.set(p.vararg, packed);
+    }
+    if (p.kwarg) {
+      const packed = values.dict([]); state.temporaries.push(packed); bindings.set(p.kwarg, packed);
+      for (const [key, value] of extraKeywords) {
+        const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
+        values.set(packed, name, value);
+      }
+    }
     return bindings;
   };
   const enter = (callable, bindings, callsite = null, completion = null) => {

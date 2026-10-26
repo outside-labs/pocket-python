@@ -322,16 +322,16 @@
     {
       "id": "varargs",
       "source": "def f(*args): return len(args)\nprint(f(1,2))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "2\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
+        "stdout": "2\n",
         "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "code": null,
+        "phase": null
       }
     },
     {

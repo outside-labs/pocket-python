@@ -53,6 +53,7 @@ through the [expanded function contract](interpreter-function-binding.md).
 The version 3 fixture format retains immutable literal defaults.
 
 Source profiles also support global/nonlocal declarations, writes and deletion.
+Variadic `*args` and `**kwargs` parameters pack owned tuples and fresh dictionaries.
 Starred expansion, annotations,
 decorators, arbitrary attributes/reflection, explicit exception
 causes, exception groups, classes/descriptors, generators and async remain

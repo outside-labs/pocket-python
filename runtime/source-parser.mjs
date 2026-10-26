@@ -243,16 +243,29 @@ class Parser {
     const start = this.expect("def"), name = this.name().value;
     if (this.at("[")) this.unsupported("Generic functions are not adopted.");
     this.expect("(");
-    let positional = [], posonly = [], kwonly = [], slash = false, star = false, defaultSeen = false;
+    let positional = [], posonly = [], kwonly = [], vararg = [], kwarg = [], slash = false, star = false, defaultSeen = false;
     const seen = new Set();
     while (!this.at(")")) {
-      if (this.at("**")) this.unsupported("Starred parameters are not adopted.");
+      if (kwarg.length) this.fail("No parameter may follow a variadic keyword parameter.");
+      if (this.eat("**")) {
+        const token = this.name();
+        if (seen.has(token.value)) this.fail("Duplicate function parameter.", token);
+        seen.add(token.value); kwarg.push({name: token.value, value: null, span: token.span});
+        if (this.at(":")) this.unsupported("Parameter annotations are not adopted.");
+        if (this.at("=")) this.fail("A variadic keyword parameter cannot have a default.");
+      } else
       if (this.eat("/")) {
         if (slash || star || !positional.length) this.fail("Invalid positional-only separator.");
         slash = true; posonly = positional; positional = [];
       } else if (this.eat("*")) {
         if (star) this.fail("Duplicate keyword-only separator.");
-        if (this.kind("name")) this.unsupported("Starred parameters are not adopted.");
+        if (this.kind("name")) {
+          const token = this.take();
+          if (seen.has(token.value)) this.fail("Duplicate function parameter.", token);
+          seen.add(token.value); vararg.push({name: token.value, value: null, span: token.span});
+          if (this.at(":")) this.unsupported("Parameter annotations are not adopted.");
+          if (this.at("=")) this.fail("A variadic positional parameter cannot have a default.");
+        }
         star = true;
       } else {
         const token = this.name();
@@ -268,12 +281,12 @@ class Parser {
       this.expect(",");
     }
     this.expect(")");
-    if (star && !kwonly.length) this.fail("A named keyword-only parameter must follow '*'.");
+    if (star && !kwonly.length && !vararg.length) this.fail("A named keyword-only parameter must follow '*'.");
     if (this.at("->")) this.unsupported("Return annotations are not adopted.");
     const before = [this.functionDepth, this.loopDepth]; this.functionDepth++; this.loopDepth = 0;
     let body;
     try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
-    return this.node("Function", start, {name, params: {posonly, positional, kwonly}, body, ...(decorators.length ? {decorators} : {})}, body.at(-1));
+    return this.node("Function", start, {name, params: {posonly, positional, kwonly, ...(vararg.length ? {vararg} : {}), ...(kwarg.length ? {kwarg} : {})}, body, ...(decorators.length ? {decorators} : {})}, body.at(-1));
   }
   classDefinition(decorators = []) {
     const start = this.expect("class"), name = this.name().value, bases = [];
