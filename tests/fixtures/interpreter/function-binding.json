@@ -666,8 +666,8 @@
     {
       "id": "star-empty-string-dict",
       "stage": "StarArgs",
-      "source": "def f(*a):\n for x in a: print(x)\nf(*[],*\"A🚀\",*{\"k\":2})\n",
-      "stdout": "A\n🚀\nk\n",
+      "source": "def f(*a):\n for x in a: print(x)\nf(*[],*\"A\ud83d\ude80\",*{\"k\":2})\n",
+      "stdout": "A\n\ud83d\ude80\nk\n",
       "profiles": [
         "core-source/1",
         "classes-source/1"
@@ -960,7 +960,7 @@
     },
     {
       "id": "function-generator-deferred",
-      "stage": "Future",
+      "stage": "Defaults",
       "source": "def f():\n yield 2\nprint(next(f()))\n",
       "stdout": "2\n",
       "profiles": [
@@ -1100,7 +1100,7 @@
     {
       "id": "mapping-arbitrary-string-key",
       "stage": "StarKw",
-      "source": "def f(**kw): print(kw[\"not-an-identifier\"],kw[\"__proto__\"],kw[\"🚀\"])\nf(**{\"not-an-identifier\":1,\"__proto__\":2,\"🚀\":3})\n",
+      "source": "def f(**kw): print(kw[\"not-an-identifier\"],kw[\"__proto__\"],kw[\"\ud83d\ude80\"])\nf(**{\"not-an-identifier\":1,\"__proto__\":2,\"\ud83d\ude80\":3})\n",
       "stdout": "1 2 3\n",
       "profiles": [
         "core-source/1",
