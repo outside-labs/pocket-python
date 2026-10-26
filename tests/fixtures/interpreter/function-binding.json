@@ -7,7 +7,8 @@
     "Defaults",
     "Scope",
     "Variadic",
-    "StarArgs"
+    "StarArgs",
+    "StarKw"
   ],
   "cases": [
     {
@@ -975,6 +976,165 @@
       ],
       "source": "class A:\n def __iter__(self):\n  print(\"iter\")\n  return iter([])\n def __len__(self):\n  print(\"hint\")\n  return 0\ndef f(*a): print(len(a))\nf(*A())\n",
       "stdout": "iter\n0\n"
+    },
+    {
+      "id": "mapping-key-snapshot-order",
+      "stage": "StarKw",
+      "source": "class I:\n def __iter__(self): return self\n def __next__(self):\n  self.n+=1\n  print(\"next\",self.n)\n  if self.n>2: raise StopIteration\n  return \"a\" if self.n==1 else \"b\"\nclass M:\n def keys(self):\n  it=I()\n  it.n=0\n  return it\n def __getitem__(self,k):\n  print(\"get\",k)\n  return 7\ndef f(**kw): print(len(kw))\nf(**M())\n",
+      "stdout": "next 1\nnext 2\nnext 3\nget a\nget b\n2\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "mapping-keys-descriptor",
+      "stage": "StarKw",
+      "source": "class M:\n @property\n def keys(self):\n  print(\"bind\")\n  def use():\n   print(\"keys\")\n   return [\"x\"]\n  return use\n def __getitem__(self,k): return 7\ndef f(**kw): print(kw[\"x\"])\nf(**M())\n",
+      "stdout": "bind\nkeys\n7\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "mapping-missing-keys",
+      "stage": "StarKw",
+      "source": "class M:\n def __getitem__(self,k): return 7\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-keys-attribute-error",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): raise AttributeError(\"body\")\n def __getitem__(self,k): return 7\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-value-attribute-error",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): return [\"x\"]\n def __getitem__(self,k): raise AttributeError(\"body\")\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-value-stop-iteration",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): return [\"x\"]\n def __getitem__(self,k): raise StopIteration\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "mapping-keys-not-iterable",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): return 7\n def __getitem__(self,k): return 7\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-custom-key-hash-phases",
+      "stage": "StarKw",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  return 7\nclass M:\n def keys(self): return [K()]\n def __getitem__(self,k):\n  print(\"get\")\n  return 2\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "hash\nget\nhash\n",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-native-cached-hash",
+      "stage": "StarKw",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  return 7\nk=K()\nd={k:2}\ndef f(**kw): pass\nf(**d)\n",
+      "stdout": "hash\n",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-custom-key-duplicate",
+      "stage": "StarKw",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  return 7\n def __eq__(self,other):\n  print(\"equal\")\n  return True\nclass M:\n def keys(self): return [K(),K()]\n def __getitem__(self,k):\n  print(\"get\")\n  return 2\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "hash\nget\nhash\nhash\nequal\n",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-final-key-validation",
+      "stage": "StarKw",
+      "source": "def mark():\n print(\"later\")\n return 3\ndef f(**kw): pass\nf(**{1:2},x=mark())\n",
+      "stdout": "later\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-explicit-duplicate-order",
+      "stage": "StarKw",
+      "source": "def mark():\n print(\"value\")\n return 3\ndef f(**kw): pass\nf(**{\"x\":2},x=mark())\n",
+      "stdout": "value\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-arbitrary-string-key",
+      "stage": "StarKw",
+      "source": "def f(**kw): print(kw[\"not-an-identifier\"],kw[\"__proto__\"],kw[\"🚀\"])\nf(**{\"not-an-identifier\":1,\"__proto__\":2,\"🚀\":3})\n",
+      "stdout": "1 2 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "mapping-finally-and-handler",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): return [\"x\",\"x\"]\n def __getitem__(self,k): return 2\ndef f(**kw): pass\ntry:\n try: f(**M())\n finally: print(\"final\")\nexcept TypeError: print(\"caught\")\n",
+      "stdout": "final\ncaught\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "mapping-duplicate-format-callback",
+      "stage": "StarKw",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other): return True\n def __str__(self):\n  print(\"error key\")\n  return \"KEY\"\nclass M:\n def keys(self): return [K(),K()]\n def __getitem__(self,k): return 2\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "error key\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mapping-duplicate-format-error",
+      "stage": "StarKw",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other): return True\n def __str__(self):\n  print(\"error key\")\n  raise ValueError(\"format\")\nclass M:\n def keys(self): return [K(),K()]\n def __getitem__(self,k): return 2\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "error key\n",
+      "error_type": "ValueError"
     }
   ]
 }

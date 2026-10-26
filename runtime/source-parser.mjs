@@ -451,8 +451,9 @@ class Parser {
       else if (this.eat("(")) {
         const args = [], keywords = [], seen = new Set();
         while (!this.at(")")) {
-          if (this.at("**")) this.unsupported("Keyword mapping expansion is not adopted.");
-          if (this.eat("*")) {
+          if (this.eat("**")) keywords.push({name: null, value: this.expression()});
+          else if (this.eat("*")) {
+            if (keywords.some(keyword => keyword.name === null)) this.fail("Iterable unpacking follows keyword unpacking.");
             const start = this.previous; args.push(this.node("StarredArgument", start, {value: this.expression()}));
           } else
           if (this.kind("name") && this.peek(1).value === "=") {

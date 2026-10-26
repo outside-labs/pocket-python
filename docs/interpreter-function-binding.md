@@ -66,6 +66,15 @@ to 128 values. Starred forms with user length hooks conservatively refuse before
 binding/iteration pending the separate construction-hint contract: CPython's
 single-star and assembled positional paths need not query the same hint owner.
 
+The StarKw stage adopts dictionaries and instance mappings. The 111-program
+matrix includes full key materialization before indexed reads, cached dictionary
+hashes, separate custom-key probe/insertion hashes, descriptor binding, duplicate
+error formatting callbacks, late string validation and arbitrary string keyword
+names. Mapping AttributeError/KeyError conversion follows the pinned reference;
+errors raised while formatting a duplicate key propagate normally. Source-dict
+structural mutation during merge retains its explicit restart refusal. Message
+text and default object display identities are outside the comparison contract.
+
 The authored corpus is `tests/fixtures/interpreter/function-binding.json`.
 Implemented stages advance with each execution PR. Unimplemented stages are
 selected only for reference checks until their source behavior is adopted.

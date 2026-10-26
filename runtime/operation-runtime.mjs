@@ -159,10 +159,80 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
     return unaryTask("iter", iterable, site, continuation("call-star-iter", {receiver}));
   };
+  const keywordMap = receiver => {
+    argumentOwner(receiver);
+    if (receiver.keywordMap !== null) return receiver.keywordMap;
+    const result = values.dict([]); state.temporaries.push(receiver, result);
+    for (let index = 0; index < receiver.keywords.length; index++) {
+      const key = values.string(Array.from(receiver.keywords[index], char => char.codePointAt(0))); state.temporaries.push(key);
+      values.set(result, key, receiver.keywordValues[index]);
+    }
+    mutate(receiver, () => {
+      const before = [receiver.keywordMap, receiver.keywords, receiver.keywordValues];
+      receiver.keywordMap = result; receiver.keywords = []; receiver.keywordValues = [];
+      return () => { [receiver.keywordMap, receiver.keywords, receiver.keywordValues] = before; };
+    });
+    return result;
+  };
+  const checkMapping = record => {
+    if (record.version !== null && record.mapping.version !== record.version)
+      hard("UNSUPPORTED", "UnsupportedOperationError", "Structural source dictionary mutation during keyword expansion requires its restart stage.");
+  };
+  const mappingNext = (record, site) => {
+    checkMapping(record);
+    if (record.position >= record.keys.items.length) return valueTask(record.receiver, site, record.after);
+    const key = record.keys.items[record.position];
+    const finish = continuation("call-map-hash", {...record, key, hash: null, item: null});
+    return record.version === null ? unaryTask("hash", key, site, finish) :
+      valueTask(values.dictionaryEntryHash(record.mapping.entries[record.position]), site, finish);
+  };
+  const keywordArgument = (receiver, name, item, site) => {
+    argumentOwner(receiver);
+    if (receiver.keywordMap === null) { appendKeyword(receiver, name, item); return valueTask(receiver, site); }
+    const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(receiver, key, item);
+    return unaryTask("hash", key, site, continuation("call-map-hash", {receiver, key, item, mode: "keyword"}));
+  };
+  const expandMapping = (receiver, mapping, site) => {
+    keywordMap(receiver); state.temporaries.push(mapping);
+    if (values.isDict(mapping)) {
+      const keys = values.tuple(mapping.entries.map(entry => entry.key)); state.temporaries.push(keys);
+      return mappingNext({receiver, mapping, keys, position: 0, version: mapping.version, mode: "mapping", after: null}, site);
+    }
+    if (!(mapping instanceof InstanceValue)) python("TypeError", "Argument after ** must be a mapping");
+    let plan;
+    try { plan = classes.read(mapping, "keys"); }
+    catch (error) {
+      if (!(error instanceof Raised) || error.value.name !== "AttributeError") throw error;
+      python("TypeError", "Argument after ** must be a mapping");
+    }
+    const fields = {receiver, mapping};
+    return plan.kind === "value" ? callTask(plan.value, [], [], [], site, continuation("call-map-keys", fields)) :
+      callTask(plan.callable, plan.args, [], [], site, continuation("call-map-lookup", fields));
+  };
+  const finishArguments = receiver => {
+    argumentOwner(receiver);
+    if (receiver.keywordMap === null) return [receiver.keywords, receiver.keywordValues];
+    const keywords = [], items = [];
+    for (const entry of receiver.keywordMap.entries) {
+      charge(1);
+      const key = values.text(entry.key);
+      if (key === null) python("TypeError", "Keywords must be strings");
+      keywords.push(key); items.push(entry.value);
+    }
+    return [keywords, items];
+  };
+  const duplicateKeyword = (receiver, key, site, after = null) => {
+    const formatted = key instanceof InstanceValue && ["__str__", "__repr__"].some(slot => classes.lookup(key.type, slot).found);
+    return formatted ? unaryTask("str", key, site, continuation("call-duplicate-result", {receiver, key, after})) :
+      unaryTask("call-keyword-duplicate", receiver, site, after);
+  };
   const recover = (value, completion, site) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind.startsWith("call-map-") && ["KeyError", "AttributeError"].includes(value.name))
+        return value.name === "KeyError" ? duplicateKeyword(current.receiver, value.args[0] ?? current.key, site, current.after) :
+          unaryTask("call-mapping-required", current.receiver, site, current.after);
       if (current.kind === "indexed-result" && ["IndexError", "StopIteration"].includes(value.name) ||
           current.kind === "callable-result" && value.name === "StopIteration") {
         exhaust(current.receiver);
@@ -204,6 +274,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "call-duplicate-result") python("TypeError", "Call received multiple values for keyword argument '" + values.text(value) + "'");
+    if (completion?.kind === "call-map-lookup") return callTask(value, [], [], [], site, continuation("call-map-keys", completion));
+    if (completion?.kind === "call-map-keys") return consumeTask("list", value, site, continuation("call-map-sequence", completion));
+    if (completion?.kind === "call-map-sequence") return mappingNext({...completion, keys: value, position: 0}, site);
+    if (completion?.kind === "call-map-hash") {
+      checkMapping(completion);
+      return dictionaryTask(completion.receiver.keywordMap, completion.key, site,
+        continuation("call-map-probe", {...completion, hash: value}), 0, "contains", null, value);
+    }
+    if (completion?.kind === "call-map-probe") {
+      checkMapping(completion);
+      if (value) return duplicateKeyword(completion.receiver, completion.key, site, completion.after);
+      if (completion.receiver.keywordMap.entries.length >= 128) hard("BUDGET", "ExecutionLimitError", "Keyword call argument budget exceeded.");
+      if (completion.mode === "keyword" || completion.version !== null) {
+        const item = completion.mode === "keyword" ? completion.item : completion.mapping.entries[completion.position].value;
+        return dictionaryTask(completion.receiver.keywordMap, completion.key, site,
+          continuation("call-map-stored", completion), 0, "set", item, completion.hash);
+      }
+      return itemTask(completion.mapping, completion.key, site, continuation("call-map-value", completion));
+    }
+    if (completion?.kind === "call-map-value") return unaryTask("hash", completion.key, site,
+      continuation("call-map-insert", {...completion, item: value}));
+    if (completion?.kind === "call-map-insert") return dictionaryTask(completion.receiver.keywordMap, completion.key, site,
+      continuation("call-map-stored", completion), 0, "set", completion.item, value);
+    if (completion?.kind === "call-map-stored") return completion.mode === "keyword" ? valueTask(completion.receiver, site, completion.after) :
+      mappingNext({...completion, position: completion.position + 1}, site);
     if (completion?.kind === "call-star-iter") return unaryTask("next", value, site,
       continuation("call-star-next", {receiver: completion.receiver, iterator: value, after: completion.after}));
     if (completion?.kind === "call-star-next") {
@@ -439,6 +535,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "unary" && ["call-keyword-duplicate", "call-mapping-required"].includes(task.operation)) {
+          state.temporaries = operationRoots(task);
+          python("TypeError", task.operation === "call-keyword-duplicate" ? "Call received multiple values for a keyword argument" : "Argument after ** must be a mapping");
+        }
         if (task.kind === "consume") {
           state.temporaries = operationRoots(task);
           const {name, receiver} = task, building = ["list", "tuple"].includes(name);
@@ -871,5 +971,5 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
-  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments});
+  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments});
 }

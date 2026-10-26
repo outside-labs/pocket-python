@@ -1676,6 +1676,21 @@
         "stdout": "True True\n",
         "error_type": null
       }
+    },
+    {
+      "id": "keyword-mapping-call",
+      "source": "def f(x=2,**kw): return x+kw[\"y\"]\nprint(f(**{\"y\":3}))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "5\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "5\n",
+        "error_type": null,
+        "code": null,
+        "phase": null
+      }
     }
   ]
 }

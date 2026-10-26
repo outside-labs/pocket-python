@@ -168,3 +168,79 @@ test('call assembly verifies its stack operations and roots pending iteration ow
   const after=completion('relay',{receiver:outer});
   assert.deepEqual(completionRoots(completion('call-star-next',{receiver:owner,iterator,after})),[owner,iterator,outer]);
 });
+
+test('mapping lookup, key iteration and item binding retain partial calls at every pause',async()=>{
+  const sources=[
+    'class M:\n @property\n def keys(self):\n  print("entered")\n  def use(): return ["x"]\n  return use\n def __getitem__(self,key): return [3]\n',
+    'class I:\n def __iter__(self): return self\n def __next__(self):\n  print("entered")\n  self.n+=1\n  if self.n>1: raise StopIteration\n  return "x"\nclass M:\n def keys(self):\n  it=I()\n  it.n=0\n  return it\n def __getitem__(self,key): return [3]\n',
+    'class M:\n def keys(self): return ["x"]\n @property\n def __getitem__(self):\n  print("entered")\n  def use(key): return [3]\n  return use\n'
+  ];
+  for(let index=0;index<sources.length;index++){
+    const source=sources[index]+'def f(a,**kw): print(a[0],kw["x"][0])\nf([7],**M())\n';
+    const {registry}=await compileSourceModules([unit(source)],{languageProfile:'classes-source/1'});
+    try{for(const mode of ['finish','cancel','close']){
+      const session=new ModuleSession(registry);let output='',cancel=false,reached=false;
+      session.context.begin({shouldCancel:()=>cancel},text=>{output+=text;});const execution=Execution.modules(session.context);
+      try{while(execution.state!=='completed'){
+        const snapshot=execution.advance();session.memory.collect([],{cleanup:true});
+        if(output==='entered\n'&&snapshot.frames.length>1){
+          reached=true;
+          if(mode==='cancel'){cancel=true;assert.throws(()=>execution.advance(),{code:'CANCELLED'});break;}
+          if(mode==='close')break;
+        }
+      }assert.ok(reached);if(mode==='finish')assert.equal(output,'entered\n'.repeat(index===1?2:1)+'7 3\n');}
+      finally{execution.close();session.context.finish();session.close();}closed({closed:session.stats()});
+    }}finally{registry.close();}
+  }
+});
+
+test('keyword merging validates after reads and stops before duplicate value lookup',async()=>{
+  const prefix='class M:\n def keys(self): return ["x","x"]\n def __getitem__(self,key):\n  print("get")\n  return [7]\ndef f(**kw): pass\n';
+  const duplicate=await runSourceRequest({modules:[unit(prefix+'f(**M())\n')],compileOptions:{languageProfile:'classes-source/1'}});
+  assert.equal(duplicate.error.type,'TypeError');assert.equal(duplicate.stdout,'get\n');closed(duplicate);
+  const arbitrary=await run('def f(**kw): print(kw["not-an-identifier"],kw["__proto__"])\nf(**{"not-an-identifier":7},**{"__proto__":8})\n');
+  assert.equal(arbitrary.error,undefined,JSON.stringify(arbitrary.error));assert.equal(arbitrary.stdout,'7 8\n');closed(arbitrary);
+});
+
+test('keyword quotas and pending mapping work release accumulated dictionaries',async()=>{
+  const prefix='class M:\n def keys(self): return range(200)\n def __getitem__(self,key): return [key]\ndef f(**kw): pass\nf(**M())\n';
+  const budget=await runSourceRequest({modules:[unit(prefix)],compileOptions:{languageProfile:'classes-source/1'},options:{maxSteps:100000,maxWork:200000}});
+  assert.equal(budget.error.code,'BUDGET');closed(budget);
+  const oom=await runSourceRequest({modules:[unit(prefix)],compileOptions:{languageProfile:'classes-source/1'},
+    options:{maxSteps:100000,maxWork:20000000},memoryLimits:{maxBytes:21000}});
+  assert.equal(oom.error.code,'OOM');closed(oom);
+  const work=await runSourceRequest({modules:[unit('class M:\n def keys(self):\n  while True: pass\ndef f(**kw): pass\nf(**M())\n')],
+    compileOptions:{languageProfile:'classes-source/1'},options:{maxSteps:100}});
+  assert.equal(work.error.code,'BUDGET');closed(work);
+});
+
+test('mapping completion records retain every owner and reject invalid phases',()=>{
+  const receiver={},mapping={},keys={},key={},item={},outer={},after=completion('relay',{receiver:outer});
+  assert.deepEqual(completionRoots(completion('call-map-value',{receiver,mapping,keys,key,item,hash:3n,after})),[receiver,mapping,keys,key,item,3n,outer]);
+  for(const fields of [{position:-1},{position:1025},{hash:3},{mode:'other'},{version:-1}])
+    assert.throws(()=>completion('call-map-probe',{receiver,...fields}),TypeError);
+});
+
+test('mapping hash and duplicate formatting callbacks root keys, fetched items and outer calls',async()=>{
+  const sources=[
+    'class K:\n @property\n def __hash__(self):\n  print("entered")\n  def use(): return 7\n  return use\n def __eq__(self,other): return True\n',
+    'class K:\n def __hash__(self): return 7\n def __eq__(self,other): return True\n @property\n def __str__(self):\n  print("entered")\n  def use(): return "KEY"\n  return use\n'
+  ];
+  for(let index=0;index<sources.length;index++){
+    const source=sources[index]+'class M:\n def keys(self): return [K(),K()]\n def __getitem__(self,key): return [7]\ndef f(**kw): pass\ntry: f(**M())\nexcept TypeError: print("caught")\n';
+    const {registry}=await compileSourceModules([unit(source)],{languageProfile:'classes-source/1'});
+    try{for(const mode of ['finish','cancel','close']){
+      const session=new ModuleSession(registry);let output='',cancel=false,reached=false;
+      session.context.begin({shouldCancel:()=>cancel},text=>{output+=text;});const execution=Execution.modules(session.context);
+      try{while(execution.state!=='completed'){
+        const snapshot=execution.advance();session.memory.collect([],{cleanup:true});
+        if(output==='entered\n'&&snapshot.frames.length>1){
+          reached=true;
+          if(mode==='cancel'){cancel=true;assert.throws(()=>execution.advance(),{code:'CANCELLED'});break;}
+          if(mode==='close')break;
+        }
+      }assert.ok(reached);if(mode==='finish')assert.equal(output,'entered\n'.repeat(index===0?3:1)+'caught\n');}
+      finally{execution.close();session.context.finish();session.close();}closed({closed:session.stats()});
+    }}finally{registry.close();}
+  }
+});

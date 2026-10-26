@@ -186,7 +186,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
     block(frame, fn.body);
   };
-  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments} = operationRuntime({state, memory, values, classes,
+  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput});
   const diagnostic = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
@@ -353,16 +353,15 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           store(state.frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
         }
       } else if (op === "call-start") stack.push(allocate(CallArguments, stack.pop()));
-      else if (["call-argument", "call-keyword", "call-star"].includes(op)) {
+      else if (["call-argument", "call-keyword", "call-star", "call-mapping"].includes(op)) {
         const value = stack.pop(), receiver = stack.pop();
         if (op === "call-star") dispatch(expandArguments(receiver, value, summary(frame, cursor)));
-        else {
-          if (op === "call-argument") appendArgument(receiver, value); else appendKeyword(receiver, arg, value);
-          stack.push(receiver);
-        }
+        else if (op === "call-mapping") dispatch(expandMapping(receiver, value, summary(frame, cursor)));
+        else if (op === "call-keyword") dispatch(keywordArgument(receiver, arg, value, summary(frame, cursor)));
+        else { appendArgument(receiver, value); stack.push(receiver); }
       } else if (op === "call-expanded") {
-        const receiver = stack.pop(); argumentOwner(receiver);
-        call(receiver.callable, receiver.args, receiver.keywords, receiver.keywordValues, summary(frame, cursor));
+        const receiver = stack.pop(), [keywords, keywordValues] = finishArguments(receiver);
+        call(receiver.callable, receiver.args, keywords, keywordValues, summary(frame, cursor));
       } else if (op === "call") {
         const kwargs = stack.splice(stack.length - extra.length), args = stack.splice(stack.length - arg), callable = stack.pop();
         call(callable, args, extra, kwargs, summary(frame, cursor));
