@@ -83,6 +83,12 @@ errors raised while formatting a duplicate key propagate normally. Source-dict
 structural mutation during merge retains its explicit restart refusal. Message
 text and default object display identities are outside the comparison contract.
 
+A composed scope correction adds three cases, bringing the current matrix to
+114 observations. A class may use a declared global in its own namespace while
+its methods capture an enclosing function's same-named cell. Verified class
+metadata preserves both roles; ordinary function conflicts remain invalid.
+Class reads/defaults/writes use the module binding and method reads use the cell.
+
 The authored corpus is `tests/fixtures/interpreter/function-binding.json`.
 Implemented stages advance with each execution PR. Unimplemented stages are
 selected only for reference checks until their source behavior is adopted.

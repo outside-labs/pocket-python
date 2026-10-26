@@ -244,3 +244,14 @@ test('mapping hash and duplicate formatting callbacks root keys, fetched items a
     }}finally{registry.close();}
   }
 });
+
+test('class global lookup and writes coexist with method capture through collection',async()=>{
+  const source='x=[1]\ndef outer():\n x=[4]\n class C:\n  global x\n  y=x\n  x=[7]\n  def f(self,default=x): return x[0]+default[0]\n return C\nC=outer()\nprint(C.y[0],x[0],C().f())\n';
+  const {registry}=await compileSourceModules([unit(source)],{languageProfile:'classes-source/1'}),session=new ModuleSession(registry);let output='';
+  session.context.begin({},text=>{output+=text;});const execution=Execution.modules(session.context);
+  try{while(execution.state!=='completed'){execution.advance();session.memory.collect([],{cleanup:true});}assert.equal(output,'1 7 11\n');}
+  finally{execution.close();session.context.finish();session.close();registry.close();}closed({closed:session.stats()});
+  const input=structuredClone(compileSource('x=1\ndef outer():\n x=4\n class C:\n  global x\n  def f(self): return x\n return C\n',{languageProfile:'classes-source/1'}).program);
+  const body=input.functions.find(fn=>fn.kind==='class');assert.deepEqual(body.globals,['x']);assert.deepEqual(body.free,['x']);verifyFunctions(input);
+  body.nonlocals=['x'];assert.throws(()=>verifyFunctions(input),{code:'BYTECODE'});
+});
