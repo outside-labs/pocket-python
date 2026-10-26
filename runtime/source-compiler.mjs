@@ -47,7 +47,7 @@ class Compiler {
       if (value.kind === "Class") return {...value, bindingName: name(value.name, owner, value),
         bases: rewrite(value.bases, owner), body: rewrite(value.body, value.name),
         ...(value.decorators ? {decorators: rewrite(value.decorators, owner)} : {})};
-      if (value.kind === "Function") {
+      if (["Function", "Lambda"].includes(value.kind)) {
         const params = Object.fromEntries(Object.entries(value.params).map(([key, group]) => [key,
           group.map(param => ({...param, name: name(param.name, owner, param), value: rewrite(param.value, owner)}))]));
         const names = Object.values(params).flat().map(param => param.name);
@@ -75,7 +75,7 @@ class Compiler {
     this.scopes.push(scope); this.scopeOf.set(node, scope);
     scope.classContext = node.kind === "Class" || !!parent?.classContext;
     if (scope.qualname.length > 256) this.fail("Qualified function name budget exceeded.", node, "COMPILE_BUDGET", "bind");
-    if (node.kind === "Function") for (const group of Object.values(node.params)) for (const param of group) scope.locals.add(param.name);
+    if (["Function", "Lambda"].includes(node.kind)) for (const group of Object.values(node.params)) for (const param of group) scope.locals.add(param.name);
     if (node.kind === "Class") { scope.locals.add("__module__"); scope.locals.add("__qualname__"); }
     const binding = (name, site) => {
       if (node.kind === "Class" && ["__module__", "__qualname__"].includes(name))
@@ -90,7 +90,7 @@ class Compiler {
         for (const key of value.names) {
           const global = value.declaration === "global";
           if (!global && !scope.parent) this.fail("Nonlocal declaration is not allowed at module level.", value, "SYNTAX", "bind");
-          if (node.kind === "Function" && Object.values(node.params).flat().some(param => param.name === key))
+          if (["Function", "Lambda"].includes(node.kind) && Object.values(node.params).flat().some(param => param.name === key))
             this.fail("A parameter conflicts with a scope declaration.", value, "SYNTAX", "bind");
           if ((global ? scope.nonlocals : scope.globals).has(key)) this.fail("A name is both global and nonlocal.", value, "SYNTAX", "bind");
           if (scope.uses.has(key) || scope.assigned.has(key)) this.fail("A name is used or assigned before its scope declaration.", value, "SYNTAX", "bind");
@@ -99,9 +99,9 @@ class Compiler {
         }
         return;
       }
-      if (["Function", "Class"].includes(value.kind)) {
+      if (["Function", "Class", "Lambda"].includes(value.kind)) {
         (value.decorators || []).forEach(visit);
-        binding(value.bindingName ?? value.name, value);
+        if (value.kind !== "Lambda") binding(value.bindingName ?? value.name, value);
         if (value.kind === "Class") value.bases.forEach(visit);
         else for (const group of Object.values(value.params)) for (const param of group) if (param.value) visit(param.value);
         this.bind(value, scope); return;
@@ -217,10 +217,19 @@ class Compiler {
           this.fail("Special attribute mutation is outside C1.", value);
         return value.name;
       };
+      const makeFunction = value => {
+        if (this.runtimeDefaults(value)) {
+          const positional = [...value.params.posonly, ...value.params.positional].filter(param => param.value !== null);
+          const keywords = value.params.kwonly.filter(param => param.value !== null);
+          [...positional, ...keywords].forEach(param => expr(param.value));
+          emit(value, "function-defaults", this.scopeOf.get(value).index, positional.length, keywords.map(param => param.name));
+        } else emit(value, "function", this.scopeOf.get(value).index);
+      };
       const expr = value => {
         this.charge(value);
         if (value.kind === "Literal") emit(value, "const", this.constant(value.literal, value));
         else if (value.kind === "NamedExpression") { expr(value.value); emit(value, "dup"); emit(value, "store", value.name); }
+        else if (value.kind === "Lambda") makeFunction(value);
         else if (value.kind === "Name") value.name === "__debug__" ? emit(value, "const", this.constant({type: "bool", value: true}, value)) : emit(value, "load", value.name);
         else if (["List", "Tuple"].includes(value.kind)) {
           if (value.items.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
@@ -342,14 +351,7 @@ class Compiler {
             const name = this.temporary(scope, decorator); expr(decorator); emit(decorator, "store", name);
             return {name, site: decorator};
           });
-          if (value.kind === "Function") {
-            if (this.runtimeDefaults(value)) {
-              const positional = [...value.params.posonly, ...value.params.positional].filter(param => param.value !== null);
-              const keywords = value.params.kwonly.filter(param => param.value !== null);
-              [...positional, ...keywords].forEach(param => expr(param.value));
-              emit(value, "function-defaults", this.scopeOf.get(value).index, positional.length, keywords.map(param => param.name));
-            } else emit(value, "function", this.scopeOf.get(value).index);
-          }
+          if (value.kind === "Function") makeFunction(value);
           else {
             if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
             value.bases.forEach(expr); emit(value, "class", this.scopeOf.get(value).index, value.bases.length);

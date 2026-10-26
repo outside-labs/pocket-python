@@ -47,7 +47,7 @@ export function verifyFunctions(program) {
     fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : []), ...scopeFields]);
     const kind = classes ? fn.kind : functionIndex === 0 ? "module" : "function";
     if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
-    if (!(fn.name === "<module>" && functionIndex === 0) && !validName(fn.name)) fail("Invalid function name.");
+    if (!(fn.name === "<module>" && functionIndex === 0) && !(modern && fn.name === "<lambda>" && kind === "function") && !validName(fn.name)) fail("Invalid function name.");
     if (typeof fn.qualname !== "string" || !fn.qualname || fn.qualname.length > 256) fail("Invalid qualified function name.");
     const variadic = modern ? ["vararg", "kwarg"].filter(key => Object.hasOwn(fn.params, key)) : [];
     fields(fn.params, ["posonly", "positional", "kwonly", "defaults", "kwdefaults", ...variadic]);
