@@ -588,9 +588,9 @@
     },
     {
       "id": "dynamic-code-reflection",
-      "status": "deferred",
-      "scope": "compile/eval/exec, dynamic imports and broader globals/locals/type/attribute reflection.",
-      "gaps": "Source admission, namespace/identity and target authority need separate explicit contracts.",
+      "status": "partial",
+      "scope": "getattr/setattr/delattr/hasattr on adopted class attributes through ordinary owned descriptor callbacks.",
+      "gaps": "Dynamic source admission, namespaces, richer types and broader reflection remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1065,9 +1065,9 @@
     },
     {
       "id": "delattr",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression.",
+      "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1079,7 +1079,9 @@
       "probes": [
         "builtin-delattr"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults"
+      ]
     },
     {
       "id": "dict",
@@ -1267,9 +1269,9 @@
     },
     {
       "id": "getattr",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression.",
+      "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1281,7 +1283,9 @@
       "probes": [
         "builtin-getattr"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults"
+      ]
     },
     {
       "id": "globals",
@@ -1303,9 +1307,9 @@
     },
     {
       "id": "hasattr",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression.",
+      "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1317,7 +1321,9 @@
       "probes": [
         "builtin-hasattr"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults"
+      ]
     },
     {
       "id": "hash",
@@ -1862,9 +1868,9 @@
     },
     {
       "id": "setattr",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression.",
+      "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1876,7 +1882,9 @@
       "probes": [
         "builtin-setattr"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults"
+      ]
     },
     {
       "id": "slice",

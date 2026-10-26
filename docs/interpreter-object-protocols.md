@@ -2,7 +2,8 @@
 
 INT-OBJECT-01 adopts finite slices against CPython 3.14.7. The authored
 `object-protocols.json` reference must also execute independently in Node and
-Chromium, draining and instruction-boundary drivers. Classes remain explicit in
+Chromium, draining and instruction-boundary drivers. O1 is implemented; O2 is the next stage. Attribute names can be arbitrary strings
+within the 256-code-unit name quota. Classes remain explicit in
 classes-source/1; core-source/1 keeps primitive arithmetic and generator support.
 
 | Stage | Finite contract |

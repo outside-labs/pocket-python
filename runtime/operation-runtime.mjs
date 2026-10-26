@@ -286,6 +286,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "attribute-result" && value.name === "AttributeError") return valueTask(current.mode === "hasattr" ? false : current.default, site, current.after);
       if (current.kind === "delegate-bind" && value.name === "AttributeError") return unaryTask("delegate-raise", current.receiver, site);
       if (current.kind.startsWith("call-map-") && (value.name === "AttributeError" || value.name === "KeyError" && current.mode !== "display"))
         return value.name === "KeyError" ? duplicateKeyword(current.receiver, value.args[0] ?? current.key, site, current.after) :
@@ -333,6 +334,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       completion = completion.after;
     }
+    if (completion?.kind === "attribute-write") return valueTask(null, site, completion.after);
+    if (completion?.kind === "attribute-result") return valueTask(completion.mode === "hasattr" ? true : value, site, completion.after);
     if (completion?.kind === "delegate-bind") return callTask(value, completion.args, [], [], site, completion.after);
     if (completion?.kind.startsWith("delegate-")) return delegateResult(completion.kind, value, site);
     count("deliver:" + (completion?.kind ?? "stack"));
@@ -1033,6 +1036,27 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (["getattr", "setattr", "delattr", "hasattr"].includes(callable.name)) {
+            const name = callable.name, writing = name === "setattr" || name === "delattr";
+            if (keywords.length || args.length < 2 || args.length > (name === "getattr" || name === "setattr" ? 3 : 2) || name === "setattr" && args.length !== 3)
+              python("TypeError", name + "() received invalid arguments");
+            const attribute = values.text(args[1]);
+            if (attribute === null) python("TypeError", "attribute name must be string");
+            if (attribute.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
+            const receiver = args[0], optional = name === "hasattr" || name === "getattr" && args.length === 3;
+            const target = writing ? continuation("attribute-write", {receiver, after: completion}) : optional ?
+              continuation("attribute-result", {receiver, default: args[2] ?? null, mode: name, after: completion}) : completion;
+            let plan;
+            try { plan = writing ? classes.write(receiver, attribute, args[2] ?? null, name === "delattr") : classes.read(receiver, attribute); }
+            catch (error) {
+              const recovery = error instanceof Raised && recover(error.value, target, site);
+              if (!recovery) throw error;
+              task = recovery; continue;
+            }
+            task = plan.kind === "value" ? valueTask(writing ? null : name === "hasattr" ? true : plan.value, site, completion) :
+              callTask(plan.callable, plan.args, [], [], site, target, depth);
+            continue;
+          }
           if (callable instanceof ValueMethod && callable.receiver instanceof GeneratorValue) {
             if (keywords.length || args.length !== (callable.name === "close" || callable.name === "__iter__" || callable.name === "__next__" ? 0 : 1)) {
               if (callable.name === "throw" && args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multi-argument generator.throw requires a separate stage.");
