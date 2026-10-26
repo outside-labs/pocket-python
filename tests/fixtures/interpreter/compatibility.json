@@ -292,31 +292,31 @@
     {
       "id": "computed-default",
       "source": "def f(x=1+2): return x\nprint(f())\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "3\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
+        "stdout": "3\n",
         "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "bind"
+        "code": null,
+        "phase": null
       }
     },
     {
       "id": "mutable-default",
       "source": "def f(x=[]): return x\nprint(len(f()))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "0\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
+        "stdout": "0\n",
         "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "bind"
+        "code": null,
+        "phase": null
       }
     },
     {
@@ -367,31 +367,31 @@
     {
       "id": "global-write",
       "source": "x=1\ndef f():\n global x\n x=2\nf()\nprint(x)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "2\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
+        "stdout": "2\n",
         "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "code": null,
+        "phase": null
       }
     },
     {
       "id": "nonlocal-write",
       "source": "def outer():\n x=1\n def f():\n  nonlocal x\n  x=2\n f()\n return x\nprint(outer())\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "2\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
+        "stdout": "2\n",
         "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "code": null,
+        "phase": null
       }
     },
     {
