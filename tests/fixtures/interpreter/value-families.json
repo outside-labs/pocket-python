@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "V1",
-    "V2"
+    "V2",
+    "V3"
   ],
   "cases": [
     {
@@ -1083,6 +1084,178 @@
       "id": "future-bytearray-delete",
       "stage": "Future",
       "source": "a=bytearray(b\"ab\"); del a[0]\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
+    },
+    {
+      "id": "view-owner-lifetime",
+      "stage": "V3",
+      "source": "b=bytearray(b\"abc\"); a=memoryview(b); c=memoryview(a)[1:]; del a; del b; c[0]=90; print(c.tobytes()==b\"Zc\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "view-empty-stride",
+      "stage": "V3",
+      "source": "a=memoryview(b\"\")[::2]; b=memoryview(b\"a\")[::2]; print(a.contiguous,b.contiguous,a.strides[0],len(a))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "False True 2 0\n"
+    },
+    {
+      "id": "view-huge-step",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\")[::10**100]; print(len(a),a.strides[0],a[0]); b=memoryview(b\"abc\")[::-10**100]; print(b.strides[0],b[0])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "1 9223372036854775807 97\n-9223372036854775807 99\n"
+    },
+    {
+      "id": "view-released-equality",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); b=memoryview(b\"abc\"); a.release(); print(a==a,a==b,a==b\"abc\",a!=b)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True False False True\n"
+    },
+    {
+      "id": "view-released-metadata",
+      "stage": "V3",
+      "source": "a=memoryview(b\"a\"); a.release(); print(a.obj)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "view-released-hash-cached",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); h=hash(a); a.release(); print(hash(a)==h)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "view-released-hash-uncached",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); a.release(); hash(a)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "view-iterator-released",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); i=iter(a); print(next(i)); a.release(); next(i)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "97\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "view-readonly-owner",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); b=a.toreadonly(); print(b.obj is a.obj,b is a,b.readonly)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True False True\n"
+    },
+    {
+      "id": "view-binary-operations",
+      "stage": "V3",
+      "source": "a=memoryview(b\"ab\"); print(a in b\"abc\",b\"z\"+a==b\"zab\",bytearray(b\"z\")+a==b\"zab\",len(set([a,b\"ab\"])))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True 1\n"
+    },
+    {
+      "id": "view-ordering-error",
+      "stage": "V3",
+      "source": "memoryview(b\"a\")<memoryview(b\"b\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "view-byte-range",
+      "stage": "V3",
+      "source": "a=memoryview(bytearray(b\"a\")); a[0]=256\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "view-source-keyword",
+      "stage": "V3",
+      "source": "memoryview(object=b\"a\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
+    },
+    {
+      "id": "view-byte-index-callback",
+      "stage": "V3",
+      "source": "class I:\n def __index__(self): print(\"index\"); return 0\na=memoryview(bytearray(b\"a\")); a[I()]=I(); print(a[0])\n",
+      "stdout": "index\nindex\n0\n"
+    },
+    {
+      "id": "view-release-during-index",
+      "stage": "V3",
+      "source": "a=memoryview(bytearray(b\"a\"))\nclass I:\n def __index__(self): a.release(); return 0\na[I()]=1\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "view-membership-equality",
+      "stage": "V3",
+      "source": "class K:\n def __eq__(self,n): print(n); return n==98\nprint(K() in memoryview(b\"abc\"))\n",
+      "stdout": "97\n98\nTrue\n"
+    },
+    {
+      "id": "future-view-slice-assignment",
+      "stage": "Future",
+      "source": "a=memoryview(bytearray(b\"abc\")); a[:]=b\"def\"\n",
+      "stdout": ""
+    },
+    {
+      "id": "future-view-order-option",
+      "stage": "Future",
+      "source": "memoryview(b\"abc\").tobytes(\"C\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
+    },
+    {
+      "id": "future-view-nested-stride-overflow",
+      "stage": "Future",
+      "source": "memoryview(b\"abc\")[::2][::10**100]\n",
       "profiles": [
         "core-source/1",
         "classes-source/1"

@@ -31,6 +31,12 @@ class SetValue {
 class BinaryValue {
   constructor(items, mutable) { this.items = mutable ? [...items] : Object.freeze([...items]); this.mutable = mutable; }
 }
+class MemoryViewValue {
+  constructor(owner, offset, stride, length, readonly) {
+    this.owner = owner; this.offset = offset; this.stride = stride; this.length = length;
+    this.readonly = readonly; this.released = false; this.cachedHash = null;
+  }
+}
 class RangeValue {
   constructor(start, stop, step, length) {
     this.start = start; this.stop = stop; this.step = step; this.length = length; Object.freeze(this);
@@ -163,6 +169,46 @@ export class ValueRuntime {
   }
   isString(value) { this.charge(1); return value instanceof StringValue; }
   isBinary(value) { return value instanceof BinaryValue; }
+  isView(value) { return value instanceof MemoryViewValue; }
+  liveView(value) { if (value.released) this.fail("ValueError", "operation forbidden on released memoryview object"); }
+  view(owner, readonly = null) {
+    if (owner instanceof MemoryViewValue) {
+      this.liveView(owner); return this.viewValue(owner.owner, owner.offset, owner.stride, owner.length, readonly ?? owner.readonly);
+    }
+    if (!(owner instanceof BinaryValue)) this.fail("TypeError", "memoryview requires an adopted bytes-like object");
+    return this.viewValue(owner, 0n, 1n, owner.items.length, readonly ?? !owner.mutable);
+  }
+  viewValue(owner, offset, stride, length, readonly) {
+    this.charge(1); return this.make(112, [owner], () => new MemoryViewValue(owner, offset, stride, length, readonly));
+  }
+  viewItems(value) {
+    this.liveView(value); const items = [];
+    for (let index = 0; index < value.length; index++) { this.charge(1); items.push(value.owner.items[Number(value.offset + value.stride * BigInt(index))]); }
+    return items;
+  }
+  viewMethod(name) {
+    if (["release", "tobytes", "tolist", "toreadonly"].includes(name)) return true;
+    if (["cast", "hex", "count", "index", "__enter__", "__exit__"].includes(name))
+      this.fail("UnsupportedOperationError", "This buffer-view API requires a later value stage.", "UNSUPPORTED");
+    return false;
+  }
+  viewAttribute(value, name) {
+    this.liveView(value); this.charge(1);
+    if (name === "obj") return value.owner;
+    if (name === "readonly") return value.readonly;
+    if (name === "format") return this.string([66]);
+    if (["itemsize", "ndim"].includes(name)) return 1n;
+    if (name === "nbytes") return this.int(BigInt(value.length));
+    if (name === "shape") return this.tuple([this.int(BigInt(value.length))]);
+    if (name === "strides") return this.tuple([this.int(value.stride)]);
+    if (name === "suboffsets") return this.tuple([]);
+    if (["contiguous", "c_contiguous", "f_contiguous"].includes(name)) return value.length === 1 || value.stride === 1n;
+    this.fail("AttributeError", "memoryview has no attribute '" + name + "'");
+  }
+  releaseView(value) {
+    if (value.released) return null;
+    this.charge(1); this.resize(value, 112, []); value.owner = null; value.released = true; return null;
+  }
   binaryValue(items, mutable = false) {
     this.limit(items.length <= VALUE_LIMITS.text, "Binary length budget exceeded."); this.charge(items.length + 1);
     return this.make(64 + items.length, [], () => new BinaryValue(items, mutable));
@@ -280,7 +326,7 @@ export class ValueRuntime {
     return this.string(Array.from(text, char => char.codePointAt(0)));
   }
   isSlice(value) { return value instanceof SliceValue; }
-  isSequence(value) { return sequence(value) || value instanceof RangeValue; }
+  isSequence(value) { return sequence(value) || value instanceof RangeValue || value instanceof MemoryViewValue; }
   sliceKey(start, stop, step) { return this.make(88, [start, stop, step], () => new SliceValue(start, stop, step)); }
   sliceAttribute(value, name) {
     this.charge(1);
@@ -474,6 +520,7 @@ export class ValueRuntime {
   }
   truth(value) {
     this.charge(1);
+    if (value instanceof MemoryViewValue) { this.liveView(value); return value.length !== 0; }
     if (value instanceof NotImplementedValue) this.fail("TypeError", "NotImplemented should not be used in a boolean context");
     if (value === null) return false;
     if (value instanceof RangeValue) return value.length !== 0n;
@@ -489,6 +536,13 @@ export class ValueRuntime {
   }
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof MemoryViewValue || right instanceof MemoryViewValue) {
+      if (left === right) return true;
+      if (left instanceof MemoryViewValue && left.released || right instanceof MemoryViewValue && right.released) return false;
+      if (!(left instanceof MemoryViewValue || left instanceof BinaryValue) || !(right instanceof MemoryViewValue || right instanceof BinaryValue)) return false;
+      const a = left instanceof MemoryViewValue ? this.viewItems(left) : left.items, b = right instanceof MemoryViewValue ? this.viewItems(right) : right.items;
+      this.charge(Math.min(a.length, b.length) + 1); return a.length === b.length && a.every((byte, index) => byte === b[index]);
+    }
     if (left instanceof BinaryValue || right instanceof BinaryValue) {
       if (!(left instanceof BinaryValue && right instanceof BinaryValue)) return false;
       this.charge(Math.min(left.items.length, right.items.length) + 1);
@@ -541,6 +595,7 @@ export class ValueRuntime {
   }
   less(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof MemoryViewValue || right instanceof MemoryViewValue) this.fail("TypeError", "memoryview does not support ordering");
     if (left instanceof BinaryValue || right instanceof BinaryValue) {
       if (!(left instanceof BinaryValue && right instanceof BinaryValue)) this.fail("TypeError", "Binary ordering requires binary operands");
       for (let index = 0; index < Math.min(left.items.length, right.items.length); index++) {
@@ -574,6 +629,7 @@ export class ValueRuntime {
   }
   hash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof MemoryViewValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof BinaryValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof SetValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue)
@@ -625,6 +681,14 @@ export class ValueRuntime {
   }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof MemoryViewValue) {
+      if (value.cachedHash !== null) return value.cachedHash;
+      this.liveView(value);
+      if (!value.readonly) this.fail("ValueError", "cannot hash writable memoryview object");
+      if (value.owner.mutable) this.fail("TypeError", "unhashable type: 'bytearray'");
+      const hash = this.pythonHash(this.binaryValue(this.viewItems(value)), depth + 1);
+      value.cachedHash = hash; return hash;
+    }
     if (value instanceof BinaryValue && value.mutable) this.fail("TypeError", "unhashable type: 'bytearray'");
     if (value instanceof SetValue) {
       if (!value.frozen) this.fail("TypeError", "unhashable type: 'set'");
@@ -726,6 +790,13 @@ export class ValueRuntime {
     return -1;
   }
   index(value, index) {
+    if (value instanceof MemoryViewValue) {
+      this.liveView(value); index = integer(index);
+      if (typeof index !== "bigint") this.fail("TypeError", "memoryview indices must be integers");
+      if (index < 0n) index += BigInt(value.length);
+      if (index < 0n || index >= BigInt(value.length)) this.fail("IndexError", "memoryview index out of bounds");
+      this.charge(1); return this.int(BigInt(value.owner.items[Number(value.offset + value.stride * index)]));
+    }
     if (value instanceof DictValue) {
       const found = this.find(value, index);
       if (found < 0) this.fail("KeyError", "Dictionary key not found.");
@@ -745,6 +816,15 @@ export class ValueRuntime {
     return value instanceof StringValue ? this.string([items[Number(index)]]) : value instanceof BinaryValue ? this.int(BigInt(items[Number(index)])) : items[Number(index)];
   }
   set(value, key, item) {
+    if (value instanceof MemoryViewValue) {
+      this.liveView(value);
+      if (value.readonly) this.fail("TypeError", "cannot modify read-only memory");
+      key = integer(key);
+      if (typeof key !== "bigint") this.fail("TypeError", "memoryview indices must be integers");
+      if (key < 0n) key += BigInt(value.length);
+      if (key < 0n || key >= BigInt(value.length)) this.fail("IndexError", "memoryview index out of bounds");
+      const byte = this.byte(item); this.charge(1); value.owner.items[Number(value.offset + value.stride * key)] = byte; return null;
+    }
     if (value instanceof BinaryValue) {
       if (!value.mutable) this.fail("TypeError", "bytes object does not support item assignment");
       key = integer(key);
@@ -786,6 +866,7 @@ export class ValueRuntime {
     value.items.push(item); return null;
   }
   remove(value, key) {
+    if (value instanceof MemoryViewValue) { this.liveView(value); this.fail("TypeError", "cannot delete memory"); }
     if (value instanceof BinaryValue && value.mutable) this.fail("UnsupportedOperationError", "Bytearray deletion requires a later value stage.", "UNSUPPORTED");
     if (value instanceof ListValue) {
       key = integer(key);
@@ -841,11 +922,14 @@ export class ValueRuntime {
     this.resize(value, 64 + 8 * items.length, items); value.items = items; return null;
   }
   slice(value, start, stop, step) {
-    if (!sequence(value) && !(value instanceof RangeValue)) this.fail("TypeError", "Slicing requires an adopted sequence.");
-    const items = value instanceof RangeValue ? null : elements(value), length = value instanceof RangeValue ? value.length : BigInt(items.length);
+    if (value instanceof MemoryViewValue) this.liveView(value);
+    if (!sequence(value) && !(value instanceof RangeValue || value instanceof MemoryViewValue)) this.fail("TypeError", "Slicing requires an adopted sequence.");
+    const items = value instanceof RangeValue || value instanceof MemoryViewValue ? null : elements(value),
+      length = value instanceof RangeValue ? value.length : value instanceof MemoryViewValue ? BigInt(value.length) : BigInt(items.length);
     step = step === null ? 1n : integer(step);
     if (typeof step !== "bigint") this.fail("TypeError", "slice indices must be integers or None");
     if (step === 0n) this.fail("ValueError", "slice step cannot be zero");
+    if (value instanceof MemoryViewValue) step = step < -9223372036854775807n ? -9223372036854775807n : step > 9223372036854775807n ? 9223372036854775807n : step;
     const positive = step > 0n, low = positive ? 0n : -1n, high = positive ? length : length - 1n;
     const normalize = (index, fallback) => {
       if (index === null) return fallback;
@@ -855,6 +939,13 @@ export class ValueRuntime {
       return index < low ? low : index > high ? high : index;
     };
     start = normalize(start, positive ? 0n : length - 1n); stop = normalize(stop, positive ? length : -1n);
+    if (value instanceof MemoryViewValue) {
+      const stride = value.stride * step;
+      if (stride < -9223372036854775808n || stride > 9223372036854775807n)
+        this.fail("UnsupportedOperationError", "Nested buffer strides outside the signed-size range require a later value stage.", "UNSUPPORTED");
+      const distance = positive ? stop - start : start - stop, magnitude = positive ? step : -step;
+      return this.viewValue(value.owner, value.offset + value.stride * start, stride, Number(distance <= 0n ? 0n : (distance - 1n) / magnitude + 1n), value.readonly);
+    }
     if (value instanceof RangeValue) {
       this.charge((value.step.toString().length + 1) * (start.toString().length + stop.toString().length + step.toString().length));
       return this.range([this.int(value.start + value.step * start), this.int(value.start + value.step * stop), this.int(value.step * step)]);
@@ -866,7 +957,8 @@ export class ValueRuntime {
   iterator(value) {
     if (value instanceof IteratorValue) return value;
     if (value instanceof RangeValue) { this.charge(1); return this.make(80, [value, 0n], () => new IteratorValue(value)); }
-    if (!sequence(value) && !(value instanceof DictValue || value instanceof SetValue)) this.fail("TypeError", "Value is not iterable in this stage.");
+    if (value instanceof MemoryViewValue) this.liveView(value);
+    if (!sequence(value) && !(value instanceof DictValue || value instanceof SetValue || value instanceof MemoryViewValue)) this.fail("TypeError", "Value is not iterable in this stage.");
     this.charge(1); return this.make(64, [value], () => new IteratorValue(value));
   }
   isIterator(value) { this.charge(1); return value instanceof IteratorValue || value instanceof ProtocolIteratorValue; }
@@ -874,6 +966,11 @@ export class ValueRuntime {
     if (!(iterator instanceof IteratorValue)) this.fail("TypeError", "next requires an iterator.");
     const value = iterator.value; this.charge(1);
     if (iterator.exhausted) this.fail("StopIteration", "");
+    if (value instanceof MemoryViewValue) {
+      this.liveView(value);
+      if (iterator.index >= value.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
+      return this.index(value, BigInt(iterator.index++));
+    }
     if (value instanceof RangeValue) {
       if (iterator.index >= value.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
       this.charge(value.start.toString().length + value.step.toString().length * iterator.index.toString().length);
@@ -896,12 +993,14 @@ export class ValueRuntime {
     return value instanceof StringValue ? this.string([item]) : value instanceof BinaryValue ? this.int(BigInt(item)) : item;
   }
   contains(key, value) {
+    if (value instanceof MemoryViewValue) return this.viewItems(value).some(byte => this.equal(this.int(BigInt(byte)), key));
     if (value instanceof BinaryValue) {
       if (["bigint", "boolean"].includes(typeof key)) { const byte = this.byte(key); this.charge(value.items.length + 1); return value.items.includes(byte); }
-      if (!(key instanceof BinaryValue)) this.fail("TypeError", "Binary membership requires a byte integer or binary sequence");
-      this.charge((value.items.length + 1) * (key.items.length + 1));
-      for (let index = 0; index <= value.items.length - key.items.length; index++)
-        if (key.items.every((byte, offset) => byte === value.items[index + offset])) return true;
+      if (!(key instanceof BinaryValue || key instanceof MemoryViewValue)) this.fail("TypeError", "Binary membership requires a byte integer or binary sequence");
+      const items = key instanceof MemoryViewValue ? this.viewItems(key) : key.items;
+      this.charge((value.items.length + 1) * (items.length + 1));
+      for (let index = 0; index <= value.items.length - items.length; index++)
+        if (items.every((byte, offset) => byte === value.items[index + offset])) return true;
       return false;
     }
     if (value instanceof SetValue) return this.findSet(value, key) >= 0;
@@ -932,6 +1031,7 @@ export class ValueRuntime {
     if (operation === "truth") return this.truth(value);
     if (operation === "not") return !this.truth(value);
     if (operation === "len") {
+      if (value instanceof MemoryViewValue) { this.liveView(value); return this.int(BigInt(value.length)); }
       if (value instanceof RangeValue) {
         if (value.length > 9223372036854775807n) this.fail("OverflowError", "Python int too large to convert to length");
         return value.length;
@@ -969,8 +1069,8 @@ export class ValueRuntime {
     if (operation === "getitem") return this.index(left, right);
     if (operation === "append") return this.append(left, right);
     if (operation === "dict-delete") return this.remove(left, right);
-    if (left instanceof BinaryValue && operation === "add" && right instanceof BinaryValue)
-      return this.binaryValue([...left.items, ...right.items], left.mutable);
+    if (left instanceof BinaryValue && operation === "add" && (right instanceof BinaryValue || right instanceof MemoryViewValue))
+      return this.binaryValue([...left.items, ...(right instanceof MemoryViewValue ? this.viewItems(right) : right.items)], left.mutable);
     if (operation === "multiply" && (left instanceof BinaryValue || right instanceof BinaryValue)) {
       const value = left instanceof BinaryValue ? left : right, count = integer(value === left ? right : left);
       if (typeof count !== "bigint") this.fail("TypeError", "Binary repetition requires an integer");
@@ -1139,6 +1239,7 @@ export function valueLayout(value) {
   if (value instanceof RangeValue) return {bytes: 112, children: [value.start, value.stop, value.step, value.length]};
   if (value instanceof StringValue) return {bytes: 64 + 4 * value.points.length, children: []};
   if (value instanceof BinaryValue) return {bytes: 64 + value.items.length, children: []};
+  if (value instanceof MemoryViewValue) return {bytes: 112, children: value.released ? [] : [value.owner]};
   if (value instanceof TupleValue || value instanceof ListValue) return {bytes: 64 + 8 * value.items.length, children: value.items};
   if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
