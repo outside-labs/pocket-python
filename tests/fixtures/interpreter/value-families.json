@@ -1,0 +1,925 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-value-families/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "set-empty",
+      "stage": "V1",
+      "source": "print(len(set()),len(frozenset()),bool(set()),bool(frozenset()))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "0 0 False False\n"
+    },
+    {
+      "id": "set-display",
+      "stage": "V1",
+      "source": "s={1,2,1,True,1.0}\nprint(len(s),1 in s,2 in s,3 not in s)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "2 True True True\n"
+    },
+    {
+      "id": "set-string",
+      "stage": "V1",
+      "source": "s=set(\"abca\")\nprint(len(s),\"a\" in s,\"z\" in s)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "3 True False\n"
+    },
+    {
+      "id": "set-construct",
+      "stage": "V1",
+      "source": "s=set([1,2,2]); f=frozenset(s)\nprint(s==f,f=={2,1},s!=set(),len(set({1:2,3:4})))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True 2\n"
+    },
+    {
+      "id": "frozen-identity",
+      "stage": "V1",
+      "source": "a=frozenset([1]); b=frozenset(a); c=set(a)\nprint(a is b,a==c,a is c)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "set-star-display",
+      "stage": "V1",
+      "source": "s={0,*range(4),*[3,4]}\nprint(len(s),4 in s,5 in s)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "5 True False\n"
+    },
+    {
+      "id": "set-algebra",
+      "stage": "V1",
+      "source": "a={1,2}; b=frozenset([2,3])\nprint(a|b=={1,2,3},a&b=={2},a-b=={1},a^b=={1,3})\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "set-subsets",
+      "stage": "V1",
+      "source": "print({1}<{1,2},{1}<={1},{1,2}>{1},{1}>={1},set()<{1})\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True True True\n"
+    },
+    {
+      "id": "set-order-type",
+      "stage": "V1",
+      "source": "{1}<[1]\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-mutation",
+      "stage": "V1",
+      "source": "s=set(); a=s\nprint(s.add(1),s.add(True),len(a)); print(s.discard(2)); print(s.remove(1),len(s)); s.add(3); print(s.clear(),len(a))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "None None 1\nNone\nNone 0\nNone 0\n"
+    },
+    {
+      "id": "set-copy",
+      "stage": "V1",
+      "source": "s={1}; t=s.copy(); t.add(2)\nprint(s is t,len(s),len(t)); f=frozenset(s); print(f.copy() is f)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "False 1 2\nTrue\n"
+    },
+    {
+      "id": "set-remove-missing",
+      "stage": "V1",
+      "source": "set().remove(1)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "frozen-mutation",
+      "stage": "V1",
+      "source": "frozenset().add(1)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "set-unhashable-item",
+      "stage": "V1",
+      "source": "set([[1]])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-arity",
+      "stage": "V1",
+      "source": "set(1,2)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-keyword",
+      "stage": "V1",
+      "source": "set(iterable=[1])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-not-iterable",
+      "stage": "V1",
+      "source": "set(2)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-iterator",
+      "stage": "V1",
+      "source": "s={10}; i=iter(s); print(next(i)); s.add(20); next(i)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "10\n",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "set-exhaustion",
+      "stage": "V1",
+      "source": "i=iter(set()); print(next(i,8)); print(next(i,9))\n",
+      "stdout": "8\n9\n"
+    },
+    {
+      "id": "set-frozen-key",
+      "stage": "V1",
+      "source": "a=frozenset([1,2]); b=frozenset([2,1]); d={a:7}\nprint(a==b,hash(a)==hash(b),d[b],a in {b})\n",
+      "stdout": "True True 7 True\n"
+    },
+    {
+      "id": "set-mutable-lookup",
+      "stage": "V1",
+      "source": "s={frozenset([1])}\nprint({1} in s,s.discard({1}),len(s))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True None 0\n"
+    },
+    {
+      "id": "set-nan-identity",
+      "stage": "V1",
+      "source": "n=float(\"nan\"); a={n,n}; b={float(\"nan\")}\nprint(len(a),n in a,len(a|b))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "1 True 2\n"
+    },
+    {
+      "id": "set-iterator-values",
+      "stage": "V1",
+      "source": "s={5}; print(list(s)[0],tuple(frozenset(s))[0],all(s),any(set()))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "5 5 True False\n"
+    },
+    {
+      "id": "set-isinstance",
+      "stage": "V1",
+      "source": "print(isinstance(set(),set),isinstance(frozenset(),frozenset),isinstance(set(),frozenset))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "set-owned-callbacks",
+      "stage": "V1",
+      "source": "class K:\n def __init__(self,n): self.n=n\n def __hash__(self): print(\"hash\",self.n); return 4\n def __eq__(self,o): print(\"equal\",self.n,o.n); return self.n==o.n\na=K(1); b=K(1); s=set([a,b]); print(len(s),b in s); s.remove(b); print(len(s))\n",
+      "stdout": "hash 1\nhash 1\nequal 1 1\nhash 1\nequal 1 1\n1 True\nhash 1\nequal 1 1\n0\n"
+    },
+    {
+      "id": "set-owned-iterator",
+      "stage": "V1",
+      "source": "class I:\n def __iter__(self): return self\n def __next__(self):\n  global n\n  n+=1\n  if n>3: raise StopIteration\n  return n\nn=0; s=set(I()); print(len(s),3 in s,n)\n",
+      "stdout": "3 True 4\n"
+    },
+    {
+      "id": "set-owned-indexed",
+      "stage": "V1",
+      "source": "class I:\n def __getitem__(self,i):\n  if i==3: raise IndexError\n  return i\ns=frozenset(I()); print(len(s),2 in s)\n",
+      "stdout": "3 True\n"
+    },
+    {
+      "id": "set-hash-error",
+      "stage": "V1",
+      "source": "class K:\n def __hash__(self): raise ValueError(\"hash\")\nset([K()])\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "set-equality-error",
+      "stage": "V1",
+      "source": "class K:\n def __hash__(self): return 4\n def __eq__(self,o): raise ValueError(\"equal\")\nset([K(),K()])\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "set-owned-equality",
+      "stage": "V1",
+      "source": "class K:\n def __hash__(self): return 4\n def __eq__(self,o): return True\na=set([K()]); b=frozenset([K()]); print(a==b,a!=b)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "bytes-empty-count",
+      "stage": "V2",
+      "source": "print(len(bytes()),len(bytearray()),len(bytes(3)),bytes(3)[1],len(bytearray(True)))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "0 0 3 0 1\n"
+    },
+    {
+      "id": "bytes-literals",
+      "stage": "V2",
+      "source": "a=b\"A\\x00\\377\\n\"; print(len(a),a[0],a[1],a[2],a[3]); print(br\"\\x41\"==b\"\\\\x41\",b\"a\" b\"b\"==b\"ab\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "4 65 0 255 10\nTrue True\n"
+    },
+    {
+      "id": "bytes-unicode-escapes",
+      "stage": "V2",
+      "source": "a=b\"\\u0041\\U00000041\\N{A}\"; print(a==br\"\\u0041\\U00000041\\N{A}\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-octal-wrap",
+      "stage": "V2",
+      "source": "print(b\"\\400\\777\"==bytes([0,255]))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-nonascii-source",
+      "stage": "V2",
+      "source": "x=b\"\u00e9\"\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "bytes-mixed-adjacent",
+      "stage": "V2",
+      "source": "x=b\"a\" \"b\"\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "bytes-construct",
+      "stage": "V2",
+      "source": "a=bytes([0,1,255,True]); b=bytearray(a); print(a==b,len(a),b[-1],bytes(a) is a); b[0]=42; print(a[0],b[0])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True 4 1 True\n0 42\n"
+    },
+    {
+      "id": "bytes-range",
+      "stage": "V2",
+      "source": "a=bytes(range(4)); print(a[0],a[-1],list(a)[2],tuple(a)[3])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "0 3 2 3\n"
+    },
+    {
+      "id": "bytes-slices",
+      "stage": "V2",
+      "source": "a=b\"abcdef\"; print(a[1:5:2]==b\"bd\",a[::-1]==b\"fedcba\",a[99:]==b\"\",bytearray(a)[::-2]==b\"fdb\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "bytes-membership",
+      "stage": "V2",
+      "source": "a=b\"abc\"; print(97 in a,100 not in a,b\"ab\" in a,b\"\" in a,bytearray(b\"bc\") in a)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True True True\n"
+    },
+    {
+      "id": "bytes-contains-range",
+      "stage": "V2",
+      "source": "256 in b\"a\"\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "bytes-contains-type",
+      "stage": "V2",
+      "source": "\"a\" in b\"abc\"\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-comparison",
+      "stage": "V2",
+      "source": "print(b\"a\"<bytearray(b\"b\"),b\"ab\"<=b\"ab\",b\"b\">b\"a\",b\"a\"==\"a\",b\"a\"==bytearray(b\"a\"))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True False True\n"
+    },
+    {
+      "id": "bytes-arithmetic",
+      "stage": "V2",
+      "source": "print(b\"ab\"+bytearray(b\"cd\")==b\"abcd\",bytearray(b\"a\")+b\"b\"==b\"ab\",b\"ab\"*3==b\"ababab\",2*b\"c\"==b\"cc\",b\"a\"*(-1)==b\"\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True True True\n"
+    },
+    {
+      "id": "bytes-mutate",
+      "stage": "V2",
+      "source": "a=bytearray(b\"abc\"); b=a; a[-1]=255; a[True]=False; print(b[2],b[1])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "255 0\n"
+    },
+    {
+      "id": "bytes-immutable",
+      "stage": "V2",
+      "source": "a=b\"a\"; a[0]=2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-byte-range",
+      "stage": "V2",
+      "source": "bytes([256])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "bytes-byte-negative",
+      "stage": "V2",
+      "source": "bytearray([-1])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "bytes-negative-count",
+      "stage": "V2",
+      "source": "bytes(-1)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "bytes-float-item",
+      "stage": "V2",
+      "source": "bytes([1.0])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-missing-encoding",
+      "stage": "V2",
+      "source": "bytes(\"hello\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-encoding-without-text",
+      "stage": "V2",
+      "source": "bytes([1],\"utf8\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-utf8",
+      "stage": "V2",
+      "source": "a=bytes(\"A\u00e9\ud83d\ude00\",\"utf-8\"); print(len(a),a[1],a[-1],a.decode()==\"A\u00e9\ud83d\ude00\",\"A\u00e9\ud83d\ude00\".encode()==a)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "7 195 128 True True\n"
+    },
+    {
+      "id": "bytes-ascii-latin",
+      "stage": "V2",
+      "source": "print(\"abc\".encode(\"ASCII\")==b\"abc\",bytes(\"\u00e9\",\"latin_1\")==b\"\\xe9\",b\"\\xe9\".decode(\"latin-1\")==\"\u00e9\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "bytes-codec-keywords",
+      "stage": "V2",
+      "source": "print(bytes(\"a\",encoding=\"utf8\",errors=\"strict\")==b\"a\",\"abc\".encode(encoding=\"ascii\")==b\"abc\",b\"abc\".decode(encoding=\"ascii\")==\"abc\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "bytes-surrogate-encode",
+      "stage": "V2",
+      "source": "bytes(\"\\ud800\",\"utf8\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "UnicodeEncodeError"
+    },
+    {
+      "id": "bytes-ascii-encode-error",
+      "stage": "V2",
+      "source": "\"\u00e9\".encode(\"ascii\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "UnicodeEncodeError"
+    },
+    {
+      "id": "bytes-ascii-decode-error",
+      "stage": "V2",
+      "source": "b\"\\x80\".decode(\"ascii\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "UnicodeDecodeError"
+    },
+    {
+      "id": "bytes-utf8-overlong",
+      "stage": "V2",
+      "source": "b\"\\xc0\\xaf\".decode()\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "UnicodeDecodeError"
+    },
+    {
+      "id": "bytes-utf8-surrogate",
+      "stage": "V2",
+      "source": "b\"\\xed\\xa0\\x80\".decode()\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "UnicodeDecodeError"
+    },
+    {
+      "id": "bytes-utf8-truncated",
+      "stage": "V2",
+      "source": "b\"\\xf0\\x9f\".decode()\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "UnicodeDecodeError"
+    },
+    {
+      "id": "bytes-codec-unknown",
+      "stage": "V2",
+      "source": "b\"a\".decode(\"missing_codec\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "LookupError"
+    },
+    {
+      "id": "bytes-repr",
+      "stage": "V2",
+      "source": "print(repr(b\"a\\x00\\xff\\n\"),str(bytearray(b\"ab\")))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "b'a\\x00\\xff\\n' bytearray(b'ab')\n"
+    },
+    {
+      "id": "bytes-hash",
+      "stage": "V2",
+      "source": "a=b\"a\"; b=bytes([97]); print(hash(a)==hash(b),{a:7}[b])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "bytearray-unhashable",
+      "stage": "V2",
+      "source": "hash(bytearray())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "binary-isinstance",
+      "stage": "V2",
+      "source": "print(isinstance(b\"a\",bytes),isinstance(bytearray(),bytearray),isinstance(bytearray(),bytes))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "bytes-index-protocol",
+      "stage": "V2",
+      "source": "class I:\n def __index__(self): print(\"index\"); return 2\na=bytes(I()); b=bytes([I()]); c=bytearray(b\"abc\"); c[I()]=I(); print(len(a),b[0],c[2])\n",
+      "stdout": "index\nindex\nindex\nindex\n2 2 2\n"
+    },
+    {
+      "id": "bytes-iter-protocol",
+      "stage": "V2",
+      "source": "class I:\n def __getitem__(self,n):\n  if n==3: raise IndexError\n  return n+65\nprint(bytes(I())==b\"ABC\")\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-index-return-error",
+      "stage": "V2",
+      "source": "class I:\n def __index__(self): return \"bad\"\nbytes([I()])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "view-basic",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); print(len(a),a[0],a[-1],a.readonly,a.format,a.itemsize,a.ndim,a.nbytes,a.obj==b\"abc\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "3 97 99 True B 1 1 3 True\n"
+    },
+    {
+      "id": "view-metadata",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); print(a.shape[0],a.strides[0],len(a.suboffsets),a.c_contiguous,a.f_contiguous,a.contiguous)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "3 1 0 True True True\n"
+    },
+    {
+      "id": "view-alias",
+      "stage": "V3",
+      "source": "b=bytearray(b\"abc\"); a=memoryview(b); a[1]=90; b[2]=89; print(b==b\"aZY\",a[2],a.readonly,a.obj is b)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True 89 False True\n"
+    },
+    {
+      "id": "view-stride",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abcdef\")[::-2]; print(a.tobytes()==b\"fdb\",a.tolist()[1],a.strides[0],a.contiguous)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True 100 -2 False\n"
+    },
+    {
+      "id": "view-nested-slice",
+      "stage": "V3",
+      "source": "b=bytearray(b\"abcd\"); a=memoryview(b)[::-1][1:3]; a[0]=90; print(b==b\"abZd\",a.tobytes()==b\"Zb\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-copy-construction",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\")[::2]; b=memoryview(a); print(b.tobytes()==b\"ac\",bytes(b)==b\"ac\",bytearray(b)==b\"ac\",a is b)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True False\n"
+    },
+    {
+      "id": "view-release",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); b=a[1:]; print(a.release(),a.release(),b.tobytes()==b\"bc\"); len(a)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "None None True\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "view-released-construct",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); a.release(); memoryview(a)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "view-readonly-write",
+      "stage": "V3",
+      "source": "a=memoryview(b\"a\"); a[0]=1\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "view-toreadonly",
+      "stage": "V3",
+      "source": "b=bytearray(b\"abc\"); a=memoryview(b).toreadonly(); b[0]=90; print(a.readonly,a[0],a.obj is b)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True 90 True\n"
+    },
+    {
+      "id": "view-hash",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\")[::2]; print(hash(a)==hash(b\"ac\"),{a:4}[b\"ac\"])\n",
+      "stdout": "True 4\n"
+    },
+    {
+      "id": "view-mutable-hash",
+      "stage": "V3",
+      "source": "hash(memoryview(bytearray(b\"a\")))\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "view-readonly-mutable-hash",
+      "stage": "V3",
+      "source": "hash(memoryview(bytearray(b\"a\")).toreadonly())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "view-equality",
+      "stage": "V3",
+      "source": "a=memoryview(b\"abc\"); print(a==b\"abc\",a==bytearray(b\"abc\"),a==memoryview(b\"abc\"),a==[97,98,99],97 in a,b\"a\" in a)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True True False True False\n"
+    },
+    {
+      "id": "view-arity",
+      "stage": "V3",
+      "source": "memoryview()\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "view-invalid-owner",
+      "stage": "V3",
+      "source": "memoryview([1,2])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "view-index-error",
+      "stage": "V3",
+      "source": "memoryview(b\"a\")[2]\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "IndexError"
+    },
+    {
+      "id": "view-isinstance",
+      "stage": "V3",
+      "source": "print(isinstance(memoryview(b\"a\"),memoryview),isinstance(b\"a\",memoryview))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True False\n"
+    },
+    {
+      "id": "future-set-comprehension",
+      "stage": "Future",
+      "source": "s={x for x in range(3)}\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
+    },
+    {
+      "id": "future-set-update",
+      "stage": "Future",
+      "source": "s=set(); s.update([1])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
+    },
+    {
+      "id": "future-user-set-algebra",
+      "stage": "Future",
+      "source": "class K:\n def __hash__(self): return 1\na=K(); set([a])|set()\n",
+      "stdout": ""
+    },
+    {
+      "id": "future-bytearray-resize",
+      "stage": "Future",
+      "source": "a=bytearray(b\"abc\"); a[1:]=b\"d\"\n",
+      "stdout": ""
+    },
+    {
+      "id": "future-codec-policy",
+      "stage": "Future",
+      "source": "b\"\\xff\".decode(\"utf8\",\"replace\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
+    },
+    {
+      "id": "future-codec-utf16",
+      "stage": "Future",
+      "source": "\"abc\".encode(\"utf-16\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
+    },
+    {
+      "id": "future-view-cast",
+      "stage": "Future",
+      "source": "memoryview(b\"abcd\").cast(\"I\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
+    },
+    {
+      "id": "future-view-context",
+      "stage": "Future",
+      "source": "with memoryview(b\"a\") as a: print(a[0])\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "97\n"
+    }
+  ]
+}
