@@ -14,14 +14,14 @@
     },
     {
       "id": "literal-precedence",
-      "source": "π=(1+2*3)\nprint(π,-7//3,-7%3,not 0==1,'a' '😀')\n",
+      "source": "\u03c0=(1+2*3)\nprint(\u03c0,-7//3,-7%3,not 0==1,'a' '\ud83d\ude00')\n",
       "features": [
         "source.grammar"
       ]
     },
     {
       "id": "unicode-closure",
-      "source": "café=3\ndef outer(π,/,*,变量=2):\n    café=π+变量\n    def middle():\n        def inner(K=1):\n            return café+K\n        return inner\n    return middle\nprint(outer(4,变量=3)()(),café)\n",
+      "source": "cafe\u0301=3\ndef outer(\u03c0,/,*,\u53d8\u91cf=2):\n    caf\u00e9=\u03c0+\u53d8\u91cf\n    def middle():\n        def inner(\u212a=1):\n            return caf\u00e9+K\n        return inner\n    return middle\nprint(outer(4,\u53d8\u91cf=3)()(),caf\u00e9)\n",
       "features": [
         "source.grammar"
       ]
@@ -56,7 +56,7 @@
     },
     {
       "id": "slice",
-      "source": "s='A😀bc'\nprint(s[::-1],s[1:3],s[:2],s[2:])\n",
+      "source": "s='A\ud83d\ude00bc'\nprint(s[::-1],s[1:3],s[:2],s[2:])\n",
       "features": [
         "source.grammar"
       ]
@@ -84,7 +84,7 @@
     },
     {
       "id": "normalized-keyword-name",
-      "source": "𝓲𝒇=7\nprint(𝓲𝒇)\n",
+      "source": "\ud835\udcf2\ud835\udc87=7\nprint(\ud835\udcf2\ud835\udc87)\n",
       "features": [
         "source.grammar"
       ]
@@ -98,7 +98,7 @@
     },
     {
       "id": "raw-triple-continuation",
-      "source": "value=(r'\\n' '😀'\n       '''a\nb''')\nprint(len(value),value[2],value[-1])\n",
+      "source": "value=(r'\\n' '\ud83d\ude00'\n       '''a\nb''')\nprint(len(value),value[2],value[-1])\n",
       "features": [
         "source.grammar"
       ]
@@ -134,7 +134,7 @@
     },
     {
       "id": "unicode-source-error",
-      "source": "π=3\ndef café():\n    return π//0\ncafé()\n",
+      "source": "\u03c0=3\ndef caf\u00e9():\n    return \u03c0//0\ncaf\u00e9()\n",
       "features": [
         "source.grammar"
       ]
@@ -180,7 +180,7 @@
         "source.augmented-assignment",
         "value.identity"
       ],
-      "source": "a=[1]\nb=a\na+=a\nprint(a is b,len(b),b[0],b[1])\na*=2\nprint(a is b,len(b))\na+=(3,4)\na+='😀'\na+={'x':1}\nprint(len(a),a[-2],a[-1])\na*=0\nprint(a is b,len(b))\nx=[[1]]\nchild=x[0]\nx[0]+=[2]\nprint(child is x[0],len(child))\n"
+      "source": "a=[1]\nb=a\na+=a\nprint(a is b,len(b),b[0],b[1])\na*=2\nprint(a is b,len(b))\na+=(3,4)\na+='\ud83d\ude00'\na+={'x':1}\nprint(len(a),a[-2],a[-1])\na*=0\nprint(a is b,len(b))\nx=[[1]]\nchild=x[0]\nx[0]+=[2]\nprint(child is x[0],len(child))\n"
     },
     {
       "id": "private-temporary-module",
@@ -244,14 +244,14 @@
     },
     {
       "id": "str-preserves-identity",
-      "source": "def make():\n text=\"A😀é\"\n held=[text]\n def read(): return held[0]\n return read\nread=make()\noriginal=read()\nconverted=str(original)\nprint(converted is original,str(converted) is read(),str(converted) is converted)\nprint(str(None),str(True),str(7),str(ValueError(\"bad\")))\ni=0\nwhile i<20:\n converted=str(converted)\n i+=1\nprint(converted is read(),converted)\n",
+      "source": "def make():\n text=\"A\ud83d\ude00e\u0301\"\n held=[text]\n def read(): return held[0]\n return read\nread=make()\noriginal=read()\nconverted=str(original)\nprint(converted is original,str(converted) is read(),str(converted) is converted)\nprint(str(None),str(True),str(7),str(ValueError(\"bad\")))\ni=0\nwhile i<20:\n converted=str(converted)\n i+=1\nprint(converted is read(),converted)\n",
       "features": [
         "source.builtin.str.identity"
       ]
     },
     {
       "id": "type-soft-identifier",
-      "source": "ｔｙｐｅ=7\ndef f(type): return type+1\nprint(type,f(8))\n",
+      "source": "\uff54\uff59\uff50\uff45=7\ndef f(type): return type+1\nprint(type,f(8))\n",
       "features": [
         "source.grammar"
       ]
@@ -293,7 +293,7 @@
     },
     {
       "id": "real-constructors-core",
-      "source": "a=float(\"١.٢٥\")\nprint(int(\"0x_ff\",0),int(-3.75),a==1.25,a is float(a),isinstance(True,int),isinstance(a,float))\n",
+      "source": "a=float(\"\u0661.\u0662\u0665\")\nprint(int(\"0x_ff\",0),int(-3.75),a==1.25,a is float(a),isinstance(True,int),isinstance(a,float))\n",
       "features": [
         "source.grammar"
       ]
@@ -371,7 +371,7 @@
     },
     {
       "id": "walrus-unicode-core",
-      "source": "print('ready')\nprint((π:=7))\n",
+      "source": "print('ready')\nprint((\u03c0:=7))\n",
       "phase": "parse",
       "compileOptions": {
         "languageProfile": "core-source/1"
@@ -470,7 +470,7 @@
     },
     {
       "id": "walrus-unicode-classes",
-      "source": "print('ready')\nprint((π:=7))\n",
+      "source": "print('ready')\nprint((\u03c0:=7))\n",
       "phase": "parse",
       "compileOptions": {
         "languageProfile": "classes-source/1"
@@ -586,8 +586,8 @@
       ]
     },
     {
-      "id": "unsupported-set",
-      "source": "print('must not run')\nx={1,2}",
+      "id": "unsupported-set-comprehension",
+      "source": "print('must not run')\nx={n for n in []}",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"
@@ -1601,7 +1601,7 @@
     },
     {
       "id": "syntax-new-forms-soft-type-core",
-      "source": "print('must not run')\nｔｙｐｅ Alias = int\n",
+      "source": "print('must not run')\n\uff54\uff59\uff50\uff45 Alias = int\n",
       "code": "SYNTAX",
       "phase": "parse",
       "compileOptions": {
@@ -1614,7 +1614,7 @@
     },
     {
       "id": "syntax-new-forms-soft-type-classes",
-      "source": "print('must not run')\nｔｙｐｅ Alias = int\n",
+      "source": "print('must not run')\n\uff54\uff59\uff50\uff45 Alias = int\n",
       "code": "SYNTAX",
       "phase": "parse",
       "compileOptions": {
@@ -1740,7 +1740,7 @@
     },
     {
       "id": "normalized-constant-name",
-      "source": "𝓣𝓻𝓾𝓮=1\n",
+      "source": "\ud835\udce3\ud835\udcfb\ud835\udcfe\ud835\udcee=1\n",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"

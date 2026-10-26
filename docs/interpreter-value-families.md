@@ -5,6 +5,8 @@ The staged `value-families.json` corpus separates reference observations from
 independent source execution. A reference-only result never establishes support.
 Core-source/1 and classes-source/1 retain bytecode versions 4 and 5.
 
+V1 is implemented. V2/V3 remain reference-only until their implementation PRs.
+
 ## Finite delivery contract
 
 | Stage | Adopted surface |

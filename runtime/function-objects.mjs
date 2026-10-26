@@ -53,6 +53,9 @@ export class PropertyAccessorValue extends BuiltinValue {
 export class AppendValue extends BuiltinValue {
   constructor(receiver) { super("append"); this.receiver = receiver; }
 }
+export class ValueMethod extends BuiltinValue {
+  constructor(receiver, name) { super(name); this.receiver = receiver; Object.freeze(this); }
+}
 export class ProtocolIteratorValue {
   constructor(kind, source, sentinel = null) {
     this.kind = kind; this.source = source; this.sentinel = sentinel;

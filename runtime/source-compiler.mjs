@@ -244,6 +244,15 @@ class Compiler {
             }
             if (value.kind === "Tuple") emit(value, "list-to-tuple");
           } else { value.items.forEach(expr); emit(value, value.kind === "List" ? "build-list" : "build-tuple", value.items.length); }
+        } else if (value.kind === "Set") {
+          if (value.items.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
+          if (value.items.some(item => item.kind === "Starred")) {
+            const first = value.items.findIndex(item => item.kind === "Starred");
+            value.items.slice(0, first).forEach(expr); emit(value, "build-set", first);
+            for (const item of value.items.slice(first)) {
+              expr(item.kind === "Starred" ? item.value : item); emit(item, item.kind === "Starred" ? "set-extend" : "set-insert");
+            }
+          } else { value.items.forEach(expr); emit(value, "build-set", value.items.length); }
         } else if (value.kind === "Dict") {
           if (value.entries.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
           if (value.entries.some(pair => pair[0] === null)) {

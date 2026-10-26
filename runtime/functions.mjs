@@ -1,12 +1,12 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -97,7 +97,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.callable.pool.code.version >= 4 && ["all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
+        (frame.callable.pool.code.version >= 4 && ["set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
         (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
@@ -372,7 +372,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (["attribute-set", "attribute-delete"].includes(op)) {
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
-        if (values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
+        if (values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
         const plan = classes.write(receiver, arg, value, op === "attribute-delete");
         if (plan.kind === "value") stack.push(plan.value);
         else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("discard")); }
@@ -385,6 +385,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           const receiver = stack.pop();
           if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
           else if (values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));
+          else if (values.isSet(receiver)) { values.setMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
           else if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             const plan = classes.read(receiver, arg);
@@ -425,7 +426,15 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (op === "jump") cursor.pc = arg;
       else if (op === "jump-if-false") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
         continuation("condition", {control: "jump", target: arg})));
-      else if (["build-list", "build-tuple", "build-dict"].includes(op)) {
+      else if (op === "build-set") {
+        const items = stack.splice(stack.length - arg);
+        dispatch(consumeTask("set", values.tuple(items), summary(frame, cursor)));
+      } else if (["set-insert", "set-extend"].includes(op)) {
+        const value = stack.pop(), receiver = stack.pop();
+        if (!values.isSet(receiver) || receiver.frozen) hard("BYTECODE", "BytecodeError", "Set display requires a mutable set result.");
+        dispatch(op === "set-extend" ? consumeTask("set-update", value, summary(frame, cursor), null, 0, receiver) :
+          dictionaryTask(receiver.storage, value, summary(frame, cursor), continuation("display-insert", {receiver}), 0, "set", null));
+      } else if (["build-list", "build-tuple", "build-dict"].includes(op)) {
         const items = stack.splice(stack.length - arg * (op === "build-dict" ? 2 : 1));
         if (op === "build-dict" && frame.callable.pool.code.version === 5 && items.some((item, index) => index % 2 === 0 && values.needsOwnedHash(item)))
           dispatch(dictionaryBuildTask(values.dict([]), items, summary(frame, cursor)));
