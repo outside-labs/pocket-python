@@ -558,8 +558,9 @@ class Parser {
           form = "dict"; entries.push([null, this.bitwiseOr()]);
         }
         else {
-          const key = this.expression();
+          const key = this.namedExpression();
           if (this.eat(":")) {
+            if (key.kind === "NamedExpression" && !this.grouped.has(key)) this.fail("A dictionary-key assignment expression requires parentheses.", key);
             if (form === "set") this.fail("Mixed set and dictionary display.");
             form = "dict"; const value = this.expression(); entries.push([key, value]);
           } else {

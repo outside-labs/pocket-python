@@ -101,3 +101,13 @@ test('deferred set algebra and structural key mutation fail without leaking call
   const mutation = await run('class K:\n def __hash__(self): return 1\n def __eq__(self,o):\n  s.clear()\n  return True\ns={K()}; K() in s\n');
   assert.equal(mutation.error.code, 'UNSUPPORTED'); closed(mutation);
 });
+
+test('starred set displays evaluate the initial group before hashing its elements', async () => {
+  const source = 'class K:\n def __init__(self,n): self.n=n\n def __hash__(self): print("hash",self.n); return self.n\n' +
+    'def value(n): print("value",n); return K(n)\ns={value(1),value(2),*[value(3)],value(4),value(5)}\nprint(len(s))\n';
+  const result = await run(source);
+  assert.equal(result.ok, true, JSON.stringify(result.error));
+  assert.equal(result.stdout, 'value 1\nvalue 2\nhash 1\nhash 2\nvalue 3\nhash 3\nvalue 4\nhash 4\nvalue 5\nhash 5\n5\n'); closed(result);
+  const walrus = await run('s={n:=1,2,*[3]}; print(n,len(s))\n');
+  assert.equal(walrus.ok, true, JSON.stringify(walrus.error)); assert.equal(walrus.stdout, '1 3\n'); closed(walrus);
+});
