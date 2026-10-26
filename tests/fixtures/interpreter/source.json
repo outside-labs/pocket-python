@@ -318,6 +318,20 @@
       "features": [
         "source.functions"
       ]
+    },
+    {
+      "id": "global",
+      "source": "global x",
+      "features": [
+        "source.functions"
+      ]
+    },
+    {
+      "id": "nonlocal",
+      "source": "def outer():\n    x=1\n    def inner():\n        nonlocal x\n",
+      "features": [
+        "source.functions"
+      ]
     }
   ],
   "boundaries": [
@@ -380,22 +394,6 @@
     {
       "id": "unsupported-set",
       "source": "print('must not run')\nx={1,2}",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-global",
-      "source": "print('must not run')\nglobal x",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-nonlocal",
-      "source": "print('must not run')\ndef outer():\n    x=1\n    def inner():\n        nonlocal x\n",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"

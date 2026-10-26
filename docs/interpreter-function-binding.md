@@ -49,6 +49,12 @@ pass in Node and Chromium, including instruction stepping. Functions own runtime
 default vectors; modern bytecode verifies their exact positional/keyword layout.
 Legacy literal-default programs retain their previous representation and costs.
 
+The Scope stage implements explicit module writes and shared nonlocal cells.
+Forty-seven selected cases (including the Defaults cases and two future refusals)
+pass in the class profile; ordinary cases also run in the core profile. Optional
+verified scope metadata survives registry normalization. Scope declaration errors
+are compilation errors, including declarations inside unreachable suites.
+
 The authored corpus is `tests/fixtures/interpreter/function-binding.json`.
 Implemented stages advance with each execution PR. Unimplemented stages are
 selected only for reference checks until their source behavior is adopted.
