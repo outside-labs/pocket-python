@@ -337,16 +337,16 @@
     {
       "id": "starred-call",
       "source": "def f(x): return x\nprint(f(*[7]))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
+        "stdout": "7\n",
         "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "code": null,
+        "phase": null
       }
     },
     {

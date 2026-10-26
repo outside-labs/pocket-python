@@ -1,5 +1,5 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -186,7 +186,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
     block(frame, fn.body);
   };
-  const {dispatch, call, deliver, notifyNext, recover} = operationRuntime({state, memory, values, classes,
+  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput});
   const diagnostic = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
@@ -352,6 +352,17 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           store(state.frames.at(-1), "__module__", values.string(Array.from(name, char => char.codePointAt(0))));
           store(state.frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
         }
+      } else if (op === "call-start") stack.push(allocate(CallArguments, stack.pop()));
+      else if (["call-argument", "call-keyword", "call-star"].includes(op)) {
+        const value = stack.pop(), receiver = stack.pop();
+        if (op === "call-star") dispatch(expandArguments(receiver, value, summary(frame, cursor)));
+        else {
+          if (op === "call-argument") appendArgument(receiver, value); else appendKeyword(receiver, arg, value);
+          stack.push(receiver);
+        }
+      } else if (op === "call-expanded") {
+        const receiver = stack.pop(); argumentOwner(receiver);
+        call(receiver.callable, receiver.args, receiver.keywords, receiver.keywordValues, summary(frame, cursor));
       } else if (op === "call") {
         const kwargs = stack.splice(stack.length - extra.length), args = stack.splice(stack.length - arg), callable = stack.pop();
         call(callable, args, extra, kwargs, summary(frame, cursor));

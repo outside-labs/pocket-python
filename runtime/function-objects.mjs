@@ -21,6 +21,9 @@ export class FunctionValue {
     this.defaults = defaults === null ? null : Object.freeze([...defaults]);
   }
 }
+export class CallArguments {
+  constructor(callable) { this.callable = callable; this.args = []; this.keywords = []; this.keywordValues = []; }
+}
 export class ClassValue {
   constructor(name, qualname, module, bases, parents, namespace, root = false) {
     this.name = name; this.qualname = qualname; this.module = module; this.root = root;

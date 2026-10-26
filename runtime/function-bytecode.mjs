@@ -126,6 +126,8 @@ export function verifyFunctions(program) {
           length = 3;
           if (!integer(arg, program.functions.length - 1) || arg === 0 || program.functions[arg]?.kind !== "class" || !integer(extra, 16)) fail("Invalid class body or base count.");
         }
+        else if (modern && op === "call-keyword") { length = 2; if (!validName(arg)) fail("Invalid assembled keyword name."); }
+        else if (modern && ["call-start", "call-argument", "call-star", "call-expanded"].includes(op)) {}
         else if (op === "call") {
           length = 3; if (!integer(arg, FUNCTION_LIMITS.names)) fail("Invalid positional argument count."); names(extra, validName);
         } else if (CONSTRUCT.has(op)) { length = 2; if (!integer(arg, 1024)) fail("Invalid container item count."); }
@@ -157,7 +159,7 @@ export function verifyFunctions(program) {
       const heights = new Map([[0, 0]]), pending = [0];
       for (let cursor = 0; cursor < pending.length; cursor++) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
-        const needs = op === "function-defaults" ? extra + instructions[at][3].length : op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
+        const needs = ["call-argument", "call-star", "call-keyword"].includes(op) ? 2 : ["call-start", "call-expanded"].includes(op) ? 1 : op === "function-defaults" ? extra + instructions[at][3].length : op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
           UNARY.has(op) || ["attribute-get", "attribute-delete", "module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
@@ -165,7 +167,7 @@ export function verifyFunctions(program) {
           if (before !== (op === "end" ? Number(block.kind === "expression") : needs)) fail("Block completion requires an exact stack height.");
           continue;
         }
-        const after = before + (["class", "function-defaults"].includes(op) ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
+        const after = before + (["call-argument", "call-star", "call-keyword"].includes(op) ? -1 : ["class", "function-defaults"].includes(op) ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
           BINARY.has(op) || CONSTRUCT.has(op) || ["call", "setitem", "slice", "build-slice"].includes(op) ? 1 - needs :
           ["store", "pop", "if", "jump-if-false"].includes(op) ? -1 : 0);
         if (after > FUNCTION_LIMITS.stack) fail("Function stack exceeds 256 values.");
