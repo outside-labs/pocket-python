@@ -168,8 +168,8 @@
     {
       "id": "function-binding",
       "status": "partial",
-      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; immutable literal/tuple defaults and lexical closures.",
-      "gaps": "Computed/mutable defaults, global/nonlocal writes, argument packing/unpacking and annotations remain deferred.",
+      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures.",
+      "gaps": "Global/nonlocal writes, argument packing/unpacking and annotations remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -188,7 +188,10 @@
         "global-write",
         "nonlocal-write"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/function-binding.json:computed-once",
+        "tests/fixtures/interpreter/function-binding.json:mutable-default-alias"
+      ]
     },
     {
       "id": "ordinary-syntax-gaps",
