@@ -83,7 +83,11 @@ class Compiler {
       scope.assigned.add(name);
       if (!scope.globals.has(name) && !scope.nonlocals.has(name)) scope.locals.add(name);
     };
-    const target = value => { if (value.kind === "Name") binding(value.name, value); };
+    const target = value => {
+      if (value.kind === "Name") binding(value.name, value);
+      else if (["List", "Tuple"].includes(value.kind)) value.items.forEach(target);
+      else if (value.kind === "Starred") target(value.value);
+    };
     const visit = value => {
       this.charge(value);
       if (value.kind === "Declaration") {
@@ -233,10 +237,22 @@ class Compiler {
         else if (value.kind === "Name") value.name === "__debug__" ? emit(value, "const", this.constant({type: "bool", value: true}, value)) : emit(value, "load", value.name);
         else if (["List", "Tuple"].includes(value.kind)) {
           if (value.items.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
-          value.items.forEach(expr); emit(value, value.kind === "List" ? "build-list" : "build-tuple", value.items.length);
+          if (value.items.some(item => item.kind === "Starred")) {
+            emit(value, "build-list", 0);
+            for (const item of value.items) {
+              expr(item.kind === "Starred" ? item.value : item); emit(item, item.kind === "Starred" ? "list-extend" : "list-push");
+            }
+            if (value.kind === "Tuple") emit(value, "list-to-tuple");
+          } else { value.items.forEach(expr); emit(value, value.kind === "List" ? "build-list" : "build-tuple", value.items.length); }
         } else if (value.kind === "Dict") {
           if (value.entries.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
-          value.entries.forEach(pair => pair.forEach(expr)); emit(value, "build-dict", value.entries.length);
+          if (value.entries.some(pair => pair[0] === null)) {
+            emit(value, "build-dict", 0);
+            for (const [key, item] of value.entries) {
+              if (key === null) { expr(item); emit(value, "dict-merge"); }
+              else { expr(key); expr(item); emit(value, "dict-insert"); }
+            }
+          } else { value.entries.forEach(pair => pair.forEach(expr)); emit(value, "build-dict", value.entries.length); }
         } else if (value.kind === "Unary") { expr(value.value); emit(value, value.operator); }
         else if (value.kind === "Binary") { expr(value.left); expr(value.right); emit(value, value.operator); }
         else if (value.kind === "Boolean") {
@@ -301,6 +317,18 @@ class Compiler {
         } else this.fail("Expression is outside the source profile.", value);
       };
       const assign = target => {
+        if (target.kind === "Starred") { assign(target.value); return; }
+        if (["List", "Tuple"].includes(target.kind)) {
+          if (target.items.length > 128) this.fail("Unpacking target budget exceeded.", target, "COMPILE_BUDGET");
+          const star = target.items.findIndex(item => item.kind === "Starred"), parts = this.temporary(scope, target);
+          emit(target, "unpack", star < 0 ? target.items.length : star, star < 0 ? null : target.items.length - star - 1);
+          emit(target, "store", parts);
+          target.items.forEach((item, index) => {
+            emit(item, "load", parts); emit(item, "const", this.constant({type: "int", value: String(index)}, item));
+            emit(item, "getitem"); assign(item);
+          });
+          emit(target, "delete", parts); return;
+        }
         if (target.kind === "Name") { emit(target, "store", target.name); return; }
         const item = this.temporary(scope, target); emit(target, "store", item);
         if (target.kind === "Attribute") {
@@ -341,11 +369,13 @@ class Compiler {
             for (const name of [owner, key, item]) emit(value, "delete", name);
           }
         } else if (value.kind === "Delete") {
-          for (const target of value.targets) {
+          const remove = target => {
+            if (["Tuple", "List"].includes(target.kind)) { target.items.forEach(remove); return; }
             if (target.kind === "Name") emit(target, "delete", target.name);
             else if (target.kind === "Attribute") { expr(target.value); emit(target, "attribute-delete", attribute(target, true)); emit(target, "pop"); }
             else { expr(target.value); expr(target.index); emit(target, "dict-delete"); emit(target, "pop"); }
-          }
+          };
+          value.targets.forEach(remove);
         } else if (["Function", "Class"].includes(value.kind)) {
           const decorators = (value.decorators || []).map(decorator => {
             const name = this.temporary(scope, decorator); expr(decorator); emit(decorator, "store", name);
@@ -372,7 +402,15 @@ class Compiler {
         else if (value.kind === "Break" || value.kind === "Continue") emit(value, value.kind.toLowerCase());
         else if (value.kind === "If") { expr(value.test); emit(value, "if", makeBlock(value.body), makeBlock(value.otherwise)); }
         else if (value.kind === "While") emit(value, "while", makeBlock([value.test], true), makeBlock(value.body), makeBlock(value.otherwise));
-        else if (value.kind === "For") emit(value, "for", value.target.name, makeBlock([value.iterable], true), makeBlock(value.body), makeBlock(value.otherwise));
+        else if (value.kind === "For") {
+          if (value.target.kind === "Name") emit(value, "for", value.target.name, makeBlock([value.iterable], true), makeBlock(value.body), makeBlock(value.otherwise));
+          else {
+            const item = this.temporary(scope, value.target), span = value.target.span;
+            const assignItem = {kind: "Assign", span, targets: [value.target], value: {kind: "Name", span, name: item}};
+            const clearItem = {kind: "Delete", span, targets: [{kind: "Name", span, name: item}]};
+            emit(value, "for", item, makeBlock([value.iterable], true), makeBlock([assignItem, clearItem, ...value.body]), makeBlock(value.otherwise));
+          }
+        }
         else if (value.kind === "Try") {
           const handlers = value.handlers.map(handler => {
             if (handler.types.some(type => !Object.hasOwn(EXCEPTIONS, type.name))) this.fail("Handlers must name adopted builtin exception classes.", handler);

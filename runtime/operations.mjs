@@ -68,6 +68,16 @@ export function completion(kind, fields = {}) {
       break;
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
+    case "display-iter": case "display-next":
+      record = {kind, receiver: fields.receiver, iterator: fields.iterator ?? null, after}; break;
+    case "display-insert": record = {kind, receiver: fields.receiver, after}; break;
+    case "unpack-iter": case "unpack-next": case "unpack-rest-iter": case "unpack-rest-next":
+      record = {kind, receiver: fields.receiver, iterator: fields.iterator ?? null, sourceIterator: fields.sourceIterator ?? null, result: fields.result,
+        before: fields.before, tail: fields.tail ?? null, after};
+      if (!Number.isSafeInteger(record.before) || record.before < 0 || record.before > 128 ||
+          record.tail !== null && (!Number.isSafeInteger(record.tail) || record.tail < 0 || record.before + record.tail + 1 > 128))
+        throw new TypeError("Invalid unpacking phase.");
+      break;
     case "call-duplicate-result": record = {kind, receiver: fields.receiver, key: fields.key, after}; break;
     case "call-map-lookup": case "call-map-keys": case "call-map-sequence": case "call-map-hash":
     case "call-map-probe": case "call-map-value": case "call-map-insert": case "call-map-stored":
@@ -75,7 +85,7 @@ export function completion(kind, fields = {}) {
         key: fields.key ?? null, item: fields.item ?? null, hash: fields.hash ?? null, position: fields.position ?? 0,
         version: fields.version ?? null, mode: fields.mode ?? "mapping", after};
       if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 1024 ||
-          record.hash !== null && typeof record.hash !== "bigint" || !["mapping", "keyword"].includes(record.mode) ||
+          record.hash !== null && typeof record.hash !== "bigint" || !["mapping", "keyword", "display"].includes(record.mode) ||
           record.version !== null && (!Number.isSafeInteger(record.version) || record.version < 0)) throw new TypeError("Invalid mapping expansion phase.");
       break;
     case "call-star-iter": case "call-star-next":
@@ -137,6 +147,9 @@ function visit(record) {
     case "dict-pair": case "dict-value": case "dict-value-truth": return [record.left, record.right, record.value, ...completionRoots(record.after)];
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
+    case "display-iter": case "display-next": return [record.receiver, record.iterator, ...completionRoots(record.after)];
+    case "display-insert": return [record.receiver, ...completionRoots(record.after)];
+    case "unpack-iter": case "unpack-next": case "unpack-rest-iter": case "unpack-rest-next": return [record.receiver, record.iterator, record.sourceIterator, record.result, ...completionRoots(record.after)];
     case "call-duplicate-result": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "call-map-lookup": case "call-map-keys": case "call-map-sequence": case "call-map-hash":
     case "call-map-probe": case "call-map-value": case "call-map-insert": case "call-map-stored":

@@ -352,16 +352,16 @@
     {
       "id": "unpacking",
       "source": "a,b=[1,2]\nprint(a+b)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "3\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
+        "stdout": "3\n",
         "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "code": null,
+        "phase": null
       }
     },
     {
@@ -1687,6 +1687,21 @@
       },
       "engine": {
         "stdout": "5\n",
+        "error_type": null,
+        "code": null,
+        "phase": null
+      }
+    },
+    {
+      "id": "starred-sequence-dictionary-display",
+      "source": "a=[0,*range(1,4)]\nd={**{1:7},2:8}\nprint(a[-1],d[1],d[2])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "3 7 8\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "3 7 8\n",
         "error_type": null,
         "code": null,
         "phase": null

@@ -121,11 +121,11 @@ limits remain explicit staged boundaries. The independent source grammar does
 not imply full Python builtin/stdlib coverage.
 
 Classes/descriptors/decorators, async/await, generators/comprehensions,
-assignment/display unpacking, annotations, future directives, pattern matching, context managers,
+annotations, future directives, pattern matching, context managers,
 exception groups/explicit causes, power/bitwise/set forms, bytes/complex/formatted
 or template strings, named Unicode escapes, dynamic imports and implicit host
 capabilities remain outside this profile. Function/module reflection and
-unlisted implicit metadata are not adopted. Assertions and assignment expressions
+unlisted implicit metadata are not adopted. Assertions, assignment expressions, lambda functions and finite unpacking/display forms
 are adopted through the [ordinary syntax contract](interpreter-ordinary-syntax.md).
 Syntax/features fail before target
 execution; runtime value/resource failures retain their named contracts.

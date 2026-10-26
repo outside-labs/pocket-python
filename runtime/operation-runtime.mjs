@@ -178,13 +178,23 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (record.version !== null && record.mapping.version !== record.version)
       hard("UNSUPPORTED", "UnsupportedOperationError", "Structural source dictionary mutation during keyword expansion requires its restart stage.");
   };
+  const mappingStorage = record => record.mode === "display" ? record.receiver : record.receiver.keywordMap;
   const mappingNext = (record, site) => {
     checkMapping(record);
-    if (record.position >= record.keys.items.length) return valueTask(record.receiver, site, record.after);
-    const key = record.keys.items[record.position];
-    const finish = continuation("call-map-hash", {...record, key, hash: null, item: null});
-    return record.version === null ? unaryTask("hash", key, site, finish) :
-      valueTask(values.dictionaryEntryHash(record.mapping.entries[record.position]), site, finish);
+    for (let position = record.position; position < record.keys.items.length; position++) {
+      const key = record.keys.items[position], next = {...record, position, key, hash: null, item: null};
+      if (record.mode === "display") {
+        if (record.version === null) return itemTask(record.mapping, key, site, continuation("call-map-value", next));
+        const item = record.mapping.entries[position].value;
+        if (!values.dictionaryNeedsProtocol(record.receiver, key)) { values.set(record.receiver, key, item); continue; }
+        return dictionaryTask(record.receiver, key, site, continuation("call-map-stored", next), 0, "set", item,
+          values.dictionaryEntryHash(record.mapping.entries[position]));
+      }
+      const finish = continuation("call-map-hash", next);
+      return record.version === null ? unaryTask("hash", key, site, finish) :
+        valueTask(values.dictionaryEntryHash(record.mapping.entries[position]), site, finish);
+    }
+    return valueTask(record.receiver, site, record.after);
   };
   const keywordArgument = (receiver, name, item, site) => {
     argumentOwner(receiver);
@@ -192,11 +202,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(receiver, key, item);
     return unaryTask("hash", key, site, continuation("call-map-hash", {receiver, key, item, mode: "keyword"}));
   };
-  const expandMapping = (receiver, mapping, site) => {
-    keywordMap(receiver); state.temporaries.push(mapping);
+  const expandMapping = (receiver, mapping, site, mode = "mapping") => {
+    if (mode === "display") {
+      if (!values.isDict(receiver)) hard("BYTECODE", "BytecodeError", "Dictionary display requires its owned result.");
+    } else keywordMap(receiver);
+    state.temporaries.push(receiver, mapping);
     if (values.isDict(mapping)) {
       const keys = values.tuple(mapping.entries.map(entry => entry.key)); state.temporaries.push(keys);
-      return mappingNext({receiver, mapping, keys, position: 0, version: mapping.version, mode: "mapping", after: null}, site);
+      return mappingNext({receiver, mapping, keys, position: 0, version: mapping.version, mode, after: null}, site);
     }
     if (!(mapping instanceof InstanceValue)) python("TypeError", "Argument after ** must be a mapping");
     let plan;
@@ -205,7 +218,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (!(error instanceof Raised) || error.value.name !== "AttributeError") throw error;
       python("TypeError", "Argument after ** must be a mapping");
     }
-    const fields = {receiver, mapping};
+    const fields = {receiver, mapping, mode};
     return plan.kind === "value" ? callTask(plan.value, [], [], [], site, continuation("call-map-keys", fields)) :
       callTask(plan.callable, plan.args, [], [], site, continuation("call-map-lookup", fields));
   };
@@ -226,11 +239,37 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return formatted ? unaryTask("str", key, site, continuation("call-duplicate-result", {receiver, key, after})) :
       unaryTask("call-keyword-duplicate", receiver, site, after);
   };
+  const refuseHints = receiver => {
+    const owner = receiver instanceof ProtocolIteratorValue && receiver.kind === "indexed" ? receiver.source : receiver;
+    if (owner instanceof InstanceValue && ["__len__", "__length_hint__"].some(slot => classes.lookup(owner.type, slot).found))
+      hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
+  };
+  const expandDisplay = (receiver, iterable, site) => {
+    if (!values.isList(receiver)) hard("BYTECODE", "BytecodeError", "Sequence display requires its owned result.");
+    refuseHints(iterable);
+    return unaryTask("iter", iterable, site, continuation("display-iter", {receiver}));
+  };
+  const expandUnpack = (receiver, before, tail, site) => {
+    if (tail !== null) refuseHints(receiver);
+    const result = values.list([]); state.temporaries.push(result);
+    return unaryTask("iter", receiver, site, continuation("unpack-iter", {receiver, result, before, tail}));
+  };
+  const unpackFinish = (record, site) => {
+    const items = record.result.items;
+    if (items.length < record.before + (record.tail ?? 0)) return unaryTask("unpack-short", record.result, site, record.after);
+    let result;
+    if (record.tail === null) result = values.tuple(items);
+    else {
+      const middle = values.list(items.slice(record.before, items.length - record.tail)); state.temporaries.push(middle);
+      result = values.tuple([...items.slice(0, record.before), middle, ...(record.tail ? items.slice(-record.tail) : [])]);
+    }
+    state.temporaries.push(result); return valueTask(result, site, record.after);
+  };
   const recover = (value, completion, site) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
-      if (current.kind.startsWith("call-map-") && ["KeyError", "AttributeError"].includes(value.name))
+      if (current.kind.startsWith("call-map-") && (value.name === "AttributeError" || value.name === "KeyError" && current.mode !== "display"))
         return value.name === "KeyError" ? duplicateKeyword(current.receiver, value.args[0] ?? current.key, site, current.after) :
           unaryTask("call-mapping-required", current.receiver, site, current.after);
       if (current.kind === "indexed-result" && ["IndexError", "StopIteration"].includes(value.name) ||
@@ -242,6 +281,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "next-default") return valueTask(current.default, site, current.after);
       if (current.kind === "for-next") return valueTask(null, site, continuation("for-exhausted"));
       if (current.kind === "search-next") return valueTask(false, site, current.after);
+      if (current.kind === "display-next") return valueTask(current.receiver, site, current.after);
+      if (["unpack-next", "unpack-rest-next"].includes(current.kind)) return unpackFinish(current, site);
       if (current.kind === "call-star-next") return valueTask(current.receiver, site, current.after);
       if (current.kind === "consume-next") return consumeFinish(current.name, current.result, site, current.after);
     }
@@ -274,6 +315,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "display-insert") return valueTask(completion.receiver, site, completion.after);
+    if (completion?.kind === "display-iter") return unaryTask("next", value, site,
+      continuation("display-next", {receiver: completion.receiver, iterator: value, after: completion.after}));
+    if (completion?.kind === "display-next") {
+      state.temporaries.push(value); values.append(completion.receiver, value);
+      return unaryTask("next", completion.iterator, site, continuation("display-next", completion));
+    }
+    if (completion?.kind === "unpack-iter") {
+      if (completion.tail !== null) refuseHints(value);
+      const fields = {...completion, iterator: value, sourceIterator: value};
+      return completion.tail !== null && completion.before === 0 ? unaryTask("iter", value, site, continuation("unpack-rest-iter", fields)) :
+        unaryTask("next", value, site, continuation("unpack-next", fields));
+    }
+    if (completion?.kind === "unpack-rest-iter") return unaryTask("next", value, site,
+      continuation("unpack-rest-next", {...completion, iterator: value}));
+    if (completion?.kind === "unpack-next") {
+      if (completion.tail === null && completion.result.items.length === completion.before) python("ValueError", "Too many values to unpack");
+      state.temporaries.push(value); values.append(completion.result, value);
+      if (completion.tail !== null && completion.result.items.length === completion.before)
+        return unaryTask("iter", completion.iterator, site, continuation("unpack-rest-iter", completion));
+      return unaryTask("next", completion.iterator, site, continuation("unpack-next", completion));
+    }
+    if (completion?.kind === "unpack-rest-next") {
+      state.temporaries.push(value); values.append(completion.result, value);
+      return unaryTask("next", completion.iterator, site, continuation("unpack-rest-next", completion));
+    }
     if (completion?.kind === "call-duplicate-result") python("TypeError", "Call received multiple values for keyword argument '" + values.text(value) + "'");
     if (completion?.kind === "call-map-lookup") return callTask(value, [], [], [], site, continuation("call-map-keys", completion));
     if (completion?.kind === "call-map-keys") return consumeTask("list", value, site, continuation("call-map-sequence", completion));
@@ -294,9 +361,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       return itemTask(completion.mapping, completion.key, site, continuation("call-map-value", completion));
     }
-    if (completion?.kind === "call-map-value") return unaryTask("hash", completion.key, site,
-      continuation("call-map-insert", {...completion, item: value}));
-    if (completion?.kind === "call-map-insert") return dictionaryTask(completion.receiver.keywordMap, completion.key, site,
+    if (completion?.kind === "call-map-value") {
+      if (completion.mode === "display" && !values.dictionaryNeedsProtocol(completion.receiver, completion.key)) {
+        state.temporaries.push(value); values.set(completion.receiver, completion.key, value);
+        return mappingNext({...completion, position: completion.position + 1}, site);
+      }
+      return unaryTask("hash", completion.key, site, continuation("call-map-insert", {...completion, item: value}));
+    }
+    if (completion?.kind === "call-map-insert") return dictionaryTask(mappingStorage(completion), completion.key, site,
       continuation("call-map-stored", completion), 0, "set", completion.item, value);
     if (completion?.kind === "call-map-stored") return completion.mode === "keyword" ? valueTask(completion.receiver, site, completion.after) :
       mappingNext({...completion, position: completion.position + 1}, site);
@@ -535,6 +607,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "unary" && task.operation === "unpack-short") {
+          state.temporaries = operationRoots(task); python("ValueError", "Not enough values to unpack");
+        }
         if (task.kind === "unary" && ["call-keyword-duplicate", "call-mapping-required"].includes(task.operation)) {
           state.temporaries = operationRoots(task);
           python("TypeError", task.operation === "call-keyword-duplicate" ? "Call received multiple values for a keyword argument" : "Argument after ** must be a mapping");
@@ -971,5 +1046,5 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
-  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments});
+  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack});
 }
