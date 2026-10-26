@@ -44,6 +44,11 @@ default graphs. The eight composed execution observations remain unchanged.
 
 ## Validation
 
+The Defaults stage is implemented: sixteen semantic cases and two future refusals
+pass in Node and Chromium, including instruction stepping. Functions own runtime
+default vectors; modern bytecode verifies their exact positional/keyword layout.
+Legacy literal-default programs retain their previous representation and costs.
+
 The authored corpus is `tests/fixtures/interpreter/function-binding.json`.
 Implemented stages advance with each execution PR. Unimplemented stages are
 selected only for reference checks until their source behavior is adopted.

@@ -910,7 +910,7 @@ export function valueLayout(value) {
   if (value instanceof Environment) return {bytes: 64 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [...value.cells.values()]};
   if (value instanceof CodePool) return {bytes: value.bytes, children: [...value.code.constants, ...(value.module ? [value.module] : [])]};
   if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length, children: [value.environment, value.pool]};
-  if (value instanceof FunctionValue) return {bytes: 80 + 8 * value.closure.size, children: [value.pool, value.globals, ...value.closure.values()]};
+  if (value instanceof FunctionValue) return {bytes: 80 + 8 * (value.closure.size + (value.defaults?.length ?? 0)), children: [value.pool, value.globals, ...value.closure.values(), ...(value.defaults ?? [])]};
   if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
     8 * (value.bases.length + value.mro.length) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
     children: [...value.bases, ...value.mro.slice(1), ...value.namespace.values()]};

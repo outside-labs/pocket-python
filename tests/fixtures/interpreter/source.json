@@ -304,6 +304,20 @@
       "features": [
         "source.grammar"
       ]
+    },
+    {
+      "id": "mutable-default",
+      "source": "def f(a=[]): pass\nprint(f())\n",
+      "features": [
+        "source.functions"
+      ]
+    },
+    {
+      "id": "computed-default",
+      "source": "def f(a=1+2): pass\nprint(f())\n",
+      "features": [
+        "source.functions"
+      ]
     }
   ],
   "boundaries": [
@@ -406,22 +420,6 @@
     {
       "id": "unsupported-parameter-annotation",
       "source": "print('must not run')\ndef f(a:int): pass",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-mutable-default",
-      "source": "print('must not run')\ndef f(a=[]): pass",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-computed-default",
-      "source": "print('must not run')\ndef f(a=1+2): pass",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"

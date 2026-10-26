@@ -136,11 +136,11 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     };
     for (let i = 0; i < ordered.length; i++) {
       const key = ordered[i], defaultIndex = i - ordered.length + p.defaults.length;
-      if (!bindings.has(key) && defaultIndex >= 0) bindings.set(key, constants[p.defaults[defaultIndex]]);
+      if (!bindings.has(key) && defaultIndex >= 0) bindings.set(key, callable.defaults ? callable.defaults[defaultIndex] : constants[p.defaults[defaultIndex]]);
     }
     missing(ordered.filter(key => !bindings.has(key)), "positional");
     for (const key of p.kwonly) {
-      if (!bindings.has(key) && Object.hasOwn(p.kwdefaults, key)) bindings.set(key, constants[p.kwdefaults[key]]);
+      if (!bindings.has(key) && Object.hasOwn(p.kwdefaults, key)) bindings.set(key, callable.defaults ? callable.defaults[p.defaults.length + Object.keys(p.kwdefaults).indexOf(key)] : constants[p.kwdefaults[key]]);
     }
     missing(p.kwonly.filter(key => !bindings.has(key)), "keyword-only");
     return bindings;
@@ -314,12 +314,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         }
         store(frame, arg, null, false);
       }
-      else if (op === "function" || op === "class") {
+      else if (op === "function" || op === "function-defaults" || op === "class") {
         const owner = frame.callable.pool;
         const closure = new Map(owner.code.functions[arg].free.map(key => [key,
           frame.fn.kind === "class" ? frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
-        const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure);
-        if (op === "function") stack.push(callable);
+        const defaults = op === "function-defaults" ? stack.splice(stack.length - extra - fourth.length) : null;
+        const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure, defaults);
+        if (op !== "class") stack.push(callable);
         else {
           const bases = stack.splice(stack.length - extra), name = values.text(frame.callable.globals.cells.get("__name__")?.value);
           state.temporaries.push(callable);

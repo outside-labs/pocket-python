@@ -56,8 +56,10 @@ export function verifyFunctions(program) {
         allParams.some(key => !locals.includes(key)) || (kind !== "class" && free.some(key => locals.includes(key)))) fail("Parameter, local and free names conflict.");
     if (kind === "class" && (allParams.length || !["__module__", "__qualname__"].every(key => locals.includes(key)))) fail("Class bodies require metadata locals and no parameters.");
     if (!Array.isArray(fn.params.defaults) || fn.params.defaults.length > params.posonly.length + params.positional.length ||
-        !Array.from(fn.params.defaults).every(index => integer(index, constants.length - 1)) || !record(fn.params.kwdefaults) ||
-        Object.keys(fn.params.kwdefaults).some(key => !params.kwonly.includes(key) || !integer(fn.params.kwdefaults[key], constants.length - 1))) fail("Defaults must refer to immutable constants and declared parameters.");
+        !Array.from(fn.params.defaults).every(index => (modern && index === null || integer(index, constants.length - 1))) || !record(fn.params.kwdefaults) ||
+        Object.keys(fn.params.kwdefaults).some(key => !params.kwonly.includes(key) || !(modern && fn.params.kwdefaults[key] === null || integer(fn.params.kwdefaults[key], constants.length - 1)))) fail("Defaults must refer to immutable constants and declared parameters.");
+    const runtimeDefaults = [...fn.params.defaults, ...Object.values(fn.params.kwdefaults)].some(value => value === null);
+    if (runtimeDefaults && [...fn.params.defaults, ...Object.values(fn.params.kwdefaults)].some(value => value !== null)) fail("Runtime defaults require a complete definition-time vector.");
     params.defaults = Object.freeze([...fn.params.defaults]);
     params.kwdefaults = Object.freeze({...fn.params.kwdefaults});
     if (functionIndex === 0 && (allParams.length || free.length)) fail("Module entry has no parameters or free cells.");
@@ -98,6 +100,17 @@ export function verifyFunctions(program) {
               (arg && !/^[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*$/.test(arg)) ||
               !integer(extra, 32) || typeof instruction[3] !== "boolean" || (extra && instruction[3])) fail("Invalid static import operands.");
         } else if (op === "function") { length = 2; if (!integer(arg, program.functions.length - 1) || arg === 0 || (classes && program.functions[arg]?.kind !== "function")) fail("Invalid function reference."); }
+        else if (modern && op === "function-defaults") {
+          length = 4;
+          if (!integer(arg, program.functions.length - 1) || arg === 0 || classes && program.functions[arg]?.kind !== "function" ||
+              !integer(extra, FUNCTION_LIMITS.names)) fail("Invalid runtime-default function reference.");
+          names(instruction[3], validName);
+          const p = program.functions[arg].params;
+          if (p.defaults.length !== extra || Object.keys(p.kwdefaults).length !== instruction[3].length ||
+              !instruction[3].every((key, index) => Object.keys(p.kwdefaults)[index] === key) ||
+              ![...p.defaults, ...Object.values(p.kwdefaults)].length ||
+              [...p.defaults, ...Object.values(p.kwdefaults)].some(value => value !== null)) fail("Runtime defaults do not match the target signature.");
+        }
         else if (classes && op === "class") {
           length = 3;
           if (!integer(arg, program.functions.length - 1) || arg === 0 || program.functions[arg]?.kind !== "class" || !integer(extra, 16)) fail("Invalid class body or base count.");
@@ -133,7 +146,7 @@ export function verifyFunctions(program) {
       const heights = new Map([[0, 0]]), pending = [0];
       for (let cursor = 0; cursor < pending.length; cursor++) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
-        const needs = op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
+        const needs = op === "function-defaults" ? extra + instructions[at][3].length : op === "class" ? extra : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
           UNARY.has(op) || ["attribute-get", "attribute-delete", "module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
@@ -141,7 +154,7 @@ export function verifyFunctions(program) {
           if (before !== (op === "end" ? Number(block.kind === "expression") : needs)) fail("Block completion requires an exact stack height.");
           continue;
         }
-        const after = before + (op === "class" ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
+        const after = before + (["class", "function-defaults"].includes(op) ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
           BINARY.has(op) || CONSTRUCT.has(op) || ["call", "setitem", "slice", "build-slice"].includes(op) ? 1 - needs :
           ["store", "pop", "if", "jump-if-false"].includes(op) ? -1 : 0);
         if (after > FUNCTION_LIMITS.stack) fail("Function stack exceeds 256 values.");
@@ -191,7 +204,9 @@ export function verifyFunctions(program) {
     return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {})});
   });
   for (const fn of functions) for (const block of fn.blocks) for (const [op, target] of block.instructions) {
-    if (["function", "class"].includes(op) && functions[target].free.some(key =>
+    if (op === "function" && [...functions[target].params.defaults, ...Object.values(functions[target].params.kwdefaults)].some(value => value === null))
+      fail("A runtime-default function requires definition values.");
+    if (["function", "function-defaults", "class"].includes(op) && functions[target].free.some(key =>
       (fn.kind === "class" || !fn.locals.includes(key)) && !fn.free.includes(key))) fail("Function/class capture has no lexical cell.");
   }
   const code = Object.freeze({format: program.format, version: program.version, constants, functions: Object.freeze(functions)});

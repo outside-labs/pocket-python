@@ -48,7 +48,11 @@ explicit class callbacks. Non-callable errors preserve
 TypeError with a stage-specific message. Binding-error messages in the corpus
 match CPython, including nested qualified names.
 
-Starred expansion, mutable/computed defaults, annotations, global/nonlocal
+The source engine additionally adopts definition-time computed/mutable defaults
+through the [expanded function contract](interpreter-function-binding.md).
+The version 3 fixture format retains immutable literal defaults.
+
+Starred expansion, annotations, global/nonlocal
 statements, decorators, arbitrary attributes/reflection, explicit exception
 causes, exception groups, classes/descriptors, generators and async remain
 unsupported. Handlers initially name the adopted builtins; dynamic expressions

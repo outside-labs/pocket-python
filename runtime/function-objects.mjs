@@ -16,8 +16,9 @@ export class ModuleValue {
   }
 }
 export class FunctionValue {
-  constructor(pool, index, globals, closure) {
+  constructor(pool, index, globals, closure, defaults = null) {
     this.pool = pool; this.index = index; this.globals = globals; this.closure = closure;
+    this.defaults = defaults === null ? null : Object.freeze([...defaults]);
   }
 }
 export class ClassValue {

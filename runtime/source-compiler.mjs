@@ -88,6 +88,7 @@ class Compiler {
         (value.decorators || []).forEach(visit);
         binding(value.bindingName ?? value.name, value);
         if (value.kind === "Class") value.bases.forEach(visit);
+        else for (const group of Object.values(value.params)) for (const param of group) if (param.value) visit(param.value);
         this.bind(value, scope); return;
       }
       if (value.kind === "Name") {
@@ -143,6 +144,12 @@ class Compiler {
     }
     this.fail("Defaults require immutable literals or literal tuples.", node, "UNSUPPORTED", "bind");
   }
+  runtimeDefaults(node) {
+    const literal = value => value.kind === "Literal" || value.kind === "Tuple" && value.items.every(literal) ||
+      value.kind === "Unary" && ["positive", "negative"].includes(value.operator) && value.value.kind === "Literal" &&
+      ["int", "float", "complex"].includes(value.value.literal.type);
+    return Object.values(node.params).flat().some(param => param.value !== null && !literal(param.value));
+  }
   temporary(scope, node) {
     const name = "@source:" + this.tempSerial++;
     scope.locals.add(name);
@@ -155,8 +162,9 @@ class Compiler {
     const params = {posonly: [], positional: [], kwonly: [], defaults: [], kwdefaults: {}};
     if (!isModule && !isClass) {
       for (const key of ["posonly", "positional", "kwonly"]) params[key] = node.params[key].map(param => param.name);
-      params.defaults = [...node.params.posonly, ...node.params.positional].filter(param => param.value !== null).map(param => this.constant(this.literal(param.value), param.value));
-      params.kwdefaults = Object.fromEntries(node.params.kwonly.filter(param => param.value !== null).map(param => [param.name, this.constant(this.literal(param.value), param.value)]));
+      const runtime = this.runtimeDefaults(node);
+      params.defaults = [...node.params.posonly, ...node.params.positional].filter(param => param.value !== null).map(param => runtime ? null : this.constant(this.literal(param.value), param.value));
+      params.kwdefaults = Object.fromEntries(node.params.kwonly.filter(param => param.value !== null).map(param => [param.name, runtime ? null : this.constant(this.literal(param.value), param.value)]));
     }
     const fn = {name: isModule ? "<module>" : node.name, qualname: scope.qualname, params,
       locals: [], free: [...scope.free].sort(), body: null, blocks: [],
@@ -282,7 +290,14 @@ class Compiler {
             const name = this.temporary(scope, decorator); expr(decorator); emit(decorator, "store", name);
             return {name, site: decorator};
           });
-          if (value.kind === "Function") emit(value, "function", this.scopeOf.get(value).index);
+          if (value.kind === "Function") {
+            if (this.runtimeDefaults(value)) {
+              const positional = [...value.params.posonly, ...value.params.positional].filter(param => param.value !== null);
+              const keywords = value.params.kwonly.filter(param => param.value !== null);
+              [...positional, ...keywords].forEach(param => expr(param.value));
+              emit(value, "function-defaults", this.scopeOf.get(value).index, positional.length, keywords.map(param => param.name));
+            } else emit(value, "function", this.scopeOf.get(value).index);
+          }
           else {
             if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
             value.bases.forEach(expr); emit(value, "class", this.scopeOf.get(value).index, value.bases.length);
