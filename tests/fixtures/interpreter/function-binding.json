@@ -1135,6 +1135,34 @@
       "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other): return True\n def __str__(self):\n  print(\"error key\")\n  raise ValueError(\"format\")\nclass M:\n def keys(self): return [K(),K()]\n def __getitem__(self,k): return 2\ndef f(**kw): pass\nf(**M())\n",
       "stdout": "error key\n",
       "error_type": "ValueError"
+    },
+    {
+      "id": "class-global-and-method-capture",
+      "stage": "Scope",
+      "source": "x=1\ndef outer():\n x=4\n class C:\n  global x\n  y=x\n  def f(self): return x\n return C\nC=outer()\nprint(C.y,C().f())\n",
+      "stdout": "1 4\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "class-global-write-and-method-default",
+      "stage": "Scope",
+      "source": "x=1\ndef outer():\n x=4\n class C:\n  global x\n  x=7\n  def f(self,y=x): return x+y\n return C\nC=outer()\nprint(x,C().f())\n",
+      "stdout": "7 11\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "class-global-missing-with-capture",
+      "stage": "Scope",
+      "source": "def outer():\n x=4\n class C:\n  global x\n  y=x\n  def f(self): return x\n return C\nouter()\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "NameError"
     }
   ]
 }

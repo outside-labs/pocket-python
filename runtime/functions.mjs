@@ -88,12 +88,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   });
   const block = (frame, id) => frame.tasks.push({type: "block", block: frame.fn.blocks[id], pc: 0, stack: []});
   const load = (frame, key) => {
-    const local = frame.locals.get(key), classBody = frame.fn.kind === "class";
-    const cell = local?.bound ? local : classBody && local ? frame.callable.globals.cells.get(key) :
+    const global = frame.fn.globals?.includes(key), local = global ? null : frame.locals.get(key), classBody = frame.fn.kind === "class";
+    const cell = global ? frame.callable.globals.cells.get(key) : local?.bound ? local : classBody && local ? frame.callable.globals.cells.get(key) :
       local || frame.closure.get(key) || frame.callable.globals.cells.get(key);
     if (cell?.bound) return cell.value;
     if (local && !classBody && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
-    if (frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
+    if (!global && frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||

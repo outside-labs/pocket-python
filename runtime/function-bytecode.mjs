@@ -59,7 +59,7 @@ export function verifyFunctions(program) {
     const allParams = [...params.posonly, ...params.positional, ...params.kwonly, ...variadic.map(key => params[key])];
     const locals = names(fn.locals, storageName), free = names(fn.free, validName);
     const globals = names(Object.hasOwn(fn, "globals") ? fn.globals : [], validName), nonlocals = names(Object.hasOwn(fn, "nonlocals") ? fn.nonlocals : [], validName);
-    if (globals.some(key => locals.includes(key) || free.includes(key)) ||
+    if (globals.some(key => locals.includes(key) || nonlocals.includes(key) || kind !== "class" && free.includes(key)) ||
         nonlocals.some(key => !free.includes(key) || locals.includes(key)) || functionIndex === 0 && nonlocals.length)
       fail("Invalid explicit scope binding.");
     const writable = key => locals.includes(key) || globals.includes(key) || nonlocals.includes(key);
