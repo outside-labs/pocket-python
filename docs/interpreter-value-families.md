@@ -5,7 +5,7 @@ The staged `value-families.json` corpus separates reference observations from
 independent source execution. A reference-only result never establishes support.
 Core-source/1 and classes-source/1 retain bytecode versions 4 and 5.
 
-V1/V2 are implemented. V3 remains reference-only until its implementation PR.
+V1/V2/V3 are implemented; Future cases retain explicit refusals.
 
 ## Finite delivery contract
 
@@ -46,7 +46,7 @@ These are logical quotas, not host RSS or native-memory measurements.
 
 Views retain their underlying owned buffer and a bounded logical selection. Slices
 alias that buffer and survive release of a parent view. Release is idempotent;
-subsequent operations on that view raise ValueError. Mutable-byte resizing remains
+subsequent data operations on that view raise ValueError. Equality retains self identity and returns false against other values; a previously cached readonly hash remains available. Mutable-byte resizing remains
 explicitly unadopted, so this stage makes no exported-buffer resizing claim.
 Readonly views over mutable bytearrays remain unhashable, matching the owner.
 

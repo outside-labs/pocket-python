@@ -181,3 +181,67 @@ test('deferred bytearray slice mutation reaches its explicit boundary', async ()
   const result = await run('a=bytearray(b"abc"); a[1:]=b"d"\n');
   assert.equal(result.error.code, 'UNSUPPORTED'); closed(result);
 });
+
+test('logical views keep one buffer edge and slices match signed sequence selection', () => {
+  const values = new ValueRuntime({numeric: true}), owner = values.binaryValue([0, 1, 2, 3, 4, 5, 6, 7], true), view = values.view(owner);
+  assert.equal(valueLayout(view).bytes, 112); assert.deepEqual(valueLayout(view).children, [owner]);
+  for (const start of [null, -100n, -3n, -1n, 0n, 3n, 100n])
+    for (const stop of [null, -100n, -3n, -1n, 0n, 3n, 100n]) for (const step of [-4n, -1n, 1n, 3n]) {
+      const sliced = values.slice(view, start, stop, step), expected = values.slice(owner, start, stop, step);
+      assert.deepEqual(values.viewItems(sliced), expected.items);
+      assert.equal(valueLayout(sliced).bytes, 112); assert.deepEqual(valueLayout(sliced).children, [owner]);
+    }
+  const child = values.slice(view, 1n, null, 2n); values.releaseView(view); values.set(child, 0n, 99n);
+  assert.equal(values.index(owner, 1n), 99n); assert.deepEqual(valueLayout(view).children, []);
+  assert.throws(() => values.unary('len', view), {name: 'ValueError'});
+});
+
+test('view owners, child aliases and cached hashes survive instruction-boundary collection', async () => {
+  const source = 'b=bytearray(b"abcd"); a=memoryview(b); c=a[::-1]; del b\na.release(); c[0]=90; print(c.tobytes()==b"Zcba")\n' +
+    'r=memoryview(b"hash"); h=hash(r); r.release(); print(hash(r)==h,r==r,r==b"hash")\n';
+  const {registry} = await compileSourceModules([unit(source)], profile), session = new ModuleSession(registry); let output = '';
+  session.context.begin({}, text => { output += text; }); const execution = Execution.modules(session.context);
+  try {
+    while (execution.state !== 'completed') { execution.advance(); session.memory.collect([], {cleanup: true}); }
+    assert.equal(output, 'True\nTrue True False\n');
+  } finally { execution.close(); session.context.finish(); session.close(); registry.close(); }
+  closed({closed: session.stats()});
+});
+
+test('view writes preserve conversion operands through callback pause, cancellation and close', async () => {
+  const source = 'b=bytearray(b"abc"); v=memoryview(b)[::-1]\nclass I:\n def __index__(self): print("entered"); return 0\nv[I()]=I(); print(b[2])\n';
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  try { for (const mode of ['finish', 'cancel', 'close']) {
+    const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+    session.context.begin({shouldCancel: () => cancel}, text => { output += text; }); const execution = Execution.modules(session.context);
+    try {
+      while (execution.state !== 'completed') {
+        execution.advance(); session.memory.collect([], {cleanup: true});
+        if (output.includes('entered\n') && !reached) {
+          reached = true;
+          if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+          if (mode === 'close') break;
+        }
+      }
+      assert.equal(reached, true); if (mode === 'finish') assert.equal(output, 'entered\nentered\n0\n');
+    } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+    closed({closed: session.stats()});
+  } } finally { registry.close(); }
+});
+
+test('readonly view writes refuse before binding index callbacks and released views retain no data authority', async () => {
+  const result = await run('class I:\n def __index__(self): print("bad"); return 0\nmemoryview(b"a")[I()]=I()\n');
+  assert.equal(result.error.type, 'TypeError'); assert.equal(result.stdout, ''); closed(result);
+  const released = await run('v=memoryview(b"a"); v.release()\nclass I:\n def __index__(self): print("bad"); return 0\nv[I()]\n');
+  assert.equal(released.error.type, 'ValueError'); assert.equal(released.stdout, ''); closed(released);
+});
+
+test('view conversions enforce list, allocation and work bounds without retaining buffers', async () => {
+  for (const [source, options, limits, code] of [
+    ['memoryview(bytes(1025)).tolist()\n', {maxWork: 20000000}, undefined, 'BUDGET'],
+    ['v=memoryview(bytes(5000)); v.tobytes()\n', {maxWork: 20000000}, {maxBytes: 11000}, 'OOM'],
+    ['v=memoryview(bytes(1000)); v.tobytes()\n', {maxWork: 2000}, undefined, 'BUDGET']
+  ]) {
+    const result = await run(source, options, limits); assert.equal(result.error.code, code); closed(result);
+  }
+});

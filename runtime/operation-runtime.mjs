@@ -88,6 +88,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
       const type = args[1];
       if (type instanceof ClassValue) return classes.isinstance(args[0], type);
+      if (type instanceof BuiltinValue && type.name === "memoryview") return values.isView(args[0]);
       if (type instanceof BuiltinValue && ["bytes", "bytearray"].includes(type.name))
         return values.isBinary(args[0]) && args[0].mutable === (type.name === "bytearray");
       if (type instanceof BuiltinValue && ["set", "frozenset"].includes(type.name))
@@ -573,6 +574,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     write(text + "\n"); return deliver(null, after, site);
   };
   const sliceNext = (receiver, parts, position, site, after, depth, operation = "get", item = null) => {
+    if (operation !== "get" && values.isView(receiver)) {
+      values.liveView(receiver);
+      if (receiver.readonly) python("TypeError", "cannot modify read-only memory");
+      hard("UNSUPPORTED", "UnsupportedOperationError", "Buffer slice mutation requires a later value stage.");
+    }
     if (operation !== "get" && values.isBinary(receiver)) {
       if (!receiver.mutable) python("TypeError", "bytes object does not support item assignment");
       hard("UNSUPPORTED", "UnsupportedOperationError", "Bytearray resizing and slice mutation require a later value stage.");
@@ -793,7 +799,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = dictionaryTask(receiver.storage, key, site, completion, depth, "contains"); continue;
           }
           if (values.dictionaryNeedsProtocol(receiver, key)) { task = dictionaryTask(receiver, key, site, completion, depth, "contains"); continue; }
-          if (task.search || values.isIterator(receiver) || values.isRange(receiver) && key instanceof InstanceValue) {
+          if (task.search || values.isIterator(receiver) || values.isView(receiver) || values.isRange(receiver) && key instanceof InstanceValue) {
             task = unaryTask("iter", receiver, site, continuation("search-iter", {receiver, key, after: completion, depth}), depth); continue;
           }
           if (!(receiver instanceof InstanceValue)) {
@@ -819,6 +825,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "item" || task.kind === "slice") {
           state.temporaries.push(...operationRoots(task));
           const {receiver, operation, item} = task;
+          if (values.isView(receiver)) {
+            values.liveView(receiver);
+            if (operation === "delete" || operation === "set" && receiver.readonly) python("TypeError", "cannot modify this memoryview");
+          }
           if (task.kind === "slice") {
             if (receiver instanceof InstanceValue) {
               const key = values.sliceKey(...task.parts); state.temporaries.push(key);
@@ -839,11 +849,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (plan.kind === "value") task = callTask(plan.value, args, [], [], site, finish, depth);
             else task = callTask(plan.callable, plan.args, [], [], site,
               continuation("invoke", {args, keywords: [], keywordValues: [], after: finish, depth}), depth);
-          } else if (values.isSlice(key) && (operation === "get" ? values.isSequence(receiver) : values.isList(receiver) || values.isBinary(receiver))) {
+          } else if (values.isSlice(key) && (operation === "get" ? values.isSequence(receiver) : values.isList(receiver) || values.isView(receiver) || values.isBinary(receiver))) {
             task = sliceTask(receiver, [key.start, key.stop, key.step], site, completion, depth, operation, item);
           } else if (key instanceof InstanceValue && values.isSequence(receiver)) {
             task = unaryTask("index", key, site, continuation("index-key", {receiver, key, after: completion, depth, operation, item}), depth);
-          } else if (operation === "set" && values.isBinary(receiver) && receiver.mutable && item instanceof InstanceValue) {
+          } else if (operation === "set" && (values.isBinary(receiver) && receiver.mutable || values.isView(receiver) && !receiver.readonly) && item instanceof InstanceValue) {
             task = unaryTask("index", item, site, continuation("byte-assignment", {receiver, key, after: completion}), depth);
           } else task = deliver(operation === "get" ? values.binary("getitem", receiver, key) :
             operation === "set" ? values.set(receiver, key, item) : values.binary("dict-delete", receiver, key), completion, site);
@@ -1008,6 +1018,25 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (callable instanceof ValueMethod && values.isView(callable.receiver)) {
+            if (args.length || keywords.length) {
+              if (callable.name === "tobytes" && args.length <= 1 && keywords.every(name => name === "order"))
+                hard("UNSUPPORTED", "UnsupportedOperationError", "Buffer byte-order options require a later value stage.");
+              python("TypeError", callable.name + "() requires no arguments");
+            }
+            const receiver = callable.receiver;
+            if (callable.name === "release") { task = valueTask(values.releaseView(receiver), site, completion); continue; }
+            values.liveView(receiver);
+            const result = callable.name === "toreadonly" ? values.view(receiver, true) : callable.name === "tobytes" ?
+              values.binaryValue(values.viewItems(receiver)) : values.list(values.viewItems(receiver).map(byte => values.int(BigInt(byte))));
+            task = valueTask(result, site, completion); continue;
+          }
+          if (callable.name === "memoryview") {
+            count("builtin:memoryview");
+            const bound = bindNamed(["object"], args, keywords, keywordValues);
+            if (!bound.has("object")) python("TypeError", "memoryview() requires an object argument");
+            task = valueTask(values.view(bound.get("object")), site, completion); continue;
+          }
           if (callable instanceof ValueMethod && ["encode", "decode"].includes(callable.name) &&
               (values.isString(callable.receiver) || values.isBinary(callable.receiver))) {
             const bound = bindNamed(["encoding", "errors"], args, keywords, keywordValues);
@@ -1023,6 +1052,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
             if (!bound.has("source")) { task = valueTask(values.binaryValue([], mutable), site, completion); continue; }
             if (values.isString(source)) python("TypeError", "string argument without an encoding");
+            if (values.isView(source)) { task = valueTask(values.binaryValue(values.viewItems(source), mutable), site, completion); continue; }
             if (values.isBinary(source)) { task = valueTask(!mutable && !source.mutable ? source : values.binaryValue(source.items, mutable), site, completion); continue; }
             if (source instanceof InstanceValue) {
               const plan = !mutable ? classes.special(source, "__bytes__") : null;

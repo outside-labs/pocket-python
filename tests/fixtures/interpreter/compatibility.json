@@ -1284,16 +1284,14 @@
     {
       "id": "builtin-memoryview",
       "source": "print(callable(memoryview))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {

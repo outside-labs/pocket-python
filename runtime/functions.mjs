@@ -97,7 +97,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.callable.pool.code.version >= 4 && ["bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
+        (frame.callable.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
         (frame.callable.pool.code.version === 5 && ["type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
@@ -372,7 +372,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (["attribute-set", "attribute-delete"].includes(op)) {
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
-        if (values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
+        if (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
         const plan = classes.write(receiver, arg, value, op === "attribute-delete");
         if (plan.kind === "value") stack.push(plan.value);
         else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("discard")); }
@@ -386,6 +386,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
           else if (values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));
           else if (values.isSet(receiver)) { values.setMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
+          else if (values.isView(receiver)) stack.push(values.viewMethod(arg) ? allocate(ValueMethod, receiver, arg) : values.viewAttribute(receiver, arg));
           else if (values.isBinary(receiver)) { values.binaryMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (arg === "encode" && values.isString(receiver)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
@@ -462,7 +463,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         else { values.set(receiver, key, item); stack.push(receiver); }
       } else if (op === "setitem") {
         const item = stack.pop(), key = stack.pop(), receiver = stack.pop();
-        if (receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key) || values.isBinary(receiver) && item instanceof InstanceValue ||
+        if (receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key) || (values.isBinary(receiver) || values.isView(receiver)) && item instanceof InstanceValue ||
             frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(receiver, key))
           dispatch(itemTask(receiver, key, summary(frame, cursor), null, 0, "set", item));
         else stack.push(values.set(receiver, key, item));
