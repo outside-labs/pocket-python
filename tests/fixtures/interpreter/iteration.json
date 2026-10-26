@@ -541,7 +541,7 @@
     },
     {
       "id": "future-generator",
-      "stage": "T3",
+      "stage": "T1",
       "source": "def use():\n yield 7\nprint(next(use()))\n",
       "stdout": "7\n"
     },
