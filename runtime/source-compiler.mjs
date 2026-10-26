@@ -247,8 +247,9 @@ class Compiler {
         } else if (value.kind === "Set") {
           if (value.items.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
           if (value.items.some(item => item.kind === "Starred")) {
-            emit(value, "build-set", 0);
-            for (const item of value.items) {
+            const first = value.items.findIndex(item => item.kind === "Starred");
+            value.items.slice(0, first).forEach(expr); emit(value, "build-set", first);
+            for (const item of value.items.slice(first)) {
               expr(item.kind === "Starred" ? item.value : item); emit(item, item.kind === "Starred" ? "set-extend" : "set-insert");
             }
           } else { value.items.forEach(expr); emit(value, "build-set", value.items.length); }
