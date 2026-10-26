@@ -161,6 +161,12 @@ assignment expressions, lambda functions, unpacking targets and starred sequence
 dictionary displays. Try `uv run python -m examples.interpreter_syntax`, with
 `--core` available for ordinary row values.
 
+The [value-family profile](docs/interpreter-value-families.md) adds sets/frozensets,
+bytes/bytearrays, strict UTF-8/ASCII/Latin-1 codecs and one-dimensional logical
+memoryviews. Run `uv run python -m examples.interpreter_values`, or add `--core`
+for primitive keys. Broader set methods, bytearray resizing, buffer casts and
+native buffers retain explicit future boundaries.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)
