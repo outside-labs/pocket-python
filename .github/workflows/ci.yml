@@ -162,6 +162,7 @@ jobs:
       - run: node --test runtime/memory.test.mjs
       - run: node --test runtime/syntax.test.mjs
       - run: node --test runtime/function-binding.test.mjs
+      - run: node --test runtime/generators.test.mjs
       - run: node --test runtime/functions.test.mjs
       - run: node --test runtime/execution.test.mjs
       - run: node --test runtime/execution-stepping.test.mjs
