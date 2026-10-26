@@ -168,8 +168,8 @@
     {
       "id": "function-binding",
       "status": "partial",
-      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures.",
-      "gaps": "Global/nonlocal writes, argument packing/unpacking and annotations remain deferred.",
+      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures. Global/nonlocal writes and deletion share the defining module and lexical cells.",
+      "gaps": "Argument packing/unpacking and annotations remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -190,7 +190,9 @@
       ],
       "evidence": [
         "tests/fixtures/interpreter/function-binding.json:computed-once",
-        "tests/fixtures/interpreter/function-binding.json:mutable-default-alias"
+        "tests/fixtures/interpreter/function-binding.json:mutable-default-alias",
+        "tests/fixtures/interpreter/function-binding.json:global-new-name",
+        "tests/fixtures/interpreter/function-binding.json:nonlocal-write"
       ]
     },
     {
