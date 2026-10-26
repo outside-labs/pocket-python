@@ -44,6 +44,14 @@ default graphs. The eight composed execution observations remain unchanged.
 
 ## Validation
 
+Integrated acceptance runs all 111 class observations and 77 core observations
+in Node/Chromium with both draining and instruction stepping. The console has
+288 comparisons/checks and 70 Stop/Restart cycles, including new function source
+after offline reload and a waiting class-to-core update. The
+[payload record](measurements/2026-10-26-functions.json) retains the preceding
+699-byte application fixture: complete core payload is 483,229 bytes, an increase
+of 22,779 bytes. No startup or speed improvement is claimed.
+
 The Defaults stage is implemented: sixteen semantic cases and two future refusals
 pass in Node and Chromium, including instruction stepping. Functions own runtime
 default vectors; modern bytecode verifies their exact positional/keyword layout.

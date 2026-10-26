@@ -152,6 +152,11 @@ and offline-console checks. Build its example with
 `uv run python -m examples.interpreter_classes`. The default core-source/1 profile
 remains available; further special protocols and async follow separate stages.
 
+Both profiles support [expanded function binding](docs/interpreter-function-binding.md):
+computed/mutable defaults, global/nonlocal state, variadic parameters and owned
+starred calls. Run `uv run python -m examples.interpreter_functions` for a class
+mapping example, or add `--core` for dictionary forwarding without class syntax.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)
