@@ -352,6 +352,10 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           store(state.frames.at(-1), "__module__", values.string(Array.from(name, char => char.codePointAt(0))));
           store(state.frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
         }
+      } else if (op === "assertion-error") {
+        const args = arg ? [stack.pop()] : [];
+        const callable = moduleContext.builtin("AssertionError", () => allocate(BuiltinValue, "AssertionError"));
+        state.temporaries.push(callable); call(callable, args, [], [], summary(frame, cursor));
       } else if (op === "call-start") stack.push(allocate(CallArguments, stack.pop()));
       else if (["call-argument", "call-keyword", "call-star", "call-mapping"].includes(op)) {
         const value = stack.pop(), receiver = stack.pop();

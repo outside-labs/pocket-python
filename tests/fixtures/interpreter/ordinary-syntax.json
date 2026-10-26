@@ -1,0 +1,612 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-ordinary-syntax/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "Control"
+  ],
+  "cases": [
+    {
+      "id": "assert-true-lazy-message",
+      "stage": "Control",
+      "source": "def bad():\n print(\"bad\")\n return 1//0\nassert True,bad()\nprint(7)\n",
+      "stdout": "7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-false-bare",
+      "stage": "Control",
+      "source": "assert False\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "AssertionError"
+    },
+    {
+      "id": "assert-message-string",
+      "stage": "Control",
+      "source": "assert 0,\"message\"\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "AssertionError"
+    },
+    {
+      "id": "assert-message-values",
+      "stage": "Control",
+      "source": "for x in [None,False,7,\"text\"]:\n try: assert False,x\n except AssertionError as e: print(str(e))\n",
+      "stdout": "None\nFalse\n7\ntext\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-empty-message",
+      "stage": "Control",
+      "source": "try: assert []\nexcept AssertionError as e: print(str(e))\n",
+      "stdout": "\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-builtin-shadow",
+      "stage": "Control",
+      "source": "AssertionError=7\ntry: assert False,\"saved\"\nexcept Exception as e: print(str(e))\n",
+      "stdout": "saved\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-message-once",
+      "stage": "Control",
+      "source": "def message():\n print(\"message\")\n return \"x\"\ntry: assert False,message()\nexcept AssertionError: print(\"caught\")\n",
+      "stdout": "message\ncaught\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-message-error",
+      "stage": "Control",
+      "source": "def message(): raise ValueError(\"message\")\nassert False,message()\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "ValueError"
+    },
+    {
+      "id": "assert-finally",
+      "stage": "Control",
+      "source": "def f():\n try:\n  assert False,\"x\"\n finally: print(\"final\")\ntry: f()\nexcept AssertionError: print(\"caught\")\n",
+      "stdout": "final\ncaught\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-class-truth",
+      "stage": "Control",
+      "source": "class A:\n def __bool__(self):\n  print(\"truth\")\n  return True\nassert A()\nprint(\"done\")\n",
+      "stdout": "truth\ndone\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-binding-truth",
+      "stage": "Control",
+      "source": "class A:\n @property\n def __bool__(self):\n  print(\"bind\")\n  def use():\n   print(\"truth\")\n   return False\n  return use\ntry: assert A(),\"x\"\nexcept AssertionError: print(\"caught\")\n",
+      "stdout": "bind\ntruth\ncaught\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-truth-error",
+      "stage": "Control",
+      "source": "class A:\n def __bool__(self): raise ValueError(\"truth\")\ndef bad():\n print(\"bad\")\n return \"x\"\nassert A(),bad()\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "ValueError"
+    },
+    {
+      "id": "walrus-value-alias",
+      "stage": "Control",
+      "source": "print((x:=7),x)\nprint((a:=[]) is a)\n",
+      "stdout": "7 7\nTrue\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-nested-unicode",
+      "stage": "Control",
+      "source": "print((π:=(b:=7)),π,b)\n",
+      "stdout": "7 7 7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-short-circuit",
+      "stage": "Control",
+      "source": "x=1\nprint(False and (x:=3),True or (x:=4),x)\n",
+      "stdout": "False True 1\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-loop",
+      "stage": "Control",
+      "source": "x=3\nwhile x:=x-1: print(x)\nprint(x)\n",
+      "stdout": "2\n1\n0\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-call-list-slice",
+      "stage": "Control",
+      "source": "a=[(x:=7),(y:=8)]\nprint(a[(n:=1)],x,y,n)\nprint(a[(lo:=0):][1],lo)\n",
+      "stdout": "8 7 8 1\n8 0\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-global",
+      "stage": "Control",
+      "source": "x=1\ndef f():\n global x\n return (x:=x+2)\nprint(f(),x)\n",
+      "stdout": "3 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-nonlocal",
+      "stage": "Control",
+      "source": "def outer():\n x=1\n def f():\n  nonlocal x\n  return (x:=x+2)\n return f\nf=outer()\nprint(f(),f())\n",
+      "stdout": "3 5\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-local-before-binding",
+      "stage": "Control",
+      "source": "x=7\ndef f():\n print(x)\n (x:=2)\nf()\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "UnboundLocalError"
+    },
+    {
+      "id": "walrus-default-outer-scope",
+      "stage": "Control",
+      "source": "def f(x=(saved:=7)): return x\nprint(saved,f())\n",
+      "stdout": "7 7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-private-binding",
+      "stage": "Control",
+      "source": "class A:\n x=(__value:=7)\n def read(self): return self.__value\nprint(A.x,A().read())\n",
+      "stdout": "7 7\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "walrus-conditional-order",
+      "stage": "Control",
+      "source": "def mark(n):\n print(n)\n return n\nprint((x:=mark(1)) if (test:=mark(2)) else (x:=mark(3)),test,x)\n",
+      "stdout": "2\n1\n1 2 1\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "assert-missing",
+      "stage": "Control",
+      "source": "assert\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "assert-too-many",
+      "stage": "Control",
+      "source": "assert False,1,2\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "walrus-statement",
+      "stage": "Control",
+      "source": "x:=7\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "walrus-target",
+      "stage": "Control",
+      "source": "print((a.x:=7))\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "walrus-global-after",
+      "stage": "Control",
+      "source": "def f():\n (x:=1)\n global x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "walrus-debug",
+      "stage": "Control",
+      "source": "print((__debug__:=7))\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "lambda-basic",
+      "stage": "Lambda",
+      "source": "f=lambda x: x+2\nprint(f(3))\n",
+      "stdout": "5\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-precedence",
+      "stage": "Lambda",
+      "source": "f=lambda x: 1 if x else 2\nprint(f(True),f(False),(lambda: lambda x:x+1)()(3))\n",
+      "stdout": "1 2 4\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-default-once",
+      "stage": "Lambda",
+      "source": "events=[]\ndef value():\n events.append(1)\n return []\nf=lambda x=value(): x\nprint(len(events),f() is f())\n",
+      "stdout": "1 True\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-variadic",
+      "stage": "Lambda",
+      "source": "f=lambda x,/,*a,y=3,**kw: x+a[0]+y+kw[\"z\"]\nprint(f(*[1,2],**{\"z\":4}))\n",
+      "stdout": "10\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-closure",
+      "stage": "Lambda",
+      "source": "def outer(x): return lambda y: x+y\nprint(outer(3)(4))\n",
+      "stdout": "7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-walrus-local",
+      "stage": "Lambda",
+      "source": "x=7\nf=lambda: (x:=3)\nprint(f(),x)\n",
+      "stdout": "3 7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-name",
+      "stage": "Lambda",
+      "source": "class A:\n f=staticmethod(lambda: 3)\nprint(A.f.__name__,A.f())\n",
+      "stdout": "<lambda> 3\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-private-parameter",
+      "stage": "Lambda",
+      "source": "class A:\n f=staticmethod(lambda __x: __x+1)\nprint(A.f(2))\n",
+      "stdout": "3\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "lambda-duplicate",
+      "stage": "Lambda",
+      "source": "f=lambda x,x:x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "lambda-kw-after",
+      "stage": "Lambda",
+      "source": "f=lambda **kw,x: x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "lambda-no-body",
+      "stage": "Lambda",
+      "source": "f=lambda x:\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "unpack-basic",
+      "stage": "Unpack",
+      "source": "a,b=[2,3]\n[c,d]=(a,b)\nprint(a,b,c,d)\n",
+      "stdout": "2 3 2 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "unpack-nested",
+      "stage": "Unpack",
+      "source": "a,(b,c)=(1,[2,3])\nprint(a,b,c)\n",
+      "stdout": "1 2 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "unpack-starred",
+      "stage": "Unpack",
+      "source": "a,*b,c=range(5)\nprint(a,len(b),b[0],b[-1],c)\n",
+      "stdout": "0 3 1 3 4\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "unpack-star-empty",
+      "stage": "Unpack",
+      "source": "*a,b=[7]\nprint(len(a),b)\n",
+      "stdout": "0 7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "unpack-loop",
+      "stage": "Unpack",
+      "source": "for a,*b in [(1,2,3),(4,)]: print(a,len(b))\n",
+      "stdout": "1 2\n4 0\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "unpack-cardinality",
+      "stage": "Unpack",
+      "source": "a,b=[1]\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "ValueError"
+    },
+    {
+      "id": "unpack-too-many",
+      "stage": "Unpack",
+      "source": "a,b=[1,2,3]\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "ValueError"
+    },
+    {
+      "id": "unpack-partial-targets",
+      "stage": "Unpack",
+      "source": "a=0\ntry: a,(b,c)=[1,[2]]\nexcept ValueError: print(a)\n",
+      "stdout": "1\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "unpack-custom-iterator",
+      "stage": "Unpack",
+      "source": "class A:\n def __iter__(self): return iter([2,3])\na,b=A()\nprint(a,b)\n",
+      "stdout": "2 3\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "unpack-subscript-target",
+      "stage": "Unpack",
+      "source": "a=[0]\na[0],b=[2,3]\nprint(a[0],b)\n",
+      "stdout": "2 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "display-sequences",
+      "stage": "Display",
+      "source": "a=[0,*range(1,4),4]\nb=(*a,5)\nprint(len(b),b[0],b[-1])\n",
+      "stdout": "6 0 5\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "display-star-string",
+      "stage": "Display",
+      "source": "a=[*\"A🚀\"]\nprint(a[0],a[1])\n",
+      "stdout": "A 🚀\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "display-dict-merge",
+      "stage": "Display",
+      "source": "a={\"x\":1,**{\"x\":2,\"y\":3},\"z\":4}\nfor key in a: print(key,a[key])\n",
+      "stdout": "x 2\ny 3\nz 4\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "display-dict-nonstring",
+      "stage": "Display",
+      "source": "a={**{1:2}}\nprint(a[1])\n",
+      "stdout": "2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "display-dict-custom-mapping",
+      "stage": "Display",
+      "source": "class M:\n def keys(self): return [\"x\"]\n def __getitem__(self,key): return 7\na={**M()}\nprint(a[\"x\"])\n",
+      "stdout": "7\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "display-not-mapping",
+      "stage": "Display",
+      "source": "a={**[(\"x\",2)]}\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "assert-container-message-deferred",
+      "stage": "Future",
+      "source": "assert False,[1]\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "AssertionError"
+    },
+    {
+      "id": "assert-float-message-deferred",
+      "stage": "Future",
+      "source": "assert False,1.25\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "AssertionError"
+    },
+    {
+      "id": "comprehension-deferred",
+      "stage": "Future",
+      "source": "print(len([x for x in range(3)]))\n",
+      "stdout": "3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    }
+  ]
+}

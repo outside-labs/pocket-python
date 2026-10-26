@@ -67,7 +67,7 @@ export class ExceptionValue {
   }
 }
 export const EXCEPTIONS = Object.freeze({
-  BaseException: null, Exception: "BaseException", ArithmeticError: "Exception",
+  BaseException: null, Exception: "BaseException", AssertionError: "Exception", ArithmeticError: "Exception",
   ZeroDivisionError: "ArithmeticError", OverflowError: "ArithmeticError", LookupError: "Exception", IndexError: "LookupError",
   KeyError: "LookupError", ValueError: "Exception", TypeError: "Exception",
   NameError: "Exception", UnboundLocalError: "NameError", RuntimeError: "Exception",

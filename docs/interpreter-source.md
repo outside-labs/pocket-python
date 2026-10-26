@@ -125,7 +125,9 @@ assignment/display unpacking, annotations, future directives, pattern matching, 
 exception groups/explicit causes, power/bitwise/set forms, bytes/complex/formatted
 or template strings, named Unicode escapes, dynamic imports and implicit host
 capabilities remain outside this profile. Function/module reflection and
-unlisted implicit metadata are not adopted. Syntax/features fail before target
+unlisted implicit metadata are not adopted. Assertions and assignment expressions
+are adopted through the [ordinary syntax contract](interpreter-ordinary-syntax.md).
+Syntax/features fail before target
 execution; runtime value/resource failures retain their named contracts.
 
 `SourceError` has code, phase, name, message and location. SYNTAX includes
