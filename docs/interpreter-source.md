@@ -85,7 +85,7 @@ None/True/False are refused; `__debug__` is the unassignable True constant.
 | Literals | None/bool, arbitrary-precision integers in four bases, decimal binary64 floats, Unicode strings with single/triple/raw/Unicode forms and ordinary/hex/Unicode/octal escapes, adjacent strings, lists/tuples/dicts. |
 | Expressions | Names, arithmetic backed by the value profile, boolean/conditional short-circuiting, comparisons including chains/is not/not in, indexing/slicing, calls and keywords, explicit module attributes and bound list.append. |
 | Statements | Simple/chained name or item assignment, adopted augmented operations, name/dict-item deletion, expression/pass, if/elif/else, while/for with else, break/continue, return, raise/bare raise, try/except/else/finally, including Python 3.14 unparenthesized multi-type handlers without an alias. |
-| Functions | Positional-only/positional/keyword-only parameters, immutable literal/tuple defaults, local/global lookup, transitive shared closure cells and recursion. |
+| Functions | Positional-only/positional/keyword-only and variadic parameters, definition-time defaults, global/nonlocal writes, owned starred calls, shared closure cells and recursion. |
 | Modules | Static named/dotted/from/relative imports, aliases/re-exports and explicit verified registry grants, cache/initialization/cycle rules. |
 
 Comparisons and assignments preserve evaluation order and single evaluation.
@@ -121,8 +121,7 @@ limits remain explicit staged boundaries. The independent source grammar does
 not imply full Python builtin/stdlib coverage.
 
 Classes/descriptors/decorators, async/await, generators/comprehensions,
-starred calls/parameters/unpacking, annotations, computed/mutable defaults,
-global/nonlocal mutation, future directives, pattern matching, context managers,
+assignment/display unpacking, annotations, future directives, pattern matching, context managers,
 exception groups/explicit causes, power/bitwise/set forms, bytes/complex/formatted
 or template strings, named Unicode escapes, dynamic imports and implicit host
 capabilities remain outside this profile. Function/module reflection and

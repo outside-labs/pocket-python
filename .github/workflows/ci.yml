@@ -90,8 +90,10 @@ jobs:
       - run: uv run --no-sync python runtime/check_compatibility.py --target browser --report build/compatibility-browser-report.json
       - run: uv run --no-sync python runtime/check_library_profiles.py --target browser --report build/library-profiles-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --report build/classes-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --stages Defaults Scope Variadic StarArgs StarKw Future --report build/function-binding-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --stages Defaults Scope Variadic StarArgs StarKw Future --stepped --report build/function-binding-browser-stepped-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --stepped --report build/function-binding-browser-stepped-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --report build/function-binding-core-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --stepped --report build/function-binding-core-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --stepped --report build/classes-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/private-names.json --stepped --report build/private-names-stepped-browser-report.json
@@ -173,8 +175,10 @@ jobs:
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/execution.json --report build/execution-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/formatting.json --report build/formatting-reference-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --stages Defaults Scope Variadic StarArgs StarKw Future --report build/function-binding-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --stages Defaults Scope Variadic StarArgs StarKw Future --stepped --report build/function-binding-node-stepped-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --stepped --report build/function-binding-node-stepped-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --report build/function-binding-core-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --stepped --report build/function-binding-core-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --stepped --report build/classes-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --stepped --report build/private-names-stepped-node-report.json

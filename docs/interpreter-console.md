@@ -108,6 +108,13 @@ when an update is waiting. Activation deletes only this URL scope's older caches
 Known cached assets stay together, and unknown paths within the app scope return
 404. Offline use depends on the browser retaining this complete cache.
 
+Expanded [function binding](interpreter-function-binding.md) is available in both
+source selections. The function console example combines mutable defaults,
+global/nonlocal state and variadic forwarding; its class selection adds a custom
+keyword mapping. Offline acceptance covers new source, original callback errors,
+pending default/iteration/mapping Stop and fresh Restart, and primitive forwarding
+after a class-to-core update. Construction hints and annotations remain separate.
+
 ## Host protocol subset
 
 The console uses [host protocol 1](browser-host-protocol.md), profile

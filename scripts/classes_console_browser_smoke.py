@@ -20,6 +20,7 @@ from pocket_python.interpreter import build_interpreter, read_interpreter
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from examples.interpreter_classes import SOURCE
+from examples.interpreter_functions import SOURCE as FUNCTION_SOURCE, CORE_SOURCE as CORE_FUNCTION_SOURCE
 
 
 def smoke(channel=None):
@@ -131,6 +132,10 @@ def smoke(channel=None):
                     sequences = json.loads((ROOT / 'tests/fixtures/interpreter/sequences.json').read_bytes())
                     programs.extend(c['source'] for c in sequences['cases']
                                     if c['stage'] in sequences['implemented_stages'] and 'error_type' not in c)
+                    functions = json.loads((ROOT / 'tests/fixtures/interpreter/function-binding.json').read_bytes())
+                    programs.extend(c['source'] for c in functions['cases']
+                                    if c['stage'] in functions['implemented_stages'] and 'error_type' not in c)
+                    programs.append(FUNCTION_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -258,6 +263,13 @@ def smoke(channel=None):
                     refused('print("entered")\nlist(range(1025))\n', 'ExecutionLimitError:')
                     assert page.locator('#result').inner_text() == 'entered\n'
                     checks.append('sequence-signatures-hints-callback-errors-and-resource-prefixes')
+                    refused('def fail():\n return 1//0\ndef f(x=fail()): pass\n', 'ZeroDivisionError:')
+                    assert 'fail at sources/app.py:2' in page.locator('#diagnostic').inner_text()
+                    refused('class M:\n def keys(self): return ["x"]\n def __getitem__(self,key):\n  raise ValueError("mapping")\ndef f(**kw): pass\nf(**M())\n', 'ValueError:')
+                    assert '__getitem__ at sources/app.py:4' in page.locator('#diagnostic').inner_text()
+                    refused('print("never")\ndef f(x):\n global x\n', 'SyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    checks.append('function-default-mapping-source-errors-and-declaration-validation')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -287,6 +299,8 @@ def smoke(channel=None):
                     run('class OfflineStream:\n def __init__(self): self.n=0\n def __iter__(self): return self\n def __next__(self):\n  self.n+=1\n  if self.n>3: raise StopIteration\n  return [self.n]\nsaved=tuple(OfflineStream())\na=list(range(2,10,3))\nprint(len(saved),saved[-1][0],a[1],all([1,2]),any([0,0,3]))\n', '3 3 5 True True\n')
                     run('class OfflineIndex:\n @property\n def __index__(self):\n  def use(): return 3\n  return use\nr=range(OfflineIndex(),10,OfflineIndex())\nprint(r.start,r.stop,r.step,tuple(r)[-1],any(range(1,10**100)),any([]))\n', '3 10 3 9 True False\n')
                     checks.append('new-range-construction-and-owned-consumer-source-after-offline-reload')
+                    run(FUNCTION_SOURCE, '19 21 True 2 1\n23 3\n')
+                    checks.append('new-default-scope-variadic-and-mapping-source-after-offline-reload')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -345,6 +359,14 @@ def smoke(channel=None):
                             busy.append('class Spin:\n def __iter__(self): return self\n '+decoration+'def __next__(self):\n  while True: pass\n'+consumer+'(Spin())\n')
                         for consumer in ['all', 'any']:
                             busy.append('class Spin:\n '+decoration+'def __bool__(self):\n  while True: pass\n'+consumer+'([Spin()])\n')
+                    busy.extend([
+                        'def busy():\n while True: pass\ndef f(x=busy()): pass\n',
+                        'class Spin:\n def __iter__(self):\n  while True: pass\ndef f(*args): pass\nf(*Spin())\n',
+                        'class Spin:\n def __iter__(self): return self\n @property\n def __next__(self):\n  while True: pass\ndef f(*args): pass\nf(*Spin())\n',
+                        'class Spin:\n @property\n def keys(self):\n  while True: pass\ndef f(**kwargs): pass\nf(**Spin())\n',
+                        'class Spin:\n def keys(self): return ["x"]\n @property\n def __getitem__(self):\n  while True: pass\ndef f(**kwargs): pass\nf(**Spin())\n',
+                        'class K:\n def __hash__(self):\n  while True: pass\nclass M:\n def keys(self): return [K()]\n def __getitem__(self,key): return 7\ndef f(**kwargs): pass\nf(**M())\n'
+                    ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
@@ -390,6 +412,8 @@ def smoke(channel=None):
                     checks.append('real-and-complex-values-retained-by-offline-core-profile-update')
                     run('r=range(2,10,3)\na=list(r[::-1])\nb=tuple(iter(a))\nprint(r.start,r.stop,r.step,len(b),b[0],b[-1],all(b),any([0,0,3]))\n', '2 10 3 3 8 2 True True\n')
                     checks.append('range-and-primitive-consumers-retained-by-offline-core-profile-update')
+                    run(CORE_FUNCTION_SOURCE, '19 21 True 2 1\n23 3\n')
+                    checks.append('functions-and-primitive-mapping-forwarding-retained-after-core-profile-update')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')
