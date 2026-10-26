@@ -1,0 +1,966 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-function-binding/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "computed-once",
+      "stage": "Defaults",
+      "source": "events=[]\ndef mark(n):\n events.append(n)\n return n+1\ndef f(x=mark(2),*,y=mark(4)): return x+y\nprint(len(events),f(),f(),events[0],events[1])\n",
+      "stdout": "2 8 8 2 4\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "mutable-default-alias",
+      "stage": "Defaults",
+      "source": "def f(x=[]):\n x.append(7)\n return x\na=f()\nb=f()\nprint(a is b,len(a),f([3])[0])\n",
+      "stdout": "True 2 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "kwonly-mutable-default",
+      "stage": "Defaults",
+      "source": "def f(*,x={}):\n x[\"n\"]=len(x)\n return x\na=f()\nprint(f() is a,a[\"n\"])\n",
+      "stdout": "True 1\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "outer-scope-default",
+      "stage": "Defaults",
+      "source": "x=4\ndef outer(x):\n def f(y=x+2): return y\n x=90\n return f\nf=outer(5)\nprint(f(),x)\n",
+      "stdout": "7 4\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "default-does-not-bind-body",
+      "stage": "Defaults",
+      "source": "x=3\ndef f(y=x+1):\n x=9\n return y\nprint(f())\n",
+      "stdout": "4\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "repeat-definition",
+      "stage": "Defaults",
+      "source": "def outer():\n def f(x=[]): return x\n return f\na=outer()\nb=outer()\nprint(a() is b())\n",
+      "stdout": "False\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "default-recursive-cycle",
+      "stage": "Defaults",
+      "source": "held=[]\ndef f(x=held): return x\nheld.append(f)\ndel held\nprint(f()[0] is f)\n",
+      "stdout": "True\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "default-nested-functions",
+      "stage": "Defaults",
+      "source": "def factory():\n def g(): return 8\n return g\ndef f(x=factory()): return x()\nprint(f())\n",
+      "stdout": "8\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "default-failure-no-binding",
+      "stage": "Defaults",
+      "source": "f=7\ndef fail(): raise ValueError(\"default\")\ntry:\n def f(x=fail()): pass\nexcept ValueError: print(f)\n",
+      "stdout": "7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "default-failure-order",
+      "stage": "Defaults",
+      "source": "def mark(n):\n print(n)\n if n==2: raise ValueError\n return n\ntry:\n def f(a=mark(1),b=mark(2),*,c=mark(3)): pass\nexcept ValueError: print(\"caught\")\n",
+      "stdout": "1\n2\ncaught\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "class-default-namespace",
+      "stage": "Defaults",
+      "source": "class A:\n x=7\n def f(self,y=x+2): return y\nprint(A().f())\n",
+      "stdout": "9\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "decorator-default-order",
+      "stage": "Defaults",
+      "source": "def mark(n):\n print(n)\n return n\ndef deco():\n print(\"deco expr\")\n def wrap(f):\n  print(\"apply\")\n  return f\n return wrap\n@deco()\ndef f(a=mark(1),*,b=mark(2)): return a+b\nprint(f())\n",
+      "stdout": "deco expr\n1\n2\napply\n3\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "default-closure-read",
+      "stage": "Defaults",
+      "source": "def outer(x):\n def middle():\n  def f(a=x+2): return a\n  return f\n return middle()\nprint(outer(4)())\n",
+      "stdout": "6\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "default-unbound",
+      "stage": "Defaults",
+      "source": "def outer():\n def f(x=later): pass\n later=2\nouter()\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "UnboundLocalError"
+    },
+    {
+      "id": "default-list-computed",
+      "stage": "Defaults",
+      "source": "def f(x=[1+2],*,y=(4+1,)): return x[0]+y[0]\nprint(f())\n",
+      "stdout": "8\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "default-exception-context",
+      "stage": "Defaults",
+      "source": "try:\n raise ValueError(\"outer\")\nexcept ValueError:\n def f(x=[3]): return x[0]\n print(f())\n",
+      "stdout": "3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "global-write-delete",
+      "stage": "Scope",
+      "source": "x=1\ndef f():\n global x\n x+=2\nf()\nprint(x)\ndef g():\n global x\n del x\ng()\ntry: print(x)\nexcept NameError: print(\"missing\")\n",
+      "stdout": "3\nmissing\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "global-new-name",
+      "stage": "Scope",
+      "source": "def f():\n global x\n x=8\nf()\nprint(x)\n",
+      "stdout": "8\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "global-bypasses-closure",
+      "stage": "Scope",
+      "source": "x=1\ndef outer():\n x=2\n def middle():\n  global x\n  def f(): return x\n  return f\n return middle()\nprint(outer()())\n",
+      "stdout": "1\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "nonlocal-write",
+      "stage": "Scope",
+      "source": "def outer():\n x=1\n def f():\n  nonlocal x\n  x+=2\n  return x\n return f\nf=outer()\nprint(f(),f())\n",
+      "stdout": "3 5\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "nonlocal-skips-middle",
+      "stage": "Scope",
+      "source": "def outer():\n x=4\n def middle():\n  def f():\n   nonlocal x\n   x+=3\n   return x\n  return f\n return middle()\nprint(outer()())\n",
+      "stdout": "7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "nonlocal-delete-rebind",
+      "stage": "Scope",
+      "source": "def outer():\n x=4\n def f():\n  nonlocal x\n  del x\n  try: print(x)\n  except NameError: print(\"empty\")\n  x=9\n def g(): return x\n f()\n return g\nprint(outer()())\n",
+      "stdout": "empty\n9\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "nonlocal-empty-delete",
+      "stage": "Scope",
+      "source": "def outer():\n def f():\n  nonlocal x\n  del x\n f()\n x=2\nouter()\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "NameError"
+    },
+    {
+      "id": "global-missing-delete",
+      "stage": "Scope",
+      "source": "def f():\n global missing\n del missing\nf()\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "NameError"
+    },
+    {
+      "id": "nonlocal-definition",
+      "stage": "Scope",
+      "source": "def outer():\n x=0\n def f():\n  nonlocal x\n  def x(): return 5\n f()\n return x\nprint(outer()())\n",
+      "stdout": "5\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "global-loop-target",
+      "stage": "Scope",
+      "source": "def f():\n global x\n for x in [2,3]: pass\nf()\nprint(x)\n",
+      "stdout": "3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "nonlocal-loop-target",
+      "stage": "Scope",
+      "source": "def outer():\n x=0\n def f():\n  nonlocal x\n  for x in [4,7]: pass\n f()\n return x\nprint(outer())\n",
+      "stdout": "7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "global-handler-cleanup",
+      "stage": "Scope",
+      "source": "x=3\ndef f():\n global x\n try: raise ValueError(\"v\")\n except ValueError as x: print(str(x))\nf()\ntry: print(x)\nexcept NameError: print(\"cleared\")\n",
+      "stdout": "v\ncleared\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "nonlocal-handler-cleanup",
+      "stage": "Scope",
+      "source": "def outer():\n x=1\n def f():\n  nonlocal x\n  try: raise ValueError\n  except ValueError as x: pass\n f()\n try: return x\n except UnboundLocalError: return 9\nprint(outer())\n",
+      "stdout": "9\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "nonlocal-class-skip",
+      "stage": "Scope",
+      "source": "def outer():\n x=3\n class A:\n  x=9\n  def f(self):\n   nonlocal x\n   x+=1\n   return x\n return A\nprint(outer()().f())\n",
+      "stdout": "4\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "class-global-store",
+      "stage": "Scope",
+      "source": "x=2\nclass A:\n global x\n x=8\nprint(x)\n",
+      "stdout": "8\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "class-nonlocal-store",
+      "stage": "Scope",
+      "source": "def outer():\n x=2\n class A:\n  nonlocal x\n  x=8\n return x\nprint(outer())\n",
+      "stdout": "8\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "private-nonlocal",
+      "stage": "Scope",
+      "source": "class A:\n def make(self):\n  __x=2\n  def f():\n   nonlocal __x\n   __x+=1\n   return __x\n  return f\nprint(A().make()())\n",
+      "stdout": "3\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "scope-after-read",
+      "stage": "Scope",
+      "source": "x=1\ndef f():\n print(x)\n global x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "scope-after-write",
+      "stage": "Scope",
+      "source": "def f():\n x=1\n global x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "scope-param-global",
+      "stage": "Scope",
+      "source": "def f(x):\n global x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "scope-param-nonlocal",
+      "stage": "Scope",
+      "source": "def f(x):\n nonlocal x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "scope-global-nonlocal",
+      "stage": "Scope",
+      "source": "def f():\n global x\n nonlocal x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "nonlocal-module",
+      "stage": "Scope",
+      "source": "nonlocal x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "nonlocal-no-owner",
+      "stage": "Scope",
+      "source": "def f():\n nonlocal x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "nonlocal-global-barrier",
+      "stage": "Scope",
+      "source": "def outer():\n x=1\n def middle():\n  global x\n  def f():\n   nonlocal x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "nonlocal-after-read",
+      "stage": "Scope",
+      "source": "def outer():\n x=1\n def f():\n  print(x)\n  nonlocal x\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "global-debug",
+      "stage": "Scope",
+      "source": "def f():\n global __debug__\n __debug__=2\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "module-global",
+      "stage": "Scope",
+      "source": "global x\nx=2\nprint(x)\n",
+      "stdout": "2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "declaration-in-dead-branch",
+      "stage": "Scope",
+      "source": "x=1\ndef f():\n if False:\n  global x\n x=7\nf()\nprint(x)\n",
+      "stdout": "7\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "args-pack",
+      "stage": "Variadic",
+      "source": "def f(a,*rest): print(a,len(rest),rest[0],rest[-1])\nf(1,2,3)\n",
+      "stdout": "1 2 2 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "empty-packs",
+      "stage": "Variadic",
+      "source": "def f(*args,**kwargs): print(len(args),len(kwargs))\nf()\n",
+      "stdout": "0 0\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "kwargs-order-alias",
+      "stage": "Variadic",
+      "source": "saved=[]\ndef f(**kw):\n for k in kw: print(k,kw[k] is saved)\nf(b=saved,a=3)\n",
+      "stdout": "b True\na False\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "posonly-in-kwargs",
+      "stage": "Variadic",
+      "source": "def f(x,/,**kw): print(x,kw[\"x\"])\nf(2,x=4)\n",
+      "stdout": "2 4\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "posonly-missing-with-kwargs",
+      "stage": "Variadic",
+      "source": "def f(x,/,**kw): pass\nf(x=3)\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "variadic-mixed-defaults",
+      "stage": "Variadic",
+      "source": "def f(x=2,/,*a,y=4,**kw): print(x,len(a),y,len(kw))\nf(1,3,5,y=8,z=9)\nf()\n",
+      "stdout": "1 2 8 1\n2 0 4 0\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "variadic-fresh-dict",
+      "stage": "Variadic",
+      "source": "held=[]\ndef f(**kw):\n held.append(kw)\nf(a=1)\nf(a=1)\nprint(held[0] is held[1])\n",
+      "stdout": "False\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "variadic-bound-method",
+      "stage": "Variadic",
+      "source": "class A:\n def f(self,*a,**kw): print(len(a),kw[\"x\"])\nA().f(1,2,x=3)\n",
+      "stdout": "2 3\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "variadic-constructor",
+      "stage": "Variadic",
+      "source": "class A:\n def __init__(self,*a,**kw): self.x=a[0]+kw[\"y\"]\nprint(A(2,y=4).x)\n",
+      "stdout": "6\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "variadic-callable",
+      "stage": "Variadic",
+      "source": "class A:\n def __call__(self,*a,**kw): return a[0]+kw[\"x\"]\nprint(A()(2,x=3))\n",
+      "stdout": "5\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "variadic-closure",
+      "stage": "Variadic",
+      "source": "def outer(*a,**kw):\n def f(): return a[0]+kw[\"x\"]\n return f\nprint(outer(2,x=7)())\n",
+      "stdout": "9\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "variadic-duplicate",
+      "stage": "Variadic",
+      "source": "def f(x,*a,**kw): pass\nf(1,x=2)\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "variadic-required-keyword",
+      "stage": "Variadic",
+      "source": "def f(*a,x,**kw): pass\nf(1,2,z=3)\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "variadic-after-kwargs",
+      "stage": "Variadic",
+      "source": "def f(**kw,x): pass\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "variadic-duplicate-param",
+      "stage": "Variadic",
+      "source": "def f(x,*x): pass\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "variadic-star-default",
+      "stage": "Variadic",
+      "source": "def f(*a=3): pass\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "variadic-kwargs-default",
+      "stage": "Variadic",
+      "source": "def f(**kw=3): pass\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "variadic-bare-star",
+      "stage": "Variadic",
+      "source": "def f(*,**kw): pass\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "star-multiple",
+      "stage": "StarArgs",
+      "source": "def f(*a):\n for x in a: print(x)\nf(0,*[1,2],3,*range(4,6))\n",
+      "stdout": "0\n1\n2\n3\n4\n5\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "star-empty-string-dict",
+      "stage": "StarArgs",
+      "source": "def f(*a):\n for x in a: print(x)\nf(*[],*\"A🚀\",*{\"k\":2})\n",
+      "stdout": "A\n🚀\nk\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "star-single-evaluation",
+      "stage": "StarArgs",
+      "source": "def mark(n):\n print(n)\n return [n]\ndef f(*a): print(len(a))\nf(*mark(1),*mark(2))\n",
+      "stdout": "1\n2\n2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "star-before-keyword",
+      "stage": "StarArgs",
+      "source": "def mark(n):\n print(n)\n return [n] if n==1 else n\ndef f(*a,x): print(a[0],x)\nf(x=mark(2),*mark(1))\n",
+      "stdout": "1\n2\n1 2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "star-consumed-iterator",
+      "stage": "StarArgs",
+      "source": "it=iter([1,2])\ndef f(*a): print(len(a))\nf(*it)\nf(*it)\n",
+      "stdout": "2\n0\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "star-not-iterable",
+      "stage": "StarArgs",
+      "source": "def f(): pass\nf(*3)\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "star-error-stops-next",
+      "stage": "StarArgs",
+      "source": "def mark():\n print(\"bad\")\n return 2\ndef f(): pass\nf(*3,mark())\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "star-custom-iterator",
+      "stage": "StarArgs",
+      "source": "class A:\n def __iter__(self): return iter([2,3])\ndef f(*a): print(a[0],a[1])\nf(*A())\n",
+      "stdout": "2 3\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "star-index-fallback",
+      "stage": "StarArgs",
+      "source": "class A:\n def __getitem__(self,n):\n  if n>1: raise IndexError\n  return n+4\ndef f(*a): print(a[0],a[1])\nf(*A())\n",
+      "stdout": "4 5\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "star-iter-error",
+      "stage": "StarArgs",
+      "source": "class A:\n def __iter__(self): raise ValueError(\"iter\")\ndef f(): pass\nf(*A())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "ValueError"
+    },
+    {
+      "id": "star-next-error",
+      "stage": "StarArgs",
+      "source": "class A:\n def __iter__(self): return self\n def __next__(self): raise ValueError(\"next\")\ndef f(): pass\nf(*A())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "ValueError"
+    },
+    {
+      "id": "star-descriptor-iter",
+      "stage": "StarArgs",
+      "source": "class A:\n @property\n def __iter__(self):\n  print(\"bind\")\n  def use(): return iter([7])\n  return use\ndef f(x): print(x)\nf(*A())\n",
+      "stdout": "bind\n7\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "kwargs-dict-order",
+      "stage": "StarKw",
+      "source": "def f(**kw):\n for x in kw: print(x,kw[x])\nf(**{\"b\":2},a=1,**{\"c\":3})\n",
+      "stdout": "b 2\na 1\nc 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "kwargs-empty",
+      "stage": "StarKw",
+      "source": "def f(x=3): print(x)\nf(**{})\n",
+      "stdout": "3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "kwargs-duplicate",
+      "stage": "StarKw",
+      "source": "def f(**kw): pass\nf(x=1,**{\"x\":2})\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "kwargs-duplicate-stops-expression",
+      "stage": "StarKw",
+      "source": "def mark():\n print(\"bad\")\n return 4\ndef f(**kw): pass\nf(**{\"x\":1},**{\"x\":2},z=mark())\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "kwargs-nonstring",
+      "stage": "StarKw",
+      "source": "def f(**kw): pass\nf(**{1:2})\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "kwargs-nonmapping",
+      "stage": "StarKw",
+      "source": "def f(**kw): pass\nf(**[(\"x\",2)])\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "kwargs-posonly",
+      "stage": "StarKw",
+      "source": "def f(x,/,**kw): print(x,kw[\"x\"])\nf(2,**{\"x\":3})\n",
+      "stdout": "2 3\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "kwargs-duplicates-after-positionals",
+      "stage": "StarKw",
+      "source": "def f(x): pass\nf(*[1],**{\"x\":2})\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "kwargs-custom-mapping",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self):\n  print(\"keys\")\n  return [\"b\",\"a\"]\n def __getitem__(self,k):\n  print(k)\n  return 7\ndef f(**kw):\n for k in kw: print(k,kw[k])\nf(**M())\n",
+      "stdout": "keys\nb\na\nb 7\na 7\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "kwargs-mapping-duplicate",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): return [\"x\",\"x\"]\n def __getitem__(self,k):\n  print(k)\n  return 7\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "x\n",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "kwargs-mapping-lookup-error",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): return [\"x\"]\n def __getitem__(self,k): raise KeyError(k)\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "kwargs-mapping-keys-error",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): raise ValueError\n def __getitem__(self,k): return 1\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "ValueError"
+    },
+    {
+      "id": "kwargs-mapping-key-validation-order",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): return [1,\"x\"]\n def __getitem__(self,k):\n  print(k)\n  return 7\ndef f(**kw): pass\nf(**M())\n",
+      "stdout": "1\nx\n",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "error_type": "TypeError"
+    },
+    {
+      "id": "kwargs-mapping-key-iterator",
+      "stage": "StarKw",
+      "source": "class M:\n def keys(self): return iter([\"a\",\"b\"])\n def __getitem__(self,k): return k\ndef f(**kw): print(kw[\"a\"],kw[\"b\"])\nf(**M())\n",
+      "stdout": "a b\n",
+      "profiles": [
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "star-after-kwargs",
+      "stage": "StarKw",
+      "source": "f(**{},*[])\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "positional-after-kwargs",
+      "stage": "StarKw",
+      "source": "f(**{},3)\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "duplicate-explicit-keyword",
+      "stage": "StarKw",
+      "source": "f(x=1,x=2)\n",
+      "stdout": "",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "function-annotations-deferred",
+      "stage": "Future",
+      "source": "def f(x: int): return x\nprint(f(2))\n",
+      "stdout": "2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    },
+    {
+      "id": "function-generator-deferred",
+      "stage": "Future",
+      "source": "def f():\n yield 2\nprint(next(f()))\n",
+      "stdout": "2\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ]
+    }
+  ]
+}
