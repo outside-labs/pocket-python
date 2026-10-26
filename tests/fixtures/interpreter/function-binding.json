@@ -6,7 +6,8 @@
   "implemented_stages": [
     "Defaults",
     "Scope",
-    "Variadic"
+    "Variadic",
+    "StarArgs"
   ],
   "cases": [
     {
@@ -965,6 +966,15 @@
         "core-source/1",
         "classes-source/1"
       ]
+    },
+    {
+      "id": "star-user-hint-deferred",
+      "stage": "Future",
+      "profiles": [
+        "classes-source/1"
+      ],
+      "source": "class A:\n def __iter__(self):\n  print(\"iter\")\n  return iter([])\n def __len__(self):\n  print(\"hint\")\n  return 0\ndef f(*a): print(len(a))\nf(*A())\n",
+      "stdout": "iter\n0\n"
     }
   ]
 }

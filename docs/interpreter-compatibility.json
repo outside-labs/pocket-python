@@ -168,8 +168,8 @@
     {
       "id": "function-binding",
       "status": "partial",
-      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures. Global/nonlocal writes and deletion share the defining module and lexical cells. Variadic positional/keyword parameters pack fresh owned values.",
-      "gaps": "Starred call expansion and annotations remain deferred.",
+      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures. Global/nonlocal writes and deletion share the defining module and lexical cells. Variadic positional/keyword parameters pack fresh owned values. Positional starred calls consume owned iterables.",
+      "gaps": "Keyword mapping call expansion, user construction hints and annotations remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -193,7 +193,8 @@
         "tests/fixtures/interpreter/function-binding.json:mutable-default-alias",
         "tests/fixtures/interpreter/function-binding.json:global-new-name",
         "tests/fixtures/interpreter/function-binding.json:nonlocal-write",
-        "tests/fixtures/interpreter/function-binding.json:variadic-mixed-defaults"
+        "tests/fixtures/interpreter/function-binding.json:variadic-mixed-defaults",
+        "tests/fixtures/interpreter/function-binding.json:star-multiple"
       ]
     },
     {

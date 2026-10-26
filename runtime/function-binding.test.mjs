@@ -6,6 +6,9 @@ import {runSourceRequest} from './source-request.mjs';
 import {verifyFunctions} from './function-bytecode.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
+import {completion, completionRoots} from './operations.mjs';
+import {CallArguments} from './function-objects.mjs';
+import {valueLayout} from './values.mjs';
 
 const unit=source=>({name:'app',source,imports:[],package:false,notice:'Synthetic function binding notice'});
 const run=(source,options={},memoryLimits)=>runSourceRequest({modules:[unit(source)],options,memoryLimits});
@@ -117,4 +120,51 @@ test('packed parameters survive every instruction pause and fail quotas cleanly'
   finally{execution.close();session.context.finish();session.close();registry.close();}closed({closed:session.stats()});
   const oom=await run('held=[]\ndef f(*a,**kw):\n held.append(a)\n held.append(kw)\nwhile True: f([7],x=[8])\n',
     {maxSteps:100000,maxWork:20000000},{maxBytes:18000});assert.equal(oom.error.code,'OOM');closed(oom);
+});
+
+test('starred positional calls consume before later arguments and explicit keywords',async()=>{
+  const result=await run('events=[]\ndef mark(n):\n events.append(n)\n return [n]\ndef keyword():\n events.append(3)\n return 3\ndef f(*a,x): print(a[0],a[1],x)\nf(x=keyword(),*mark(1),*mark(2))\nprint(events[0],events[1],events[2])\n');
+  assert.equal(result.error,undefined,JSON.stringify(result.error));assert.equal(result.stdout,'1 2 3\n1 2 3\n');closed(result);
+});
+
+test('positional expansion retains callable, prior arguments and iterators across callback pauses',async()=>{
+  const source='class A:\n def __iter__(self): return self\n @property\n def __next__(self):\n  print("entered")\n  def use():\n   self.n+=1\n   if self.n>2: raise StopIteration\n   return [self.n]\n  return use\na=A()\na.n=0\ndef f(first,*rest): print(first[0],rest[0][0],rest[1][0])\nf([7],*a)\n';
+  const {registry}=await compileSourceModules([unit(source)],{languageProfile:'classes-source/1'});
+  try{for(const mode of ['finish','cancel','close']){
+    const session=new ModuleSession(registry);let output='',cancel=false,reached=false;
+    session.context.begin({shouldCancel:()=>cancel},text=>{output+=text;});const execution=Execution.modules(session.context);
+    try{while(execution.state!=='completed'){
+      const snapshot=execution.advance();session.memory.collect([],{cleanup:true});
+      if(output==='entered\n'&&snapshot.frames.some(frame=>frame.completion==='invoke')){
+        reached=true;
+        if(mode==='cancel'){cancel=true;assert.throws(()=>execution.advance(),{code:'CANCELLED'});break;}
+        if(mode==='close')break;
+      }
+    }assert.ok(reached);if(mode==='finish')assert.equal(output,'entered\nentered\nentered\n7 1 2\n');}
+    finally{execution.close();session.context.finish();session.close();}closed({closed:session.stats()});
+  }}finally{registry.close();}
+});
+
+test('positional assembly limits and primitive consumption cancellation release partial arguments',async()=>{
+  const budget=await run('def f(*a): pass\nf(*range(10000))\n');assert.equal(budget.error.code,'BUDGET');assert.match(budget.error.message,/argument/);closed(budget);
+  const oom=await run('held=[]\ndef f(*a): held.append(a)\nwhile True: f(*[[7],[8],[9]])\n',
+    {maxSteps:100000,maxWork:20000000},{maxBytes:18000});assert.equal(oom.error.code,'OOM');closed(oom);
+  const {registry}=await compileSourceModules([unit('def f(*a): pass\nprint("entered")\nf(*range(100))\n')]),session=new ModuleSession(registry);
+  let entered=false,polls=0;
+  try{assert.throws(()=>session.run({shouldCancel:()=>entered&&++polls>40},()=>{entered=true;}),{code:'CANCELLED'});}
+  finally{session.close();registry.close();}assert.ok(entered);closed({closed:session.stats()});
+});
+
+test('call assembly verifies its stack operations and roots pending iteration owners',()=>{
+  const input=structuredClone(compileSource('def f(*a): pass\nf(*[1],x=2)\n').program);
+  for(const change of [op=>op[1]='bad-name',op=>op.push(3)]){
+    const p=structuredClone(input),op=p.functions[0].blocks[0].instructions.find(i=>i[0]==='call-keyword');
+    change(op);assert.throws(()=>verifyFunctions(p),{code:'BYTECODE'});
+  }
+  const underflow=structuredClone(input);underflow.functions[0].blocks[0].instructions.find(i=>i[0]==='call-start')[0]='call-argument';
+  assert.throws(()=>verifyFunctions(underflow),{code:'BYTECODE'});
+  const callable={},argument={},iterator={},outer={},owner=new CallArguments(callable);owner.args.push(argument);
+  assert.deepEqual(valueLayout(owner).children,[callable,argument]);
+  const after=completion('relay',{receiver:outer});
+  assert.deepEqual(completionRoots(completion('call-star-next',{receiver:owner,iterator,after})),[owner,iterator,outer]);
 });

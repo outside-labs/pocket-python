@@ -451,7 +451,10 @@ class Parser {
       else if (this.eat("(")) {
         const args = [], keywords = [], seen = new Set();
         while (!this.at(")")) {
-          if (this.at("*") || this.at("**")) this.unsupported("Starred argument expansion is not adopted.");
+          if (this.at("**")) this.unsupported("Keyword mapping expansion is not adopted.");
+          if (this.eat("*")) {
+            const start = this.previous; args.push(this.node("StarredArgument", start, {value: this.expression()}));
+          } else
           if (this.kind("name") && this.peek(1).value === "=") {
             const token = this.take(); this.expect("=");
             if (seen.has(token.value)) this.fail("Duplicate keyword argument.", token);

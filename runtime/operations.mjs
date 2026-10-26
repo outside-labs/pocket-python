@@ -68,6 +68,8 @@ export function completion(kind, fields = {}) {
       break;
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
+    case "call-star-iter": case "call-star-next":
+      record = {kind, receiver: fields.receiver, iterator: fields.iterator ?? null, after}; break;
     case "consume-iter": case "consume-next": case "consume-truth":
       record = {kind, name: consumerName(fields.name), receiver: fields.receiver, result: fields.result ?? null, depth: fields.depth, after};
       depthCheck(record.depth); break;
@@ -125,6 +127,7 @@ function visit(record) {
     case "dict-pair": case "dict-value": case "dict-value-truth": return [record.left, record.right, record.value, ...completionRoots(record.after)];
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
+    case "call-star-iter": case "call-star-next": return [record.receiver, record.iterator, ...completionRoots(record.after)];
     case "consume-iter": case "consume-next": case "consume-truth": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "contains-result": case "search-iter": case "search-next": case "search-equal": case "search-truth": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "sentinel-equal": case "sentinel-truth": return [record.receiver, record.value, ...completionRoots(record.after)];

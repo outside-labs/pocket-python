@@ -59,6 +59,13 @@ The Variadic stage adopts extra positional/keyword packs. Sixty-five selected
 class observations and the profiled core subset pass; focused units exercise
 fresh dictionaries, aliasing/capture, malformed signatures, collection and OOM.
 
+The StarArgs stage uses an owned argument record and resumable acquisition/
+advancement. The expanded matrix has 95 reference cases; 78 selected observations
+include three future refusals. Call assembly bounds each positional/keyword group
+to 128 values. Starred forms with user length hooks conservatively refuse before
+binding/iteration pending the separate construction-hint contract: CPython's
+single-star and assembled positional paths need not query the same hint owner.
+
 The authored corpus is `tests/fixtures/interpreter/function-binding.json`.
 Implemented stages advance with each execution PR. Unimplemented stages are
 selected only for reference checks until their source behavior is adopted.

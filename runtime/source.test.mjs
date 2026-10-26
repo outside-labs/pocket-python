@@ -57,7 +57,7 @@ test("augmented lists retain aliases and self-extension/multiplication semantics
 
 test("syntax and feature diagnostics reject complete source before application effects", async () => {
   for (const source of ["return 1", "break", "continue", "if True print(1)", "def f(:\n pass", "x=(1+)", "f(a=1,a=2)", "f(a=1,2)", "try:\n pass\n", "def f(a=1,b):\n pass", "def f(*):\n pass", "def f(a,a):\n pass", "None=1", "import *"]) error(source, "SYNTAX");
-  for (const source of ["class C: pass", "async def f(): pass", "f(*args)", "x=lambda:1", "x=[n for n in []]", "a,b=(1,2)", "x={1,2}", "x=2@3", "from x import *", "x:int=1", "def f(a:int): pass", "raise ValueError() from None", "'\\N{SNOWMAN}'"]) {
+  for (const source of ["class C: pass", "async def f(): pass", "x=lambda:1", "x=[n for n in []]", "a,b=(1,2)", "x={1,2}", "x=2@3", "from x import *", "x:int=1", "def f(a:int): pass", "raise ValueError() from None", "'\\N{SNOWMAN}'"]) {
     error(source, "UNSUPPORTED");
   }
   const r = await run("print('must not execute')\nclass Deferred: pass\n");

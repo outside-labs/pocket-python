@@ -271,8 +271,19 @@ class Compiler {
           } else { expr(value.index); emit(value, "getitem"); }
         } else if (value.kind === "Call") {
           if (value.args.length > 128 || value.keywords.length > 128) this.fail("Call argument budget exceeded.", value, "COMPILE_BUDGET");
-          expr(value.callable); value.args.forEach(expr); value.keywords.forEach(keyword => expr(keyword.value));
-          emit(value, "call", value.args.length, value.keywords.map(keyword => keyword.name));
+          expr(value.callable);
+          if (value.args.some(arg => arg.kind === "StarredArgument")) {
+            emit(value, "call-start");
+            for (const arg of value.args) {
+              expr(arg.kind === "StarredArgument" ? arg.value : arg);
+              emit(arg, arg.kind === "StarredArgument" ? "call-star" : "call-argument");
+            }
+            for (const keyword of value.keywords) { expr(keyword.value); emit(value, "call-keyword", keyword.name); }
+            emit(value, "call-expanded");
+          } else {
+            value.args.forEach(expr); value.keywords.forEach(keyword => expr(keyword.value));
+            emit(value, "call", value.args.length, value.keywords.map(keyword => keyword.name));
+          }
         } else this.fail("Expression is outside the source profile.", value);
       };
       const assign = target => {

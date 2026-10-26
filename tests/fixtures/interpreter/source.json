@@ -339,6 +339,13 @@
       "features": [
         "source.functions"
       ]
+    },
+    {
+      "id": "starred-call",
+      "source": "def f(x): return x\nprint(f(*[7]))\n",
+      "features": [
+        "source.functions"
+      ]
     }
   ],
   "boundaries": [
@@ -353,14 +360,6 @@
     {
       "id": "unsupported-async",
       "source": "print('must not run')\nasync def f(): pass",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-starred-call",
-      "source": "print('must not run')\nf(*args)",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"

@@ -1,4 +1,4 @@
-import {FunctionValue, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {FunctionValue, CallArguments, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -133,6 +133,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const value = name === "tuple" ? values.tuple(result.items) : name === "list" ? result : name === "all";
     state.temporaries.push(value); return valueTask(value, site, after);
   };
+  const argumentOwner = receiver => {
+    if (!(receiver instanceof CallArguments)) hard("BYTECODE", "BytecodeError", "Call assembly requires its owned argument record.");
+  };
+  const appendArgument = (receiver, value) => {
+    argumentOwner(receiver); charge(1);
+    if (receiver.args.length >= 128) hard("BUDGET", "ExecutionLimitError", "Positional call argument budget exceeded.");
+    state.temporaries.push(receiver, value);
+    mutate(receiver, () => { receiver.args.push(value); return () => receiver.args.pop(); });
+  };
+  const appendKeyword = (receiver, key, value) => {
+    argumentOwner(receiver); charge(key.length + 1);
+    if (receiver.keywords.includes(key)) python("TypeError", "Call received multiple values for keyword argument '" + key + "'");
+    if (receiver.keywords.length >= 128) hard("BUDGET", "ExecutionLimitError", "Keyword call argument budget exceeded.");
+    state.temporaries.push(receiver, value);
+    mutate(receiver, () => {
+      receiver.keywords.push(key); receiver.keywordValues.push(value);
+      return () => { receiver.keywords.pop(); receiver.keywordValues.pop(); };
+    });
+  };
+  const expandArguments = (receiver, iterable, site) => {
+    argumentOwner(receiver);
+    const hintOwner = iterable instanceof ProtocolIteratorValue && iterable.kind === "indexed" ? iterable.source : iterable;
+    if (hintOwner instanceof InstanceValue && ["__len__", "__length_hint__"].some(slot => classes.lookup(hintOwner.type, slot).found))
+      hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
+    return unaryTask("iter", iterable, site, continuation("call-star-iter", {receiver}));
+  };
   const recover = (value, completion, site) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
@@ -146,6 +172,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "next-default") return valueTask(current.default, site, current.after);
       if (current.kind === "for-next") return valueTask(null, site, continuation("for-exhausted"));
       if (current.kind === "search-next") return valueTask(false, site, current.after);
+      if (current.kind === "call-star-next") return valueTask(current.receiver, site, current.after);
       if (current.kind === "consume-next") return consumeFinish(current.name, current.result, site, current.after);
     }
     return null;
@@ -177,6 +204,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion = completion.after;
     }
     count("deliver:" + (completion?.kind ?? "stack"));
+    if (completion?.kind === "call-star-iter") return unaryTask("next", value, site,
+      continuation("call-star-next", {receiver: completion.receiver, iterator: value, after: completion.after}));
+    if (completion?.kind === "call-star-next") {
+      appendArgument(completion.receiver, value);
+      return unaryTask("next", completion.iterator, site, continuation("call-star-next", completion));
+    }
     if (completion?.kind === "consume-iter") return consumeNext(completion.name, value, completion.result, site, completion.after, completion.depth);
     if (completion?.kind === "consume-next") {
       const {name, receiver, result, after, depth} = completion;
@@ -838,5 +871,5 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
-  return Object.freeze({dispatch, call, deliver, notifyNext, recover});
+  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments});
 }
