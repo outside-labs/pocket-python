@@ -201,9 +201,9 @@
     },
     {
       "id": "ordinary-syntax-gaps",
-      "status": "deferred",
-      "scope": "assert, lambda, assignment expressions and tuple/list/starred assignment unpacking.",
-      "gaps": "No execution support. Recognized assignment expressions receive UNSUPPORTED without execution support.",
+      "status": "partial",
+      "scope": "Assertions and assignment expressions in both source profiles, with owned truth callbacks and lexical scope writes.",
+      "gaps": "Lambda, tuple/list/starred assignment unpacking and starred collection displays remain queued. Assertion messages retain the adopted None/bool/int/string exception contract.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -219,7 +219,10 @@
         "walrus",
         "unpacking"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/ordinary-syntax.json:assert-builtin-shadow",
+        "tests/fixtures/interpreter/ordinary-syntax.json:walrus-nonlocal"
+      ]
     },
     {
       "id": "class-construction",

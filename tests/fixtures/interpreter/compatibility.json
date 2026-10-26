@@ -397,16 +397,16 @@
     {
       "id": "assert-statement",
       "source": "assert True\nprint(7)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
+        "stdout": "7\n",
         "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "code": null,
+        "phase": null
       }
     },
     {
@@ -427,16 +427,16 @@
     {
       "id": "walrus",
       "source": "print((x:=7))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "UnsupportedSyntaxError",
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "stdout": "7\n",
+        "error_type": null,
+        "code": null,
+        "phase": null
       }
     },
     {

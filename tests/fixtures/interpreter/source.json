@@ -346,6 +346,204 @@
       "features": [
         "source.functions"
       ]
+    },
+    {
+      "id": "walrus-group-core",
+      "source": "print('ready')\nprint((x:=7))\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-call-core",
+      "source": "print('ready')\nprint(x:=7)\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-unicode-core",
+      "source": "print('ready')\nprint((π:=7))\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-if-core",
+      "source": "print('ready')\nif x:=7: print(x)\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-while-core",
+      "source": "print('ready')\nwhile x:=0: pass\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-list-core",
+      "source": "print('ready')\nx=[a:=7]\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-subscript-core",
+      "source": "print('ready')\nx=[7][a:=0]\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-slice-core",
+      "source": "print('ready')\nx=[7][(a:=0):]\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-nested-core",
+      "source": "print('ready')\nprint((x:=(y:=7)))\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "core-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-group-classes",
+      "source": "print('ready')\nprint((x:=7))\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-call-classes",
+      "source": "print('ready')\nprint(x:=7)\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-unicode-classes",
+      "source": "print('ready')\nprint((π:=7))\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-if-classes",
+      "source": "print('ready')\nif x:=7: print(x)\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-while-classes",
+      "source": "print('ready')\nwhile x:=0: pass\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-list-classes",
+      "source": "print('ready')\nx=[a:=7]\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-subscript-classes",
+      "source": "print('ready')\nx=[7][a:=0]\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-slice-classes",
+      "source": "print('ready')\nx=[7][(a:=0):]\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
+    },
+    {
+      "id": "walrus-nested-classes",
+      "source": "print('ready')\nprint((x:=(y:=7)))\n",
+      "phase": "parse",
+      "compileOptions": {
+        "languageProfile": "classes-source/1"
+      },
+      "features": [
+        "source.named-expression"
+      ]
     }
   ],
   "boundaries": [
@@ -470,168 +668,6 @@
       ]
     },
     {
-      "id": "unsupported-walrus-group-core",
-      "source": "print('must not run')\nprint((x:=7))\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        8,
-        2,
-        12
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-call-core",
-      "source": "print('must not run')\nprint(x:=7)\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        7,
-        2,
-        11
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-unicode-core",
-      "source": "print('must not run')\nprint((π:=7))\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        8,
-        2,
-        13
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-if-core",
-      "source": "print('must not run')\nif x:=7: print(x)\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        4,
-        2,
-        8
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-while-core",
-      "source": "print('must not run')\nwhile x:=0: pass\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        7,
-        2,
-        11
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-list-core",
-      "source": "print('must not run')\nx=[a:=7]\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        4,
-        2,
-        8
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-subscript-core",
-      "source": "print('must not run')\nx=[7][a:=0]\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        7,
-        2,
-        11
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-slice-core",
-      "source": "print('must not run')\nx=[7][(a:=0):]\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        8,
-        2,
-        12
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-nested-core",
-      "source": "print('must not run')\nprint((x:=(y:=7)))\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        12,
-        2,
-        16
-      ],
-      "compileOptions": {
-        "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
       "id": "unsupported-type-alias-core",
       "source": "print('must not run')\ntype A=list[int]\n",
       "code": "UNSUPPORTED",
@@ -680,168 +716,6 @@
       ],
       "compileOptions": {
         "languageProfile": "core-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-group-classes",
-      "source": "print('must not run')\nprint((x:=7))\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        8,
-        2,
-        12
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-call-classes",
-      "source": "print('must not run')\nprint(x:=7)\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        7,
-        2,
-        11
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-unicode-classes",
-      "source": "print('must not run')\nprint((π:=7))\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        8,
-        2,
-        13
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-if-classes",
-      "source": "print('must not run')\nif x:=7: print(x)\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        4,
-        2,
-        8
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-while-classes",
-      "source": "print('must not run')\nwhile x:=0: pass\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        7,
-        2,
-        11
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-list-classes",
-      "source": "print('must not run')\nx=[a:=7]\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        4,
-        2,
-        8
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-subscript-classes",
-      "source": "print('must not run')\nx=[7][a:=0]\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        7,
-        2,
-        11
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-slice-classes",
-      "source": "print('must not run')\nx=[7][(a:=0):]\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        8,
-        2,
-        12
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
-      },
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-walrus-nested-classes",
-      "source": "print('must not run')\nprint((x:=(y:=7)))\n",
-      "code": "UNSUPPORTED",
-      "phase": "parse",
-      "span": [
-        2,
-        12,
-        2,
-        16
-      ],
-      "compileOptions": {
-        "languageProfile": "classes-source/1"
       },
       "features": [
         "source.feature-boundary"

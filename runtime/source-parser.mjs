@@ -127,7 +127,11 @@ class Parser {
       while (this.eat(",")) names.push(this.name().value);
       return this.node("Declaration", start, {declaration, names});
     }
-    if (["assert", "yield"].some(value => this.at(value))) this.unsupported("Assertions and generators are not adopted.");
+    if (this.eat("assert")) {
+      const test = this.expression(), message = this.eat(",") ? this.expression() : null;
+      return this.node("Assert", start, {test, message});
+    }
+    if (this.at("yield")) this.unsupported("Generators are not adopted.");
     if (this.eat("pass")) return this.node("Pass", start);
     if (this.at("break") || this.at("continue")) {
       const op = this.take().value;
@@ -366,7 +370,7 @@ class Parser {
       if (this.typeExpression) this.fail("Assignment expressions cannot occur in type expressions.", start);
       if (start.value === "__debug__") this.fail("Cannot bind __debug__.", start);
       const value = this.expression();
-      return this.defer("Assignment expressions are not adopted.", this.node("NamedExpression", start, {name: start.value, value}));
+      return this.node("NamedExpression", start, {name: start.value, value});
     }
     const value = this.expression();
     if (this.at(":=")) this.fail("An assignment expression requires a bare identifier target.");

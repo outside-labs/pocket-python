@@ -59,7 +59,7 @@ class Compiler {
         aliases: value.aliases.map(alias => ({...alias, name: name(alias.name, owner, value),
           bindingName: name(alias.asname || (value.specifier === null ? alias.name.split(".")[0] : alias.name), owner, value)}))};
       const result = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, key === "span" ? child : rewrite(child, owner)]));
-      if (["Name", "Attribute"].includes(value.kind)) result.name = name(value.name, owner, value);
+      if (["Name", "Attribute", "NamedExpression"].includes(value.kind)) result.name = name(value.name, owner, value);
       if (value.kind === "Handler" && value.alias) result.alias = name(value.alias, owner, value);
       if (value.kind === "Declaration") result.names = value.names.map(key => name(key, owner, value));
       return result;
@@ -110,6 +110,7 @@ class Compiler {
         if (scope.classContext && value.name === "__class__") this.fail("Implicit class cells require a later class stage.", value);
         scope.uses.add(value.name);
       }
+      if (value.kind === "NamedExpression") binding(value.name, value);
       if (["Assign", "Delete"].includes(value.kind)) value.targets.forEach(target);
       if (value.kind === "Augment") target(value.target);
       if (value.kind === "For") target(value.target);
@@ -219,6 +220,7 @@ class Compiler {
       const expr = value => {
         this.charge(value);
         if (value.kind === "Literal") emit(value, "const", this.constant(value.literal, value));
+        else if (value.kind === "NamedExpression") { expr(value.value); emit(value, "dup"); emit(value, "store", value.name); }
         else if (value.kind === "Name") value.name === "__debug__" ? emit(value, "const", this.constant({type: "bool", value: true}, value)) : emit(value, "load", value.name);
         else if (["List", "Tuple"].includes(value.kind)) {
           if (value.items.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
@@ -301,6 +303,13 @@ class Compiler {
         this.charge(value);
         if (value.kind === "Pass" || value.kind === "Declaration") return;
         if (value.kind === "Expr") { expr(value.value); emit(value, "pop"); }
+        else if (value.kind === "Assert") {
+          expr(value.test); const failure = emit(value.test, "jump-if-false", 0), done = emit(value, "jump", 0);
+          instructions[failure][1] = instructions.length;
+          if (value.message) expr(value.message);
+          emit(value, "assertion-error", value.message !== null); emit(value, "raise");
+          instructions[done][1] = instructions.length;
+        }
         else if (value.kind === "Assign") {
           expr(value.value);
           value.targets.forEach((target, index) => { if (index < value.targets.length - 1) emit(value, "dup"); assign(target); });
