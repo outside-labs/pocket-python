@@ -22,6 +22,7 @@ sys.path.insert(0, str(ROOT))
 from examples.interpreter_classes import SOURCE
 from examples.interpreter_functions import SOURCE as FUNCTION_SOURCE, CORE_SOURCE as CORE_FUNCTION_SOURCE
 from examples.interpreter_syntax import SOURCE as SYNTAX_SOURCE, CORE_SOURCE as CORE_SYNTAX_SOURCE
+from examples.interpreter_values import SOURCE as VALUES_SOURCE, CORE_SOURCE as CORE_VALUES_SOURCE
 
 
 def smoke(channel=None):
@@ -74,6 +75,7 @@ def smoke(channel=None):
                     assert 'integer indices and item/slice access and mutation' in page.locator('#language').inner_text()
                     assert 'iteration and containment' in page.locator('#language').inner_text()
                     assert 'equality and hashing' in page.locator('#language').inner_text()
+                    assert 'sets, bytes, bytearrays and memoryviews' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -141,6 +143,15 @@ def smoke(channel=None):
                     programs.extend(c['source'] for c in syntax['cases']
                                     if c['stage'] in syntax['implemented_stages'] and 'error_type' not in c)
                     programs.append(SYNTAX_SOURCE)
+                    values = json.loads((ROOT / 'tests/fixtures/interpreter/value-families.json').read_bytes())
+                    programs.extend(c['source'] for c in values['cases'] if c['id'] in [
+                        'set-star-display', 'set-algebra', 'set-mutation', 'set-frozen-key', 'set-mutable-lookup',
+                        'set-owned-callbacks', 'set-owned-equality', 'set-star-evaluation-order', 'set-named-expression',
+                        'bytes-literals', 'bytes-slices', 'bytes-membership', 'bytes-arithmetic', 'bytes-utf8',
+                        'bytes-codec-keywords', 'bytes-index-protocol', 'bytes-hook-descriptor', 'bytes-repr',
+                        'view-basic', 'view-alias', 'view-stride', 'view-owner-lifetime', 'view-released-equality',
+                        'view-released-hash-cached', 'view-binary-operations', 'view-byte-index-callback'])
+                    programs.append(VALUES_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -284,6 +295,14 @@ def smoke(channel=None):
                     assert page.locator('#result').inner_text() == ''
                     refused('assert False,[1]\n', 'UnsupportedOperationError:')
                     checks.append('assert-lambda-unpack-original-errors-and-explicit-message-boundary')
+                    refused('class K:\n def __hash__(self):\n  raise ValueError("key")\nset([K()])\n', 'ValueError:')
+                    assert '__hash__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    refused('print("entered")\n"é".encode("ascii")\n', 'UnicodeEncodeError:')
+                    assert page.locator('#result').inner_text() == 'entered\n'
+                    refused('b"\\xff".decode()\n', 'UnicodeDecodeError:')
+                    refused('a=memoryview(b"a"); a.release(); len(a)\n', 'ValueError:')
+                    refused('a=bytearray(b"abc"); a[1:]=b"d"\n', 'UnsupportedOperationError:')
+                    checks.append('value-family-key-codec-release-and-deferred-resize-errors')
                     context.set_offline(True)
                     page.reload()
                     ready()
@@ -317,6 +336,9 @@ def smoke(channel=None):
                     checks.append('new-default-scope-variadic-and-mapping-source-after-offline-reload')
                     run(SYNTAX_SOURCE, 'alpha 6\nbeta 6\n2 alpha 1 done\n')
                     checks.append('new-assert-walrus-lambda-unpack-and-display-source-offline')
+                    run(VALUES_SOURCE, 'sets 2 True True\ntext Café afé False\nview CBA 3 -1\n')
+                    run('class Byte:\n @property\n def __bytes__(self): return lambda: "café".encode()\nraw=bytes(Byte()); a=bytearray(raw); v=memoryview(a)[::-1]; v[0]=ord(b"!")\nprint(raw.decode(),a[-1],v[0],len({frozenset([1,2]),frozenset([2,1])}))\n', 'café 33 33 1\n')
+                    checks.append('new-sets-codecs-bytes-binding-and-buffer-alias-source-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -393,6 +415,14 @@ def smoke(channel=None):
                         'class M:\n @property\n def keys(self):\n  while True: pass\na={"x":1,**M()}\n',
                         'class K:\n def __hash__(self):\n  while True: pass\nclass M:\n def keys(self): return [K()]\n def __getitem__(self,key): return [7]\na={"start":[3],**M()}\n'
                     ])
+                    busy.extend([
+                        'class K:\n def __hash__(self):\n  while True: pass\nset([K()])\n',
+                        'class K:\n def __hash__(self): return 7\n def __eq__(self,other):\n  while True: pass\n{K(),K()}\n',
+                        'class I:\n def __iter__(self): return self\n def __next__(self):\n  while True: pass\nset(I())\n',
+                        'class B:\n @property\n def __bytes__(self):\n  while True: pass\nbytes(B())\n',
+                        'class I:\n def __index__(self):\n  while True: pass\nbytes([I()])\n',
+                        'class I:\n def __index__(self):\n  while True: pass\nv=memoryview(bytearray(b"a")); v[I()]=0\n'
+                    ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
@@ -442,6 +472,8 @@ def smoke(channel=None):
                     checks.append('functions-and-primitive-mapping-forwarding-retained-after-core-profile-update')
                     run(CORE_SYNTAX_SOURCE, 'alpha 6\nbeta 6\n2 alpha 1 done\n')
                     checks.append('ordinary-syntax-retained-after-core-profile-update')
+                    run(CORE_VALUES_SOURCE, 'sets 2 True True\ntext Café afé False\nview CBA 3 -1\n')
+                    checks.append('sets-binary-codecs-and-buffer-values-retained-after-core-profile-update')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

@@ -1,0 +1,3101 @@
+{
+  "browser": null,
+  "collected_at_utc": "2026-10-26T19:52:01.461862+00:00",
+  "compression": {
+    "archive": "canonical sorted USTAR mode0644 mtime0 then gzip level9 mtime0",
+    "files": "independent gzip level9 mtime0; payload bytes only, no HTTP/TLS framing",
+    "zlib": "1.2.12"
+  },
+  "host": {
+    "machine": "arm64",
+    "processor": "arm",
+    "release": "27.0.0",
+    "system": "Darwin"
+  },
+  "kind": "pocket-python-interpreter-measurements",
+  "methods": {
+    "browser_cold": "Fresh context per sample; same browser process and uncontrolled OS caches. DOM mutation observation from navigation; profile-specific startup boundaries are recorded.",
+    "browser_memory": "Dedicated-worker CDP V8 heap/embedder/backing storage bytes after forced GC, in separate untimed contexts. Excludes page, service worker, cache, process RSS, peak allocations and unreported native/Wasm memory. No transport quiescence is asserted for the compiled adapter.",
+    "browser_warm": "Installed same-version service-worker cache; untimed warm-up then reload/run observations. Offline reload/output verified separately.",
+    "comparison": "Same canonical computation, three inputs and stdout. Adapters, source compilation, worker reuse and startup boundaries differ; no universal startup/memory ranking. Full/reduced source rows retain the same engine; only explicit library/data/metadata selection differs.",
+    "node_memory": "Separate --expose-gc processes: process.memoryUsage bytes after forced GC at imported baseline, compiled registry, completed live session and teardown. Arena peakBytes accounts logical VM/registry allocations, excluding parser/host/V8 RSS. No peak RSS claim.",
+    "node_timing": "Fresh process per sample: engine module import, first compile/registry/run and repeated runs with fresh registries/arenas. Includes library verification in each compilation. Warm summary is the median of per-process medians; nested runs are not independent processes. No forced GC in timing processes."
+  },
+  "node": "v24.19.0",
+  "pocket_python": "0.2.0",
+  "profiles": [
+    {
+      "accepts_new_source_in_this_ui": true,
+      "browser": null,
+      "build_ns": 62027500,
+      "capabilities": [
+        {
+          "id": "output/1"
+        }
+      ],
+      "engine": {
+        "backend": "javascript-vm",
+        "bytecode_version": 4,
+        "entrypoint": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/interpreter-worker.mjs",
+        "fingerprint": "28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f",
+        "implementation": "pocket-python-source",
+        "language_profile": "core-source/1",
+        "version": "1"
+      },
+      "files": [
+        {
+          "bucket": "receipt_bytes",
+          "gzip_bytes": 3496,
+          "path": "POCKET-PYTHON.json",
+          "sha256": "738b5f792f87467e5f36cc3e01b1311aaa2b4072ece2e71e6998e18ed9f0a623",
+          "size_bytes": 25024
+        },
+        {
+          "bucket": "assembly_module_bytes",
+          "gzip_bytes": 2701,
+          "path": "app-83517f0c728721f6ee8a38a2fa2c6468c3d39506d728174ee56badbf5356b3b0.js",
+          "sha256": "83517f0c728721f6ee8a38a2fa2c6468c3d39506d728174ee56badbf5356b3b0",
+          "size_bytes": 7237
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 555,
+          "path": "app-config-5f26f91c429c10049464a3f1035a20fc3c7aa3a2baeb101b9a24c2da9d70172e.json",
+          "sha256": "5f26f91c429c10049464a3f1035a20fc3c7aa3a2baeb101b9a24c2da9d70172e",
+          "size_bytes": 1210
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 705,
+          "path": "application/bec3a23e28442791bcfa86a7e0ad226fcc2266dfabc829602e927e9768c26cd8/APPLICATION.json",
+          "sha256": "bec3a23e28442791bcfa86a7e0ad226fcc2266dfabc829602e927e9768c26cd8",
+          "size_bytes": 1427
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 646,
+          "path": "application/bec3a23e28442791bcfa86a7e0ad226fcc2266dfabc829602e927e9768c26cd8/LICENSES/application.txt",
+          "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+          "size_bytes": 1066
+        },
+        {
+          "bucket": "application_source_bytes",
+          "gzip_bytes": 334,
+          "path": "application/bec3a23e28442791bcfa86a7e0ad226fcc2266dfabc829602e927e9768c26cd8/sources/app.py",
+          "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+          "size_bytes": 699
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 3464,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/browser-protocol.mjs",
+          "sha256": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76",
+          "size_bytes": 10589
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 2355,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/bytecode.mjs",
+          "sha256": "e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4",
+          "size_bytes": 6836
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 621,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/class-policy.mjs",
+          "sha256": "586d8800afd0e5d5ec7d4d3e758dbf56942f7d74207c111c0b32fb4483b0d1f6",
+          "size_bytes": 1362
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 3844,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/class-values.mjs",
+          "sha256": "f4f682f07b74c4f8d36d6e30ba7cfbacfde1e81ba4b5b1ebec0a36c378901b43",
+          "size_bytes": 15322
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 5386,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/function-bytecode.mjs",
+          "sha256": "d5b06d94e1de04c00a05c90918090a669a476b7b57268c41f0f37b99e69dd4d7",
+          "size_bytes": 20064
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 1193,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/function-objects.mjs",
+          "sha256": "70be5471355a99e067588fd3f43511b56a11ada9b2b9f158dd3ce0574d814cf5",
+          "size_bytes": 3785
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 11619,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/functions.mjs",
+          "sha256": "9a804521dbbccec4565981115db7da5c4197f5a750942b6c23ee5424421de184",
+          "size_bytes": 48091
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 2417,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/interpreter-host.mjs",
+          "sha256": "0bb0a64faffcf77e0064258e4cfcaa7a937c4372129849f76901bee91b5a5ae2",
+          "size_bytes": 7019
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 2739,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/interpreter-worker.mjs",
+          "sha256": "937a97cc49d987492de0bc16021a4a804ef51e4ea5b398f79c92e5d30ac82558",
+          "size_bytes": 8282
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 504,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/library-catalog.mjs",
+          "sha256": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c",
+          "size_bytes": 907
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 1469,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/library-selection.mjs",
+          "sha256": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a",
+          "size_bytes": 3661
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 646,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/licenses/POCKET-PYTHON.txt",
+          "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+          "size_bytes": 1066
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 1063,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/licenses/UNICODE.txt",
+          "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+          "size_bytes": 1995
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 2424,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/memory.mjs",
+          "sha256": "240775fe3521e88dc2f004f6a7af4f3507fb573d1dc0b7551c5b70bc91df884e",
+          "size_bytes": 7591
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 2697,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/module-context.mjs",
+          "sha256": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca",
+          "size_bytes": 8319
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 3403,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/module-registry.mjs",
+          "sha256": "f23f8313c0804a052cba155e193df920b0221ef978a06f16c1a22f208dfbef91",
+          "size_bytes": 10085
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 612,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/module-session.mjs",
+          "sha256": "08e4ccf16361299c15b99621fdfcef0d9ef93de50d28d738158c7bc85a7c23a3",
+          "size_bytes": 1470
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 4311,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/numeric.mjs",
+          "sha256": "2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad",
+          "size_bytes": 13954
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 14799,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/operation-runtime.mjs",
+          "sha256": "0968b48bd900b06690922ea3d04a9902c88678d71ab68e8564ffe75340160b05",
+          "size_bytes": 82724
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 3807,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/operations.mjs",
+          "sha256": "2809708b38b6bdbf15c0456ad92a1df34e895260bab6e4125db668e530cbe1ad",
+          "size_bytes": 21094
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 7395,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-compiler.mjs",
+          "sha256": "8a0a1e790cb25c602b54da2d081d0b731dc864c85c050ef3a6a890eea2f284d9",
+          "size_bytes": 32056
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 6247,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-identifiers.mjs",
+          "sha256": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914",
+          "size_bytes": 25949
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 1866,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-modules.mjs",
+          "sha256": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef",
+          "size_bytes": 5115
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 7453,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-parser.mjs",
+          "sha256": "c44ac7385ce24fb9a5308c9a3d14c538c5b3cb7b6711d2135fba3fb2ecfb8c38",
+          "size_bytes": 31585
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 4470,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-tokens.mjs",
+          "sha256": "e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54",
+          "size_bytes": 15061
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 3903,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/string-printability.mjs",
+          "sha256": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f",
+          "size_bytes": 13287
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 17953,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/values.mjs",
+          "sha256": "1155dc6bdbccb67a26e1241a5cf5665d90abd0900a75362b667339595b9aea32",
+          "size_bytes": 84712
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 1920,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/vm.mjs",
+          "sha256": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d",
+          "size_bytes": 6080
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 183,
+          "path": "icon.svg",
+          "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691",
+          "size_bytes": 214
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 1139,
+          "path": "index.html",
+          "sha256": "5e668d9f43ccdad28643ebc7a4b51faea668dc90336540d7f7d8b494bcc33f4f",
+          "size_bytes": 2230
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 208,
+          "path": "manifest.webmanifest",
+          "sha256": "bba2b1f787dfa61914058ef3003ec70321eb02165e5e2459ede68f318752c1c2",
+          "size_bytes": 335
+        },
+        {
+          "bucket": "assembly_module_bytes",
+          "gzip_bytes": 3023,
+          "path": "service-worker.js",
+          "sha256": "1bdb151904c00978f12662cf748ade989f0b32cb9804b3ddf4b47af7980f1edc",
+          "size_bytes": 8792
+        }
+      ],
+      "host_profile": "output-only/1",
+      "id": "source-core",
+      "library_profile": {
+        "fingerprint": "0658bf184744e21e6a2eb0901a55c5f71e640eb5dbd4f5b5297c83ffd57782c9",
+        "id": "core-only/1"
+      },
+      "mode": "source",
+      "node": {
+        "max_accounted_live_bytes": 23354,
+        "median_cold_run_ms": 54.559042,
+        "median_import_ms": 19.913708,
+        "median_warm_run_ms": 24.763958000000002,
+        "memory_process_samples": [
+          {
+            "baseline_process": {
+              "arrayBuffers": 203010,
+              "external": 1977965,
+              "heapTotal": 10518528,
+              "heapUsed": 5059696,
+              "rss": 54034432
+            },
+            "host": "v24.19.0",
+            "import_ms": 18.192375,
+            "mode": "memory",
+            "observation": {
+              "after_close_process": {
+                "arrayBuffers": 150104,
+                "external": 2086333,
+                "heapTotal": 12091392,
+                "heapUsed": 6987152,
+                "rss": 67813376
+              },
+              "after_compile_process": {
+                "arrayBuffers": 150104,
+                "external": 2092979,
+                "heapTotal": 11304960,
+                "heapUsed": 6479720,
+                "rss": 57933824
+              },
+              "after_execution_process": {
+                "arrayBuffers": 150104,
+                "external": 2086333,
+                "heapTotal": 12091392,
+                "heapUsed": 7134136,
+                "rss": 67813376
+              },
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 23354,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                }
+              ],
+              "compile_registry_ms": 27.178167000000002,
+              "execution_ms": 41.417416,
+              "logical": {
+                "allocations": 85,
+                "bytes": 21496,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 23354,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 71.740958
+            },
+            "subprocess_wall_ns": 172131084
+          },
+          {
+            "baseline_process": {
+              "arrayBuffers": 203010,
+              "external": 1977965,
+              "heapTotal": 10256384,
+              "heapUsed": 5059728,
+              "rss": 53985280
+            },
+            "host": "v24.19.0",
+            "import_ms": 13.237625000000001,
+            "mode": "memory",
+            "observation": {
+              "after_close_process": {
+                "arrayBuffers": 143618,
+                "external": 2086333,
+                "heapTotal": 12091392,
+                "heapUsed": 6985520,
+                "rss": 66600960
+              },
+              "after_compile_process": {
+                "arrayBuffers": 150104,
+                "external": 2092979,
+                "heapTotal": 11304960,
+                "heapUsed": 6212800,
+                "rss": 57819136
+              },
+              "after_execution_process": {
+                "arrayBuffers": 150104,
+                "external": 2086333,
+                "heapTotal": 12091392,
+                "heapUsed": 7133840,
+                "rss": 66568192
+              },
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 23354,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                }
+              ],
+              "compile_registry_ms": 26.974959000000005,
+              "execution_ms": 46.478832999999995,
+              "logical": {
+                "allocations": 85,
+                "bytes": 21496,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 23354,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 76.097792
+            },
+            "subprocess_wall_ns": 168489292
+          },
+          {
+            "baseline_process": {
+              "arrayBuffers": 203010,
+              "external": 1977965,
+              "heapTotal": 10518528,
+              "heapUsed": 5059728,
+              "rss": 54083584
+            },
+            "host": "v24.19.0",
+            "import_ms": 15.512791,
+            "mode": "memory",
+            "observation": {
+              "after_close_process": {
+                "arrayBuffers": 143618,
+                "external": 2086333,
+                "heapTotal": 12091392,
+                "heapUsed": 6986472,
+                "rss": 67796992
+              },
+              "after_compile_process": {
+                "arrayBuffers": 156590,
+                "external": 2093011,
+                "heapTotal": 11304960,
+                "heapUsed": 6197376,
+                "rss": 58114048
+              },
+              "after_execution_process": {
+                "arrayBuffers": 150104,
+                "external": 2086333,
+                "heapTotal": 12091392,
+                "heapUsed": 7134504,
+                "rss": 67796992
+              },
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 23354,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                }
+              ],
+              "compile_registry_ms": 16.062000000000005,
+              "execution_ms": 36.40533400000001,
+              "logical": {
+                "allocations": 85,
+                "bytes": 21496,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 23354,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 56.410709000000004
+            },
+            "subprocess_wall_ns": 143754291
+          }
+        ],
+        "timing_process_samples": [
+          {
+            "cold": {
+              "after_close_process": null,
+              "after_compile_process": null,
+              "after_execution_process": null,
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 23354,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                }
+              ],
+              "compile_registry_ms": 19.545582999999993,
+              "execution_ms": 25.835834000000006,
+              "logical": {
+                "allocations": 85,
+                "bytes": 21496,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 23354,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 45.382000000000005
+            },
+            "host": "v24.19.0",
+            "import_ms": 19.913708,
+            "mode": "timing",
+            "subprocess_wall_ns": 185919625,
+            "warm": [
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 5.244500000000002,
+                "execution_ms": 16.929125,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 22.175124999999994
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 5.462708000000006,
+                "execution_ms": 15.355834000000002,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 20.819375000000008
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 2.8042079999999885,
+                "execution_ms": 20.413207999999997,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 23.217749999999995
+              }
+            ]
+          },
+          {
+            "cold": {
+              "after_close_process": null,
+              "after_compile_process": null,
+              "after_execution_process": null,
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 23354,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                }
+              ],
+              "compile_registry_ms": 23.001292,
+              "execution_ms": 36.552665999999995,
+              "logical": {
+                "allocations": 85,
+                "bytes": 21496,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 23354,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 59.554458
+            },
+            "host": "v24.19.0",
+            "import_ms": 18.367083,
+            "mode": "timing",
+            "subprocess_wall_ns": 197681875,
+            "warm": [
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 6.771833000000001,
+                "execution_ms": 20.837541,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 27.610916000000003
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 6.206917000000004,
+                "execution_ms": 24.50145900000001,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 30.709167000000008
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 4.665542000000016,
+                "execution_ms": 12.573791999999997,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 17.239750000000015
+              }
+            ]
+          },
+          {
+            "cold": {
+              "after_close_process": null,
+              "after_compile_process": null,
+              "after_execution_process": null,
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 23354,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                }
+              ],
+              "compile_registry_ms": 23.721250000000005,
+              "execution_ms": 30.837374999999994,
+              "logical": {
+                "allocations": 85,
+                "bytes": 21496,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 23354,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 54.559042
+            },
+            "host": "v24.19.0",
+            "import_ms": 23.634375000000002,
+            "mode": "timing",
+            "subprocess_wall_ns": 203688500,
+            "warm": [
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 4.445791999999997,
+                "execution_ms": 22.662833000000006,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 27.110416999999998
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 5.461124999999981,
+                "execution_ms": 19.30200000000002,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 24.763958000000002
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 23354,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  }
+                ],
+                "compile_registry_ms": 6.078374999999994,
+                "execution_ms": 11.284375000000011,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 21496,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 23354,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 17.363167000000004
+              }
+            ]
+          }
+        ]
+      },
+      "producer": {
+        "language_profile": "core-source/1",
+        "name": "pocket-python",
+        "version": "0.2.0"
+      },
+      "profile": "in-house-interpreter/1",
+      "sizes": {
+        "application_source_bytes": 699,
+        "assembly_module_bytes": 16029,
+        "bridge_bytes": 30458,
+        "canonical_tar_bytes": 573440,
+        "complete_payload_bytes": 536295,
+        "data_bytes": 5416,
+        "engine_bytes": 454542,
+        "generated_module_bytes": 0,
+        "gzip_file_transfer_bytes": 133570,
+        "gzip_tar_bytes": 123946,
+        "gzip_tar_sha256": "21edc7f1395a142229cdc72c4df5fd16f527bb67659dd1242b7c969e1b0dae90",
+        "helper_bytes": 0,
+        "library_bytes": 0,
+        "notice_bytes": 4127,
+        "receipt_bytes": 25024,
+        "source_map_bytes": 0
+      },
+      "source_execution": true
+    },
+    {
+      "accepts_new_source_in_this_ui": true,
+      "browser": null,
+      "build_ns": 34311167,
+      "capabilities": [
+        {
+          "id": "output/1"
+        }
+      ],
+      "engine": {
+        "backend": "javascript-vm",
+        "bytecode_version": 4,
+        "entrypoint": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/interpreter-worker.mjs",
+        "fingerprint": "28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f",
+        "implementation": "pocket-python-source",
+        "language_profile": "core-source/1",
+        "version": "1"
+      },
+      "files": [
+        {
+          "bucket": "receipt_bytes",
+          "gzip_bytes": 3639,
+          "path": "POCKET-PYTHON.json",
+          "sha256": "9469d57e081102a8eee4a9f20ab66de87c87d90eb2c5f99c1d49bb65e1d77d38",
+          "size_bytes": 26194
+        },
+        {
+          "bucket": "assembly_module_bytes",
+          "gzip_bytes": 2700,
+          "path": "app-44b6f10fe6a3d8f799ac1ff2cf71e169857ceedd14eec843ca40cef95f25f542.js",
+          "sha256": "44b6f10fe6a3d8f799ac1ff2cf71e169857ceedd14eec843ca40cef95f25f542",
+          "size_bytes": 7237
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 808,
+          "path": "app-config-633123c25c39df724b42e0ac8d2b536db75b8952f14d29a3adbc6f4a1ae1c262.json",
+          "sha256": "633123c25c39df724b42e0ac8d2b536db75b8952f14d29a3adbc6f4a1ae1c262",
+          "size_bytes": 1802
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 859,
+          "path": "application/2783ca57b845ebc69bfc3f799b4e0d70caf5e4ce33d1a4d661d637ed221eaef0/APPLICATION.json",
+          "sha256": "2783ca57b845ebc69bfc3f799b4e0d70caf5e4ce33d1a4d661d637ed221eaef0",
+          "size_bytes": 1907
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 646,
+          "path": "application/2783ca57b845ebc69bfc3f799b4e0d70caf5e4ce33d1a4d661d637ed221eaef0/LICENSES/application.txt",
+          "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+          "size_bytes": 1066
+        },
+        {
+          "bucket": "application_source_bytes",
+          "gzip_bytes": 334,
+          "path": "application/2783ca57b845ebc69bfc3f799b4e0d70caf5e4ce33d1a4d661d637ed221eaef0/sources/app.py",
+          "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+          "size_bytes": 699
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 3464,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/browser-protocol.mjs",
+          "sha256": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76",
+          "size_bytes": 10589
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 2355,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/bytecode.mjs",
+          "sha256": "e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4",
+          "size_bytes": 6836
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 621,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/class-policy.mjs",
+          "sha256": "586d8800afd0e5d5ec7d4d3e758dbf56942f7d74207c111c0b32fb4483b0d1f6",
+          "size_bytes": 1362
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 3844,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/class-values.mjs",
+          "sha256": "f4f682f07b74c4f8d36d6e30ba7cfbacfde1e81ba4b5b1ebec0a36c378901b43",
+          "size_bytes": 15322
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 5386,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/function-bytecode.mjs",
+          "sha256": "d5b06d94e1de04c00a05c90918090a669a476b7b57268c41f0f37b99e69dd4d7",
+          "size_bytes": 20064
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 1193,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/function-objects.mjs",
+          "sha256": "70be5471355a99e067588fd3f43511b56a11ada9b2b9f158dd3ce0574d814cf5",
+          "size_bytes": 3785
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 11619,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/functions.mjs",
+          "sha256": "9a804521dbbccec4565981115db7da5c4197f5a750942b6c23ee5424421de184",
+          "size_bytes": 48091
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 2417,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/interpreter-host.mjs",
+          "sha256": "0bb0a64faffcf77e0064258e4cfcaa7a937c4372129849f76901bee91b5a5ae2",
+          "size_bytes": 7019
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 2739,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/interpreter-worker.mjs",
+          "sha256": "937a97cc49d987492de0bc16021a4a804ef51e4ea5b398f79c92e5d30ac82558",
+          "size_bytes": 8282
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 504,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/library-catalog.mjs",
+          "sha256": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c",
+          "size_bytes": 907
+        },
+        {
+          "bucket": "bridge_bytes",
+          "gzip_bytes": 1469,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/library-selection.mjs",
+          "sha256": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a",
+          "size_bytes": 3661
+        },
+        {
+          "bucket": "library_bytes",
+          "gzip_bytes": 197,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/library/operator.py",
+          "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+          "size_bytes": 457
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 646,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/licenses/POCKET-PYTHON.txt",
+          "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+          "size_bytes": 1066
+        },
+        {
+          "bucket": "notice_bytes",
+          "gzip_bytes": 1063,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/licenses/UNICODE.txt",
+          "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+          "size_bytes": 1995
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 2424,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/memory.mjs",
+          "sha256": "240775fe3521e88dc2f004f6a7af4f3507fb573d1dc0b7551c5b70bc91df884e",
+          "size_bytes": 7591
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 2697,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/module-context.mjs",
+          "sha256": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca",
+          "size_bytes": 8319
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 3403,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/module-registry.mjs",
+          "sha256": "f23f8313c0804a052cba155e193df920b0221ef978a06f16c1a22f208dfbef91",
+          "size_bytes": 10085
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 612,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/module-session.mjs",
+          "sha256": "08e4ccf16361299c15b99621fdfcef0d9ef93de50d28d738158c7bc85a7c23a3",
+          "size_bytes": 1470
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 4311,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/numeric.mjs",
+          "sha256": "2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad",
+          "size_bytes": 13954
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 14799,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/operation-runtime.mjs",
+          "sha256": "0968b48bd900b06690922ea3d04a9902c88678d71ab68e8564ffe75340160b05",
+          "size_bytes": 82724
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 3807,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/operations.mjs",
+          "sha256": "2809708b38b6bdbf15c0456ad92a1df34e895260bab6e4125db668e530cbe1ad",
+          "size_bytes": 21094
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 7395,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-compiler.mjs",
+          "sha256": "8a0a1e790cb25c602b54da2d081d0b731dc864c85c050ef3a6a890eea2f284d9",
+          "size_bytes": 32056
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 6247,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-identifiers.mjs",
+          "sha256": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914",
+          "size_bytes": 25949
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 1866,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-modules.mjs",
+          "sha256": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef",
+          "size_bytes": 5115
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 7453,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-parser.mjs",
+          "sha256": "c44ac7385ce24fb9a5308c9a3d14c538c5b3cb7b6711d2135fba3fb2ecfb8c38",
+          "size_bytes": 31585
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 4470,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/source-tokens.mjs",
+          "sha256": "e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54",
+          "size_bytes": 15061
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 3903,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/string-printability.mjs",
+          "sha256": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f",
+          "size_bytes": 13287
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 17953,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/values.mjs",
+          "sha256": "1155dc6bdbccb67a26e1241a5cf5665d90abd0900a75362b667339595b9aea32",
+          "size_bytes": 84712
+        },
+        {
+          "bucket": "engine_bytes",
+          "gzip_bytes": 1920,
+          "path": "engine/28f03f4ae5b86d4d1747348966dea1649758b2f42a27a4f67d21717e828e2f3f/vm.mjs",
+          "sha256": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d",
+          "size_bytes": 6080
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 183,
+          "path": "icon.svg",
+          "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691",
+          "size_bytes": 214
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 1139,
+          "path": "index.html",
+          "sha256": "83ef97a01b83b5410e33f7d1c38ce14a8cc86106f6152bd7e768234a3f74215b",
+          "size_bytes": 2230
+        },
+        {
+          "bucket": "data_bytes",
+          "gzip_bytes": 208,
+          "path": "manifest.webmanifest",
+          "sha256": "bba2b1f787dfa61914058ef3003ec70321eb02165e5e2459ede68f318752c1c2",
+          "size_bytes": 335
+        },
+        {
+          "bucket": "assembly_module_bytes",
+          "gzip_bytes": 3075,
+          "path": "service-worker.js",
+          "sha256": "9642736a8bf6794901071af2c7ed3983b9b63c8fee84f5a8113bb2881af3696f",
+          "size_bytes": 8994
+        }
+      ],
+      "host_profile": "output-only/1",
+      "id": "source-operator",
+      "library_profile": {
+        "fingerprint": "8fae1499faa7ae0fe071de23902082c4a7c979cdc71990d877ca537e941cae40",
+        "id": "operator/1"
+      },
+      "mode": "source",
+      "node": {
+        "max_accounted_live_bytes": 30450,
+        "median_cold_run_ms": 67.78729200000001,
+        "median_import_ms": 16.709332999999997,
+        "median_warm_run_ms": 31.091333000000006,
+        "memory_process_samples": [
+          {
+            "baseline_process": {
+              "arrayBuffers": 203010,
+              "external": 1977965,
+              "heapTotal": 10518528,
+              "heapUsed": 5063936,
+              "rss": 53788672
+            },
+            "host": "v24.19.0",
+            "import_ms": 16.409416999999998,
+            "mode": "memory",
+            "observation": {
+              "after_close_process": {
+                "arrayBuffers": 143618,
+                "external": 2093429,
+                "heapTotal": 12353536,
+                "heapUsed": 7127520,
+                "rss": 67846144
+              },
+              "after_compile_process": {
+                "arrayBuffers": 157200,
+                "external": 2114098,
+                "heapTotal": 11567104,
+                "heapUsed": 6395760,
+                "rss": 64241664
+              },
+              "after_execution_process": {
+                "arrayBuffers": 157200,
+                "external": 2093429,
+                "heapTotal": 12353536,
+                "heapUsed": 7301024,
+                "rss": 67829760
+              },
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 30450,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                },
+                {
+                  "bytecode": {
+                    "path": "code/operator.pbc.json",
+                    "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                    "size_bytes": 5573
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "operator",
+                  "source": {
+                    "path": "sources/operator.py",
+                    "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                    "size_bytes": 457
+                  },
+                  "stats": {
+                    "blocks": 12,
+                    "bytecodeBytes": 5573,
+                    "bytes": 457,
+                    "functions": 12,
+                    "instructions": 78,
+                    "nodes": 56,
+                    "tokens": 172,
+                    "work": 2080
+                  }
+                }
+              ],
+              "compile_registry_ms": 31.230249999999998,
+              "execution_ms": 39.229292,
+              "logical": {
+                "allocations": 85,
+                "bytes": 28592,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 30450,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 74.076417
+            },
+            "subprocess_wall_ns": 174645292
+          },
+          {
+            "baseline_process": {
+              "arrayBuffers": 203010,
+              "external": 1977965,
+              "heapTotal": 10256384,
+              "heapUsed": 5063776,
+              "rss": 53837824
+            },
+            "host": "v24.19.0",
+            "import_ms": 21.310916999999996,
+            "mode": "memory",
+            "observation": {
+              "after_close_process": {
+                "arrayBuffers": 143618,
+                "external": 2093429,
+                "heapTotal": 12353536,
+                "heapUsed": 7128720,
+                "rss": 67387392
+              },
+              "after_compile_process": {
+                "arrayBuffers": 157200,
+                "external": 2114098,
+                "heapTotal": 11304960,
+                "heapUsed": 6395456,
+                "rss": 61374464
+              },
+              "after_execution_process": {
+                "arrayBuffers": 157200,
+                "external": 2093429,
+                "heapTotal": 12353536,
+                "heapUsed": 7300752,
+                "rss": 67371008
+              },
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 30450,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                },
+                {
+                  "bytecode": {
+                    "path": "code/operator.pbc.json",
+                    "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                    "size_bytes": 5573
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "operator",
+                  "source": {
+                    "path": "sources/operator.py",
+                    "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                    "size_bytes": 457
+                  },
+                  "stats": {
+                    "blocks": 12,
+                    "bytecodeBytes": 5573,
+                    "bytes": 457,
+                    "functions": 12,
+                    "instructions": 78,
+                    "nodes": 56,
+                    "tokens": 172,
+                    "work": 2080
+                  }
+                }
+              ],
+              "compile_registry_ms": 26.191582999999994,
+              "execution_ms": 39.085832999999994,
+              "logical": {
+                "allocations": 85,
+                "bytes": 28592,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 30450,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 68.80370799999999
+            },
+            "subprocess_wall_ns": 173676291
+          },
+          {
+            "baseline_process": {
+              "arrayBuffers": 203010,
+              "external": 1977965,
+              "heapTotal": 10256384,
+              "heapUsed": 5063808,
+              "rss": 53559296
+            },
+            "host": "v24.19.0",
+            "import_ms": 24.564459,
+            "mode": "memory",
+            "observation": {
+              "after_close_process": {
+                "arrayBuffers": 143618,
+                "external": 2093429,
+                "heapTotal": 12615680,
+                "heapUsed": 7126424,
+                "rss": 68042752
+              },
+              "after_compile_process": {
+                "arrayBuffers": 157200,
+                "external": 2107011,
+                "heapTotal": 11567104,
+                "heapUsed": 6393808,
+                "rss": 63586304
+              },
+              "after_execution_process": {
+                "arrayBuffers": 157200,
+                "external": 2093429,
+                "heapTotal": 12615680,
+                "heapUsed": 7299824,
+                "rss": 68042752
+              },
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 30450,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                },
+                {
+                  "bytecode": {
+                    "path": "code/operator.pbc.json",
+                    "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                    "size_bytes": 5573
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "operator",
+                  "source": {
+                    "path": "sources/operator.py",
+                    "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                    "size_bytes": 457
+                  },
+                  "stats": {
+                    "blocks": 12,
+                    "bytecodeBytes": 5573,
+                    "bytes": 457,
+                    "functions": 12,
+                    "instructions": 78,
+                    "nodes": 56,
+                    "tokens": 172,
+                    "work": 2080
+                  }
+                }
+              ],
+              "compile_registry_ms": 33.93875,
+              "execution_ms": 44.111417,
+              "logical": {
+                "allocations": 85,
+                "bytes": 28592,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 30450,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 83.33125
+            },
+            "subprocess_wall_ns": 185146750
+          }
+        ],
+        "timing_process_samples": [
+          {
+            "cold": {
+              "after_close_process": null,
+              "after_compile_process": null,
+              "after_execution_process": null,
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 30450,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                },
+                {
+                  "bytecode": {
+                    "path": "code/operator.pbc.json",
+                    "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                    "size_bytes": 5573
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "operator",
+                  "source": {
+                    "path": "sources/operator.py",
+                    "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                    "size_bytes": 457
+                  },
+                  "stats": {
+                    "blocks": 12,
+                    "bytecodeBytes": 5573,
+                    "bytes": 457,
+                    "functions": 12,
+                    "instructions": 78,
+                    "nodes": 56,
+                    "tokens": 172,
+                    "work": 2080
+                  }
+                }
+              ],
+              "compile_registry_ms": 30.632709000000006,
+              "execution_ms": 37.153792,
+              "logical": {
+                "allocations": 85,
+                "bytes": 28592,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 30450,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 67.78729200000001
+            },
+            "host": "v24.19.0",
+            "import_ms": 10.874957999999996,
+            "mode": "timing",
+            "subprocess_wall_ns": 215310583,
+            "warm": [
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 6.424125000000004,
+                "execution_ms": 19.323375,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 25.748291999999992
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 12.251000000000005,
+                "execution_ms": 22.973750000000024,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 35.22554200000002
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 7.960166999999984,
+                "execution_ms": 18.28525000000002,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 26.246207999999996
+              }
+            ]
+          },
+          {
+            "cold": {
+              "after_close_process": null,
+              "after_compile_process": null,
+              "after_execution_process": null,
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 30450,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                },
+                {
+                  "bytecode": {
+                    "path": "code/operator.pbc.json",
+                    "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                    "size_bytes": 5573
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "operator",
+                  "source": {
+                    "path": "sources/operator.py",
+                    "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                    "size_bytes": 457
+                  },
+                  "stats": {
+                    "blocks": 12,
+                    "bytecodeBytes": 5573,
+                    "bytes": 457,
+                    "functions": 12,
+                    "instructions": 78,
+                    "nodes": 56,
+                    "tokens": 172,
+                    "work": 2080
+                  }
+                }
+              ],
+              "compile_registry_ms": 28.091749999999998,
+              "execution_ms": 32.333,
+              "logical": {
+                "allocations": 85,
+                "bytes": 28592,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 30450,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 60.425459
+            },
+            "host": "v24.19.0",
+            "import_ms": 16.709332999999997,
+            "mode": "timing",
+            "subprocess_wall_ns": 235154750,
+            "warm": [
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 17.456707999999992,
+                "execution_ms": 32.351833,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 49.809416
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 16.90454200000002,
+                "execution_ms": 14.415375000000012,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 31.320375000000013
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 7.015083000000004,
+                "execution_ms": 10.07850000000002,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 17.094458000000003
+              }
+            ]
+          },
+          {
+            "cold": {
+              "after_close_process": null,
+              "after_compile_process": null,
+              "after_execution_process": null,
+              "closed": {
+                "allocations": 85,
+                "bytes": 0,
+                "collections": 632,
+                "external": 0,
+                "frames": 0,
+                "objects": 0,
+                "peakBytes": 30450,
+                "reclaimed": 85,
+                "roots": 0,
+                "state": "closed"
+              },
+              "compilations": [
+                {
+                  "bytecode": {
+                    "path": "code/app.pbc.json",
+                    "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                    "size_bytes": 5712
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "app",
+                  "source": {
+                    "path": "sources/app.py",
+                    "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                    "size_bytes": 699
+                  },
+                  "stats": {
+                    "blocks": 19,
+                    "bytecodeBytes": 5712,
+                    "bytes": 699,
+                    "functions": 3,
+                    "instructions": 104,
+                    "nodes": 98,
+                    "tokens": 173,
+                    "work": 3223
+                  }
+                },
+                {
+                  "bytecode": {
+                    "path": "code/operator.pbc.json",
+                    "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                    "size_bytes": 5573
+                  },
+                  "language_profile": "core-source/1",
+                  "module": "operator",
+                  "source": {
+                    "path": "sources/operator.py",
+                    "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                    "size_bytes": 457
+                  },
+                  "stats": {
+                    "blocks": 12,
+                    "bytecodeBytes": 5573,
+                    "bytes": 457,
+                    "functions": 12,
+                    "instructions": 78,
+                    "nodes": 56,
+                    "tokens": 172,
+                    "work": 2080
+                  }
+                }
+              ],
+              "compile_registry_ms": 16.66525,
+              "execution_ms": 51.547416,
+              "logical": {
+                "allocations": 85,
+                "bytes": 28592,
+                "collections": 631,
+                "external": 1,
+                "frames": 0,
+                "objects": 35,
+                "peakBytes": 30450,
+                "reclaimed": 50,
+                "roots": 1,
+                "state": "open"
+              },
+              "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+              "total_ms": 68.21312499999999
+            },
+            "host": "v24.19.0",
+            "import_ms": 24.548292,
+            "mode": "timing",
+            "subprocess_wall_ns": 241430917,
+            "warm": [
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 9.870082999999994,
+                "execution_ms": 21.21900000000001,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 31.091333000000006
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 11.058582999999999,
+                "execution_ms": 23.859957999999978,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 34.919332999999995
+              },
+              {
+                "after_close_process": null,
+                "after_compile_process": null,
+                "after_execution_process": null,
+                "closed": {
+                  "allocations": 85,
+                  "bytes": 0,
+                  "collections": 632,
+                  "external": 0,
+                  "frames": 0,
+                  "objects": 0,
+                  "peakBytes": 30450,
+                  "reclaimed": 85,
+                  "roots": 0,
+                  "state": "closed"
+                },
+                "compilations": [
+                  {
+                    "bytecode": {
+                      "path": "code/app.pbc.json",
+                      "sha256": "5aec15c0af517a75fc4a03614985ff03653ab1a277c906db005c66e9d0947e7f",
+                      "size_bytes": 5712
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "app",
+                    "source": {
+                      "path": "sources/app.py",
+                      "sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0",
+                      "size_bytes": 699
+                    },
+                    "stats": {
+                      "blocks": 19,
+                      "bytecodeBytes": 5712,
+                      "bytes": 699,
+                      "functions": 3,
+                      "instructions": 104,
+                      "nodes": 98,
+                      "tokens": 173,
+                      "work": 3223
+                    }
+                  },
+                  {
+                    "bytecode": {
+                      "path": "code/operator.pbc.json",
+                      "sha256": "191be8f34bbdc71827c8fd97a65a042301bac67a1707dd88c4678172e54727c3",
+                      "size_bytes": 5573
+                    },
+                    "language_profile": "core-source/1",
+                    "module": "operator",
+                    "source": {
+                      "path": "sources/operator.py",
+                      "sha256": "2a4fea9196b5b9b17a86ce6ac16848bdba765b27671dae3483ae7897ef49f0d7",
+                      "size_bytes": 457
+                    },
+                    "stats": {
+                      "blocks": 12,
+                      "bytecodeBytes": 5573,
+                      "bytes": 457,
+                      "functions": 12,
+                      "instructions": 78,
+                      "nodes": 56,
+                      "tokens": 172,
+                      "work": 2080
+                    }
+                  }
+                ],
+                "compile_registry_ms": 6.708583000000004,
+                "execution_ms": 20.39345800000001,
+                "logical": {
+                  "allocations": 85,
+                  "bytes": 28592,
+                  "collections": 631,
+                  "external": 1,
+                  "frames": 0,
+                  "objects": 35,
+                  "peakBytes": 30450,
+                  "reclaimed": 50,
+                  "roots": 1,
+                  "state": "open"
+                },
+                "stdout": "0 0 0\n14 4 2\n3 1 1\n",
+                "total_ms": 27.102416000000005
+              }
+            ]
+          }
+        ]
+      },
+      "producer": {
+        "language_profile": "core-source/1",
+        "name": "pocket-python",
+        "version": "0.2.0"
+      },
+      "profile": "in-house-interpreter/1",
+      "sizes": {
+        "application_source_bytes": 699,
+        "assembly_module_bytes": 16231,
+        "bridge_bytes": 30458,
+        "canonical_tar_bytes": 573440,
+        "complete_payload_bytes": 539196,
+        "data_bytes": 6488,
+        "engine_bytes": 454542,
+        "generated_module_bytes": 0,
+        "gzip_file_transfer_bytes": 134368,
+        "gzip_tar_bytes": 124385,
+        "gzip_tar_sha256": "dd214413158873beaab494bf98c274d4cb42624d8b21f5f7c1631de2f05715f7",
+        "helper_bytes": 0,
+        "library_bytes": 457,
+        "notice_bytes": 4127,
+        "receipt_bytes": 26194,
+        "source_map_bytes": 0
+      },
+      "source_execution": true
+    }
+  ],
+  "python": "3.14.7",
+  "repository_revision": "57379c96ea56bc81a5d8f2f8b8e8b2d53e6cff8a",
+  "samples_per_condition": 3,
+  "schema_version": 1,
+  "scripts_sha256": {
+    "runtime/library-catalog.mjs": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c",
+    "runtime/library-profiles.mjs": "666f0fc23f8b300b1b05a373b5bcc6237cdae3cf63b5e1cefe7cbe6af82c50f1",
+    "runtime/library-selection.mjs": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a",
+    "runtime/measure-profiles.mjs": "7fe2edfb4c0662762448779271611209a3c5b82338afc822c3109a97dcc6eb86",
+    "scripts/_measurement_browser.py": "c9a373f5878cc795a387deaef6779c730661e0d684d9bc80cef39377f09e48e1",
+    "scripts/interpreter_measurements.py": "603855b5054c71ba06fd2dd8290db30f4be01b34de0696beba528b872a2962f7"
+  },
+  "suite": "interpreter-profiles/1",
+  "unavailable_profiles": [
+    {
+      "id": "compiled",
+      "reason": "Pass --compiled with the declared pinned compiler tooling."
+    },
+    {
+      "id": "micropython",
+      "reason": "Supply an explicit verified runtime directory with --micropython-runtime."
+    },
+    {
+      "gate": "INT-WASM-03",
+      "id": "wasm-vm"
+    },
+    {
+      "gate": "INT-10",
+      "id": "async-host-modules"
+    }
+  ],
+  "working_tree_modified": true,
+  "workload": {
+    "body": "for text in ('', 'A\ud83d\ude00 e\u0301\\nline two', 'a\\xa0b'):\n    result=metrics(text)\n    print(result[0],result[1],result[2])\n",
+    "computation_sha256": "cd0fc16e047b4c81230a1272446b0257ef741f937b1ea0857d2a94bb3d0bb350",
+    "expected_stdout": "0 0 0\n14 4 2\n3 1 1\n",
+    "inputs": [
+      "",
+      "A\ud83d\ude00 e\u0301\nline two",
+      "a\u00a0b"
+    ],
+    "source": "def character_count(text):\n    return len(text)\n\n\n\nSEPARATORS = \" \\t\\n\\r\\v\\f\"\n\n\ndef metrics(text):\n    if not isinstance(text, str):\n        raise TypeError(\"text must be str\")\n    characters = character_count(text)\n    words = 0\n    lines = 0\n    inside_word = False\n    if text:\n        lines = 1\n    for character in text:\n        if character == \"\\n\":\n            lines = lines + 1\n        if character in SEPARATORS:\n            inside_word = False\n        elif not inside_word:\n            words = words + 1\n            inside_word = True\n    return characters, words, lines\n\nfor text in ('', 'A\ud83d\ude00 e\u0301\\nline two', 'a\\xa0b'):\n    result=metrics(text)\n    print(result[0],result[1],result[2])\n",
+    "source_sha256": "7ed72ed7cbfa6cbb036134a28000dac960a777c4eaa64e3a06b37f29adf2c0e0"
+  }
+}

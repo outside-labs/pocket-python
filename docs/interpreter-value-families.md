@@ -70,3 +70,29 @@ and [buffer views](https://docs.python.org/3.14/builtins/stdtypes.html#memoryvie
 This batch does not complete all builtin methods, generators, object/exception
 protocols, formatting, libraries or native-extension compatibility. Those remain
 in their established issue families; publication and hosting retain separate gates.
+
+## Accepted source and offline evidence
+
+The complete matrix has 136 class observations: 122 CPython comparisons and 14
+explicit future refusals. The 103 shared core observations contain 93 comparisons
+and ten refusals. CI independently executes all eight Node/Chromium, class/core,
+drain/step combinations, including source identities and zero logical teardown.
+
+The integrated suite has 349 Node tests and 59 Python tests. The eight composed
+execution resource baselines are unchanged. Offline console acceptance has 350
+source comparisons, 39 acceptance groups and 84 Stop/Restart cycles. New source
+uses sets, strict codecs, bytes hooks and aliasing views after an offline reload;
+the waiting class-to-core update retains the primitive APIs.
+
+The [payload record](measurements/2026-10-26-value-families.json) retains the same
+699-byte application fixture and records 536,295 complete core payload bytes,
+with exact file hashes, notices and compressed archives. It describes its measured
+working-tree/revision state and logical/host-memory scopes; it makes no performance
+or device-compatibility claim.
+
+Build the composed example with `python -m examples.interpreter_values`, adding
+`--core` for primitive keys. Remaining set methods/algebra callbacks, user bytes
+length hints, bytearray resizing, buffer slice mutation/casts/formats, non-strict
+codecs and native buffers remain unfinished. INT-VALUES-01 stays open for these
+continuing APIs; generators, object/exception protocols, formatting and libraries
+retain their own established tasks.

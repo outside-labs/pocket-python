@@ -86,8 +86,8 @@
     {
       "id": "string-values",
       "status": "partial",
-      "scope": "Unicode code-point length, concatenation, comparison, membership, indexing and slicing, including negative step.",
-      "gaps": "General string methods, formatting and bytes/encoding APIs are not adopted.",
+      "scope": "Unicode code-point length, concatenation, comparison, membership, indexing and slicing, including negative step. Strict UTF-8/ASCII/Latin-1 encode/decode uses the value-family contract.",
+      "gaps": "Broader string methods, formatting, additional codecs and non-strict codec error policies remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -100,7 +100,9 @@
       "probes": [
         "unicode-values"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/value-families.json:bytes-utf8"
+      ]
     },
     {
       "id": "container-values",
@@ -315,7 +317,7 @@
     {
       "id": "repr-str",
       "status": "partial",
-      "scope": "print/str display None, bool, int, strings and adopted exception messages; str() and str(s) preserve the adopted identity rules. repr covers None/bool/int/str and explicit user __repr__; type-level __str__/__repr__ callbacks and print sequencing run on the owned machine.",
+      "scope": "print/str display None, bool, int, strings and adopted exception messages; str() and str(s) preserve the adopted identity rules. repr covers None/bool/int/str and explicit user __repr__; type-level __str__/__repr__ callbacks and print sequencing run on the owned machine. Bytes and bytearray repr/str are adopted in both source profiles.",
       "gaps": "Float/container/default-object displays, exception repr, format specifications and unadopted str/print keyword or encoding forms remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1693,7 +1695,7 @@
     {
       "id": "ord",
       "status": "supported",
-      "scope": "One-character Unicode strings, including non-BMP code points and lone surrogate values; positional-only argument.",
+      "scope": "One-character Unicode strings, including non-BMP code points and lone surrogate values; positional-only argument. One-byte bytes/bytearray arguments are also adopted.",
       "gaps": "",
       "reference_version": "3.14.7",
       "targets": [
@@ -1784,7 +1786,7 @@
     {
       "id": "repr",
       "status": "partial",
-      "scope": "repr(x), exactly one positional argument: None/bool/int/str or adopted user __repr__.",
+      "scope": "repr(x), exactly one positional argument: None/bool/int/str or adopted user __repr__. Bytes/bytearray use finite binary representations.",
       "gaps": "Float/container/default-object and exception representations.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1929,7 +1931,7 @@
     {
       "id": "str",
       "status": "partial",
-      "scope": "str() and str(x) for None/bool/int/str/adopted exceptions and user slots; existing/returned strings retain identity.",
+      "scope": "str() and str(x) for None/bool/int/str/adopted exceptions and user slots; existing/returned strings retain identity. Bytes/bytearray use finite binary representations.",
       "gaps": "Float/container/default-object displays, object= keyword and encoding forms.",
       "reference_version": "3.14.7",
       "targets": [
