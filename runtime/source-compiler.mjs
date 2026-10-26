@@ -272,13 +272,16 @@ class Compiler {
         } else if (value.kind === "Call") {
           if (value.args.length > 128 || value.keywords.length > 128) this.fail("Call argument budget exceeded.", value, "COMPILE_BUDGET");
           expr(value.callable);
-          if (value.args.some(arg => arg.kind === "StarredArgument")) {
+          if (value.args.some(arg => arg.kind === "StarredArgument") || value.keywords.some(keyword => keyword.name === null)) {
             emit(value, "call-start");
             for (const arg of value.args) {
               expr(arg.kind === "StarredArgument" ? arg.value : arg);
               emit(arg, arg.kind === "StarredArgument" ? "call-star" : "call-argument");
             }
-            for (const keyword of value.keywords) { expr(keyword.value); emit(value, "call-keyword", keyword.name); }
+            for (const keyword of value.keywords) {
+              expr(keyword.value);
+              if (keyword.name === null) emit(value, "call-mapping"); else emit(value, "call-keyword", keyword.name);
+            }
             emit(value, "call-expanded");
           } else {
             value.args.forEach(expr); value.keywords.forEach(keyword => expr(keyword.value));

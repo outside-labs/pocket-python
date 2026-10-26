@@ -68,6 +68,16 @@ export function completion(kind, fields = {}) {
       break;
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
+    case "call-duplicate-result": record = {kind, receiver: fields.receiver, key: fields.key, after}; break;
+    case "call-map-lookup": case "call-map-keys": case "call-map-sequence": case "call-map-hash":
+    case "call-map-probe": case "call-map-value": case "call-map-insert": case "call-map-stored":
+      record = {kind, receiver: fields.receiver, mapping: fields.mapping ?? null, keys: fields.keys ?? null,
+        key: fields.key ?? null, item: fields.item ?? null, hash: fields.hash ?? null, position: fields.position ?? 0,
+        version: fields.version ?? null, mode: fields.mode ?? "mapping", after};
+      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 1024 ||
+          record.hash !== null && typeof record.hash !== "bigint" || !["mapping", "keyword"].includes(record.mode) ||
+          record.version !== null && (!Number.isSafeInteger(record.version) || record.version < 0)) throw new TypeError("Invalid mapping expansion phase.");
+      break;
     case "call-star-iter": case "call-star-next":
       record = {kind, receiver: fields.receiver, iterator: fields.iterator ?? null, after}; break;
     case "consume-iter": case "consume-next": case "consume-truth":
@@ -127,6 +137,10 @@ function visit(record) {
     case "dict-pair": case "dict-value": case "dict-value-truth": return [record.left, record.right, record.value, ...completionRoots(record.after)];
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
+    case "call-duplicate-result": return [record.receiver, record.key, ...completionRoots(record.after)];
+    case "call-map-lookup": case "call-map-keys": case "call-map-sequence": case "call-map-hash":
+    case "call-map-probe": case "call-map-value": case "call-map-insert": case "call-map-stored":
+      return [record.receiver, record.mapping, record.keys, record.key, record.item, record.hash, ...completionRoots(record.after)];
     case "call-star-iter": case "call-star-next": return [record.receiver, record.iterator, ...completionRoots(record.after)];
     case "consume-iter": case "consume-next": case "consume-truth": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "contains-result": case "search-iter": case "search-next": case "search-equal": case "search-truth": return [record.receiver, record.key, ...completionRoots(record.after)];

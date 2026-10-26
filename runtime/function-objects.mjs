@@ -22,7 +22,7 @@ export class FunctionValue {
   }
 }
 export class CallArguments {
-  constructor(callable) { this.callable = callable; this.args = []; this.keywords = []; this.keywordValues = []; }
+  constructor(callable) { this.callable = callable; this.args = []; this.keywords = []; this.keywordValues = []; this.keywordMap = null; }
 }
 export class ClassValue {
   constructor(name, qualname, module, bases, parents, namespace, root = false) {

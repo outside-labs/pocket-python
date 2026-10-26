@@ -55,7 +55,8 @@ The version 3 fixture format retains immutable literal defaults.
 Source profiles also support global/nonlocal declarations, writes and deletion.
 Variadic `*args` and `**kwargs` parameters pack owned tuples and fresh dictionaries.
 Positional starred calls consume the adopted iterables through owned operations.
-Keyword mapping expansion, annotations,
+Keyword mapping calls adopt owned dictionaries and instance keys/getitem mappings.
+Annotations,
 decorators, arbitrary attributes/reflection, explicit exception
 causes, exception groups, classes/descriptors, generators and async remain
 unsupported. Handlers initially name the adopted builtins; dynamic expressions
