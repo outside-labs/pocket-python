@@ -115,6 +115,7 @@ jobs:
           name: interpreter-browser-report
           path: |
             build/*browser-report.json
+            build/*browser-stepped-report.json
             build/application-measurements/report.json
             build/application-measurements/compiler-component-report.json
             build/interpreter-measurements/report.json
@@ -233,6 +234,7 @@ jobs:
           name: interpreter-node-report
           path: |
             build/*node-report.json
+            build/*node-stepped-report.json
             build/interpreter-node-measurements/report.json
             build/classes-reference-report.json
             build/function-binding-reference-report.json
