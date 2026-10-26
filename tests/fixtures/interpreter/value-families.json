@@ -4,7 +4,8 @@
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
   "implemented_stages": [
-    "V1"
+    "V1",
+    "V2"
   ],
   "cases": [
     {
@@ -922,6 +923,171 @@
         "classes-source/1"
       ],
       "stdout": "97\n"
+    },
+    {
+      "id": "bytes-source-keyword",
+      "stage": "V2",
+      "source": "print(bytes(source=[65])==b\"A\",bytearray(source=b\"a\")==b\"a\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bytes-encoding-duplicate",
+      "stage": "V2",
+      "source": "bytes(\"a\",\"utf8\",encoding=\"ascii\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-none-source",
+      "stage": "V2",
+      "source": "bytes(None)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-overflow-count",
+      "stage": "V2",
+      "source": "bytes(10**100)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "bytes-ord",
+      "stage": "V2",
+      "source": "print(ord(b\"a\"),ord(bytearray(b\"\\xff\")))\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "97 255\n"
+    },
+    {
+      "id": "bytes-zero-slice-step",
+      "stage": "V2",
+      "source": "b\"a\"[::0]\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "bytes-bom",
+      "stage": "V2",
+      "source": "print(b\"\\xef\\xbb\\xbf\".decode()==\"\\ufeff\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-unicode-error-hierarchy",
+      "stage": "V2",
+      "source": "try: \"\u00e9\".encode(\"ascii\")\nexcept UnicodeError: print(\"unicode\")\ntry: b\"\\xff\".decode()\nexcept ValueError: print(\"value\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "unicode\nvalue\n"
+    },
+    {
+      "id": "bytes-unicode-roundtrip",
+      "stage": "V2",
+      "source": "s=\"\\x00\\x7f\\x80\\u07ff\\u0800\\uffff\\U00010000\\U0010ffff\"\nprint(s.encode().decode()==s)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-hooks",
+      "stage": "V2",
+      "source": "class B:\n def __bytes__(self): print(\"bytes\"); return b\"xy\"\n def __index__(self): print(\"index\"); return 3\nx=B(); print(bytes(x)==b\"xy\",len(bytearray(x)))\n",
+      "stdout": "bytes\nindex\nTrue 3\n"
+    },
+    {
+      "id": "bytes-hook-descriptor",
+      "stage": "V2",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"binding\")\n  return lambda: b\"a\"\nclass B: __bytes__=D()\nprint(bytes(B())==b\"a\")\n",
+      "stdout": "binding\nTrue\n"
+    },
+    {
+      "id": "bytes-hook-invalid-return",
+      "stage": "V2",
+      "source": "class B:\n def __bytes__(self): return bytearray()\nbytes(B())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-hook-none",
+      "stage": "V2",
+      "source": "class B: __bytes__=None\nbytes(B())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-hook-instance-ignored",
+      "stage": "V2",
+      "source": "class B:\n def __index__(self): return 2\nb=B(); b.__bytes__=lambda: b\"hello\"\nprint(len(bytes(b)))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "bytes-member-index",
+      "stage": "V2",
+      "source": "class I:\n def __index__(self): print(\"index\"); return 97\nprint(I() in b\"abc\")\n",
+      "stdout": "index\nTrue\n"
+    },
+    {
+      "id": "bytes-byte-stop-error",
+      "stage": "V2",
+      "source": "class I:\n def __index__(self): raise StopIteration(\"byte\")\nbytes([I()])\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "future-bytes-length-hint",
+      "stage": "Future",
+      "source": "class I:\n def __iter__(self): print(\"iter\"); return iter([1])\n def __len__(self): print(\"len\"); return 1\nprint(len(bytes(I())))\n",
+      "stdout": "iter\nlen\n1\n"
+    },
+    {
+      "id": "future-bytearray-inplace",
+      "stage": "Future",
+      "source": "a=bytearray(b\"a\"); b=a; a+=b\"b\"; print(b==b\"ab\")\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-bytearray-delete",
+      "stage": "Future",
+      "source": "a=bytearray(b\"ab\"); del a[0]\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": ""
     },
     {
       "id": "set-named-expression",

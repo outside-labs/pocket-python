@@ -317,10 +317,10 @@
           "stdout": "",
           "error": {
             "code": "UNSUPPORTED",
-            "phase": "tokenize",
             "type": "UnsupportedSyntaxError"
           }
-        }
+        },
+        "note": "Bytes literals are adopted; core refuses the class at parse and classes refuses the unadopted __buffer__ hook at bind. Both are pre-session refusals without compatibility credit."
       }
     },
     {

@@ -125,6 +125,19 @@ class VersionAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "independent source reports"):
             audit.matrix_from_reports({"mode": "reference-only", "source_execution": False}, {})
 
+    def test_profile_specific_pre_session_refusals_receive_no_teardown_credit(self):
+        _, cases = audit.load_corpus()
+        case = next(case for case in cases if case["id"] == "bytes-lookup-error")
+        for profile, phase in [("core-source/1", "parse"), ("classes-source/1", "bind")]:
+            with self.subTest(profile=profile):
+                actual = copy.deepcopy(case["engine_expectation"]["expected"])
+                actual.update(stats=None, compilation=None)
+                actual["error"]["phase"] = phase
+                record = audit.classify_observation(case, profile, actual)
+                self.assertEqual(record["status"], "observed")
+                self.assertFalse(record["compatibility_credit"])
+                self.assertFalse(record["teardown"]["zero_teardown_measured"])
+
     @unittest.skipUnless(PINNED and shutil.which("node"), "Requires the pinned oracle and installed Node")
     def test_real_node_observations_preserve_profile_and_evidence_boundaries(self):
         report = audit.engine_report("node")

@@ -106,13 +106,13 @@ class Scanner {
     }
   }
   string(prefix, start, offset) {
-    if (/[^ru]/i.test(prefix)) this.fail("UNSUPPORTED", "Bytes, formatted and template strings are outside this source profile.", start);
+    if (/[^rub]/i.test(prefix)) this.fail("UNSUPPORTED", "Formatted and template strings are outside this source profile.", start);
     const quote = this.take(), triple = this.source.startsWith(quote + quote, this.offset);
     if (triple) { this.take(); this.take(); }
-    const closing = quote.repeat(triple ? 3 : 1), raw = /r/i.test(prefix), points = [];
+    const closing = quote.repeat(triple ? 3 : 1), raw = /r/i.test(prefix), bytes = /b/i.test(prefix), points = [];
     const add = point => {
       if (points.length >= SOURCE_LIMITS.text) this.fail("COMPILE_BUDGET", "String literal budget exceeded.", start);
-      points.push(point);
+      points.push(bytes ? point & 255 : point);
     };
     const hex = count => {
       let value = "";
@@ -128,21 +128,23 @@ class Scanner {
       if (this.source.startsWith(closing, this.offset)) {
         for (let i = 0; i < closing.length; i++) this.take();
         this.token("string", this.source.slice(offset, this.offset), start, offset,
-          Object.freeze({type: "str", codepoints: Object.freeze(points)})); return;
+          Object.freeze(bytes ? {type: "bytes", bytes: Object.freeze(points)} : {type: "str", codepoints: Object.freeze(points)})); return;
       }
       const char = this.take();
+      if (bytes && char.codePointAt(0) > 127) this.fail("SYNTAX", "Bytes literals can only contain ASCII literal characters.", start);
       if (char === "\n" && !triple) this.fail("SYNTAX", "Unterminated string literal.", start);
       if (char !== "\\") { add(char.codePointAt(0)); continue; }
       if (!this.peek()) break;
       const next = this.take();
+      if (bytes && next.codePointAt(0) > 127) this.fail("SYNTAX", "Bytes literals can only contain ASCII literal characters.", start);
       if (raw) { add(92); add(next.codePointAt(0)); continue; }
       const escapes = {a: 7, b: 8, f: 12, n: 10, r: 13, t: 9, v: 11, "\\": 92, "'": 39, '"': 34};
       if (Object.hasOwn(escapes, next)) add(escapes[next]);
       else if (next === "\n") { /* Explicit physical continuation contributes no point. */ }
       else if (next === "x") add(hex(2));
-      else if (next === "u") add(hex(4));
-      else if (next === "U") add(hex(8));
-      else if (next === "N") this.fail("UNSUPPORTED", "Named Unicode escapes require a separately adopted name database.", start);
+      else if (next === "u" && !bytes) add(hex(4));
+      else if (next === "U" && !bytes) add(hex(8));
+      else if (next === "N" && !bytes) this.fail("UNSUPPORTED", "Named Unicode escapes require a separately adopted name database.", start);
       else if (/^[0-7]$/.test(next)) {
         let octal = next;
         while (octal.length < 3 && /^[0-7]$/.test(this.peek())) octal += this.take();

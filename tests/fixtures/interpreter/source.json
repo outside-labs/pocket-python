@@ -558,6 +558,13 @@
       "features": [
         "source.unpacking"
       ]
+    },
+    {
+      "id": "byte-string",
+      "source": "print(b\"abc\"==bytes([97,98,99]))\n",
+      "features": [
+        "source.grammar"
+      ]
     }
   ],
   "boundaries": [
@@ -636,14 +643,6 @@
     {
       "id": "unsupported-formatted-string",
       "source": "print('must not run')\nf'{x}'",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-byte-string",
-      "source": "print('must not run')\nb'abc'",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"

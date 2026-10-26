@@ -125,8 +125,7 @@
     },
     {
       "id": "byte-string",
-      "source": "b'data'",
-      "code": "UNSUPPORTED"
+      "source": "b'data'"
     },
     {
       "id": "template-string",

@@ -26,6 +26,8 @@ def tagged(value):
         return {"type": "float", "bits": struct.pack(">d", value).hex()}
     if type(value) is str:
         return {"type": "str", "codepoints": list(map(ord, value))}
+    if type(value) is bytes:
+        return {"type": "bytes", "bytes": list(value)}
     raise ValueError("Unadopted lexical literal")
 
 
