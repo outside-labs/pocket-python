@@ -548,19 +548,29 @@ class Parser {
       this.expect("]"); return this.node("List", start, {items});
     }
     if (this.eat("{")) {
-      const entries = [];
+      const entries = [], items = []; let form = null;
       while (!this.at("}")) {
-        if (this.at("*")) this.unsupported("Set displays require the separate set-value profile.");
-        if (this.eat("**")) entries.push([null, this.bitwiseOr()]);
+        if (this.at("*")) {
+          if (form === "dict") this.fail("A dictionary display cannot contain a starred set element.");
+          form = "set"; items.push(this.starredExpression(true));
+        } else if (this.eat("**")) {
+          if (form === "set") this.fail("A set display cannot contain a dictionary unpacking.");
+          form = "dict"; entries.push([null, this.bitwiseOr()]);
+        }
         else {
           const key = this.expression();
-          if (!this.eat(":")) this.unsupported("Set literals are not adopted.");
-          const value = this.expression(); entries.push([key, value]);
+          if (this.eat(":")) {
+            if (form === "set") this.fail("Mixed set and dictionary display.");
+            form = "dict"; const value = this.expression(); entries.push([key, value]);
+          } else {
+            if (form === "dict") this.fail("A dictionary element requires a value.");
+            form = "set"; items.push(key);
+          }
         }
         if (this.at("for")) this.unsupported("Comprehensions are not adopted.");
         if (!this.eat(",")) break;
       }
-      this.expect("}"); return this.node("Dict", start, {entries});
+      this.expect("}"); return this.node(form === "set" ? "Set" : "Dict", start, form === "set" ? {items} : {entries});
     }
     if (this.at("...")) this.unsupported("Ellipsis is not adopted.");
     this.fail("Expected an expression.");

@@ -144,7 +144,7 @@
     {
       "id": "walrus-nested-unicode",
       "stage": "Control",
-      "source": "print((π:=(b:=7)),π,b)\n",
+      "source": "print((\u03c0:=(b:=7)),\u03c0,b)\n",
       "stdout": "7 7 7\n",
       "profiles": [
         "core-source/1",
@@ -532,8 +532,8 @@
     {
       "id": "display-star-string",
       "stage": "Display",
-      "source": "a=[*\"A🚀\"]\nprint(a[0],a[1])\n",
-      "stdout": "A 🚀\n",
+      "source": "a=[*\"A\ud83d\ude80\"]\nprint(a[0],a[1])\n",
+      "stdout": "A \ud83d\ude80\n",
       "profiles": [
         "core-source/1",
         "classes-source/1"
@@ -988,8 +988,8 @@
       ]
     },
     {
-      "id": "star-set-display-deferred",
-      "stage": "Future",
+      "id": "star-set-display",
+      "stage": "Display",
       "source": "a={*[1,2]}\nprint(len(a))\n",
       "stdout": "2\n",
       "profiles": [

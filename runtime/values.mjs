@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -25,6 +25,9 @@ class SliceValue {
   constructor(start, stop, step) { this.start = start; this.stop = stop; this.step = step; Object.freeze(this); }
 }
 class DictValue { constructor() { this.entries = []; this.version = 0; this.ownedKeys = false; } }
+class SetValue {
+  constructor(storage, frozen) { this.storage = storage; this.frozen = frozen; Object.freeze(this); }
+}
 class RangeValue {
   constructor(start, stop, step, length) {
     this.start = start; this.stop = stop; this.step = step; this.length = length; Object.freeze(this);
@@ -33,7 +36,10 @@ class RangeValue {
 export class IteratorValue {
   constructor(value) {
     this.value = value; this.index = value instanceof RangeValue ? 0n : 0;
-    if (value instanceof DictValue) { this.size = value.entries.length; this.version = value.version; }
+    if (value instanceof DictValue || value instanceof SetValue) {
+      const storage = value instanceof SetValue ? value.storage : value;
+      this.size = storage.entries.length; this.version = storage.version;
+    }
   }
 }
 
@@ -200,6 +206,59 @@ export class ValueRuntime {
     if (length > 9223372036854775807n) this.fail("OverflowError", "Python int too large to convert to length hint");
   }
   isDict(value) { return value instanceof DictValue; }
+  isSet(value) { return value instanceof SetValue; }
+  newSet(frozen = false, storage = null) {
+    storage ??= this.dict([]);
+    return this.make(64, [storage], () => new SetValue(storage, frozen));
+  }
+  setLookupKey(value) { return value instanceof SetValue && !value.frozen ? this.newSet(true, value.storage) : value; }
+  setMethod(value, name) {
+    if (name === "copy" || !value.frozen && ["add", "discard", "remove", "clear"].includes(name)) return;
+    if (["update", "union", "intersection", "difference", "symmetric_difference", "intersection_update", "difference_update",
+        "symmetric_difference_update", "issubset", "issuperset", "isdisjoint", "pop"].includes(name))
+      this.fail("UnsupportedOperationError", "This set method requires a later value stage.", "UNSUPPORTED");
+    this.fail("AttributeError", "Set value has no attribute '" + name + "'");
+  }
+  copySet(value, frozen = value.frozen) {
+    if (value.frozen && frozen) return value;
+    const result = this.newSet(frozen);
+    for (const entry of value.storage.entries) {
+      this.charge(1); this.commitDictionary(result.storage, entry.key, null, this.dictionaryEntryHash(entry), -1);
+    }
+    return result;
+  }
+  clearSet(value) {
+    if (!value.storage.entries.length) return null;
+    this.charge(value.storage.entries.length + 1); this.resize(value.storage, 96, []);
+    value.storage.entries = []; value.storage.version++; return null;
+  }
+  primitiveSet(value) {
+    if (this.hasUserEquality(value)) this.fail("UnsupportedOperationError", "Set algebra and frozen hashing with user keys require a later value stage.", "UNSUPPORTED");
+  }
+  findSet(value, key) {
+    key = this.setLookupKey(key);
+    const hash = this.pythonHash(key);
+    for (let index = 0; index < value.storage.entries.length; index++) {
+      this.charge(1); const entry = value.storage.entries[index];
+      if (hash === this.dictionaryEntryHash(entry) && (entry.key === key || this.equal(entry.key, key))) return index;
+    }
+    return -1;
+  }
+  setAlgebra(operation, left, right, inplace = false) {
+    if (!(left instanceof SetValue && right instanceof SetValue)) this.fail("TypeError", "Set operators require set operands");
+    this.primitiveSet(left); this.primitiveSet(right);
+    const result = this.newSet(inplace ? false : left.frozen);
+    const add = entry => { if (this.findSet(result, entry.key) < 0) this.commitDictionary(result.storage, entry.key, null, this.dictionaryEntryHash(entry), -1); };
+    for (const entry of left.storage.entries) {
+      const present = this.findSet(right, entry.key) >= 0;
+      if (operation === "bit-or" || (operation === "bit-and" ? present : !present)) add(entry);
+    }
+    if (["bit-or", "bit-xor"].includes(operation)) for (const entry of right.storage.entries)
+      if (operation === "bit-or" || this.findSet(left, entry.key) < 0) add(entry);
+    if (!inplace || left.frozen) return result;
+    this.resize(left.storage, valueLayout(result.storage).bytes, valueLayout(result.storage).children);
+    left.storage.entries = result.storage.entries; left.storage.version++; left.storage.ownedKeys = true; return left;
+  }
   comparisonSequence(value) { return value instanceof ListValue || value instanceof TupleValue ? value.items : null; }
   sameSequenceKind(left, right) { return this.comparisonSequence(left) !== null && left.constructor === right?.constructor; }
   hasUserEquality(value) {
@@ -207,6 +266,7 @@ export class ValueRuntime {
     while (pending.length) {
       const item = pending.pop();
       if (item instanceof InstanceValue) return true;
+      if (item instanceof SetValue) { pending.push(...item.storage.entries.map(entry => entry.key)); continue; }
       if (item instanceof DictValue && item.ownedKeys) return true;
       if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;
       seen.add(item); this.charge(1);
@@ -216,6 +276,8 @@ export class ValueRuntime {
   }
   inplace(operation, left, right) {
     this.charge(1);
+    if (left instanceof SetValue && ["bit-or", "bit-and", "bit-xor", "subtract"].includes(operation))
+      return this.setAlgebra(operation, left, right, !left.frozen);
     if (!(left instanceof ListValue)) return this.binary(operation, left, right);
     if (operation === "add") {
       let items;
@@ -318,6 +380,7 @@ export class ValueRuntime {
     if (numeric(value)) return value instanceof FloatValue ? value.value !== 0 : integer(value) !== 0n;
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
+    if (value instanceof SetValue) return value.storage.entries.length !== 0;
     if (value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
         value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue) return true;
@@ -325,6 +388,11 @@ export class ValueRuntime {
   }
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof SetValue || right instanceof SetValue) {
+      if (!(left instanceof SetValue && right instanceof SetValue)) return false;
+      this.primitiveSet(left); this.primitiveSet(right);
+      return left.storage.entries.length === right.storage.entries.length && left.storage.entries.every(entry => this.findSet(right, entry.key) >= 0);
+    }
     if (left instanceof RangeValue || right instanceof RangeValue) return left instanceof RangeValue && right instanceof RangeValue &&
       left.length === right.length && (left.length === 0n || left.start === right.start && (left.length === 1n || left.step === right.step));
     if (left instanceof ComplexValue || right instanceof ComplexValue) {
@@ -367,6 +435,11 @@ export class ValueRuntime {
   }
   less(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof SetValue || right instanceof SetValue) {
+      if (!(left instanceof SetValue && right instanceof SetValue)) this.fail("TypeError", "Set ordering requires sets");
+      this.primitiveSet(left); this.primitiveSet(right);
+      return left.storage.entries.length < right.storage.entries.length && left.storage.entries.every(entry => this.findSet(right, entry.key) >= 0);
+    }
     if (left instanceof SliceValue || right instanceof SliceValue)
       this.fail("UnsupportedOperationError", "Slice comparisons require the later equality/sequence profile.", "UNSUPPORTED");
     if (numeric(left) && numeric(right)) {
@@ -388,6 +461,7 @@ export class ValueRuntime {
   }
   hash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof SetValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue)
       this.fail("UnsupportedOperationError", "Object dictionary keys require the later identity-hash profile.", "UNSUPPORTED");
     if (value === null) return "none";
@@ -437,6 +511,16 @@ export class ValueRuntime {
   }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof SetValue) {
+      if (!value.frozen) this.fail("TypeError", "unhashable type: 'set'");
+      this.primitiveSet(value);
+      let hash = 1927868237n;
+      for (const entry of value.storage.entries) {
+        this.charge(1); const part = BigInt.asUintN(64, this.dictionaryEntryHash(entry));
+        hash ^= BigInt.asUintN(64, (part ^ (part << 16n) ^ 89869747n) * 3644798167n);
+      }
+      return this.hashResult(BigInt.asIntN(64, hash ^ BigInt(value.storage.entries.length) * 69069n));
+    }
     if (value instanceof RangeValue) this.fail("UnsupportedOperationError", "Range hashing requires a later sequence stage.", "UNSUPPORTED");
     const modulus = 2305843009213693951n;
     if (value instanceof ComplexValue) {
@@ -654,7 +738,7 @@ export class ValueRuntime {
   iterator(value) {
     if (value instanceof IteratorValue) return value;
     if (value instanceof RangeValue) { this.charge(1); return this.make(80, [value, 0n], () => new IteratorValue(value)); }
-    if (!sequence(value) && !(value instanceof DictValue)) this.fail("TypeError", "Value is not iterable in this stage.");
+    if (!sequence(value) && !(value instanceof DictValue || value instanceof SetValue)) this.fail("TypeError", "Value is not iterable in this stage.");
     this.charge(1); return this.make(64, [value], () => new IteratorValue(value));
   }
   isIterator(value) { this.charge(1); return value instanceof IteratorValue || value instanceof ProtocolIteratorValue; }
@@ -669,13 +753,14 @@ export class ValueRuntime {
       this.resize(iterator, 80, [value, index]); iterator.index = index;
       return this.int(item);
     }
-    if (value instanceof DictValue) {
-      if (iterator.invalidated || iterator.size !== value.entries.length) {
-        iterator.invalidated = true; this.fail("RuntimeError", "dictionary changed size during iteration");
+    if (value instanceof DictValue || value instanceof SetValue) {
+      const storage = value instanceof SetValue ? value.storage : value, label = value instanceof SetValue ? "Set" : "dictionary";
+      if (iterator.invalidated || iterator.size !== storage.entries.length) {
+        iterator.invalidated = true; this.fail("RuntimeError", label + " changed size during iteration");
       }
-      if (iterator.version !== value.version) this.fail("UnsupportedOperationError", "Equal-size dictionary key mutation during iteration is deferred.", "UNSUPPORTED");
-      if (iterator.index >= value.entries.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
-      return value.entries[iterator.index++].key;
+      if (iterator.version !== storage.version) this.fail("UnsupportedOperationError", "Equal-size key mutation during iteration is deferred.", "UNSUPPORTED");
+      if (iterator.index >= storage.entries.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
+      return storage.entries[iterator.index++].key;
     }
     const items = elements(value);
     if (iterator.index >= items.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
@@ -683,6 +768,7 @@ export class ValueRuntime {
     return value instanceof StringValue ? this.string([item]) : item;
   }
   contains(key, value) {
+    if (value instanceof SetValue) return this.findSet(value, key) >= 0;
     if (value instanceof RangeValue) {
       if (key instanceof ComplexValue) { if (key.imag !== 0) return false; key = key.real; }
       else if (key instanceof FloatValue) key = key.value;
@@ -716,6 +802,7 @@ export class ValueRuntime {
       }
       if (sequence(value)) return BigInt(elements(value).length);
       if (value instanceof DictValue) return BigInt(value.entries.length);
+      if (value instanceof SetValue) return BigInt(value.storage.entries.length);
       this.fail("TypeError", "Value has no len() in this stage.");
     }
     if (operation === "iter") return this.iterator(value);
@@ -746,6 +833,8 @@ export class ValueRuntime {
     if (operation === "getitem") return this.index(left, right);
     if (operation === "append") return this.append(left, right);
     if (operation === "dict-delete") return this.remove(left, right);
+    if ((left instanceof SetValue || right instanceof SetValue) && ["bit-and", "bit-or", "bit-xor", "subtract"].includes(operation))
+      return this.setAlgebra(operation, left, right);
     if (left instanceof ComplexValue || right instanceof ComplexValue) {
       if (!["add", "subtract", "multiply", "divide", "power"].includes(operation)) this.fail("TypeError", "This operator does not accept complex values");
       const parts = value => value instanceof ComplexValue ? [value.real,value.imag] : [this.number(value),0];
@@ -902,6 +991,7 @@ export function valueLayout(value) {
   if (value instanceof TupleValue || value instanceof ListValue) return {bytes: 64 + 8 * value.items.length, children: value.items};
   if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
+  if (value instanceof SetValue) return {bytes: 64, children: [value.storage]};
   if (value instanceof IteratorValue) return value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
   if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};
   if (value instanceof NotImplementedValue) return {bytes: 48, children: []};
@@ -923,6 +1013,7 @@ export function valueLayout(value) {
   if (value instanceof MethodWrapperValue) return {bytes: 64, children: [value.callable]};
   if (value instanceof PropertyAccessorValue) return {bytes: 64, children: [value.property]};
   if (value instanceof AppendValue) return {bytes: 64, children: [value.receiver]};
+  if (value instanceof ValueMethod) return {bytes: 64 + 2 * value.name.length, children: [value.receiver]};
   if (value instanceof BuiltinValue) return {bytes: 48 + 2 * value.name.length, children: []};
   if (value instanceof ExceptionValue) return {bytes: 96 + 2 * (value.name.length + value.message.length) +
     value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),

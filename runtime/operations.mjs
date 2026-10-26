@@ -6,7 +6,7 @@ const itemOperation = value => {
   return value;
 };
 const dictionaryOperation = value => {
-  if (!["get", "set", "delete", "contains", "probe"].includes(value)) throw new TypeError("Invalid dictionary operation.");
+  if (!["get", "set", "delete", "discard", "contains", "probe"].includes(value)) throw new TypeError("Invalid dictionary operation.");
   return value;
 };
 const operands = values => {
@@ -22,7 +22,7 @@ const numericPosition = value => {
   return value;
 };
 const consumerName = value => {
-  if (!["list", "tuple", "all", "any"].includes(value)) throw new TypeError("Invalid iterable consumer.");
+  if (!["list", "tuple", "all", "any", "set", "frozenset", "set-update"].includes(value)) throw new TypeError("Invalid iterable consumer.");
   return value;
 };
 export function completion(kind, fields = {}) {
@@ -90,7 +90,7 @@ export function completion(kind, fields = {}) {
       break;
     case "call-star-iter": case "call-star-next":
       record = {kind, receiver: fields.receiver, iterator: fields.iterator ?? null, after}; break;
-    case "consume-iter": case "consume-next": case "consume-truth":
+    case "consume-iter": case "consume-next": case "consume-truth": case "consume-stored":
       record = {kind, name: consumerName(fields.name), receiver: fields.receiver, result: fields.result ?? null, depth: fields.depth, after};
       depthCheck(record.depth); break;
     case "contains-result": case "search-iter": case "search-next":
@@ -155,7 +155,7 @@ function visit(record) {
     case "call-map-probe": case "call-map-value": case "call-map-insert": case "call-map-stored":
       return [record.receiver, record.mapping, record.keys, record.key, record.item, record.hash, ...completionRoots(record.after)];
     case "call-star-iter": case "call-star-next": return [record.receiver, record.iterator, ...completionRoots(record.after)];
-    case "consume-iter": case "consume-next": case "consume-truth": return [record.receiver, record.result, ...completionRoots(record.after)];
+    case "consume-iter": case "consume-next": case "consume-truth": case "consume-stored": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "contains-result": case "search-iter": case "search-next": case "search-equal": case "search-truth": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "sentinel-equal": case "sentinel-truth": return [record.receiver, record.value, ...completionRoots(record.after)];
     case "compare-result": case "ne-result": case "sequence-item": case "sequence-truth": return [record.left, record.right, ...completionRoots(record.after)];
@@ -203,9 +203,9 @@ export function numericTask(name, args, site, after = null, depth = 0, position 
   if (args.length > 3 || position > (name === "range" ? 3 : 2)) throw new TypeError("Invalid numeric operands.");
   return Object.freeze({kind:"numeric", name:numericName(name), args:operands(args), position, site, completion:after, depth});
 }
-export function consumeTask(name, receiver, site, after = null, depth = 0) {
+export function consumeTask(name, receiver, site, after = null, depth = 0, result = null) {
   depthCheck(depth); completionRoots(after);
-  return Object.freeze({kind: "consume", name: consumerName(name), receiver, site, completion: after, depth});
+  return Object.freeze({kind: "consume", name: consumerName(name), receiver, result, site, completion: after, depth});
 }
 export function valueTask(value, site, after = null, depth = 0) {
   depthCheck(depth); completionRoots(after);
@@ -241,7 +241,7 @@ export function operationRoots(task) {
   switch (task.kind) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "numeric": return [...task.args, ...completionRoots(task.completion)];
-    case "consume": return [task.receiver, ...completionRoots(task.completion)];
+    case "consume": return [task.receiver, ...(task.result === null ? [] : [task.result]), ...completionRoots(task.completion)];
     case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "contains": return [task.receiver, task.key, ...completionRoots(task.completion)];
     case "compare": return [task.left, task.right, ...completionRoots(task.completion)];

@@ -1,4 +1,4 @@
-import {FunctionValue, CallArguments, BuiltinValue, AppendValue, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -77,6 +77,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
       const type = args[1];
       if (type instanceof ClassValue) return classes.isinstance(args[0], type);
+      if (type instanceof BuiltinValue && ["set", "frozenset"].includes(type.name))
+        return values.isSet(args[0]) && args[0].frozen === (type.name === "frozenset");
       if (values.numeric && type instanceof BuiltinValue && ["list", "tuple", "range"].includes(type.name)) return values.isSequenceType(args[0], type.name);
       if (values.numeric && type instanceof BuiltinValue && ["int", "float", "complex", "bool"].includes(type.name)) return values.isPrimitive(args[0], type.name);
       if (type instanceof BuiltinValue && type.name === "str") return values.isString(args[0]);
@@ -130,7 +132,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const consumeFinish = (name, result, site, after) => {
     state.temporaries.push(result);
-    const value = name === "tuple" ? values.tuple(result.items) : name === "list" ? result : name === "all";
+    const value = name === "tuple" ? values.tuple(result.items) : ["list", "set", "frozenset", "set-update"].includes(name) ? result : name === "all";
     state.temporaries.push(value); return valueTask(value, site, after);
   };
   const argumentOwner = receiver => {
@@ -385,8 +387,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (["list", "tuple"].includes(name)) {
         values.append(result, value); return consumeNext(name, receiver, result, site, after, depth);
       }
+      if (values.isSet(result)) return dictionaryTask(result.storage, value, site,
+        continuation("consume-stored", completion), depth, "set", null);
       return unaryTask("truth", value, site, continuation("consume-truth", {name, receiver, result, after, depth}), depth);
     }
+    if (completion?.kind === "consume-stored") return consumeNext(completion.name, completion.receiver,
+      completion.result, site, completion.after, completion.depth);
     if (completion?.kind === "consume-truth") {
       const {name, receiver, result, after, depth} = completion;
       if (value === (name === "any")) return valueTask(value, site, after);
@@ -585,6 +591,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (operation === "contains") return valueTask(found, site, after);
     if (operation === "probe") return valueTask(values.tuple([found, found ? receiver.entries[position].value : null]), site, after);
     if (operation === "set") return valueTask(values.commitDictionary(receiver, key, item, hash, position), site, after);
+    if (operation === "discard" && !found) return valueTask(null, site, after);
     if (!found) python("KeyError", "Dictionary key not found");
     return valueTask(operation === "get" ? receiver.entries[position].value :
       values.commitDictionary(receiver, key, null, hash, position, true), site, after);
@@ -621,7 +628,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (building && hintOwner instanceof InstanceValue &&
               ["__len__", "__length_hint__"].some(slot => classes.lookup(hintOwner.type, slot).found))
             hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
-          const result = building ? values.list([]) : null; state.temporaries.push(result);
+          const result = task.result ?? (building ? values.list([]) : ["set", "frozenset"].includes(name) ? values.newSet(name === "frozenset") : null);
+          state.temporaries.push(result);
           task = unaryTask("iter", receiver, site, continuation("consume-iter", {name, receiver, result, after: completion, depth}), depth);
           continue;
         }
@@ -703,7 +711,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (task.kind === "compare") {
           state.temporaries.push(...operationRoots(task));
-          const {left, right, operation, position} = task;
+          let {left, right} = task;
+          const {operation, position} = task;
+          if (values.isSet(left) && values.isSet(right)) { left = left.storage; right = right.storage; }
           if (!(left instanceof InstanceValue || right instanceof InstanceValue)) {
             if (values.sameSequenceKind(left, right)) {
               const a = values.comparisonSequence(left), b = values.comparisonSequence(right);
@@ -743,7 +753,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (task.kind === "contains") {
           state.temporaries.push(...operationRoots(task));
-          const {receiver, key} = task;
+          let {receiver, key} = task;
+          if (values.isSet(receiver)) {
+            key = values.setLookupKey(key); state.temporaries.push(key);
+            task = dictionaryTask(receiver.storage, key, site, completion, depth, "contains"); continue;
+          }
           if (values.dictionaryNeedsProtocol(receiver, key)) { task = dictionaryTask(receiver, key, site, completion, depth, "contains"); continue; }
           if (task.search || values.isIterator(receiver) || values.isRange(receiver) && key instanceof InstanceValue) {
             task = unaryTask("iter", receiver, site, continuation("search-iter", {receiver, key, after: completion, depth}), depth); continue;
@@ -958,6 +972,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
         if (callable instanceof BuiltinValue) {
+          if (callable instanceof ValueMethod && values.isSet(callable.receiver)) {
+            const receiver = callable.receiver, name = callable.name;
+            if (keywords.length || args.length !== (["add", "discard", "remove"].includes(name) ? 1 : 0))
+              python("TypeError", name + "() received invalid arguments");
+            if (name === "copy" || name === "clear") {
+              task = valueTask(name === "copy" ? values.copySet(receiver) : values.clearSet(receiver), site, completion); continue;
+            }
+            const key = name === "add" ? args[0] : values.setLookupKey(args[0]); state.temporaries.push(key);
+            task = dictionaryTask(receiver.storage, key, site, completion, depth,
+              {add: "set", discard: "discard", remove: "delete"}[name], null); continue;
+          }
+          if (["set", "frozenset"].includes(callable.name)) {
+            count("builtin:" + callable.name);
+            if (args.length > 1 || keywords.length) python("TypeError", callable.name + "() accepts at most one positional iterable");
+            if (values.isSet(args[0])) {
+              task = valueTask(values.copySet(args[0], callable.name === "frozenset"), site, completion); continue;
+            }
+            task = args.length ? consumeTask(callable.name, args[0], site, completion, depth) :
+              valueTask(values.newSet(callable.name === "frozenset"), site, completion); continue;
+          }
           if (["list", "tuple"].includes(callable.name)) {
             count("builtin:" + callable.name);
             if (args.length > 1 || keywords.length) python("TypeError", callable.name + "() accepts at most one positional argument");

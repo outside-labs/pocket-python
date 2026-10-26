@@ -19,14 +19,14 @@
     },
     {
       "id": "unicode-values",
-      "source": "text=\"A😀é\"\nprint(len(text),text[1],text[::-1],\"😀\" in text)\n",
+      "source": "text=\"A\ud83d\ude00e\u0301\"\nprint(len(text),text[1],text[::-1],\"\ud83d\ude00\" in text)\n",
       "classification": "supported",
       "reference": {
-        "stdout": "4 😀 ́e😀A True\n",
+        "stdout": "4 \ud83d\ude00 \u0301e\ud83d\ude00A True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "4 😀 ́e😀A True\n",
+        "stdout": "4 \ud83d\ude00 \u0301e\ud83d\ude00A True\n",
         "error_type": null
       }
     },
@@ -71,7 +71,7 @@
     },
     {
       "id": "builtin-forms",
-      "source": "print(bool(),bool([]),len(\"😀\"),next(iter([7])),isinstance(\"x\",str))\n",
+      "source": "print(bool(),bool([]),len(\"\ud83d\ude00\"),next(iter([7])),isinstance(\"x\",str))\n",
       "classification": "supported",
       "reference": {
         "stdout": "False False 1 7 True\n",
@@ -247,16 +247,14 @@
     {
       "id": "sets",
       "source": "print(len({1,2}))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "2\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "stdout": "2\n",
+        "error_type": null
       }
     },
     {
@@ -1012,7 +1010,7 @@
     },
     {
       "id": "builtin-float",
-      "source": "a=float(\"١.٢٥\")\nprint(a==1.25,a is float(a),isinstance(a,float))\n",
+      "source": "a=float(\"\u0661.\u0662\u0665\")\nprint(a==1.25,a is float(a),isinstance(a,float))\n",
       "classification": "supported",
       "reference": {
         "stdout": "True True True\n",
@@ -1041,16 +1039,14 @@
     {
       "id": "builtin-frozenset",
       "source": "print(callable(frozenset))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -1377,7 +1373,7 @@
     },
     {
       "id": "builtin-ord",
-      "source": "print(ord(\"é\"))\n",
+      "source": "print(ord(\"\u00e9\"))\n",
       "classification": "supported",
       "reference": {
         "stdout": "233\n",
@@ -1483,16 +1479,14 @@
     {
       "id": "builtin-set",
       "source": "print(callable(set))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
