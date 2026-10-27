@@ -91,3 +91,14 @@ These refine [#123](https://github.com/outside-labs/pocket-python/issues/123).
 See the [rich comparison data model](https://docs.python.org/3.14/reference/datamodel.html#object.__lt__)
 and [sequence comparison rules](https://docs.python.org/3.14/library/stdtypes.html#comparisons).
 Live documentation revisions do not change the pinned oracle.
+
+## Ordering method adoption
+
+O12 is implemented. The 55 method cases and five Base/Future observations pass
+in Node and Chromium with draining and instruction-boundary drivers. Raw values,
+all four reflected method pairs, inherited subtype priority, descriptor failures,
+same-type fallback, type mutation and original error frames match the oracle.
+Focused lifecycle checks collect during binding, method bodies and consuming
+truth, and verify cancellation, close, recursion and real budget/OOM failures.
+The complete Node suite passes with the existing composed resource baselines.
+O13/O14 remain reference-only until their separate implementation slices.

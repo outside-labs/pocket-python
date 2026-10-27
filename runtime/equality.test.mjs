@@ -21,7 +21,7 @@ test('comparison phases own both operands, iterator results and outer destinatio
   for(const kind of ['sentinel-equal','sentinel-truth'])
     assert.deepEqual(completionRoots(completion(kind,{receiver:left,value:right,after,depth:0})),[left,right,right]);
   assert.deepEqual(operationRoots(compareTask('equal',left,right,null,after)),[left,right,right]);
-  assert.throws(()=>compareTask('less',left,right,null),TypeError);
+  assert.throws(()=>compareTask('unordered',left,right,null),TypeError);
   assert.throws(()=>compareTask('equal',left,right,null,null,0,3),TypeError);
 });
 

@@ -221,7 +221,7 @@ const depthCheck = depth => {
   if (!Number.isSafeInteger(depth) || depth < 0 || depth > 256) throw new TypeError("Invalid operation depth.");
 };
 const comparisonCheck = (operation, position) => {
-  if (!["equal", "not-equal"].includes(operation) || !Number.isSafeInteger(position) || position < 0 || position > 1024)
+  if (!["equal", "not-equal", "less", "less-equal", "greater", "greater-equal"].includes(operation) || !Number.isSafeInteger(position) || position < 0 || position > 1024)
     throw new TypeError("Invalid comparison phase.");
 };
 export function compareTask(operation, left, right, site, after = null, depth = 0, position = 0) {

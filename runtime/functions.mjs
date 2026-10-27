@@ -1,4 +1,4 @@
-import {ARITHMETIC_SLOTS} from "./class-policy.mjs";
+import {ARITHMETIC_SLOTS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
 import {GeneratorValue, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
@@ -667,8 +667,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));
       }
-      else if (["equal", "not-equal"].includes(op) && frame.callable.pool.code.version === 5 &&
-          (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1)))) {
+      else if (frame.callable.pool.code.version === 5 &&
+          (["equal", "not-equal"].includes(op) && (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1))) ||
+           Object.hasOwn(ORDERING_SLOTS, op) && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue))) {
         const right = stack.pop(); dispatch(compareTask(op, stack.pop(), right, summary(frame, cursor)));
       }
       else if (["less", "less-equal", "greater", "greater-equal"].includes(op) && frame.callable.pool.code.version === 5 &&

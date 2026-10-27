@@ -558,8 +558,8 @@
       "stdout": "7\n"
     },
     {
-      "id": "future-ordering-slot",
-      "stage": "E3",
+      "id": "ordering-slot",
+      "stage": "E1",
       "source": "class A:\n def __lt__(self,other): return True\nprint(A()<7)\n",
       "stdout": "True\n"
     },
