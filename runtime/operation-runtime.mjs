@@ -488,6 +488,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return numericTask(name,converted,site,after,depth,["complex", "range"].includes(name) ? position+1 : 0);
     }
     if (completion?.kind === "hash-result") return valueTask(values.hashResult(value), site, completion.after);
+    if (completion?.kind === "sequence-hash") return hashNext(completion.receiver, completion.position + 1,
+      values.combineHash(completion.hash, value), site, completion.after, completion.depth);
     if (completion?.kind === "dict-hash") return dictionaryTask(completion.receiver, completion.key, site, completion.after,
       completion.depth, completion.operation, completion.item, value);
     if (completion?.kind === "dict-key") return unaryTask("truth", value, site, continuation("dict-truth", completion), completion.depth);
@@ -591,6 +593,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     state.frames.at(-1).tasks.at(-1).stack.push(completion?.kind === "discard" ? null : value);
     return null;
+  };
+  const hashNext = (receiver, position, hash, site, after, depth) => {
+    const parts = values.hashParts(receiver);
+    if (position === parts.length) return valueTask(values.hashResult(BigInt.asIntN(64, hash ^ BigInt(parts.length))), site, after);
+    charge(1);
+    return unaryTask("hash", parts[position], site, continuation("sequence-hash", {receiver, position, hash, depth, after}), depth + 1);
   };
   const notifyNext = (type, entries, index, site, after = null) => {
     state.temporaries.push(type, ...entries.map(entry => entry[1]));
@@ -1059,6 +1067,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries.push(...operationRoots(task));
           if (["hash", "hash-unhashable"].includes(operation)) {
             if (operation === "hash-unhashable") python("TypeError", "unhashable type");
+            if (values.hashParts(value) !== null && values.needsOwnedHash(value)) {
+              if (depth >= maxDepth) python("RecursionError", "maximum sequence hash depth exceeded");
+              task = hashNext(value, 0, 14695981039346656037n, site, completion, depth); continue;
+            }
             if (!(value instanceof InstanceValue)) { task = deliver(values.pythonHash(value), completion, site); continue; }
             if (++depth > maxDepth) python("RecursionError", "maximum implicit hash dispatch depth exceeded");
             const fallback = {operation: "hash-unhashable", receiver: value, after: completion, depth};

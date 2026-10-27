@@ -57,7 +57,7 @@ stable hashes and equal-value invariants; their concrete implementation-dependen
 hash numbers are not a cross-process or CPython-address promise. Identity hashes
 belong to owned VM objects, not serialized representations or host addresses.
 Hashing mutable list/dict values fails with TypeError. Tuple keys containing user
-instances remain separately gated; bound methods follow the [method hash contract](interpreter-object-hashing.md).
+instances, slices and bound methods follow the [method hash contract](interpreter-object-hashing.md).
 
 At class creation, an own `__eq__` without an own `__hash__` installs a None hash
 slot, even when a parent supplies a hash. Inherited disabling remains effective.

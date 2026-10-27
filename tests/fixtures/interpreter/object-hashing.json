@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "H1"
+    "H1",
+    "H2"
   ],
   "cases": [
     {
@@ -128,6 +129,154 @@
       "source": "class A:\n def use(self): pass\nhash(A().use,7)\n",
       "stdout": "",
       "error_type": "TypeError"
+    },
+    {
+      "id": "slice-primitives",
+      "stage": "H2",
+      "source": "print(hash(slice(1,7,2))==hash(slice(1,7,2)),hash(slice(None))==hash(slice(None)))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "slice-equal-numeric-fields",
+      "stage": "H2",
+      "source": "print(slice(True,7.0,2)==slice(1,7,2),hash(slice(True,7.0,2))==hash(slice(1,7,2)))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "slice-dictionary",
+      "stage": "H2",
+      "source": "d={slice(1,7,2):[8]}\nprint(d[slice(1,7,2)][0],slice(1,7,2) in d)\nd[slice(1,7,2)]=[9]\nprint(len(d),d[slice(1,7,2)][0])\ndel d[slice(1,7,2)]\nprint(len(d))\n",
+      "stdout": "8 True\n1 9\n0\n"
+    },
+    {
+      "id": "slice-raw-fields",
+      "stage": "H2",
+      "source": "class A:\n def __index__(self): raise ValueError(\"wrong\")\n def __hash__(self):\n  print(\"hash\")\n  return 7\na=A()\nprint(hash(slice(a))==hash(slice(a)))\n",
+      "stdout": "hash\nhash\nTrue\n"
+    },
+    {
+      "id": "slice-hash-order",
+      "stage": "H2",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __hash__(self):\n  print(self.n)\n  return self.n\nhash(slice(A(1),A(2),A(3)))\n",
+      "stdout": "1\n2\n3\n"
+    },
+    {
+      "id": "slice-nested-tuple",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self): return 7\n def __eq__(self,other): return True\nx=(slice((A(),)),slice(A(),7))\ny=(slice((A(),)),slice(A(),7))\nprint(x==y,hash(x)==hash(y),{x:8}[y])\n",
+      "stdout": "True True 8\n"
+    },
+    {
+      "id": "slice-equal-user-fields",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self): return 7\n def __eq__(self,other): return True\nprint({slice(A()):8}[slice(A())])\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "slice-hash-every-time",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self):\n  print(\"hash\")\n  return 7\ns=slice(A())\nhash(s)\nhash(s)\n",
+      "stdout": "hash\nhash\n"
+    },
+    {
+      "id": "slice-unhashable-start",
+      "stage": "H2",
+      "source": "hash(slice([],1,2))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-unhashable-stop",
+      "stage": "H2",
+      "source": "hash(slice(1,[],2))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-unhashable-step",
+      "stage": "H2",
+      "source": "hash(slice(1,2,[]))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-hash-short-circuit",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self):\n  print(\"wrong\")\n  return 7\nhash(slice([],A(),A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-hash-body-error",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self):\n  print(\"entered\")\n  raise ValueError(\"bad\")\nhash(slice(A()))\n",
+      "stdout": "entered\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "slice-hash-invalid-result",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self): return \"bad\"\nhash(slice(A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-hash-descriptor",
+      "stage": "H2",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\")\n  return lambda: 7\nclass A:\n __hash__=D()\na=A()\nprint(hash(slice(a))==hash(slice(a)))\n",
+      "stdout": "bind\nbind\nTrue\n"
+    },
+    {
+      "id": "slice-hash-binding-error",
+      "stage": "H2",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\")\n  raise ValueError(\"bad\")\nclass A:\n __hash__=D()\nhash(slice(A()))\n",
+      "stdout": "bind\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "tuple-user-hash",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self): return 7\n def __eq__(self,other): return True\nprint(hash((A(),))==hash((A(),)),{(A(),):8}[(A(),)])\n",
+      "stdout": "True 8\n"
+    },
+    {
+      "id": "slice-hash-signature",
+      "stage": "H2",
+      "source": "hash(slice(1),2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-nested-method",
+      "stage": "H2",
+      "source": "class A:\n def use(self): pass\na=A()\nx=slice((a.use,))\nprint(hash(x)==hash(slice((a.use,))),{x:7}[slice((a.use,))])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "slice-hash-bool",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self): return True\nprint(hash(slice(A()))==hash(slice(1)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-hash-minus-one",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self): return -1\nprint(hash(slice(A()))==hash(slice(-2)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-hash-instance-disabled",
+      "stage": "H2",
+      "source": "class A:\n __hash__=None\nhash(slice(A()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-user-hash-error",
+      "stage": "H2",
+      "source": "class A:\n def __hash__(self): raise ValueError(\"bad\")\nhash((A(),))\n",
+      "stdout": "",
+      "error_type": "ValueError"
     }
   ]
 }

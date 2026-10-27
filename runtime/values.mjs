@@ -704,6 +704,10 @@ export class ValueRuntime {
     if (value < -9223372036854775808n || value > 9223372036854775807n) value %= 2305843009213693951n;
     return this.int(value === -1n ? -2n : value);
   }
+  hashParts(value) {
+    return value instanceof SliceValue ? [value.start, value.stop, value.step] : value instanceof TupleValue ? value.items : null;
+  }
+  combineHash(hash, item) { return BigInt.asUintN(64, (hash ^ BigInt.asUintN(64, item)) * 1099511628211n); }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
     if (value instanceof BoundMethodValue)
@@ -759,18 +763,18 @@ export class ValueRuntime {
       return this.hashResult(hash);
     }
     if (value === null) return this.hashResult(BigInt.asIntN(64, 0x9e3779b97f4a7c15n));
-    if (value instanceof StringValue || value instanceof TupleValue || value instanceof BinaryValue) {
+    if (value instanceof StringValue || value instanceof TupleValue || value instanceof BinaryValue || value instanceof SliceValue) {
       let hash = 14695981039346656037n;
-      const parts = value instanceof StringValue ? value.points : value.items;
+      const parts = value instanceof StringValue ? value.points : this.hashParts(value) || value.items;
       for (const part of parts) {
         this.charge(1);
         const item = value instanceof StringValue || value instanceof BinaryValue ? BigInt(part) : this.pythonHash(part, depth + 1);
-        hash = BigInt.asUintN(64, (hash ^ BigInt.asUintN(64, item)) * 1099511628211n);
+        hash = this.combineHash(hash, item);
       }
       return this.hashResult(BigInt.asIntN(64, hash ^ BigInt(parts.length)));
     }
     if (value instanceof ListValue || value instanceof DictValue) this.fail("TypeError", "unhashable mutable value");
-    if (value instanceof SliceValue || value instanceof InstanceValue || value instanceof PropertyAccessorValue)
+    if (value instanceof InstanceValue || value instanceof PropertyAccessorValue)
       this.fail("UnsupportedOperationError", "This hash value family requires its separate protocol stage.", "UNSUPPORTED");
     return this.identityHash(value);
   }
@@ -778,7 +782,7 @@ export class ValueRuntime {
     const pending = [value], seen = new Set();
     while (pending.length) {
       const item = pending.pop();
-      if (item instanceof GeneratorValue || item instanceof InstanceValue || item instanceof ClassValue || item instanceof FunctionValue || item instanceof BuiltinValue ||
+      if (item instanceof SliceValue || item instanceof GeneratorValue || item instanceof InstanceValue || item instanceof ClassValue || item instanceof FunctionValue || item instanceof BuiltinValue ||
           item instanceof BoundMethodValue || item instanceof SuperValue || item instanceof PropertyValue || item instanceof MethodWrapperValue ||
           item instanceof NotImplementedValue || item instanceof ModuleValue || item instanceof ProtocolIteratorValue || item instanceof IteratorValue ||
           item instanceof ExceptionValue || item instanceof FloatValue && Number.isNaN(item.value) ||
