@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-object-protocols/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "attribute-defaults",
+      "stage": "O1",
+      "source": "class A: pass\na=A()\nsetattr(a,'x',7)\nprint(getattr(a,'x'),hasattr(a,'x'),getattr(a,'missing',9))\ndelattr(a,'x')\nprint(hasattr(a,'x'))\n",
+      "stdout": "7 True 9\nFalse\n"
+    },
+    {
+      "id": "attribute-property",
+      "stage": "O1",
+      "source": "class A:\n @property\n def x(self):\n  print('get')\n  return 4\n @x.setter\n def x(self,value): self.saved=value\n @x.deleter\n def x(self): print('delete')\na=A()\nsetattr(a,'x',8)\nprint(getattr(a,'x'),a.saved)\ndelattr(a,'x')\n",
+      "stdout": "get\n4 8\ndelete\n"
+    },
+    {
+      "id": "attribute-suppress",
+      "stage": "O1",
+      "source": "class A:\n @property\n def x(self): raise AttributeError('missing')\na=A()\nprint(getattr(a,'x',8),hasattr(a,'x'))\n",
+      "stdout": "8 False\n"
+    },
+    {
+      "id": "attribute-propagate",
+      "stage": "O1",
+      "source": "class A:\n @property\n def x(self): raise ValueError('bad')\nprint(hasattr(A(),'x'))\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "attribute-string",
+      "stage": "O1",
+      "source": "class A: pass\ngetattr(A(),3)\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "attribute-no-mangling",
+      "stage": "O1",
+      "source": "class A:\n def __init__(self): self.__x=1\na=A()\nsetattr(a,'__x',2)\nprint(getattr(a,'__x'),getattr(a,'_A__x'))\n",
+      "stdout": "2 1\n"
+    },
+    {
+      "id": "arithmetic-reflected",
+      "stage": "O2",
+      "source": "class A:\n def __add__(self,other):\n  print('left')\n  return NotImplemented\nclass B:\n def __radd__(self,other):\n  print('right')\n  return [7]\nprint((A()+B())[0])\n",
+      "stdout": "left\nright\n7\n"
+    },
+    {
+      "id": "subclass-priority",
+      "stage": "O2",
+      "source": "class A:\n def __add__(self,other):\n  print('left')\n  return 1\n def __radd__(self,other):\n  print('base-right')\n  return 2\nclass B(A):\n def __radd__(self,other):\n  print('sub-right')\n  return 3\nprint(A()+B())\n",
+      "stdout": "sub-right\n3\n"
+    },
+    {
+      "id": "inplace-fallback",
+      "stage": "O2",
+      "source": "class A:\n def __iadd__(self,other): return NotImplemented\n def __add__(self,other): return other+4\na=A()\na+=3\nprint(a)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "same-type-no-reflect",
+      "stage": "O2",
+      "source": "class A:\n def __add__(self,other): return NotImplemented\n def __radd__(self,other):\n  print('bad')\n  return 1\nA()+A()\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "primitive-reflect",
+      "stage": "O2",
+      "source": "class A:\n def __rsub__(self,other): return other+2\n def __neg__(self): return 9\nprint(3-A(),-A())\n",
+      "stdout": "5 9\n"
+    },
+    {
+      "id": "power-divmod",
+      "stage": "O2",
+      "source": "class A:\n def __pow__(self,other,mod=None): return other if mod is None else mod\n def __rpow__(self,other,mod=None): return other+1\n def __divmod__(self,other): return (other,3)\na=A()\nb=divmod(a,7)\nprint(pow(a,4),pow(a,4,9),pow(2,a),b[0],b[1])\n",
+      "stdout": "4 9 3 7 3\n"
+    },
+    {
+      "id": "arithmetic-body-error",
+      "stage": "O2",
+      "source": "class A:\n def __add__(self,other): raise AttributeError('body')\nA()+1\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "new-future",
+      "stage": "Future",
+      "source": "class A:\n def __new__(cls): return object.__new__(cls)\nprint(type(A()) is A)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hooks-future",
+      "stage": "Future",
+      "source": "class A:\n def __getattr__(self,name): return 2\nprint(A().x)\n",
+      "stdout": "2\n"
+    }
+  ]
+}

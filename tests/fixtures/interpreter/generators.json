@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-generators/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "lazy-binding",
+      "stage": "G1",
+      "source": "def g(x):\n print('body')\n yield x\na=g(4)\nprint('made',iter(a) is a)\nprint(next(a))\nprint(next(a,9))\n",
+      "stdout": "made True\nbody\n4\n9\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "binding-before-body",
+      "stage": "G1",
+      "source": "def g(x):\n print('bad')\n yield x\ng()\n",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "send-return",
+      "stage": "G1",
+      "source": "def g():\n x=yield 2\n yield x+1\n return 7\na=g()\nprint(a.send(None),a.send(4))\ntry: next(a)\nexcept StopIteration as e: print(e.value)\nprint(next(a,99))\n",
+      "stdout": "2 5\n7\n99\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "send-new",
+      "stage": "G1",
+      "source": "def g():\n yield 1\ng().send(3)\n",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "throw-catch-finally",
+      "stage": "G1",
+      "source": "def g():\n try:\n  yield 1\n except ValueError as e:\n  yield str(e)\n finally:\n  print('final')\na=g()\nprint(next(a))\nprint(a.throw(ValueError('caught')))\nprint(a.close(),a.close())\n",
+      "stdout": "1\ncaught\nfinal\nNone None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "throw-new-closed",
+      "stage": "G1",
+      "source": "def g():\n print('bad')\n yield 1\na=g()\ntry: a.throw(KeyError)\nexcept KeyError: print('new')\ntry: a.throw(ValueError('closed'))\nexcept ValueError: print('closed')\nprint(next(a,8))\n",
+      "stdout": "new\nclosed\n8\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "close-return",
+      "stage": "G1",
+      "source": "def g():\n try: yield 1\n except GeneratorExit: return 42\na=g()\nprint(next(a),a.close(),a.close())\n",
+      "stdout": "1 42 None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "close-ignored",
+      "stage": "G1",
+      "source": "def g():\n try: yield 1\n except GeneratorExit: yield 2\n yield 3\na=g()\nprint(next(a))\ntry: a.close()\nexcept RuntimeError: print('ignored')\nprint(next(a),a.close())\n",
+      "stdout": "1\nignored\n3 None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "escaping-stop",
+      "stage": "G1",
+      "source": "def g():\n yield 1\n raise StopIteration('bad')\na=g()\nprint(next(a))\nnext(a)\n",
+      "stdout": "1\n",
+      "error_type": "RuntimeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "nested-finally-yields",
+      "stage": "G1",
+      "source": "def g():\n try:\n  for i in range(2):\n   try: yield i\n   finally: yield i+10\n finally: print('done')\na=list(g())\nprint(a[0],a[1],a[2],a[3])\n",
+      "stdout": "done\n0 10 1 11\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "delegation-return-send",
+      "stage": "G1",
+      "source": "def child():\n x=yield 1\n yield x\n return 9\ndef parent():\n r=yield from child()\n yield r\na=parent()\nprint(next(a),a.send(4),next(a),next(a,0))\n",
+      "stdout": "1 4 9 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "delegation-throw-close",
+      "stage": "G1",
+      "source": "def child():\n try:\n  yield 1\n except ValueError:\n  yield 2\n finally: print('child')\ndef parent():\n try: yield from child()\n finally: print('parent')\na=parent()\nprint(next(a),a.throw(ValueError))\nprint(a.close())\n",
+      "stdout": "1 2\nchild\nparent\nNone\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "delegation-primitive",
+      "stage": "G1",
+      "source": "def g():\n r=yield from [2,3]\n yield r\na=g()\nprint(next(a),a.send(None),next(a),next(a,7))\n",
+      "stdout": "2 3 None 7\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "delegation-missing-send",
+      "stage": "G1",
+      "source": "def g():\n yield from [1,2]\na=g()\nprint(next(a))\na.send(3)\n",
+      "stdout": "1\n",
+      "error_type": "AttributeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "reentry",
+      "stage": "G1",
+      "source": "def g():\n try: next(a)\n except ValueError: print('running')\n yield 3\na=g()\nprint(next(a))\n",
+      "stdout": "running\n3\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "except-state",
+      "stage": "G1",
+      "source": "def g():\n try: raise ValueError('inside')\n except ValueError:\n  yield 1\n  raise\na=g()\nprint(next(a))\ntry: next(a)\nexcept ValueError as e: print(str(e))\n",
+      "stdout": "1\ninside\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "class-generator",
+      "stage": "G1",
+      "source": "class A:\n def values(self):\n  yield self.x\na=A()\na.x=5\nprint(next(a.values()))\n",
+      "stdout": "5\n"
+    },
+    {
+      "id": "list-nested-filters",
+      "stage": "G2",
+      "source": "x=90\na=[x*10+y for x in range(4) if x%2 for y in range(3) if y!=1]\nprint(x,len(a),a[0],a[3])\n",
+      "stdout": "90 4 10 32\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-set",
+      "stage": "G2",
+      "source": "def f(x):\n print(x)\n return x\na={f(x):f(x+10) for x in range(2)}\nb={x%2 for x in range(4)}\nprint(a[1],len(b),1 in b)\n",
+      "stdout": "0\n10\n1\n11\n11 2 True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generator-outer-eager",
+      "stage": "G2",
+      "source": "def outer():\n print('outer')\n return [1,2]\ndef item(x):\n print('item',x)\n return x+4\na=(item(x) for x in outer())\nprint('made')\nprint(next(a),next(a))\n",
+      "stdout": "outer\nmade\nitem 1\nitem 2\n5 6\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "comprehension-closures",
+      "stage": "G2",
+      "source": "a=[lambda: x for x in range(3)]\nprint(a[0](),a[2]())\nx=9\nb=(lambda: x for x in range(2))\nf=next(b)\nprint(f())\nnext(b)\nprint(f(),x)\n",
+      "stdout": "2 2\n0\n1 9\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "comprehension-unpack",
+      "stage": "G2",
+      "source": "a=[x+y+len(z) for x,*z,y in [(1,2,3,4),(5,6)]]\nprint(a[0],a[1])\n",
+      "stdout": "7 11\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "comprehension-class-scope",
+      "stage": "G2",
+      "source": "x=8\nclass A:\n x=[2,3]\n y=[x for i in x]\nprint(A.y[0],A.y[1])\n",
+      "stdout": "8 8\n"
+    },
+    {
+      "id": "comprehension-stop",
+      "stage": "G2",
+      "source": "def f(): raise StopIteration\nx=[f() for i in [1]]\n",
+      "error_type": "StopIteration",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "genexpr-stop",
+      "stage": "G2",
+      "source": "def f(): raise StopIteration\nnext(f() for i in [1])\n",
+      "error_type": "RuntimeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "async-generator",
+      "stage": "Future",
+      "source": "async def g():\n yield 1\nprint(callable(g))\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generator-reflection",
+      "stage": "Future",
+      "source": "def g(): yield 1\na=g()\nprint(a.gi_running)\n",
+      "stdout": "False\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "comprehension-walrus",
+      "stage": "Future",
+      "source": "a=[(y:=x) for x in range(2)]\nprint(y)\n",
+      "stdout": "1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    }
+  ]
+}
