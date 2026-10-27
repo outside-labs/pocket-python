@@ -19,12 +19,12 @@ They convey no authority to enter a different session or import undeclared code.
 
 `enqueue(handle, positionalValues, options, onOutput)` returns an event with a
 result Promise and idempotent `cancel`. Arguments use the existing tagged
-by-value encoding. Admission copies plain data without getters/toJSON hooks,
+by-value encoding. Admission copies plain argument data without getters/toJSON hooks,
 cycles or mutable aliases; it validates tags and bounds conversion work before
 accounting the queued representation. Each event admits at most 128 arguments,
 65,536 logical transport bytes, 20,000 data nodes and 40 transport levels.
 Callback and pending-event caps default to 128 each (configurable 1–1,024).
-The pending cap includes the active event. Queue and callback metadata, serialized
+Execution options are captured as ordinary data fields before event metadata is allocated; accessors never run. The pending cap includes the active event. Queue and callback metadata, serialized
 arguments and retained VM graphs all have explicit arena owners.
 
 `pump(n)` starts or advances one FIFO event. It never starts a second Python
@@ -73,6 +73,6 @@ and a full offline save application remain subsequent acceptance stages.
 
 The [payload and evidence record](measurements/2026-10-27-events.json) pins the
 final engine/corpus/report inputs, 300 passing source observations with measured
-zero teardown, and all 38 files of the 628,575-byte counter example. An identical
+zero teardown, and all 38 files of the 629,452-byte counter example. An identical
 second assembly verifies its file and receipt hashes. These are finite payload
 and semantic observations, without a performance or broader package claim.

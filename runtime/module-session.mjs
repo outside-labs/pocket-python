@@ -148,10 +148,21 @@ export class ModuleSession {
       if ((work += amount) > 1000000) throw new ResourceError("QUOTA", "ExecutionLimitError", "Event conversion work budget exceeded.");
     }});
     copied.value.forEach(value => values.decode(value));
+    if (!options || typeof options !== "object" || Array.isArray(options) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(options))) throw new TypeError("Event options require plain data.");
+    const keys = Reflect.ownKeys(options), snapshot = {};
+    if (keys.length > 16) throw new TypeError("Too many event execution options.");
+    for (const key of keys) {
+      const descriptor = Object.getOwnPropertyDescriptor(options, key);
+      if (typeof key !== "string" || !descriptor.enumerable || !Object.hasOwn(descriptor, "value"))
+        throw new TypeError("Event execution options require ordinary data fields.");
+      Object.defineProperty(snapshot, key, {value: descriptor.value, enumerable: true});
+    }
+    if (this.pending >= this.#maxEvents) throw new ResourceError("QUOTA", "ExecutionLimitError", "Event queue budget exceeded.");
     const release = this.memory.external(128 + copied.bytes), id = this.#generation + ":event:" + (++this.#nextEvent);
     let resolve, reject;
     const result = new Promise((yes, no) => { resolve = yes; reject = no; }); result.catch(() => {});
-    const event = {id, entry, args: copied.value, options: {...options}, onOutput, resolve, reject, release, activation: null, settled: false};
+    const event = {id, entry, args: copied.value, options: Object.freeze(snapshot), onOutput, resolve, reject, release, activation: null, settled: false};
     this.#events.set(id, event); this.#queue.push(event);
     return Object.freeze({id, result, cancel: () => this.#cancelEvent(event)});
   }

@@ -235,3 +235,13 @@ test('invalid event execution options settle only that event and preserve the ne
     await assert.rejects(bad.result, TypeError); assert.deepEqual(await good.result, integer(7));
   } finally { close(); }
 });
+
+test('execution-option accessors never run and failed snapshots allocate no event metadata', async () => {
+  const {session, close} = await setup('def update(): return 7\n');
+  try {
+    session.run(); const handle = session.register('update'), before = session.stats(); let getters = 0;
+    const options = {get maxSteps() { getters++; throw new Error('getter ran'); }};
+    assert.throws(() => session.enqueue(handle, [], options), TypeError);
+    assert.equal(getters, 0); assert.equal(session.pending, 0); assert.deepEqual(session.stats(), before);
+  } finally { close(); }
+});
