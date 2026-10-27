@@ -342,6 +342,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "advertised-instance")
       return valueTask(classes.isType(value) && classes.subclass(value, completion.type), site, completion.after);
+    if (completion?.kind === "check-result") return unaryTask("truth", value, site,
+      continuation("check-truth", completion), completion.depth);
+    if (completion?.kind === "check-truth") return valueTask(value, site, completion.after);
     if (completion?.kind === "advertised-super")
       return valueTask(classes.superProxy(completion.type, completion.receiver, value), site, completion.after);
     if (completion?.kind === "instance-tuple") {
@@ -722,8 +725,18 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               continuation("instance-tuple", {receiver, type, position: 1, nesting, depth, after: completion}), depth, nesting + 1);
             continue;
           }
+          if (!task.native && classes.customCheck(type, "__instancecheck__")) {
+            if (classes.typeOf(receiver) === type) { task = valueTask(true, site, completion); continue; }
+            if (++depth > maxDepth) python("RecursionError", "maximum instance-check dispatch depth exceeded");
+            const plan = classes.bindCheck(type, "__instancecheck__");
+            const target = continuation("check-result", {receiver, type, depth, after: completion});
+            task = plan.kind === "value" ? callTask(plan.value, [receiver], [], [], site, target, depth) :
+              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [receiver], keywords: [], keywordValues: [], after: target, depth}), depth);
+            continue;
+          }
           if (!classes.isType(type)) python("TypeError", "isinstance requires an adopted type");
           if (classes.subclass(classes.typeOf(receiver), type)) { task = valueTask(true, site, completion); continue; }
+          if (!classes.needsAdvertised(receiver)) { task = valueTask(false, site, completion); continue; }
           task = attributeTask(receiver, "__class__", site, continuation("advertised-instance", {receiver, type, after: completion}), depth);
           continue;
         }
@@ -1201,9 +1214,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
-          if (callable.name === "isinstance" && classes.needsAdvertised(args[0])) {
+          if (callable.name === "isinstance" && (classes.needsAdvertised(args[0]) || classes.customCheck(args[1], "__instancecheck__") ||
+              state.frames.at(-1).callable.pool.code.version === 5 && values.isSequenceType(args[1], "tuple"))) {
             if (keywords.length || args.length !== 2) python("TypeError", "isinstance requires two positional arguments");
             task = instanceTask(args[0], args[1], site, completion, depth); continue;
+          }
+          if (callable.name === "type.__instancecheck__") {
+            if (keywords.length || args.length !== 2 || !classes.isType(args[0])) python("TypeError", "type.__instancecheck__ requires a type and instance");
+            task = instanceTask(args[1], args[0], site, completion, depth, 0, true); continue;
           }
           if (callable.name === "dict") {
             if (args.length || keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Populated dictionary constructors require their separate sequence stage.");

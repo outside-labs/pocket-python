@@ -173,6 +173,7 @@ jobs:
       - run: node --test runtime/object-protocols.test.mjs
       - run: node --test runtime/construction.test.mjs
       - run: node --test runtime/attribute-hooks.test.mjs
+      - run: node --test runtime/type-checks.test.mjs
       - run: node --test runtime/generators.test.mjs
       - run: node --test runtime/functions.test.mjs
       - run: node --test runtime/execution.test.mjs

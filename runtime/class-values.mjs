@@ -7,7 +7,7 @@ export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, 
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__"]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__instancecheck__"]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -129,13 +129,24 @@ export class ClassRuntime {
   needsAdvertised(value) {
     return value instanceof InstanceValue && ["__class__", "__getattribute__", "__getattr__"].some(name => this.hasSlot(value.type, name));
   }
+  checkingType(value) {
+    return value instanceof ClassValue ? value.metaclass : value instanceof InstanceValue ? value.type : null;
+  }
+  customCheck(value, name) {
+    const type = this.checkingType(value);
+    return type !== null && this.hasSlot(type, name);
+  }
+  bindCheck(value, name) {
+    const type = this.checkingType(value), item = this.lookup(type, name);
+    return this.bindAttribute(item.value, value, type);
+  }
   lookup(type, name, native = true, start = 0) {
     this.key(name); this.touch(type);
     if (!this.isType(type)) throw new TypeError("An adopted class is required.");
     for (const base of this.mro(type).slice(start)) {
       this.charge(1);
       if (base instanceof BuiltinValue) {
-        if (native && base.name === "type" && ["__new__", "__init__", "__call__"].includes(name))
+        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
         continue;
       }
@@ -187,6 +198,8 @@ export class ClassRuntime {
       if (name === "__class__") return value(this.typeOf(receiver));
       if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(receiver.name, char => char.codePointAt(0))));
       if (this.isType(receiver)) {
+        if (receiver.name !== "type" && name === "__instancecheck__")
+          return this.bindAttribute(this.builtin("type." + name), receiver, this.builtin("type"));
         if (name === "__module__") return value(this.values.string(Array.from("builtins", char => char.codePointAt(0))));
         if (name === "__mro__") return value(this.values.tuple(this.mro(receiver)));
         if (name === "__bases__") return value(this.values.tuple([this.mro(receiver)[1]]));
@@ -224,17 +237,18 @@ export class ClassRuntime {
     }
     if (!allowsClassSpecial(name, "attribute")) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
-    const metaItem = receiver instanceof ClassValue && receiver.metaclass ? this.lookup(receiver.metaclass, name) : null;
+    const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (name === "__instancecheck__" ? this.builtin("type") : null) : null;
+    const metaItem = metaclass ? this.lookup(metaclass, name) : null;
     const metaDescriptor = metaItem?.found ? this.descriptor(metaItem.value) : null;
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
-      return this.bindAttribute(metaItem.value, receiver, receiver.metaclass);
+      return this.bindAttribute(metaItem.value, receiver, metaclass);
     const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
     if (receiver instanceof InstanceValue && (item.value instanceof PropertyValue ||
         descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)))
       return this.bindAttribute(item.value, receiver, owner);
     if (receiver instanceof InstanceValue && receiver.attributes.has(name)) return value(receiver.attributes.get(name));
     if (!item.found) {
-      if (metaItem?.found) return this.bindAttribute(metaItem.value, receiver, receiver.metaclass);
+      if (metaItem?.found) return this.bindAttribute(metaItem.value, receiver, metaclass);
       this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
     }
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
@@ -254,7 +268,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner)};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__instancecheck__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);
