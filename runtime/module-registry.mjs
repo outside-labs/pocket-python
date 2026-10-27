@@ -150,6 +150,7 @@ export async function verifyRegistry(manifest, suppliedAssets) {
       functions: checked.functions.map(fn => ({name: fn.name, qualname: fn.qualname, params: fn.params,
         locals: fn.locals, free: fn.free, body: fn.body, ...(checked.version === 5 ? {kind: fn.kind} : {}),
         ...(fn.namespace ? {namespace: fn.namespace} : {}),
+        ...(fn.namespaceCells ? {namespaceCells: fn.namespaceCells} : {}),
         ...Object.fromEntries(["globals", "nonlocals"].filter(key => Object.hasOwn(fn, key)).map(key => [key, fn[key]])),
         blocks: fn.blocks.map(block => ({kind: block.kind, instructions: block.instructions, source: block.source}))}))});
     if (value.record.source) {

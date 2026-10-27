@@ -44,7 +44,7 @@ export function verifyFunctions(program) {
   let count = 0, blockCount = 0;
   const functions = Array.from(program.functions, (fn, functionIndex) => {
     const scopeFields = modern ? ["globals", "nonlocals"].filter(key => Object.hasOwn(fn, key)) : [];
-    const namespaceFields = classes && Object.hasOwn(fn, "namespace") ? ["namespace"] : [];
+    const namespaceFields = classes ? ["namespace", "namespaceCells"].filter(key => Object.hasOwn(fn, key)) : [];
     fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : []), ...scopeFields, ...namespaceFields]);
     const kind = classes ? fn.kind : functionIndex === 0 ? "module" : "function";
     if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
@@ -59,8 +59,11 @@ export function verifyFunctions(program) {
     }
     const allParams = [...params.posonly, ...params.positional, ...params.kwonly, ...variadic.map(key => params[key])];
     const locals = names(fn.locals, key => storageName(key) || kind === "class" && key === "@source:class"), free = names(fn.free, validName);
-    const namespace = namespaceFields.length ? names(fn.namespace, key => validName(key) || fn.name === "<genexpr>" && key === params.posonly[0]) : null;
+    const namespace = Object.hasOwn(fn, "namespace") ? names(fn.namespace, key => validName(key) || fn.name === "<genexpr>" && key === params.posonly[0]) : null;
+    const namespaceCells = Object.hasOwn(fn, "namespaceCells") ? names(fn.namespaceCells, validName) : null;
     if (namespace && kind !== "function") fail("Optimized namespace metadata requires a function.");
+    if (namespaceCells && (!namespace || namespaceCells.some(key => !locals.includes(key) || allParams.includes(key))))
+      fail("Invalid optimized namespace cell names.");
     const globals = names(Object.hasOwn(fn, "globals") ? fn.globals : [], validName), nonlocals = names(Object.hasOwn(fn, "nonlocals") ? fn.nonlocals : [], validName);
     if (globals.some(key => locals.includes(key) || nonlocals.includes(key) || kind !== "class" && free.includes(key)) ||
         nonlocals.some(key => !free.includes(key) || locals.includes(key)) || functionIndex === 0 && nonlocals.length)
@@ -225,7 +228,7 @@ export function verifyFunctions(program) {
     };
     control(fn.body, false);
     if (reached.size !== blocks.length) fail("Function contains an unreferenced block.");
-    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {}), ...Object.fromEntries(scopeFields.map(key => [key, key === "globals" ? globals : nonlocals])), ...(namespace ? {namespace} : {})});
+    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {}), ...Object.fromEntries(scopeFields.map(key => [key, key === "globals" ? globals : nonlocals])), ...(namespace ? {namespace} : {}), ...(namespaceCells ? {namespaceCells} : {})});
   });
   for (const fn of functions) if (fn.namespace) {
     const group = new Set([fn]);

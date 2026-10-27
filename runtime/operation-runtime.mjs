@@ -32,19 +32,30 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     let index = state.frames.length - 1;
     const overlays = [];
     while (index > 0 && inline(state.frames[index])) overlays.unshift(state.frames[index--]);
-    const frame = state.frames[index];
+    // Module/class comprehensions have an isolated optimized namespace. Their
+    // containing live mapping is never substituted with a snapshot.
+    const frame = state.frames[index].fn.kind === "function" ? state.frames[index] : overlays.shift() || state.frames[index];
     if (frame.fn.kind !== "function")
       hard("UNSUPPORTED", "UnsupportedOperationError", "This scope requires its own live or comprehension namespace contract.");
     for (const block of frame.fn.blocks) for (const instruction of block.instructions) {
       charge(1);
     }
     const cells = new Map([...frame.locals, ...frame.closure]);
+    const targetCells = new Set();
+    // Each inlined group hides its nested target slots. A referenced free cell
+    // is a different binding and survives until this loop binds the name.
     for (const overlay of overlays) for (const name of overlay.fn.namespace || overlay.fn.locals) {
       charge(name.length + 1);
-      if (!name.startsWith("@source:")) cells.set(name, overlay.locals.get(name));
+      if (!name.startsWith("@source:")) {
+        const local = overlay.locals.get(name);
+        if (local) targetCells.add(local);
+        cells.set(name, local || overlay.closure.get(name) || frame.closure.get(name));
+      }
     }
     const iteratorName = frame.fn.name === "<genexpr>" ? frame.fn.params.posonly[0] : null;
-    return [...new Set([...(frame.fn.namespace || frame.fn.locals), ...frame.closure.keys()])]
+    const cellNames = [...(frame.fn.namespaceCells || []), ...frame.closure.keys()];
+    const ordered = (frame.fn.namespace || frame.fn.locals).filter(name => !cellNames.includes(name) || targetCells.has(cells.get(name)));
+    return [...new Set([...ordered, ...cellNames])]
       .map(name => [name === iteratorName ? ".0" : name, cells.get(name)]).filter(([name, cell]) => {
       charge(name.length + 1); return cell?.bound && !name.startsWith("@source:");
     });

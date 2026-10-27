@@ -14,6 +14,62 @@ const unit = source => ({name: 'app', package: false, imports: [], source, notic
 const run = (source, options = {}, memoryLimits) => runSourceRequest({modules: [unit(source)], compileOptions: profile, options, memoryLimits});
 const closed = stats => { for (const key of ['bytes', 'objects', 'roots', 'frames', 'external']) assert.equal(stats[key], 0, key); };
 const corpus = JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/reflection.json', import.meta.url)));
+
+test('captured namespace metadata preserves distinct cell and iteration-slot order', () => {
+  const source = 'def f(p):\n x=9\n def keep():return x\n r=[locals() for x in [1]]\n return r\n';
+  const result = compileSource(source, profile);
+  assert.deepEqual(result.program.functions[1].namespaceCells, ['x']);
+  const code = verifyFunctions(result.program).code;
+  assert.ok(Object.isFrozen(code.functions[1].namespaceCells));
+  for (const invalid of [['p'], ['missing'], ['x', 'x'], null]) {
+    const program = structuredClone(result.program); program.functions[1].namespaceCells = invalid;
+    assert.throws(() => verifyFunctions(program), /namespace|Names/);
+  }
+  const missing = structuredClone(result.program); delete missing.functions[1].namespace;
+  assert.throws(() => verifyFunctions(missing), /namespace/);
+  assert.throws(() => compileSource(source, {...profile, maxWork: result.stats.work - 1}), {code: 'COMPILE_BUDGET'});
+  const wide = 'def f(p):\n return ['+Array.from({length:64}, (_,i) => '[locals() for x'+i+',y'+i+' in [(1,2)]]').join(',')+']\n';
+  assert.throws(() => compileSource(wide, profile), {code: 'COMPILE_BUDGET'});
+});
+
+test('isolated comprehension snapshots retain owners during class and module execution', async () => {
+  for (const body of [
+    'saved=[(vars(),[vars() for y in [marker()]]) for x in [[7]]]\nr=saved[0]\n',
+    'class A:\n saved=[(vars(),[vars() for y in [marker()]]) for x in [[7]]]\nr=A.saved[0]\n',
+  ]) {
+    const source = 'def marker():\n print("entered")\n return 8\n'+body+'print(list(r[0])==["x"],r[0]["x"][0],r[1][0]["y"])\n';
+    const {registry} = await compileSourceModules([unit(source)], profile);
+    try {
+      for (const mode of ['finish', 'cancel', 'close']) {
+        const session = new ModuleSession(registry); let output = '', cancel = false;
+        session.context.begin({shouldCancel: () => cancel}, text => { output += text; });
+        const execution = Execution.modules(session.context);
+        try {
+          while (execution.state !== 'completed') {
+            execution.advance(); session.memory.collect([], {cleanup: true});
+            if (output.includes('entered') && mode !== 'finish') {
+              if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); }
+              break;
+            }
+          }
+          if (mode === 'finish') assert.equal(output, 'entered\nTrue 7 8\n');
+        } finally { execution.close(); session.context.finish(); session.close(); }
+        closed(session.stats());
+      }
+    } finally { registry.close(); }
+  }
+});
+
+test('isolated comprehension snapshots share instruction, work and real allocation limits', async () => {
+  for (const [source, options, memoryLimits, expected] of [
+    ['while True: [locals() for x in [1]]\n', {maxSteps: 300}, undefined, 'BUDGET'],
+    ['while True: [vars() for x in [1]]\n', {maxSteps: 100000, maxWork: 1800}, undefined, 'BUDGET'],
+    ['saved=[]\nwhile True: saved.append([locals() for x in [1]])\n', {maxSteps: 100000}, {maxBytes: 28000}, 'OOM'],
+  ]) {
+    const result = await run(source, options, memoryLimits);
+    assert.equal(result.error?.code, expected, JSON.stringify(result.error)); closed(result.closed);
+  }
+});
 test('comprehension namespace metadata is bounded, exact, immutable and retained by registries', async () => {
   const source = 'def f(p):\n a=7\n return [locals() for x in [1]]\nr=f(9)[0]\nprint(*list(r))\n';
   const compiled = compileSource(source, profile).program;
@@ -153,9 +209,9 @@ test('recursive snapshot graphs share real memory and work budgets', async () =>
   }
 });
 
-test('live namespace and comprehension forms refuse explicitly', async () => {
+test('live namespace forms refuse explicitly, including a comprehension initial iterable', async () => {
   for (const source of ['locals()\n', 'vars()\n', 'dir()\n', 'globals()\n', 'class A:\n locals()\n',
-    '[locals() for x in range(1)]\n']) {
+    '[locals() for x in [locals()]]\n']) {
     const result = await run(source); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
   }
 });

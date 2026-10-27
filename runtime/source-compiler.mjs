@@ -552,14 +552,22 @@ class Compiler {
       const fn = this.program.functions[scope.index], params = fn.params;
       const parameters = [...params.posonly, ...params.positional, ...params.kwonly,
         ...(params.vararg ? [params.vararg] : []), ...(params.kwarg ? [params.kwarg] : [])];
-      const targets = new Set(group.filter(inline).flatMap(item => [...item.locals]).filter(key => !key.startsWith("@source:")));
-      const captured = new Set(this.scopes.filter(child => group.includes(child.parent) && !inline(child))
-        .flatMap(child => [...child.free]).filter(key => scope.locals.has(key) && !parameters.includes(key) && !targets.has(key)));
+      const captured = new Set();
+      if (!inline(scope)) for (const child of this.scopes) if (group.includes(child.parent) && !inline(child)) {
+        for (const key of child.free) {
+          let owner = child.parent;
+          while (owner !== scope && !owner.locals.has(key)) { this.charge(child.node); owner = owner.parent; }
+          if (owner === scope && scope.locals.has(key) && !parameters.includes(key)) captured.add(key);
+        }
+      }
       const ordered = new Set(parameters);
       const visitBlock = (owner, id) => {
         if (id === null) return;
         const code = this.program.functions[owner.index];
-        const remember = key => { if (owner.locals.has(key) || owner.free.has(key) && scope.locals.has(key)) ordered.add(key); };
+        const remember = key => {
+          if (owner.locals.has(key) && (owner !== scope || !captured.has(key)) ||
+              owner.free.has(key) && scope.locals.has(key) && !captured.has(key)) ordered.add(key);
+        };
         for (const [index, [op, arg, extra, other, final]] of code.blocks[id].instructions.entries()) {
           this.charge(owner.node);
           const child = this.namespaceEvents.get(owner.index)?.get(id)?.get(index);
@@ -577,9 +585,10 @@ class Compiler {
         }
       };
       visitBlock(scope, fn.body);
-      for (const owner of group) for (const key of owner.locals) ordered.add(key);
+      for (const owner of group) for (const key of owner.locals) if (owner !== scope || !captured.has(key)) ordered.add(key);
       const visible = key => !key.startsWith("@source:") || fn.name === "<genexpr>" && key === params.posonly[0];
-      fn.namespace = [...[...ordered].filter(key => visible(key) && !captured.has(key)), ...[...captured].sort(nameOrder)];
+      fn.namespace = [...new Set([...ordered].filter(visible).concat([...captured].sort(nameOrder)))];
+      if (captured.size) fn.namespaceCells = [...captured].sort(nameOrder);
       if (fn.namespace.length > FUNCTION_LIMITS.names) this.fail("Comprehension namespace budget exceeded.", scope.node, "COMPILE_BUDGET");
     }
   }
