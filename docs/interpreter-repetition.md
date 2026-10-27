@@ -56,8 +56,10 @@ execution, together with 60 shared primitive core cases per combination:
 784 observations and 784 measured zero logical teardown records. All 58
 source/driver hashes and the corpus hash match each retained source report.
 Native repetition descriptor lookup retains its existing AttributeError boundary.
+Historical bytecode 2/3 retain their ordinary repetition refusal; the shared value
+path requires the existing source value profile.
 
-All 1,273 Node tests pass, including temporary operands collected between every
+All 1,274 Node tests pass, including temporary operands collected between every
 instruction, cancellation and repeated close in binding/index frames, callback
 source diagnostics, local list mutation and real recursion/instruction/work/arena
 failures. The eight composed resource observations are unchanged. The 60-test
@@ -75,6 +77,6 @@ repetition while removing the existing class/reflection authority.
 
 The [repetition console](../examples/interpreter_repetition.py) has an exact
 [payload/source record](measurements/2026-10-27-repetition.json): all 38 files and
-37 receipt members verify at 652,626 bytes, with an identical fresh rebuild.
+37 receipt members verify at 652,764 bytes, with an identical fresh rebuild.
 This is finite source and payload evidence, without a performance, device or
 package claim. Broader #123 and native async/host-adapter #34 remain open.
