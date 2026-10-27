@@ -203,6 +203,11 @@ Run `python -m examples.interpreter_reflection` for a console combining those
 protocols. Live namespace mappings and default directories retain their own
 contracts.
 
+[Comprehension reflection](docs/interpreter-comprehension-reflection.md) exposes
+fresh enclosing function snapshots inside list/dict/set comprehensions, and
+isolated snapshots for module/class comprehensions. Nested targets, captured
+cells and escaped values retain Python namespace order and owned lifetimes.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)

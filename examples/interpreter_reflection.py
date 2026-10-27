@@ -54,6 +54,23 @@ first = next(snapshots)
 second = next(snapshots)
 snapshots.close()
 print("scope", list(first) == [".0", "field"], first[".0"] is second[".0"], first["field"] is columns[0])
+
+def inspect_rows(rows):
+    revision = 1
+    snapshots = [vars() for record in rows]
+    print("inline", list(snapshots[0]) == ["rows", "revision", "record"],
+          "record" in locals(), snapshots[1]["record"] is rows[1])
+    return snapshots
+
+rows = [Record("first", 1), Record("second", 2)]
+snapshots = inspect_rows(rows)
+snapshots[0]["record"].revision += 1
+print("escaped", snapshots[0]["record"] is rows[0], rows[0].revision)
+isolated = [locals() for field in columns]
+print("isolated", list(isolated[0]) == ["field"], isolated[1]["field"] is columns[1])
+class Preview:
+    snapshots = [vars() for field in columns]
+print("class", list(Preview.snapshots[0]) == ["field"])
 '''
 
 if __name__ == '__main__':

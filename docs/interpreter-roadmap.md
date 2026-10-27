@@ -238,3 +238,18 @@ generator-expression snapshots retaining the acquired iterator as `.0`, custom
 directory iterable length hints and stable owned comparison/truth sorting of
 adopted entries. These protocols retain the same source profiles and host grants.
 Native coroutine/await and host adapters remain separate work under #34.
+
+## Inlined comprehension reflection checkpoint
+
+[O21/O22](interpreter-comprehension-reflection.md) adopt fresh locals/vars
+snapshots and sorted zero-argument directories inside list/dict/set
+comprehensions. Optimized scopes include enclosing bindings; module/class
+comprehensions expose isolated snapshots. Nested target masking, captured-cell
+order and restoration retain owned execution and the existing resource rules.
+
+Live module/class/global mappings, ordinary instance dictionaries and mapping
+proxies, default directories, unboxed integer identity, builtin layouts,
+further metaclass protocols and dynamic source admission remain under #123.
+Native coroutine/await, async protocols, awaited capabilities and durable
+offline view/save acceptance remain under #34. This checkpoint adds no host
+grant, runtime dependency, release, publication or deployment.

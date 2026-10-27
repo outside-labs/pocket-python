@@ -10,6 +10,9 @@ The implemented [O18–O20 contract](interpreter-directory-scopes.md) extends th
 profile with generator-expression namespaces, custom directory length hints and
 owned ordering of arbitrary adopted directory entries. Its acceptance record
 supersedes the earlier finite boundaries below for those three forms.
+The [O21/O22 contract](interpreter-comprehension-reflection.md) further adopts
+inlined list/dict/set comprehension reflection and enclosing optimized scopes;
+the earlier comprehension refusals below describe the preceding checkpoint.
 
 | Stage | Adopted contract |
 | --- | --- |
