@@ -1,0 +1,1125 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-repetition/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "list-primitive-0",
+      "stage": "R1",
+      "source": "a=[1,2]\nprint(a*0,0*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "[] [] [1, 2]\n"
+    },
+    {
+      "id": "list-primitive-1",
+      "stage": "R1",
+      "source": "a=[1,2]\nprint(a*1,1*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "[1, 2] [1, 2] [1, 2]\n"
+    },
+    {
+      "id": "list-primitive-3",
+      "stage": "R1",
+      "source": "a=[1,2]\nprint(a*3,3*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "[1, 2, 1, 2, 1, 2] [1, 2, 1, 2, 1, 2] [1, 2]\n"
+    },
+    {
+      "id": "list-primitive-minus2",
+      "stage": "R1",
+      "source": "a=[1,2]\nprint(a*-2,-2*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "[] [] [1, 2]\n"
+    },
+    {
+      "id": "list-primitive-true",
+      "stage": "R1",
+      "source": "a=[1,2]\nprint(a*True,True*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "[1, 2] [1, 2] [1, 2]\n"
+    },
+    {
+      "id": "list-primitive-false",
+      "stage": "R1",
+      "source": "a=[1,2]\nprint(a*False,False*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "[] [] [1, 2]\n"
+    },
+    {
+      "id": "list-shallow",
+      "stage": "R1",
+      "source": "item=[7]\na=[item]\nb=a*2\nitem.append(8)\nprint(b[0] is item,b[1] is item,b[0][1],len(a))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True True 8 1\n"
+    },
+    {
+      "id": "list-count-one-identity",
+      "stage": "R1",
+      "source": "a=[1,2]\nb=a*1\nprint(a is b)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "False\n"
+    },
+    {
+      "id": "list-augmented",
+      "stage": "R1",
+      "source": "a=[1,2]\nb=a\na*=3\nprint(a,b,a is b)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "[1, 2, 1, 2, 1, 2] [1, 2, 1, 2, 1, 2] True\n"
+    },
+    {
+      "id": "list-empty-positive",
+      "stage": "R1",
+      "source": "a=[]\nprint(len(a*9223372036854775807),len(9223372036854775807*a))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 0\n"
+    },
+    {
+      "id": "list-empty-negative",
+      "stage": "R1",
+      "source": "a=[]\nprint(len(a*-9223372036854775808),len(-9223372036854775808*a))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 0\n"
+    },
+    {
+      "id": "list-overflow-left",
+      "stage": "R1",
+      "source": "a=[]\nprint(a*9223372036854775808)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "list-overflow-right",
+      "stage": "R1",
+      "source": "a=[]\nprint(9223372036854775808*a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "list-overflow-left-negative",
+      "stage": "R1",
+      "source": "a=[]\nprint(a*-9223372036854775809)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "list-overflow-right-negative",
+      "stage": "R1",
+      "source": "a=[]\nprint(-9223372036854775809*a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "list-invalid-15",
+      "stage": "R1",
+      "source": "[1,2]*1.5\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-invalid-16",
+      "stage": "R1",
+      "source": "1.5*[1,2]\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-invalid-17",
+      "stage": "R1",
+      "source": "[1,2]*None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-invalid-18",
+      "stage": "R1",
+      "source": "[1,2]*[1,2]\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-primitive-0",
+      "stage": "R1",
+      "source": "a=(1,2)\nprint(a*0,0*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "() () (1, 2)\n"
+    },
+    {
+      "id": "tuple-primitive-1",
+      "stage": "R1",
+      "source": "a=(1,2)\nprint(a*1,1*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "(1, 2) (1, 2) (1, 2)\n"
+    },
+    {
+      "id": "tuple-primitive-3",
+      "stage": "R1",
+      "source": "a=(1,2)\nprint(a*3,3*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "(1, 2, 1, 2, 1, 2) (1, 2, 1, 2, 1, 2) (1, 2)\n"
+    },
+    {
+      "id": "tuple-primitive-minus2",
+      "stage": "R1",
+      "source": "a=(1,2)\nprint(a*-2,-2*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "() () (1, 2)\n"
+    },
+    {
+      "id": "tuple-primitive-true",
+      "stage": "R1",
+      "source": "a=(1,2)\nprint(a*True,True*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "(1, 2) (1, 2) (1, 2)\n"
+    },
+    {
+      "id": "tuple-primitive-false",
+      "stage": "R1",
+      "source": "a=(1,2)\nprint(a*False,False*a,a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "() () (1, 2)\n"
+    },
+    {
+      "id": "tuple-shallow",
+      "stage": "R1",
+      "source": "item=[7]\na=(item,)\nb=a*2\nitem.append(8)\nprint(b[0] is item,b[1] is item,b[0][1],len(a))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True True 8 1\n"
+    },
+    {
+      "id": "tuple-count-one-identity",
+      "stage": "R1",
+      "source": "a=(1,2)\nb=a*1\nprint(a is b)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "tuple-augmented",
+      "stage": "R1",
+      "source": "a=(1,2)\nb=a\na*=3\nprint(a,b,a is b)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "(1, 2, 1, 2, 1, 2) (1, 2) False\n"
+    },
+    {
+      "id": "tuple-empty-positive",
+      "stage": "R1",
+      "source": "a=()\nprint(len(a*9223372036854775807),len(9223372036854775807*a))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 0\n"
+    },
+    {
+      "id": "tuple-empty-negative",
+      "stage": "R1",
+      "source": "a=()\nprint(len(a*-9223372036854775808),len(-9223372036854775808*a))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 0\n"
+    },
+    {
+      "id": "tuple-overflow-left",
+      "stage": "R1",
+      "source": "a=()\nprint(a*9223372036854775808)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "tuple-overflow-right",
+      "stage": "R1",
+      "source": "a=()\nprint(9223372036854775808*a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "tuple-overflow-left-negative",
+      "stage": "R1",
+      "source": "a=()\nprint(a*-9223372036854775809)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "tuple-overflow-right-negative",
+      "stage": "R1",
+      "source": "a=()\nprint(-9223372036854775809*a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "tuple-invalid-34",
+      "stage": "R1",
+      "source": "(1,2)*1.5\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-invalid-35",
+      "stage": "R1",
+      "source": "1.5*(1,2)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-invalid-36",
+      "stage": "R1",
+      "source": "(1,2)*None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-invalid-37",
+      "stage": "R1",
+      "source": "(1,2)*(1,2)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-copy-storage",
+      "stage": "R1",
+      "source": "a=[1,2]\nb=2*a\nb[0]=9\nprint(a,b,a is b)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "[1, 2] [9, 2, 1, 2] False\n"
+    },
+    {
+      "id": "tuple-empty-identity",
+      "stage": "R1",
+      "source": "a=()\nprint(a*0 is a,a*2 is a,a*-2 is a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "text-primitive-0",
+      "stage": "R2",
+      "source": "a=\"a\ud83d\ude00e\\u0301\"\nprint(a*0==0*a,len(a*0))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "text-primitive-1",
+      "stage": "R2",
+      "source": "a=\"a\ud83d\ude00e\\u0301\"\nprint(a*1==1*a,len(a*1))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True 4\n"
+    },
+    {
+      "id": "text-primitive-3",
+      "stage": "R2",
+      "source": "a=\"a\ud83d\ude00e\\u0301\"\nprint(a*3==3*a,len(a*3))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True 12\n"
+    },
+    {
+      "id": "text-primitive-minus2",
+      "stage": "R2",
+      "source": "a=\"a\ud83d\ude00e\\u0301\"\nprint(a*-2==-2*a,len(a*-2))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "text-primitive-true",
+      "stage": "R2",
+      "source": "a=\"a\ud83d\ude00e\\u0301\"\nprint(a*True==True*a,len(a*True))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True 4\n"
+    },
+    {
+      "id": "text-primitive-false",
+      "stage": "R2",
+      "source": "a=\"a\ud83d\ude00e\\u0301\"\nprint(a*False==False*a,len(a*False))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "text-codepoints",
+      "stage": "R2",
+      "source": "a=\"\\ud800\ud83d\ude00\\udfff\"\nb=a*3\nprint(len(b),b[0]==a[0],b[3]==a[0],b[4]==\"\ud83d\ude00\",b[8]==a[2])\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "9 True True True True\n"
+    },
+    {
+      "id": "text-count-one-identity",
+      "stage": "R2",
+      "source": "a=\"ab\ud83d\ude00\"\nprint(a*1 is a,1*a is a)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "text-augmented",
+      "stage": "R2",
+      "source": "a=\"ab\ud83d\ude00\"\nb=a\na*=2\nprint(a,b,a is b)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "ab\ud83d\ude00ab\ud83d\ude00 ab\ud83d\ude00 False\n"
+    },
+    {
+      "id": "text-empty-positive",
+      "stage": "R2",
+      "source": "print(len(\"\"*9223372036854775807),len(9223372036854775807*\"\"))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 0\n"
+    },
+    {
+      "id": "text-empty-negative",
+      "stage": "R2",
+      "source": "print(len(\"\"*-9223372036854775808),len(-9223372036854775808*\"\"))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 0\n"
+    },
+    {
+      "id": "text-overflow-51",
+      "stage": "R2",
+      "source": "\"\"*9223372036854775808\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "text-overflow-52",
+      "stage": "R2",
+      "source": "\"\"*-9223372036854775809\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "text-overflow-53",
+      "stage": "R2",
+      "source": "\"x\"*9223372036854775808\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "text-overflow-54",
+      "stage": "R2",
+      "source": "\"x\"*-9223372036854775809\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "text-invalid-55",
+      "stage": "R2",
+      "source": "\"a\"*1.5\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "text-invalid-56",
+      "stage": "R2",
+      "source": "1.5*\"a\"\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "text-invalid-57",
+      "stage": "R2",
+      "source": "\"a\"*None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "text-invalid-58",
+      "stage": "R2",
+      "source": "\"a\"*\"b\"\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "text-invalid-59",
+      "stage": "R2",
+      "source": "\"a\"*(1+2j)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-index-left",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len([7]*I()))\n",
+      "stdout": "index\n2\n"
+    },
+    {
+      "id": "list-index-right",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len(I()*[7]))\n",
+      "stdout": "index\n2\n"
+    },
+    {
+      "id": "list-index-result-62",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return -2\nprint(len([7]*I()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "list-index-result-63",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 0\nprint(len([7]*I()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "list-index-result-64",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return True\nprint(len([7]*I()))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "list-index-result-65",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 1.5\nprint(len([7]*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-index-result-66",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return None\nprint(len([7]*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-index-result-67",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return NotImplemented\nprint(len([7]*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-index-result-68",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 9223372036854775808\nprint(len([7]*I()))\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "list-index-result-69",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return -9223372036854775809\nprint(len([7]*I()))\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "list-index-descriptor-70",
+      "stage": "R3",
+      "source": "class I:\n @property\n def __index__(self):\n  print(\"bind\")\n  return lambda: 2\nprint(len([7]*I()))\n",
+      "stdout": "bind\n2\n"
+    },
+    {
+      "id": "list-index-descriptor-71",
+      "stage": "R3",
+      "source": "class I:\n @staticmethod\n def __index__(): return 2\nprint(len([7]*I()))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "list-index-descriptor-72",
+      "stage": "R3",
+      "source": "class I:\n @classmethod\n def __index__(cls): return 2\nprint(len([7]*I()))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "list-arithmetic-first-__mul__",
+      "stage": "R3",
+      "source": "class I:\n def __mul__(self,other):\n  print(\"multiply\")\n  return [9]\n def __index__(self):\n  print(\"never\")\n  return 2\nprint((I()*[7])[0])\n",
+      "stdout": "multiply\n9\n"
+    },
+    {
+      "id": "list-arithmetic-fallback-__mul__",
+      "stage": "R3",
+      "source": "class I:\n def __mul__(self,other):\n  print(\"multiply\")\n  return NotImplemented\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len(I()*[7]))\n",
+      "stdout": "multiply\nindex\n2\n"
+    },
+    {
+      "id": "list-arithmetic-first-__rmul__",
+      "stage": "R3",
+      "source": "class I:\n def __rmul__(self,other):\n  print(\"multiply\")\n  return [9]\n def __index__(self):\n  print(\"never\")\n  return 2\nprint(([7]*I())[0])\n",
+      "stdout": "multiply\n9\n"
+    },
+    {
+      "id": "list-arithmetic-fallback-__rmul__",
+      "stage": "R3",
+      "source": "class I:\n def __rmul__(self,other):\n  print(\"multiply\")\n  return NotImplemented\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len([7]*I()))\n",
+      "stdout": "multiply\nindex\n2\n"
+    },
+    {
+      "id": "list-index-error-AttributeError",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise AttributeError(\"original\")\n[7]*I()\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "list-index-error-StopIteration",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise StopIteration(\"original\")\n[7]*I()\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "list-index-error-ValueError",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise ValueError(\"original\")\n[7]*I()\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "tuple-index-left",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len((7,)*I()))\n",
+      "stdout": "index\n2\n"
+    },
+    {
+      "id": "tuple-index-right",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len(I()*(7,)))\n",
+      "stdout": "index\n2\n"
+    },
+    {
+      "id": "tuple-index-result-82",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return -2\nprint(len((7,)*I()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "tuple-index-result-83",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 0\nprint(len((7,)*I()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "tuple-index-result-84",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return True\nprint(len((7,)*I()))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "tuple-index-result-85",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 1.5\nprint(len((7,)*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-index-result-86",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return None\nprint(len((7,)*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-index-result-87",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return NotImplemented\nprint(len((7,)*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-index-result-88",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 9223372036854775808\nprint(len((7,)*I()))\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "tuple-index-result-89",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return -9223372036854775809\nprint(len((7,)*I()))\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "tuple-index-descriptor-90",
+      "stage": "R3",
+      "source": "class I:\n @property\n def __index__(self):\n  print(\"bind\")\n  return lambda: 2\nprint(len((7,)*I()))\n",
+      "stdout": "bind\n2\n"
+    },
+    {
+      "id": "tuple-index-descriptor-91",
+      "stage": "R3",
+      "source": "class I:\n @staticmethod\n def __index__(): return 2\nprint(len((7,)*I()))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "tuple-index-descriptor-92",
+      "stage": "R3",
+      "source": "class I:\n @classmethod\n def __index__(cls): return 2\nprint(len((7,)*I()))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "tuple-arithmetic-first-__mul__",
+      "stage": "R3",
+      "source": "class I:\n def __mul__(self,other):\n  print(\"multiply\")\n  return [9]\n def __index__(self):\n  print(\"never\")\n  return 2\nprint((I()*(7,))[0])\n",
+      "stdout": "multiply\n9\n"
+    },
+    {
+      "id": "tuple-arithmetic-fallback-__mul__",
+      "stage": "R3",
+      "source": "class I:\n def __mul__(self,other):\n  print(\"multiply\")\n  return NotImplemented\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len(I()*(7,)))\n",
+      "stdout": "multiply\nindex\n2\n"
+    },
+    {
+      "id": "tuple-arithmetic-first-__rmul__",
+      "stage": "R3",
+      "source": "class I:\n def __rmul__(self,other):\n  print(\"multiply\")\n  return [9]\n def __index__(self):\n  print(\"never\")\n  return 2\nprint(((7,)*I())[0])\n",
+      "stdout": "multiply\n9\n"
+    },
+    {
+      "id": "tuple-arithmetic-fallback-__rmul__",
+      "stage": "R3",
+      "source": "class I:\n def __rmul__(self,other):\n  print(\"multiply\")\n  return NotImplemented\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len((7,)*I()))\n",
+      "stdout": "multiply\nindex\n2\n"
+    },
+    {
+      "id": "tuple-index-error-AttributeError",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise AttributeError(\"original\")\n(7,)*I()\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "tuple-index-error-StopIteration",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise StopIteration(\"original\")\n(7,)*I()\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "tuple-index-error-ValueError",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise ValueError(\"original\")\n(7,)*I()\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "text-index-left",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "index\n2\n"
+    },
+    {
+      "id": "text-index-right",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len(I()*\"\ud83d\ude00\"))\n",
+      "stdout": "index\n2\n"
+    },
+    {
+      "id": "text-index-result-102",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return -2\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "text-index-result-103",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 0\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "text-index-result-104",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return True\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "text-index-result-105",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 1.5\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "text-index-result-106",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return None\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "text-index-result-107",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return NotImplemented\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "text-index-result-108",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 9223372036854775808\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "text-index-result-109",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return -9223372036854775809\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "text-index-descriptor-110",
+      "stage": "R3",
+      "source": "class I:\n @property\n def __index__(self):\n  print(\"bind\")\n  return lambda: 2\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "bind\n2\n"
+    },
+    {
+      "id": "text-index-descriptor-111",
+      "stage": "R3",
+      "source": "class I:\n @staticmethod\n def __index__(): return 2\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "text-index-descriptor-112",
+      "stage": "R3",
+      "source": "class I:\n @classmethod\n def __index__(cls): return 2\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "text-arithmetic-first-__mul__",
+      "stage": "R3",
+      "source": "class I:\n def __mul__(self,other):\n  print(\"multiply\")\n  return [9]\n def __index__(self):\n  print(\"never\")\n  return 2\nprint((I()*\"\ud83d\ude00\")[0])\n",
+      "stdout": "multiply\n9\n"
+    },
+    {
+      "id": "text-arithmetic-fallback-__mul__",
+      "stage": "R3",
+      "source": "class I:\n def __mul__(self,other):\n  print(\"multiply\")\n  return NotImplemented\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len(I()*\"\ud83d\ude00\"))\n",
+      "stdout": "multiply\nindex\n2\n"
+    },
+    {
+      "id": "text-arithmetic-first-__rmul__",
+      "stage": "R3",
+      "source": "class I:\n def __rmul__(self,other):\n  print(\"multiply\")\n  return [9]\n def __index__(self):\n  print(\"never\")\n  return 2\nprint((\"\ud83d\ude00\"*I())[0])\n",
+      "stdout": "multiply\n9\n"
+    },
+    {
+      "id": "text-arithmetic-fallback-__rmul__",
+      "stage": "R3",
+      "source": "class I:\n def __rmul__(self,other):\n  print(\"multiply\")\n  return NotImplemented\n def __index__(self):\n  print(\"index\")\n  return 2\nprint(len(\"\ud83d\ude00\"*I()))\n",
+      "stdout": "multiply\nindex\n2\n"
+    },
+    {
+      "id": "text-index-error-AttributeError",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise AttributeError(\"original\")\n\"\ud83d\ude00\"*I()\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "text-index-error-StopIteration",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise StopIteration(\"original\")\n\"\ud83d\ude00\"*I()\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "text-index-error-ValueError",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  raise ValueError(\"original\")\n\"\ud83d\ude00\"*I()\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "index-custom-descriptor",
+      "stage": "R3",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(obj is not None,owner is I)\n  return lambda: 3\nclass I: __index__=D()\nprint(len([7]*I()),len(I()*\"x\"))\n",
+      "stdout": "True True\nTrue True\n3 3\n"
+    },
+    {
+      "id": "index-ignores-shadows-and-reads",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 2\n def __getattribute__(self,name):\n  print(\"never\")\n  raise ValueError(\"read\")\ni=I()\nobject.__setattr__(i,\"__index__\",None)\nprint(len([7]*i))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "index-list-mutation-122",
+      "stage": "R3",
+      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  a[0]=9\n  a.append(8)\n  return 2\nprint(a*I(),a)\n",
+      "stdout": "[9, 2, 8, 9, 2, 8] [9, 2, 8]\n"
+    },
+    {
+      "id": "index-list-mutation-123",
+      "stage": "R3",
+      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  del a[0]\n  return 2\nprint(a*I(),a)\n",
+      "stdout": "[2, 2] [2]\n"
+    },
+    {
+      "id": "index-list-mutation-124",
+      "stage": "R3",
+      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  a[0:2]=[]\n  return 2\nprint(a*I(),a)\n",
+      "stdout": "[] []\n"
+    },
+    {
+      "id": "index-clears-then-large-count",
+      "stage": "R3",
+      "source": "a=[1]\nclass I:\n def __index__(self):\n  del a[0]\n  return 9223372036854775807\nprint(a*I())\n",
+      "stdout": "[]\n"
+    },
+    {
+      "id": "index-empty-called",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return -2\nprint([]*I(),I()*(),len(\"\"*I()))\n",
+      "stdout": "index\nindex\nindex\n[] () 0\n"
+    },
+    {
+      "id": "index-evaluation-once",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 2\ndef sequence():\n print(\"sequence\")\n return [7]\ndef count():\n print(\"count\")\n return I()\nprint(len(sequence()*count()))\n",
+      "stdout": "sequence\ncount\nindex\n2\n"
+    },
+    {
+      "id": "index-augmented-alias",
+      "stage": "R3",
+      "source": "class I:\n def __index__(self): return 2\na=[7]\nb=a\na*=I()\nprint(a is b,len(b))\na=(7,)\nb=a\na*=I()\nprint(a is b,len(a),len(b))\na=\"\ud83d\ude00\"\nb=a\na*=I()\nprint(a is b,len(a),len(b))\n",
+      "stdout": "True 2\nFalse 2 1\nFalse 2 1\n"
+    },
+    {
+      "id": "index-binding-error",
+      "stage": "R3",
+      "source": "class I:\n @property\n def __index__(self):\n  raise AttributeError(\"binding\")\n[7]*I()\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "index-noncallable",
+      "stage": "R3",
+      "source": "class I: __index__=None\n[7]*I()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "index-int-only-rejected",
+      "stage": "R3",
+      "source": "class I:\n def __int__(self):\n  print(\"never\")\n  return 2\n[7]*I()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "reflected-error-stops-index",
+      "stage": "R3",
+      "source": "class I:\n def __rmul__(self,other): raise AttributeError(\"multiply\")\n def __index__(self):\n  print(\"never\")\n  return 2\n[7]*I()\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "builtin-subclass-deferred",
+      "stage": "Future",
+      "source": "class Items(list): pass\nprint(len(Items([1])*2))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "native-repeat-descriptor-deferred",
+      "stage": "Future",
+      "source": "print(list.__mul__([7],2))\n",
+      "stdout": "[7, 7]\n"
+    },
+    {
+      "id": "view-repeat-error",
+      "stage": "R3",
+      "source": "memoryview(b\"x\")*2\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytearray-inplace-deferred",
+      "stage": "Future",
+      "source": "a=bytearray(b\"x\")\na*=2\nprint(len(a))\n",
+      "stdout": "2\n"
+    }
+  ]
+}
