@@ -194,8 +194,8 @@
     {
       "id": "locals-hidden-compiler-temporaries",
       "stage": "O16",
-      "source": "def f():\n a,b=[1,2]\n c=[x for x in range(3)]\n print(len(locals()),\"x\" in locals())\nf()\n",
-      "stdout": "3 False\n"
+      "source": "def f():\n a,b=[1,2]\n c=[3]\n c[0]+=a\n print(len(locals()),c[0])\nf()\n",
+      "stdout": "3 4\n"
     },
     {
       "id": "locals-delete-exception-alias",
@@ -491,6 +491,60 @@
       "stage": "Future",
       "source": "class Items:\n def __iter__(self): return iter((\"x\",))\n def __len__(self):\n  print(\"hint\")\n  return 1\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
       "stdout": "hint\nx\n"
+    },
+    {
+      "id": "comprehension-enclosing-locals-deferred",
+      "stage": "Future",
+      "source": "def f():\n a,b=[1,2]\n c=[x for x in range(3)]\n print(len(locals()),\"x\" in locals())\nf()\n",
+      "stdout": "3 False\n"
+    },
+    {
+      "id": "locals-assignment-expression-order",
+      "stage": "O16",
+      "source": "def f():\n a=(b:=1)\n for key in locals(): print(key)\nf()\n",
+      "stdout": "b\na\n"
+    },
+    {
+      "id": "locals-definition-default-order",
+      "stage": "O16",
+      "source": "def f():\n def g(x=(z:=1)): return x\n for key in locals(): print(key)\nf()\n",
+      "stdout": "z\ng\n"
+    },
+    {
+      "id": "locals-enclosing-generator-expression",
+      "stage": "O16",
+      "source": "def f():\n z=1\n a=(z for x in range(1))\n y=7\n for key in locals(): print(key)\nf()\n",
+      "stdout": "a\ny\nz\n"
+    },
+    {
+      "id": "locals-for-operand-order",
+      "stage": "O16",
+      "source": "def f():\n for a in (b:=[1]): c=2\n for key in locals(): print(key)\nf()\n",
+      "stdout": "b\na\nc\n"
+    },
+    {
+      "id": "locals-try-handler-order",
+      "stage": "O16",
+      "source": "def f():\n try:\n  q=7\n  raise ValueError(\"x\")\n except ValueError as z:\n  a=1\n  for key in locals(): print(key)\nf()\n",
+      "stdout": "q\nz\na\n"
+    },
+    {
+      "id": "locals-while-condition-order",
+      "stage": "O16",
+      "source": "def f():\n while (b:=0): a=1\n a=2\n for key in locals(): print(key)\nf()\n",
+      "stdout": "b\na\n"
+    },
+    {
+      "id": "locals-target-operand-order",
+      "stage": "O16",
+      "source": "def f():\n a=[0]\n a[(x:=0)]=(y:=7)\n for key in locals(): print(key)\nf()\n",
+      "stdout": "a\ny\nx\n"
+    },
+    {
+      "id": "locals-try-else-order",
+      "stage": "O16",
+      "source": "def f():\n try: x=1\n except ValueError: z=2\n else: y=3\n z=4\n for key in locals(): print(key)\nf()\n",
+      "stdout": "x\ny\nz\n"
     }
   ]
 }
