@@ -266,7 +266,7 @@ def smoke(channel=None):
                     refused('class A:\n def __hash__(self): return "bad"\nhash(A())\n', 'TypeError:')
                     assert 'sources/app.py:3' in page.locator('#status').inner_text()
                     refused('class A:\n def __eq__(self,other): return True\nhash(A())\n', 'TypeError:')
-                    refused('class K:\n def __hash__(self): return 7\nhash((K(),))\n', 'UnsupportedOperationError:')
+                    run('class K:\n def __hash__(self): return 7\nprint(hash((K(),))==hash((K(),)))\n', 'True\n')
                     run(SOURCE, cases[0]['stdout'])
                     checks.append('equality-binding-body-hash-result-disabling-and-explicit-future-errors')
                     refused('print("entered")\npow(6,-1,12)\n', 'ValueError:')
@@ -423,8 +423,8 @@ def smoke(channel=None):
                         refused(source, prefix)
                         assert frame in page.locator('#diagnostic').inner_text()
                     refused('class A: pass\na=A()\na<=a\n', 'TypeError:')
-                    refused('hash(slice(1,7))\n', 'UnsupportedOperationError:')
-                    checks.append('ordering-binding-body-truth-errors-and-future-slice-hash-retain-offline-diagnostics')
+                    run('print(hash(slice(1,7))==hash(slice(1,7)))\n', 'True\n')
+                    checks.append('ordering-binding-body-truth-errors-and-adopted-slice-hash-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
