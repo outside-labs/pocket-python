@@ -7,6 +7,11 @@ import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 const MODULE_NAME = /^[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*$/;
 const NONE = Object.freeze({type: "none"});
+const nameOrder = (left, right) => {
+  const a = Array.from(left, char => char.codePointAt(0)), b = Array.from(right, char => char.codePointAt(0));
+  for (let index = 0; index < Math.min(a.length, b.length); index++) if (a[index] !== b[index]) return a[index] - b[index];
+  return a.length - b.length;
+};
 
 class Compiler {
   constructor(parsed, options) {
@@ -239,7 +244,7 @@ class Compiler {
       params.kwdefaults = Object.fromEntries(node.params.kwonly.filter(param => param.value !== null).map(param => [param.name, runtime ? null : this.constant(this.literal(param.value), param.value)]));
     }
     const fn = {name: isModule ? "<module>" : node.name, qualname: scope.qualname, params,
-      locals: [], free: [...scope.free].sort(), body: null, blocks: [],
+      locals: [], free: [...scope.free].sort(nameOrder), body: null, blocks: [],
       ...(this.classes ? {kind: isModule ? "module" : isClass ? "class" : "function"} : {}),
       ...(scope.globals.size ? {globals: [...scope.globals].sort()} : {}),
       ...(scope.nonlocals.size ? {nonlocals: [...scope.nonlocals].sort()} : {})};
@@ -498,6 +503,16 @@ class Compiler {
       emit(nodes.at(-1) || node, "end"); return id;
     };
     fn.body = makeBlock(node.body); fn.locals = [...scope.locals].sort();
+    if (this.classes && !isModule && !isClass) {
+      // Optimized namespace order is parameters, ordinary locals, then cells.
+      // Captured parameters stay in their parameter positions.
+      const parameters = [...params.posonly, ...params.positional, ...params.kwonly,
+        ...(params.vararg ? [params.vararg] : []), ...(params.kwarg ? [params.kwarg] : [])];
+      const captured = new Set(this.scopes.filter(child => child.parent === scope)
+        .flatMap(child => [...child.free]).filter(key => scope.locals.has(key) && !parameters.includes(key)));
+      const ordered = [...new Set([...parameters, ...scope.locals])];
+      fn.locals = [...ordered.filter(key => !captured.has(key)), ...[...captured].sort(nameOrder)];
+    }
   }
   compile() {
     this.resolve(); this.scopes.forEach(scope => this.function(scope));
