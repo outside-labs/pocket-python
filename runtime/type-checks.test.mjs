@@ -5,7 +5,7 @@ import {runSourceRequest} from './source-request.mjs';
 import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
-import {completion, completionRoots, instanceTask, operationRoots} from './operations.mjs';
+import {completion, completionRoots, instanceTask, subclassTask, operationRoots} from './operations.mjs';
 
 const profile = {languageProfile: 'classes-source/1'};
 const unit = source => ({name: 'app', package: false, imports: [], source, notice: 'Synthetic type-check fixture'});
@@ -27,9 +27,13 @@ test('type-check binding and truth continuations retain checked values and outer
     const target = completion(kind, {receiver, type, depth: 1, after});
     assert.deepEqual(completionRoots(target), [receiver, type, outer]);
     assert.deepEqual(operationRoots(instanceTask(receiver, type, null, target)), [receiver, type, receiver, type, outer]);
+    assert.deepEqual(operationRoots(subclassTask(receiver, type, null, target)), [receiver, type, receiver, type, outer]);
     assert.throws(() => completion(kind, {receiver, type, depth: -1, after}), TypeError);
   }
   assert.throws(() => instanceTask(receiver, type, null, after, 0, 0, 'native'), TypeError);
+  const tuple = completion('subclass-tuple', {receiver, type, position: 1, nesting: 0, depth: 1, after});
+  assert.deepEqual(completionRoots(tuple), [receiver, type, outer]);
+  assert.throws(() => subclassTask(receiver, type, null, after, 0, 33), TypeError);
 });
 
 const pausedSources = [
@@ -40,7 +44,8 @@ const pausedSources = [
 ];
 
 test('instance checking survives collection, cancellation and close during binding, checking and truth', async () => {
-  for (const source of pausedSources) {
+  const subclassSources = pausedSources.slice(0, 3).map(source => source.replaceAll('__instancecheck__', '__subclasscheck__').replaceAll('isinstance(', 'issubclass('));
+  for (const source of [...pausedSources, ...subclassSources]) {
     const {registry} = await compileSourceModules([unit(source)], profile);
     try { for (const mode of ['finish', 'cancel', 'close']) {
       const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
@@ -112,4 +117,44 @@ test('descriptor binding and result truth share activation limits and preserve e
 test('ordinary checking ignores class shadows and instance attribute hooks', async () => {
   const result = await run('class A:\n def __instancecheck__(self,obj): return True\nclass Checker:\n def __getattribute__(self,name): raise ValueError("never")\n def __instancecheck__(self,obj): return True\nprint(isinstance(7,A),isinstance(7,Checker()))\n');
   assert.equal(result.stdout, 'False True\n'); assert.equal(result.ok, true); closed(result.closed);
+});
+
+test('subclass checking preserves source frames during checking, binding and truth errors', async () => {
+  for (const [source, frames] of [
+    ['class M(type):\n def __subclasscheck__(cls,sub):\n  raise ValueError("original")\nclass A(metaclass=M): pass\nissubclass(int,A)\n', [['<module>',5],['__subclasscheck__',3]]],
+    ['class D:\n def __get__(self,obj,owner):\n  raise ValueError("original")\nclass M(type): __subclasscheck__=D()\nclass A(metaclass=M): pass\nissubclass(int,A)\n', [['<module>',6],['__get__',3]]],
+    ['class Truth:\n def __bool__(self):\n  raise ValueError("original")\nclass M(type):\n def __subclasscheck__(cls,sub): return Truth()\nclass A(metaclass=M): pass\nissubclass(int,A)\n', [['<module>',7],['__bool__',3]]],
+  ]) {
+    const result = await run(source);
+    assert.equal(result.error.type, 'ValueError');
+    assert.deepEqual(result.error.traceback.map(f => [f.function,f.location.span[0]]), frames);
+    closed(result.closed);
+  }
+});
+
+test('subclass callbacks, descriptors and truth share recursion, work and allocation limits', async () => {
+  for (const phase of ['checking', 'binding', 'truth']) for (const [body, options, limits, code] of [
+    [phase === 'checking' ? 'return issubclass(sub,cls)' : phase === 'binding' ? 'return issubclass(int,obj)' : 'return bool(self)', {maxDepth: 12}, undefined, 'PYTHON'],
+    ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+    ['while True: pass', {maxSteps: 100000, maxWork: 5000}, undefined, 'BUDGET'],
+    ['items=[]\n  while True: items.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
+  ]) {
+    const source = phase === 'checking' ?
+      'class M(type):\n def __subclasscheck__(cls,sub):\n  '+body+'\nclass A(metaclass=M): pass\nissubclass(int,A)\n' : phase === 'binding' ?
+      'class D:\n def __get__(self,obj,owner):\n  '+body+'\nclass M(type): __subclasscheck__=D()\nclass A(metaclass=M): pass\nissubclass(int,A)\n' :
+      'class Truth:\n def __bool__(self):\n  '+body+'\nclass M(type):\n def __subclasscheck__(cls,sub): return Truth()\nclass A(metaclass=M): pass\nissubclass(int,A)\n';
+    const result = await run(source, options, limits);
+    assert.equal(result.error.code, code, JSON.stringify(result.error));
+    if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+    closed(result.closed);
+  }
+});
+
+test('subclass checks ignore class shadows and preserve tuple errors and nesting limits', async () => {
+  const result = await run('class A:\n def __subclasscheck__(self,sub): return True\nclass Checker:\n def __getattribute__(self,name): raise ValueError("never")\n def __subclasscheck__(self,sub): return True\nprint(issubclass(int,A),issubclass(int,Checker()))\n');
+  assert.equal(result.stdout, 'False True\n'); assert.equal(result.ok, true); closed(result.closed);
+  for (const name of ['isinstance', 'issubclass']) {
+    const nested = await run('class M(type):\n def '+(name === 'isinstance' ? '__instancecheck__' : '__subclasscheck__')+'(cls,obj): return True\nclass A(metaclass=M): pass\nx=A\nfor i in range(33): x=(x,)\n'+name+'(int,x)\n');
+    assert.equal(nested.error.code, 'BUDGET'); closed(nested.closed);
+  }
 });

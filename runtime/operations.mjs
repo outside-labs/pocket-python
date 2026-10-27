@@ -137,7 +137,7 @@ export function completion(kind, fields = {}) {
     case "check-result": case "check-truth":
       record = {kind, receiver: fields.receiver, type: fields.type, depth: fields.depth, after};
       depthCheck(record.depth); break;
-    case "instance-tuple": record = {kind, receiver: fields.receiver, type: fields.type, position: fields.position, nesting: fields.nesting, depth: fields.depth, after};
+    case "instance-tuple": case "subclass-tuple": record = {kind, receiver: fields.receiver, type: fields.type, position: fields.position, nesting: fields.nesting, depth: fields.depth, after};
       depthCheck(record.depth);
       if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 131072 ||
           !Number.isSafeInteger(record.nesting) || record.nesting < 0 || record.nesting > 32) throw new TypeError("Invalid class-info tuple phase.");
@@ -198,7 +198,7 @@ function visit(record) {
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];
     case "attribute-write": return [record.receiver, ...completionRoots(record.after)];
-    case "advertised-instance": case "advertised-super": case "instance-tuple": case "check-result": case "check-truth": return [record.receiver, record.type, ...completionRoots(record.after)];
+    case "advertised-instance": case "advertised-super": case "instance-tuple": case "subclass-tuple": case "check-result": case "check-truth": return [record.receiver, record.type, ...completionRoots(record.after)];
     case "attribute-fallback": return [record.receiver, record.key, record.hook, ...completionRoots(record.after)];
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
@@ -279,6 +279,9 @@ export function instanceTask(receiver, type, site, after = null, depth = 0, nest
   if (!Number.isSafeInteger(nesting) || nesting < 0 || nesting > 32) throw new TypeError("Invalid class-info tuple depth.");
   return Object.freeze({kind: "instance", receiver, type, nesting, native, site, completion: after, depth});
 }
+export function subclassTask(receiver, type, site, after = null, depth = 0, nesting = 0, native = false) {
+  return Object.freeze({...instanceTask(receiver, type, site, after, depth, nesting, native), kind: "subclass"});
+}
 export function sliceTask(receiver, parts, site, after = null, depth = 0, operation = "get", item = null) {
   depthCheck(depth); completionRoots(after);
   if (parts.length !== 3) throw new TypeError("A slice requires three parts.");
@@ -303,7 +306,7 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
 }
 export function operationRoots(task) {
   switch (task.kind) {
-    case "instance": return [task.receiver, task.type, ...completionRoots(task.completion)];
+    case "instance": case "subclass": return [task.receiver, task.type, ...completionRoots(task.completion)];
     case "attribute": return [task.receiver, task.key, task.hook, ...(["set", "native-set"].includes(task.operation) ? [task.item] : []), ...completionRoots(task.completion)];
     case "construct": case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "arithmetic":
