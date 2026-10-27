@@ -6,12 +6,73 @@ import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
 import {completion, completionRoots} from './operations.mjs';
+import {compileSource} from './source-compiler.mjs';
+import {verifyFunctions} from './function-bytecode.mjs';
 
 const profile = {languageProfile: 'classes-source/1'};
 const unit = source => ({name: 'app', package: false, imports: [], source, notice: 'Synthetic reflection fixture'});
 const run = (source, options = {}, memoryLimits) => runSourceRequest({modules: [unit(source)], compileOptions: profile, options, memoryLimits});
 const closed = stats => { for (const key of ['bytes', 'objects', 'roots', 'frames', 'external']) assert.equal(stats[key], 0, key); };
 const corpus = JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/reflection.json', import.meta.url)));
+test('comprehension namespace metadata is bounded, exact, immutable and retained by registries', async () => {
+  const source = 'def f(p):\n a=7\n return [locals() for x in [1]]\nr=f(9)[0]\nprint(*list(r))\n';
+  const compiled = compileSource(source, profile).program;
+  const checked = verifyFunctions(compiled).code;
+  assert.deepEqual(checked.functions[1].namespace, ['p', 'a', 'x']);
+  assert.ok(Object.isFrozen(checked.functions[1].namespace));
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  const session = new ModuleSession(registry); let output = '';
+  try {
+    session.run({}, text => { output += text; });
+    assert.equal(output, 'p a x\n');
+  } finally { session.close(); registry.close(); }
+  closed(session.stats());
+  for (const invalid of [['p', 'a'], ['p', 'a', 'x', 'other'], ['p', 'a', 'x', 'x'],
+    ['p', 'a', '@source:999'], Array.from({length: 129}, (_, i) => 'n'+i), null]) {
+    const code = structuredClone(compiled); code.functions[1].namespace = invalid;
+    assert.throws(() => verifyFunctions(code), /namespace|Names/);
+  }
+  const module = structuredClone(compiled); module.functions[0].namespace = [];
+  assert.throws(() => verifyFunctions(module), /function/);
+  const core = structuredClone(compileSource('def f(): return 7\n').program);
+  core.functions[1].namespace = [];
+  assert.throws(() => verifyFunctions(core), /fields/);
+});
+
+test('comprehension snapshots keep escaped values through every-instruction collection and interruption', async () => {
+  const source = 'def marker():\n print("entered")\n return 8\ndef f(p):\n a=[7]\n saved=[(locals(),[locals() for y in [marker()]]) for x in [a]]\n return saved\nr=f(9)[0]\nprint(r[0]["a"] is r[0]["x"],r[0]["p"],r[1][0]["y"],r[0]["a"][0])\n';
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  try {
+    for (const mode of ['finish', 'cancel', 'close']) {
+      const session = new ModuleSession(registry); let output = '', cancel = false;
+      session.context.begin({shouldCancel: () => cancel}, text => { output += text; });
+      const execution = Execution.modules(session.context);
+      try {
+        while (execution.state !== 'completed') {
+          execution.advance(); session.memory.collect([], {cleanup: true});
+          if (output.includes('entered') && mode !== 'finish') {
+            if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); }
+            break;
+          }
+        }
+        if (mode === 'finish') assert.equal(output, 'entered\nTrue 9 8 7\n');
+      } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+      closed(session.stats());
+    }
+  } finally { registry.close(); }
+});
+
+test('comprehension reflection shares real instruction, work and allocation limits', async () => {
+  for (const [body, options, memoryLimits, expected] of [
+    ['while True: [locals() for x in [1]]', {maxSteps: 300}, undefined, 'BUDGET'],
+    ['while True: [locals() for x in [1]]', {maxSteps: 100000, maxWork: 1800}, undefined, 'BUDGET'],
+    ['saved=[]\n while True: saved.append([locals() for x in [1]])', {maxSteps: 100000}, {maxBytes: 28000}, 'OOM'],
+  ]) {
+    const result = await run('def f(p):\n '+body+'\nf([7])\n', options, memoryLimits);
+    assert.equal(result.error?.code, expected, JSON.stringify(result.error));
+    closed(result.closed);
+  }
+});
 
 for (const fixture of corpus.cases.filter(c => corpus.implemented_stages.includes(c.stage)))
   test('reflection source: ' + fixture.id, async () => {

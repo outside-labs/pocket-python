@@ -28,17 +28,25 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const numericNames = new Set(["range","int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"]);
   const optimizedBindings = () => {
-    const frame = state.frames.at(-1);
-    if (frame.fn.kind !== "function" || ["<listcomp>", "<dictcomp>", "<setcomp>"].includes(frame.fn.name))
+    const inline = frame => ["<listcomp>", "<dictcomp>", "<setcomp>"].includes(frame.fn.name);
+    let index = state.frames.length - 1;
+    const overlays = [];
+    while (index > 0 && inline(state.frames[index])) overlays.unshift(state.frames[index--]);
+    const frame = state.frames[index];
+    if (frame.fn.kind !== "function")
       hard("UNSUPPORTED", "UnsupportedOperationError", "This scope requires its own live or comprehension namespace contract.");
-    for (const block of frame.fn.blocks) for (const [op, index] of block.instructions) {
+    for (const block of frame.fn.blocks) for (const instruction of block.instructions) {
       charge(1);
-      if (["function", "function-defaults"].includes(op) && ["<listcomp>", "<dictcomp>", "<setcomp>"].includes(frame.callable.pool.code.functions[index].name))
-        hard("UNSUPPORTED", "UnsupportedOperationError", "Enclosing namespaces of inlined comprehensions require their own binding contract.");
+    }
+    const cells = new Map([...frame.locals, ...frame.closure]);
+    for (const overlay of overlays) for (const name of overlay.fn.namespace || overlay.fn.locals) {
+      charge(name.length + 1);
+      if (!name.startsWith("@source:")) cells.set(name, overlay.locals.get(name));
     }
     const iteratorName = frame.fn.name === "<genexpr>" ? frame.fn.params.posonly[0] : null;
-    return [...frame.fn.locals.map(name => [name === iteratorName ? ".0" : name, frame.locals.get(name)]), ...frame.closure].filter(([name, cell]) => {
-      charge(name.length + 1); return cell.bound && !name.startsWith("@source:");
+    return [...new Set([...(frame.fn.namespace || frame.fn.locals), ...frame.closure.keys()])]
+      .map(name => [name === iteratorName ? ".0" : name, cells.get(name)]).filter(([name, cell]) => {
+      charge(name.length + 1); return cell?.bound && !name.startsWith("@source:");
     });
   };
   const namespaceSnapshot = bindings => {
