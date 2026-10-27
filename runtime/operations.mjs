@@ -46,6 +46,12 @@ export function completion(kind, fields = {}) {
     case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
     case "hash-result": record = {kind, receiver: fields.receiver, after}; break;
+    case "sequence-hash":
+      record = {kind, receiver: fields.receiver, position: fields.position, hash: fields.hash, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 1024 || typeof record.hash !== "bigint")
+        throw new TypeError("Invalid sequence hash continuation.");
+      break;
     case "numeric-result": case "numeric-index":
       record = {kind, name:numericName(fields.name), args:operands(fields.args), position:numericPosition(fields.position), slot:fields.slot, depth:fields.depth, after};
       depthCheck(record.depth);
@@ -171,6 +177,7 @@ function visit(record) {
     case "class-created": return [record.cell, ...completionRoots(record.after)];
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "hash-result": return [record.receiver, ...completionRoots(record.after)];
+    case "sequence-hash": return [record.receiver, record.hash, ...completionRoots(record.after)];
     case "numeric-result": case "numeric-index": return [...record.args, ...completionRoots(record.after)];
     case "dict-hash": case "dict-key": case "dict-truth": return [record.receiver, record.key, record.hash, record.candidate,
       ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];

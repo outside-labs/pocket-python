@@ -18,6 +18,14 @@ errors, rather than addresses or exact identity hashes. Node and Chromium run
 independently compiled source with draining and instruction-boundary drivers.
 Collection, cancellation and close must release all transient owners.
 
-Slice hashing and callback-bearing tuple hashing remain the next owned phase.
+INT-OBJECT-01Y adopts slice hashes over raw start, stop and step fields in that
+order. Fields use `__hash__` rather than `__index__`; each hash call visits them
+again. The owned sequence phase also hashes tuples containing user instances,
+methods and nested slices, preserving equal-key dictionary lookup. A closed
+continuation owns the immutable sequence and accumulator across descriptor
+binding and callback frames. Errors stop before later fields; callbacks share
+the activation's instruction, work, recursion and allocation limits. Pure
+primitive tuple hashing retains its existing path and costs.
+
 Namespace reflection, builtin layouts, metaclass protocols and dynamic source
 admission remain under #123; native asynchronous language work remains under #34.

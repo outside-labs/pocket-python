@@ -553,7 +553,7 @@
     },
     {
       "id": "future-tuple-user-key",
-      "stage": "E3",
+      "stage": "E2",
       "source": "class K:\n def __init__(self,n): self.n=n\n def __hash__(self): return 7\n def __eq__(self,other): return self.n==other.n\na=K(1)\nd={(a,):7}\nprint(d[(K(1),)])\n",
       "stdout": "7\n"
     },

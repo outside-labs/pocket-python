@@ -546,7 +546,7 @@
     },
     {
       "id": "future-slice-hash",
-      "stage": "I3",
+      "stage": "I2",
       "source": "s=slice(1,7)\nd={s:7}\nprint(d[s])\n",
       "stdout": "7\n"
     },

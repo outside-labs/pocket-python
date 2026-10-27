@@ -191,7 +191,9 @@ and resource limits. The ordered-note console combines comparison with slice
 insertion and generators.
 
 Broader namespace/identity reflection, builtin layouts, metaclass protocols and
-bound-method/slice hashing remain finite follow-ups under #123. Async #34
+further descriptor hashing remain finite follow-ups under #123. Async #34
 remains open for cooperative quanta, session-owned parked executions, persistent
 callbacks/events and an adopted awaited capability; these are not supplied by
 synchronous ordering or the existing generator suspension contract.
+
+Method, raw-slice and callback-bearing tuple hashing follow the [owned hash contract](interpreter-object-hashing.md).

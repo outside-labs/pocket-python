@@ -755,7 +755,7 @@
     },
     {
       "id": "future-slice-hashing",
-      "stage": "Future",
+      "stage": "O14",
       "source": "print(hash(slice(1,3))==hash(slice(1,3)))\n",
       "stdout": "True\n"
     },
