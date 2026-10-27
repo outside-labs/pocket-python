@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O3",
-    "O4"
+    "O4",
+    "O5"
   ],
   "cases": [
     {
@@ -588,6 +589,138 @@
       "id": "future-class-keywords",
       "stage": "Future",
       "source": "class A:\n def __init_subclass__(cls,flag): print(flag)\nclass B(A,flag=7): pass\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "dynamic-winning-metaclass",
+      "stage": "O5",
+      "source": "class M(type):\n def __new__(mcls,name,bases,ns):\n  print(\"new\",name)\n  return type.__new__(mcls,name,bases,ns)\n def __init__(cls,name,bases,ns): print(\"init\",name)\nclass A(metaclass=M): pass\nB=type(\"B\",(A,),{})\nprint(type(B) is M)\n",
+      "stdout": "new A\ninit A\nnew B\ninit B\nTrue\n"
+    },
+    {
+      "id": "native-type-new-without-init",
+      "stage": "O5",
+      "source": "class M(type):\n def __init__(cls,*args): print(\"never\")\nA=type.__new__(M,\"A\",(),{})\nprint(type(A) is M)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-type-init",
+      "stage": "O5",
+      "source": "print(type.__init__(int,7),type.__init__(object,\"O\",(),{}))\n",
+      "stdout": "None None\n"
+    },
+    {
+      "id": "native-type-new-selection",
+      "stage": "O5",
+      "source": "class M(type): pass\nclass N(M):\n def __new__(mcls,name,bases,ns):\n  print(\"chosen\",name)\n  return type.__new__(mcls,name,bases,ns)\nclass A(metaclass=N): pass\nB=type.__new__(M,\"B\",(A,),{})\nprint(type(B) is N)\n",
+      "stdout": "chosen A\nchosen B\nTrue\n"
+    },
+    {
+      "id": "metaclass-data-descriptor",
+      "stage": "O5",
+      "source": "class M(type):\n @property\n def x(cls): return cls.saved\n @x.setter\n def x(cls,value): cls.saved=value\n @x.deleter\n def x(cls): del cls.saved\nclass A(metaclass=M):\n saved=4\n x=0\nprint(A.x)\nA.x=8\nprint(A.x)\ndel A.x\nprint(hasattr(A,\"saved\"))\n",
+      "stdout": "4\n8\nFalse\n"
+    },
+    {
+      "id": "metaclass-nondata-descriptor",
+      "stage": "O5",
+      "source": "class M(type):\n def f(cls): return 7\nclass A(metaclass=M): f=8\nprint(A.f)\ndel A.f\nprint(A.f())\n",
+      "stdout": "8\n7\n"
+    },
+    {
+      "id": "metaclass-temporary",
+      "stage": "O5",
+      "source": "def factory():\n class M(type):\n  def __new__(mcls,name,bases,ns): return type.__new__(mcls,name,bases,ns)\n return M\nclass A(metaclass=factory()):\n def f(self): return __class__\nprint(A().f() is A,type(A).__name__)\n",
+      "stdout": "True M\n"
+    },
+    {
+      "id": "metaclass-cell-missing",
+      "stage": "O5",
+      "source": "class M(type):\n def __new__(mcls,name,bases,ns):\n  del ns[\"__classcell__\"]\n  return type.__new__(mcls,name,bases,ns)\nclass A(metaclass=M):\n def f(self): return __class__\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "metaclass-cell-different",
+      "stage": "O5",
+      "source": "class M(type):\n def __new__(mcls,name,bases,ns):\n  other=type.__new__(mcls,\"Other\",bases,ns)\n  return type.__new__(mcls,name,bases,{})\nclass A(metaclass=M):\n def f(self): return __class__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "metaclass-cell-foreign-return",
+      "stage": "O5",
+      "source": "class M(type):\n def __new__(mcls,*args): return 7\nclass A(metaclass=M):\n def f(self): return __class__\nprint(A)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "class-cell-before-notification",
+      "stage": "O5",
+      "source": "class D:\n def __set_name__(self,owner,name): print(owner().f() is owner)\nclass A:\n x=D()\n def f(self): return __class__\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metaclass-cell-before-notification",
+      "stage": "O5",
+      "source": "class D:\n def __set_name__(self,owner,name): print(owner().f() is owner)\nclass M(type): pass\nclass A(metaclass=M):\n x=D()\n def f(self): return __class__\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metaclass-none",
+      "stage": "O5",
+      "source": "class A(metaclass=None): print(\"never\")\n",
+      "stdout": "never\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "type-singleton-constructors",
+      "stage": "O5",
+      "source": "print(type(None)() is None,type(NotImplemented)() is NotImplemented)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "type-none-constructor-arguments",
+      "stage": "O5",
+      "source": "type(None)(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "type-class-attribute",
+      "stage": "O5",
+      "source": "class M(type): pass\nclass A(metaclass=M): pass\na=A()\nprint(A.__class__ is M,a.__class__ is A,(7).__class__ is int,True.__class__ is bool)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "dynamic-name-null",
+      "stage": "O5",
+      "source": "type(\"bad\\x00name\",(),{})\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "relation-error-order",
+      "stage": "O5",
+      "source": "print(issubclass(7,((),())),isinstance(7,((),int)))\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "object-new-metaclass-layout",
+      "stage": "O5",
+      "source": "class M(type): pass\nobject.__new__(M)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "future-metaclass-equality",
+      "stage": "Future",
+      "source": "class M(type):\n def __eq__(cls,other): return True\nclass A(metaclass=M): pass\nprint(A==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-metaclass-factory",
+      "stage": "Future",
+      "source": "def factory(name,bases,ns): return 7\nclass A(metaclass=factory): pass\nprint(A)\n",
       "stdout": "7\n"
     }
   ]

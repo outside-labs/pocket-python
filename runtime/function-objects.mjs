@@ -37,10 +37,11 @@ export class CallArguments {
   constructor(callable) { this.callable = callable; this.args = []; this.keywords = []; this.keywordValues = []; this.keywordMap = null; }
 }
 export class ClassValue {
-  constructor(name, qualname, module, bases, parents, namespace, root = false) {
+  constructor(name, qualname, module, bases, parents, namespace, root = false, metaclass = null) {
     this.name = name; this.qualname = qualname; this.module = module; this.root = root;
     this.bases = Object.freeze([...bases]); this.mro = Object.freeze([this, ...parents]);
     this.namespace = new Map(namespace);
+    this.metaclass = metaclass;
   }
 }
 export class InstanceValue {

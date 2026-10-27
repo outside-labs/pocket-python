@@ -44,7 +44,7 @@ test('metadata overrides and later class stages refuse before source effects',as
     'class A:\n from helper import value as __module__\n',
     'class A:\n def __matmul__(self,x): return 7\n',
     'class A: pass\na=A()\na.__class__=A\n',
-    'class A(metaclass=type): pass\n','class A[T]: pass\n','class A(*bases): pass\n',
+    'class A(metaclass=type,extra=1): pass\n','class A[T]: pass\n','class A(*bases): pass\n',
     'async def f(): pass\n'
   ]){
     const result=await run("print('never')\n"+source);

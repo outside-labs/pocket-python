@@ -4,7 +4,7 @@ import {runSourceRequest} from './source-request.mjs';
 import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
-import {completion, completionRoots} from './operations.mjs';
+import {completion, completionRoots, constructTask, operationRoots} from './operations.mjs';
 import {compileSource} from './source-compiler.mjs';
 import {verifyFunctions} from './function-bytecode.mjs';
 
@@ -123,5 +123,74 @@ test('super descriptor failures retain source frames and shared resource limits'
   ]) {
     const result = await run('class A:\n @property\n def f(self):\n  '+body+'\nclass B(A):\n def g(self): return super().f\nB().g()\n', options, limits);
     assert.equal(result.error.code, expected); if (expected === 'PYTHON') assert.equal(result.error.type, 'RecursionError'); closed(result.closed);
+  }
+});
+
+test('metaclass invocation and notification continuations retain all pending owners', () => {
+  const type = {}, cell = {}, descriptor = {}, argument = {}, keyword = {}, outer = {};
+  const after = completion('class-created', {cell, after: completion('relay', {receiver: outer})});
+  assert.deepEqual(operationRoots(constructTask(type, [argument], ['x'], [keyword], null, after)), [type, argument, keyword, cell, outer]);
+  assert.deepEqual(completionRoots(completion('notify', {type, entries: [['x', descriptor]], index: 0, after})), [type, descriptor, cell, outer]);
+});
+
+test('temporary metaclasses, class cells and pending notifications survive collection and interruption', async () => {
+  const sources = [
+    'def factory():\n class M(type):\n  def __new__(mcls,name,bases,ns):\n   print("entered")\n   return type.__new__(mcls,name,bases,ns)\n return M\nclass A(metaclass=factory()):\n def f(self): return __class__\nprint(A().f() is A)\n',
+    'class D:\n def __set_name__(self,owner,name):\n  print("entered")\n  owner.x=[7]\nclass M(type):\n def __new__(mcls,name,bases,ns): return type.__new__(mcls,name,bases,ns)\nclass A(metaclass=M):\n field=D()\n def f(self): return __class__\nprint(A().f() is A,A.x[0])\n',
+    'class M(type):\n def __new__(mcls,name,bases,ns): return type.__new__(mcls,name,bases,ns)\n def __init__(cls,name,bases,ns):\n  print("entered")\n  cls.x=ns["saved"]\nclass A(metaclass=M): saved=[7]\nprint(A.x[0])\n',
+  ];
+  for (let index = 0; index < sources.length; index++) {
+    const {registry} = await compileSourceModules([unit(sources[index])], profile);
+    try { for (const mode of ['finish', 'cancel', 'close']) {
+      const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+      session.context.begin({shouldCancel: () => cancel}, text => { output += text; }); const execution = Execution.modules(session.context);
+      try {
+        while (execution.state !== 'completed') {
+          execution.advance(); session.memory.collect([], {cleanup: true});
+          if (output === 'entered\n') {
+            reached = true;
+            if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+            if (mode === 'close') break;
+          }
+        }
+        assert.ok(reached); if (mode === 'finish') assert.equal(output, ['entered\nTrue\n', 'entered\nTrue 7\n', 'entered\n7\n'][index]);
+      } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+      closed(session.stats());
+    } } finally { registry.close(); }
+  }
+});
+
+test('metaclass callbacks and inherited type calls obey shared limits', async () => {
+  for (const slot of ['__new__', '__init__', '__call__']) for (const [body, options, limits, expected] of [
+    [slot === '__init__' ? 'M.__init__(cls,*args)' : 'return cls(*args)', {maxDepth: 12}, undefined, 'PYTHON'],
+    ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+    ['a=[]\n  while True: a.append([7])', {maxSteps: 100000, maxWork: 100000000}, {maxBytes: 30000}, 'OOM'],
+  ]) {
+    const source = 'class M(type):\n def '+slot+'(cls,*args):\n  '+body+'\nclass A(metaclass=M): pass\n'+(slot === '__call__' ? 'A()\n' : '');
+    const result = await run(source, options, limits);
+    assert.equal(result.error.code, expected, JSON.stringify(result.error)); if (expected === 'PYTHON') assert.equal(result.error.type, 'RecursionError'); closed(result.closed);
+  }
+});
+
+test('class-info tuple nesting is bounded without host recursion and remains short-circuited', async () => {
+  const result = await run('t=()\ni=0\nwhile i<100:\n t=(t,)\n i+=1\nprint(isinstance(7,(int,t)))\nisinstance(7,t)\n');
+  assert.equal(result.stdout, 'True\n'); assert.equal(result.error.code, 'BUDGET'); closed(result.closed);
+});
+
+test('class-meta bytecode verifies the extra operand and cannot enter the core profile', () => {
+  const raw = JSON.parse(JSON.stringify(compileSource('class A(metaclass=type): pass\n', profile).program));
+  assert.ok(raw.functions[0].blocks[0].instructions.some(([op]) => op === 'class-meta'));
+  const underflow = JSON.parse(JSON.stringify(raw)); underflow.functions[0].blocks[0].instructions.shift();
+  assert.throws(() => verifyFunctions(underflow), {code: 'BYTECODE'});
+  const wrongTarget = JSON.parse(JSON.stringify(raw)); wrongTarget.functions[0].blocks[0].instructions.find(([op]) => op === 'class-meta')[1] = 0;
+  assert.throws(() => verifyFunctions(wrongTarget), {code: 'BYTECODE'});
+  assert.throws(() => compileSource('class A(metaclass=type): pass\n'), {code: 'UNSUPPORTED'});
+});
+
+test('dynamic class identities and namespace keys enforce budgets as owned failures', async () => {
+  const name = JSON.stringify('x'.repeat(257));
+  for (const source of ['type('+name+',(),{})\n', 'type("A",(),{'+name+':7})\n']) {
+    const result = await run(source);
+    assert.equal(result.error.code, 'BUDGET'); closed(result.closed);
   }
 });
