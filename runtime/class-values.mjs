@@ -1,9 +1,13 @@
-import {ClassValue, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
+import {ClassValue, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
+const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
+  "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "builtin_function_or_method", "generator", "module", "cell",
+  "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__class__"]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -23,20 +27,24 @@ export class ClassRuntime {
     if (typeof name !== "string" || name.length > CLASS_LIMITS.name) throw new TypeError("Invalid class attribute name.");
   }
   root() { return this.make(ClassValue, "object", "object", "builtins", [], [], new Map(), true); }
-  create(name, qualname, module, bases, namespace, root) {
+  create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null} = {}) {
     this.key(name);
-    if (!isPythonIdentifier(name)) throw new TypeError("Invalid class name.");
+    if (!dynamic && !isPythonIdentifier(name)) throw new TypeError("Invalid class name.");
     this.bounded(typeof qualname === "string" && qualname.length <= 256 && typeof module === "string" && module.length <= 192,
       "Class identity budget exceeded.");
     if (!(root instanceof ClassValue) || !root.root || !Array.isArray(bases) || !(namespace instanceof Map)) throw new TypeError("Invalid class construction record.");
     this.touch(root);
     this.bounded(bases.length <= CLASS_LIMITS.bases && namespace.size <= CLASS_LIMITS.attributes, "Class base/namespace budget exceeded.");
     bases = bases.length ? [...bases] : [root]; namespace = new Map(namespace);
+    const metaLayout = bases.some(base => base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base));
+    if (metaLayout && [...namespace.keys()].some(key => isSpecialName(key) && !META_SPECIALS.has(key)))
+      this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
     if (namespace.has("__eq__") && !namespace.has("__hash__")) namespace.set("__hash__", null);
     this.bounded(namespace.size <= CLASS_LIMITS.attributes, "Class namespace budget exceeded.");
     for (const base of bases) {
       this.charge(1);
-      if (base instanceof BuiltinValue && (["list", "tuple", "str", "bool", "type", "property", "staticmethod", "classmethod"].includes(base.name) || Object.hasOwn(EXCEPTIONS, base.name)))
+      if (base instanceof BuiltinValue && base.name === "type") { this.touch(base); continue; }
+      if (base instanceof BuiltinValue && NATIVE_TYPES.has(base.name))
         this.fail("UnsupportedOperationError", "Builtin subclassing is outside classes-source/1.", "UNSUPPORTED");
       if (!(base instanceof ClassValue)) this.fail("TypeError", "Class bases must be adopted class values.");
       this.touch(base);
@@ -52,7 +60,7 @@ export class ClassRuntime {
     for (const [key, expected] of [["__module__", module], ["__qualname__", qualname]])
       if (namespace.has(key) && this.values.text(namespace.get(key)) !== expected)
         this.fail("UnsupportedOperationError", "Class metadata overrides are outside C1.", "UNSUPPORTED");
-    const pending = [...bases.map(base => [...base.mro]), [...bases]], parents = [];
+    const pending = [...bases.map(base => [...this.mro(base)]), [...bases]], parents = [];
     while (pending.some(items => items.length)) {
       this.charge(1); let candidate = null;
       for (const items of pending) {
@@ -68,7 +76,7 @@ export class ClassRuntime {
       parents.push(candidate);
       for (const items of pending) if (items[0] === candidate) items.shift();
     }
-    return this.make(ClassValue, name, qualname, module, bases, parents, namespace);
+    return this.make(ClassValue, name, qualname, module, bases, parents, namespace, false, metaclass);
   }
   instance(type) {
     if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
@@ -77,13 +85,51 @@ export class ClassRuntime {
   hasSlot(type, name) {
     // The bounded MRO is also the native slot-presence index. Default calls keep
     // their original lookup/accounting path; only adopted overrides add phases.
-    return type.mro.some(base => !base.root && base.namespace.has(name));
+    return type.mro.some(base => base instanceof ClassValue && !base.root && base.namespace.has(name));
+  }
+  isType(value) { return value instanceof ClassValue || value?.constructor === BuiltinValue && NATIVE_TYPES.has(value.name); }
+  isMetaclass(value) { return value instanceof ClassValue && value.mro.some(base => base instanceof BuiltinValue && base.name === "type"); }
+  mro(type) {
+    if (type instanceof ClassValue) return type.mro;
+    if (!this.isType(type)) this.fail("TypeError", "An adopted type is required");
+    const result = [type];
+    let name = type.name;
+    while (name === "bool" || EXCEPTIONS[name]) { name = name === "bool" ? "int" : EXCEPTIONS[name]; result.push(this.builtin(name)); }
+    result.push(this.builtin("object")); return result;
+  }
+  typeOf(value) {
+    this.touch(value);
+    if (value instanceof InstanceValue) return value.type;
+    if (value instanceof ClassValue) return value.metaclass || this.builtin("type");
+    let name = this.values.typeName(value);
+    if (name === null) {
+      if (this.isType(value)) name = "type";
+      else if (value instanceof BuiltinValue) name = "builtin_function_or_method";
+      else if (value instanceof FunctionValue) name = "function";
+      else if (value instanceof BoundMethodValue) name = value.callable instanceof BuiltinValue ? "method-wrapper" : "method";
+      else if (value instanceof PropertyValue) name = "property";
+      else if (value instanceof MethodWrapperValue) name = value.kind;
+      else if (value instanceof SuperValue) name = "super";
+      else if (value instanceof GeneratorValue) name = "generator";
+      else if (value instanceof ModuleValue) name = "module";
+      else if (value instanceof Cell) name = "cell";
+      else if (value instanceof NotImplementedValue) name = "NotImplementedType";
+      else if (value instanceof ProtocolIteratorValue) name = value.kind === "callable" ? "callable_iterator" : "iterator";
+      else if (Object.hasOwn(EXCEPTIONS, value?.name)) name = value.name;
+    }
+    if (name === null || name === undefined) this.fail("UnsupportedOperationError", "This reflective value type requires a separate stage", "UNSUPPORTED");
+    return this.builtin(name);
   }
   lookup(type, name, native = true, start = 0) {
     this.key(name); this.touch(type);
-    if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
-    for (const base of type.mro.slice(start)) {
+    if (!this.isType(type)) throw new TypeError("An adopted class is required.");
+    for (const base of this.mro(type).slice(start)) {
       this.charge(1);
+      if (base instanceof BuiltinValue) {
+        if (native && base.name === "type" && ["__new__", "__init__", "__call__"].includes(name))
+          return {found: true, value: this.builtin("type." + name)};
+        continue;
+      }
       if (!native && base.root && ["__new__", "__init__"].includes(name)) continue;
       if (base.namespace.has(name)) return {found: true, value: base.namespace.get(name)};
       if (native && base.root && ["__hash__", "__new__", "__init__"].includes(name)) {
@@ -121,10 +167,22 @@ export class ClassRuntime {
       if (["__thisclass__", "__self__", "__self_class__"].includes(name))
         return value(receiver[{__thisclass__: "thisclass", __self__: "self", __self_class__: "selfClass"}[name]]);
       if (receiver.selfClass !== null) {
-        const item = this.lookup(receiver.selfClass, name, true, receiver.selfClass.mro.indexOf(receiver.thisclass) + 1);
+        const item = this.lookup(receiver.selfClass, name, true, this.mro(receiver.selfClass).indexOf(receiver.thisclass) + 1);
         if (item.found) return this.bindAttribute(item.value, receiver.self === receiver.selfClass ? null : receiver.self, receiver.selfClass);
       }
       this.fail("AttributeError", "super has no attribute '" + name + "'.");
+    }
+    if (receiver instanceof BuiltinValue) {
+      if (name === "__class__") return value(this.typeOf(receiver));
+      if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(receiver.name, char => char.codePointAt(0))));
+      if (this.isType(receiver)) {
+        if (name === "__module__") return value(this.values.string(Array.from("builtins", char => char.codePointAt(0))));
+        if (name === "__mro__") return value(this.values.tuple(this.mro(receiver)));
+        if (name === "__bases__") return value(this.values.tuple([this.mro(receiver)[1]]));
+        const item = this.lookup(receiver, name);
+        if (item.found) return this.bindAttribute(item.value, null, receiver);
+      }
+      this.fail("AttributeError", "Builtin has no adopted attribute '" + name + "'.");
     }
     if (receiver instanceof PropertyValue) {
       if (["fget", "fset", "fdel"].includes(name)) return value(receiver[name]);
@@ -145,19 +203,26 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
     if (receiver instanceof InstanceValue && name === "__class__") return value(receiver.type);
     if (receiver instanceof ClassValue) {
-      if (name === "__class__") return value(this.builtin("type"));
+      if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
       if (["__name__", "__qualname__", "__module__"].includes(name)) return value(this.values.string(Array.from(
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
       if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
     }
     if (!allowsClassSpecial(name, "attribute")) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
+    const metaItem = receiver instanceof ClassValue && receiver.metaclass ? this.lookup(receiver.metaclass, name) : null;
+    const metaDescriptor = metaItem?.found ? this.descriptor(metaItem.value) : null;
+    if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
+      return this.bindAttribute(metaItem.value, receiver, receiver.metaclass);
     const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
     if (receiver instanceof InstanceValue && (item.value instanceof PropertyValue ||
         descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)))
       return this.bindAttribute(item.value, receiver, owner);
     if (receiver instanceof InstanceValue && receiver.attributes.has(name)) return value(receiver.attributes.get(name));
-    if (!item.found) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
+    if (!item.found) {
+      if (metaItem?.found) return this.bindAttribute(metaItem.value, receiver, receiver.metaclass);
+      this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
+    }
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
   bindAttribute(value, receiver, owner) {
@@ -172,7 +237,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner)};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && ["object.__hash__", "object.__init__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "type.__init__", "type.__call__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);
@@ -191,8 +256,8 @@ export class ClassRuntime {
   write(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
     if (receiver instanceof SuperValue) this.fail("AttributeError", "super attributes are read-only");
-    if (receiver instanceof InstanceValue) {
-      const item = this.lookup(receiver.type, name), descriptor = item.found ? this.descriptor(item.value) : null;
+    if (receiver instanceof InstanceValue || receiver instanceof ClassValue && receiver.metaclass) {
+      const item = this.lookup(receiver instanceof InstanceValue ? receiver.type : receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.value instanceof PropertyValue) {
         const callable = item.value[remove ? "fdel" : "fset"];
         if (callable === null) this.fail("AttributeError", "Property has no " + (remove ? "deleter" : "setter") + ".");
@@ -211,6 +276,8 @@ export class ClassRuntime {
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
+    if (receiver instanceof ClassValue && this.isMetaclass(receiver) && isSpecialName(name) && !META_SPECIALS.has(name))
+      this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
     if (!allowsClassSpecial(name, "mutate")) this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     const map = receiver instanceof ClassValue ? receiver.namespace : receiver.attributes;
     const present = map.has(name), before = map.get(name);
@@ -221,17 +288,22 @@ export class ClassRuntime {
     catch (error) { if (present) map.set(name, before); else map.delete(name); throw error; }
     return null;
   }
-  subclass(type, parent) {
-    if (!(type instanceof ClassValue) || !(parent instanceof ClassValue)) this.fail("TypeError", "issubclass requires adopted class values.");
+  subclass(type, parent, depth = 0) {
+    if (this.values.isSequenceType(parent, "tuple")) {
+      this.bounded(depth < 32, "Class-info tuple nesting budget exceeded");
+      for (const item of parent.items) { this.charge(1); if (this.subclass(type, item, depth + 1)) return true; }
+      return false;
+    }
+    if (!this.isType(type) || !this.isType(parent)) this.fail("TypeError", "issubclass requires adopted type values.");
     this.touch(type); this.touch(parent);
-    for (const base of type.mro) { this.charge(1); if (base === parent) return true; }
+    for (const base of this.mro(type)) { this.charge(1); if (base === parent) return true; }
     return false;
   }
   superProxy(type, receiver = null) {
-    if (!(type instanceof ClassValue)) this.fail("TypeError", "super requires an adopted type");
+    if (!this.isType(type)) this.fail("TypeError", "super requires an adopted type");
     this.touch(type);
     if (receiver === null) return this.make(SuperValue, type, null, null);
-    const owner = receiver instanceof ClassValue ? receiver : receiver instanceof InstanceValue ? receiver.type : null;
+    let owner = receiver instanceof ClassValue && this.subclass(receiver, type) ? receiver : this.typeOf(receiver);
     if (owner === null || !this.subclass(owner, type)) this.fail("TypeError", "super receiver must be an instance or subtype of its first argument");
     return this.make(SuperValue, type, receiver, owner);
   }
@@ -252,9 +324,29 @@ export class ClassRuntime {
     });
     return this.make(PropertyValue, ...fields.map(name => assigned.has(name) ? assigned.get(name) : null));
   }
-  isinstance(value, type) {
-    if (!(type instanceof ClassValue)) this.fail("TypeError", "isinstance requires an adopted class.");
+  isinstance(value, type, depth = 0) {
+    if (this.values.isSequenceType(type, "tuple")) {
+      this.bounded(depth < 32, "Class-info tuple nesting budget exceeded");
+      for (const item of type.items) { this.charge(1); if (this.isinstance(value, item, depth + 1)) return true; }
+      return false;
+    }
+    if (!this.isType(type)) this.fail("TypeError", "isinstance requires an adopted type.");
     this.touch(type); this.touch(value);
-    return type.root || value instanceof InstanceValue && this.subclass(value.type, type);
+    return type.root || this.subclass(this.typeOf(value), type);
+  }
+  selectMetaclass(bases, explicit = undefined) {
+    let selected = explicit === undefined ? this.builtin("type") : explicit;
+    if (!this.callable(selected)) this.fail("TypeError", "Metaclass must be callable");
+    if (!this.isType(selected)) this.fail("UnsupportedOperationError", "Callable metaclass factories require a separate construction stage", "UNSUPPORTED");
+    for (const base of bases) {
+      this.charge(1);
+      const candidate = this.typeOf(base);
+      if (this.subclass(selected, candidate)) continue;
+      if (this.subclass(candidate, selected)) selected = candidate;
+      else this.fail("TypeError", "Metaclass conflict");
+    }
+    if (!(selected instanceof BuiltinValue && selected.name === "type") && !this.isMetaclass(selected))
+      this.fail("UnsupportedOperationError", "Non-type metaclass constructors require a separate stage", "UNSUPPORTED");
+    return selected;
   }
 }

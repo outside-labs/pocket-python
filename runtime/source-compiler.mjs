@@ -46,6 +46,7 @@ class Compiler {
       this.charge(value);
       if (value.kind === "Class") return {...value, bindingName: name(value.name, owner, value),
         bases: rewrite(value.bases, owner), body: rewrite(value.body, value.name),
+        ...(value.metaclass ? {metaclass: rewrite(value.metaclass, owner)} : {}),
         ...(value.decorators ? {decorators: rewrite(value.decorators, owner)} : {})};
       if (["Function", "Lambda"].includes(value.kind)) {
         const params = Object.fromEntries(Object.entries(value.params).map(([key, group]) => [key,
@@ -106,7 +107,7 @@ class Compiler {
       if (["Function", "Class", "Lambda"].includes(value.kind)) {
         (value.decorators || []).forEach(visit);
         if (value.kind !== "Lambda") binding(value.bindingName ?? value.name, value);
-        if (value.kind === "Class") value.bases.forEach(visit);
+        if (value.kind === "Class") { value.bases.forEach(visit); if (value.metaclass) visit(value.metaclass); }
         else for (const group of Object.values(value.params)) for (const param of group) if (param.value) visit(param.value);
         this.bind(value, scope); return;
       }
@@ -434,7 +435,9 @@ class Compiler {
           if (value.kind === "Function") makeFunction(value);
           else {
             if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
-            value.bases.forEach(expr); emit(value, "class", this.scopeOf.get(value).index, value.bases.length);
+            value.bases.forEach(expr);
+            if (value.metaclass) expr(value.metaclass);
+            emit(value, value.metaclass ? "class-meta" : "class", this.scopeOf.get(value).index, value.bases.length);
           }
           if (decorators.length) {
             const result = this.temporary(scope, value); emit(value, "store", result);

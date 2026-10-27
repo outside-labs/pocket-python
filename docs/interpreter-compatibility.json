@@ -237,8 +237,8 @@
     {
       "id": "class-construction",
       "status": "partial",
-      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super.",
-      "gaps": "Metaclasses, builtin instance subclassing and broader type/reflection remain separate construction stages.",
+      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces.",
+      "gaps": "Builtin instance layouts, custom namespace preparation, further metaclass special slots, callable factories and additional class keywords remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -254,7 +254,9 @@
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:new-subclass-init",
-        "tests/fixtures/interpreter/construction.json:super-diamond"
+        "tests/fixtures/interpreter/construction.json:super-diamond",
+        "tests/fixtures/interpreter/construction.json:metaclass-new-init",
+        "tests/fixtures/interpreter/construction.json:dynamic-winning-metaclass"
       ]
     },
     {
@@ -1087,9 +1089,9 @@
     },
     {
       "id": "dict",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "No-argument dict() in classes-source/1; dictionary literals and existing owned operations retain their separate contracts.",
+      "gaps": "Populated dictionary construction and broader dictionary methods remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1101,7 +1103,9 @@
       "probes": [
         "builtin-dict"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/construction.json:type-primitives"
+      ]
     },
     {
       "id": "dir",
@@ -1443,8 +1447,8 @@
     {
       "id": "isinstance",
       "status": "partial",
-      "scope": "isinstance(x, str/adopted exception class/user class).",
-      "gaps": "Tuple/union classinfo and unadopted builtin families.",
+      "scope": "Adopted type relationships, canonical native identities, bool/int and exception ancestry, nested class-info tuples with short-circuit/error order in classes-source/1.",
+      "gaps": "Unions and custom instance/subclass checks remain deferred; tuple nesting is bounded.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1456,13 +1460,16 @@
       "probes": [
         "builtin-isinstance"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/construction.json:relation-builtin-ancestry",
+        "tests/fixtures/interpreter/construction.json:relation-nested-tuples"
+      ]
     },
     {
       "id": "issubclass",
       "status": "partial",
-      "scope": "issubclass(user_class, user_class/object).",
-      "gaps": "Full builtin, tuple/union classinfo.",
+      "scope": "Adopted type relationships, canonical native identities, bool/int and exception ancestry, nested class-info tuples with short-circuit/error order in classes-source/1.",
+      "gaps": "Unions and custom instance/subclass checks remain deferred; tuple nesting is bounded.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1474,7 +1481,10 @@
       "probes": [
         "builtin-issubclass"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/construction.json:relation-builtin-ancestry",
+        "tests/fixtures/interpreter/construction.json:relation-nested-tuples"
+      ]
     },
     {
       "id": "iter",
@@ -1656,8 +1666,8 @@
     {
       "id": "object",
       "status": "partial",
-      "scope": "object() and root base in classes-source/1.",
-      "gaps": "Default displays, identity hashing, __new__ and richer object APIs.",
+      "scope": "Root object identity, no-argument construction and finite object.__new__/__init__ for ordinary user instances in classes-source/1.",
+      "gaps": "Default displays, builtin instance allocation and broader reflection remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1670,7 +1680,10 @@
       "probes": [
         "builtin-object"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/construction.json:object-new-direct",
+        "tests/fixtures/interpreter/construction.json:object-init-overrides"
+      ]
     },
     {
       "id": "oct",
@@ -2029,8 +2042,8 @@
     {
       "id": "type",
       "status": "partial",
-      "scope": "type(user_instance), one argument; classes-source/1.",
-      "gaps": "Full one-argument and three-argument type construction.",
+      "scope": "Canonical type identities for adopted values and three-argument type construction with tuple bases and a bounded string-key dictionary namespace; finite type.__new__/__init__/__call__ and metaclass selection.",
+      "gaps": "Custom namespace mappings, callable factories, builtin instance subclasses and further metaclass special slots remain gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2042,7 +2055,11 @@
       "probes": [
         "builtin-type"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/construction.json:type-primitives",
+        "tests/fixtures/interpreter/construction.json:dynamic-type",
+        "tests/fixtures/interpreter/construction.json:metaclass-new-init"
+      ]
     },
     {
       "id": "vars",

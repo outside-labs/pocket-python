@@ -151,7 +151,7 @@
     },
     {
       "id": "metaclass",
-      "stage": "deferred",
+      "stage": "O5",
       "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\n"
     },
     {
@@ -246,6 +246,7 @@
     "C2-decorator",
     "C3-length",
     "C3-hash",
-    "O4"
+    "O4",
+    "O5"
   ]
 }

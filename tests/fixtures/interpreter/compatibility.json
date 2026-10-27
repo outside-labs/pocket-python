@@ -613,16 +613,14 @@
     {
       "id": "metaclass",
       "source": "class M(type): pass\nclass A(metaclass=M): pass\nprint(7)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "stdout": "7\n",
+        "error_type": null
       }
     },
     {
@@ -896,16 +894,14 @@
     {
       "id": "builtin-dict",
       "source": "print(callable(dict))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {

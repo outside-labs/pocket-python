@@ -1,13 +1,13 @@
 import {ARITHMETIC_SLOTS} from "./class-policy.mjs";
-import {GeneratorValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, completionRoots, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
+import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value instanceof NotImplementedValue) return "NotImplemented";
@@ -87,6 +87,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (moduleContext && callable.name === "isinstance") {
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
+      if (state.frames.at(-1).callable.pool.code.version === 5) return classes.isinstance(args[0], args[1]);
       const type = args[1];
       if (type instanceof ClassValue) return classes.isinstance(args[0], type);
       if (type instanceof BuiltinValue && type.name === "memoryview") return values.isView(args[0]);
@@ -105,8 +106,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return classes.subclass(args[0], args[1]);
     }
     if (callable.name === "type") {
-      if (args.length !== 1 || !(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "type supports one user instance in C1.");
-      return args[0].type;
+      if (args.length !== 1) python("TypeError", "type requires one or three arguments");
+      return classes.typeOf(args[0]);
     }
     if (callable.name === "str" && args.length === 0) return values.string([]);
     if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
@@ -337,8 +338,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "new-result") {
       state.temporaries.push(value, ...completionRoots(completion));
-      if (!(value instanceof InstanceValue) || !classes.subclass(value.type, completion.type)) return valueTask(value, site, completion.after);
+      if (!classes.subclass(classes.typeOf(value), completion.type)) return valueTask(value, site, completion.after);
       return initialize(value, completion.args, completion.keywords, completion.keywordValues, site, completion.after, completion.depth, true);
+    }
+    if (completion?.kind === "class-created") {
+      if (value instanceof ClassValue) {
+        if (!completion.cell.bound) python("RuntimeError", "__class__ cell was not propagated to type.__new__");
+        if (completion.cell.value !== value) python("TypeError", "__class__ cell refers to a different class");
+      }
+      return valueTask(value, site, completion.after);
     }
     if (completion?.kind === "arithmetic-result") {
       if (!(value instanceof NotImplementedValue)) return valueTask(value, site, completion.after);
@@ -552,7 +560,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion.after, completion.depth);
     if (completion?.kind === "invoke") return callTask(value, completion.args, completion.keywords,
       completion.keywordValues, site, completion.after, completion.depth);
-    if (completion?.kind === "notify") return notifyNext(completion.type, completion.entries, completion.index, site);
+    if (completion?.kind === "notify") return notifyNext(completion.type, completion.entries, completion.index, site, completion.after);
     if (completion?.kind === "condition") {
       const frame = state.frames.at(-1), task = frame.tasks.at(-1);
       if (completion.control === "if") block(frame, value ? completion.body : completion.otherwise);
@@ -566,7 +574,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     state.frames.at(-1).tasks.at(-1).stack.push(completion?.kind === "discard" ? null : value);
     return null;
   };
-  const notifyNext = (type, entries, index, site) => {
+  const notifyNext = (type, entries, index, site, after = null) => {
     state.temporaries.push(type, ...entries.map(entry => entry[1]));
     while (index < entries.length) {
       charge(1);
@@ -577,17 +585,18 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const plan = classes.notification(value, type, nameValue);
       if (!plan) continue;
       return callTask(plan.callable, plan.args, [], [], site,
-        continuation("notify", {type, entries, index}));
+        continuation("notify", {type, entries, index, after}));
     }
-    return deliver(type, null, site);
+    return deliver(type, after, site);
   };
   const initialize = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
-    const initializer = classes.lookup(instance.type, "__init__", false);
+    const type = instance instanceof InstanceValue ? instance.type : classes.typeOf(instance);
+    const initializer = classes.lookup(type, "__init__", instance instanceof ClassValue);
     if (!initializer.found) {
       if (!customNew && (args.length || keywords.length)) python("TypeError", instance.type.name + "() takes no arguments");
       return valueTask(instance, site, after);
     }
-    const plan = customNew ? classes.bindAttribute(initializer.value, instance, instance.type) : classes.read(instance, "__init__");
+    const plan = customNew ? classes.bindAttribute(initializer.value, instance, type) : classes.read(instance, "__init__");
     const target = continuation("init", {instance, after});
     return plan.kind === "value" ? callTask(plan.value, args, keywords, keywordValues, site, target, depth) :
       callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args, keywords, keywordValues, after: target, depth}), depth);
@@ -1098,7 +1107,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           task = deliver(allocate(PropertyValue, ...fields), completion, site); continue;
         }
         if (callable instanceof ClassValue) {
-          if (classes.hasSlot(callable, "__new__")) {
+          if (task.kind !== "construct" && callable.metaclass && classes.hasSlot(callable.metaclass, "__call__")) {
+            if (++depth > maxDepth) python("RecursionError", "maximum metaclass call dispatch depth exceeded");
+            const item = classes.lookup(callable.metaclass, "__call__"), plan = classes.bindAttribute(item.value, callable, callable.metaclass);
+            const target = continuation("relay", {receiver: callable, after: completion});
+            task = plan.kind === "value" ? callTask(plan.value, args, keywords, keywordValues, site, target, depth) :
+              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args, keywords, keywordValues, after: target, depth}), depth);
+            continue;
+          }
+          if (classes.hasSlot(callable, "__new__") || classes.isMetaclass(callable)) {
             if (++depth > maxDepth) python("RecursionError", "maximum constructor dispatch depth exceeded");
             const item = classes.lookup(callable, "__new__"), plan = classes.bindAttribute(item.value, null, callable);
             const target = continuation("new-result", {type: callable, args, keywords, keywordValues, after: completion, depth});
@@ -1118,6 +1135,68 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "dict") {
+            if (args.length || keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Populated dictionary constructors require their separate sequence stage.");
+            task = valueTask(values.dict([]), site, completion); continue;
+          }
+          if (callable.name === "type.__call__") {
+            if (!args.length || !classes.isType(args[0])) python("TypeError", "type.__call__ requires a type");
+            task = constructTask(args[0], args.slice(1), keywords, keywordValues, site, completion, depth); continue;
+          }
+          if (callable.name === "type.__init__") {
+            if (!args.length || !classes.isType(args[0]) || keywords.length || ![2, 4].includes(args.length))
+              python("TypeError", "type.__init__ requires one or three arguments after its receiver");
+            task = valueTask(null, site, completion); continue;
+          }
+          if (callable.name === "type" && args.length === 3) {
+            const target = continuation("new-result", {type: callable, args, keywords, keywordValues, after: completion, depth});
+            task = callTask(classes.builtin("type.__new__"), [callable, ...args], keywords, keywordValues, site, target, depth); continue;
+          }
+          if (callable.name === "type.__new__") {
+            if (keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Class creation keywords require their separate construction stage.");
+            if (args.length !== 4) python("TypeError", "type.__new__ requires a metaclass, name, bases and namespace");
+            let [metaclass, nameValue, basesValue, namespaceValue] = args;
+            if (!(metaclass instanceof BuiltinValue && metaclass.name === "type") && !classes.isMetaclass(metaclass)) python("TypeError", "type.__new__ requires a subtype of type");
+            const name = values.text(nameValue);
+            if (name === null || !values.isSequenceType(basesValue, "tuple") || !values.isDict(namespaceValue)) python("TypeError", "type requires a string name, tuple bases and dictionary namespace");
+            if (name.length > 256 || basesValue.items.length > 16) hard("BUDGET", "ExecutionLimitError", "Class identity/base budget exceeded.");
+            if (name.includes("\0")) python("ValueError", "type name must not contain null characters");
+            const bases = basesValue.items, namespace = new Map();
+            for (const entry of namespaceValue.entries) {
+              charge(1); const key = values.text(entry.key);
+              if (key === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Non-string class namespace keys require a separate construction stage.");
+              if (key.length > 256) hard("BUDGET", "ExecutionLimitError", "Class attribute name budget exceeded.");
+              classes.key(key); namespace.set(key, entry.value);
+            }
+            const frame = state.frames.at(-1), currentModule = values.text(frame.callable.globals.cells.get("__name__")?.value) || "builtins";
+            const module = namespace.has("__module__") ? values.text(namespace.get("__module__")) : currentModule;
+            const qualname = namespace.has("__qualname__") ? values.text(namespace.get("__qualname__")) : name;
+            if (module === null || qualname === null) python("TypeError", "Class metadata requires strings");
+            const cell = namespace.get("__classcell__"); namespace.delete("__classcell__");
+            if (cell !== undefined && !(cell instanceof Cell)) python("TypeError", "__classcell__ must be a cell");
+            const selected = classes.selectMetaclass(bases, metaclass);
+            if (selected !== metaclass && selected instanceof ClassValue && classes.hasSlot(selected, "__new__")) {
+              if (++depth > maxDepth) python("RecursionError", "maximum metaclass construction depth exceeded");
+              const item = classes.lookup(selected, "__new__"), plan = classes.bindAttribute(item.value, null, selected);
+              const positional = [selected, nameValue, basesValue, namespaceValue];
+              task = plan.kind === "value" ? callTask(plan.value, positional, [], [], site, completion, depth) :
+                callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: positional, keywords: [], keywordValues: [], after: completion, depth}), depth);
+              continue;
+            }
+            metaclass = selected;
+            const type = classes.create(name, qualname, module, bases, namespace, classes.builtin("object"),
+              {dynamic: true, metaclass: metaclass instanceof ClassValue ? metaclass : null});
+            state.temporaries.push(type);
+            if (cell) setCell(cell, type);
+            task = notifyNext(type, [...namespace], 0, site, completion); continue;
+          }
+          if (classes.isType(callable) && !["type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
+            if (["NoneType", "NotImplementedType"].includes(callable.name)) {
+              if (args.length || keywords.length) python("TypeError", callable.name + " takes no arguments");
+              task = valueTask(callable.name === "NoneType" ? null : moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, completion); continue;
+            }
+            hard("UNSUPPORTED", "UnsupportedOperationError", "Construction of reflected implementation types requires a separate stage.");
+          }
           if (callable.name === "super") {
             if (keywords.length || args.length > 2) python("TypeError", "super received invalid arguments");
             let type = args[0], receiver = args[1] ?? null;
@@ -1126,7 +1205,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (first === undefined) python("RuntimeError", "super(): no arguments");
               const parameter = frame.locals.get(first), cell = frame.closure.get("__class__");
               if (!parameter?.bound) python("RuntimeError", "super(): first argument was deleted");
-              if (!cell?.bound || !(cell.value instanceof ClassValue)) python("RuntimeError", "super(): missing or invalid __class__ cell");
+              if (!cell?.bound || !classes.isType(cell.value)) python("RuntimeError", "super(): missing or invalid __class__ cell");
               type = cell.value; receiver = parameter.value;
             }
             task = valueTask(classes.superProxy(type, receiver), site, completion); continue;
@@ -1134,6 +1213,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "object.__new__") {
             if (!args.length || !(args[0] instanceof ClassValue)) python("TypeError", "object.__new__ requires a type");
             const type = args[0];
+            if (classes.isMetaclass(type)) python("TypeError", "object.__new__ cannot allocate a type layout");
             if ((args.length > 1 || keywords.length) && (classes.hasSlot(type, "__new__") || !classes.hasSlot(type, "__init__")))
               python("TypeError", "object.__new__ received extra arguments");
             task = valueTask(classes.instance(type), site, completion); continue;

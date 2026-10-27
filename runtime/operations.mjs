@@ -34,7 +34,9 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
-    case "class": record = {kind, bases: operands(fields.bases), module: fields.module}; break;
+    case "class": record = {kind, bases: operands(fields.bases), module: fields.module,
+      ...(fields.metaclass ? {metaclass: fields.metaclass} : {}), ...(fields.invalidMetaclass ? {invalidMetaclass: true} : {})}; break;
+    case "class-created": record = {kind, cell: fields.cell, after}; break;
     case "init": record = {kind, instance: fields.instance, after}; break;
     case "new-result":
       record = {kind, type: fields.type, args: operands(fields.args), keywords: operands(fields.keywords),
@@ -136,7 +138,7 @@ export function completion(kind, fields = {}) {
     case "delegate-bind": record = {kind, receiver: fields.receiver, args: operands(fields.args), after}; break;
     case "invoke": record = {kind, args: operands(fields.args), keywords: operands(fields.keywords),
       keywordValues: operands(fields.keywordValues), depth: fields.depth, fallback: fields.fallback ?? null, after}; break;
-    case "notify": record = {kind, type: fields.type, entries: Object.freeze(fields.entries.map(entry => Object.freeze([...entry]))), index: fields.index};
+    case "notify": record = {kind, type: fields.type, entries: Object.freeze(fields.entries.map(entry => Object.freeze([...entry]))), index: fields.index, after};
       if (record.entries.length > 128) throw new TypeError("Invalid notification snapshot.");
       break;
     case "condition":
@@ -155,6 +157,7 @@ function visit(record) {
     case "class": case "condition": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
+    case "class-created": return [record.cell, ...completionRoots(record.after)];
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "hash-result": return [record.receiver, ...completionRoots(record.after)];
     case "numeric-result": case "numeric-index": return [...record.args, ...completionRoots(record.after)];
@@ -187,7 +190,7 @@ function visit(record) {
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
-    case "notify": return [record.type, ...record.entries.map(entry => entry[1])];
+    case "notify": return [record.type, ...record.entries.map(entry => entry[1]), ...completionRoots(record.after)];
     default: throw new TypeError("Unknown operation root owner.");
   }
 }
@@ -197,7 +200,7 @@ export function completionRoots(record, frame = false) {
   if (!records.has(record)) throw new TypeError("Unknown operation root owner.");
   const retained = roots.get(record);
   if (!frame) return retained;
-  if (record.kind === "class") return record.bases;
+  if (record.kind === "class") return record.metaclass ? [...record.bases, record.metaclass] : record.bases;
   if (record.kind === "init") return [record.instance, ...retained];
   return retained;
 }
@@ -217,6 +220,9 @@ export function callTask(callable, args, keywords, keywordValues, site, after = 
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "call", callable, args: operands(args), keywords: operands(keywords),
     keywordValues: operands(keywordValues), site, completion: after, depth});
+}
+export function constructTask(callable, args, keywords, keywordValues, site, after = null, depth = 0) {
+  return Object.freeze({...callTask(callable, args, keywords, keywordValues, site, after, depth), kind: "construct"});
 }
 export function unaryTask(operation, value, site, after = null, depth = 0, optionalLength = false) {
   depthCheck(depth); completionRoots(after);
@@ -272,7 +278,7 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
 }
 export function operationRoots(task) {
   switch (task.kind) {
-    case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
+    case "construct": case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "arithmetic":
     case "numeric": return [...task.args, ...completionRoots(task.completion)];
     case "consume": return [task.receiver, ...(task.result === null ? [] : [task.result]), ...completionRoots(task.completion)];

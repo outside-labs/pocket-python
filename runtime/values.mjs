@@ -338,6 +338,26 @@ export class ValueRuntime {
     return name === "list" ? value instanceof ListValue : name === "tuple" ? value instanceof TupleValue :
       name === "range" && value instanceof RangeValue;
   }
+  typeName(value) {
+    this.charge(1);
+    if (value === null) return "NoneType";
+    if (typeof value === "boolean") return "bool";
+    if (typeof value === "bigint") return "int";
+    if (value instanceof FloatValue) return "float";
+    if (value instanceof ComplexValue) return "complex";
+    if (value instanceof StringValue) return "str";
+    if (value instanceof ListValue) return "list";
+    if (value instanceof TupleValue) return "tuple";
+    if (value instanceof DictValue) return "dict";
+    if (value instanceof RangeValue) return "range";
+    if (value instanceof SliceValue) return "slice";
+    if (value instanceof SetValue) return value.frozen ? "frozenset" : "set";
+    if (value instanceof BinaryValue) return value.mutable ? "bytearray" : "bytes";
+    if (value instanceof MemoryViewValue) return "memoryview";
+    if (value instanceof IteratorValue) return {list: "list_iterator", tuple: "tuple_iterator", str: "str_iterator", dict: "dict_keyiterator",
+      range: "range_iterator", set: "set_iterator", frozenset: "set_iterator", bytes: "bytes_iterator", bytearray: "bytearray_iterator", memoryview: "memory_iterator"}[this.typeName(value.value)];
+    return null;
+  }
   checkConstructionHint(value) {
     const range = value instanceof IteratorValue && value.value instanceof RangeValue ? value.value : value;
     if (!(range instanceof RangeValue)) return;
@@ -1258,8 +1278,8 @@ export function valueLayout(value) {
     children: [value.callable, ...value.args, ...value.keywordValues, ...(value.keywordMap === null ? [] : [value.keywordMap])]};
   if (value instanceof FunctionValue) return {bytes: 80 + 8 * (value.closure.size + (value.defaults?.length ?? 0)), children: [value.pool, value.globals, ...value.closure.values(), ...(value.defaults ?? [])]};
   if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
-    8 * (value.bases.length + value.mro.length) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
-    children: [...value.bases, ...value.mro.slice(1), ...value.namespace.values()]};
+    8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1)) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
+    children: [...value.bases, ...value.mro.slice(1), ...value.namespace.values(), ...(value.metaclass === null ? [] : [value.metaclass])]};
   if (value instanceof InstanceValue) return {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
     children: [value.type, ...value.attributes.values()]};
   if (value instanceof BoundMethodValue) return {bytes: 64, children: [value.callable, value.receiver]};
