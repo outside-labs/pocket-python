@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {GeneratorValue, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -78,7 +78,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message);
     hard(code, name, message);
   }});
-  const classes = new ClassRuntime({memory, charge, values, fail: values.fail});
+  const nativeBuiltin = name => {
+    if (moduleContext) return moduleContext.builtin(name, () => allocate(BuiltinValue, name));
+    if (!state.builtins.has(name)) state.builtins.set(name, allocate(BuiltinValue, name));
+    return state.builtins.get(name);
+  };
+  const classes = new ClassRuntime({memory, charge, values, fail: values.fail, builtin: nativeBuiltin});
   const objectType = () => moduleContext.builtin("object", () => classes.root());
   const setCell = (cell, value, bound = true) => mutate(cell, () => {
     const before = [cell.value, cell.bound]; cell.value = value; cell.bound = bound;
@@ -99,7 +104,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
         (frame.callable.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
-        (frame.callable.pool.code.version === 5 && ["getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash"].includes(key))) {
+        (frame.callable.pool.code.version === 5 && ["super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -434,9 +439,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           .map(key => [key, frame.locals.get(key).value]));
         const completion = frame.completion;
         state.temporaries.push(...namespace.values(), ...completion.bases);
+        const classCell = frame.locals.get("@source:class");
+        if (classCell) state.temporaries.push(classCell);
         state.current = {...frame.callsite, instruction: frame.returnInstruction};
         frame.leave(); state.frames.pop();
         const type = classes.create(frame.fn.name, frame.fn.qualname, completion.module, completion.bases, namespace, objectType());
+        if (classCell) { state.temporaries.push(type, classCell); setCell(classCell, type); }
         dispatch(notifyNext(type, [...namespace], 0, frame.callsite)); return;
       }
       const completion = frame.completion;
@@ -477,7 +485,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (op === "function" || op === "function-defaults" || op === "class") {
         const owner = frame.callable.pool;
         const closure = new Map(owner.code.functions[arg].free.map(key => [key,
-          frame.fn.kind === "class" ? frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
+          frame.fn.kind === "class" ? key === "__class__" && frame.locals.has("@source:class") ? frame.locals.get("@source:class") : frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
         const defaults = op === "function-defaults" ? stack.splice(stack.length - extra - fourth.length) : null;
         const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure, defaults);
         if (op !== "class") stack.push(callable);
@@ -536,7 +544,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           else if (values.isBinary(receiver)) { values.binaryMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (arg === "encode" && values.isString(receiver)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
-          else if (op === "attribute-get" && (receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+          else if (op === "attribute-get" && (receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             const plan = classes.read(receiver, arg);
             if (plan.kind === "value") stack.push(plan.value);
             else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }

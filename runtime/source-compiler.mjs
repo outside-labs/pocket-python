@@ -111,8 +111,8 @@ class Compiler {
         this.bind(value, scope); return;
       }
       if (value.kind === "Name") {
-        if (scope.classContext && value.name === "__class__") this.fail("Implicit class cells require a later class stage.", value);
         scope.uses.add(value.name);
+        if (this.classes && value.name === "super" && ["Function", "Lambda"].includes(node.kind)) scope.uses.add("__class__");
       }
       if (value.kind === "NamedExpression") binding(value.name, value);
       if (["Assign", "Delete"].includes(value.kind)) value.targets.forEach(target);
@@ -175,6 +175,9 @@ class Compiler {
       let owner = scope.parent;
       while (owner?.parent) {
         this.charge(scope.node);
+        if (this.classes && name === "__class__" && owner.node.kind === "Class") {
+          owner.locals.add("@source:class"); break;
+        }
         if (owner.node.kind !== "Class") {
           if (owner.globals.has(name)) { owner = null; break; }
           if (owner.locals.has(name)) break;

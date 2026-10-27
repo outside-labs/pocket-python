@@ -3,7 +3,7 @@
 INT-OBJECT-01 adopts the following finite construction slices against CPython
 3.14.7. `construction.json` records independent source/reference expectations;
 an authored reference is not evidence that the independent engine implements it.
-O3 is implemented; O4/O5 remain reference-only until their changes are accepted.
+O3 and O4 are implemented; O5 remains reference-only until its changes are accepted.
 Classes remain explicit in classes-source/1 and bytecode 5. The default
 core-source/1 and bytecode 4 do not gain class syntax or reflective builtins.
 

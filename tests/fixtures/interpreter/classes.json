@@ -204,7 +204,7 @@
     },
     {
       "id": "implicit-class-cell",
-      "stage": "deferred",
+      "stage": "O4",
       "source": "class A:\n    def f(self): return __class__\nprint(A().f() is A)\n",
       "stdout": "True\n"
     },
@@ -245,6 +245,7 @@
     "C2-descriptor",
     "C2-decorator",
     "C3-length",
-    "C3-hash"
+    "C3-hash",
+    "O4"
   ]
 }

@@ -57,7 +57,7 @@ export function verifyFunctions(program) {
       params[key] = fn.params[key];
     }
     const allParams = [...params.posonly, ...params.positional, ...params.kwonly, ...variadic.map(key => params[key])];
-    const locals = names(fn.locals, storageName), free = names(fn.free, validName);
+    const locals = names(fn.locals, key => storageName(key) || kind === "class" && key === "@source:class"), free = names(fn.free, validName);
     const globals = names(Object.hasOwn(fn, "globals") ? fn.globals : [], validName), nonlocals = names(Object.hasOwn(fn, "nonlocals") ? fn.nonlocals : [], validName);
     if (globals.some(key => locals.includes(key) || nonlocals.includes(key) || kind !== "class" && free.includes(key)) ||
         nonlocals.some(key => !free.includes(key) || locals.includes(key)) || functionIndex === 0 && nonlocals.length)
@@ -228,6 +228,7 @@ export function verifyFunctions(program) {
     if (op === "function" && [...functions[target].params.defaults, ...Object.values(functions[target].params.kwdefaults)].some(value => value === null))
       fail("A runtime-default function requires definition values.");
     if (["function", "function-defaults", "class"].includes(op) && functions[target].free.some(key =>
+      !(fn.kind === "class" && key === "__class__" && fn.locals.includes("@source:class")) &&
       (fn.kind === "class" || !fn.locals.includes(key)) && !fn.free.includes(key))) fail("Function/class capture has no lexical cell.");
   }
   const code = Object.freeze({format: program.format, version: program.version, constants, functions: Object.freeze(functions)});

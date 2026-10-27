@@ -1,4 +1,4 @@
-import {ClassValue, InstanceValue, BoundMethodValue, FunctionValue, BuiltinValue, EXCEPTIONS, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
+import {ClassValue, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, PropertyValue, MethodWrapperValue, PropertyAccessorValue} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
@@ -6,10 +6,11 @@ import {isPythonIdentifier} from "./source-identifiers.mjs";
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 
 export class ClassRuntime {
-  constructor({memory = null, charge = () => {}, fail = null, values = null} = {}) {
+  constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
     this.memory = memory; this.charge = charge;
     this.fail = fail || ((name, message, code = "PYTHON") => { throw Object.assign(new Error(message), {name, code}); });
     this.values = values || new ValueRuntime({memory, charge, fail: this.fail});
+    this.builtin = builtin || (name => this.make(BuiltinValue, name));
   }
   make(Type, ...args) {
     const value = new Type(...args), layout = valueLayout(value);
@@ -78,10 +79,10 @@ export class ClassRuntime {
     // their original lookup/accounting path; only adopted overrides add phases.
     return type.mro.some(base => !base.root && base.namespace.has(name));
   }
-  lookup(type, name, native = true) {
+  lookup(type, name, native = true, start = 0) {
     this.key(name); this.touch(type);
     if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
-    for (const base of type.mro) {
+    for (const base of type.mro.slice(start)) {
       this.charge(1);
       if (!native && base.root && ["__new__", "__init__"].includes(name)) continue;
       if (base.namespace.has(name)) return {found: true, value: base.namespace.get(name)};
@@ -115,6 +116,16 @@ export class ClassRuntime {
   read(receiver, name) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
+    if (receiver instanceof SuperValue) {
+      if (name === "__class__") return value(this.builtin("super"));
+      if (["__thisclass__", "__self__", "__self_class__"].includes(name))
+        return value(receiver[{__thisclass__: "thisclass", __self__: "self", __self_class__: "selfClass"}[name]]);
+      if (receiver.selfClass !== null) {
+        const item = this.lookup(receiver.selfClass, name, true, receiver.selfClass.mro.indexOf(receiver.thisclass) + 1);
+        if (item.found) return this.bindAttribute(item.value, receiver.self === receiver.selfClass ? null : receiver.self, receiver.selfClass);
+      }
+      this.fail("AttributeError", "super has no attribute '" + name + "'.");
+    }
     if (receiver instanceof PropertyValue) {
       if (["fget", "fset", "fdel"].includes(name)) return value(receiver[name]);
       if (["getter", "setter", "deleter"].includes(name)) return value(this.make(PropertyAccessorValue, name, receiver));
@@ -134,6 +145,7 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
     if (receiver instanceof InstanceValue && name === "__class__") return value(receiver.type);
     if (receiver instanceof ClassValue) {
+      if (name === "__class__") return value(this.builtin("type"));
       if (["__name__", "__qualname__", "__module__"].includes(name)) return value(this.values.string(Array.from(
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
       if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
@@ -149,6 +161,8 @@ export class ClassRuntime {
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
   bindAttribute(value, receiver, owner) {
+    if (value instanceof SuperValue && value.self === null && receiver !== null)
+      return {kind: "value", value: this.superProxy(value.thisclass, receiver)};
     if (receiver !== null && value instanceof PropertyValue) {
       if (value.fget === null) this.fail("AttributeError", "Property has no getter.");
       return {kind: "call", callable: value.fget, args: [receiver]};
@@ -176,6 +190,7 @@ export class ClassRuntime {
   }
   write(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (receiver instanceof SuperValue) this.fail("AttributeError", "super attributes are read-only");
     if (receiver instanceof InstanceValue) {
       const item = this.lookup(receiver.type, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.value instanceof PropertyValue) {
@@ -211,6 +226,14 @@ export class ClassRuntime {
     this.touch(type); this.touch(parent);
     for (const base of type.mro) { this.charge(1); if (base === parent) return true; }
     return false;
+  }
+  superProxy(type, receiver = null) {
+    if (!(type instanceof ClassValue)) this.fail("TypeError", "super requires an adopted type");
+    this.touch(type);
+    if (receiver === null) return this.make(SuperValue, type, null, null);
+    const owner = receiver instanceof ClassValue ? receiver : receiver instanceof InstanceValue ? receiver.type : null;
+    if (owner === null || !this.subclass(owner, type)) this.fail("TypeError", "super receiver must be an instance or subtype of its first argument");
+    return this.make(SuperValue, type, receiver, owner);
   }
   callable(value) {
     this.touch(value);

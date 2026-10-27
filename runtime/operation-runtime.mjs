@@ -1118,6 +1118,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "super") {
+            if (keywords.length || args.length > 2) python("TypeError", "super received invalid arguments");
+            let type = args[0], receiver = args[1] ?? null;
+            if (!args.length) {
+              const frame = state.frames.at(-1), first = [...frame.fn.params.posonly, ...frame.fn.params.positional][0];
+              if (first === undefined) python("RuntimeError", "super(): no arguments");
+              const parameter = frame.locals.get(first), cell = frame.closure.get("__class__");
+              if (!parameter?.bound) python("RuntimeError", "super(): first argument was deleted");
+              if (!cell?.bound || !(cell.value instanceof ClassValue)) python("RuntimeError", "super(): missing or invalid __class__ cell");
+              type = cell.value; receiver = parameter.value;
+            }
+            task = valueTask(classes.superProxy(type, receiver), site, completion); continue;
+          }
           if (callable.name === "object.__new__") {
             if (!args.length || !(args[0] instanceof ClassValue)) python("TypeError", "object.__new__ requires a type");
             const type = args[0];
