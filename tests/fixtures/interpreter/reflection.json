@@ -8,7 +8,8 @@
     "O16",
     "O17",
     "O18",
-    "O19"
+    "O19",
+    "O20"
   ],
   "cases": [
     {
@@ -937,14 +938,34 @@
       "stage": "O20",
       "source": "class Entry:\n def __lt__(self,other): raise ValueError(\"original\")\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n",
       "stdout": "",
-      "error_type": "ValueError"
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "__lt__",
+          "line": 2
+        }
+      ]
     },
     {
       "id": "dir-ordering-truth-error",
       "stage": "O20",
       "source": "class Truth:\n def __bool__(self): raise AttributeError(\"truth\")\nclass Entry:\n def __lt__(self,other): return Truth()\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n",
       "stdout": "",
-      "error_type": "AttributeError"
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "__bool__",
+          "line": 2
+        }
+      ]
     },
     {
       "id": "dir-ordering-copy-before-comparison",
@@ -975,13 +996,71 @@
       "stage": "O19",
       "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"kept\")\nclass Items:\n def __iter__(self): return iter(())\n __length_hint__=D()\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
       "stdout": "",
-      "error_type": "AttributeError"
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 8
+        },
+        {
+          "function": "__get__",
+          "line": 2
+        }
+      ]
     },
     {
       "id": "dir-hint-selected-after-iter",
       "stage": "O19",
       "source": "class Items:\n def __iter__(self):\n  Items.__length_hint__=lambda self: 0\n  return iter((\"x\",))\n def __length_hint__(self): raise ValueError(\"old\")\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
       "stdout": "x\n"
+    },
+    {
+      "id": "dir-generated-stable-order-0",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [15, 7, -13, 14, 2, -15, -10, 1, -4, -9, 2, -10, 9, 12, 12, 4, 15, 4, 10, 13, -14, -14, 4, -10, 6, 8, -15, 0, 13, -14, -15, 3, -8, -8, -5, -2, 15, -13, 2, 6, 6, -15, -11, 4, 14]\nprint(dir(A())==[-15, -15, -15, -15, -14, -14, -14, -13, -13, -11, -10, -10, -10, -9, -8, -8, -5, -4, -2, 0, 1, 2, 2, 2, 3, 4, 4, 4, 4, 6, 6, 6, 7, 8, 9, 10, 12, 12, 13, 13, 14, 14, 15, 15, 15])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-generated-stable-order-1",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [14, 9, 5, 0, 11, 14, -2, -8, -3, -15, -13, -10, 8, -15, -1, -13, -12, 15, -4, 4, 2, 15, -13, 15, -11, 12, 0, -3, 13, 14, -7, -13, 0, 2, -1, 14, -1, 14, -13, -14, 0, 10, -11, -15, 9]\nprint(dir(A())==[-15, -15, -15, -14, -13, -13, -13, -13, -13, -12, -11, -11, -10, -8, -7, -4, -3, -3, -2, -1, -1, -1, 0, 0, 0, 0, 2, 2, 4, 5, 8, 9, 9, 10, 11, 12, 13, 14, 14, 14, 14, 14, 15, 15, 15])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-generated-stable-order-2",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [-11, -10, -14, 0, -14, -13, -11, -13, -13, 6, -15, -8, 1, -11, 10, 9, 13, -14, 14, 8, 5, 15, -15, -12, -15, -14, 7, -4, -2, -12, 7, -5, 11, 4, 8, -8, -7, 1, -12, 11, 3, 14, 14, 9, 8]\nprint(dir(A())==[-15, -15, -15, -14, -14, -14, -14, -13, -13, -13, -12, -12, -12, -11, -11, -11, -10, -8, -8, -7, -5, -4, -2, 0, 1, 1, 3, 4, 5, 6, 7, 7, 8, 8, 8, 9, 9, 10, 11, 11, 13, 14, 14, 14, 15])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-generated-stable-order-3",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [-9, -7, -2, -2, -13, 5, 11, -4, -1, 4, 15, 8, 6, -4, 2, 10, -2, -13, -12, 3, -3, -7, 9, -3, -13, -2, -5, 9, 9, -2, -8, 7, -4, 15, -10, -8, -9, -5, -14, -5, 13, 8, 14, -12, -3]\nprint(dir(A())==[-14, -13, -13, -13, -12, -12, -10, -9, -9, -8, -8, -7, -7, -5, -5, -5, -4, -4, -4, -3, -3, -3, -2, -2, -2, -2, -2, -1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 9, 10, 11, 13, 14, 15, 15])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-generated-stable-order-4",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [6, 8, -14, 0, 7, 4, -11, 6, -15, 5, -5, 14, 5, 10, 3, -15, -8, -12, -11, -7, -12, 1, -5, 3, 11, -12, -3, 11, -4, -6, -8, 4, -10, 12, 12, -9, -15, -6, 15, 15, 0, -2, -15, 3, 8]\nprint(dir(A())==[-15, -15, -15, -15, -14, -12, -12, -12, -11, -11, -10, -9, -8, -8, -7, -6, -6, -5, -5, -4, -3, -2, 0, 0, 1, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 8, 8, 10, 11, 11, 12, 12, 14, 15, 15])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-generated-stable-order-5",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [7, 10, -5, 4, 7, -13, -15, 9, 0, -9, -11, -15, -5, 12, -10, 8, 8, -13, 9, -15, 12, 13, 13, 12, 10, 9, -10, 8, 9, 10, -1, 8, 5, 7, 13, 6, -11, 12, 3, 3, -4, 7, 0, -13, 7]\nprint(dir(A())==[-15, -15, -15, -13, -13, -13, -11, -11, -10, -10, -9, -5, -5, -4, -1, 0, 0, 3, 3, 4, 5, 6, 7, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 12, 12, 12, 12, 13, 13, 13])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-generated-stable-order-6",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [3, 1, 1, -13, -14, -11, -4, -3, -10, 11, -7, 2, -4, 7, 4, 12, -9, -13, 7, 10, 9, 14, -15, -6, -1, 7, -2, 13, -4, -15, -8, -10, 1, 6, 3, 3, -3, -15, 11, -10, -1, -4, 2, 2, 1]\nprint(dir(A())==[-15, -15, -15, -14, -13, -13, -11, -10, -10, -10, -9, -8, -7, -6, -4, -4, -4, -4, -3, -3, -2, -1, -1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 6, 7, 7, 7, 9, 10, 11, 11, 12, 13, 14])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-generated-stable-order-7",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [-13, -11, -12, 10, 6, 8, 3, 5, 14, 6, -8, 14, 6, -12, -15, -9, 8, -14, 5, -1, 9, -5, 12, 2, 14, 7, -12, 12, -9, 15, -15, -7, -15, -10, 12, -6, 15, 12, 9, 11, -10, 9, -8, -2, 8]\nprint(dir(A())==[-15, -15, -15, -14, -13, -12, -12, -12, -11, -10, -10, -9, -9, -8, -8, -7, -6, -5, -2, -1, 2, 3, 5, 5, 6, 6, 6, 7, 8, 8, 8, 9, 9, 9, 10, 11, 12, 12, 12, 12, 14, 14, 14, 15, 15])\n",
+      "stdout": "True\n"
     }
   ]
 }
