@@ -121,9 +121,10 @@ export class ClassRuntime {
     return this.builtin(name);
   }
   classAttribute(value) {
-    if (value instanceof InstanceValue && this.hasSlot(value.type, "__class__"))
-      this.fail("UnsupportedOperationError", "Advertised __class__ identities require their separate reflection stage", "UNSUPPORTED");
     return this.typeOf(value);
+  }
+  needsAdvertised(value) {
+    return value instanceof InstanceValue && ["__class__", "__getattribute__", "__getattr__"].some(name => this.hasSlot(value.type, name));
   }
   lookup(type, name, native = true, start = 0) {
     this.key(name); this.touch(type);
@@ -206,7 +207,10 @@ export class ClassRuntime {
     }
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
-    if (receiver instanceof InstanceValue && name === "__class__") return value(this.classAttribute(receiver));
+    if (receiver instanceof InstanceValue && name === "__class__") {
+      const item = this.lookup(receiver.type, name);
+      return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : value(this.classAttribute(receiver));
+    }
     if (receiver instanceof ClassValue) {
       if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
       if (["__name__", "__qualname__", "__module__"].includes(name)) return value(this.values.string(Array.from(
@@ -231,8 +235,11 @@ export class ClassRuntime {
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
   bindAttribute(value, receiver, owner) {
-    if (value instanceof SuperValue && value.self === null && receiver !== null)
+    if (value instanceof SuperValue && value.self === null && receiver !== null) {
+      if (this.needsAdvertised(receiver) && !this.subclass(receiver.type, value.thisclass))
+        return {kind: "call", callable: this.builtin("super"), args: [value.thisclass, receiver]};
       return {kind: "value", value: this.superProxy(value.thisclass, receiver)};
+    }
     if (receiver !== null && value instanceof PropertyValue) {
       if (value.fget === null) this.fail("AttributeError", "Property has no getter.");
       return {kind: "call", callable: value.fget, args: [receiver]};
@@ -304,14 +311,14 @@ export class ClassRuntime {
     for (const base of this.mro(type)) { this.charge(1); if (base === parent) return true; }
     return false;
   }
-  superProxy(type, receiver = null) {
+  superProxy(type, receiver = null, advertised = undefined) {
     if (!this.isType(type)) this.fail("TypeError", "super requires an adopted type");
     this.touch(type);
     if (receiver === null) return this.make(SuperValue, type, null, null);
-    let owner = receiver instanceof ClassValue && this.subclass(receiver, type) ? receiver : this.typeOf(receiver);
-    if (owner === null || !this.subclass(owner, type)) {
-      if (receiver instanceof InstanceValue && this.hasSlot(receiver.type, "__class__"))
-        this.fail("UnsupportedOperationError", "Advertised __class__ identities require their separate reflection stage", "UNSUPPORTED");
+    let owner = advertised === undefined ? receiver instanceof ClassValue && this.subclass(receiver, type) ? receiver : this.typeOf(receiver) : advertised;
+    if (!this.isType(owner) || !this.subclass(owner, type)) {
+      if (advertised === undefined && this.needsAdvertised(receiver))
+        this.fail("UnsupportedOperationError", "Advertised class lookup requires owned execution", "UNSUPPORTED");
       this.fail("TypeError", "super receiver must be an instance or subtype of its first argument");
     }
     return this.make(SuperValue, type, receiver, owner);
@@ -342,8 +349,8 @@ export class ClassRuntime {
     if (!this.isType(type)) this.fail("TypeError", "isinstance requires an adopted type.");
     this.touch(type); this.touch(value);
     if (type.root || this.subclass(this.typeOf(value), type)) return true;
-    if (value instanceof InstanceValue && this.hasSlot(value.type, "__class__"))
-      this.fail("UnsupportedOperationError", "Advertised __class__ identities require their separate reflection stage", "UNSUPPORTED");
+    if (this.needsAdvertised(value))
+      this.fail("UnsupportedOperationError", "Advertised class lookup requires owned execution", "UNSUPPORTED");
     return false;
   }
   selectMetaclass(bases, explicit = undefined) {

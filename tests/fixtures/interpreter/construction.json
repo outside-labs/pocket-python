@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O3",
     "O4",
-    "O5"
+    "O5",
+    "O8"
   ],
   "cases": [
     {
@@ -725,25 +726,25 @@
     },
     {
       "id": "future-advertised-class-value",
-      "stage": "Future",
+      "stage": "O8",
       "source": "class A:\n __class__=int\nprint(A().__class__ is int)\n",
       "stdout": "True\n"
     },
     {
       "id": "future-advertised-class-getter",
-      "stage": "Future",
+      "stage": "O8",
       "source": "class A:\n @property\n def __class__(self):\n  print(\"hook\")\n  return int\nprint(A().__class__ is int)\n",
       "stdout": "hook\nTrue\n"
     },
     {
       "id": "future-advertised-class-relation",
-      "stage": "Future",
+      "stage": "O8",
       "source": "class A:\n @property\n def __class__(self):\n  print(\"hook\")\n  return int\nprint(isinstance(A(),int))\n",
       "stdout": "hook\nTrue\n"
     },
     {
       "id": "future-advertised-class-super",
-      "stage": "Future",
+      "stage": "O8",
       "source": "class A: pass\nclass B:\n __class__=A\nprint(super(A,B()).__self_class__ is A)\n",
       "stdout": "True\n"
     },

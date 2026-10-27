@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O6",
-    "O7"
+    "O7",
+    "O8"
   ],
   "cases": [
     {
@@ -527,6 +528,67 @@
       "stage": "O7",
       "source": "class A:\n @staticmethod\n def __setattr__(name,value): print(name,value)\n @classmethod\n def __delattr__(cls,name): print(cls.__name__,name)\na=A()\na.x=7\ndel a.x\n",
       "stdout": "x 7\nA x\n"
+    },
+    {
+      "id": "advertised-nested-tuple",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self):\n  print(\"check\")\n  return B\na=A()\nprint(isinstance(a,((str,),((B,),),7)))\n",
+      "stdout": "check\ncheck\nTrue\n"
+    },
+    {
+      "id": "advertised-empty-tuple",
+      "stage": "O8",
+      "source": "class A:\n def __getattribute__(self,name): print(\"never\")\nprint(isinstance(A(),((),())))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "advertised-repeated-candidates",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self):\n  print(\"check\")\n  return B\na=A()\nprint(isinstance(a,(str,int,A)))\n",
+      "stdout": "check\ncheck\nTrue\n"
+    },
+    {
+      "id": "advertised-getattr-fallback",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self): raise AttributeError(\"missing\")\n def __getattr__(self,name): return B\na=A()\nprint(isinstance(a,B),super(B,a).__self_class__ is B)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "advertised-native-property",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self): return B\na=A()\nprint(object.__getattribute__(a,\"__class__\") is B,type(a) is A)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "advertised-super-unbound-descriptor",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n s=super(B)\n @property\n def __class__(self): return B\na=A()\nprint(a.s.__self__ is a,a.s.__self_class__ is B)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "advertised-super-invalid-first",
+      "stage": "O8",
+      "source": "class A:\n def __getattribute__(self,name): print(\"never\")\nsuper(7,A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-function-class",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n def __class__(self): return B\nprint(isinstance(A(),B),callable(A().__class__))\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "advertised-tuple-temporary-class",
+      "stage": "O8",
+      "source": "class A:\n @property\n def __class__(self): return type(\"B\",(Base,),{})\nclass Base: pass\nprint(isinstance(A(),((str,),Base,7)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "advertised-super-temporary-class",
+      "stage": "O8",
+      "source": "class Base: pass\nclass A:\n @property\n def __class__(self): return type(\"B\",(Base,),{})\ns=super(Base,A())\nprint(s.__self_class__.__name__,s.__thisclass__ is Base)\n",
+      "stdout": "B True\n"
     }
   ]
 }

@@ -371,9 +371,8 @@ def smoke(channel=None):
                     checks.append('constructor-super-metaclass-errors-and-future-hooks-retain-offline-diagnostics')
                     identity = 'class A: pass\nclass B:\n @property\n def __class__(self):\n  print("hook")\n  return A\nb=B()\n'
                     for expression in ['b.__class__', 'getattr(b,"__class__")', 'isinstance(b,A)', 'super(A,b)']:
-                        refused(identity + expression + '\n', 'UnsupportedOperationError:')
-                        assert page.locator('#result').inner_text() == ''
-                    checks.append('deferred-advertised-class-identities-refuse-before-offline-hook-effects')
+                        run(identity + expression + '\n', 'hook\n')
+                    checks.append('advertised-class-identities-execute-offline-hooks-when-required')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
