@@ -1,0 +1,782 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-callbacks/1",
+  "reference_version": "3.14.7",
+  "cases": [
+    {
+      "id": "persistent-global-state",
+      "source": "print(\"initialized\")\nn=0\ndef update(x):\n global n\n n+=x\n print(n)\n return [n]\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update(1) == [1]\nassert update(2) == [3]\nassert update(3) == [6]\n",
+      "stdout": "initialized\n1\n3\n6\n",
+      "results": [
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "1"
+              }
+            ]
+          }
+        },
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "3"
+              }
+            ]
+          }
+        },
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "6"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "mutable-default-state",
+      "source": "def update(x,seen=[]):\n seen.append(x)\n print(len(seen))\n return seen\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "2"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "3"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update(1) == [1]\nassert update(2) == [1, 2]\nassert update(3) == [1, 2, 3]\n",
+      "stdout": "1\n2\n3\n",
+      "results": [
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "1"
+              }
+            ]
+          }
+        },
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "1"
+              },
+              {
+                "type": "int",
+                "value": "2"
+              }
+            ]
+          }
+        },
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "1"
+              },
+              {
+                "type": "int",
+                "value": "2"
+              },
+              {
+                "type": "int",
+                "value": "3"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "retained-lexical-cells",
+      "source": "def make():\n n=0\n def update(x):\n  nonlocal n\n  n+=x\n  print(n)\n  return n\n return update\nupdate=make()\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "4"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update(1) == 1\nassert update(4) == 5\n",
+      "stdout": "1\n5\n",
+      "results": [
+        {
+          "value": {
+            "type": "int",
+            "value": "1"
+          }
+        },
+        {
+          "value": {
+            "type": "int",
+            "value": "5"
+          }
+        }
+      ]
+    },
+    {
+      "id": "callback-input-copy",
+      "source": "def update(x):\n x.append(7)\n print(len(x))\n return x\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "list",
+              "items": [
+                {
+                  "type": "int",
+                  "value": "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "list",
+              "items": [
+                {
+                  "type": "int",
+                  "value": "2"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update([1]) == [1,7]\nassert update([2]) == [2,7]\n",
+      "stdout": "2\n2\n",
+      "results": [
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "1"
+              },
+              {
+                "type": "int",
+                "value": "7"
+              }
+            ]
+          }
+        },
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "2"
+              },
+              {
+                "type": "int",
+                "value": "7"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "source-errors-and-recovery",
+      "source": "n=0\ndef update(x):\n global n\n n+=1\n print(n)\n return 7//x\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "1"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "try:\n update(0)\nexcept ZeroDivisionError: pass\nelse: raise AssertionError(\"missing callback error\")\nassert update(1) == 7\n",
+      "stdout": "1\n2\n",
+      "results": [
+        {
+          "error_type": "ZeroDivisionError"
+        },
+        {
+          "value": {
+            "type": "int",
+            "value": "7"
+          }
+        }
+      ]
+    },
+    {
+      "id": "callback-binding",
+      "source": "def update(a,/,b=3,*items,**named):\n print(a,b,len(items),len(named))\n return a+b\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "2"
+            },
+            {
+              "type": "int",
+              "value": "4"
+            },
+            {
+              "type": "int",
+              "value": "9"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update(1) == 4\nassert update(2,4,9) == 6\n",
+      "stdout": "1 3 0 0\n2 4 1 0\n",
+      "results": [
+        {
+          "value": {
+            "type": "int",
+            "value": "4"
+          }
+        },
+        {
+          "value": {
+            "type": "int",
+            "value": "6"
+          }
+        }
+      ]
+    },
+    {
+      "id": "callback-binding-error",
+      "source": "def update(x):\n print(x)\n return x\n",
+      "events": [
+        {
+          "name": "update",
+          "args": []
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "7"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "try:\n update()\nexcept TypeError: pass\nelse: raise AssertionError(\"missing callback error\")\nassert update(7) == 7\n",
+      "stdout": "7\n",
+      "results": [
+        {
+          "error_type": "TypeError"
+        },
+        {
+          "value": {
+            "type": "int",
+            "value": "7"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nested-argument-ownership",
+      "source": "def update(x,y):\n print(x[0][\"key\"][0],y[0])\n return (x,y)\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "list",
+              "items": [
+                {
+                  "type": "dict",
+                  "entries": [
+                    [
+                      {
+                        "type": "str",
+                        "codepoints": [
+                          107,
+                          101,
+                          121
+                        ]
+                      },
+                      {
+                        "type": "list",
+                        "items": [
+                          {
+                            "type": "int",
+                            "value": "7"
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "items": [
+                {
+                  "type": "int",
+                  "value": "8"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update([{'key': [7]}],[8]) == ([{'key': [7]}], [8])\n",
+      "stdout": "7 8\n",
+      "results": [
+        {
+          "value": {
+            "type": "tuple",
+            "items": [
+              {
+                "type": "list",
+                "items": [
+                  {
+                    "type": "dict",
+                    "entries": [
+                      [
+                        {
+                          "type": "str",
+                          "codepoints": [
+                            107,
+                            101,
+                            121
+                          ]
+                        },
+                        {
+                          "type": "list",
+                          "items": [
+                            {
+                              "type": "int",
+                              "value": "7"
+                            }
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "list",
+                "items": [
+                  {
+                    "type": "int",
+                    "value": "8"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "class-protocols-in-callback",
+      "source": "class A:\n def __hash__(self): return 7\n def __eq__(self,other): return True\ndef update(x):\n d={slice((A(),)):x}\n print(d[slice((A(),))])\n return d[slice((A(),))]\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "7"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "8"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update(7) == 7\nassert update(8) == 8\n",
+      "stdout": "7\n8\n",
+      "results": [
+        {
+          "value": {
+            "type": "int",
+            "value": "7"
+          }
+        },
+        {
+          "value": {
+            "type": "int",
+            "value": "8"
+          }
+        }
+      ]
+    },
+    {
+      "id": "generators-in-callback",
+      "source": "def stream(x):\n yield x\n yield x+1\ndef update(x):\n result=list(stream(x))\n print(result[0],result[1])\n return result\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "7"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "int",
+              "value": "9"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update(7) == [7, 8]\nassert update(9) == [9, 10]\n",
+      "stdout": "7 8\n9 10\n",
+      "results": [
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "7"
+              },
+              {
+                "type": "int",
+                "value": "8"
+              }
+            ]
+          }
+        },
+        {
+          "value": {
+            "type": "list",
+            "items": [
+              {
+                "type": "int",
+                "value": "9"
+              },
+              {
+                "type": "int",
+                "value": "10"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "unicode-binary-values",
+      "source": "def update(x,y):\n print(x,len(y))\n return (x,y)\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "str",
+              "codepoints": [
+                99,
+                97,
+                102,
+                233,
+                127861
+              ]
+            },
+            {
+              "type": "bytes",
+              "bytes": [
+                97,
+                98,
+                99
+              ]
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update('caf\u00e9\ud83c\udf75',b'abc') == ('caf\u00e9\ud83c\udf75', b'abc')\n",
+      "stdout": "caf\u00e9\ud83c\udf75 3\n",
+      "results": [
+        {
+          "value": {
+            "type": "tuple",
+            "items": [
+              {
+                "type": "str",
+                "codepoints": [
+                  99,
+                  97,
+                  102,
+                  233,
+                  127861
+                ]
+              },
+              {
+                "type": "bytes",
+                "bytes": [
+                  97,
+                  98,
+                  99
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "numeric-values",
+      "source": "def update(x,y):\n print(x==1.5,y==3+4j)\n return (x,y)\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "float",
+              "bits": "3ff8000000000000"
+            },
+            {
+              "type": "complex",
+              "real_bits": "4008000000000000",
+              "imag_bits": "4010000000000000"
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update(1.5,(3+4j)) == (1.5, (3+4j))\n",
+      "stdout": "True True\n",
+      "results": [
+        {
+          "value": {
+            "type": "tuple",
+            "items": [
+              {
+                "type": "float",
+                "bits": "3ff8000000000000"
+              },
+              {
+                "type": "complex",
+                "real_bits": "4008000000000000",
+                "imag_bits": "4010000000000000"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "none-bool-dictionary",
+      "source": "def update(x):\n print(x is None)\n return {\"valid\":True,\"value\":x}\n",
+      "events": [
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "none"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "args": [
+            {
+              "type": "bool",
+              "value": false
+            }
+          ]
+        }
+      ],
+      "reference_tail": "assert update(None) == {'valid': True, 'value': None}\nassert update(False) == {'valid': True, 'value': False}\n",
+      "stdout": "True\nFalse\n",
+      "results": [
+        {
+          "value": {
+            "type": "dict",
+            "entries": [
+              [
+                {
+                  "type": "str",
+                  "codepoints": [
+                    118,
+                    97,
+                    108,
+                    105,
+                    100
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": true
+                }
+              ],
+              [
+                {
+                  "type": "str",
+                  "codepoints": [
+                    118,
+                    97,
+                    108,
+                    117,
+                    101
+                  ]
+                },
+                {
+                  "type": "none"
+                }
+              ]
+            ]
+          }
+        },
+        {
+          "value": {
+            "type": "dict",
+            "entries": [
+              [
+                {
+                  "type": "str",
+                  "codepoints": [
+                    118,
+                    97,
+                    108,
+                    105,
+                    100
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": true
+                }
+              ],
+              [
+                {
+                  "type": "str",
+                  "codepoints": [
+                    118,
+                    97,
+                    108,
+                    117,
+                    101
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": false
+                }
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -476,7 +476,12 @@ export class ValueRuntime {
     for (const [key, value] of pairs) this.set(result, key, value);
     return result;
   }
-  decode(record, {immutable = false, depth = 0} = {}) {
+  decode(record, options = {}) {
+    const value = this.decodeRecord(record, options);
+    options.retain?.(value);
+    return value;
+  }
+  decodeRecord(record, {immutable = false, depth = 0, retain = null} = {}) {
     this.depth(depth); this.charge(1);
     if (!record || typeof record !== "object" || Array.isArray(record)) this.fail("TypeError", "Expected a tagged Python value.");
     const fields = {none: ["type"], bool: ["type", "value"], int: ["type", "value"],
@@ -503,14 +508,14 @@ export class ValueRuntime {
     }
     if (["tuple", "list"].includes(record.type) && Array.isArray(record.items) && record.items.length <= VALUE_LIMITS.items) {
       if (immutable && record.type === "list") this.fail("TypeError", "Mutable constants require construction instructions.");
-      const items = Array.from(record.items, item => this.decode(item, {immutable, depth: depth + 1}));
+      const items = Array.from(record.items, item => this.decode(item, {immutable, depth: depth + 1, retain}));
       return record.type === "tuple" ? this.tuple(items) : this.list(items);
     }
     if (record.type === "dict" && Array.isArray(record.entries) && record.entries.length <= VALUE_LIMITS.items) {
       if (immutable) this.fail("TypeError", "Mutable constants require construction instructions.");
       return this.dict(Array.from(record.entries, pair => {
         if (!Array.isArray(pair) || pair.length !== 2) this.fail("TypeError", "Dictionary entries require key/value pairs.");
-        return pair.map(item => this.decode(item, {immutable, depth: depth + 1}));
+        return pair.map(item => this.decode(item, {immutable, depth: depth + 1, retain}));
       }));
     }
     this.fail("TypeError", "Invalid or unimplemented tagged value.");

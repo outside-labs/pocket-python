@@ -18,7 +18,7 @@ const summary = (frame, cursor) => Object.freeze({function: frame.fn.name,
 
 function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth = 48,
   shouldCancel = null, memoryLimits = {}, arena = null, retainResult = false, onOutput = () => {},
-  moduleContext = null, module = null, inheritedException = null} = {}) {
+  moduleContext = null, module = null, inheritedException = null, entryCall = null} = {}) {
   if (!Number.isSafeInteger(maxSteps) || maxSteps < 1 || maxSteps > 1_000_000 ||
       !Number.isSafeInteger(maxWork) || maxWork < 1 || maxWork > 100_000_000 ||
       !Number.isSafeInteger(maxDepth) || maxDepth < 1 || maxDepth > 256 ||
@@ -32,6 +32,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         !(module instanceof ModuleValue) || moduleContext.module(module.name) !== module || moduleContext.registry.program(module.name) !== program)) ||
       (verified.code.version >= 4 && moduleContext === null) ||
       (inheritedException !== null && (!(inheritedException instanceof ExceptionValue) || moduleContext === null))) throw new TypeError("Version 4/5 requires a verified module execution context.");
+  if (entryCall !== null && (moduleContext === null || !(entryCall.callable instanceof FunctionValue) ||
+      entryCall.callable.pool.module !== module || !Array.isArray(entryCall.arguments) || entryCall.arguments.length > 128))
+    throw new TypeError("Invalid module callback entry.");
   const state = {frames: [], outputLeases: [], builtins: new Map(), pool: null, globals: null,
     temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null, pendingImport: null,
     transitions: moduleContext?.transitions || Object.create(null)};
@@ -468,7 +471,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
   };
   const start = () => {
+    if (entryCall) state.temporaries.push(entryCall.callable);
     state.rootLeave = memory.enter(() => [state.pool, state.globals, inheritedException, ...state.builtins.values(), ...state.temporaries], {charge, fail: hard});
+    if (entryCall) {
+      state.pool = entryCall.callable.pool; state.globals = module.environment;
+      const args = entryCall.arguments.map(record => values.decode(record, {retain: value => state.temporaries.push(value)}));
+      enter(entryCall.callable, bind(entryCall.callable, args, [], []));
+      return;
+    }
     state.pool = allocate(CodePool, verified.code, verified.bytes, module);
     state.globals = module ? module.environment : allocate(Environment);
     if (module) mutate(module, () => { const before = module.pool; module.pool = state.pool; return () => { module.pool = before; }; });
@@ -844,6 +854,13 @@ export class Execution {
   static modules(context) {
     if (!isModuleContext(context) || !context.activeRun) throw new TypeError("An active module context is required.");
     return new Execution(null, {}, context);
+  }
+  static callback(context, callable, args) {
+    if (!isModuleContext(context) || !context.activeRun || !(callable instanceof FunctionValue) ||
+        context.module(callable.pool.module?.name) !== callable.pool.module || callable.pool.module.status !== "ready")
+      throw new TypeError("A ready owned Python callback and active module context are required.");
+    return new Execution(context.registry.program(callable.pool.module.name), {...context.options, arena: context.memory,
+      moduleContext: context, module: callable.pool.module, retainResult: true, entryCall: {callable, arguments: args}});
   }
   get state() { return this.#state; }
   get result() {
