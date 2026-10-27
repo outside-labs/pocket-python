@@ -245,3 +245,16 @@ test('execution-option accessors never run and failed snapshots allocate no even
     assert.equal(getters, 0); assert.equal(session.pending, 0); assert.deepEqual(session.stats(), before);
   } finally { close(); }
 });
+
+test('falsy values thrown by host hooks reject exactly once and preserve the next event', async () => {
+  const {session, close} = await setup('def update(): return 7\n');
+  try {
+    session.run(); const handle = session.register('update');
+    for (const thrown of [null, undefined, false, 0]) {
+      const bad = session.enqueue(handle, [], {shouldCancel: () => { throw thrown; }}), good = session.enqueue(handle);
+      pump(session);
+      await bad.result.then(() => assert.fail('Host failure resolved'), error => assert.equal(error, thrown));
+      assert.deepEqual(await good.result, integer(7)); assert.equal(bad.cancel(), false);
+    }
+  } finally { close(); }
+});

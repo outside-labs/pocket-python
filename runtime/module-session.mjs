@@ -166,12 +166,12 @@ export class ModuleSession {
     this.#events.set(id, event); this.#queue.push(event);
     return Object.freeze({id, result, cancel: () => this.#cancelEvent(event)});
   }
-  #settle(event, error = null) {
+  #settle(event, ...failure) {
     if (event.settled) return;
     event.settled = true; this.#events.delete(event.id);
     this.#queue = this.#queue.filter(item => item !== event); if (this.#event === event) this.#event = null;
     event.release();
-    if (error) event.reject(error); else event.resolve(event.activation.result);
+    if (failure.length) event.reject(failure[0]); else event.resolve(event.activation.result);
   }
   #cancelEvent(event) {
     if (event.settled) return false;
