@@ -1,0 +1,591 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-construction/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "new-original-arguments",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls,x,*,y):\n  print(\"new\",cls.__name__,x,y)\n  return object.__new__(cls)\n def __init__(self,x,*,y):\n  print(\"init\",x,y)\n  self.x=x+y\na=A(3,y=4)\nprint(a.x)\n",
+      "stdout": "new A 3 4\ninit 3 4\n7\n"
+    },
+    {
+      "id": "new-foreign-return",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls,x): return [x]\n def __init__(self,x): print(\"never\")\nprint(A(7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "new-none-return",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls): return None\n def __init__(self): print(\"never\")\nprint(A())\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "new-subclass-init",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls,x): return object.__new__(B)\n def __init__(self,x): print(\"base\")\nclass B(A):\n def __init__(self,x): print(\"child\",x)\na=A(8)\nprint(isinstance(a,B))\n",
+      "stdout": "child 8\nTrue\n"
+    },
+    {
+      "id": "new-unrelated-instance",
+      "stage": "O3",
+      "source": "class B:\n def __init__(self): self.x=9\nclass A:\n def __new__(cls): return B()\n def __init__(self): print(\"never\")\nprint(A().x)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "new-inherited",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls,x):\n  print(cls.__name__)\n  return object.__new__(cls)\n def __init__(self,x): self.x=x\nclass B(A): pass\nprint(B(7).x)\n",
+      "stdout": "B\n7\n"
+    },
+    {
+      "id": "new-static-definition",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls): return object.__new__(cls)\na=A()\nprint(A.__new__ is a.__new__,isinstance(a.__new__(A),A))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "new-explicit-static",
+      "stage": "O3",
+      "source": "class A:\n @staticmethod\n def __new__(cls,x): return object.__new__(cls)\nprint(isinstance(A(3),A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "new-classmethod",
+      "stage": "O3",
+      "source": "class A:\n @classmethod\n def __new__(bound,cls):\n  print(bound is cls)\n  return object.__new__(cls)\nA()\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "new-descriptor",
+      "stage": "O3",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(obj is None,owner.__name__)\n  def create(cls,x): return object.__new__(cls)\n  return create\nclass A:\n __new__=D()\n def __init__(self,x): self.x=x\nprint(A(4).x)\n",
+      "stdout": "True A\n4\n"
+    },
+    {
+      "id": "new-runtime-assignment",
+      "stage": "O3",
+      "source": "class A: pass\ndef create(cls,x): return [x]\nA.__new__=create\nprint(A(6)[0])\ndel A.__new__\nprint(isinstance(A(),A))\n",
+      "stdout": "6\nTrue\n"
+    },
+    {
+      "id": "new-cached-instance",
+      "stage": "O3",
+      "source": "class A:\n def __init__(self,x): self.x=x\na=object.__new__(A)\ndef create(cls,x): return a\nA.__new__=create\nprint(A(3) is A(4),a.x)\n",
+      "stdout": "True 4\n"
+    },
+    {
+      "id": "new-init-selected-after-new",
+      "stage": "O3",
+      "source": "def initialize(self,x): print(\"changed\",x)\nclass A:\n def __new__(cls,x):\n  cls.__init__=initialize\n  return object.__new__(cls)\n def __init__(self,x): print(\"old\")\nA(5)\n",
+      "stdout": "changed 5\n"
+    },
+    {
+      "id": "new-init-descriptor",
+      "stage": "O3",
+      "source": "class D:\n def __get__(self,obj,owner):\n  def initialize(x): obj.x=x\n  return initialize\nclass A:\n __init__=D()\nprint(A(7).x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "new-init-result",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls): return object.__new__(cls)\n def __init__(self): return 1\nA()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "new-body-error",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls): raise AttributeError(\"body\")\nA()\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "new-binding-error",
+      "stage": "O3",
+      "source": "class D:\n def __get__(self,obj,owner): raise ValueError(\"binding\")\nclass A: __new__=D()\nA()\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "new-not-callable",
+      "stage": "O3",
+      "source": "class A: __new__=None\nA()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "new-signature",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls,x): return object.__new__(cls)\nA()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "new-generator-result",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls):\n  yield 7\n def __init__(self): print(\"never\")\nprint(next(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "object-new-direct",
+      "stage": "O3",
+      "source": "class A:\n def __init__(self,x): self.x=x\na=object.__new__(A,7)\nprint(isinstance(a,A),hasattr(a,\"x\"))\nA.__init__(a,8)\nprint(a.x)\n",
+      "stdout": "True False\n8\n"
+    },
+    {
+      "id": "object-new-extra",
+      "stage": "O3",
+      "source": "class A: pass\nobject.__new__(A,3)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "object-new-overridden-extra",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls,*args): return object.__new__(cls,*args)\nA(3)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "object-new-type",
+      "stage": "O3",
+      "source": "object.__new__(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "object-init-overrides",
+      "stage": "O3",
+      "source": "class A:\n def __new__(cls,x): return object.__new__(cls)\na=A(3)\nprint(object.__init__(a,4))\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "object-init-default-extra",
+      "stage": "O3",
+      "source": "class A: pass\nobject.__init__(A(),3)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "object-init-overridden-extra",
+      "stage": "O3",
+      "source": "class A:\n def __init__(self,x): pass\nobject.__init__(A(1),2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "object-init-arbitrary-value",
+      "stage": "O3",
+      "source": "print(object.__init__(7))\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "super-diamond",
+      "stage": "O4",
+      "source": "class A:\n def f(self): return 1\nclass B(A):\n def f(self): return super().f()+2\nclass C(A):\n def f(self): return super().f()+4\nclass D(B,C):\n def f(self): return super().f()+8\nprint(D().f())\n",
+      "stdout": "15\n"
+    },
+    {
+      "id": "super-explicit",
+      "stage": "O4",
+      "source": "class A:\n def f(self): return 7\nclass B(A): pass\nb=B()\nb.f=None\nprint(super(B,b).f(),super(B,b).__self__ is b,super(B,b).__self_class__ is B)\n",
+      "stdout": "7 True True\n"
+    },
+    {
+      "id": "super-classmethod",
+      "stage": "O4",
+      "source": "class A:\n @classmethod\n def f(cls): return cls.__name__\nclass B(A):\n @classmethod\n def f(cls): return super().f()\nprint(B.f(),super(B,B).f())\n",
+      "stdout": "B B\n"
+    },
+    {
+      "id": "super-property",
+      "stage": "O4",
+      "source": "class A:\n @property\n def x(self): return self.saved\nclass B(A):\n def f(self): return super().x\nb=B()\nb.saved=8\nb.x=9\nprint(b.f())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "super-property-binding",
+      "stage": "O4",
+      "source": "class A:\n @property\n def x(self): return self.saved\nclass B(A):\n def f(self): return super().x\nb=B()\nb.saved=8\nprint(b.f())\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "super-descriptor-owner",
+      "stage": "O4",
+      "source": "class Desc:\n def __get__(self,obj,owner):\n  print(owner.__name__,obj is None)\n  return 9\nclass A: x=Desc()\nclass B(A): pass\nprint(super(B,B()).x,super(B,B).x)\n",
+      "stdout": "B False\nB True\n9 9\n"
+    },
+    {
+      "id": "super-unbound",
+      "stage": "O4",
+      "source": "class A:\n def f(self): return 4\nclass B(A): pass\nu=super(B)\nprint(u.__thisclass__ is B,u.__self__ is None,u.__self_class__ is None)\nB.proxy=u\nb=B()\nprint(b.proxy.f(),B.proxy is u)\n",
+      "stdout": "True True True\n4 True\n"
+    },
+    {
+      "id": "super-none",
+      "stage": "O4",
+      "source": "class A: pass\nu=super(A,None)\nprint(u.__self__ is None)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "super-missing",
+      "stage": "O4",
+      "source": "class A: pass\nsuper(A,A()).missing\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "super-invalid-first",
+      "stage": "O4",
+      "source": "super(7,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "super-invalid-receiver",
+      "stage": "O4",
+      "source": "class A: pass\nclass B: pass\nsuper(A,B())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "super-no-frame-cell",
+      "stage": "O4",
+      "source": "def f(x): return super()\nf(7)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "super-no-arguments",
+      "stage": "O4",
+      "source": "class A:\n @staticmethod\n def f(): return super()\nA.f()\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "super-deleted-first",
+      "stage": "O4",
+      "source": "class A:\n def f(self):\n  del self\n  return super()\nA().f()\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "super-replaced-first",
+      "stage": "O4",
+      "source": "class A:\n def f(self):\n  self=7\n  return super()\nA().f()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "super-nested-first",
+      "stage": "O4",
+      "source": "class A:\n def f(self): return 3\nclass B(A):\n def f(self):\n  def nested(value): return super().f()\n  return nested(self)\nprint(B().f())\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "super-generator",
+      "stage": "O4",
+      "source": "class A:\n def f(self): return 6\nclass B(A):\n def g(self):\n  yield 1\n  yield super().f()\ng=B().g()\nprint(next(g),next(g))\n",
+      "stdout": "1 6\n"
+    },
+    {
+      "id": "super-new",
+      "stage": "O4",
+      "source": "class A:\n def __new__(cls,x): return super().__new__(cls)\n def __init__(self,x): self.x=x\nprint(A(8).x)\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "class-cell-decorator",
+      "stage": "O4",
+      "source": "def decorate(cls):\n print(cls().owner() is cls)\n return cls\n@decorate\nclass A:\n def owner(self): return __class__\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-cell-nested",
+      "stage": "O4",
+      "source": "class A:\n x=9\n def f(self):\n  def inner(): return __class__\n  return inner()\nprint(A().f() is A)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-cell-class-local",
+      "stage": "O4",
+      "source": "class A:\n x=9\n def f(self): return x\nA().f()\n",
+      "stdout": "",
+      "error_type": "NameError"
+    },
+    {
+      "id": "class-cell-not-class-local-value",
+      "stage": "O4",
+      "source": "class A:\n __class__=7\n def f(self): return __class__\nprint(A().f() is A,A.__class__ is type)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-cell-nonlocal",
+      "stage": "O4",
+      "source": "class A:\n def f(self):\n  nonlocal __class__\n  __class__=7\n def g(self): return __class__\na=A()\na.f()\nprint(a.g())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "class-cell-empty-before-completion",
+      "stage": "O4",
+      "source": "class A:\n def f(value): return __class__\n f(None)\n",
+      "stdout": "",
+      "error_type": "NameError"
+    },
+    {
+      "id": "type-primitives",
+      "stage": "O5",
+      "source": "print(type(1) is int,type(True) is bool,type(1.5) is float,type(2j) is complex,type(\"x\") is str)\nprint(type([]) is list,type(()) is tuple,type({}) is dict,type(range(3)) is range)\n",
+      "stdout": "True True True True True\nTrue True True True\n"
+    },
+    {
+      "id": "type-owned-values",
+      "stage": "O5",
+      "source": "print(type(set()) is set,type(frozenset()) is frozenset,type(b\"a\") is bytes,type(bytearray()) is bytearray,type(memoryview(b\"x\")) is memoryview,type(slice(1)) is slice)\n",
+      "stdout": "True True True True True True\n"
+    },
+    {
+      "id": "type-classes",
+      "stage": "O5",
+      "source": "class A: pass\nprint(type(A) is type,type(A()) is A,type(type) is type,type(object) is type,type(object()) is object)\n",
+      "stdout": "True True True True True\n"
+    },
+    {
+      "id": "type-named-values",
+      "stage": "O5",
+      "source": "def f(): pass\nclass A:\n def f(self): pass\nprint(type(None).__name__,type(f).__name__,type(A().f).__name__,type(print).__name__,type(NotImplemented).__name__)\n",
+      "stdout": "NoneType function method builtin_function_or_method NotImplementedType\n"
+    },
+    {
+      "id": "type-exceptions",
+      "stage": "O5",
+      "source": "print(type(ValueError()) is ValueError,isinstance(KeyError(),LookupError),issubclass(UnicodeDecodeError,ValueError))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "type-signatures",
+      "stage": "O5",
+      "source": "type(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "type-no-arguments",
+      "stage": "O5",
+      "source": "type()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "relation-builtin-ancestry",
+      "stage": "O5",
+      "source": "print(issubclass(bool,int),issubclass(int,bool),issubclass(type,object),issubclass(str,object),issubclass(Exception,BaseException))\nprint(isinstance(True,int),isinstance(int,type),isinstance(object,type),isinstance(7,object))\n",
+      "stdout": "True False True True True\nTrue True True True\n"
+    },
+    {
+      "id": "relation-nested-tuples",
+      "stage": "O5",
+      "source": "class A: pass\nclass B(A): pass\nprint(isinstance(B(),((str,int),(A,))),issubclass(B,((str,int),(A,))),isinstance(3,(int,7)),issubclass(bool,(int,7)))\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "relation-empty-tuples",
+      "stage": "O5",
+      "source": "print(isinstance(1,()),issubclass(1,()),issubclass(int,()))\n",
+      "stdout": "False False False\n"
+    },
+    {
+      "id": "relation-invalid-classinfo",
+      "stage": "O5",
+      "source": "isinstance(1,(str,7,int))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "relation-invalid-subject",
+      "stage": "O5",
+      "source": "issubclass(7,(int,str))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "relation-native-metadata",
+      "stage": "O5",
+      "source": "print(int.__name__,bool.__bases__[0] is int,type.__bases__[0] is object,object.__bases__==(),len(bool.__mro__))\n",
+      "stdout": "int True True True 3\n"
+    },
+    {
+      "id": "dynamic-type",
+      "stage": "O5",
+      "source": "A=type(\"A\",(),{\"x\":7})\nB=type(\"B\",(A,),{\"y\":8})\nprint(A.__name__,B().x,B.y,B.__bases__[0] is A,type(B) is type)\n",
+      "stdout": "A 7 8 True True\n"
+    },
+    {
+      "id": "dynamic-name",
+      "stage": "O5",
+      "source": "A=type(\"two words\",(),{})\nprint(A.__name__)\n",
+      "stdout": "two words\n"
+    },
+    {
+      "id": "dynamic-init",
+      "stage": "O5",
+      "source": "def init(self,x): self.x=x\nA=type(\"A\",(),{\"__init__\":init})\nprint(A(8).x)\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "dynamic-notification",
+      "stage": "O5",
+      "source": "class D:\n def __set_name__(self,owner,name): print(owner.__name__,name)\nA=type(\"A\",(),{\"x\":D()})\n",
+      "stdout": "A x\n"
+    },
+    {
+      "id": "dynamic-namespace-copy",
+      "stage": "O5",
+      "source": "ns={\"x\":7}\nA=type(\"A\",(),ns)\nns[\"x\"]=8\nprint(A.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "dynamic-namespace-type",
+      "stage": "O5",
+      "source": "type(\"A\",(),[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dynamic-namespace-key",
+      "stage": "Future",
+      "source": "type(\"A\",(),{1:2})\n",
+      "stdout": ""
+    },
+    {
+      "id": "dynamic-bases-type",
+      "stage": "O5",
+      "source": "type(\"A\",[],{})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dynamic-name-type",
+      "stage": "O5",
+      "source": "type(7,(),{})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "metaclass-explicit-type",
+      "stage": "O5",
+      "source": "class A(metaclass=type): pass\nprint(type(A) is type)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metaclass-new-init",
+      "stage": "O5",
+      "source": "class M(type):\n def __new__(mcls,name,bases,ns):\n  print(\"new\",name)\n  ns[\"x\"]=7\n  return super().__new__(mcls,name,bases,ns)\n def __init__(cls,name,bases,ns):\n  print(\"init\",name,cls.x)\n  super().__init__(name,bases,ns)\nclass A(metaclass=M): pass\nprint(type(A) is M,A.x,isinstance(A,M),issubclass(M,type))\n",
+      "stdout": "new A\ninit A 7\nTrue 7 True True\n"
+    },
+    {
+      "id": "metaclass-inheritance",
+      "stage": "O5",
+      "source": "class M(type): pass\nclass N(M): pass\nclass A(metaclass=M): pass\nclass B(A,metaclass=N): pass\nclass C(B): pass\nprint(type(A) is M,type(B) is N,type(C) is N)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "metaclass-conflict",
+      "stage": "O5",
+      "source": "class M(type): pass\nclass N(type): pass\nclass A(metaclass=M): pass\nclass B(metaclass=N): pass\nclass C(A,B): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "metaclass-selection",
+      "stage": "O5",
+      "source": "class M(type): pass\nclass N(M): pass\nclass A(metaclass=N): pass\nclass B(A,metaclass=M): pass\nprint(type(B) is N)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metaclass-foreign-return",
+      "stage": "O5",
+      "source": "class M(type):\n def __new__(mcls,name,bases,ns): return 7\n def __init__(cls,*args): print(\"never\")\nclass A(metaclass=M): pass\nprint(A)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "metaclass-cell",
+      "stage": "O5",
+      "source": "class M(type):\n def __new__(mcls,name,bases,ns): return type.__new__(mcls,name,bases,ns)\nclass A(metaclass=M):\n def f(self): return __class__\nprint(A().f() is A)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metaclass-notification-order",
+      "stage": "O5",
+      "source": "class D:\n def __set_name__(self,owner,name): print(\"name\",name)\nclass M(type):\n def __new__(mcls,name,bases,ns):\n  print(\"before\")\n  cls=type.__new__(mcls,name,bases,ns)\n  print(\"after\")\n  return cls\n def __init__(cls,*args): print(\"init\")\ndef deco(cls):\n print(\"deco\")\n return cls\n@deco\nclass A(metaclass=M): x=D()\n",
+      "stdout": "before\nname x\nafter\ninit\ndeco\n"
+    },
+    {
+      "id": "metaclass-method",
+      "stage": "O5",
+      "source": "class M(type):\n def f(cls): return cls.__name__\nclass A(metaclass=M): pass\nprint(A.f(),A.f.__self__ is A)\n",
+      "stdout": "A True\n"
+    },
+    {
+      "id": "metaclass-call",
+      "stage": "O5",
+      "source": "class M(type):\n def __call__(cls,x):\n  print(\"call\",x)\n  return super().__call__(x+1)\nclass A(metaclass=M):\n def __init__(self,x): self.x=x\nprint(A(4).x)\n",
+      "stdout": "call 4\n5\n"
+    },
+    {
+      "id": "metaclass-call-foreign",
+      "stage": "O5",
+      "source": "class M(type):\n def __call__(cls,x): return [x]\nclass A(metaclass=M): pass\nprint(A(3)[0])\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "metaclass-init-result",
+      "stage": "O5",
+      "source": "class M(type):\n def __init__(cls,*args): return 7\nclass A(metaclass=M): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "metaclass-new-body-error",
+      "stage": "O5",
+      "source": "class M(type):\n def __new__(mcls,*args): raise ValueError(\"new\")\nclass A(metaclass=M): pass\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "future-prepare",
+      "stage": "Future",
+      "source": "class M(type):\n @classmethod\n def __prepare__(mcls,name,bases): return {}\nclass A(metaclass=M): pass\n",
+      "stdout": ""
+    },
+    {
+      "id": "future-init-subclass",
+      "stage": "Future",
+      "source": "class A:\n def __init_subclass__(cls): print(\"hook\")\nclass B(A): pass\n",
+      "stdout": "hook\n"
+    },
+    {
+      "id": "future-builtin-subclass",
+      "stage": "Future",
+      "source": "class A(list): pass\nprint(len(A()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "future-instancecheck",
+      "stage": "Future",
+      "source": "class M(type):\n def __instancecheck__(cls,value): return True\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-class-keywords",
+      "stage": "Future",
+      "source": "class A:\n def __init_subclass__(cls,flag): print(flag)\nclass B(A,flag=7): pass\n",
+      "stdout": "7\n"
+    }
+  ]
+}
