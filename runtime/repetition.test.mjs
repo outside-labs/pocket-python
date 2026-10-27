@@ -44,3 +44,21 @@ test('container repetition uses activation work and allocation budgets', async (
     assert.equal(oom.error?.code, 'OOM'); assert.equal(oom.stdout, 'entered\n'); closed(oom.closed);
   }
 });
+
+test('text repetition bounds Unicode code points before host allocation', async () => {
+  const accepted = await run('a="😀"*65536\nprint(len(a),a[65535]=="😀")\n');
+  assert.equal(accepted.error, undefined, JSON.stringify(accepted.error));
+  assert.equal(accepted.stdout, '65536 True\n'); closed(accepted.closed);
+  for (const source of ['"x"*65537\n', '65537*"😀"\n']) {
+    const result = await run(source);
+    assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+  }
+});
+
+test('text repetition obeys work and arena limits independently of its length quota', async () => {
+  const source = 'print("entered")\na="😀"*10000\n';
+  const budget = await run(source, {maxWork: 1000});
+  assert.equal(budget.error?.code, 'BUDGET'); assert.equal(budget.stdout, 'entered\n'); closed(budget.closed);
+  const oom = await run(source, {maxWork: 20000000}, {maxBytes: 8000});
+  assert.equal(oom.error?.code, 'OOM'); assert.equal(oom.stdout, 'entered\n'); closed(oom.closed);
+});
