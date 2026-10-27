@@ -392,6 +392,27 @@
         "classes-source/1",
         "core-source/1"
       ]
+    },
+    {
+      "id": "injected-caller-context-isolation",
+      "stage": "G1",
+      "source": "def g():\n yield 1\na=g()\nnext(a)\ntry:\n raise KeyError(\"caller\")\nexcept KeyError:\n a.throw(ValueError(\"injected\"))\n",
+      "error_type": "ValueError",
+      "error_context_type": null,
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 8
+        },
+        {
+          "function": "g",
+          "line": 2
+        }
+      ],
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     }
   ]
 }

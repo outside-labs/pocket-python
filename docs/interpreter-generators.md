@@ -37,8 +37,8 @@ See the [yield expression and generator method reference](https://docs.python.or
 
 ## Acceptance
 
-The corpus contains 32 adopted class comparisons and three explicit refusals;
-the shared core selection has 29 comparisons and three refusals. CI runs all
+The corpus contains 33 adopted class comparisons and three explicit refusals;
+the shared core selection has 30 comparisons and three refusals. CI runs all
 eight target/profile/driver combinations and requires zero logical teardown.
 Dedicated tests collect between every instruction, retain suspended aliases and
 cycles, and interrupt execution in generator bodies and comprehension callbacks.

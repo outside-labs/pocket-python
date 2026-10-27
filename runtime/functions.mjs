@@ -220,7 +220,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   const injectGenerator = value => {
     const frame = state.frames.at(-1);
     addTrace(value, frame.suspensionSite);
-    if (frame.activeException && frame.activeException !== value) mutate(value, () => {
+    if (frame.ownsException && frame.activeException && frame.activeException !== value) mutate(value, () => {
       const before = value.context; value.context = frame.activeException;
       return () => { value.context = before; };
     });
