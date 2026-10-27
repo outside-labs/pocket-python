@@ -257,11 +257,11 @@ export function itemTask(receiver, key, site, after = null, depth = 0, operation
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "item", receiver, key, operation: itemOperation(operation), item, site, completion: after, depth});
 }
-export function attributeTask(receiver, name, site, after = null, depth = 0, operation = "get", key = null, hook = null) {
+export function attributeTask(receiver, name, site, after = null, depth = 0, operation = "get", key = null, hook = null, item = null) {
   depthCheck(depth); completionRoots(after);
-  if (typeof name !== "string" || name.length > 256 || !["get", "native-get", "fallback"].includes(operation))
+  if (typeof name !== "string" || name.length > 256 || !["get", "native-get", "fallback", "set", "delete", "native-set", "native-delete"].includes(operation))
     throw new TypeError("Invalid attribute operation.");
-  return Object.freeze({kind: "attribute", receiver, name, key, hook, operation, site, completion: after, depth});
+  return Object.freeze({kind: "attribute", receiver, name, key, hook, item, operation, site, completion: after, depth});
 }
 export function sliceTask(receiver, parts, site, after = null, depth = 0, operation = "get", item = null) {
   depthCheck(depth); completionRoots(after);
@@ -287,7 +287,7 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
 }
 export function operationRoots(task) {
   switch (task.kind) {
-    case "attribute": return [task.receiver, task.key, task.hook, ...completionRoots(task.completion)];
+    case "attribute": return [task.receiver, task.key, task.hook, ...(["set", "native-set"].includes(task.operation) ? [task.item] : []), ...completionRoots(task.completion)];
     case "construct": case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "arithmetic":
     case "numeric": return [...task.args, ...completionRoots(task.completion)];

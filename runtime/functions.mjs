@@ -540,6 +540,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
         if (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
+        if (receiver instanceof InstanceValue && classes.hasSlot(receiver.type, op === "attribute-set" ? "__setattr__" : "__delattr__")) {
+          dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "attribute-set" ? "set" : "delete", null, null, value)); return;
+        }
         const plan = classes.write(receiver, arg, value, op === "attribute-delete");
         if (plan.kind === "value") stack.push(plan.value);
         else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("discard")); }

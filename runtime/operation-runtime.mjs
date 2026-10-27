@@ -698,30 +698,35 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "attribute") {
           state.temporaries = operationRoots(task);
           const {receiver, name, operation} = task;
+          const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
           if (name === "__class__" && operation === "get")
             hard("UNSUPPORTED", "UnsupportedOperationError", "Advertised class lookup requires its separate reflection stage.");
-          if (!allowsClassSpecial(name, "attribute") && name !== "__class__")
+          if (!(writing ? allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || name === "__class__"))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
           state.temporaries.push(key);
+          if (writing) completion = continuation("attribute-write", {receiver, after: completion});
           if (operation === "get" && classes.hasSlot(receiver.type, "__getattr__")) {
             const hook = classes.lookup(receiver.type, "__getattr__").value;
             completion = continuation("attribute-fallback", {receiver, name, key, hook, depth, after: completion});
           }
           state.temporaries.push(...completionRoots(completion));
           let plan;
-          if (operation === "fallback") plan = classes.bindAttribute(task.hook, receiver, receiver.type);
+          if (["set", "delete"].includes(operation) && classes.hasSlot(receiver.type, removing ? "__delattr__" : "__setattr__"))
+            plan = classes.special(receiver, removing ? "__delattr__" : "__setattr__");
+          else if (operation === "fallback") plan = classes.bindAttribute(task.hook, receiver, receiver.type);
           else if (operation === "get" && classes.hasSlot(receiver.type, "__getattribute__"))
             plan = classes.special(receiver, "__getattribute__");
           else {
-            plan = classes.read(receiver, name);
+            plan = writing ? classes.write(receiver, name, task.item, removing) : classes.read(receiver, name);
             task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth);
             continue;
           }
           if (++depth > maxDepth) python("RecursionError", "maximum attribute dispatch depth exceeded");
           const target = continuation("relay", {receiver, after: completion});
-          task = plan.kind === "value" ? callTask(plan.value, [key], [], [], site, target, depth) :
-            callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [key], keywords: [], keywordValues: [], after: target, depth}), depth);
+          const hookArgs = writing && !removing ? [key, task.item] : [key];
+          task = plan.kind === "value" ? callTask(plan.value, hookArgs, [], [], site, target, depth) :
+            callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: hookArgs, keywords: [], keywordValues: [], after: target, depth}), depth);
           continue;
         }
         if (task.kind === "unary" && task.operation === "delegate-raise") { injectGenerator(task.value); return; }
@@ -1257,13 +1262,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
           }
-          if (callable.name === "object.__getattribute__") {
-            if (keywords.length || args.length !== 2) python("TypeError", "object.__getattribute__ requires an instance and name");
+          if (["object.__getattribute__", "object.__setattr__", "object.__delattr__"].includes(callable.name)) {
+            const writing = callable.name !== "object.__getattribute__", setting = callable.name === "object.__setattr__";
+            if (keywords.length || args.length !== (setting ? 3 : 2)) python("TypeError", "Native attribute operation received invalid arguments");
             const name = values.text(args[1]);
             if (name === null) python("TypeError", "attribute name must be string");
             if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
+            if (writing && args[0] instanceof ClassValue) python("TypeError", "object attribute mutation requires an ordinary instance");
             if (!(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
-            task = attributeTask(args[0], name, site, completion, depth, "native-get", args[1]); continue;
+            task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
           if (["getattr", "setattr", "delattr", "hasattr"].includes(callable.name)) {
             const name = callable.name, writing = name === "setattr" || name === "delattr";
@@ -1275,6 +1282,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = args[0], optional = name === "hasattr" || name === "getattr" && args.length === 3;
             const target = writing ? continuation("attribute-write", {receiver, after: completion}) : optional ?
               continuation("attribute-result", {receiver, default: args[2] ?? null, mode: name, after: completion}) : completion;
+            if (writing && receiver instanceof InstanceValue && classes.hasSlot(receiver.type, name === "setattr" ? "__setattr__" : "__delattr__")) {
+              task = attributeTask(receiver, attribute, site, completion, depth, name === "setattr" ? "set" : "delete", args[1], null, args[2] ?? null); continue;
+            }
             if (!writing && receiver instanceof InstanceValue &&
                 (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__"))) {
               task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue;

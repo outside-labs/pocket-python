@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O6"
+    "O6",
+    "O7"
   ],
   "cases": [
     {
@@ -489,6 +490,43 @@
       "source": "class A:\n def __getattribute__(self,name):\n  A.__getattr__=lambda self,name: 9\n  raise AttributeError(\"missing\")\nA().x\n",
       "stdout": "",
       "error_type": "AttributeError"
+    },
+    {
+      "id": "write-explicit-result",
+      "stage": "O7",
+      "source": "class A:\n def __setattr__(self,name,value): return 9\n def __delattr__(self,name): return 8\na=A()\nprint(a.__setattr__(\"x\",7),a.__delattr__(\"x\"),setattr(a,\"x\",7),delattr(a,\"x\"))\n",
+      "stdout": "9 8 None None\n"
+    },
+    {
+      "id": "write-slot-bypasses-read-hook",
+      "stage": "O7",
+      "source": "class A:\n def __getattribute__(self,name): raise ValueError(\"never\")\n def __setattr__(self,name,value): print(name,value)\n def __delattr__(self,name): print(name)\na=A()\na.x=7\ndel a.x\n",
+      "stdout": "x 7\nx\n"
+    },
+    {
+      "id": "write-original-name",
+      "stage": "O7",
+      "source": "name=\"two words\"\nclass A:\n def __setattr__(self,key,value): print(key is name,value)\n def __delattr__(self,key): print(key is name)\na=A()\nsetattr(a,name,7)\ndelattr(a,name)\n",
+      "stdout": "True 7\nTrue\n"
+    },
+    {
+      "id": "write-generator-not-entered",
+      "stage": "O7",
+      "source": "class A:\n def __setattr__(self,name,value):\n  print(\"never\")\n  yield 7\n def __delattr__(self,name):\n  print(\"never\")\n  yield 8\na=A()\na.x=7\ndel a.x\nprint(\"done\")\n",
+      "stdout": "done\n"
+    },
+    {
+      "id": "write-binding-error",
+      "stage": "O7",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"binding\")\nclass A:\n __setattr__=D()\n def __getattr__(self,name): print(\"never\")\nA().x=7\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "write-static-hook",
+      "stage": "O7",
+      "source": "class A:\n @staticmethod\n def __setattr__(name,value): print(name,value)\n @classmethod\n def __delattr__(cls,name): print(cls.__name__,name)\na=A()\na.x=7\ndel a.x\n",
+      "stdout": "x 7\nA x\n"
     }
   ]
 }
