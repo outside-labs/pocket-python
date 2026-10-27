@@ -831,6 +831,34 @@
       "stdout": "iter\nTrue\n"
     },
     {
+      "id": "dir-length-huge-negative",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter(())\n def __len__(self): return -(1<<100)\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-hint-huge-negative",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter(())\n def __length_hint__(self): return -(1<<100)\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "dir-hint-signed-minimum",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter(())\n def __length_hint__(self): return -9223372036854775808\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-hint-below-signed-minimum",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter(())\n def __length_hint__(self): return -9223372036854775809\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
       "id": "dir-hint-original-not-iterator",
       "stage": "O19",
       "source": "class Iterator:\n def __iter__(self): return self\n def __next__(self): raise StopIteration\n def __length_hint__(self): raise ValueError(\"unused\")\nclass Items:\n def __iter__(self): return Iterator()\n def __length_hint__(self):\n  print(\"source\")\n  return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[])\n",
