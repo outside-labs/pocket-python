@@ -121,26 +121,26 @@
     },
     {
       "path": "build/callbacks-node-report.json",
-      "sha256": "a9253f208009c9874b18f1654de9e4e05b6a4acf7ea49d98c8583858ac1c236f",
+      "sha256": "81dfd531d13dcbd8b415c374569ed1e98270c6ef697b045cab4fe191ea6dade3",
       "target": "node",
       "driver": "parked-serialized-events/1",
       "summary": {
         "pass": 13,
         "fail": 0
       },
-      "input_hashes_verified": 57,
+      "input_hashes_verified": 58,
       "zero_teardown_records": 13
     },
     {
       "path": "build/callbacks-browser-report.json",
-      "sha256": "e17af1a03b4848baa03f1c47d83409ff94420b397222d01487dc79cee64035f5",
+      "sha256": "ae7e0dd8b5b841a091361593d62bcbdb86b9dad28b03009b917242fe3d318212",
       "target": "browser",
       "driver": "parked-serialized-events/1",
       "summary": {
         "pass": 13,
         "fail": 0
       },
-      "input_hashes_verified": 57,
+      "input_hashes_verified": 58,
       "zero_teardown_records": 13
     }
   ],
