@@ -794,7 +794,7 @@ function executionMachine(program, options, context) {
     // A failed preparation or imported handler can itself raise. Keep unwinding
     // on this controller instead of entering another native evaluator.
     try { action(); }
-    catch (error) { unwind(error); }
+    catch (error) { unwind(error instanceof Raised ? new Unhandled(error.value) : error); }
   };
   const start = () => {
     started = true;
@@ -830,8 +830,7 @@ function executionMachine(program, options, context) {
 
 const activeExecutions = new WeakMap();
 
-// Internal instruction-boundary driver. Public source sessions still drain
-// synchronously; this is not a scheduler, coroutine or host-waiting API.
+// Instruction-boundary ownership and driving; Python yield/await are separate.
 export class Execution {
   #machine;
   #state = "ready";
@@ -839,6 +838,8 @@ export class Execution {
   #error = null;
   #draining = false;
   #claimed = false;
+  #boundary = 0;
+  #parked = null;
   constructor(program, options = {}, context = null) { this.#machine = executionMachine(program, options, context); }
   static modules(context) {
     if (!isModuleContext(context) || !context.activeRun) throw new TypeError("An active module context is required.");
@@ -858,14 +859,29 @@ export class Execution {
     try { this.#machine.close(); }
     finally { stack.pop(); this.#claimed = false; if (!stack.length) activeExecutions.delete(this.#machine.memory); }
   }
+  park() {
+    if (this.#state !== "paused") throw new TypeError("Only a paused execution can park.");
+    const owners = activeExecutions.get(this.#machine.memory);
+    if (owners?.at(-1) !== this) throw new TypeError("Execution does not own the active arena scopes.");
+    this.#parked = this.#machine.memory.parkScopes(this.#boundary);
+    owners.pop(); if (!owners.length) activeExecutions.delete(this.#machine.memory);
+    this.#claimed = false; this.#state = "parked";
+    return this.snapshot();
+  }
+  #restore(owners) {
+    this.#boundary = this.#machine.memory.scopeDepth;
+    this.#machine.memory.restoreScopes(this.#parked); this.#parked = null;
+    owners.push(this); activeExecutions.set(this.#machine.memory, owners); this.#claimed = true;
+  }
   advance(instructions = 1) {
-    if (!["ready", "paused"].includes(this.#state)) throw new TypeError("Execution cannot advance from " + this.#state + ".");
+    if (!["ready", "paused", "parked"].includes(this.#state)) throw new TypeError("Execution cannot advance from " + this.#state + ".");
     if (!Number.isSafeInteger(instructions) || instructions < 1 || instructions > 1000000) throw new TypeError("Invalid execution quantum.");
     const owners = activeExecutions.get(this.#machine.memory) || [];
     if (owners.length && owners.at(-1) !== this)
       throw new TypeError("A paused execution owns this arena.");
     const initial = this.#state === "ready";
-    if (initial) { owners.push(this); activeExecutions.set(this.#machine.memory, owners); this.#claimed = true; }
+    if (this.#state === "parked") this.#restore(owners);
+    if (initial) { this.#boundary = this.#machine.memory.scopeDepth; owners.push(this); activeExecutions.set(this.#machine.memory, owners); this.#claimed = true; }
     this.#state = "running";
     try {
       if (initial) this.#machine.start();
@@ -881,7 +897,7 @@ export class Execution {
     }
   }
   drain() {
-    if (this.#draining || !["ready", "paused"].includes(this.#state)) throw new TypeError("Execution cannot drain from " + this.#state + ".");
+    if (this.#draining || !["ready", "paused", "parked"].includes(this.#state)) throw new TypeError("Execution cannot drain from " + this.#state + ".");
     this.#draining = true;
     try { do { this.advance(1000000); } while (this.#state === "paused"); return this.result; }
     finally { this.#draining = false; }
@@ -889,6 +905,11 @@ export class Execution {
   close() {
     if (this.#state === "running") throw new TypeError("Cannot close a running execution.");
     if (this.#state === "closed") return;
+    if (this.#state === "parked") {
+      const owners = activeExecutions.get(this.#machine.memory) || [];
+      if (owners.at(-1)?.state === "running") throw new TypeError("Cannot close a parked execution during running host callbacks.");
+      this.#restore(owners);
+    }
     this.#release();
     this.#state = "closed";
   }

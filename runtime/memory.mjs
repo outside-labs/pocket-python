@@ -13,6 +13,7 @@ export class MemoryArena {
   #pins = new Map();
   #external = new Map();
   #scopes = [];
+  #parked = new Map();
   #closed = false;
   #bytes = 0;
   #peak = 0;
@@ -37,11 +38,28 @@ export class MemoryArena {
     throw new ResourceError(code, name, message);
   }
   active() { if (this.#closed) this.fail("STALE_HANDLE", "ReferenceError", "Memory arena is closed."); }
+  get scopeDepth() { return this.#scopes.length; }
+  #scopeCount() { return this.#scopes.length + [...this.#parked.values()].reduce((count, group) => count + group.length, 0); }
+
+  parkScopes(boundary) {
+    this.active();
+    if (!Number.isSafeInteger(boundary) || boundary < 0 || boundary >= this.#scopes.length) throw new TypeError("Invalid execution scope boundary.");
+    const token = Object.freeze({});
+    this.#parked.set(token, this.#scopes.splice(boundary));
+    return token;
+  }
+  restoreScopes(token) {
+    this.active();
+    const group = this.#parked.get(token);
+    if (!group) throw new TypeError("Unknown or restored execution scope owner.");
+    this.#parked.delete(token);
+    this.#scopes.push(...group);
+  }
 
   enter(roots, {charge = () => {}, fail = null} = {}) {
     this.active();
     if (typeof roots !== "function" || typeof charge !== "function" || (fail !== null && typeof fail !== "function")) throw new TypeError("Invalid execution root scope.");
-    if (this.#scopes.length >= this.limits.maxFrames) this.fail("BUDGET", "ExecutionLimitError", "Active frame budget exceeded.");
+    if (this.#scopeCount() >= this.limits.maxFrames) this.fail("BUDGET", "ExecutionLimitError", "Active frame budget exceeded.");
     const scope = {roots, charge, fail};
     this.#scopes.push(scope);
     return () => {
@@ -67,7 +85,7 @@ export class MemoryArena {
     };
     for (const roots of this.#pins.values()) { bytes += 32 + 8 * roots.length; pending.push(...roots); }
     for (const amount of this.#external.values()) bytes += amount;
-    for (const item of this.#scopes) {
+    for (const item of [...this.#parked.values()].flat().concat(this.#scopes)) {
       const roots = item.roots();
       if (!Array.isArray(roots)) throw new TypeError("Execution roots must be an array.");
       bytes += 128 + 8 * roots.length;
@@ -167,14 +185,14 @@ export class MemoryArena {
   }
   stats() {
     return Object.freeze({state: this.#closed ? "closed" : "open", bytes: this.#bytes, peakBytes: this.#peak,
-      objects: this.#records.size, roots: this.#pins.size, frames: this.#scopes.length, external: this.#external.size,
+      objects: this.#records.size, roots: this.#pins.size, frames: this.#scopeCount(), external: this.#external.size,
       allocations: this.#allocations, reclaimed: this.#reclaimed, collections: this.#collections});
   }
   close() {
     if (this.#closed) return;
     this.#closed = true;
     this.#reclaimed += this.#records.size;
-    this.#records.clear(); this.#pins.clear(); this.#external.clear(); this.#scopes.length = 0; this.#bytes = 0;
+    this.#records.clear(); this.#pins.clear(); this.#external.clear(); this.#scopes.length = 0; this.#parked.clear(); this.#bytes = 0;
     this.#identityHashes = new WeakMap(); this.#nextIdentityHash = 1n;
   }
 }

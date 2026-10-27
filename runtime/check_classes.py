@@ -57,7 +57,7 @@ def references(corpus_path=CORPUS):
                                         for status in ['pass', 'fail']}}
 
 
-def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, profile=None):
+def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, profile=None, parked=False):
     report = references(corpus_path)
     if report['summary']['fail']:
         raise AssertionError('The class reference corpus differs from its recorded expectations.')
@@ -77,7 +77,8 @@ def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, 
         'notice': 'Synthetic class fixture notice\n', 'source': case['source']}] +
         [{**module, 'notice': 'Synthetic class fixture notice\n'} for module in case.get('modules', [])],
         'compileOptions': {'languageProfile': report['profile']},
-        'options': {'maxSteps': 50000, 'maxWork': 20000000}} for case in cases]
+        'options': {'maxSteps': 50000, 'maxWork': 20000000}, **({'parked': True} if parked else {})} for case in cases]
+    stepped = stepped or parked
     if target == 'node':
         response = json.loads(subprocess.check_output(['node', str(ROOT / ('execution-runner.mjs' if stepped else 'source-runner.mjs'))],
             input=json.dumps(requests), text=True, encoding='utf-8', timeout=30))
@@ -111,7 +112,7 @@ def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, 
         records.append({'id': case['id'], 'stage': case['stage'], 'classification': classification,
                         'status': 'pass' if passed else 'fail', 'reference': expected, 'actual': actual})
     files = [p for p in ROOT.glob('*.mjs') if not p.name.endswith('.test.mjs')]
-    return {**report, 'mode': 'source', 'source_execution': True, 'target': target, 'execution_driver': 'instruction-boundary' if stepped else 'drain',
+    return {**report, 'mode': 'source', 'source_execution': True, 'target': target, 'execution_driver': 'parked-instruction-boundary' if parked else 'instruction-boundary' if stepped else 'drain',
             'host_version': host, 'bytecode_version': 4 if selected_profile == 'core-source/1' else 5,
             'corpus_cases': len(corpus['cases']), 'source_cases': len(cases),
             'selected_stages': sorted({case['stage'] for case in cases}),
@@ -131,12 +132,13 @@ if __name__ == '__main__':
     parser.add_argument('--target', choices=['node', 'browser'], default='node')
     parser.add_argument('--channel')
     parser.add_argument('--stepped', action='store_true', help='Advance the internal owned execution one instruction at a time.')
+    parser.add_argument('--parked', action='store_true', help='Park and restore the complete execution scope owner at every instruction boundary.')
     parser.add_argument('--corpus', type=Path, default=CORPUS)
     parser.add_argument('--stages', nargs='+', help='Execute only these source stages; reference validation still covers the complete corpus.')
     parser.add_argument('--profile', choices=['core-source/1', 'classes-source/1'], help='Select explicitly profiled source cases from the corpus.')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
-    report = references(args.corpus) if args.reference_only else check(args.target, args.channel, args.corpus, args.stages, args.stepped, args.profile)
+    report = references(args.corpus) if args.reference_only else check(args.target, args.channel, args.corpus, args.stages, args.stepped, args.profile, args.parked)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
