@@ -648,7 +648,7 @@
     },
     {
       "id": "future-bound-method-hash",
-      "stage": "E3",
+      "stage": "E2",
       "source": "class A:\n def use(self): return 7\na=A()\nprint(hash(a.use)==hash(a.use))\n",
       "stdout": "True\n"
     },
@@ -660,7 +660,7 @@
     },
     {
       "id": "future-native-bound-method-hash",
-      "stage": "E3",
+      "stage": "E2",
       "source": "a=[]\nprint(hash(a.append)==hash(a.append))\n",
       "stdout": "True\n"
     }

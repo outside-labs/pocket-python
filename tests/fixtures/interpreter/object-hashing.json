@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-object-hashing/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "H1"
+  ],
+  "cases": [
+    {
+      "id": "method-hash-stable",
+      "stage": "H1",
+      "source": "class A:\n def use(self): return 7\na=A()\nprint(a.use==a.use,hash(a.use)==hash(a.use))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "method-unhashable-receiver",
+      "stage": "H1",
+      "source": "class A:\n __hash__=None\n def use(self): return 7\na=A()\nprint(hash(a.use)==hash(a.use))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-receiver-hash-bypass",
+      "stage": "H1",
+      "source": "class A:\n def __hash__(self): raise ValueError(\"wrong\")\n def use(self): return 7\na=A()\nprint(hash(a.use)==(object.__hash__(a)^hash(A.use)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-receiver-equality-bypass",
+      "stage": "H1",
+      "source": "class A:\n def __hash__(self): return 1\n def __eq__(self,other): raise ValueError(\"wrong\")\n def use(self): return 7\na=A()\nb=A()\nprint(a.use==b.use,a.use==a.use)\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "method-dictionary",
+      "stage": "H1",
+      "source": "class A:\n def use(self): return 7\na=A()\nd={a.use:[7]}\nprint(d[a.use][0],a.use in d,len(d))\nd[a.use]=[8]\nprint(d[a.use][0],len(d))\ndel d[a.use]\nprint(len(d))\n",
+      "stdout": "7 True 1\n8 1\n0\n"
+    },
+    {
+      "id": "method-distinct-receivers",
+      "stage": "H1",
+      "source": "class A:\n def use(self): return 7\na=A()\nb=A()\nd={a.use:7,b.use:8}\nprint(len(d),d[a.use],d[b.use])\n",
+      "stdout": "2 7 8\n"
+    },
+    {
+      "id": "method-distinct-functions",
+      "stage": "H1",
+      "source": "class A:\n def first(self): pass\n def second(self): pass\na=A()\nd={a.first:7,a.second:8}\nprint(len(d),d[a.first],d[a.second])\n",
+      "stdout": "2 7 8\n"
+    },
+    {
+      "id": "method-alias",
+      "stage": "H1",
+      "source": "class A:\n def use(self): pass\n other=use\na=A()\nprint(a.use==a.other,hash(a.use)==hash(a.other),{a.use:7}[a.other])\n",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "method-classmethod",
+      "stage": "H1",
+      "source": "class A:\n @classmethod\n def use(cls): pass\nclass B(A): pass\nprint(A.use==A().use,hash(A.use)==hash(A().use),A.use==B.use)\nprint({A.use:7,B.use:8}[A.use])\n",
+      "stdout": "True True False\n7\n"
+    },
+    {
+      "id": "method-staticmethod",
+      "stage": "H1",
+      "source": "class A:\n @staticmethod\n def use(): pass\nprint(A.use is A().use,hash(A.use)==hash(A().use),{A.use:7}[A().use])\n",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "method-super",
+      "stage": "H1",
+      "source": "class A:\n def use(self): pass\nclass B(A):\n def get(self): return super().use\nb=B()\nprint(b.use==b.get(),hash(b.use)==hash(b.get()),{b.use:7}[b.get()])\n",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "method-keeps-temporary",
+      "stage": "H1",
+      "source": "class A:\n def use(self): return 7\nf=A().use\nd={f:[7]}\nprint(d[f][0],f())\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "method-tuple-key",
+      "stage": "H1",
+      "source": "class A:\n def use(self): pass\na=A()\nprint(hash((a.use,))==hash((a.use,)),{(a.use,):7}[(a.use,)])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "native-append-hash",
+      "stage": "H1",
+      "source": "a=[]\nprint(a.append==a.append,hash(a.append)==hash(a.append),{a.append:7}[a.append])\n",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "native-distinct-receivers",
+      "stage": "H1",
+      "source": "a=[]\nb=[]\nprint(a.append==b.append,len({a.append:7,b.append:8}))\n",
+      "stdout": "False 2\n"
+    },
+    {
+      "id": "native-generator-method",
+      "stage": "H1",
+      "source": "def values(): yield 7\ng=values()\nprint(g.send==g.send,hash(g.send)==hash(g.send),{g.send:7}[g.send],g.send==g.close)\n",
+      "stdout": "True True 7 False\n"
+    },
+    {
+      "id": "native-type-helper",
+      "stage": "H1",
+      "source": "f=type.__instancecheck__\nprint(hash(f)==hash(type.__instancecheck__),{f:7}[type.__instancecheck__])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "native-bound-type-helper",
+      "stage": "H1",
+      "source": "class A: pass\nf=A.__instancecheck__\nprint(f==A.__instancecheck__,hash(f)==hash(A.__instancecheck__),{f:7}[A.__instancecheck__])\n",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "method-hash-keyword",
+      "stage": "H1",
+      "source": "class A:\n def use(self): pass\nhash(object=A().use)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-hash-arity",
+      "stage": "H1",
+      "source": "class A:\n def use(self): pass\nhash(A().use,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    }
+  ]
+}

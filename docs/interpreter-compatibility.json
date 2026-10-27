@@ -399,8 +399,8 @@
     {
       "id": "user-equality-hash",
       "status": "partial",
-      "scope": "Owned __eq__/__ne__/__hash__, NotImplemented, reflected priority, bounded container equality and user dictionary keys. Four rich ordering methods and bounded list/tuple/slice comparisons use the owned machine.",
-      "gaps": "Structural dictionary mutation during comparison, tuples containing user instances, bound-method/slice hashing and user-key set ordering remain separately gated.",
+      "scope": "Owned __eq__/__ne__/__hash__, NotImplemented, reflected priority, bounded container equality and user dictionary keys. Four rich ordering methods and bounded list/tuple/slice comparisons use the owned machine. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes.",
+      "gaps": "Structural dictionary mutation during comparison, tuples containing user instances, slice hashing and user-key set ordering remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -422,14 +422,15 @@
         "tests/fixtures/interpreter/equality.json:hash-restore-object",
         "tests/fixtures/interpreter/ordering.json:lt-strict-subclass-priority",
         "tests/fixtures/interpreter/ordering.json:sequence-mutation-reloads-unequal-pair",
-        "tests/fixtures/interpreter/ordering.json:slice-raw-ordering-result"
+        "tests/fixtures/interpreter/ordering.json:slice-raw-ordering-result",
+        "tests/fixtures/interpreter/object-hashing.json:method-unhashable-receiver"
       ]
     },
     {
       "id": "further-object-protocols",
       "status": "partial",
-      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation.",
-      "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, namespace/identity reflection, bound-method/slice hashing and dynamic source admission remain separate contracts.",
+      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes.",
+      "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, namespace/identity reflection, slice hashing and dynamic source admission remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -446,7 +447,8 @@
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:subclass-priority",
         "tests/fixtures/interpreter/object-protocols.json:inplace-fallback",
-        "tests/fixtures/interpreter/ordering.json:le-raw-result"
+        "tests/fixtures/interpreter/ordering.json:le-raw-result",
+        "tests/fixtures/interpreter/object-hashing.json:method-unhashable-receiver"
       ]
     },
     {
@@ -1342,8 +1344,8 @@
     {
       "id": "hash",
       "status": "partial",
-      "scope": "hash(value), positional-only in classes-source/1; numeric/string/primitive tuple hashes, user __hash__ and owned default identities.",
-      "gaps": "Tuple-with-instance, bound-method and slice hash families remain deferred; exact string/object hash numbers are not a cross-process guarantee.",
+      "scope": "hash(value), positional-only in classes-source/1; numeric/string/primitive tuple hashes, user __hash__ and owned default identities. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes.",
+      "gaps": "Tuple-with-instance, slice hash families remain deferred; exact string/object hash numbers are not a cross-process guarantee.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1358,7 +1360,8 @@
       ],
       "evidence": [
         "tests/fixtures/interpreter/equality.json:hash-scalar-invariants",
-        "tests/fixtures/interpreter/equality.json:hash-integer-normalization"
+        "tests/fixtures/interpreter/equality.json:hash-integer-normalization",
+        "tests/fixtures/interpreter/object-hashing.json:method-unhashable-receiver"
       ]
     },
     {
