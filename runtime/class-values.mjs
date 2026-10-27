@@ -46,7 +46,8 @@ export class ClassRuntime {
       if (!allowsClassSpecial(key, "define"))
         this.fail("UnsupportedOperationError", "Custom special methods require a later class stage.", "UNSUPPORTED");
     }
-    if (namespace.has("__init__")) this.initializer(namespace.get("__init__"));
+    if (namespace.get("__new__") instanceof FunctionValue)
+      namespace.set("__new__", this.make(MethodWrapperValue, "staticmethod", namespace.get("__new__")));
     for (const [key, expected] of [["__module__", module], ["__qualname__", qualname]])
       if (namespace.has(key) && this.values.text(namespace.get(key)) !== expected)
         this.fail("UnsupportedOperationError", "Class metadata overrides are outside C1.", "UNSUPPORTED");
@@ -72,14 +73,20 @@ export class ClassRuntime {
     if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
     this.touch(type); return this.make(InstanceValue, type);
   }
-  lookup(type, name) {
+  hasSlot(type, name) {
+    // The bounded MRO is also the native slot-presence index. Default calls keep
+    // their original lookup/accounting path; only adopted overrides add phases.
+    return type.mro.some(base => !base.root && base.namespace.has(name));
+  }
+  lookup(type, name, native = true) {
     this.key(name); this.touch(type);
     if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
     for (const base of type.mro) {
       this.charge(1);
+      if (!native && base.root && ["__new__", "__init__"].includes(name)) continue;
       if (base.namespace.has(name)) return {found: true, value: base.namespace.get(name)};
-      if (base.root && name === "__hash__") {
-        const value = this.make(BuiltinValue, "object.__hash__");
+      if (native && base.root && ["__hash__", "__new__", "__init__"].includes(name)) {
+        const value = this.make(BuiltinValue, "object." + name);
         base.namespace.set(name, value);
         try { const layout = valueLayout(base); this.memory?.resize(base, layout.bytes, layout.children); }
         catch (error) { base.namespace.delete(name); throw error; }
@@ -151,7 +158,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner)};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && value.name === "object.__hash__") ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && ["object.__hash__", "object.__init__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);
@@ -190,7 +197,6 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
     if (!allowsClassSpecial(name, "mutate")) this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
-    if (receiver instanceof ClassValue && name === "__init__" && !remove) this.initializer(value);
     const map = receiver instanceof ClassValue ? receiver.namespace : receiver.attributes;
     const present = map.has(name), before = map.get(name);
     if (remove && !present) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
@@ -222,11 +228,6 @@ export class ClassRuntime {
       assigned.set(name, keywordValues[index]);
     });
     return this.make(PropertyValue, ...fields.map(name => assigned.has(name) ? assigned.get(name) : null));
-  }
-  initializer(value) {
-    if (value instanceof MethodWrapperValue) value = value.callable;
-    if (!(value instanceof FunctionValue || value instanceof BoundMethodValue && value.callable instanceof FunctionValue))
-      this.fail("UnsupportedOperationError", "Initializers require Python functions, retained Python bound methods or native method wrappers.", "UNSUPPORTED");
   }
   isinstance(value, type) {
     if (!(type instanceof ClassValue)) this.fail("TypeError", "isinstance requires an adopted class.");

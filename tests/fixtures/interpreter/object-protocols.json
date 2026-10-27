@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O1",
-    "O2"
+    "O2",
+    "O3"
   ],
   "cases": [
     {
@@ -88,7 +89,7 @@
     },
     {
       "id": "new-future",
-      "stage": "Future",
+      "stage": "O3",
       "source": "class A:\n def __new__(cls): return object.__new__(cls)\nprint(type(A()) is A)\n",
       "stdout": "True\n"
     },
