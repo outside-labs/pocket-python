@@ -550,7 +550,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           inheritedException: frame.activeException};
         else {
           const receiver = stack.pop();
-          if (op === "attribute-get" && arg === "__class__") stack.push(classes.typeOf(receiver));
+          if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
           else if (receiver instanceof GeneratorValue) {
             if (!["send", "throw", "close", "__iter__", "__next__"].includes(arg)) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires a separate stage.");
             stack.push(allocate(ValueMethod, receiver, arg));

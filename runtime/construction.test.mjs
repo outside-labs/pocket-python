@@ -194,3 +194,16 @@ test('dynamic class identities and namespace keys enforce budgets as owned failu
     assert.equal(result.error.code, 'BUDGET'); closed(result.closed);
   }
 });
+
+test('deferred advertised class lookup refuses before descriptor effects', async () => {
+  const prefix = 'class A: pass\nclass B:\n @property\n def __class__(self):\n  print("hook")\n  return A\nb=B()\n';
+  for (const expression of ['b.__class__', 'getattr(b,"__class__")', 'isinstance(b,A)', 'super(A,b)']) {
+    const result = await run(prefix+expression+'\n');
+    assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
+  }
+});
+
+test('real type identity and successful actual checks do not consult advertised classes', async () => {
+  const result = await run('class A:\n @property\n def __class__(self):\n  print("never")\n  return int\na=A()\nprint(type(a) is A,isinstance(a,A),isinstance(a,object))\nclass B(A): pass\nprint(super(A,B()).__self_class__ is B)\n');
+  assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, 'True True True\nTrue\n'); closed(result.closed);
+});
