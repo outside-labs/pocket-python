@@ -133,6 +133,12 @@ export function completion(kind, fields = {}) {
       record = {kind, operation: fields.operation, args: operands(fields.args), position: fields.position, order: fields.order, nativeInplace: fields.nativeInplace === true, depth: fields.depth, after};
       arithmeticCheck(record.operation, record.args, record.position, record.order); depthCheck(record.depth); break;
     case "attribute-write": record = {kind, receiver: fields.receiver, after}; break;
+    case "advertised-instance": case "advertised-super": record = {kind, receiver: fields.receiver, type: fields.type, after}; break;
+    case "instance-tuple": record = {kind, receiver: fields.receiver, type: fields.type, position: fields.position, nesting: fields.nesting, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 131072 ||
+          !Number.isSafeInteger(record.nesting) || record.nesting < 0 || record.nesting > 32) throw new TypeError("Invalid class-info tuple phase.");
+      break;
     case "attribute-fallback": record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, hook: fields.hook, depth: fields.depth, after};
       depthCheck(record.depth); break;
     case "attribute-result": record = {kind, receiver: fields.receiver, default: fields.default, mode: fields.mode, after};
@@ -189,6 +195,7 @@ function visit(record) {
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];
     case "attribute-write": return [record.receiver, ...completionRoots(record.after)];
+    case "advertised-instance": case "advertised-super": case "instance-tuple": return [record.receiver, record.type, ...completionRoots(record.after)];
     case "attribute-fallback": return [record.receiver, record.key, record.hook, ...completionRoots(record.after)];
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
@@ -263,6 +270,11 @@ export function attributeTask(receiver, name, site, after = null, depth = 0, ope
     throw new TypeError("Invalid attribute operation.");
   return Object.freeze({kind: "attribute", receiver, name, key, hook, item, operation, site, completion: after, depth});
 }
+export function instanceTask(receiver, type, site, after = null, depth = 0, nesting = 0) {
+  depthCheck(depth); completionRoots(after);
+  if (!Number.isSafeInteger(nesting) || nesting < 0 || nesting > 32) throw new TypeError("Invalid class-info tuple depth.");
+  return Object.freeze({kind: "instance", receiver, type, nesting, site, completion: after, depth});
+}
 export function sliceTask(receiver, parts, site, after = null, depth = 0, operation = "get", item = null) {
   depthCheck(depth); completionRoots(after);
   if (parts.length !== 3) throw new TypeError("A slice requires three parts.");
@@ -287,6 +299,7 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
 }
 export function operationRoots(task) {
   switch (task.kind) {
+    case "instance": return [task.receiver, task.type, ...completionRoots(task.completion)];
     case "attribute": return [task.receiver, task.key, task.hook, ...(["set", "native-set"].includes(task.operation) ? [task.item] : []), ...completionRoots(task.completion)];
     case "construct": case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "arithmetic":

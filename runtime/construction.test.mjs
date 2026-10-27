@@ -195,11 +195,11 @@ test('dynamic class identities and namespace keys enforce budgets as owned failu
   }
 });
 
-test('deferred advertised class lookup refuses before descriptor effects', async () => {
+test('advertised class lookups execute descriptor effects only when required', async () => {
   const prefix = 'class A: pass\nclass B:\n @property\n def __class__(self):\n  print("hook")\n  return A\nb=B()\n';
   for (const expression of ['b.__class__', 'getattr(b,"__class__")', 'isinstance(b,A)', 'super(A,b)']) {
     const result = await run(prefix+expression+'\n');
-    assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
+    assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, 'hook\n'); closed(result.closed);
   }
 });
 

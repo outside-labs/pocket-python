@@ -508,6 +508,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           const bases = stack.splice(stack.length - extra), name = values.text(frame.callable.globals.cells.get("__name__")?.value);
           state.temporaries.push(callable);
           if (name === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Class module metadata requires text in C1.");
+          classes.validateNamespace(bases, owner.code.functions[arg].locals);
           const invalidMetaclass = op === "class-meta" && !classes.isType(explicit) && !classes.callable(explicit);
           const metaclass = !invalidMetaclass && (op === "class-meta" || bases.some(base => base instanceof ClassValue && base.metaclass !== null)) ? classes.selectMetaclass(bases, explicit) : null;
           enter(callable, new Map(), summary(frame, cursor), continuation("class", {bases, module: name, metaclass, invalidMetaclass}));
@@ -553,8 +554,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           inheritedException: frame.activeException};
         else {
           const receiver = stack.pop();
-          if (op === "attribute-get" && receiver instanceof InstanceValue && arg !== "__class__" &&
-              (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__")))
+          if (op === "attribute-get" && receiver instanceof InstanceValue &&
+              (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__") || arg === "__class__" && classes.hasSlot(receiver.type, "__class__")))
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
           else if (receiver instanceof GeneratorValue) {

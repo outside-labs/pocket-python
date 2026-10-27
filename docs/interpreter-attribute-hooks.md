@@ -1,7 +1,7 @@
 # Instance attribute hooks and advertised classes
 
 The next finite #123 slices use CPython 3.14.7 as their executable reference.
-`attribute-hooks.json` records 82 source cases. Reference expectations do not
+`attribute-hooks.json` records 92 source cases. Reference expectations do not
 establish implementation; each stage is enabled only with independent execution
 and its ownership tests. Classes remain explicit in classes-source/1, bytecode 5.
 
@@ -52,4 +52,7 @@ Node drain/step execution; descriptor binding, original fallback snapshots,
 source errors, every-instruction collection, cancellation and real resource
 limits have dedicated tests. O7 now adopts write/delete hooks and native defaults. All 61 O6/O7 cases pass
 Node drain/step comparisons, with collection, cancellation, source-frame and
-real resource-limit tests for read and mutation callbacks. O8 remains pending.
+real resource-limit tests for read and mutation callbacks. O8 now executes ordinary advertised-class reads, tuple checks and super fallback
+through owned callbacks. All 92 recorded cases pass Node drain/step execution;
+86 are adopted comparisons and six retain explicit future refusals. Native type
+identity, successful actual checks and lexical class cells remain independent.

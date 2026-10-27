@@ -12,7 +12,7 @@ core-source/1 and bytecode 4 do not gain class syntax or reflective builtins.
 | O3 | Class calls select `__new__` through the class MRO, bind its descriptor with no instance, and pass the requested class plus original arguments. A Python function defined as `__new__` is implicitly static. `object.__new__` allocates an ordinary user instance. Only a returned instance of the requested class or its subclass is initialized, using the returned value's actual type and the original arguments. Foreign values pass through unchanged. `__init__` binds normally, can suspend, and must return None. Direct `object.__new__`/`object.__init__` validate receivers and extra arguments. Mutation, wrappers, callable descriptors, exceptions and generator returns obey the existing protocols. |
 | O4 | `super(T, value)` follows the current C3 MRO after T, ignoring instance shadow attributes and binding descriptors to the original value and dynamic owner. `super(T)` and `super(T, None)` are unbound; stored unbound proxies bind as descriptors. Zero-argument `super()` reads the calling Python frame's first positional parameter and lexical `__class__` cell. Cells are filled before class decorators run, are shared with nested functions and suspended generators, and do not capture ordinary class locals. Proxy metadata `__thisclass__`, `__self__`, `__self_class__` and `__class__` is read-only. |
 | O5 | `type(value)` returns canonical type identities for adopted values. `isinstance`/`issubclass` accept types and nested tuples with Python short-circuit/error order, bool/int ancestry and the adopted exception hierarchy. Three-argument `type(name, bases, namespace)` accepts a tuple of adopted bases and an ordinary dictionary with string keys. Finite metaclasses support inheritance from type, most-derived selection/conflicts, explicit `metaclass=`, and user `__new__`/`__init__` through ordinary frames and `type.__new__`/`type.__init__`. Class cells propagate through the namespace to `type.__new__`. Metadata, class decorators and `__set_name__` retain their order. |
-| Future | Builtin instance layouts/subclassing, custom `__prepare__` and class-creation mappings, extra class keywords, `__init_subclass__`, `__mro_entries__`, callable metaclass factories, additional metaclass special slots beyond construction/call, custom instance/subclass checking, non-string namespace keys, unions, custom attribute hooks and dynamic source admission require separate contracts. Broader dir/vars/globals/locals/id, coroutine/async-generator and host-adapter work remain open under #123 and #34. |
+| Future | Builtin instance layouts/subclassing, custom `__prepare__` and class-creation mappings, extra class keywords, `__init_subclass__`, `__mro_entries__`, callable metaclass factories, additional metaclass special slots beyond construction/call, custom instance/subclass checking, non-string namespace keys, unions, dynamic source admission require separate contracts. Instance attribute hooks and advertised classes follow the [O6–O8 contract](interpreter-attribute-hooks.md). Broader dir/vars/globals/locals/id, coroutine/async-generator and host-adapter work remain open under #123 and #34. |
 
 O5 covers ordinary dictionary class namespaces. It does not imply an arbitrary
 metaclass or builtin-subclass profile. Unsupported class-creation hooks must be
@@ -71,7 +71,9 @@ contains all 38 file sizes and hashes for the 593,610-byte construction console,
 including the receipt and deterministic compression observations. This is a
 complete local payload measurement, with no timing, device or package claim.
 
-Advertised `__class__` identities remain an explicit reflection boundary. Type
-queries and super refuse a required advertised-class lookup before callback
-effects. `type(value)`, successful actual-type checks and real-subtype super
-binding continue without consulting these hooks.
+The later [O6–O8 contract](interpreter-attribute-hooks.md) adopts instance
+attribute hooks and advertised `__class__` identities. Type queries and super use
+owned lookup only after actual-type checks fail; real identity and successful
+actual checks bypass those callbacks. Four original advertised-class refusals
+are now adopted comparisons in the construction corpus. The evidence above
+records the earlier O3–O5 checkpoint.

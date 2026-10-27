@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
 import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -288,6 +288,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "advertised-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
+      if (current.kind === "advertised-super" && value.name === "AttributeError") return unaryTask("super-invalid", current.receiver, site, current.after);
       if (current.kind === "attribute-fallback" && value.name === "AttributeError")
         return attributeTask(current.receiver, current.name, site, current.after, current.depth, "fallback", current.key, current.hook);
       if (current.kind === "attribute-result" && value.name === "AttributeError") return valueTask(current.mode === "hasattr" ? false : current.default, site, current.after);
@@ -337,6 +339,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
       }
       completion = completion.after;
+    }
+    if (completion?.kind === "advertised-instance")
+      return valueTask(classes.isType(value) && classes.subclass(value, completion.type), site, completion.after);
+    if (completion?.kind === "advertised-super")
+      return valueTask(classes.superProxy(completion.type, completion.receiver, value), site, completion.after);
+    if (completion?.kind === "instance-tuple") {
+      if (value || completion.position === completion.type.items.length) return valueTask(value, site, completion.after);
+      charge(1);
+      return instanceTask(completion.receiver, completion.type.items[completion.position], site,
+        continuation("instance-tuple", {...completion, position: completion.position + 1}), completion.depth, completion.nesting + 1);
     }
     if (completion?.kind === "new-result") {
       state.temporaries.push(value, ...completionRoots(completion));
@@ -695,12 +707,30 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "unary" && task.operation === "super-invalid") {
+          state.temporaries = operationRoots(task);
+          python("TypeError", "super receiver must be an instance or subtype of its first argument");
+        }
+        if (task.kind === "instance") {
+          state.temporaries = operationRoots(task);
+          const {receiver, type, nesting} = task;
+          if (values.isSequenceType(type, "tuple")) {
+            if (nesting >= 32) hard("BUDGET", "ExecutionLimitError", "Class-info tuple nesting budget exceeded");
+            if (!type.items.length) { task = valueTask(false, site, completion); continue; }
+            charge(1);
+            task = instanceTask(receiver, type.items[0], site,
+              continuation("instance-tuple", {receiver, type, position: 1, nesting, depth, after: completion}), depth, nesting + 1);
+            continue;
+          }
+          if (!classes.isType(type)) python("TypeError", "isinstance requires an adopted type");
+          if (classes.subclass(classes.typeOf(receiver), type)) { task = valueTask(true, site, completion); continue; }
+          task = attributeTask(receiver, "__class__", site, continuation("advertised-instance", {receiver, type, after: completion}), depth);
+          continue;
+        }
         if (task.kind === "attribute") {
           state.temporaries = operationRoots(task);
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
-          if (name === "__class__" && operation === "get")
-            hard("UNSUPPORTED", "UnsupportedOperationError", "Advertised class lookup requires its separate reflection stage.");
           if (!(writing ? allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || name === "__class__"))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
@@ -1171,6 +1201,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "isinstance" && classes.needsAdvertised(args[0])) {
+            if (keywords.length || args.length !== 2) python("TypeError", "isinstance requires two positional arguments");
+            task = instanceTask(args[0], args[1], site, completion, depth); continue;
+          }
           if (callable.name === "dict") {
             if (args.length || keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Populated dictionary constructors require their separate sequence stage.");
             task = valueTask(values.dict([]), site, completion); continue;
@@ -1244,6 +1278,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (!cell?.bound || !classes.isType(cell.value)) python("RuntimeError", "super(): missing or invalid __class__ cell");
               type = cell.value; receiver = parameter.value;
             }
+            if (!classes.isType(type)) python("TypeError", "super requires an adopted type");
+            if (classes.needsAdvertised(receiver) && !classes.subclass(receiver.type, type)) {
+              task = attributeTask(receiver, "__class__", site, continuation("advertised-super", {receiver, type, after: completion}), depth); continue;
+            }
             task = valueTask(classes.superProxy(type, receiver), site, completion); continue;
           }
           if (callable.name === "object.__new__") {
@@ -1286,7 +1324,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = attributeTask(receiver, attribute, site, completion, depth, name === "setattr" ? "set" : "delete", args[1], null, args[2] ?? null); continue;
             }
             if (!writing && receiver instanceof InstanceValue &&
-                (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__"))) {
+                (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__") || attribute === "__class__" && classes.hasSlot(receiver.type, "__class__"))) {
               task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue;
             }
             let plan;
