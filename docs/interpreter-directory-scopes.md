@@ -5,14 +5,20 @@ the executable oracle for `tests/fixtures/interpreter/reflection.json`.
 Reference-only cases specify behavior before independent implementation.
 The APIs retain classes-source/1 and bytecode 5; core-source/1 stays unchanged.
 
-O18 is implemented. O19 and O20 remain reference-only stages until their
-separate implementation changes are accepted.
+O18 and O19 are implemented. O20 remains a reference-only stage until its
+separate implementation change is accepted.
 
 | Stage | Contract |
 | --- | --- |
 | O18 | `locals()` and zero-argument `vars()` inside generator expressions return fresh shallow snapshots of the acquired outer iterator under `.0`, currently bound targets and captured free cells in Python order. Zero-argument `dir()` sorts those names. Aliased builtins inspect their immediate Python caller. Snapshot mutations cannot rebind cells; escaped iterators and values keep their ordinary identity after suspension and close. Private compiler storage stays hidden. |
 | O19 | A custom `__dir__` result is copied after acquiring its iterator. Consult the original iterable's type-selected `__len__`, then `__length_hint__` if length is absent or raises TypeError. Length accepts the existing index protocol; a hint must itself be an integer. A hint call raising TypeError or returning NotImplemented uses the default. Hint descriptor lookup failures propagate; other callback failures propagate. Negative counts raise ValueError and counts outside the signed 64-bit size range raise OverflowError. Counts above the adopted sequence bound refuse through the shared budget before consumption. Hints do not constrain the number of yielded entries. |
 | O20 | Custom directory entries may be arbitrary adopted values. Return a fresh, stable sorted list using rich less-than and truth conversion, preserving duplicates and entry identities. Copy the iterable completely before comparison callbacks. Descriptor, reflected ordering and truth phases enter ordinary owned frames. The comparison schedule is an implementation choice; callers must not depend on a particular number or sequence of comparisons. |
+
+`__len__` rejects every negative result before signed-size conversion, so even a
+huge negative length raises ValueError. `__length_hint__` converts first: a value
+below the signed minimum raises OverflowError, while the representable negative
+minimum raises ValueError. Descriptor errors and callback errors retain their
+separate recovery phases in both cases.
 
 Inlined list/dict/set comprehension reflection, live module/class/global
 namespaces, instance dictionaries, mapping proxies, default directories, boxed

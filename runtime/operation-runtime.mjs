@@ -1,4 +1,5 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
+import {VALUE_LIMITS} from "./values.mjs";
 import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
@@ -184,6 +185,25 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       ["bytearray", "list", "set", "frozenset", "set-update"].includes(name) ? result : name === "all";
     state.temporaries.push(value); return valueTask(value, site, after);
   };
+  const directoryNext = (record, site) => {
+    state.temporaries.push(record.receiver, record.iterator);
+    const result = values.list([]); state.temporaries.push(result);
+    return consumeNext("list", record.iterator, result, site, record.after, record.depth);
+  };
+  const directoryHint = (record, site) => {
+    state.temporaries.push(record.receiver, record.iterator);
+    const depth = record.depth + 1;
+    if (depth > maxDepth) python("RecursionError", "maximum directory hint dispatch depth exceeded");
+    const plan = classes.special(record.receiver, "__length_hint__");
+    if (!plan) return directoryNext(record, site);
+    const next = {...record, depth};
+    return plan.kind === "value" ? callTask(plan.value, [], [], [], site, continuation("dir-hint-call", next), depth) :
+      callTask(plan.callable, plan.args, [], [], site, continuation("dir-hint-bound", next), depth);
+  };
+  const directoryCount = value => {
+    const length = lengthResult(value);
+    if (length > BigInt(VALUE_LIMITS.items)) hard("BUDGET", "ExecutionLimitError", "Directory length hint exceeds the sequence budget.");
+  };
   const argumentOwner = receiver => {
     if (!(receiver instanceof CallArguments)) hard("BYTECODE", "BytecodeError", "Call assembly requires its owned argument record.");
   };
@@ -320,6 +340,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "dir-length" && value.name === "TypeError") return directoryHint(current, site);
+      if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "advertised-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
       if (current.kind === "advertised-super" && value.name === "AttributeError") return unaryTask("super-invalid", current.receiver, site, current.after);
@@ -348,6 +370,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return null;
   };
   const deliver = (value, completion, site) => {
+    try { return deliverValue(value, completion, site); }
+    catch (error) {
+      // Returned protocol values can fail validation after the callback frame
+      // exits. They use the same owned recovery destination as body errors.
+      const recovery = error instanceof Raised && recover(error.value, completion, site);
+      if (!recovery) throw error;
+      return recovery;
+    }
+  };
+  const deliverValue = (value, completion, site) => {
     while (["init", "relay", "vars-result", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
@@ -478,9 +510,31 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return unaryTask("next", completion.iterator, site, continuation("call-star-next", completion));
     }
     if (completion?.kind === "dir-result") {
-      if (value instanceof InstanceValue && classes.hasSlot(value.type, "__len__"))
-        hard("UNSUPPORTED", "UnsupportedOperationError", "Directory iterable length hints require their own contract.");
-      return consumeTask("list", value, site, continuation("dir-sort", {receiver: value, after: completion.after}), completion.depth);
+      const after = continuation("dir-sort", {receiver: value, after: completion.after});
+      return value instanceof InstanceValue ? unaryTask("iter", value, site,
+        continuation("dir-iter", {receiver: value, depth: completion.depth, after}), completion.depth) :
+        consumeTask("list", value, site, after, completion.depth);
+    }
+    if (completion?.kind === "dir-iter") {
+      state.temporaries.push(value);
+      const record = {...completion, iterator: value};
+      return classes.hasSlot(completion.receiver.type, "__len__") ? unaryTask("len", completion.receiver, site,
+        continuation("dir-length", record), completion.depth) : directoryHint(record, site);
+    }
+    if (completion?.kind === "dir-length") {
+      directoryCount(value); return directoryNext(completion, site);
+    }
+    if (completion?.kind === "dir-hint-bound")
+      return callTask(value, [], [], [], site, continuation("dir-hint-call", completion), completion.depth);
+    if (completion?.kind === "dir-hint-call")
+      return valueTask(value, site, continuation("dir-hint-value", completion));
+    if (completion?.kind === "dir-hint-value") {
+      // __len__ rejects every negative value before its size conversion;
+      // __length_hint__ performs the signed-size conversion first.
+      if (typeof value === "bigint" && value < -9223372036854775808n)
+        python("OverflowError", "directory length hint is below the signed-64-bit minimum");
+      if (!(value instanceof NotImplementedValue)) directoryCount(value);
+      return directoryNext(completion, site);
     }
     if (completion?.kind === "dir-sort") return valueTask(sortedDirectory(value), site, completion.after);
     if (completion?.kind === "consume-iter") return consumeNext(completion.name, value, completion.result, site, completion.after, completion.depth);

@@ -7,7 +7,8 @@
     "O15",
     "O16",
     "O17",
-    "O18"
+    "O18",
+    "O19"
   ],
   "cases": [
     {
@@ -829,6 +830,34 @@
       "stdout": "iter\nTrue\n"
     },
     {
+      "id": "dir-length-huge-negative",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter(())\n def __len__(self): return -(1<<100)\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-hint-huge-negative",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter(())\n def __length_hint__(self): return -(1<<100)\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "dir-hint-signed-minimum",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter(())\n def __length_hint__(self): return -9223372036854775808\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-hint-below-signed-minimum",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter(())\n def __length_hint__(self): return -9223372036854775809\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "OverflowError"
+    },
+    {
       "id": "dir-hint-original-not-iterator",
       "stage": "O19",
       "source": "class Iterator:\n def __iter__(self): return self\n def __next__(self): raise StopIteration\n def __length_hint__(self): raise ValueError(\"unused\")\nclass Items:\n def __iter__(self): return Iterator()\n def __length_hint__(self):\n  print(\"source\")\n  return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[])\n",
@@ -922,6 +951,37 @@
       "stage": "O20",
       "source": "saved=[]\nclass Entry:\n def __init__(self,key): self.key=key\n def __lt__(self,other):\n  saved.append(\"later\")\n  return self.key<other.key\nsaved.append(Entry(2))\nsaved.append(Entry(1))\nclass A:\n def __dir__(self): return saved\na=dir(A())\nprint(len(a),a[0].key,a[1].key,len(saved)>2)\n",
       "stdout": "2 1 2 True\n"
+    },
+    {
+      "id": "dir-length-index-invalid-fallback",
+      "stage": "O19",
+      "source": "class Index:\n def __index__(self): return \"bad\"\nclass Items:\n def __iter__(self): return iter((\"x\",))\n def __len__(self): return Index()\n def __length_hint__(self): print(\"hint\"); return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
+      "stdout": "hint\nx\n"
+    },
+    {
+      "id": "dir-length-index-typeerror-fallback",
+      "stage": "O19",
+      "source": "class Index:\n def __index__(self): raise TypeError(\"ignored\")\nclass Items:\n def __iter__(self): return iter((\"x\",))\n def __len__(self): return Index()\n def __length_hint__(self): print(\"hint\"); return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
+      "stdout": "hint\nx\n"
+    },
+    {
+      "id": "dir-hint-noncallable-default",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): return iter((\"x\",))\n __length_hint__=None\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "dir-hint-binding-attributeerror",
+      "stage": "O19",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"kept\")\nclass Items:\n def __iter__(self): return iter(())\n __length_hint__=D()\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "dir-hint-selected-after-iter",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  Items.__length_hint__=lambda self: 0\n  return iter((\"x\",))\n def __length_hint__(self): raise ValueError(\"old\")\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
+      "stdout": "x\n"
     }
   ]
 }

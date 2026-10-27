@@ -125,10 +125,54 @@ test('escaped generator-expression iterator remains usable after the generator c
 });
 
 test('reflection continuations retain receivers, iterable owners and outer destinations', () => {
-  const receiver = {}, outer = {}, after = completion('relay', {receiver: outer});
+  const receiver = {}, iterator = {}, outer = {}, after = completion('relay', {receiver: outer});
   for (const kind of ['vars-result', 'dir-result', 'dir-sort'])
     assert.deepEqual(completionRoots(completion(kind, {receiver, after, depth: 1})), [receiver, outer]);
   assert.throws(() => completion('dir-result', {receiver, depth: -1}), TypeError);
+  assert.deepEqual(completionRoots(completion('dir-iter', {receiver, after, depth: 1})), [receiver, outer]);
+  for (const kind of ['dir-length', 'dir-hint-bound', 'dir-hint-call', 'dir-hint-value'])
+    assert.deepEqual(completionRoots(completion(kind, {receiver, iterator, after, depth: 1})), [receiver, iterator, outer]);
+});
+
+test('directory length, hint, binding and index phases survive collection and interruption', async () => {
+  const sources = [
+    'class Items:\n def __iter__(self): return iter(("z","a"))\n def __len__(self):\n  print("entered")\n  return 0\n',
+    'class Items:\n def __iter__(self): return iter(("z","a"))\n def __length_hint__(self):\n  print("entered")\n  return 0\n',
+    'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  return lambda: 0\nclass Items:\n def __iter__(self): return iter(("z","a"))\n __length_hint__=D()\n',
+    'class Index:\n def __index__(self):\n  print("entered")\n  return 0\nclass Items:\n def __iter__(self): return iter(("z","a"))\n def __len__(self): return Index()\n',
+    'class Items:\n def __len__(self): return 0\n def __iter__(self):\n  yield "z"\n  print("entered")\n  yield "a"\n',
+  ];
+  for (const definitions of sources) {
+    const source = definitions + 'class A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n';
+    const {registry} = await compileSourceModules([unit(source)], profile);
+    try { for (const mode of ['finish', 'cancel', 'close']) {
+      const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+      session.context.begin({shouldCancel: () => cancel}, text => { output += text; }); const execution = Execution.modules(session.context);
+      try {
+        while (execution.state !== 'completed') {
+          execution.advance(); session.memory.collect([], {cleanup: true});
+          if (output === 'entered\n') {
+            reached = true;
+            if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+            if (mode === 'close') break;
+          }
+        }
+        assert.ok(reached); if (mode === 'finish') assert.equal(output, 'entered\na\n');
+      } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+      closed(session.stats());
+    } } finally { registry.close(); }
+  }
+});
+
+test('directory hints share work, instruction and actual allocation limits without reserving host arrays', async () => {
+  for (const slot of ['__len__', '__length_hint__']) for (const [body, options, limits, expected] of [
+    ['return 1025', {}, undefined, 'BUDGET'],
+    ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+    ['saved=[]\n  while True: saved.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
+  ]) {
+    const result = await run('class Items:\n def __iter__(self): return iter(())\n def '+slot+'(self):\n  '+body+'\nclass A:\n def __dir__(self): return Items()\ndir(A())\n', options, limits);
+    assert.equal(result.error.code, expected); closed(result.closed);
+  }
 });
 
 test('reflection binding, bodies and partial iterable copies survive collection and interruption', async () => {
