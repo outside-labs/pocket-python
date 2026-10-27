@@ -796,3 +796,22 @@ matrix executions retain their existing scope. The unchanged console source
 totals 372,607 bytes (+62); its
 [diagnostic payload record](docs/measurements/2026-10-22-soft-keyword.json) retains
 all hashes and preceding measurements. No execution feature is added.
+
+
+### Generator and object-protocol checkpoint (2026-10-26)
+
+The finite G1/G2 and O1/O2 contracts add owned suspended generator functions,
+yield-from delegation, next/send/throw/close, isolated comprehensions, descriptor
+attribute reflection and binary/reflected/in-place arithmetic. Both source
+profiles keep their explicit selection and bytecode 4/5; class protocols remain
+in classes-source/1. Node/Chromium draining and stepping, resource interruptions,
+collection between instructions and offline source/Stop/Restart/update acceptance
+are required. Existing composed resource baselines remain unchanged.
+
+See [generators](docs/interpreter-generators.md) and
+[object protocols](docs/interpreter-object-protocols.md) for exact signatures,
+reference cases and remaining boundaries. Construction, super, richer type
+relations, metaclasses, builtin subclasses, custom attribute hooks, dynamic
+source, comprehension assignment expressions and async remain separately gated.
+The broader #120/#123 and #33/#34 milestones remain open; this checkpoint does
+not select a publication, deployment, dependency or host capability.

@@ -422,9 +422,9 @@
     },
     {
       "id": "further-object-protocols",
-      "status": "deferred",
-      "scope": "Arithmetic/reflected/in-place slots, __new__, metaclasses, custom attribute hooks and builtin subclassing.",
-      "gaps": "Each slice requires an adopted reference and owned continuation contract.",
+      "status": "partial",
+      "scope": "Binary/reflected/in-place arithmetic, unary +,-,~, divmod and power slots through owned descriptor callbacks, with subclass priority and NotImplemented fallback.",
+      "gaps": "Construction, super, richer type relations, metaclasses, custom attribute hooks, builtin subclassing and broader reflection remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -437,7 +437,10 @@
         "metaclass",
         "builtin-super"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/object-protocols.json:subclass-priority",
+        "tests/fixtures/interpreter/object-protocols.json:inplace-fallback"
+      ]
     },
     {
       "id": "exceptions",
@@ -1122,8 +1125,8 @@
     {
       "id": "divmod",
       "status": "partial",
-      "scope": "Positional-only primitive int/float quotient and remainder with owned tuple results and Python sign/zero rules.",
-      "gaps": "General user arithmetic/reflected slots remain INT-OBJECT-01.",
+      "scope": "Positional-only primitive int/float quotient and remainder with owned tuple results and Python sign/zero rules. Adopted user forward/reflected slots use owned descriptor dispatch.",
+      "gaps": "Further object construction/reflection remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1135,7 +1138,9 @@
       "probes": [
         "builtin-divmod"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/object-protocols.json:power-divmod"
+      ]
     },
     {
       "id": "enumerate",
@@ -1721,8 +1726,8 @@
     {
       "id": "pow",
       "status": "partial",
-      "scope": "Two-argument real/integer power, modular integer power/inverse, and complex integer powers from -100 to 100 with finite intermediates; named base/exp/mod keywords.",
-      "gaps": "Remaining complex power/recovery families are INT-NUM-02; user arithmetic slots are INT-OBJECT-01.",
+      "scope": "Two-argument real/integer power, modular integer power/inverse, and complex integer powers from -100 to 100 with finite intermediates; named base/exp/mod keywords. Adopted user forward/reflected slots use owned descriptor dispatch.",
+      "gaps": "Remaining complex power/recovery families are INT-NUM-02; User-valued power modulus and remaining construction/reflection remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1735,7 +1740,9 @@
       "probes": [
         "builtin-pow"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/object-protocols.json:power-divmod"
+      ]
     },
     {
       "id": "print",

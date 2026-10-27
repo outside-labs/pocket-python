@@ -1,3 +1,4 @@
+import {ARITHMETIC_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
 import {GeneratorValue, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
@@ -6,7 +7,7 @@ import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -616,11 +617,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (["less", "less-equal", "greater", "greater-equal"].includes(op) && frame.callable.pool.code.version === 5 &&
           (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1))))
         hard("UNSUPPORTED", "UnsupportedOperationError", "Ordering with user values requires its own comparison stage.");
-      else if (op === "inplace-add" && stack.at(-1) instanceof InstanceValue && values.isList(stack.at(-2))) {
-        const right = stack.pop(), left = stack.pop(), iterator = classes.lookup(right.type, "__iter__");
-        if (iterator.found ? iterator.value !== null : classes.lookup(right.type, "__getitem__").found)
-          hard("UNSUPPORTED", "UnsupportedOperationError", "List += with a user iterable requires its own sequence stage.");
-        stack.push(values.inplace("add", left, right));
+      else if (Object.hasOwn(ARITHMETIC_SLOTS, op.startsWith("inplace-") ? op.slice(8) : op) &&
+          (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
+        const right = stack.pop(), left = stack.pop(); dispatch(arithmeticTask(op, [left, right], summary(frame, cursor)));
       }
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
     } catch (error) { handle(error); }

@@ -167,6 +167,14 @@ memoryviews. Run `uv run python -m examples.interpreter_values`, or add `--core`
 for primitive keys. Broader set methods, bytearray resizing, buffer casts and
 native buffers retain explicit future boundaries.
 
+The [generator profile](docs/interpreter-generators.md) adds owned suspended
+functions, yield-from delegation, next/send/throw/close and scoped list/dict/set/
+generator comprehensions in both profiles. [Object protocols](docs/interpreter-object-protocols.md)
+add attribute reflection and forward/reflected/in-place arithmetic in the class
+profile. Run `python -m examples.interpreter_generators`, adding `--core` for
+generators without classes. Construction, richer reflection and async retain
+separate contracts.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)

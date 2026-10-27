@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O1"
+    "O1",
+    "O2"
   ],
   "cases": [
     {
@@ -96,6 +97,192 @@
       "stage": "Future",
       "source": "class A:\n def __getattr__(self,name): return 2\nprint(A().x)\n",
       "stdout": "2\n"
+    },
+    {
+      "id": "arithmetic-add",
+      "stage": "O2",
+      "source": "class A:\n def __add__(self,x): return [x+1]\nclass B:\n def __radd__(self,x): return [x+2]\nprint((A()+4)[0],(4+B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-add",
+      "stage": "O2",
+      "source": "class A:\n def __iadd__(self,x): return [x+3]\na=A()\na+=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-sub",
+      "stage": "O2",
+      "source": "class A:\n def __sub__(self,x): return [x+1]\nclass B:\n def __rsub__(self,x): return [x+2]\nprint((A()-4)[0],(4-B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-sub",
+      "stage": "O2",
+      "source": "class A:\n def __isub__(self,x): return [x+3]\na=A()\na-=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-mul",
+      "stage": "O2",
+      "source": "class A:\n def __mul__(self,x): return [x+1]\nclass B:\n def __rmul__(self,x): return [x+2]\nprint((A()*4)[0],(4*B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-mul",
+      "stage": "O2",
+      "source": "class A:\n def __imul__(self,x): return [x+3]\na=A()\na*=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-truediv",
+      "stage": "O2",
+      "source": "class A:\n def __truediv__(self,x): return [x+1]\nclass B:\n def __rtruediv__(self,x): return [x+2]\nprint((A()/4)[0],(4/B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-truediv",
+      "stage": "O2",
+      "source": "class A:\n def __itruediv__(self,x): return [x+3]\na=A()\na/=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-floordiv",
+      "stage": "O2",
+      "source": "class A:\n def __floordiv__(self,x): return [x+1]\nclass B:\n def __rfloordiv__(self,x): return [x+2]\nprint((A()//4)[0],(4//B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-floordiv",
+      "stage": "O2",
+      "source": "class A:\n def __ifloordiv__(self,x): return [x+3]\na=A()\na//=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-mod",
+      "stage": "O2",
+      "source": "class A:\n def __mod__(self,x): return [x+1]\nclass B:\n def __rmod__(self,x): return [x+2]\nprint((A()%4)[0],(4%B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-mod",
+      "stage": "O2",
+      "source": "class A:\n def __imod__(self,x): return [x+3]\na=A()\na%=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-pow",
+      "stage": "O2",
+      "source": "class A:\n def __pow__(self,x): return [x+1]\nclass B:\n def __rpow__(self,x): return [x+2]\nprint((A()**4)[0],(4**B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-pow",
+      "stage": "O2",
+      "source": "class A:\n def __ipow__(self,x): return [x+3]\na=A()\na**=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-lshift",
+      "stage": "O2",
+      "source": "class A:\n def __lshift__(self,x): return [x+1]\nclass B:\n def __rlshift__(self,x): return [x+2]\nprint((A()<<4)[0],(4<<B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-lshift",
+      "stage": "O2",
+      "source": "class A:\n def __ilshift__(self,x): return [x+3]\na=A()\na<<=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-rshift",
+      "stage": "O2",
+      "source": "class A:\n def __rshift__(self,x): return [x+1]\nclass B:\n def __rrshift__(self,x): return [x+2]\nprint((A()>>4)[0],(4>>B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-rshift",
+      "stage": "O2",
+      "source": "class A:\n def __irshift__(self,x): return [x+3]\na=A()\na>>=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-and",
+      "stage": "O2",
+      "source": "class A:\n def __and__(self,x): return [x+1]\nclass B:\n def __rand__(self,x): return [x+2]\nprint((A()&4)[0],(4&B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-and",
+      "stage": "O2",
+      "source": "class A:\n def __iand__(self,x): return [x+3]\na=A()\na&=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-or",
+      "stage": "O2",
+      "source": "class A:\n def __or__(self,x): return [x+1]\nclass B:\n def __ror__(self,x): return [x+2]\nprint((A()|4)[0],(4|B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-or",
+      "stage": "O2",
+      "source": "class A:\n def __ior__(self,x): return [x+3]\na=A()\na|=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "arithmetic-xor",
+      "stage": "O2",
+      "source": "class A:\n def __xor__(self,x): return [x+1]\nclass B:\n def __rxor__(self,x): return [x+2]\nprint((A()^4)[0],(4^B())[0])\n",
+      "stdout": "5 6\n"
+    },
+    {
+      "id": "inplace-xor",
+      "stage": "O2",
+      "source": "class A:\n def __ixor__(self,x): return [x+3]\na=A()\na^=4\nprint(a[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "unary-results",
+      "stage": "O2",
+      "source": "class A:\n def __neg__(self): return [1]\n def __pos__(self): return [2]\n def __invert__(self): return [3]\nprint((-A())[0],(+A())[0],(~A())[0])\n",
+      "stdout": "1 2 3\n"
+    },
+    {
+      "id": "inherited-reflection",
+      "stage": "O2",
+      "source": "class A:\n def __add__(self,other):\n  print(\"left\")\n  return NotImplemented\n def __radd__(self,other):\n  print(\"right\")\n  return 9\nclass B(A): pass\nprint(A()+B())\n",
+      "stdout": "left\nright\n9\n"
+    },
+    {
+      "id": "arithmetic-property",
+      "stage": "O2",
+      "source": "class A:\n @property\n def __add__(self):\n  print(\"bind\")\n  def use(other): return other+3\n  return use\nprint(A()+4)\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "arithmetic-lazy-result",
+      "stage": "O2",
+      "source": "class A:\n def __add__(self,other):\n  print(\"body\")\n  yield other+3\ng=A()+4\nprint(\"made\")\nprint(next(g))\n",
+      "stdout": "made\nbody\n7\n"
+    },
+    {
+      "id": "repeat-index-alias",
+      "stage": "O2",
+      "source": "class I:\n def __index__(self): return 2\na=[7]\nb=a\na*=I()\nprint(a is b,len(b),len(b\"x\"*I()))\n",
+      "stdout": "True 2 2\n"
+    },
+    {
+      "id": "reflected-ternary-power",
+      "stage": "O2",
+      "source": "class A:\n def __rpow__(self,other,mod=None): return other+mod\nprint(pow(2,A(),5))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "reflection-unusual-keys",
+      "stage": "O1",
+      "source": "class A: pass\na=A()\nsetattr(a,\"two words\",7)\nsetattr(a,\"\",8)\nprint(getattr(a,\"two words\"),getattr(a,\"\"))\n",
+      "stdout": "7 8\n"
     }
   ]
 }

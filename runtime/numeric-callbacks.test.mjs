@@ -19,7 +19,7 @@ test('numeric continuations retain every operand and outer destination with clos
   assert.deepEqual(operationRoots(numericTask('round',[receiver,digits],null,after)),[receiver,digits,pending]);
   assert.throws(()=>numericTask('future',[],null),TypeError);
   assert.throws(()=>numericTask('round',[receiver],null,null,0,3),TypeError);
-  assert.throws(()=>completion('numeric-result',{...fields,slot:'__add__'}),TypeError);
+  assert.throws(()=>completion('numeric-result',{...fields,slot:'__matmul__'}),TypeError);
   assert.throws(()=>completion('numeric-index',{...fields,position:2}),TypeError);
 });
 

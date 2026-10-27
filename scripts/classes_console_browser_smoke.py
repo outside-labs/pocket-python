@@ -23,6 +23,7 @@ from examples.interpreter_classes import SOURCE
 from examples.interpreter_functions import SOURCE as FUNCTION_SOURCE, CORE_SOURCE as CORE_FUNCTION_SOURCE
 from examples.interpreter_syntax import SOURCE as SYNTAX_SOURCE, CORE_SOURCE as CORE_SYNTAX_SOURCE
 from examples.interpreter_values import SOURCE as VALUES_SOURCE, CORE_SOURCE as CORE_VALUES_SOURCE
+from examples.interpreter_generators import SOURCE as GENERATOR_SOURCE, CORE_SOURCE as GENERATOR_CORE_SOURCE
 
 
 def smoke(channel=None):
@@ -152,6 +153,12 @@ def smoke(channel=None):
                         'view-basic', 'view-alias', 'view-stride', 'view-owner-lifetime', 'view-released-equality',
                         'view-released-hash-cached', 'view-binary-operations', 'view-byte-index-callback'])
                     programs.append(VALUES_SOURCE)
+                    generators = json.loads((ROOT / 'tests/fixtures/interpreter/generators.json').read_bytes())
+                    objects = json.loads((ROOT / 'tests/fixtures/interpreter/object-protocols.json').read_bytes())
+                    for corpus in [generators, objects]:
+                        programs.extend(c['source'] for c in corpus['cases']
+                                        if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
+                    programs.append(GENERATOR_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -160,7 +167,7 @@ def smoke(channel=None):
                     refused('class A:\n def fail(self): return 1//0\nA().fail()\n', 'ZeroDivisionError:')
                     assert 'sources/app.py:2' in page.locator('#status').inner_text()
                     assert 'fail at sources/app.py:2' in page.locator('#diagnostic').inner_text()
-                    refused("print('never')\nclass A:\n def __add__(self,other): return 7\n", 'UnsupportedSyntaxError:')
+                    refused("print('never')\nclass A:\n def __matmul__(self,other): return 7\n", 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     refused('A()\n', 'NameError:')
                     refused('import browser\n', 'ImportError:')
@@ -339,6 +346,13 @@ def smoke(channel=None):
                     run(VALUES_SOURCE, 'sets 2 True True\ntext Café afé False\nview CBA 3 -1\n')
                     run('class Byte:\n @property\n def __bytes__(self): return lambda: "café".encode()\nraw=bytes(Byte()); a=bytearray(raw); v=memoryview(a)[::-1]; v[0]=ord(b"!")\nprint(raw.decode(),a[-1],v[0],len({frozenset([1,2]),frozenset([2,1])}))\n', 'café 33 33 1\n')
                     checks.append('new-sets-codecs-bytes-binding-and-buffer-alias-source-offline')
+                    generator_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', GENERATOR_SOURCE], text=True, encoding='utf-8')
+                    run(GENERATOR_SOURCE, generator_expected)
+                    checks.append('new-generators-comprehensions-reflection-and-arithmetic-source-offline')
+                    refused('def g():\n yield 1\n raise StopIteration("escaped")\na=g()\nnext(a)\nnext(a)\n', 'RuntimeError:')
+                    refused('class A:\n @property\n def x(self): raise ValueError("body")\nhasattr(A(),"x")\n', 'ValueError:')
+                    refused('class A:\n def __add__(self,x): raise KeyError("body")\nA()+1\n', 'KeyError:')
+                    checks.append('generator-and-object-body-errors-retain-offline-diagnostics')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -423,6 +437,14 @@ def smoke(channel=None):
                         'class I:\n def __index__(self):\n  while True: pass\nbytes([I()])\n',
                         'class I:\n def __index__(self):\n  while True: pass\nv=memoryview(bytearray(b"a")); v[I()]=0\n'
                     ])
+                    busy.extend([
+                        'def g():\n while True: yield 1\nall(g())\n',
+                        'def g():\n try: yield 1\n finally:\n  while True: pass\na=g()\nnext(a)\na.close()\n',
+                        'def busy(x):\n while True: pass\na=[busy(x) for x in range(2)]\n',
+                        'class Spin:\n def __add__(self,other):\n  while True: pass\nSpin()+[7]\n',
+                        'class Spin:\n @property\n def __radd__(self):\n  while True: pass\n[7]+Spin()\n',
+                        'class Spin:\n @property\n def x(self):\n  while True: pass\ngetattr(Spin(),"x",[7])\n'
+                    ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
@@ -474,6 +496,9 @@ def smoke(channel=None):
                     checks.append('ordinary-syntax-retained-after-core-profile-update')
                     run(CORE_VALUES_SOURCE, 'sets 2 True True\ntext Café afé False\nview CBA 3 -1\n')
                     checks.append('sets-binary-codecs-and-buffer-values-retained-after-core-profile-update')
+                    core_generator_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', GENERATOR_CORE_SOURCE], text=True, encoding='utf-8')
+                    run(GENERATOR_CORE_SOURCE, core_generator_expected)
+                    checks.append('generators-and-comprehensions-retained-after-offline-core-profile-update')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

@@ -504,7 +504,7 @@
     },
     {
       "id": "future-arithmetic",
-      "stage": "I3",
+      "stage": "I1",
       "source": "class A:\n def __add__(self,x): return 7\nprint(A()+1)\n",
       "stdout": "7\n"
     },

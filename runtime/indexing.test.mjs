@@ -100,7 +100,7 @@ test('default source profile keeps class and slice-constructor admission explici
   const core=await runSourceRequest({modules:[unit('print("A😀"[::-1])\n')]});
   assert.equal(core.stdout,'😀A\n'); closed(core);
   const refused=await runSourceRequest({modules:[unit('slice(7)\n')]}); assert.equal(refused.error.type,'NameError'); closed(refused);
-  const future=await run('print("never")\nclass A:\n def __add__(self,other): return 7\n'); assert.equal(future.error.code,'UNSUPPORTED'); assert.equal(future.stdout,'');
+  const future=await run('print("never")\nclass A:\n def __matmul__(self,other): return 7\n'); assert.equal(future.error.code,'UNSUPPORTED'); assert.equal(future.stdout,'');
 });
 
 test('mutation continuations retain the RHS and outer completion with exhaustive roots', () => {
