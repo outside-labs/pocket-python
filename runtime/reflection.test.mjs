@@ -184,12 +184,14 @@ test('directory comparison and truth callbacks share recursion, work and allocat
   for (const slot of ['__lt__', '__bool__']) for (const [body, options, limits, expected] of [
     ['return dir(A())', {maxDepth: 12}, undefined, 'PYTHON'],
     ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+    ['print("entered")\n  while True: pass', {maxSteps: 100000, maxWork: 20000}, undefined, 'BUDGET'],
     ['saved=[]\n  while True: saved.append([7])', {maxSteps: 100000}, {maxBytes: 28000}, 'OOM'],
   ]) {
     const source = slot === '__lt__' ? 'class Entry:\n def __lt__(self,other):\n  '+body+'\n' :
       'class Truth:\n def __bool__(self):\n  '+body+'\nclass Entry:\n def __lt__(self,other): return Truth()\n';
     const result = await run(source+'class A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n', options, limits);
     assert.equal(result.error.code, expected); if (expected === 'PYTHON') assert.equal(result.error.type, 'RecursionError'); closed(result.closed);
+    if (options.maxWork) assert.equal(result.stdout, 'entered\n');
   }
 });
 
@@ -227,10 +229,12 @@ test('directory hints share work, instruction and actual allocation limits witho
   for (const slot of ['__len__', '__length_hint__']) for (const [body, options, limits, expected] of [
     ['return 1025', {}, undefined, 'BUDGET'],
     ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+    ['print("entered")\n  while True: pass', {maxSteps: 100000, maxWork: 20000}, undefined, 'BUDGET'],
     ['saved=[]\n  while True: saved.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
   ]) {
     const result = await run('class Items:\n def __iter__(self): return iter(())\n def '+slot+'(self):\n  '+body+'\nclass A:\n def __dir__(self): return Items()\ndir(A())\n', options, limits);
     assert.equal(result.error.code, expected); closed(result.closed);
+    if (options.maxWork) assert.equal(result.stdout, 'entered\n');
   }
 });
 

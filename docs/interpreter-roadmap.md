@@ -226,9 +226,15 @@ directories copy their iterable and sort bounded string names by Unicode code
 point, retaining duplicates.
 
 Live module/class/global mappings, ordinary instance dictionaries, mapping
-proxies, default directories, comprehension namespace rules and unboxed integer
+proxies, default directories, inlined comprehension namespace rules and unboxed integer
 identity remain finite follow-ups under #123. Builtin layouts, further metaclass
 protocols and dynamic source admission remain open. #34 still requires native
 coroutine/await and async protocols, an adopted awaited capability and a durable
 offline view/save application. The [reflection example](../examples/interpreter_reflection.py)
 and its acceptance evidence do not broaden host grants or package/device claims.
+
+[O18–O20](interpreter-directory-scopes.md) extend the reflection checkpoint with
+generator-expression snapshots retaining the acquired iterator as `.0`, custom
+directory iterable length hints and stable owned comparison/truth sorting of
+adopted entries. These protocols retain the same source profiles and host grants.
+Native coroutine/await and host adapters remain separate work under #34.

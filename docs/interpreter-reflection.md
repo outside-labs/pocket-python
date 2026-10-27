@@ -6,17 +6,17 @@ future cases before implementation. Reference-only results do not establish
 independent execution. These APIs belong to classes-source/1 and bytecode 5;
 core-source/1 admission and bytecode 4 remain unchanged.
 
-The next [O18–O20 contract](interpreter-directory-scopes.md) specifies
-generator-expression namespaces, custom directory length hints and owned
-ordering of arbitrary directory entries. Its reference cases do not imply
-implementation until their stages are explicitly adopted.
+The implemented [O18–O20 contract](interpreter-directory-scopes.md) extends this
+profile with generator-expression namespaces, custom directory length hints and
+owned ordering of arbitrary adopted directory entries. Its acceptance record
+supersedes the earlier finite boundaries below for those three forms.
 
 | Stage | Adopted contract |
 | --- | --- |
 | O15 | `id(value, /)` returns an integer identifying an adopted arena object or the None/True/False singletons. Simultaneously live distinct objects have distinct identities; aliases retain identity through mutation, collection, parked execution and callbacks. Identity agrees with the existing `is` operation and never invokes hashing, equality or attribute hooks. IDs are session-local opaque integers, without an address or cross-session guarantee. Unboxed integer identity remains an explicit refusal, matching the existing `is` boundary. |
 | O16 | In ordinary optimized function, lambda and generator frames containing no list/dict/set comprehensions, `locals()` and zero-argument `vars()` return a fresh shallow dictionary on each call. Include bound parameters, ordinary local cells and captured free cells; omit unbound/deleted names, explicit globals and compiler storage. Preserve parameter/local/cell/free-variable order, including assignment-expression and definition-time operand order. Snapshot mutation cannot rebind a Python cell, while referenced mutable values keep their identity. Zero-argument `dir()` returns a fresh list of the same currently bound names, sorted by Unicode code point. Aliasing the builtin still inspects its immediate calling Python frame. Lexical `__class__` cells are visible when captured. |
 | O17 | `vars(object, /)` reads `__dict__` through ordinary owned attribute lookup, including custom descriptors, `__getattribute__` and `__getattr__`. Return the result unchanged, even if it is not a dictionary. Convert only terminal AttributeError to TypeError. `dir(object, /)` selects a custom `__dir__` on the actual type/metaclass, bypasses instance shadows and read hooks, binds its descriptor and invokes it with no arguments. Copy its iterable result, then sort bounded string entries by Unicode code point, retaining duplicates and leaving the returned iterable unchanged. Binding, iteration and method-body errors propagate. |
-| Future | Live globals/module/class namespaces, ordinary instance dictionaries, class mapping proxies, function/module dictionaries, default object/type/builtin directories, comprehension namespace reflection, integer identity, custom directory entries other than strings, and custom directory iterables with length hints require separate contracts. Dynamic exec/eval/compile/import, builtin instance layouts and additional metaclass protocols remain open. |
+| Future | Live globals/module/class namespaces, ordinary instance dictionaries, class mapping proxies, function/module dictionaries, default object/type/builtin directories, inlined comprehension namespace reflection and integer identity require separate contracts. Dynamic exec/eval/compile/import, builtin instance layouts and additional metaclass protocols remain open. |
 
 Module and class `locals()` have a live mapping contract; an optimized snapshot
 must not stand in for them. Inlined comprehensions retain a separate namespace

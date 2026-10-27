@@ -29,6 +29,31 @@ def inspect(record):
     print("snapshot", alias is record, "before" in before, "names" in dir())
 
 inspect(Record("offline", 1))
+
+class Decision:
+    def __init__(self, value): self.value = value
+    def __bool__(self): return self.value
+
+class Field:
+    def __init__(self, name, order): self.name = name; self.order = order
+    def __lt__(self, other): return Decision(self.order < other.order)
+
+class Fields:
+    def __init__(self, entries): self.entries = entries
+    def __iter__(self): return iter(self.entries)
+    def __len__(self): raise TypeError("use the advisory hint")
+    def __length_hint__(self): return 0
+
+class View:
+    def __dir__(self): return Fields([Field("title", 2), Field("revision", 1)])
+
+columns = dir(View())
+print("ordered", columns[0].name, columns[1].name)
+snapshots = (locals() for field in columns)
+first = next(snapshots)
+second = next(snapshots)
+snapshots.close()
+print("scope", list(first) == [".0", "field"], first[".0"] is second[".0"], first["field"] is columns[0])
 '''
 
 if __name__ == '__main__':
