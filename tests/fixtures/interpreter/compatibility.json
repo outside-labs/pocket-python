@@ -883,16 +883,14 @@
     {
       "id": "builtin-delattr",
       "source": "print(callable(delattr))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -1042,16 +1040,14 @@
     {
       "id": "builtin-getattr",
       "source": "print(callable(getattr))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -1072,16 +1068,14 @@
     {
       "id": "builtin-hasattr",
       "source": "print(callable(hasattr))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -1480,16 +1474,14 @@
     {
       "id": "builtin-setattr",
       "source": "print(callable(setattr))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {

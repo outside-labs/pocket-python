@@ -19,11 +19,12 @@ export class ClassRuntime {
   bounded(condition, message) { if (!condition) this.fail("ExecutionLimitError", message, "BUDGET"); }
   key(name) {
     this.charge(typeof name === "string" ? name.length + 1 : 1);
-    if (typeof name !== "string" || name.length > CLASS_LIMITS.name || !isPythonIdentifier(name)) throw new TypeError("Invalid class attribute name.");
+    if (typeof name !== "string" || name.length > CLASS_LIMITS.name) throw new TypeError("Invalid class attribute name.");
   }
   root() { return this.make(ClassValue, "object", "object", "builtins", [], [], new Map(), true); }
   create(name, qualname, module, bases, namespace, root) {
     this.key(name);
+    if (!isPythonIdentifier(name)) throw new TypeError("Invalid class name.");
     this.bounded(typeof qualname === "string" && qualname.length <= 256 && typeof module === "string" && module.length <= 192,
       "Class identity budget exceeded.");
     if (!(root instanceof ClassValue) || !root.root || !Array.isArray(bases) || !(namespace instanceof Map)) throw new TypeError("Invalid class construction record.");

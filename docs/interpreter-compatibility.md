@@ -102,7 +102,7 @@ issue families; availability alone never certifies an entire type or module.
 | classmethod | partial | classmethod(callable), classes-source/1 and accessed-owner binding. | Unrestricted wrapper introspection. |
 | compile | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | complex | partial | Owned immutable Cartesian values, literal/text/real/complex construction, real/imag keywords and attributes, finite basic arithmetic, equality/truth/hash and bounded integer powers. Owned conversion and index fallback callbacks run in ordinary VM frames under classes-source/1. | General powers, non-finite arithmetic/recovery families, numeric methods, formatting and builtin subclasses remain later boundaries. |
-| delattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| delattr | partial | Positional reflection on adopted class attributes and descriptors. | Custom hooks and broader reflection remain separate. |
 | dict | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | dir | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | divmod | partial | Positional-only primitive int/float quotient and remainder with owned tuple results and Python sign/zero rules. | General user arithmetic/reflected slots remain INT-OBJECT-01. |
@@ -113,9 +113,9 @@ issue families; availability alone never certifies an entire type or module.
 | float | partial | Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles. Owned conversion and index fallback callbacks run in ordinary VM frames under classes-source/1. | Bytes (int/float), builtin subclasses, numeric methods and formatting remain later value/object stages. |
 | format | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | frozenset | partial | Zero/one positional iterable construction, set displays, membership/equality/iteration, finite methods and primitive algebra; owned iterator/hash/equality callbacks in classes-source/1. | Broader methods, set-algebra callbacks, recursive user-key frozen hashing and comprehensions remain deferred. |
-| getattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| getattr | partial | Positional reflection on adopted class attributes and descriptors. | Custom hooks and broader reflection remain separate. |
 | globals | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
-| hasattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| hasattr | partial | Positional reflection on adopted class attributes and descriptors. | Custom hooks and broader reflection remain separate. |
 | hash | partial | hash(value), positional-only in classes-source/1; numeric/string/primitive tuple hashes, user __hash__ and owned default identities. | Tuple-with-instance, bound-method and slice hash families remain deferred; exact string/object hash numbers are not a cross-process guarantee. |
 | help | host-restricted | Not installed; availability probe only, never invoked. | Interactive/process/filesystem behavior needs an explicit target capability contract. |
 | hex | supported | Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract. |  |
@@ -145,7 +145,7 @@ issue families; availability alone never certifies an entire type or module.
 | reversed | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | round | supported | Primitive numeric signatures in both source profiles and owned type-level callbacks in classes-source/1; see interpreter-numeric.md for the finite contract. |  |
 | set | partial | Zero/one positional iterable construction, set displays, membership/equality/iteration, finite methods and primitive algebra; owned iterator/hash/equality callbacks in classes-source/1. | Broader methods, set-algebra callbacks, recursive user-key frozen hashing and comprehensions remain deferred. |
-| setattr | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
+| setattr | partial | Positional reflection on adopted class attributes and descriptors. | Custom hooks and broader reflection remain separate. |
 | slice | partial | classes-source/1: slice(stop), slice(start,stop), slice(start,stop,step), positional only; immutable raw start/stop/step fields. | Core constructor, slice.indices, repr, equality/hash and other reflection are deferred. |
 | sorted | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | staticmethod | partial | staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1. | Unrestricted wrapper introspection. |

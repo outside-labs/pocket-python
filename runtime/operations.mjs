@@ -122,6 +122,9 @@ export function completion(kind, fields = {}) {
       break;
     case "protocol-result": record = {kind, receiver: fields.receiver, operation: fields.operation, slot: fields.slot, depth: fields.depth ?? 0, after}; break;
     case "optional-truth": record = {kind, receiver: fields.receiver, operation: fields.operation, depth: fields.depth, after}; break;
+    case "attribute-write": record = {kind, receiver: fields.receiver, after}; break;
+    case "attribute-result": record = {kind, receiver: fields.receiver, default: fields.default, mode: fields.mode, after};
+      if (!["getattr", "hasattr"].includes(record.mode)) throw new TypeError("Invalid attribute result mode."); break;
     case "delegate-bind": record = {kind, receiver: fields.receiver, args: operands(fields.args), after}; break;
     case "invoke": record = {kind, args: operands(fields.args), keywords: operands(fields.keywords),
       keywordValues: operands(fields.keywordValues), depth: fields.depth, fallback: fields.fallback ?? null, after}; break;
@@ -170,6 +173,8 @@ function visit(record) {
     case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
+    case "attribute-write": return [record.receiver, ...completionRoots(record.after)];
+    case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "notify": return [record.type, ...record.entries.map(entry => entry[1])];
