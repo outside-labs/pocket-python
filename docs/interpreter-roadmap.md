@@ -253,3 +253,18 @@ further metaclass protocols and dynamic source admission remain under #123.
 Native coroutine/await, async protocols, awaited capabilities and durable
 offline view/save acceptance remain under #34. This checkpoint adds no host
 grant, runtime dependency, release, publication or deployment.
+
+## Ordinary sequence repetition checkpoint
+
+[R1–R3](interpreter-repetition.md) adopt shallow list/tuple repetition and Unicode
+text multiplication with primitive factors in both source profiles. Class-profile
+index callbacks run after numeric/reflected candidates, preserve owned operands,
+and copy lists after callback-visible mutation. Existing bytes and list in-place
+resource rules remain unchanged. The composed repetition console and its exact
+payload record cover offline execution and Stop/Restart.
+
+This advances #123's arithmetic consumers. Live namespace mappings, default
+directories, builtin instance layouts, further metaclass protocols and dynamic
+source admission retain their finite boundaries. Native coroutine/await, async
+protocols, awaited host adapters and durable view/save acceptance remain under
+#34. No host grant, dependency, publication or deployment accompanies this work.

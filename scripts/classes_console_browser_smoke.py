@@ -29,6 +29,7 @@ from examples.interpreter_attributes import SOURCE as ATTRIBUTE_SOURCE
 from examples.interpreter_type_checks import SOURCE as TYPE_CHECK_SOURCE
 from examples.interpreter_ordering import SOURCE as ORDERING_SOURCE
 from examples.interpreter_reflection import SOURCE as REFLECTION_SOURCE
+from examples.interpreter_repetition import SOURCE as REPETITION_SOURCE
 
 
 def smoke(channel=None):
@@ -171,7 +172,8 @@ def smoke(channel=None):
                     ordering = json.loads((ROOT / 'tests/fixtures/interpreter/ordering.json').read_bytes())
                     object_hashing = json.loads((ROOT / 'tests/fixtures/interpreter/object-hashing.json').read_bytes())
                     reflection = json.loads((ROOT / 'tests/fixtures/interpreter/reflection.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection]:
+                    repetition = json.loads((ROOT / 'tests/fixtures/interpreter/repetition.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -180,6 +182,7 @@ def smoke(channel=None):
                     programs.append(TYPE_CHECK_SOURCE)
                     programs.append(ORDERING_SOURCE)
                     programs.append(REFLECTION_SOURCE)
+                    programs.append(REPETITION_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -449,6 +452,14 @@ def smoke(channel=None):
                     refused('print("must not execute")\ny=9\nr=[lambda a=(y:=7):a for x in [1]]\n', 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     checks.append('comprehension-lambda-default-bindings-refuse-before-offline-effects')
+                    run(REPETITION_SOURCE, 'copies True 1 2 1\nevents run save run save\nbanner 6 True\nmutation 2 4 finish finish\ninplace True 6 True\n')
+                    for case in repetition['cases']:
+                        if case['stage'] not in repetition['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                    checks.append('sequence-repetition-aliases-unicode-mutation-and-generators-compose-offline')
+                    checks.append('repetition-index-errors-overflow-and-deferred-forms-retain-offline-boundaries')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -501,6 +512,10 @@ def smoke(channel=None):
                                         'def '+slot+'(self'+params+'):\n  while True: pass\n'+invocation+'\n')
                     for invocation in ['int("ff",base=Spin())','bin(Spin())','round(1.25,Spin())']:
                         busy.append('class Spin:\n @property\n def __index__(self):\n  while True: pass\n'+invocation+'\n')
+                    for sequence in ['[[7]]', '([7],)', '"😀"']:
+                        for binding in [False, True]:
+                            busy.append('class Spin:\n '+('@property\n ' if binding else '')+
+                                        'def __index__(self):\n  print("entered")\n  while True: pass\n'+sequence+'*Spin()\n')
                     for binding in [False, True]:
                         decoration = '@property\n ' if binding else ''
                         busy.append('class Spin:\n '+decoration+'def __index__(self):\n  while True: pass\nrange(Spin())\n')
@@ -666,6 +681,8 @@ def smoke(channel=None):
                     for name in ['id', 'locals', 'vars', 'dir', 'globals']:
                         refused(name + '\n', 'NameError:')
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
+                    run('a=[7]\nb=a*2\na[0]=9\nprint(len(b),b[0],len("😀"*3),len(2*(1,)))\n', '2 7 3 2\n')
+                    checks.append('primitive-repetition-retained-after-core-profile-update')
                     run('print(len("okay"),bool([]))\n', '4 False\n')
                     run('print(repr("A😀"),len(str()))\n', "'A😀' 0\n")
                     run('print(7)\n', '7\n')
