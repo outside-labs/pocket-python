@@ -1197,6 +1197,7 @@ export class ValueRuntime {
     if (!["add", "subtract", "multiply", "floor-divide", "modulo", "divide"].includes(operation)) this.fail("UnsupportedOperationError", "Unknown binary operation.", "UNSUPPORTED");
     if (operation === "multiply" && ((sequence(left) && ["bigint", "boolean"].includes(typeof right)) ||
         (sequence(right) && ["bigint", "boolean"].includes(typeof left)))) {
+      if (!this.numeric) this.fail("UnsupportedOperationError", "Sequence repetition requires the source value profile.", "UNSUPPORTED");
       const value = sequence(left) ? left : right, count = value === left ? right : left;
       if (value instanceof StringValue) this.fail("UnsupportedOperationError", "Text repetition requires its own stage.", "UNSUPPORTED");
       return this.repeat(value, count);
