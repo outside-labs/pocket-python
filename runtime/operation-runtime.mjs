@@ -1,4 +1,4 @@
-import {ARITHMETIC_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
+import {ARITHMETIC_SLOTS, ORDERING_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
 import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
@@ -922,6 +922,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries.push(...operationRoots(task));
           let {left, right} = task;
           const {operation, position} = task;
+          const ordering = Object.hasOwn(ORDERING_SLOTS, operation);
           if (values.isSet(left) && values.isSet(right)) { left = left.storage; right = right.storage; }
           if (!(left instanceof InstanceValue || right instanceof InstanceValue)) {
             if (values.sameSequenceKind(left, right)) {
@@ -936,15 +937,18 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = deliver(values.binary(operation, left, right), completion, site); continue;
           }
           const reflected = left instanceof InstanceValue && right instanceof InstanceValue && left.type !== right.type && right.type.mro.includes(left.type);
-          const candidates = reflected ? [[right, left], [left, right]] : [[left, right], [right, left]];
-          if (position >= candidates.length) { task = deliver(operation === "equal" ? left === right : left !== right, completion, site); continue; }
-          const [receiver, other] = candidates[position];
+          const candidates = reflected ? [[right, left, 1], [left, right, 0]] : [[left, right, 0], [right, left, 1]];
+          if (position >= candidates.length) {
+            if (ordering) python("TypeError", "Ordering is not supported between these values");
+            task = deliver(operation === "equal" ? left === right : left !== right, completion, site); continue;
+          }
+          const [receiver, other, direction] = candidates[position];
           if (!(receiver instanceof InstanceValue)) { task = compareTask(operation, left, right, site, completion, depth, position + 1); continue; }
           if (depth >= maxDepth) python("RecursionError", "maximum implicit comparison dispatch depth exceeded");
           const fallback = {operation: "compare-next", comparison: operation, left, right, position: position + 1, after: completion, depth};
           let plan, invert = false;
           try {
-            plan = classes.special(receiver, operation === "equal" ? "__eq__" : "__ne__");
+            plan = classes.special(receiver, ordering ? ORDERING_SLOTS[operation][direction] : operation === "equal" ? "__eq__" : "__ne__");
             if (!plan && operation === "not-equal") { invert = true; plan = classes.special(receiver, "__eq__"); }
           } catch (error) {
             const recovery = error instanceof Raised && bindingRecovery(error.value, {fallback}, site);
@@ -952,7 +956,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = recovery; continue;
           }
           if (!plan) {
-            task = receiver === other ? valueTask(operation === "equal", site, completion) :
+            task = !ordering && receiver === other ? valueTask(operation === "equal", site, completion) :
               compareTask(operation, left, right, site, completion, depth, position + 1); continue;
           }
           const finish = continuation(invert ? "ne-result" : "compare-result", {operation, left, right, position, depth, after: completion});

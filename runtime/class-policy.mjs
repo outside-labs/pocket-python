@@ -2,12 +2,16 @@
 export const DESCRIPTOR_HOOKS = Object.freeze(["__get__", "__set__", "__delete__", "__set_name__"]);
 export const ARITHMETIC_SLOTS = Object.freeze({add: "add", subtract: "sub", multiply: "mul", divide: "truediv", "floor-divide": "floordiv",
   modulo: "mod", power: "pow", "bit-and": "and", "bit-or": "or", "bit-xor": "xor", "left-shift": "lshift", "right-shift": "rshift", divmod: "divmod"});
+export const ORDERING_SLOTS = Object.freeze({less: Object.freeze(["__lt__", "__gt__"]),
+  "less-equal": Object.freeze(["__le__", "__ge__"]), greater: Object.freeze(["__gt__", "__lt__"]),
+  "greater-equal": Object.freeze(["__ge__", "__le__"])});
 const contexts = new Set(["define", "attribute", "mutate", "implicit"]);
 const ordinarySlot = Object.freeze({define: true, attribute: true, mutate: true, implicit: false});
 export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
   ...["__call__", "__len__", "__bool__", "__repr__", "__str__", "__index__", "__bytes__", "__getitem__", "__setitem__", "__delitem__", "__iter__", "__next__", "__contains__", "__eq__", "__ne__", "__hash__", "__int__", "__float__", "__complex__", "__abs__", "__round__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ...Object.values(ARITHMETIC_SLOTS).flatMap(stem => ["", "r", ...(stem === "divmod" ? [] : ["i"])].map(prefix =>
     ["__" + prefix + stem + "__", Object.freeze({...ordinarySlot, implicit: true})])),
+  ...["__lt__", "__le__", "__gt__", "__ge__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ...["__neg__", "__pos__", "__invert__", "__getattribute__", "__getattr__", "__setattr__", "__delattr__", "__instancecheck__", "__subclasscheck__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ["__init__", ordinarySlot], ["__new__", ordinarySlot], ...DESCRIPTOR_HOOKS.map(name => [name, ordinarySlot]),
   ["__module__", Object.freeze({define: true})], ["__qualname__", Object.freeze({define: true})],

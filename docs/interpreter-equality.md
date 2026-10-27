@@ -32,7 +32,9 @@ the stored element with the query and truth-test the result. Adopt bounded
 recursive list/tuple equality, and dictionary equality after E2. Preserve list
 length shortcuts and callback-visible element/length mutations. Primitive paths,
 normal source evaluation order, chained comparison and conditional truth remain
-required. Ordering slots, sets and arbitrary reflective hooks are separate work.
+required. The separately adopted [ordering contract](interpreter-ordering.md)
+adds four ordering slots; set ordering with user keys and arbitrary reflective
+hooks remain separate work.
 
 Callable-sentinel comparison uses sentinel equality before deciding exhaustion.
 Its comparison errors must not set the iterator's sticky exhaustion flag.
