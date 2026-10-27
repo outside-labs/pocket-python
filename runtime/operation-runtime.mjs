@@ -30,6 +30,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const frame = state.frames.at(-1);
     if (frame.fn.kind !== "function" || ["<listcomp>", "<dictcomp>", "<setcomp>", "<genexpr>"].includes(frame.fn.name))
       hard("UNSUPPORTED", "UnsupportedOperationError", "This scope requires its own live or comprehension namespace contract.");
+    for (const block of frame.fn.blocks) for (const [op, index] of block.instructions) {
+      charge(1);
+      if (["function", "function-defaults"].includes(op) && ["<listcomp>", "<dictcomp>", "<setcomp>"].includes(frame.callable.pool.code.functions[index].name))
+        hard("UNSUPPORTED", "UnsupportedOperationError", "Enclosing namespaces of inlined comprehensions require their own binding contract.");
+    }
     return [...frame.fn.locals.map(name => [name, frame.locals.get(name)]), ...frame.closure].filter(([name, cell]) => {
       charge(name.length + 1); return cell.bound && !name.startsWith("@source:");
     });
