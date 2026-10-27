@@ -73,6 +73,6 @@ and a full offline save application remain subsequent acceptance stages.
 
 The [payload and evidence record](measurements/2026-10-27-events.json) pins the
 final engine/corpus/report inputs, 300 passing source observations with measured
-zero teardown, and all 38 files of the 629,452-byte counter example. An identical
+zero teardown, and all 38 files of the 629,464-byte counter example. An identical
 second assembly verifies its file and receipt hashes. These are finite payload
 and semantic observations, without a performance or broader package claim.
