@@ -19,12 +19,12 @@ They convey no authority to enter a different session or import undeclared code.
 
 `enqueue(handle, positionalValues, options, onOutput)` returns an event with a
 result Promise and idempotent `cancel`. Arguments use the existing tagged
-by-value encoding. Admission copies plain data without getters/toJSON hooks,
+by-value encoding. Admission copies plain argument data without getters/toJSON hooks,
 cycles or mutable aliases; it validates tags and bounds conversion work before
 accounting the queued representation. Each event admits at most 128 arguments,
 65,536 logical transport bytes, 20,000 data nodes and 40 transport levels.
 Callback and pending-event caps default to 128 each (configurable 1–1,024).
-The pending cap includes the active event. Queue and callback metadata, serialized
+Execution options are captured as ordinary data fields before event metadata is allocated; accessors never run. The pending cap includes the active event. Queue and callback metadata, serialized
 arguments and retained VM graphs all have explicit arena owners.
 
 `pump(n)` starts or advances one FIFO event. It never starts a second Python
@@ -57,3 +57,22 @@ pumps and forced collection. Separate lifecycle tests cover queue/handle/transpo
 caps, stale generations, reentry, OOM, cancellation, close and zero teardown.
 Native coroutines, await, async iterators/generators/context managers and awaited
 host adapters remain subsequent #34 slices.
+
+The source console worker now drives 512-instruction quanta with macrotask yields
+and acknowledged live output. Its host `cancel()` uses the existing cancellation
+protocol and preserves the worker for a fresh source run. Terminal replies remain
+exactly once; Stop/Restart retains authoritative worker termination. This adds
+no event registration capability to the console protocol.
+
+The [counter domain module](../examples/interpreter_events.py) demonstrates
+revisioned state and by-value snapshots for trusted embedding. Installed offline
+browser acceptance imports the verified engine assets, pumps ordered callbacks,
+cancels queued/parked events, checks expired generations and closes both current
+and fresh sessions with zero logical ownership. Durable storage, view adapters
+and a full offline save application remain subsequent acceptance stages.
+
+The [payload and evidence record](measurements/2026-10-27-events.json) pins the
+final engine/corpus/report inputs, 300 passing source observations with measured
+zero teardown, and all 38 files of the 629,464-byte counter example. An identical
+second assembly verifies its file and receipt hashes. These are finite payload
+and semantic observations, without a performance or broader package claim.

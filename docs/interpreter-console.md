@@ -64,8 +64,8 @@ The editor shows the selected profile. Build a class example
 with `uv run python -m examples.interpreter_classes`, then serve
 `build/class-console`. Its Counter example uses len(), bool(), not, __repr__ and
 __str__ alongside callable methods. Core source also supports primitive repr and
-str(). Float/container/default-object formatting and
-ordering protocols and async remain later stages. Language selection is
+str(). Float/container/default-object formatting and native async syntax remain
+later stages. Rich ordering follows its separately adopted contract. Language selection is
 independent of `--library-profile`;
 both language profiles use the same complete pinned engine.
 
@@ -148,11 +148,18 @@ survive. Every supplied source is parsed and compiled locally before executing.
 The logical filename is `sources/app.py`. This is source execution, without an
 ahead-of-time application compiler or a server execution endpoint.
 
-Synchronous execution collects one bounded stdout batch, releases the registry
-and arena, then requests `output.write` and awaits its acknowledgement before
-returning the run result. Output produced before a runtime error is retained.
-Live output while a synchronous infinite loop runs is deferred with async
-scheduling. The host renders output as text. Errors retain bounded Python type,
+The worker executes at most 512 verified instructions per quantum, parks its
+scope graph and yields a macrotask so cancel/close messages can run. Output is
+flushed at quantum boundaries through bounded, acknowledged `output.write`
+batches. Every batch completes before the terminal result; failed batches are
+not replayed. Output produced before a runtime error is retained. `cancel()`
+requests cancellation without terminating the worker; the run rejects once and
+the next run starts fresh. Stop/Restart still terminates the worker and removes
+its listeners. Hard interruption does not execute Python finally blocks.
+Budgets and deadlines apply to the whole run, including pauses and output waits.
+This is cooperative instruction scheduling; an individual bounded operation
+remains atomic. Native coroutine/await syntax and additional host grants retain
+their own contracts. The host renders output as text. Errors retain bounded Python type,
 message, application-only source locations and up to sixteen original frames.
 
 Limits are explicit in init and echoed exactly by ready. Protocol fields retain

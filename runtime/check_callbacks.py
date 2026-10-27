@@ -41,7 +41,7 @@ def check(target):
     return {'schema_version': 1, 'suite': corpus['suite'], 'reference_version': platform.python_version(),
             'target': target, 'host': host, 'driver': 'parked-serialized-events/1', 'cases': records,
             'corpus_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
-            'inputs_sha256': {p.name: hashlib.sha256(p.read_bytes().replace(b'\r\n', b'\n')).hexdigest() for p in [*files, Path(__file__)]},
+            'inputs_sha256': {p.name: hashlib.sha256(p.read_bytes().replace(b'\r\n', b'\n')).hexdigest() for p in [*files, Path(__file__), ROOT / 'check_functions.py']},
             'summary': {status: sum(record['status'] == status for record in records) for status in ['pass', 'fail']}}
 
 

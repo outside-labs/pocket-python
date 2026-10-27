@@ -248,3 +248,74 @@ test("worker validates initialization, source arguments, cancellation races and 
   peer.send("request", {id: "h2", operation: "interpreter.run", arguments: {source: sourceValue("pass", CONSOLE_LIMITS)}, timeout_ms: 1000}); await tick();
   assert.equal(responses.at(-1).kind, "fatal"); assert.equal(controller.stats().state, "closed");
 });
+
+test('cooperative output permits cancellation of executing Python and a fresh run on the same worker', async () => {
+  let output = '', sent = false, app;
+  app = create({onOutput: text => {
+    output += text;
+    if (!sent) {
+      sent = true; assert.ok(last().controller.stats().quanta > 0);
+      assert.equal(app.cancel(), true); assert.equal(app.cancel(), false);
+    }
+  }});
+  try {
+    await app.ready; assert.equal(app.cancel(), false);
+    await assert.rejects(app.run('try:\n print("entered")\n while True: pass\nfinally: print("wrong")\n'), {code: 'CANCELLED'});
+    assert.equal(output, 'entered\n'); assert.equal(app.stats().state, 'ready'); assert.equal(app.cancel(), false);
+    assert.equal(last().other.messages.filter(m => m.kind === 'result' && m.reply_to === 'h1').length, 1);
+    await app.run('print("after cancel")\n'); assert.equal(output, 'entered\nafter cancel\n');
+  } finally { app.stop(); }
+});
+
+test('multiple output quanta preserve order and acknowledge every batch before completion', async () => {
+  const chunks = [], app = create({onOutput: text => { chunks.push(text); }});
+  try {
+    await app.ready; await app.run('i=0\nwhile i<260:\n print(i)\n i+=1\n');
+    assert.equal(chunks.join(''), Array.from({length: 260}, (_, i) => i+'\n').join(''));
+    assert.ok(chunks.length > 1); assert.equal(last().controller.stats().pending, 0);
+    assert.equal(last().other.messages.filter(m => m.operation === 'output.write').length, chunks.length);
+    assert.equal(last().other.messages.at(-1).kind, 'result');
+  } finally { app.stop(); }
+});
+
+test('macrotask quanta receive cancellation even when Python emits no output', async () => {
+  const app = create({});
+  try {
+    await app.ready; const pending = app.run('while True: pass\n');
+    while (!last().controller.stats().quanta) await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(app.cancel(), true); await assert.rejects(pending, {code: 'CANCELLED'});
+    assert.equal(last().controller.stats().active, false);
+  } finally { app.stop(); }
+});
+
+test('cooperative output failures do not replay chunks and stop the parked Python activation', async () => {
+  let calls = 0;
+  const app = create({onOutput: () => { if (++calls === 1) throw new Error('display failed'); }});
+  try {
+    await app.ready;
+    await assert.rejects(app.run('try:\n print("entered")\n while True: pass\nfinally: print("wrong")\n'), {code: 'IO'});
+    assert.equal(calls, 1); assert.equal(last().controller.stats().active, false);
+    assert.equal(last().other.messages.filter(m => m.operation === 'output.write').length, 1);
+    await app.run('print(7)\n'); assert.equal(calls, 2);
+  } finally { app.stop(); }
+});
+
+test('closing on live output settles the run once and emits no later terminal reply', async () => {
+  let app, output = '';
+  app = create({onOutput: text => { output += text; app.stop(); }});
+  await app.ready;
+  await assert.rejects(app.run('try:\n print("entered")\n while True: pass\nfinally: print("wrong")\n'), {code: 'CANCELLED'});
+  await tick(); assert.equal(output, 'entered\n');
+  assert.equal(last().controller.stats().state, 'closed'); assert.equal(last().controller.stats().pending, 0);
+  assert.equal(last().other.messages.filter(m => m.kind === 'result').length, 0);
+});
+
+test('cooperative instruction limits remain total across quanta and output acknowledgments', async () => {
+  let output = '';
+  const app = create({limits: {execution_steps: 1100}, onOutput: text => { output += text; }});
+  try {
+    await app.ready;
+    await assert.rejects(app.run('print("entered")\nwhile True: pass\n'), {code: 'BUDGET'});
+    assert.equal(output, 'entered\n'); assert.equal(last().controller.stats().active, false);
+  } finally { app.stop(); }
+});

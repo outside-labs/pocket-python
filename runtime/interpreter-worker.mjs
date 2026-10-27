@@ -4,12 +4,14 @@ import {verifyLibraries, profileModules} from "./library-selection.mjs";
 import {Peer, CONSOLE_LIMITS, application, capabilities, limits, record, exact, fields, request,
   failure, exception, readText, sourceValue, textValue, diagnostic, checkError} from "./browser-protocol.mjs";
 
+export const WORKER_QUANTUM = 512;
+
 // Ports make the same state machine usable by a browser Worker and unit tests.
 export function attachInterpreterWorker(port) {
   let peer = null, state = "created", nextHost = 1, nextOutput = 1, active = null, output = null, selection = null, languageProfile = null;
   const dispose = () => {
     if (state === "closed") return;
-    state = "closed"; if (active) active.cancelled = true;
+    state = "closed"; if (active) active.cancelled = true; active = null;
     port.removeEventListener("message", receive);
     if (output) { clearTimeout(output.timer); output.reject(exception(failure("CANCELLED", "Worker closed.", "host", "HostError"))); output = null; }
   };
@@ -41,18 +43,26 @@ export function attachInterpreterWorker(port) {
       if (state === "closed" || token.cancelled) throw exception(failure("CANCELLED", "Run cancelled.", "host", "HostError"));
       session = new ModuleSession(registry, {memoryLimits: {maxBytes: peer.limits.memory_bytes,
         maxObjects: peer.limits.memory_objects, maxFrames: peer.limits.memory_frames}});
-      session.run({maxSteps: peer.limits.execution_steps, maxWork: peer.limits.execution_work,
+      const activation = session.start({maxSteps: peer.limits.execution_steps, maxWork: peer.limits.execution_work,
         maxDepth: peer.limits.memory_frames, shouldCancel: cancelled}, text => {
         points += Array.from(text).length;
         if (points > peer.limits.output_codepoints) throw exception(failure("QUOTA", "Console output budget exceeded.", "runtime", "ExecutionLimitError"));
         stdout += text;
       });
+      do {
+        if (cancelled()) throw exception(failure(token.cancelled ? "CANCELLED" : "TIMEOUT", "Source execution interrupted.", "host", "HostError"));
+        activation.advance(WORKER_QUANTUM); token.quanta++;
+        if (activation.state === "parked") {
+          if (stdout) { const text = stdout; stdout = ""; await sendOutput(text); }
+          // A macrotask permits actual worker cancel/close messages to run.
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+      } while (activation.state === "parked");
     } catch (cause) { error = cause.detail || diagnostic(cause); }
     finally { session?.close(); registry?.close(); }
     if (state === "closed") return;
     try {
-      // Sync execution cannot await host calls yet. One bounded output batch is
-      // acknowledged before the terminal result; INT-10 adds async host calls.
+      // Every output batch is acknowledged before the terminal result.
       if (stdout) {
         try { await sendOutput(stdout); }
         catch (cause) { error = cause.detail || diagnostic(cause); }
@@ -96,7 +106,7 @@ export function attachInterpreterWorker(port) {
       } else if (message.kind === "request") {
         request(message, "h", nextHost++);
         if (active) { peer.send("result", {reply_to: message.id, error: failure("QUOTA", "Only one source run may be pending.", "host", "HostError")}); return; }
-        active = {id: message.id, cancelled: false}; void run(message, active);
+        active = {id: message.id, cancelled: false, quanta: 0}; void run(message, active);
       } else if (message.kind === "result") {
         fields(message, ["reply_to", Object.hasOwn(message, "error") ? "error" : "value"]);
         if (!output || output.id !== message.reply_to) throw new Error("Unknown or duplicate output reply.");
@@ -116,7 +126,8 @@ export function attachInterpreterWorker(port) {
     } catch (error) { fatal(error); }
   }
   port.addEventListener("message", receive);
-  return Object.freeze({dispose, stats: () => ({state, active: active !== null && state !== "closed", pending: output ? 1 : 0})});
+  return Object.freeze({dispose, stats: () => ({state, active: active !== null && state !== "closed", pending: output ? 1 : 0,
+    quanta: active?.quanta || 0})});
 }
 
 if (typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope) attachInterpreterWorker(globalThis);

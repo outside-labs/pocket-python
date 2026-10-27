@@ -192,8 +192,26 @@ insertion and generators.
 
 Broader namespace/identity reflection, builtin layouts, metaclass protocols and
 further descriptor hashing remain finite follow-ups under #123. Async #34
-remains open for cooperative quanta, session-owned parked executions, persistent
-callbacks/events and an adopted awaited capability; these are not supplied by
-synchronous ordering or the existing generator suspension contract.
+now has cooperative worker quanta, session-owned parked executions and persistent
+callback/event entry through [module-events/1](interpreter-events.md). Native
+coroutines/await, async iteration/generators/context managers, an adopted awaited
+capability and durable view/save application acceptance remain open.
 
 Method, raw-slice and callback-bearing tuple hashing follow the [owned hash contract](interpreter-object-hashing.md).
+
+
+## Scheduling and persistent event checkpoint
+
+INT-ASYNC-01–03 deliver parked scope groups with unchanged existing resource
+baselines, cooperative source worker quanta, acknowledged live output and
+non-terminating cancellation. Persistent registered callbacks retain ordinary
+Python module state and serialize bounded copied events. The pinned source
+matrix runs in Node/Chromium with one-instruction pumping; installed offline
+acceptance exercises cancellation, fresh generations and zero teardown.
+
+This advances #34's first two application prerequisites. Native coroutine syntax,
+awaitable transport, async protocols, browser event/view/storage grants and an
+offline save application require their own finite contracts and evidence. #123
+remains open for namespace reflection, builtin layouts, further metaclass and
+reflective protocols and dynamic source admission. No release or deployment is
+part of this checkpoint.
