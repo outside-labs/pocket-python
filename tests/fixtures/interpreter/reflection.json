@@ -539,6 +539,12 @@
       "stage": "O16",
       "source": "def f():\n a=[0]\n a[(x:=0)]=(y:=7)\n for key in locals(): print(key)\nf()\n",
       "stdout": "a\ny\nx\n"
+    },
+    {
+      "id": "locals-try-else-order",
+      "stage": "O16",
+      "source": "def f():\n try: x=1\n except ValueError: z=2\n else: y=3\n z=4\n for key in locals(): print(key)\nf()\n",
+      "stdout": "x\ny\nz\n"
     }
   ]
 }

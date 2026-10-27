@@ -521,9 +521,9 @@ class Compiler {
           else if (["for", "for-iterator"].includes(op)) {
             visitBlock(extra); remember(arg); visitBlock(other); visitBlock(final);
           } else if (op === "try") {
-            visitBlock(arg);
+            visitBlock(arg); visitBlock(other);
             for (const [types, alias, body] of extra) { types.forEach(remember); if (alias) remember(alias); visitBlock(body); }
-            visitBlock(other); visitBlock(final);
+            visitBlock(final);
           }
         }
       };
