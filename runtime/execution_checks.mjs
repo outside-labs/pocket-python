@@ -14,7 +14,10 @@ export async function runExecutionRequest(request) {
     try {
       const execution = Execution.modules(context);
       try {
-        do { execution.advance(request.quantum || 1); boundaries++; } while (execution.state === 'paused');
+        do {
+          execution.advance(request.quantum || 1); boundaries++;
+          if (request.parked && execution.state === 'paused') execution.park();
+        } while (['paused', 'parked'].includes(execution.state));
       } finally { execution.close(); }
       const name = registry.entry;
       const exports = Object.fromEntries((request.exports || []).map(name => [name, session.read(name)]));

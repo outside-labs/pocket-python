@@ -67,8 +67,9 @@ inherit that policy. Frame-free callable/binding cycles remain depth/work bounde
 
 Active arena scopes are LIFO. A static pin is an immutable value snapshot; it is
 not a substitute for the mutable frame/control graph of a paused execution. The
-first stepping driver supports a single owned activation. Multiple parked tasks,
-host waiting and coroutine construction need the later scheduling contract.
+first stepping driver supports a single active activation. The parked-owner
+extension below permits multiple independent activations; host waiting and
+coroutine construction retain their separate contracts.
 
 ## Lifecycle and safe boundaries
 
@@ -183,3 +184,38 @@ measured console fixture grows from 316,222 to 334,337 uncompressed bytes across
 the batch (+18,115), including 5,484 bytes for module scheduling. This is structural
 and compatibility evidence; multi-task parking, host waiting, coroutines and
 additional Python features remain separately planned.
+
+
+## Parked execution ownership (INT-ASYNC-01)
+
+`Execution.park()` transfers a paused execution's complete suffix of arena scopes
+into a session-owned parked group. Its dynamic root visitors retain frames,
+module plans, continuations, generators, exceptions and temporaries. Parking and
+restoring allocate no logical pins or new roots and do not collect, execute
+Python, replenish budgets or change the existing scope charges. Within each
+owner the original root order and multiplicity are preserved. Collection visits
+parked groups in parking order, followed by active scopes; work is charged to the
+current active execution. Host cleanup collection never invokes a parked
+execution's work/cancellation callback.
+
+`advance(n)` restores a parked owner before running at most n verified
+instructions. Only one activation can be active on an arena; other activations
+must park first. Multiple parked owners remain subject to the arena's combined
+byte/object/frame limits. Counters, import plans, active exceptions and output
+leases retain their activation lifetimes across every pause. A failed admission
+or allocation cannot destroy another parked owner's graph.
+
+A parked execution may close in any order, including while another is paused.
+Close temporarily restores its own scopes above the current paused owner and
+unwinds only that group. No Python handlers/finalizers run on hard close or
+cancellation. Running reentry, park during dispatch, and closing another parked
+owner from a running host callback are rejected. Scope-owner tokens are local to
+one arena, single-use and inaccessible from Python. A stale or foreign restore
+fails without changing ownership.
+
+The eight existing composed resource baselines remain exact when parking at each
+instruction boundary. Forced collections and interleaved activations have their
+explicit additional collection/work costs. `check_classes.py --parked` compares
+independently compiled source through this owner transfer in Node and Chromium.
+Persistent callback/event entry, native coroutine syntax, scheduling fairness and
+awaited host replies require their own delivery slices.
