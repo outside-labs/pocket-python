@@ -132,6 +132,65 @@ test('reflection continuations retain receivers, iterable owners and outer desti
   assert.deepEqual(completionRoots(completion('dir-iter', {receiver, after, depth: 1})), [receiver, outer]);
   for (const kind of ['dir-length', 'dir-hint-bound', 'dir-hint-call', 'dir-hint-value'])
     assert.deepEqual(completionRoots(completion(kind, {receiver, iterator, after, depth: 1})), [receiver, iterator, outer]);
+  for (const kind of ['dir-compare', 'dir-truth']) {
+    assert.deepEqual(completionRoots(completion(kind, {receiver, index: 2, lower: 0, upper: 2, after, depth: 1})), [receiver, outer]);
+    assert.throws(() => completion(kind, {receiver, index: 2, lower: 3, upper: 2, after, depth: 1}), TypeError);
+  }
+});
+
+test('directory comparison, reflected, descriptor and truth phases retain their private copy', async () => {
+  const definitions = [
+    'class Entry:\n def __init__(self,key): self.key=key\n def __lt__(self,other):\n  print("entered")\n  return self.key<other.key\n',
+    'class Entry:\n def __init__(self,key): self.key=key\n def __lt__(self,other): return NotImplemented\n def __gt__(self,other):\n  print("entered")\n  return self.key>other.key\n',
+    'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  return lambda other: obj.key<other.key\nclass Entry:\n def __init__(self,key): self.key=key\n __lt__=D()\n',
+    'class Truth:\n def __init__(self,value): self.value=value\n def __bool__(self):\n  print("entered")\n  return self.value\nclass Entry:\n def __init__(self,key): self.key=key\n def __lt__(self,other): return Truth(self.key<other.key)\n',
+    'class Truth:\n def __init__(self,value): self.value=value\n def __len__(self):\n  print("entered")\n  return int(self.value)\nclass Entry:\n def __init__(self,key): self.key=key\n def __lt__(self,other): return Truth(self.key<other.key)\n',
+  ];
+  for (const definition of definitions) {
+    const source = definition + 'saved=[Entry(2),Entry(1)]\nclass A:\n def __dir__(self): return saved\nresult=dir(A())\nprint(result[0] is saved[1],result[1] is saved[0])\n';
+    const {registry} = await compileSourceModules([unit(source)], profile);
+    try { for (const mode of ['finish', 'cancel', 'close']) {
+      const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+      session.context.begin({shouldCancel: () => cancel}, text => { output += text; }); const execution = Execution.modules(session.context);
+      try {
+        while (execution.state !== 'completed') {
+          execution.advance(); session.memory.collect([], {cleanup: true});
+          if (output === 'entered\n') {
+            reached = true;
+            if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+            if (mode === 'close') break;
+          }
+        }
+        assert.ok(reached); if (mode === 'finish') assert.equal(output, 'entered\nTrue True\n');
+      } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+      closed(session.stats());
+    } } finally { registry.close(); }
+  }
+});
+
+test('directory sorting retains stability and every entry across repeated collection', async () => {
+  const source = 'class Entry:\n def __init__(self,key,label): self.key=key; self.label=label\n def __lt__(self,other): return self.key<other.key\nsaved=[Entry(i%3,i) for i in range(20)]\nclass A:\n def __dir__(self): return saved\nresult=dir(A())\nprint([x.label for x in result]==[0,3,6,9,12,15,18,1,4,7,10,13,16,19,2,5,8,11,14,17],saved[1].label)\n';
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  const session = new ModuleSession(registry); let output = '';
+  session.context.begin({}, text => { output += text; }); const execution = Execution.modules(session.context);
+  try {
+    while (execution.state !== 'completed') { execution.advance(); session.memory.collect([], {cleanup: true}); }
+    assert.equal(output, 'True 1\n');
+  } finally { execution.close(); session.context.finish(); session.close(); registry.close(); }
+  closed(session.stats());
+});
+
+test('directory comparison and truth callbacks share recursion, work and allocation limits', async () => {
+  for (const slot of ['__lt__', '__bool__']) for (const [body, options, limits, expected] of [
+    ['return dir(A())', {maxDepth: 12}, undefined, 'PYTHON'],
+    ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+    ['saved=[]\n  while True: saved.append([7])', {maxSteps: 100000}, {maxBytes: 28000}, 'OOM'],
+  ]) {
+    const source = slot === '__lt__' ? 'class Entry:\n def __lt__(self,other):\n  '+body+'\n' :
+      'class Truth:\n def __bool__(self):\n  '+body+'\nclass Entry:\n def __lt__(self,other): return Truth()\n';
+    const result = await run(source+'class A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n', options, limits);
+    assert.equal(result.error.code, expected); if (expected === 'PYTHON') assert.equal(result.error.type, 'RecursionError'); closed(result.closed);
+  }
 });
 
 test('directory length, hint, binding and index phases survive collection and interruption', async () => {

@@ -204,6 +204,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const length = lengthResult(value);
     if (length > BigInt(VALUE_LIMITS.items)) hard("BUDGET", "ExecutionLimitError", "Directory length hint exceeds the sequence budget.");
   };
+  const directorySort = (record, site) => {
+    const {receiver, after, depth} = record;
+    state.temporaries.push(receiver);
+    let {index, lower, upper} = record;
+    while (index < receiver.items.length) {
+      if (lower < upper) return compareTask("less", receiver.items[index], receiver.items[Math.floor((lower + upper) / 2)], site,
+        continuation("dir-compare", {receiver, index, lower, upper, depth, after}), depth);
+      // The private copy keeps the candidate at index throughout comparison
+      // callbacks. Insert after equal peers to preserve their original order.
+      charge(index - lower + 1);
+      if (lower !== index) mutate(receiver, () => {
+        const before = receiver.items.slice(lower, index + 1), item = receiver.items[index];
+        for (let position = index; position > lower; position--) receiver.items[position] = receiver.items[position - 1];
+        receiver.items[lower] = item;
+        return () => { for (let offset = 0; offset < before.length; offset++) receiver.items[lower + offset] = before[offset]; };
+      });
+      index++; lower = 0; upper = index;
+    }
+    return valueTask(receiver, site, after);
+  };
   const argumentOwner = receiver => {
     if (!(receiver instanceof CallArguments)) hard("BYTECODE", "BytecodeError", "Call assembly requires its owned argument record.");
   };
@@ -510,7 +530,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return unaryTask("next", completion.iterator, site, continuation("call-star-next", completion));
     }
     if (completion?.kind === "dir-result") {
-      const after = continuation("dir-sort", {receiver: value, after: completion.after});
+      const after = continuation("dir-sort", {receiver: value, depth: completion.depth, after: completion.after});
       return value instanceof InstanceValue ? unaryTask("iter", value, site,
         continuation("dir-iter", {receiver: value, depth: completion.depth, after}), completion.depth) :
         consumeTask("list", value, site, after, completion.depth);
@@ -532,7 +552,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (!(value instanceof NotImplementedValue)) directoryCount(value);
       return directoryNext(completion, site);
     }
-    if (completion?.kind === "dir-sort") return valueTask(sortedDirectory(value), site, completion.after);
+    if (completion?.kind === "dir-sort")
+      return directorySort({receiver: value, index: 1, lower: 0, upper: 1, depth: completion.depth, after: completion.after}, site);
+    if (completion?.kind === "dir-compare")
+      return unaryTask("truth", value, site, continuation("dir-truth", completion), completion.depth);
+    if (completion?.kind === "dir-truth") {
+      const middle = Math.floor((completion.lower + completion.upper) / 2);
+      return directorySort({...completion, ...(value ? {upper: middle} : {lower: middle + 1})}, site);
+    }
     if (completion?.kind === "consume-iter") return consumeNext(completion.name, value, completion.result, site, completion.after, completion.depth);
     if (completion?.kind === "consume-next") {
       const {name, receiver, result, after, depth} = completion;
