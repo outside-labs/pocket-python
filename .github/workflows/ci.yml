@@ -99,6 +99,7 @@ jobs:
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/attribute-hooks.json --stepped --report build/attribute-hooks-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --report build/type-checks-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-browser-stepped-report.json
+      - run: uv run --no-sync python runtime/check_callbacks.py --target browser --report build/callbacks-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/execution.json --parked --report build/execution-parked-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-hashing.json --parked --report build/object-hashing-parked-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-hashing.json --report build/object-hashing-browser-report.json
@@ -189,6 +190,7 @@ jobs:
       - run: node --test runtime/execution.test.mjs
       - run: node --test runtime/execution-stepping.test.mjs
       - run: node --test runtime/parked-executions.test.mjs
+      - run: node --test runtime/persistent-callbacks.test.mjs
       - run: node --test runtime/operations.test.mjs
       - run: node --test runtime/module-registry.test.mjs
       - run: node --test runtime/modules.test.mjs
@@ -226,6 +228,7 @@ jobs:
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/attribute-hooks.json --stepped --report build/attribute-hooks-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --report build/type-checks-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-node-stepped-report.json
+      - run: python runtime/check_callbacks.py --target node --report build/callbacks-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/execution.json --parked --report build/execution-parked-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-hashing.json --parked --report build/object-hashing-parked-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-hashing.json --report build/object-hashing-node-report.json
