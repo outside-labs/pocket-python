@@ -369,6 +369,11 @@ def smoke(channel=None):
                     refused('class A:\n def f(self): return super().missing\nA().f()\n', 'AttributeError:')
                     refused('class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\n', 'UnsupportedSyntaxError:')
                     checks.append('constructor-super-metaclass-errors-and-future-hooks-retain-offline-diagnostics')
+                    identity = 'class A: pass\nclass B:\n @property\n def __class__(self):\n  print("hook")\n  return A\nb=B()\n'
+                    for expression in ['b.__class__', 'getattr(b,"__class__")', 'isinstance(b,A)', 'super(A,b)']:
+                        refused(identity + expression + '\n', 'UnsupportedOperationError:')
+                        assert page.locator('#result').inner_text() == ''
+                    checks.append('deferred-advertised-class-identities-refuse-before-offline-hook-effects')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',

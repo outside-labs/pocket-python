@@ -51,22 +51,27 @@ documentation differs.
 
 ## Accepted evidence
 
-The 113-case matrix has 105 adopted comparisons and eight explicit future
+The 118-case matrix has 106 adopted comparisons and twelve explicit future
 refusals. Node and Chromium each pass draining and instruction-boundary execution:
-452 observations, including 436 measured zero logical teardown records. Source,
+472 observations, including 456 measured zero logical teardown records. Source,
 corpus and driver hashes are checked against the retained reports. Dedicated
 tests cover callback source frames, temporary metaclasses, missing/conflicting
 class cells, notification destinations, suspended generators, every-instruction
 collection, cancellation/close and real recursion/work/allocation failures.
-All 385 Node tests pass, including the eight unchanged composed resource cases.
+All 387 Node tests pass, including the eight unchanged composed resource cases.
 
-Installed offline console acceptance has 487 program comparisons, 44 acceptance
+Installed offline console acceptance has 488 program comparisons, 45 acceptance
 groups and 98 Stop/Restart cycles. New source composes construction, super,
 metaclasses and generators after offline reload. Constructor/metaclass errors
 retain their Python source diagnostics; custom preparation remains a refusal.
 The waiting class-to-core update still removes class/library authority.
 
 The [payload and source record](measurements/2026-10-26-construction.json)
-contains all 38 file sizes and hashes for the 592,822-byte construction console,
+contains all 38 file sizes and hashes for the 593,610-byte construction console,
 including the receipt and deterministic compression observations. This is a
 complete local payload measurement, with no timing, device or package claim.
+
+Advertised `__class__` identities remain an explicit reflection boundary. Type
+queries and super refuse a required advertised-class lookup before callback
+effects. `type(value)`, successful actual-type checks and real-subtype super
+binding continue without consulting these hooks.

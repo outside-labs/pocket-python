@@ -120,6 +120,11 @@ export class ClassRuntime {
     if (name === null || name === undefined) this.fail("UnsupportedOperationError", "This reflective value type requires a separate stage", "UNSUPPORTED");
     return this.builtin(name);
   }
+  classAttribute(value) {
+    if (value instanceof InstanceValue && this.hasSlot(value.type, "__class__"))
+      this.fail("UnsupportedOperationError", "Advertised __class__ identities require their separate reflection stage", "UNSUPPORTED");
+    return this.typeOf(value);
+  }
   lookup(type, name, native = true, start = 0) {
     this.key(name); this.touch(type);
     if (!this.isType(type)) throw new TypeError("An adopted class is required.");
@@ -201,7 +206,7 @@ export class ClassRuntime {
     }
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
-    if (receiver instanceof InstanceValue && name === "__class__") return value(receiver.type);
+    if (receiver instanceof InstanceValue && name === "__class__") return value(this.classAttribute(receiver));
     if (receiver instanceof ClassValue) {
       if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
       if (["__name__", "__qualname__", "__module__"].includes(name)) return value(this.values.string(Array.from(
@@ -304,7 +309,11 @@ export class ClassRuntime {
     this.touch(type);
     if (receiver === null) return this.make(SuperValue, type, null, null);
     let owner = receiver instanceof ClassValue && this.subclass(receiver, type) ? receiver : this.typeOf(receiver);
-    if (owner === null || !this.subclass(owner, type)) this.fail("TypeError", "super receiver must be an instance or subtype of its first argument");
+    if (owner === null || !this.subclass(owner, type)) {
+      if (receiver instanceof InstanceValue && this.hasSlot(receiver.type, "__class__"))
+        this.fail("UnsupportedOperationError", "Advertised __class__ identities require their separate reflection stage", "UNSUPPORTED");
+      this.fail("TypeError", "super receiver must be an instance or subtype of its first argument");
+    }
     return this.make(SuperValue, type, receiver, owner);
   }
   callable(value) {
@@ -332,7 +341,10 @@ export class ClassRuntime {
     }
     if (!this.isType(type)) this.fail("TypeError", "isinstance requires an adopted type.");
     this.touch(type); this.touch(value);
-    return type.root || this.subclass(this.typeOf(value), type);
+    if (type.root || this.subclass(this.typeOf(value), type)) return true;
+    if (value instanceof InstanceValue && this.hasSlot(value.type, "__class__"))
+      this.fail("UnsupportedOperationError", "Advertised __class__ identities require their separate reflection stage", "UNSUPPORTED");
+    return false;
   }
   selectMetaclass(bases, explicit = undefined) {
     let selected = explicit === undefined ? this.builtin("type") : explicit;
