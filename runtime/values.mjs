@@ -697,6 +697,13 @@ export class ValueRuntime {
     }
     this.fail("UnsupportedOperationError", "Hashing this value is deferred.", "UNSUPPORTED");
   }
+  objectId(value) {
+    this.charge(1);
+    if (value === null) return this.int(1n);
+    if (typeof value === "boolean") return this.int(value ? 2n : 3n);
+    if (typeof value === "bigint") this.fail("UnsupportedOperationError", "Integer identity requires an owned integer layout.", "UNSUPPORTED");
+    return this.int(this.identityHash(value) + 3n);
+  }
   identityHash(value) {
     this.charge(1);
     if (this.memory) return this.int(this.memory.identityHash(value));

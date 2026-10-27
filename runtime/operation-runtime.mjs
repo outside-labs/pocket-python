@@ -1512,6 +1512,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             count("builtin:"+callable.name);
             task = numericTask(callable.name,bindNumeric(callable.name,args,keywords,keywordValues),site,completion,depth); continue;
           }
+          if (callable.name === "id") {
+            count("builtin:id");
+            if (args.length !== 1 || keywords.length) python("TypeError", "id() requires one positional value");
+            task = valueTask(values.objectId(args[0]), site, completion); continue;
+          }
+          if (["globals", "locals", "vars", "dir"].includes(callable.name))
+            hard("UNSUPPORTED", "UnsupportedOperationError", "This namespace reflection form requires its adopted namespace contract.");
           if (["hash", "object.__hash__"].includes(callable.name)) {
             count("builtin:" + callable.name);
             if (args.length !== 1 || keywords.length) python("TypeError", "hash requires one positional value");
