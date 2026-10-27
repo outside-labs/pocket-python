@@ -434,7 +434,7 @@ def smoke(channel=None):
                         if 'error_type' in case:
                             refused(case['source'], case['error_type'] + ':')
                     checks.append('method-slice-and-tuple-hash-signatures-and-errors-offline')
-                    run(REFLECTION_SOURCE, 'same True True\nfields revision title 2\nsnapshot True False True\nordered revision title\nscope True True True\n')
+                    run(REFLECTION_SOURCE, 'same True True\nfields revision title 2\nsnapshot True False True\nordered revision title\nscope True True True\ninline True False True\nescaped True 2\nisolated True True\nclass True\n')
                     for case in reflection['cases']:
                         if case['stage'] not in reflection['implemented_stages']:
                             refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
@@ -445,6 +445,7 @@ def smoke(channel=None):
                     checks.append('identity-snapshots-and-custom-reflection-execute-after-offline-reload')
                     checks.append('reflection-source-errors-and-live-namespace-refusals-remain-explicit-offline')
                     checks.append('generator-expression-iterator-snapshots-and-owned-directory-hints-and-ordering-compose-offline')
+                    checks.append('optimized-and-isolated-comprehension-snapshots-compose-after-offline-reload')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -456,6 +457,8 @@ def smoke(channel=None):
                         'class Spin:\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n',
                         'class Spin:\n @property\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n']
                     busy.extend([
+                        'def marker():\n print("entered")\n while True: pass\ndef f(p):\n return [(locals(),marker()) for x in [p]]\nf([7])\n',
+                        'def marker():\n print("entered")\n while True: pass\nclass A:\n snapshots=[(vars(),marker()) for x in [[7]]]\n',
                         'class Spin:\n def __index__(self):\n  while True: pass\n[7][Spin()]\n',
                         'class Spin:\n @property\n def __index__(self):\n  while True: pass\n[7][Spin():]\n',
                         'class Spin:\n def __getitem__(self,key):\n  while True: pass\nSpin()[0]\n',

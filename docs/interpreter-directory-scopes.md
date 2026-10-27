@@ -20,7 +20,8 @@ below the signed minimum raises OverflowError, while the representable negative
 minimum raises ValueError. Descriptor errors and callback errors retain their
 separate recovery phases in both cases.
 
-Inlined list/dict/set comprehension reflection, live module/class/global
+The later [O21/O22 contract](interpreter-comprehension-reflection.md) adopts
+inlined list/dict/set comprehension reflection. Live module/class/global
 namespaces, instance dictionaries, mapping proxies, default directories, boxed
 integer identity, builtin instance layouts and dynamic source remain separate
 contracts. Admitting `__length_hint__` for this directory copy does not adopt

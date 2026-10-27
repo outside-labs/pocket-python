@@ -430,7 +430,7 @@
     {
       "id": "further-object-protocols",
       "status": "partial",
-      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted.",
+      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order.",
       "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, live namespace mappings and default directories and dynamic source admission remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -450,7 +450,9 @@
         "tests/fixtures/interpreter/object-protocols.json:inplace-fallback",
         "tests/fixtures/interpreter/ordering.json:le-raw-result",
         "tests/fixtures/interpreter/object-hashing.json:method-unhashable-receiver",
-        "tests/fixtures/interpreter/object-hashing.json:slice-nested-tuple"
+        "tests/fixtures/interpreter/object-hashing.json:slice-nested-tuple",
+        "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
       ]
     },
     {
@@ -500,8 +502,8 @@
     {
       "id": "generators-comprehensions",
       "status": "partial",
-      "scope": "Generator functions, yield/yield from, next/send/one-argument throw/close with owned suspended frames and shared budgets. Scoped list/dict/set/generator comprehensions with eager outer iterator acquisition. Generator-expression locals/vars snapshots and dir names expose .0, bound targets and captured cells.",
-      "gaps": "Async generators, frame objects, inlined list/dict/set comprehension namespaces, multi-argument throw and comprehension assignment expressions remain separate stages.",
+      "scope": "Generator functions, yield/yield from, next/send/one-argument throw/close with owned suspended frames and shared budgets. Scoped list/dict/set/generator comprehensions with eager outer iterator acquisition. Generator-expression locals/vars snapshots and dir names expose .0, bound targets and captured cells. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order.",
+      "gaps": "Async generators, frame objects, multi-argument throw and comprehension assignment expressions remain separate stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -519,7 +521,9 @@
         "tests/fixtures/interpreter/generators.json:send-return",
         "tests/fixtures/interpreter/generators.json:delegation-throw-close",
         "tests/fixtures/interpreter/generators.json:comprehension-class-scope",
-        "tests/fixtures/interpreter/reflection.json:genexpr-implicit-iterator"
+        "tests/fixtures/interpreter/reflection.json:genexpr-implicit-iterator",
+        "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
       ]
     },
     {
@@ -608,8 +612,8 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1.",
-      "gaps": "Live namespace mappings, inlined comprehension namespaces, default directories, integer identity, dynamic source and broader metaclass/layout reflection remain deferred.",
+      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order.",
+      "gaps": "Live namespace mappings, default directories, integer identity, dynamic source and broader metaclass/layout reflection remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -632,7 +636,9 @@
         "tests/fixtures/interpreter/reflection.json:locals-fresh-shallow",
         "tests/fixtures/interpreter/reflection.json:dir-custom-descriptor",
         "tests/fixtures/interpreter/reflection.json:dir-length-hint-fallback",
-        "tests/fixtures/interpreter/reflection.json:dir-entry-stability"
+        "tests/fixtures/interpreter/reflection.json:dir-entry-stability",
+        "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
       ]
     },
     {
@@ -1134,8 +1140,8 @@
     {
       "id": "dir",
       "status": "partial",
-      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities.",
-      "gaps": "Default directories, inlined comprehension namespaces, module/class namespaces and length hints for other iterable consumers remain separate.",
+      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order.",
+      "gaps": "Default directories, module/class namespaces and length hints for other iterable consumers remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1148,13 +1154,17 @@
         "builtin-dir-custom",
         "builtin-dir",
         "builtin-dir-length-hint",
-        "builtin-dir-rich-ordering"
+        "builtin-dir-rich-ordering",
+        "builtin-inline-snapshot",
+        "builtin-isolated-snapshot"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:dir-custom-descriptor",
         "tests/fixtures/interpreter/reflection.json:genexpr-dir-sorted",
         "tests/fixtures/interpreter/reflection.json:dir-length-hint-fallback",
-        "tests/fixtures/interpreter/reflection.json:dir-entry-stability"
+        "tests/fixtures/interpreter/reflection.json:dir-entry-stability",
+        "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
       ]
     },
     {
@@ -1588,8 +1598,8 @@
     {
       "id": "locals",
       "status": "partial",
-      "scope": "Fresh shallow snapshots of bound parameters, locals and free cells in optimized functions, lambdas and generators containing no inlined comprehensions, plus generator-expression .0/target/free-cell namespaces; classes-source/1.",
-      "gaps": "Live mappings, namespace reflection around inlined comprehensions and frame objects remain separate.",
+      "scope": "Fresh shallow snapshots of bound parameters, locals and free cells in optimized functions, lambdas and generators including inlined comprehension snapshots, plus generator-expression .0/target/free-cell namespaces; classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order.",
+      "gaps": "Live mappings, frame objects remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1601,11 +1611,15 @@
       "probes": [
         "builtin-locals-snapshot",
         "builtin-locals",
-        "builtin-genexpr-snapshot"
+        "builtin-genexpr-snapshot",
+        "builtin-inline-snapshot",
+        "builtin-isolated-snapshot"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:locals-fresh-shallow",
-        "tests/fixtures/interpreter/reflection.json:genexpr-implicit-iterator"
+        "tests/fixtures/interpreter/reflection.json:genexpr-implicit-iterator",
+        "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
       ]
     },
     {
@@ -2108,8 +2122,8 @@
     {
       "id": "vars",
       "status": "partial",
-      "scope": "Zero-argument optimized function and generator-expression snapshots; one positional user instance reads custom __dict__ through owned descriptors and read hooks, returning its result unchanged.",
-      "gaps": "Ordinary instance storage, namespace reflection around inlined comprehensions and function/module/class dictionaries or mapping proxies remain separate.",
+      "scope": "Zero-argument optimized function and generator-expression snapshots; one positional user instance reads custom __dict__ through owned descriptors and read hooks, returning its result unchanged. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order.",
+      "gaps": "Ordinary instance storage, function/module/class dictionaries or mapping proxies remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2121,11 +2135,15 @@
       "probes": [
         "builtin-vars-snapshot",
         "builtin-vars",
-        "builtin-genexpr-snapshot"
+        "builtin-genexpr-snapshot",
+        "builtin-inline-snapshot",
+        "builtin-isolated-snapshot"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:vars-custom-property",
-        "tests/fixtures/interpreter/reflection.json:genexpr-vars-fresh-shallow"
+        "tests/fixtures/interpreter/reflection.json:genexpr-vars-fresh-shallow",
+        "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
       ]
     },
     {

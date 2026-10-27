@@ -1,8 +1,8 @@
 # Inlined comprehension namespace reflection
 
 O21 and O22 continue #123 against pinned CPython 3.14.7. The reference cases in
-`tests/fixtures/interpreter/reflection.json` specify these stages before their
-independent implementation. They extend classes-source/1 and bytecode 5 only;
+`tests/fixtures/interpreter/reflection.json` specify the implemented stages.
+They extend classes-source/1 and bytecode 5 only;
 core-source/1 and bytecode 4 retain their existing admission rules.
 
 | Stage | Contract |
@@ -55,3 +55,34 @@ updates; exact example assets and a reproducible rebuild.
 Semantic anchors: Python 3.14 [locals](https://docs.python.org/3.14/library/functions.html#locals),
 [PEP 709](https://peps.python.org/pep-0709/) and
 [PEP 667](https://peps.python.org/pep-0667/).
+
+## Accepted evidence
+
+The complete reflection matrix contains 275 cases: 261 adopted comparisons and
+fourteen explicit refusals. Node and Chromium pass draining and
+instruction-boundary execution, totaling 1,100 observations and 1,096 measured
+zero logical teardown records. The four remaining observations reject source
+before execution. All 58 source/driver hashes and the corpus hash match the
+retained reports. Thirty-two cross-scope cases retain the parameter/local/free
+and class combinations that distinguish cell order from target-slot order.
+
+All 1,068 Node tests pass, including the eight unchanged composed resource
+observations. Dedicated tests validate namespace metadata, reject oversized
+merged namespaces, collect between instructions and interrupt active optimized
+and isolated comprehension frames. Real work/instruction/allocation failures,
+escaping snapshots and closures, nested shadowing and error restoration are
+covered. The 60-test Python suite passes with one optional runtime skip;
+distribution allowlists and four isolated installations pass. The compatibility
+inventory has 132 passing probes on both targets.
+
+Installed-wheel offline acceptance passes 950 program comparisons and 59
+acceptance groups, with 132 Stop/Restart cycles. The reflection example composes
+enclosing and isolated snapshots with mutable records, custom directories and
+generator-expression snapshots after offline reload. Stop/Restart interrupts
+both optimized and class comprehension callbacks while snapshots are owned.
+A waiting class-to-core update still removes reflection builtin authority.
+
+The [payload and source record](measurements/2026-10-27-comprehension-reflection.json)
+verifies all 38 files and 37 receipt members at 652,989 bytes, with an identical
+fresh rebuild. This is exact payload evidence without a performance, device or
+package claim. #123 and #34 remain open for their remaining finite slices.
