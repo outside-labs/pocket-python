@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class GeneratorObjectContractTests(unittest.TestCase):
     def test_pinned_reference_contracts(self):
-        for name in ("generators", "object-protocols", "construction", "attribute-hooks"):
+        for name in ("generators", "object-protocols", "construction", "attribute-hooks", "type-checks"):
             with self.subTest(corpus=name):
                 path = ROOT / "tests/fixtures/interpreter" / (name + ".json")
                 corpus = json.loads(path.read_text(encoding="utf-8"))

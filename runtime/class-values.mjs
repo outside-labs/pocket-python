@@ -170,6 +170,8 @@ export class ClassRuntime {
   notification(receiver, owner, name) { return this.boundHook(receiver, "__set_name__", [owner, name]); }
   read(receiver, name) {
     this.key(name); this.touch(receiver);
+    if (["__instancecheck__", "__subclasscheck__"].includes(name) && !allowsClassSpecial(name, "attribute"))
+      this.fail("UnsupportedOperationError", "Custom type checking requires its separate protocol stage.", "UNSUPPORTED");
     const value = value => ({kind: "value", value});
     if (receiver instanceof SuperValue) {
       if (name === "__class__") return value(this.builtin("super"));

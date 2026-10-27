@@ -97,6 +97,8 @@ jobs:
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/construction.json --stepped --report build/construction-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/attribute-hooks.json --report build/attribute-hooks-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/attribute-hooks.json --stepped --report build/attribute-hooks-browser-stepped-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --report build/type-checks-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-protocols.json --report build/object-protocols-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-protocols.json --stepped --report build/object-protocols-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --report build/classes-browser-report.json
@@ -209,6 +211,8 @@ jobs:
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/construction.json --stepped --report build/construction-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/attribute-hooks.json --report build/attribute-hooks-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/attribute-hooks.json --stepped --report build/attribute-hooks-node-stepped-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --report build/type-checks-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-protocols.json --report build/object-protocols-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-protocols.json --stepped --report build/object-protocols-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
