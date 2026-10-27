@@ -1,0 +1,493 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-reflection/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "identity-alias",
+      "stage": "O15",
+      "source": "a=[]\nb=a\nprint(id(a)==id(b),a is b)\na.append(7)\nprint(id(a)==id(b))\n",
+      "stdout": "True True\nTrue\n"
+    },
+    {
+      "id": "identity-distinct",
+      "stage": "O15",
+      "source": "a=[]\nb=[]\nprint(a==b,a is b,id(a)==id(b),id(a)>0)\n",
+      "stdout": "True False False True\n"
+    },
+    {
+      "id": "identity-singletons",
+      "stage": "O15",
+      "source": "a=None\nb=True\nc=False\nprint(id(a)==id(None),id(b)==id(True),id(c)==id(False))\nprint(id(a)!=id(b),id(a)!=id(c),id(b)!=id(c))\n",
+      "stdout": "True True True\nTrue True True\n"
+    },
+    {
+      "id": "identity-class-function",
+      "stage": "O15",
+      "source": "class A: pass\ndef f(): return 7\nprint(id(A)==id(A),id(f)==id(f),id(A)!=id(f),id(type(A))==id(type))\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "identity-native-types",
+      "stage": "O15",
+      "source": "a=[]\nprint(id(type(a))==id(list),id(object)==id(object),id(NotImplemented)==id(NotImplemented))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "identity-stored-methods",
+      "stage": "O15",
+      "source": "class A:\n def f(self): return 7\na=A()\nx=a.f\ny=a.f\nprint(x==y,x is y,id(x)==id(y),id(x)==id(x))\n",
+      "stdout": "True False False True\n"
+    },
+    {
+      "id": "identity-bypasses-callbacks",
+      "stage": "O15",
+      "source": "class A:\n def __hash__(self): raise ValueError(\"hash\")\n def __eq__(self,other): raise ValueError(\"equal\")\n def __getattribute__(self,name): raise ValueError(\"attribute\")\na=A()\nb=a\nprint(id(a)==id(b))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "identity-value-families",
+      "stage": "O15",
+      "source": "a=[{},(),\"text\",b\"text\",bytearray(),set(),frozenset(),range(3),slice(1),1.5,complex(1,2)]\nfor x in a: print(id(x)==id(x))\n",
+      "stdout": "True\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\n"
+    },
+    {
+      "id": "identity-generator",
+      "stage": "O15",
+      "source": "def f(): yield 7\ng=f()\nsaved=id(g)\nprint(next(g),saved==id(g))\ng.close()\nprint(saved==id(g))\n",
+      "stdout": "7 True\nTrue\n"
+    },
+    {
+      "id": "identity-escaped",
+      "stage": "O15",
+      "source": "def f():\n x=[]\n return x,id(x)\nx,saved=f()\nprint(saved==id(x))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "identity-shadowing",
+      "stage": "O15",
+      "source": "def id(x): return x+1\nprint(id(3))\n",
+      "stdout": "4\n"
+    },
+    {
+      "id": "identity-no-arguments",
+      "stage": "O15",
+      "source": "id()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "identity-extra-arguments",
+      "stage": "O15",
+      "source": "id([],[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "identity-keyword",
+      "stage": "O15",
+      "source": "id(object=[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "locals-fresh-shallow",
+      "stage": "O16",
+      "source": "def f():\n x=[7]\n a=locals()\n a[\"x\"]=9\n a[\"made\"]=3\n b=locals()\n print(a is b,x[0],b[\"x\"] is x,\"made\" in b,\"a\" in a,\"a\" in b,\"b\" in b)\nf()\n",
+      "stdout": "False 7 True False False True False\n"
+    },
+    {
+      "id": "locals-alias-mutation",
+      "stage": "O16",
+      "source": "def f():\n x=[]\n d=locals()\n d[\"x\"].append(7)\n print(x[0])\nf()\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "locals-unbound-deleted",
+      "stage": "O16",
+      "source": "def f():\n if False: hidden=7\n x=1\n del x\n print(\"hidden\" in locals(),\"x\" in locals())\nf()\n",
+      "stdout": "False False\n"
+    },
+    {
+      "id": "locals-rebinding",
+      "stage": "O16",
+      "source": "def f():\n x=1\n old=locals()\n x=2\n print(old[\"x\"],locals()[\"x\"])\nf()\n",
+      "stdout": "1 2\n"
+    },
+    {
+      "id": "locals-parameter-order",
+      "stage": "O16",
+      "source": "def f(z,a,/,*args,k=1,**kwargs):\n b=2\n c=3\n for key in locals(): print(key)\nf(1,2,4,k=5,q=6)\n",
+      "stdout": "z\na\nk\nargs\nkwargs\nb\nc\n"
+    },
+    {
+      "id": "locals-cell-order",
+      "stage": "O16",
+      "source": "def f(z,a):\n b=2\n c=3\n def g(): return b\n for key in locals(): print(key)\nf(1,2)\n",
+      "stdout": "z\na\nc\ng\nb\n"
+    },
+    {
+      "id": "locals-free-cells",
+      "stage": "O16",
+      "source": "def outer():\n z=7\n a=8\n def inner():\n  y=1\n  print(z,a)\n  for key in locals(): print(key)\n inner()\nouter()\n",
+      "stdout": "7 8\ny\na\nz\n"
+    },
+    {
+      "id": "locals-nonlocal",
+      "stage": "O16",
+      "source": "def outer():\n x=1\n def inner():\n  nonlocal x\n  before=locals()\n  x=7\n  print(before[\"x\"],locals()[\"x\"])\n inner()\nouter()\n",
+      "stdout": "1 7\n"
+    },
+    {
+      "id": "locals-unbound-free-cell",
+      "stage": "O16",
+      "source": "def outer():\n def inner():\n  if False: print(x)\n  print(\"x\" in locals())\n inner()\n x=7\nouter()\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "locals-global-excluded",
+      "stage": "O16",
+      "source": "x=7\ndef f():\n global x\n x=8\n print(x,\"x\" in locals(),\"f\" in locals())\nf()\n",
+      "stdout": "8 False False\n"
+    },
+    {
+      "id": "locals-lexical-class",
+      "stage": "O16",
+      "source": "class A:\n def f(self):\n  super\n  print(locals()[\"__class__\"] is A)\n  for key in locals(): print(key)\nA().f()\n",
+      "stdout": "True\nself\n__class__\n"
+    },
+    {
+      "id": "locals-nested-class",
+      "stage": "O16",
+      "source": "def outer():\n x=7\n class A:\n  x=9\n  def f(self):\n   print(x,locals()[\"x\"])\n A().f()\nouter()\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "locals-generator",
+      "stage": "O16",
+      "source": "def f():\n x=1\n yield locals()\n x=2\n yield locals()\ng=f()\na=next(g)\nb=next(g)\nprint(a[\"x\"],b[\"x\"],a is b)\ng.close()\n",
+      "stdout": "1 2 False\n"
+    },
+    {
+      "id": "locals-lambda",
+      "stage": "O16",
+      "source": "f=lambda x: locals()\nprint(f(7)[\"x\"])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "locals-alias-call",
+      "stage": "O16",
+      "source": "saved=locals\ndef f():\n x=7\n return saved()[\"x\"]\nprint(f())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "locals-shadowing",
+      "stage": "O16",
+      "source": "def f():\n locals=lambda: {\"x\":7}\n print(locals()[\"x\"])\nf()\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "locals-hidden-compiler-temporaries",
+      "stage": "O16",
+      "source": "def f():\n a,b=[1,2]\n c=[x for x in range(3)]\n print(len(locals()),\"x\" in locals())\nf()\n",
+      "stdout": "3 False\n"
+    },
+    {
+      "id": "locals-delete-exception-alias",
+      "stage": "O16",
+      "source": "def f():\n try: raise ValueError(\"x\")\n except ValueError as error: print(\"error\" in locals())\n print(\"error\" in locals())\nf()\n",
+      "stdout": "True\nFalse\n"
+    },
+    {
+      "id": "locals-arguments-error",
+      "stage": "O16",
+      "source": "locals(1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "locals-keyword-error",
+      "stage": "O16",
+      "source": "locals(x=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "vars-optimized",
+      "stage": "O16",
+      "source": "def f(x):\n a=vars()\n b=vars()\n print(a is b,a[\"x\"],\"a\" in b,\"b\" in b)\nf(7)\n",
+      "stdout": "False 7 True False\n"
+    },
+    {
+      "id": "dir-optimized-sorted",
+      "stage": "O16",
+      "source": "def f(z,a):\n x=7\n for key in dir(): print(key)\nf(1,2)\n",
+      "stdout": "a\nx\nz\n"
+    },
+    {
+      "id": "dir-free-cells",
+      "stage": "O16",
+      "source": "def outer():\n x=7\n def f(y):\n  print(x)\n  for key in dir(): print(key)\n f(1)\nouter()\n",
+      "stdout": "7\nx\ny\n"
+    },
+    {
+      "id": "dir-fresh-names",
+      "stage": "O16",
+      "source": "def f():\n x=7\n d=dir()\n x=8\n d.append(\"made\")\n print(\"made\" in dir(),\"d\" in dir(),\"x\" in dir())\nf()\n",
+      "stdout": "False True True\n"
+    },
+    {
+      "id": "vars-keyword-error",
+      "stage": "O16",
+      "source": "vars(object=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-keyword-error",
+      "stage": "O16",
+      "source": "dir(object=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "vars-custom-property",
+      "stage": "O17",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"read\")\n  return {\"x\":7}\nprint(vars(A())[\"x\"])\n",
+      "stdout": "read\n7\n"
+    },
+    {
+      "id": "vars-custom-result-identity",
+      "stage": "O17",
+      "source": "saved=[]\nclass A:\n @property\n def __dict__(self): return saved\nprint(vars(A()) is saved)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "vars-read-hooks",
+      "stage": "O17",
+      "source": "class A:\n def __getattribute__(self,name):\n  print(name)\n  return 7\nprint(vars(A()))\n",
+      "stdout": "__dict__\n7\n"
+    },
+    {
+      "id": "vars-fallback-hook",
+      "stage": "O17",
+      "source": "class A:\n def __getattribute__(self,name): raise AttributeError(\"missing\")\n def __getattr__(self,name): return {\"x\":7}\nprint(vars(A())[\"x\"])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "vars-attribute-error-conversion",
+      "stage": "O17",
+      "source": "class A:\n @property\n def __dict__(self): raise AttributeError(\"missing\")\nvars(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "vars-value-error-propagates",
+      "stage": "O17",
+      "source": "class A:\n @property\n def __dict__(self): raise ValueError(\"original\")\nvars(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "vars-native-no-dict",
+      "stage": "O17",
+      "source": "vars(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "vars-too-many-arguments",
+      "stage": "O17",
+      "source": "vars(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-custom-list",
+      "stage": "O17",
+      "source": "saved=[\"z\",\"a\",\"a\"]\nclass A:\n def __dir__(self): return saved\nresult=dir(A())\nfor name in result: print(name)\nprint(saved[0],result is saved)\n",
+      "stdout": "a\na\nz\nz False\n"
+    },
+    {
+      "id": "dir-custom-tuple",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): return (\"z\",\"a\")\nfor name in dir(A()): print(name)\n",
+      "stdout": "a\nz\n"
+    },
+    {
+      "id": "dir-custom-generator",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self):\n  yield \"z\"\n  print(\"resumed\")\n  yield \"a\"\nfor name in dir(A()): print(name)\n",
+      "stdout": "resumed\na\nz\n"
+    },
+    {
+      "id": "dir-custom-unicode",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): return [\"𐀀\",\"\",\"a\",\"\"]\nfor name in dir(A()): print(name)\n",
+      "stdout": "\na\n\n𐀀\n"
+    },
+    {
+      "id": "dir-custom-descriptor",
+      "stage": "O17",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(owner.__name__)\n  return lambda: (\"z\",\"a\")\nclass A: __dir__=D()\nfor name in dir(A()): print(name)\n",
+      "stdout": "A\na\nz\n"
+    },
+    {
+      "id": "dir-custom-special-lookup",
+      "stage": "O17",
+      "source": "class A:\n def __getattribute__(self,name): raise ValueError(\"wrong\")\n def __dir__(self): return (\"x\",)\na=A()\na.__dir__=None\nprint(dir(a)[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "dir-metaclass-hook",
+      "stage": "O17",
+      "source": "class M(type):\n def __dir__(cls): return (\"z\",\"a\")\nclass A(metaclass=M): pass\nfor name in dir(A): print(name)\n",
+      "stdout": "a\nz\n"
+    },
+    {
+      "id": "dir-inherited-hook",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): return (\"z\",\"a\")\nclass B(A): pass\nfor name in dir(B()): print(name)\n",
+      "stdout": "a\nz\n"
+    },
+    {
+      "id": "dir-dynamic-slot-replacement",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): return (\"old\",)\ndef changed(self): return (\"new\",)\na=A()\nprint(dir(a)[0])\nA.__dir__=changed\nprint(dir(a)[0])\n",
+      "stdout": "old\nnew\n"
+    },
+    {
+      "id": "dir-custom-empty",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): return ()\nprint(len(dir(A())))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "dir-custom-dict",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): return {\"z\":1,\"a\":2}\nfor name in dir(A()): print(name)\n",
+      "stdout": "a\nz\n"
+    },
+    {
+      "id": "dir-custom-text",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): return \"za\"\nfor name in dir(A()): print(name)\n",
+      "stdout": "a\nz\n"
+    },
+    {
+      "id": "dir-noncallable-slot",
+      "stage": "O17",
+      "source": "class A: __dir__=None\ndir(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-noniterable-result",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): return 7\ndir(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-body-error",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self): raise AttributeError(\"original\")\ndir(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "dir-binding-error",
+      "stage": "O17",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"original\")\nclass A: __dir__=D()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "dir-too-many-arguments",
+      "stage": "O17",
+      "source": "dir(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "integer-identity-deferred",
+      "stage": "Future",
+      "source": "print(id(7)==id(7))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "module-locals-live-deferred",
+      "stage": "Future",
+      "source": "print(locals() is locals())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "module-vars-live-deferred",
+      "stage": "Future",
+      "source": "print(vars() is vars())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "module-dir-deferred",
+      "stage": "Future",
+      "source": "print(\"__name__\" in dir())\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "class-locals-live-deferred",
+      "stage": "Future",
+      "source": "class A:\n print(locals() is locals())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "globals-live-deferred",
+      "stage": "Future",
+      "source": "print(globals() is globals())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-locals-deferred",
+      "stage": "Future",
+      "source": "a=[locals() for x in range(1)]\nprint(\"x\" in a[0])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "generator-expression-locals-deferred",
+      "stage": "Future",
+      "source": "g=(locals() for x in range(1))\nprint(\"x\" in next(g))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-dictionary-deferred",
+      "stage": "Future",
+      "source": "class A: pass\nprint(len(vars(A())))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "class-dictionary-deferred",
+      "stage": "Future",
+      "source": "class A: pass\nprint(\"__module__\" in vars(A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "default-directory-deferred",
+      "stage": "Future",
+      "source": "class A: pass\nprint(\"__class__\" in dir(A()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "nonstring-directory-deferred",
+      "stage": "Future",
+      "source": "class A:\n def __dir__(self): return [2,1]\nprint(dir(A())[0])\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "length-hint-directory-deferred",
+      "stage": "Future",
+      "source": "class Items:\n def __iter__(self): return iter((\"x\",))\n def __len__(self):\n  print(\"hint\")\n  return 1\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
+      "stdout": "hint\nx\n"
+    }
+  ]
+}
