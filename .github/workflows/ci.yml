@@ -167,6 +167,7 @@ jobs:
       - run: node --test runtime/syntax.test.mjs
       - run: node --test runtime/function-binding.test.mjs
       - run: node --test runtime/object-protocols.test.mjs
+      - run: node --test runtime/construction.test.mjs
       - run: node --test runtime/generators.test.mjs
       - run: node --test runtime/functions.test.mjs
       - run: node --test runtime/execution.test.mjs
