@@ -6,6 +6,11 @@ future cases before implementation. Reference-only results do not establish
 independent execution. These APIs belong to classes-source/1 and bytecode 5;
 core-source/1 admission and bytecode 4 remain unchanged.
 
+The next [O18–O20 contract](interpreter-directory-scopes.md) specifies
+generator-expression namespaces, custom directory length hints and owned
+ordering of arbitrary directory entries. Its reference cases do not imply
+implementation until their stages are explicitly adopted.
+
 | Stage | Adopted contract |
 | --- | --- |
 | O15 | `id(value, /)` returns an integer identifying an adopted arena object or the None/True/False singletons. Simultaneously live distinct objects have distinct identities; aliases retain identity through mutation, collection, parked execution and callbacks. Identity agrees with the existing `is` operation and never invokes hashing, equality or attribute hooks. IDs are session-local opaque integers, without an address or cross-session guarantee. Unboxed integer identity remains an explicit refusal, matching the existing `is` boundary. |
