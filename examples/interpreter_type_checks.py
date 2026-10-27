@@ -36,6 +36,8 @@ print("actual", type.__instancecheck__(Note, record),
 stream = record.values()
 print("values", next(stream), next(stream), type(record) is Record)
 stream.close()
+print("native", type(type.__instancecheck__).__name__,
+      type(Record.__instancecheck__).__name__, type.__instancecheck__.__name__)
 '''
 
 if __name__ == '__main__':

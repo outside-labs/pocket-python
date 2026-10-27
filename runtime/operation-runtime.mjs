@@ -1291,6 +1291,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = notifyNext(type, [...namespace], 0, site, completion); continue;
           }
           if (classes.isType(callable) && !["type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
+            if (callable.name === "method_descriptor") python("TypeError", "cannot create 'method_descriptor' instances");
             if (["NoneType", "NotImplementedType"].includes(callable.name)) {
               if (args.length || keywords.length) python("TypeError", callable.name + " takes no arguments");
               task = valueTask(callable.name === "NoneType" ? null : moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, completion); continue;

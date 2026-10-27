@@ -395,7 +395,7 @@ def smoke(channel=None):
                     refused('class M(type):\n print("never")\n def __getattribute__(self,name): return 7\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == ''
                     checks.append('instance-hook-errors-and-deferred-reflection-retain-offline-boundaries')
-                    run(TYPE_CHECK_SOURCE, 'virtual True True\nactual False False True\nvalues 7 8 True\n')
+                    run(TYPE_CHECK_SOURCE, 'virtual True True\nactual False False True\nvalues 7 8 True\nnative method_descriptor builtin_function_or_method __instancecheck__\n')
                     checks.append('new-custom-checking-composes-with-descriptors-truth-generators-and-native-defaults-offline')
                     for slot, builtin, argument in [('__instancecheck__', 'isinstance', '7'), ('__subclasscheck__', 'issubclass', 'int')]:
                         refused('class M(type):\n def '+slot+'(cls,obj):\n  raise ValueError("check")\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n', 'ValueError:')
@@ -405,6 +405,10 @@ def smoke(channel=None):
                         refused('class Truth:\n def __bool__(self):\n  raise ValueError("truth")\nclass M(type):\n def '+slot+'(cls,obj): return Truth()\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n', 'ValueError:')
                         assert '__bool__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
                     checks.append('custom-check-binding-body-and-truth-errors-retain-offline-source-diagnostics')
+                    for slot in ['__instancecheck__', '__subclasscheck__']:
+                        refused('type(type.'+slot+')()\n', 'TypeError:')
+                        refused('int.'+slot+'.__func__\n', 'AttributeError:')
+                    checks.append('native-checking-callable-identities-metadata-and-construction-refusal-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
