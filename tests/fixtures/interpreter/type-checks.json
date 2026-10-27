@@ -6,7 +6,8 @@
   "implemented_stages": [
     "Base",
     "O9",
-    "O10"
+    "O10",
+    "O11"
   ],
   "cases": [
     {
@@ -478,6 +479,82 @@
       "stage": "Future",
       "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\nclass A(metaclass=M): pass\n",
       "stdout": ""
+    },
+    {
+      "id": "native-instancecheck-unbound-metadata",
+      "stage": "O11",
+      "source": "value=type.__instancecheck__\nprint(type(value).__name__,value.__class__ is type(value),value.__name__,value.__qualname__)\n",
+      "stdout": "method_descriptor True __instancecheck__ type.__instancecheck__\n"
+    },
+    {
+      "id": "native-instancecheck-bound-identity",
+      "stage": "O11",
+      "source": "class A: pass\nraw=type.__instancecheck__\nbound=A.__instancecheck__\nprint(type(bound).__name__,type(bound) is type(print),type(raw) is type(bound),bound.__self__ is A)\n",
+      "stdout": "builtin_function_or_method True False True\n"
+    },
+    {
+      "id": "native-instancecheck-canonical-types",
+      "stage": "O11",
+      "source": "raw=type.__instancecheck__\nprint(type(raw) is type(type.__instancecheck__),type(type(raw)) is type,issubclass(type(raw),object),isinstance(raw,type(raw)),isinstance(raw,type(print)))\n",
+      "stdout": "True True True True False\n"
+    },
+    {
+      "id": "native-instancecheck-native-bound-type",
+      "stage": "O11",
+      "source": "print(type(int.__instancecheck__).__name__,type(int.__instancecheck__) is type(print))\n",
+      "stdout": "builtin_function_or_method True\n"
+    },
+    {
+      "id": "native-instancecheck-descriptor-construction",
+      "stage": "O11",
+      "source": "type(type.__instancecheck__)()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-subclasscheck-unbound-metadata",
+      "stage": "O11",
+      "source": "value=type.__subclasscheck__\nprint(type(value).__name__,value.__class__ is type(value),value.__name__,value.__qualname__)\n",
+      "stdout": "method_descriptor True __subclasscheck__ type.__subclasscheck__\n"
+    },
+    {
+      "id": "native-subclasscheck-bound-identity",
+      "stage": "O11",
+      "source": "class A: pass\nraw=type.__subclasscheck__\nbound=A.__subclasscheck__\nprint(type(bound).__name__,type(bound) is type(print),type(raw) is type(bound),bound.__self__ is A)\n",
+      "stdout": "builtin_function_or_method True False True\n"
+    },
+    {
+      "id": "native-subclasscheck-canonical-types",
+      "stage": "O11",
+      "source": "raw=type.__subclasscheck__\nprint(type(raw) is type(type.__subclasscheck__),type(type(raw)) is type,issubclass(type(raw),object),isinstance(raw,type(raw)),isinstance(raw,type(print)))\n",
+      "stdout": "True True True True False\n"
+    },
+    {
+      "id": "native-subclasscheck-native-bound-type",
+      "stage": "O11",
+      "source": "print(type(int.__subclasscheck__).__name__,type(int.__subclasscheck__) is type(print))\n",
+      "stdout": "builtin_function_or_method True\n"
+    },
+    {
+      "id": "native-subclasscheck-descriptor-construction",
+      "stage": "O11",
+      "source": "type(type.__subclasscheck__)()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-instancecheck-no-bound-func",
+      "stage": "O11",
+      "source": "int.__instancecheck__.__func__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-subclasscheck-no-bound-func",
+      "stage": "O11",
+      "source": "int.__subclasscheck__.__func__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
     }
   ]
 }

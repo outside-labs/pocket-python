@@ -5,9 +5,10 @@ import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
-  "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "builtin_function_or_method", "generator", "module", "cell",
+  "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__"]);
+const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -107,9 +108,10 @@ export class ClassRuntime {
     let name = this.values.typeName(value);
     if (name === null) {
       if (this.isType(value)) name = "type";
-      else if (value instanceof BuiltinValue) name = "builtin_function_or_method";
+      else if (value instanceof BuiltinValue) name = NATIVE_CHECK_METHODS.has(value.name) ? "method_descriptor" : "builtin_function_or_method";
       else if (value instanceof FunctionValue) name = "function";
-      else if (value instanceof BoundMethodValue) name = value.callable instanceof BuiltinValue ? "method-wrapper" : "method";
+      else if (value instanceof BoundMethodValue) name = value.callable instanceof BuiltinValue ?
+        NATIVE_CHECK_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
       else if (value instanceof PropertyValue) name = "property";
       else if (value instanceof MethodWrapperValue) name = value.kind;
       else if (value instanceof SuperValue) name = "super";
@@ -194,7 +196,8 @@ export class ClassRuntime {
     }
     if (receiver instanceof BuiltinValue) {
       if (name === "__class__") return value(this.typeOf(receiver));
-      if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(receiver.name, char => char.codePointAt(0))));
+      if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(
+        name === "__name__" && NATIVE_CHECK_METHODS.has(receiver.name) ? receiver.name.slice(5) : receiver.name, char => char.codePointAt(0))));
       if (this.isType(receiver)) {
         if (receiver.name !== "type" && ["__instancecheck__", "__subclasscheck__"].includes(name))
           return this.bindAttribute(this.builtin("type." + name), receiver, this.builtin("type"));
@@ -215,6 +218,8 @@ export class ClassRuntime {
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
+    if (receiver instanceof BoundMethodValue && name === "__func__" && receiver.callable instanceof BuiltinValue && NATIVE_CHECK_METHODS.has(receiver.callable.name))
+      this.fail("AttributeError", "Native checking methods have no __func__ attribute.");
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {

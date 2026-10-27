@@ -9,6 +9,7 @@ The explicit classes-source/1 profile and bytecode 5 remain the admission bounda
 | --- | --- |
 | O9 | `isinstance(value, classinfo)` first accepts an exact actual-type identity. Otherwise custom `__instancecheck__` is selected through classinfo's actual type, bypassing class/instance shadows and ordinary attribute hooks. Classes bind the metaclass descriptor to the class and its actual metaclass; ordinary checker instances bind their actual type's descriptor. Inherited functions, static/class methods, properties and custom descriptors use ordinary frames. The returned value undergoes owned Python truth conversion. Native `type.__instancecheck__` bypasses custom checking, accepts real subtypes first and then uses the adopted advertised `__class__` lookup. |
 | O10 | `issubclass(derived, classinfo)` selects `__subclasscheck__` through classinfo's actual type before validating derived. Custom hooks also run for self and real subtype relationships. Descriptor binding and result truth conversion follow O9. Native `type.__subclasscheck__` bypasses custom hooks and checks adopted actual type ancestry; advertised `__class__` does not make an ordinary instance into a class. |
+| O11 | Native type checking helpers have canonical `method_descriptor` identities when unbound, and `builtin_function_or_method` identities when bound. Unbound `__name__` is bare and `__qualname__` is type-qualified; bound native methods expose their class receiver and have no Python-method `__func__` attribute. These values retain ordinary invocation and owned receiver lifetimes. Constructing `method_descriptor` instances raises TypeError. Broader method-descriptor metadata, binding APIs and builtin subclassing remain separately gated. |
 | Base | Nested class-info tuples run left to right and stop at the first true result or error. An empty tuple returns false even for an invalid derived argument. Existing bool/int and exception ancestry remain adopted. |
 | Future | Abstract class-like objects advertising `__bases__`, unions, generic aliases, custom metaclass attribute access, namespace preparation and mappings remain separately gated. Broader dir/vars/globals/locals/id and dynamic source admission remain under #123. Persistent scheduling, async syntax and host capabilities remain under #34. |
 
@@ -47,7 +48,7 @@ Semantic anchors: Python's [custom checking protocol](https://docs.python.org/3.
 and the pinned [CPython implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/abstract.c).
 The pinned executable decides the finite cases when later documentation differs.
 
-## Accepted evidence
+## Accepted O9/O10 checkpoint
 
 O9/O10 are implemented. The 74-case corpus has 71 adopted comparisons and three
 explicit future refusals. Node and Chromium each pass drain and instruction-boundary
@@ -77,3 +78,26 @@ example measurement; no timing, device or package compatibility claim follows.
 layouts, further metaclass protocols and dynamic source admission. Persistent
 execution, native coroutines, host await and event ownership remain under #34.
 No publication or deployment accompanies this delivery.
+
+## Native checking callable reflection
+
+O11 corrects the native checking helpers' unbound/bound type identities and bare
+unbound names, and prevents bound native methods from exposing a Python-method
+`__func__`. Checked instance/subclass results and descriptor invocation are
+unchanged. Canonical reflected descriptor types support the adopted type
+relations; direct descriptor construction raises Python TypeError.
+
+The expanded 86-case matrix has 83 adopted comparisons and three explicit
+refusals. All four Node/Chromium drain/step combinations pass: 344 observations
+and 336 measured zero logical teardown records, with all 55 input hashes and the
+corpus hash verified. The full Node suite passes 575 tests, including temporary
+bound class-owner collection and the eight unchanged composed resource cases.
+
+Installed-wheel offline acceptance passes 607 program comparisons and 50 groups
+with 111 Stop/Restart cycles. Newly entered source checks callable identities and
+metadata; native descriptor construction and missing `__func__` retain their
+Python errors. The updated [payload/source record](measurements/2026-10-27-type-check-reflection.json)
+verifies the complete 38-file, 610,170-byte example, all receipt hashes and an
+identical fresh rebuild. Isolated wheel and source-distribution checks pass.
+These are finite callable reflection claims; broader descriptor APIs, ordinary
+namespace/identity reflection and async retain their existing separate scopes.

@@ -158,3 +158,16 @@ test('subclass checks ignore class shadows and preserve tuple errors and nesting
     assert.equal(nested.error.code, 'BUDGET'); closed(nested.closed);
   }
 });
+
+test('native checking metadata keeps temporary bound class owners alive across collection', async () => {
+  const source = 'bound=type("A",(),{}).__instancecheck__\nother=type("B",(),{}).__subclasscheck__\nprint(type(bound).__name__,bound.__self__.__name__,bound(bound.__self__()))\nprint(type(other).__name__,other.__self__.__name__,other(other.__self__))\n';
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  const session = new ModuleSession(registry); let output = '';
+  session.context.begin({}, text => { output += text; });
+  const execution = Execution.modules(session.context);
+  try {
+    while (execution.state !== 'completed') { execution.advance(); session.memory.collect([], {cleanup: true}); }
+    assert.equal(output, 'builtin_function_or_method A True\nbuiltin_function_or_method B True\n');
+  } finally { execution.close(); session.context.finish(); session.close(); registry.close(); }
+  closed(session.stats());
+});
