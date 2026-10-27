@@ -53,14 +53,14 @@ Pinned reference cases settle the finite callback/error boundaries.
 
 ## Accepted evidence
 
-The 160-case reflection matrix contains 147 adopted comparisons and thirteen
+The 164-case reflection matrix contains 151 adopted comparisons and thirteen
 explicit refusals. Node and Chromium each pass draining and instruction-boundary
-execution: 640 observations and 640 measured zero logical teardown records.
+execution: 656 observations and 656 measured zero logical teardown records.
 All 58 source/driver hashes and the corpus hash match the retained reports.
 Comparison scheduling is deliberately outside the conformance promise; stable
 results, identities, descriptor/truth behavior and error propagation are covered.
 
-All 948 Node tests pass, including the eight unchanged composed resource cases.
+All 952 Node tests pass, including the eight unchanged composed resource cases.
 Dedicated tests collect between instructions and interrupt length, hint, index,
 descriptor, comparison and truth callbacks, including partial copies and escaped
 generator iterators. Callback/source errors, recursion and real instruction/work/
@@ -76,6 +76,6 @@ builtin authority. The inventory's 128 probes retain explicit live/inlined
 namespace and host boundaries.
 
 The [payload and source record](measurements/2026-10-27-directory-scopes.json)
-verifies all 38 files and 37 receipt members at 645,626 bytes; a fresh assembly is
+verifies all 38 files and 37 receipt members at 645,931 bytes; a fresh assembly is
 identical. This is exact payload evidence without a performance, package, device
 or native-async claim. #123 and #34 remain open for their remaining slices.
