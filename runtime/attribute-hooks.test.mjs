@@ -26,6 +26,7 @@ test('attribute operations retain original names, fallback snapshots and destina
   const target = completion('attribute-fallback', {receiver, key, name: 'x', hook, depth: 0, after});
   assert.deepEqual(completionRoots(target), [receiver, key, hook, outer]);
   assert.deepEqual(operationRoots(attributeTask(receiver, 'x', null, target, 0, 'get', key)), [receiver, key, null, receiver, key, hook, outer]);
+  assert.deepEqual(operationRoots(attributeTask(receiver, 'x', null, after, 0, 'set', key, null, hook)), [receiver, key, null, hook, outer]);
   assert.throws(() => attributeTask(receiver, 7, null), TypeError);
   assert.throws(() => attributeTask(receiver, 'x', null, null, 0, 'unknown'), TypeError);
 });
@@ -37,6 +38,8 @@ test('read and binding callbacks survive every-instruction collection, cancellat
     'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  def read(name): return [7]\n  return read\nclass A: __getattribute__=D()\nprint([1][0]+A().x[0])\n',
     'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  raise AttributeError("binding")\nclass A:\n __getattribute__=D()\n def __getattr__(self,name): return [7]\nprint([1][0]+A().x[0])\n',
     'class A:\n def __getattribute__(self,name):\n  del A.__getattr__\n  print("entered")\n  raise AttributeError("missing")\n def __getattr__(self,name): return [7]\nprint([1][0]+A().x[0])\n',
+    'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  def write(name,value): object.__setattr__(obj,name,value)\n  return write\nclass A: __setattr__=D()\na=A()\na.x=[7]\nprint([1][0]+a.x[0])\n',
+    'class A:\n def __delattr__(self,name):\n  print("entered")\n  object.__delattr__(self,name)\na=A()\na.x=[7]\nsaved=a.x\ndel a.x\nprint([1][0]+saved[0])\n',
   ];
   for (const source of sources) {
     const {registry} = await compileSourceModules([unit(source)], profile);
@@ -81,4 +84,24 @@ test('read hooks preserve source frames and share recursion, work and real alloc
 test('deferred special reflection refuses before instance hook effects', async () => {
   const result = await run('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__dict__")\n');
   assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
+});
+
+test('mutation hooks preserve error frames and share recursion, work and allocation limits', async () => {
+  for (const slot of ['__setattr__', '__delattr__']) {
+    const expression = slot === '__setattr__' ? 'A().x=7' : 'del A().x';
+    const signature = slot === '__setattr__' ? 'self,name,value' : 'self,name';
+    const failure = await run('class A:\n def '+slot+'('+signature+'):\n  raise ValueError("original")\n'+expression+'\n');
+    assert.equal(failure.error.type, 'ValueError');
+    assert.deepEqual(failure.error.traceback.map(f => [f.function, f.location.span[0]]), [['<module>', 4], [slot, 3]]);
+    closed(failure.closed);
+    for (const [body, options, limits, code] of [
+      [slot === '__setattr__' ? 'self.x=value' : 'del self.x', {maxDepth: 12}, undefined, 'PYTHON'],
+      ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+      ['items=[]\n  while True: items.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
+    ]) {
+      const result = await run('class A:\n def '+slot+'('+signature+'):\n  '+body+'\n'+expression+'\n', options, limits);
+      assert.equal(result.error.code, code); if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+      closed(result.closed);
+    }
+  }
 });

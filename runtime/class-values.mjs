@@ -135,9 +135,9 @@ export class ClassRuntime {
           return {found: true, value: this.builtin("type." + name)};
         continue;
       }
-      if (!native && base.root && ["__new__", "__init__", "__getattribute__"].includes(name)) continue;
+      if (!native && base.root && ["__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) continue;
       if (base.namespace.has(name)) return {found: true, value: base.namespace.get(name)};
-      if (native && base.root && ["__hash__", "__new__", "__init__", "__getattribute__"].includes(name)) {
+      if (native && base.root && ["__hash__", "__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) {
         const value = this.make(BuiltinValue, "object." + name);
         base.namespace.set(name, value);
         try { const layout = valueLayout(base); this.memory?.resize(base, layout.bytes, layout.children); }
@@ -242,7 +242,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner)};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "object.__getattribute__", "type.__init__", "type.__call__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);
