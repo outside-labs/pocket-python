@@ -47,6 +47,12 @@ admission retain separate contracts. Native coroutine/await and host adapters
 remain under #34. No dependency, host grant, release, publication or deployment
 is included.
 
+Lambda defaults execute in the surrounding comprehension scope. Deferred
+assignment expressions and yield in those defaults refuse before application
+effects, including nested defaults. The lambda body retains its independent
+scope; its adopted assignment expressions and ordinary computed defaults remain
+available. This distinction applies to both source profiles.
+
 Acceptance requires the pinned reflection matrix in Node and Chromium, draining
 and instruction-boundary execution; ownership and malformed metadata checks;
 composed installed-wheel offline execution and Stop/Restart; compatibility
@@ -66,16 +72,18 @@ before execution. All 58 source/driver hashes and the corpus hash match the
 retained reports. Thirty-two cross-scope cases retain the parameter/local/free
 and class combinations that distinguish cell order from target-slot order.
 
-All 1,068 Node tests pass, including the eight unchanged composed resource
+All 1,069 Node tests pass, including the eight unchanged composed resource
 observations. Dedicated tests validate namespace metadata, reject oversized
 merged namespaces, collect between instructions and interrupt active optimized
 and isolated comprehension frames. Real work/instruction/allocation failures,
 escaping snapshots and closures, nested shadowing and error restoration are
 covered. The 60-test Python suite passes with one optional runtime skip;
 distribution allowlists and four isolated installations pass. The compatibility
-inventory has 132 passing probes on both targets.
+inventory has 132 passing probes on both targets. The ordinary-syntax matrix
+passes 104 class-profile and 81 core-profile cases in both Node and Chromium,
+including the six deferred lambda-default binding forms.
 
-Installed-wheel offline acceptance passes 950 program comparisons and 59
+Installed-wheel offline acceptance passes 950 program comparisons and 60
 acceptance groups, with 132 Stop/Restart cycles. The reflection example composes
 enclosing and isolated snapshots with mutable records, custom directories and
 generator-expression snapshots after offline reload. Stop/Restart interrupts
@@ -83,6 +91,6 @@ both optimized and class comprehension callbacks while snapshots are owned.
 A waiting class-to-core update still removes reflection builtin authority.
 
 The [payload and source record](measurements/2026-10-27-comprehension-reflection.json)
-verifies all 38 files and 37 receipt members at 652,989 bytes, with an identical
+verifies all 38 files and 37 receipt members at 653,280 bytes, with an identical
 fresh rebuild. This is exact payload evidence without a performance, device or
 package claim. #123 and #34 remain open for their remaining finite slices.

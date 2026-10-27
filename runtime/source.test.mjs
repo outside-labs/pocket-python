@@ -13,6 +13,27 @@ const unit = (source, name = "app", imports = [], package_ = false) => ({name, s
 async function run(source, options = {}) { return runSourceRequest({modules: [unit(source)], ...options}); }
 const error = (source, code, options = {}) => assert.throws(() => compileSource(source, options), e => e instanceof SourceError && e.code === code);
 
+test("comprehension lambda defaults retain deferred admission while lambda bodies keep their own scope", async () => {
+  const expressions = [
+    "[lambda a=(y:=7):a for x in [1]]",
+    "{x:lambda a=(y:=7):a for x in [1]}",
+    "{lambda a=(y:=7):a for x in [1]}",
+    "(lambda a=(y:=7):a for x in [1])",
+    "[lambda *,a=(y:=7):a for x in [1]]",
+    "[lambda a=(lambda b=(y:=7):b):a for x in [1]]",
+  ];
+  for (const languageProfile of ["core-source/1", "classes-source/1"]) {
+    for (const expression of expressions) {
+      const result = await run("print('must not execute')\ny=9\nr="+expression+"\n", {compileOptions: {languageProfile}});
+      assert.equal(result.error?.code, "UNSUPPORTED", JSON.stringify(result.error));
+      assert.equal(result.stdout, ""); assert.equal(result.stats, null);
+    }
+    const result = await run("y=9\na=[lambda:(y:=7) for x in [1]]\nb=[lambda p=x+1:p for x in [7]]\nc=[lambda p=(lambda:(y:=8)):p for x in [1]]\nprint(y,a[0](),b[0](),c[0]()())\n", {compileOptions: {languageProfile}});
+    assert.equal(result.ok, true, JSON.stringify(result.error)); assert.equal(result.stdout, "9 7 8 8\n");
+    for (const key of ["bytes", "objects", "roots", "frames", "external"]) assert.equal(result.closed[key], 0);
+  }
+});
+
 test("parses precedence, literal forms and frozen verified code with original UTF-8 locations", async () => {
   const source = "# original\nπ = (1 + 2 * 3)\nprint(π, -7//3, -7%3, not 0 == 1, 'a' '😀')\n";
   const compiled = compileSource(source, {filename: "logic.py"});

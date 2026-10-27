@@ -996,6 +996,66 @@
         "core-source/1",
         "classes-source/1"
       ]
+    },
+    {
+      "id": "comprehension-lambda-default-binding-list",
+      "stage": "Future",
+      "source": "print(\"entered\")\ny=9\nr=[lambda a=(y:=7):a for x in [1]]\nprint(y)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "entered\n7\n"
+    },
+    {
+      "id": "comprehension-lambda-default-binding-dict",
+      "stage": "Future",
+      "source": "print(\"entered\")\ny=9\nr={x:lambda a=(y:=7):a for x in [1]}\nprint(y)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "entered\n7\n"
+    },
+    {
+      "id": "comprehension-lambda-default-binding-set",
+      "stage": "Future",
+      "source": "print(\"entered\")\ny=9\nr={lambda a=(y:=7):a for x in [1]}\nprint(y)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "entered\n7\n"
+    },
+    {
+      "id": "comprehension-lambda-default-binding-generator",
+      "stage": "Future",
+      "source": "print(\"entered\")\ny=9\nr=(lambda a=(y:=7):a for x in [1])\nprint(y)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "entered\n9\n"
+    },
+    {
+      "id": "comprehension-lambda-default-binding-keyword",
+      "stage": "Future",
+      "source": "print(\"entered\")\ny=9\nr=[lambda *,a=(y:=7):a for x in [1]]\nprint(y)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "entered\n7\n"
+    },
+    {
+      "id": "comprehension-lambda-default-binding-nested",
+      "stage": "Future",
+      "source": "print(\"entered\")\ny=9\nr=[lambda a=(lambda b=(y:=7):b):a for x in [1]]\nprint(y)\n",
+      "profiles": [
+        "core-source/1",
+        "classes-source/1"
+      ],
+      "stdout": "entered\n7\n"
     }
   ]
 }
