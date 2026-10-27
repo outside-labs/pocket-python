@@ -41,5 +41,7 @@ outer-destination roots; logical teardown must be zero.
 
 The generator console composes these protocols with suspended source functions
 and comprehensions. Offline acceptance includes freshly entered source, callback
-errors and Stop/Restart. INT-OBJECT-01 remains open for its construction, super,
-type-relation, metaclass, builtin-subclass and broader reflection slices.
+errors and Stop/Restart. The finite [construction, super, type-relation and
+metaclass slices](interpreter-construction.md) are also adopted. INT-OBJECT-01
+remains open for builtin instance layouts, additional metaclass protocols,
+custom attribute hooks and broader reflection.
