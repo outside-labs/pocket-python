@@ -413,7 +413,7 @@
     },
     {
       "id": "future-attribute-hook",
-      "stage": "C3-future",
+      "stage": "C3-call",
       "source": "class A:\n def __getattr__(self,name): return 7\nprint(A().missing)\n",
       "stdout": "7\n"
     }

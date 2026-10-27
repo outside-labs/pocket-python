@@ -133,6 +133,8 @@ export function completion(kind, fields = {}) {
       record = {kind, operation: fields.operation, args: operands(fields.args), position: fields.position, order: fields.order, nativeInplace: fields.nativeInplace === true, depth: fields.depth, after};
       arithmeticCheck(record.operation, record.args, record.position, record.order); depthCheck(record.depth); break;
     case "attribute-write": record = {kind, receiver: fields.receiver, after}; break;
+    case "attribute-fallback": record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, hook: fields.hook, depth: fields.depth, after};
+      depthCheck(record.depth); break;
     case "attribute-result": record = {kind, receiver: fields.receiver, default: fields.default, mode: fields.mode, after};
       if (!["getattr", "hasattr"].includes(record.mode)) throw new TypeError("Invalid attribute result mode."); break;
     case "delegate-bind": record = {kind, receiver: fields.receiver, args: operands(fields.args), after}; break;
@@ -187,6 +189,7 @@ function visit(record) {
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];
     case "attribute-write": return [record.receiver, ...completionRoots(record.after)];
+    case "attribute-fallback": return [record.receiver, record.key, record.hook, ...completionRoots(record.after)];
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
@@ -254,6 +257,12 @@ export function itemTask(receiver, key, site, after = null, depth = 0, operation
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "item", receiver, key, operation: itemOperation(operation), item, site, completion: after, depth});
 }
+export function attributeTask(receiver, name, site, after = null, depth = 0, operation = "get", key = null, hook = null) {
+  depthCheck(depth); completionRoots(after);
+  if (typeof name !== "string" || name.length > 256 || !["get", "native-get", "fallback"].includes(operation))
+    throw new TypeError("Invalid attribute operation.");
+  return Object.freeze({kind: "attribute", receiver, name, key, hook, operation, site, completion: after, depth});
+}
 export function sliceTask(receiver, parts, site, after = null, depth = 0, operation = "get", item = null) {
   depthCheck(depth); completionRoots(after);
   if (parts.length !== 3) throw new TypeError("A slice requires three parts.");
@@ -278,6 +287,7 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
 }
 export function operationRoots(task) {
   switch (task.kind) {
+    case "attribute": return [task.receiver, task.key, task.hook, ...completionRoots(task.completion)];
     case "construct": case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "arithmetic":
     case "numeric": return [...task.args, ...completionRoots(task.completion)];

@@ -7,7 +7,7 @@ import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -550,7 +550,10 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           inheritedException: frame.activeException};
         else {
           const receiver = stack.pop();
-          if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
+          if (op === "attribute-get" && receiver instanceof InstanceValue && arg !== "__class__" &&
+              (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__")))
+            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+          else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
           else if (receiver instanceof GeneratorValue) {
             if (!["send", "throw", "close", "__iter__", "__next__"].includes(arg)) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires a separate stage.");
             stack.push(allocate(ValueMethod, receiver, arg));

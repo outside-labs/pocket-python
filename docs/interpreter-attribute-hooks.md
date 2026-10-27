@@ -1,7 +1,7 @@
 # Instance attribute hooks and advertised classes
 
 The next finite #123 slices use CPython 3.14.7 as their executable reference.
-`attribute-hooks.json` records 74 source cases. Reference expectations do not
+`attribute-hooks.json` records 76 source cases. Reference expectations do not
 establish implementation; each stage is enabled only with independent execution
 and its ownership tests. Classes remain explicit in classes-source/1, bytecode 5.
 
@@ -46,3 +46,8 @@ Semantic anchors: Python's [attribute-access model](https://docs.python.org/3.14
 [isinstance](https://docs.python.org/3.14/library/functions.html#isinstance) and
 [super](https://docs.python.org/3.14/library/functions.html#super). The pinned
 executable reference decides these finite cases if later documentation differs.
+
+O6 is implemented through owned read operations. The initial 33 O6 cases pass
+Node drain/step execution; descriptor binding, original fallback snapshots,
+source errors, every-instruction collection, cancellation and real resource
+limits have dedicated tests. O7/O8 still require their implementation slices.

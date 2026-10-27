@@ -3,7 +3,9 @@
   "suite": "interpreter-attribute-hooks/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O6"
+  ],
   "cases": [
     {
       "id": "read-intercept",
@@ -474,6 +476,19 @@
       "stage": "Future",
       "source": "class A(list): pass\nprint(len(A()))\n",
       "stdout": "0\n"
+    },
+    {
+      "id": "read-fallback-snapshot",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name):\n  A.__getattr__=lambda self,name: 9\n  raise AttributeError(\"missing\")\n def __getattr__(self,name): return 7\nprint(A().x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "read-fallback-not-added-midlookup",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name):\n  A.__getattr__=lambda self,name: 9\n  raise AttributeError(\"missing\")\nA().x\n",
+      "stdout": "",
+      "error_type": "AttributeError"
     }
   ]
 }

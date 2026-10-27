@@ -1,6 +1,6 @@
-import {ARITHMETIC_SLOTS} from "./class-policy.mjs";
+import {ARITHMETIC_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
 import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -288,6 +288,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "attribute-fallback" && value.name === "AttributeError")
+        return attributeTask(current.receiver, current.name, site, current.after, current.depth, "fallback", current.key, current.hook);
       if (current.kind === "attribute-result" && value.name === "AttributeError") return valueTask(current.mode === "hasattr" ? false : current.default, site, current.after);
       if (current.kind === "delegate-bind" && value.name === "AttributeError") return unaryTask("delegate-raise", current.receiver, site);
       if (current.kind.startsWith("call-map-") && (value.name === "AttributeError" || value.name === "KeyError" && current.mode !== "display"))
@@ -311,7 +313,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return null;
   };
   const deliver = (value, completion, site) => {
-    while (["init", "relay", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
+    while (["init", "relay", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
@@ -693,6 +695,35 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "attribute") {
+          state.temporaries = operationRoots(task);
+          const {receiver, name, operation} = task;
+          if (name === "__class__" && operation === "get")
+            hard("UNSUPPORTED", "UnsupportedOperationError", "Advertised class lookup requires its separate reflection stage.");
+          if (!allowsClassSpecial(name, "attribute") && name !== "__class__")
+            hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
+          const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
+          state.temporaries.push(key);
+          if (operation === "get" && classes.hasSlot(receiver.type, "__getattr__")) {
+            const hook = classes.lookup(receiver.type, "__getattr__").value;
+            completion = continuation("attribute-fallback", {receiver, name, key, hook, depth, after: completion});
+          }
+          state.temporaries.push(...completionRoots(completion));
+          let plan;
+          if (operation === "fallback") plan = classes.bindAttribute(task.hook, receiver, receiver.type);
+          else if (operation === "get" && classes.hasSlot(receiver.type, "__getattribute__"))
+            plan = classes.special(receiver, "__getattribute__");
+          else {
+            plan = classes.read(receiver, name);
+            task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth);
+            continue;
+          }
+          if (++depth > maxDepth) python("RecursionError", "maximum attribute dispatch depth exceeded");
+          const target = continuation("relay", {receiver, after: completion});
+          task = plan.kind === "value" ? callTask(plan.value, [key], [], [], site, target, depth) :
+            callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [key], keywords: [], keywordValues: [], after: target, depth}), depth);
+          continue;
+        }
         if (task.kind === "unary" && task.operation === "delegate-raise") { injectGenerator(task.value); return; }
         if (task.kind === "unary" && task.operation === "unpack-short") {
           state.temporaries = operationRoots(task); python("ValueError", "Not enough values to unpack");
@@ -1226,6 +1257,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
           }
+          if (callable.name === "object.__getattribute__") {
+            if (keywords.length || args.length !== 2) python("TypeError", "object.__getattribute__ requires an instance and name");
+            const name = values.text(args[1]);
+            if (name === null) python("TypeError", "attribute name must be string");
+            if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
+            if (!(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            task = attributeTask(args[0], name, site, completion, depth, "native-get", args[1]); continue;
+          }
           if (["getattr", "setattr", "delattr", "hasattr"].includes(callable.name)) {
             const name = callable.name, writing = name === "setattr" || name === "delattr";
             if (keywords.length || args.length < 2 || args.length > (name === "getattr" || name === "setattr" ? 3 : 2) || name === "setattr" && args.length !== 3)
@@ -1236,6 +1275,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = args[0], optional = name === "hasattr" || name === "getattr" && args.length === 3;
             const target = writing ? continuation("attribute-write", {receiver, after: completion}) : optional ?
               continuation("attribute-result", {receiver, default: args[2] ?? null, mode: name, after: completion}) : completion;
+            if (!writing && receiver instanceof InstanceValue &&
+                (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__"))) {
+              task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue;
+            }
             let plan;
             try { plan = writing ? classes.write(receiver, attribute, args[2] ?? null, name === "delattr") : classes.read(receiver, attribute); }
             catch (error) {
