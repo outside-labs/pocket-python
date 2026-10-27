@@ -55,23 +55,24 @@ control-block traversal when recording local operand order.
 
 ## Accepted evidence
 
-O15–O17 are implemented. The current matrix contains 89 cases: 74 adopted
-comparisons and fifteen explicit refusals. Node and Chromium each pass draining
-and instruction-boundary execution, totaling 356 observations and 356 measured
-zero logical teardown records. Retained reports verify all 58 source/driver
-hashes and the corpus hash. The earlier attribute corpus also adopts its custom
-directory case.
+O15–O17 are implemented within the finite boundaries above. The current matrix
+contains 98 cases: 82 adopted comparisons and sixteen explicit refusals. Node and
+Chromium each pass draining and instruction-boundary execution, totaling 392
+observations and 392 measured zero logical teardown records. Retained reports
+verify all 58 source/driver hashes and the corpus hash. The earlier attribute
+corpus also adopts its custom directory case.
 
-All 868 Node tests pass, including the eight unchanged composed resource
+All 876 Node tests pass, including the eight unchanged composed resource
 observations. Dedicated tests cover persistent callback identity, generator
-snapshots, Unicode closure-name order, partial iterable copies, descriptor and
-method source frames, every-instruction collection, cancellation/close and real
-recursion/work/instruction/allocation failures. The 60-test Python suite passes
-with one optional runtime skip; wheel/source allowlists and four isolated
-default/compiled installations pass. The compatibility inventory has 125 finite
-probes and retains explicit live-namespace refusals.
+snapshots, Unicode and operand/control-flow namespace order, partial iterable
+copies, descriptor and method source frames, every-instruction collection,
+cancellation/close and real recursion/work/instruction/allocation failures.
+The 60-test Python suite passes with one optional runtime skip; wheel/source
+allowlists and four isolated default/compiled installations pass. The
+compatibility inventory has 125 finite probes and retains explicit live and
+comprehension namespace refusals.
 
-Installed-wheel offline console acceptance passes 787 program comparisons and
+Installed-wheel offline console acceptance passes 795 program comparisons and
 57 groups, including all current reflection cases after reload. Its 122
 Stop/Restart cycles cover snapshot growth, custom dictionary/directory bodies,
 directory descriptor binding and suspended directory generators. A waiting
@@ -80,5 +81,5 @@ class-to-core update removes the reflection builtin names.
 The [reflection console](../examples/interpreter_reflection.py) combines mutable
 records, IDs, snapshots and custom dictionary/directory hooks. Its
 [payload and evidence record](measurements/2026-10-27-reflection.json) verifies
-all 38 files and receipt members at 637,513 bytes; a fresh assembly is identical.
+all 38 files and receipt members at 638,936 bytes; a fresh assembly is identical.
 This is a finite payload observation, without a performance or package claim.

@@ -1128,7 +1128,7 @@
       "id": "dir",
       "status": "partial",
       "scope": "Zero-argument optimized function names; custom actual-type/metaclass __dir__, owned iterable copying and bounded Unicode string sorting with duplicates preserved.",
-      "gaps": "Default directories, module/class namespaces, non-string custom entries and custom iterable length hints remain separate.",
+      "gaps": "Default directories, namespace reflection around inlined comprehensions, module/class namespaces, non-string custom entries and custom iterable length hints remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1576,8 +1576,8 @@
     {
       "id": "locals",
       "status": "partial",
-      "scope": "Fresh shallow snapshots of bound parameters, locals and free cells in optimized functions, lambdas and generators; classes-source/1.",
-      "gaps": "Module/class live mappings, comprehension reflection and frame objects remain separate.",
+      "scope": "Fresh shallow snapshots of bound parameters, locals and free cells in optimized functions, lambdas and generators containing no list/dict/set comprehensions; classes-source/1.",
+      "gaps": "Live mappings, namespace reflection around inlined comprehensions and frame objects remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2095,7 +2095,7 @@
       "id": "vars",
       "status": "partial",
       "scope": "Zero-argument optimized function snapshots; one positional user instance reads custom __dict__ through owned descriptors and read hooks, returning its result unchanged.",
-      "gaps": "Ordinary instance storage and function/module/class dictionaries or mapping proxies remain separate.",
+      "gaps": "Ordinary instance storage, namespace reflection around inlined comprehensions and function/module/class dictionaries or mapping proxies remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
