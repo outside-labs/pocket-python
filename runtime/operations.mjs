@@ -43,7 +43,9 @@ export function completion(kind, fields = {}) {
         keywordValues: operands(fields.keywordValues), depth: fields.depth, after};
       depthCheck(record.depth); break;
     case "relay": case "vars-result": case "dir-sort": record = {kind, receiver: fields.receiver, after}; break;
-    case "dir-result": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; depthCheck(record.depth); break;
+    case "dir-result": case "dir-iter": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; depthCheck(record.depth); break;
+    case "dir-length": case "dir-hint-bound": case "dir-hint-call": case "dir-hint-value":
+      record = {kind, receiver: fields.receiver, iterator: fields.iterator, depth: fields.depth, after}; depthCheck(record.depth); break;
     case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
     case "hash-result": record = {kind, receiver: fields.receiver, after}; break;
@@ -177,7 +179,9 @@ function visit(record) {
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
-    case "hash-result": case "vars-result": case "dir-result": case "dir-sort": return [record.receiver, ...completionRoots(record.after)];
+    case "hash-result": case "vars-result": case "dir-result": case "dir-iter": case "dir-sort": return [record.receiver, ...completionRoots(record.after)];
+    case "dir-length": case "dir-hint-bound": case "dir-hint-call": case "dir-hint-value":
+      return [record.receiver, record.iterator, ...completionRoots(record.after)];
     case "sequence-hash": return [record.receiver, record.hash, ...completionRoots(record.after)];
     case "numeric-result": case "numeric-index": return [...record.args, ...completionRoots(record.after)];
     case "dict-hash": case "dict-key": case "dict-truth": return [record.receiver, record.key, record.hash, record.candidate,

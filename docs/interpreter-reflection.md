@@ -22,9 +22,10 @@ Module and class `locals()` have a live mapping contract; an optimized snapshot
 must not stand in for them. Inlined comprehensions retain a separate namespace
 contract and refuse at invocation. O18 adopts generator-expression snapshots,
 including the implicit iterator under `.0`. `globals()` remains an explicit refusal. Custom
-directory iterables without length hooks use the adopted owned iteration
-protocol; a custom iterable with `__len__` refuses before iteration. Builtin
-iterables and ordinary generators retain their existing finite behavior.
+directory iterables use the adopted owned iteration protocol. O19 adds length
+and length-hint callbacks after acquiring the iterator; other consumers retain
+their own hint boundaries. Builtin iterables and ordinary generators retain
+their existing finite behavior.
 
 Ordinary instance `__dict__` storage/replacement and class mapping proxies remain
 unimplemented. Defining a custom instance `__dict__` descriptor is distinct from

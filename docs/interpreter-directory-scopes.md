@@ -5,8 +5,8 @@ the executable oracle for `tests/fixtures/interpreter/reflection.json`.
 Reference-only cases specify behavior before independent implementation.
 The APIs retain classes-source/1 and bytecode 5; core-source/1 stays unchanged.
 
-O18 is implemented. O19 and O20 remain reference-only stages until their
-separate implementation changes are accepted.
+O18 and O19 are implemented. O20 remains a reference-only stage until its
+separate implementation change is accepted.
 
 | Stage | Contract |
 | --- | --- |
