@@ -11,11 +11,12 @@ export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
   ...["__call__", "__len__", "__bool__", "__repr__", "__str__", "__index__", "__bytes__", "__getitem__", "__setitem__", "__delitem__", "__iter__", "__next__", "__contains__", "__eq__", "__ne__", "__hash__", "__int__", "__float__", "__complex__", "__abs__", "__round__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ...Object.values(ARITHMETIC_SLOTS).flatMap(stem => ["", "r", ...(stem === "divmod" ? [] : ["i"])].map(prefix =>
     ["__" + prefix + stem + "__", Object.freeze({...ordinarySlot, implicit: true})])),
-  ...["__lt__", "__le__", "__gt__", "__ge__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
+  ...["__lt__", "__le__", "__gt__", "__ge__", "__dir__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ...["__neg__", "__pos__", "__invert__", "__getattribute__", "__getattr__", "__setattr__", "__delattr__", "__instancecheck__", "__subclasscheck__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ["__init__", ordinarySlot], ["__new__", ordinarySlot], ...DESCRIPTOR_HOOKS.map(name => [name, ordinarySlot]),
   ["__module__", Object.freeze({define: true})], ["__qualname__", Object.freeze({define: true})],
-  ["__class__", Object.freeze({define: true})]
+  ["__class__", Object.freeze({define: true})],
+  ["__dict__", Object.freeze({define: true, attribute: true})]
 ]));
 export const isSpecialName = name => typeof name === "string" && name.startsWith("__") && name.endsWith("__");
 export function allowsClassSpecial(name, context) {
