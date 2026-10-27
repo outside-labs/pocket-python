@@ -446,6 +446,9 @@ def smoke(channel=None):
                     checks.append('reflection-source-errors-and-live-namespace-refusals-remain-explicit-offline')
                     checks.append('generator-expression-iterator-snapshots-and-owned-directory-hints-and-ordering-compose-offline')
                     checks.append('optimized-and-isolated-comprehension-snapshots-compose-after-offline-reload')
+                    refused('print("must not execute")\ny=9\nr=[lambda a=(y:=7):a for x in [1]]\n', 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    checks.append('comprehension-lambda-default-bindings-refuse-before-offline-effects')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',

@@ -140,7 +140,13 @@ class Compiler {
       if (node.kind !== "Comprehension") return node;
       const forbidden = child => {
         if (!child || typeof child !== "object") return;
-        if (child.kind === "Lambda") return;
+        if (child.kind === "Lambda") {
+          // Defaults run in the containing comprehension; only the body has
+          // the lambda's independent binding scope.
+          for (const group of Object.values(child.params)) for (const param of group)
+            if (param.value) forbidden(param.value);
+          return;
+        }
         if (["NamedExpression", "Yield"].includes(child.kind)) this.fail("Yield and assignment expressions in comprehensions require a separate scope stage.", child);
         Object.values(child).forEach(forbidden);
       };
