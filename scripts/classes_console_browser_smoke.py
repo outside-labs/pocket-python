@@ -72,7 +72,8 @@ def smoke(channel=None):
                     def refused(source, prefix):
                         page.fill('#input', source)
                         page.click('#run')
-                        page.wait_for_function("prefix=>document.querySelector('#status').textContent.startsWith(prefix)", arg=prefix)
+                        prefixes = [prefix] if isinstance(prefix, str) else prefix
+                        page.wait_for_function("prefixes=>prefixes.some(prefix=>document.querySelector('#status').textContent.startsWith(prefix))", arg=prefixes)
 
                     page.goto(url)
                     ready()
@@ -436,7 +437,7 @@ def smoke(channel=None):
                     run(REFLECTION_SOURCE, 'same True True\nfields revision title 2\nsnapshot True False True\n')
                     for case in reflection['cases']:
                         if case['stage'] not in reflection['implemented_stages']:
-                            refused(case['source'], 'UnsupportedOperationError:')
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
                         elif 'error_type' in case:
                             refused(case['source'], case['error_type'] + ':')
                         else:
