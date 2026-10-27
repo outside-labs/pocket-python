@@ -19,9 +19,9 @@ implementation until their stages are explicitly adopted.
 | Future | Live globals/module/class namespaces, ordinary instance dictionaries, class mapping proxies, function/module dictionaries, default object/type/builtin directories, comprehension namespace reflection, integer identity, custom directory entries other than strings, and custom directory iterables with length hints require separate contracts. Dynamic exec/eval/compile/import, builtin instance layouts and additional metaclass protocols remain open. |
 
 Module and class `locals()` have a live mapping contract; an optimized snapshot
-must not stand in for them. Inlined comprehensions and generator-expression
-implicit parameters also need their own namespace rules. These forms refuse
-explicitly at invocation. `globals()` remains an explicit refusal. Custom
+must not stand in for them. Inlined comprehensions retain a separate namespace
+contract and refuse at invocation. O18 adopts generator-expression snapshots,
+including the implicit iterator under `.0`. `globals()` remains an explicit refusal. Custom
 directory iterables without length hooks use the adopted owned iteration
 protocol; a custom iterable with `__len__` refuses before iteration. Builtin
 iterables and ordinary generators retain their existing finite behavior.
