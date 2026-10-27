@@ -906,16 +906,16 @@
     },
     {
       "id": "builtin-dir",
-      "source": "print(callable(dir))\n",
+      "source": "dir()\n",
       "classification": "deferred",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED",
         "phase": "execute"
       }
     },
@@ -1048,16 +1048,16 @@
     },
     {
       "id": "builtin-globals",
-      "source": "print(callable(globals))\n",
+      "source": "globals()\n",
       "classification": "deferred",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED",
         "phase": "execute"
       }
     },
@@ -1117,17 +1117,15 @@
     },
     {
       "id": "builtin-id",
-      "source": "print(callable(id))\n",
-      "classification": "deferred",
+      "source": "a=[]\nprint(id(a)==id(a))\n",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -1224,16 +1222,16 @@
     },
     {
       "id": "builtin-locals",
-      "source": "print(callable(locals))\n",
+      "source": "locals()\n",
       "classification": "deferred",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED",
         "phase": "execute"
       }
     },
@@ -1589,16 +1587,16 @@
     },
     {
       "id": "builtin-vars",
-      "source": "print(callable(vars))\n",
+      "source": "vars()\n",
       "classification": "deferred",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED",
         "phase": "execute"
       }
     },
