@@ -6,6 +6,7 @@ import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
 import {completion, completionRoots} from './operations.mjs';
+import {execute as executeValues} from './vm.mjs';
 
 const profile = {languageProfile: 'classes-source/1'};
 const unit = source => ({name: 'app', package: false, imports: [], source, notice: 'Synthetic repetition fixture'});
@@ -15,6 +16,18 @@ const closed = stats => {
   for (const key of ['bytes', 'objects', 'roots', 'frames', 'external']) assert.equal(stats[key], 0, key);
 };
 const corpus = JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/repetition.json', import.meta.url)));
+
+test('legacy bytecode-2 sequence multiplication retains its explicit refusal', () => {
+  const factor = {type: 'int', value: '2'};
+  for (const [create, constants] of [
+    [['build-list', 0], [factor]], [['build-tuple', 0], [factor]],
+    [['const', 1], [factor, {type: 'str', codepoints: [120]}]],
+  ]) {
+    const program = {format: 'pocket-python-bytecode', version: 2,
+      constants, instructions: [create, ['const', 0], ['multiply'], ['return']]};
+    assert.throws(() => executeValues(program), {code: 'UNSUPPORTED'});
+  }
+});
 
 for (const item of corpus.cases.filter(item => corpus.implemented_stages.includes(item.stage))) {
   for (const languageProfile of item.profiles ?? [corpus.profile]) {
