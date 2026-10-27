@@ -418,13 +418,16 @@ export class ValueRuntime {
     this.resize(left.storage, valueLayout(result.storage).bytes, valueLayout(result.storage).children);
     left.storage.entries = result.storage.entries; left.storage.version++; left.storage.ownedKeys = true; return left;
   }
-  comparisonSequence(value) { return value instanceof ListValue || value instanceof TupleValue ? value.items : null; }
+  comparisonSequence(value) {
+    if (value instanceof SliceValue) return [value.start, value.stop, value.step];
+    return value instanceof ListValue || value instanceof TupleValue ? value.items : null;
+  }
   sameSequenceKind(left, right) { return this.comparisonSequence(left) !== null && left.constructor === right?.constructor; }
   hasUserEquality(value) {
     const pending = [value], seen = new Set();
     while (pending.length) {
       const item = pending.pop();
-      if (item instanceof InstanceValue) return true;
+      if (item instanceof InstanceValue || item instanceof SliceValue) return true;
       if (item instanceof SetValue) { pending.push(...item.storage.entries.map(entry => entry.key)); continue; }
       if (item instanceof DictValue && item.ownedKeys) return true;
       if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;

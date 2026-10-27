@@ -6,7 +6,8 @@
   "implemented_stages": [
     "Base",
     "O12",
-    "O13"
+    "O13",
+    "O14"
   ],
   "cases": [
     {
@@ -763,6 +764,42 @@
       "stage": "Future",
       "source": "class A: pass\na=A()\nprint({a}<={a})\n",
       "stdout": "True\n"
+    },
+    {
+      "id": "slice-reflected-native-peer",
+      "stage": "O14",
+      "source": "class A:\n def __gt__(self,other): return 7\nprint(slice(1)<A())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "slice-reflected-peer-equality",
+      "stage": "O14",
+      "source": "class A:\n def __eq__(self,other): return 7\nprint(slice(1)==A())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "slice-field-index-not-consulted",
+      "stage": "O14",
+      "source": "class A:\n def __index__(self): raise ValueError(\"never\")\n def __eq__(self,other): return True\nprint(slice(A())==slice(A()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-field-equality-truth",
+      "stage": "O14",
+      "source": "class A:\n def __eq__(self,other): return [7]\nprint(slice(A())==slice(A()),slice(A())!=slice(A()))\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "slice-dictionary-value-equality",
+      "stage": "O14",
+      "source": "print({\"x\":slice(1,3)}=={\"x\":slice(1,3)})\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-callable-sentinel",
+      "stage": "O14",
+      "source": "i=0\ndef supply():\n global i\n i+=1\n return slice(i)\nit=iter(supply,slice(2))\nprint(next(it)==slice(1),next(it,7))\n",
+      "stdout": "True 7\n"
     }
   ]
 }

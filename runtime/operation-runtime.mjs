@@ -944,6 +944,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = !ordering && a.length !== b.length ? valueTask(operation === "not-equal", site, completion) :
                 sequenceNext({left, right, operation, after: completion, depth}, site); continue;
             }
+            if (values.isSlice(left) || values.isSlice(right)) {
+              if (ordering) python("TypeError", "Ordering is not supported between these values");
+              task = deliver(operation === "not-equal", completion, site); continue;
+            }
             if (!ordering && values.isDict(left) && values.isDict(right)) {
               task = left.entries.length !== right.entries.length ? valueTask(operation === "not-equal", site, completion) :
                 dictionaryNext({left, right, operation, after: completion, depth, version: left.version, otherVersion: right.version}, site); continue;

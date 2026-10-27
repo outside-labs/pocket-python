@@ -101,7 +101,6 @@ same-type fallback, type mutation and original error frames match the oracle.
 Focused lifecycle checks collect during binding, method bodies and consuming
 truth, and verify cancellation, close, recursion and real budget/OOM failures.
 The complete Node suite passes with the existing composed resource baselines.
-O14 remains reference-only until its separate implementation slice.
 
 ## Sequence ordering adoption
 
@@ -111,3 +110,17 @@ may replace, shrink or grow lists before the current unequal pair is selected.
 The selected pair, raw ordering result and outer expression survive collection
 and cancellation, including callbacks that remove both operands from their
 lists. Recursive element equality shares the comparison depth limit.
+
+## Slice comparison adoption
+
+O14 is implemented. The complete 112-case matrix has 109 adopted comparisons
+and three explicit future refusals per Node/Chromium driver combination. It
+covers raw fields, identity prefixes, nested slices, reflected peers, equality
+truth, dictionary values, membership and callable sentinels. The five former
+slice-comparison refusals in the indexing matrix are adopted; slice hashing,
+indices, display and broader iterable slice assignment remain refused.
+
+All 693 Node tests pass, including paused slice equality binding/truth and
+ordering binding, cancellation/close, recursive slice comparison and real
+ordering-budget/OOM failures. The shared primitive cases also pass through the
+core source profile. Existing composed resource observations are unchanged.
