@@ -47,12 +47,26 @@ Semantic anchors: Python's [attribute-access model](https://docs.python.org/3.14
 [super](https://docs.python.org/3.14/library/functions.html#super). The pinned
 executable reference decides these finite cases if later documentation differs.
 
-O6 is implemented through owned read operations. The initial 33 O6 cases pass
-Node drain/step execution; descriptor binding, original fallback snapshots,
-source errors, every-instruction collection, cancellation and real resource
-limits have dedicated tests. O7 now adopts write/delete hooks and native defaults. All 61 O6/O7 cases pass
-Node drain/step comparisons, with collection, cancellation, source-frame and
-real resource-limit tests for read and mutation callbacks. O8 now executes ordinary advertised-class reads, tuple checks and super fallback
-through owned callbacks. All 92 recorded cases pass Node drain/step execution;
-86 are adopted comparisons and six retain explicit future refusals. Native type
-identity, successful actual checks and lexical class cells remain independent.
+## Accepted evidence
+
+O6/O7/O8 are implemented. All 92 recorded cases pass Node and Chromium with
+drain/step drivers: 86 adopted comparisons and six explicit future refusals per
+combination, totaling 368 observations and 352 measured zero logical teardown
+records. Reports verify their source/corpus/driver hashes. Dedicated tests cover
+original fallback snapshots, source frames, every-instruction collection,
+cancellation/close and real recursion/work/allocation failures. The full Node
+suite passes 481 tests, including eight unchanged composed resource observations.
+
+The installed offline console passes 551 program comparisons and 47 acceptance
+groups with 105 Stop/Restart cycles. New source composes hooks, descriptors,
+generators, type relations and super after offline reload. User callback errors
+retain their source diagnostics; deferred reflection and metaclass hooks refuse
+before their callback/body effects. The class-to-core update retains its reduced
+authority. Native type identity, actual checks and lexical class cells remain
+independent of advertised identities.
+
+Build `python -m examples.interpreter_attributes` for the composed console. The
+[payload/source record](measurements/2026-10-27-attribute-hooks.json) verifies all
+38 files and receipt hashes for its 604,860-byte payload, with deterministic
+compression and an identical fresh rebuild. This measures the complete local
+example payload; it makes no timing, device or package claim.

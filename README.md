@@ -176,8 +176,13 @@ generators without classes. The finite [construction profile](docs/interpreter-c
 adds owned __new__/__init__, super and lexical __class__ cells, type relations
 and type-derived metaclasses with ordinary dictionary namespaces. Run
 `python -m examples.interpreter_construction` for a console composing these
-protocols with suspended generators. Builtin instance layouts, custom namespace
-preparation, further reflection and async retain separate contracts.
+protocols with suspended generators. The
+[instance attribute profile](docs/interpreter-attribute-hooks.md) adds owned
+__getattribute__/__getattr__, write/delete hooks, native object defaults and
+advertised class checks. Run `python -m examples.interpreter_attributes` for a
+console composing hooks, reflection and generators. Builtin instance layouts,
+custom namespace preparation, broader reflection and async retain separate
+contracts.
 
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
