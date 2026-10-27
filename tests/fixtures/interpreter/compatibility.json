@@ -1726,6 +1726,45 @@
         "stdout": "a\nz\n",
         "error_type": null
       }
+    },
+    {
+      "id": "builtin-genexpr-snapshot",
+      "source": "g=(locals() for x in (7,8))\na=next(g)\nb=next(g)\nprint(list(a)==[\".0\",\"x\"],list(b)==[\".0\",\"x\"],a[\".0\"] is b[\".0\"],a[\"x\"],b[\"x\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True True 7 8\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True True 7 8\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-dir-length-hint",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self):\n  print(\"len\")\n  raise TypeError(\"ignored\")\n def __length_hint__(self):\n  print(\"hint\")\n  return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "iter\nlen\nhint\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "iter\nlen\nhint\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-dir-rich-ordering",
+      "source": "class Entry:\n def __init__(self,key,label): self.key=key; self.label=label\n def __lt__(self,other): return self.key<other.key\nsaved=[Entry(2,\"z\"),Entry(1,\"a\"),Entry(1,\"b\"),Entry(2,\"y\")]\nclass A:\n def __dir__(self): return saved\nresult=dir(A())\nprint([x.label for x in result]==[\"a\",\"b\",\"z\",\"y\"],[x.label for x in saved]==[\"z\",\"a\",\"b\",\"y\"],result is saved,result[0] is saved[1])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True False True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True False True\n",
+        "error_type": null
+      }
     }
   ]
 }

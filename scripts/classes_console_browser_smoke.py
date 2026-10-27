@@ -434,7 +434,7 @@ def smoke(channel=None):
                         if 'error_type' in case:
                             refused(case['source'], case['error_type'] + ':')
                     checks.append('method-slice-and-tuple-hash-signatures-and-errors-offline')
-                    run(REFLECTION_SOURCE, 'same True True\nfields revision title 2\nsnapshot True False True\n')
+                    run(REFLECTION_SOURCE, 'same True True\nfields revision title 2\nsnapshot True False True\nordered revision title\nscope True True True\n')
                     for case in reflection['cases']:
                         if case['stage'] not in reflection['implemented_stages']:
                             refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
@@ -444,6 +444,7 @@ def smoke(channel=None):
                             run(case['source'], case['stdout'])
                     checks.append('identity-snapshots-and-custom-reflection-execute-after-offline-reload')
                     checks.append('reflection-source-errors-and-live-namespace-refusals-remain-explicit-offline')
+                    checks.append('generator-expression-iterator-snapshots-and-owned-directory-hints-and-ordering-compose-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -576,10 +577,22 @@ def smoke(channel=None):
                         'class Spin:\n def __dir__(self):\n  yield "x"\n  while True: pass\ndir(Spin())\n',
                         'def spin():\n saved=[]\n while True: saved.append(locals())\nspin()\n',
                     ])
+                    busy.extend([
+                        'def spin():\n g=(locals() for x in range(1000000000))\n while True: next(g)\nspin()\n',
+                        'class Items:\n def __iter__(self): return iter(())\n def __len__(self):\n  print("entered")\n  while True: pass\nclass A:\n def __dir__(self): return Items()\ndir(A())\n',
+                        'class Items:\n def __iter__(self): return iter(())\n def __length_hint__(self):\n  print("entered")\n  while True: pass\nclass A:\n def __dir__(self): return Items()\ndir(A())\n',
+                        'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass Items:\n def __iter__(self): return iter(())\n __length_hint__=D()\nclass A:\n def __dir__(self): return Items()\ndir(A())\n',
+                        'class Index:\n def __index__(self):\n  print("entered")\n  while True: pass\nclass Items:\n def __iter__(self): return iter(())\n def __len__(self): return Index()\nclass A:\n def __dir__(self): return Items()\ndir(A())\n',
+                        'class Entry:\n def __lt__(self,other):\n  print("entered")\n  while True: pass\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n',
+                        'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass Entry: __lt__=D()\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n',
+                        'class Truth:\n def __bool__(self):\n  print("entered")\n  while True: pass\nclass Entry:\n def __lt__(self,other): return Truth()\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n',
+                    ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
                         page.wait_for_function("()=>document.querySelector('#status').textContent==='Running…'")
+                        if 'print("entered")' in busy[cycle]:
+                            page.wait_for_function("()=>document.querySelector('#result').textContent.includes('entered\\n')")
                         page.wait_for_timeout(25)
                         before = time.perf_counter()
                         page.click('#stop')

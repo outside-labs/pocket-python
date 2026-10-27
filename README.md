@@ -195,6 +195,14 @@ raw results and callback-visible mutation. Run
 `python -m examples.interpreter_ordering` for an ordered-note console composing
 comparison, slice insertion and suspended iteration.
 
+The [reflection profile](docs/interpreter-reflection.md) adds stable object
+identities, shallow function and generator-expression namespace snapshots,
+and custom dictionary/directory hooks. [Directory copying](docs/interpreter-directory-scopes.md)
+adopts length hints and stable ordering through Python comparison callbacks.
+Run `python -m examples.interpreter_reflection` for a console combining those
+protocols. Live namespace mappings and default directories retain their own
+contracts.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)
