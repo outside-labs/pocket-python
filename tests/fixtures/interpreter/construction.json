@@ -7,7 +7,8 @@
     "O3",
     "O4",
     "O5",
-    "O8"
+    "O8",
+    "O9"
   ],
   "cases": [
     {
@@ -582,7 +583,7 @@
     },
     {
       "id": "future-instancecheck",
-      "stage": "Future",
+      "stage": "O9",
       "source": "class M(type):\n def __instancecheck__(cls,value): return True\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
       "stdout": "True\n"
     },

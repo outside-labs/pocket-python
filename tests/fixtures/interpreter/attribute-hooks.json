@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O6",
     "O7",
-    "O8"
+    "O8",
+    "O9"
   ],
   "cases": [
     {
@@ -162,8 +163,8 @@
     {
       "id": "read-arbitrary-names",
       "stage": "O6",
-      "source": "class A:\n def __getattribute__(self,name): return name\na=A()\nprint(getattr(a,\"\"),getattr(a,\"two words\"),getattr(a,\"K\"),getattr(a,\"K\"))\n",
-      "stdout": " two words K K\n"
+      "source": "class A:\n def __getattribute__(self,name): return name\na=A()\nprint(getattr(a,\"\"),getattr(a,\"two words\"),getattr(a,\"\u212a\"),getattr(a,\"K\"))\n",
+      "stdout": " two words \u212a K\n"
     },
     {
       "id": "read-signature-25",
@@ -457,7 +458,7 @@
     },
     {
       "id": "future-instance-check",
-      "stage": "Future",
+      "stage": "O9",
       "source": "class M(type):\n def __instancecheck__(self,value): return True\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
       "stdout": "True\n"
     },
