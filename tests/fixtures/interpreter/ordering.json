@@ -1,0 +1,766 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-ordering/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "Base"
+  ],
+  "cases": [
+    {
+      "id": "primitive-nan-sequences",
+      "stage": "Base",
+      "source": "a=float(\"nan\")\nb=float(\"nan\")\nfor x,y in [([a],[b]),([a],[a]),([a],[a,1]),([1j],[1j]),([set([1])],[set([2])])]:\n print(x<y,x<=y,x>y,x>=y)\n",
+      "stdout": "False False False False\nFalse True False True\nTrue True False False\nFalse True False True\nFalse False False False\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "primitive-prefixes-and-widths",
+      "stage": "Base",
+      "source": "for x,y in [((),()),((1,),(1,2)),([1,3],[1,2]),(\"a\",\"b\"),(b\"a\",bytearray(b\"b\")),(9007199254740993,9007199254740992.0)]:\n print(x<y,x<=y,x>y,x>=y)\n",
+      "stdout": "False True False True\nTrue True False False\nFalse False True True\nTrue True False False\nTrue True False False\nFalse False True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "lt-raw-result",
+      "stage": "O12",
+      "source": "class A:\n def __lt__(self,other): return result\nresult=[7]\nx=A()<8\nprint(x is result,x[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "lt-reflected-native",
+      "stage": "O12",
+      "source": "class A:\n def __gt__(self,other):\n  print(\"reflected\",other)\n  return 7\nprint(3<A())\n",
+      "stdout": "reflected 3\n7\n"
+    },
+    {
+      "id": "lt-same-type-fallback",
+      "stage": "O12",
+      "source": "class A:\n def __lt__(self,other):\n  print(\"left\")\n  return NotImplemented\n def __gt__(self,other):\n  print(\"right\")\n  return 7\nprint(A()<A())\n",
+      "stdout": "left\nright\n7\n"
+    },
+    {
+      "id": "lt-strict-subclass-priority",
+      "stage": "O12",
+      "source": "class A:\n def __lt__(self,other):\n  print(\"base\")\n  return 3\n def __gt__(self,other):\n  print(\"reflected\")\n  return 7\nclass B(A): pass\nprint(A()<B())\n",
+      "stdout": "reflected\n7\n"
+    },
+    {
+      "id": "lt-subclass-notimplemented",
+      "stage": "O12",
+      "source": "class A:\n def __lt__(self,other):\n  print(\"base\")\n  return 7\n def __gt__(self,other):\n  print(\"reflected\")\n  return NotImplemented\nclass B(A): pass\nprint(A()<B())\n",
+      "stdout": "reflected\nbase\n7\n"
+    },
+    {
+      "id": "lt-no-equality-derivation",
+      "stage": "O12",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"never\")\n  return True\na=A()\nprint(a<a)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "lt-present-noncallable",
+      "stage": "O12",
+      "source": "class A: __lt__=None\nprint(A()<7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "lt-property-binding",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __lt__(self):\n  print(\"bind\")\n  return lambda other: other+4\nprint(A()<3)\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "lt-binding-attributeerror",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __lt__(self):\n  print(\"bind\")\n  raise AttributeError(\"missing\")\nclass B:\n def __gt__(self,other): return 7\nprint(A()<B())\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "lt-body-attributeerror",
+      "stage": "O12",
+      "source": "class A:\n def __lt__(self,other): raise AttributeError(\"original\")\nprint(A()<7)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        },
+        {
+          "function": "__lt__",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "lt-static-binding",
+      "stage": "O12",
+      "source": "class A:\n @staticmethod\n def __lt__(other): return other+4\nprint(A()<3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "lt-class-binding",
+      "stage": "O12",
+      "source": "class A:\n @classmethod\n def __lt__(cls,other): return cls.__name__==\"A\"\nprint(A()<3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "le-raw-result",
+      "stage": "O12",
+      "source": "class A:\n def __le__(self,other): return result\nresult=[7]\nx=A()<=8\nprint(x is result,x[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "le-reflected-native",
+      "stage": "O12",
+      "source": "class A:\n def __ge__(self,other):\n  print(\"reflected\",other)\n  return 7\nprint(3<=A())\n",
+      "stdout": "reflected 3\n7\n"
+    },
+    {
+      "id": "le-same-type-fallback",
+      "stage": "O12",
+      "source": "class A:\n def __le__(self,other):\n  print(\"left\")\n  return NotImplemented\n def __ge__(self,other):\n  print(\"right\")\n  return 7\nprint(A()<=A())\n",
+      "stdout": "left\nright\n7\n"
+    },
+    {
+      "id": "le-strict-subclass-priority",
+      "stage": "O12",
+      "source": "class A:\n def __le__(self,other):\n  print(\"base\")\n  return 3\n def __ge__(self,other):\n  print(\"reflected\")\n  return 7\nclass B(A): pass\nprint(A()<=B())\n",
+      "stdout": "reflected\n7\n"
+    },
+    {
+      "id": "le-subclass-notimplemented",
+      "stage": "O12",
+      "source": "class A:\n def __le__(self,other):\n  print(\"base\")\n  return 7\n def __ge__(self,other):\n  print(\"reflected\")\n  return NotImplemented\nclass B(A): pass\nprint(A()<=B())\n",
+      "stdout": "reflected\nbase\n7\n"
+    },
+    {
+      "id": "le-no-equality-derivation",
+      "stage": "O12",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"never\")\n  return True\na=A()\nprint(a<=a)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "le-present-noncallable",
+      "stage": "O12",
+      "source": "class A: __le__=None\nprint(A()<=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "le-property-binding",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __le__(self):\n  print(\"bind\")\n  return lambda other: other+4\nprint(A()<=3)\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "le-binding-attributeerror",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __le__(self):\n  print(\"bind\")\n  raise AttributeError(\"missing\")\nclass B:\n def __ge__(self,other): return 7\nprint(A()<=B())\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "le-body-attributeerror",
+      "stage": "O12",
+      "source": "class A:\n def __le__(self,other): raise AttributeError(\"original\")\nprint(A()<=7)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        },
+        {
+          "function": "__le__",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "le-static-binding",
+      "stage": "O12",
+      "source": "class A:\n @staticmethod\n def __le__(other): return other+4\nprint(A()<=3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "le-class-binding",
+      "stage": "O12",
+      "source": "class A:\n @classmethod\n def __le__(cls,other): return cls.__name__==\"A\"\nprint(A()<=3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "gt-raw-result",
+      "stage": "O12",
+      "source": "class A:\n def __gt__(self,other): return result\nresult=[7]\nx=A()>8\nprint(x is result,x[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "gt-reflected-native",
+      "stage": "O12",
+      "source": "class A:\n def __lt__(self,other):\n  print(\"reflected\",other)\n  return 7\nprint(3>A())\n",
+      "stdout": "reflected 3\n7\n"
+    },
+    {
+      "id": "gt-same-type-fallback",
+      "stage": "O12",
+      "source": "class A:\n def __gt__(self,other):\n  print(\"left\")\n  return NotImplemented\n def __lt__(self,other):\n  print(\"right\")\n  return 7\nprint(A()>A())\n",
+      "stdout": "left\nright\n7\n"
+    },
+    {
+      "id": "gt-strict-subclass-priority",
+      "stage": "O12",
+      "source": "class A:\n def __gt__(self,other):\n  print(\"base\")\n  return 3\n def __lt__(self,other):\n  print(\"reflected\")\n  return 7\nclass B(A): pass\nprint(A()>B())\n",
+      "stdout": "reflected\n7\n"
+    },
+    {
+      "id": "gt-subclass-notimplemented",
+      "stage": "O12",
+      "source": "class A:\n def __gt__(self,other):\n  print(\"base\")\n  return 7\n def __lt__(self,other):\n  print(\"reflected\")\n  return NotImplemented\nclass B(A): pass\nprint(A()>B())\n",
+      "stdout": "reflected\nbase\n7\n"
+    },
+    {
+      "id": "gt-no-equality-derivation",
+      "stage": "O12",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"never\")\n  return True\na=A()\nprint(a>a)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "gt-present-noncallable",
+      "stage": "O12",
+      "source": "class A: __gt__=None\nprint(A()>7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "gt-property-binding",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __gt__(self):\n  print(\"bind\")\n  return lambda other: other+4\nprint(A()>3)\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "gt-binding-attributeerror",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __gt__(self):\n  print(\"bind\")\n  raise AttributeError(\"missing\")\nclass B:\n def __lt__(self,other): return 7\nprint(A()>B())\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "gt-body-attributeerror",
+      "stage": "O12",
+      "source": "class A:\n def __gt__(self,other): raise AttributeError(\"original\")\nprint(A()>7)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        },
+        {
+          "function": "__gt__",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "gt-static-binding",
+      "stage": "O12",
+      "source": "class A:\n @staticmethod\n def __gt__(other): return other+4\nprint(A()>3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "gt-class-binding",
+      "stage": "O12",
+      "source": "class A:\n @classmethod\n def __gt__(cls,other): return cls.__name__==\"A\"\nprint(A()>3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "ge-raw-result",
+      "stage": "O12",
+      "source": "class A:\n def __ge__(self,other): return result\nresult=[7]\nx=A()>=8\nprint(x is result,x[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "ge-reflected-native",
+      "stage": "O12",
+      "source": "class A:\n def __le__(self,other):\n  print(\"reflected\",other)\n  return 7\nprint(3>=A())\n",
+      "stdout": "reflected 3\n7\n"
+    },
+    {
+      "id": "ge-same-type-fallback",
+      "stage": "O12",
+      "source": "class A:\n def __ge__(self,other):\n  print(\"left\")\n  return NotImplemented\n def __le__(self,other):\n  print(\"right\")\n  return 7\nprint(A()>=A())\n",
+      "stdout": "left\nright\n7\n"
+    },
+    {
+      "id": "ge-strict-subclass-priority",
+      "stage": "O12",
+      "source": "class A:\n def __ge__(self,other):\n  print(\"base\")\n  return 3\n def __le__(self,other):\n  print(\"reflected\")\n  return 7\nclass B(A): pass\nprint(A()>=B())\n",
+      "stdout": "reflected\n7\n"
+    },
+    {
+      "id": "ge-subclass-notimplemented",
+      "stage": "O12",
+      "source": "class A:\n def __ge__(self,other):\n  print(\"base\")\n  return 7\n def __le__(self,other):\n  print(\"reflected\")\n  return NotImplemented\nclass B(A): pass\nprint(A()>=B())\n",
+      "stdout": "reflected\nbase\n7\n"
+    },
+    {
+      "id": "ge-no-equality-derivation",
+      "stage": "O12",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"never\")\n  return True\na=A()\nprint(a>=a)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "ge-present-noncallable",
+      "stage": "O12",
+      "source": "class A: __ge__=None\nprint(A()>=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "ge-property-binding",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __ge__(self):\n  print(\"bind\")\n  return lambda other: other+4\nprint(A()>=3)\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "ge-binding-attributeerror",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __ge__(self):\n  print(\"bind\")\n  raise AttributeError(\"missing\")\nclass B:\n def __le__(self,other): return 7\nprint(A()>=B())\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "ge-body-attributeerror",
+      "stage": "O12",
+      "source": "class A:\n def __ge__(self,other): raise AttributeError(\"original\")\nprint(A()>=7)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        },
+        {
+          "function": "__ge__",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "ge-static-binding",
+      "stage": "O12",
+      "source": "class A:\n @staticmethod\n def __ge__(other): return other+4\nprint(A()>=3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "ge-class-binding",
+      "stage": "O12",
+      "source": "class A:\n @classmethod\n def __ge__(cls,other): return cls.__name__==\"A\"\nprint(A()>=3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "ordering-special-lookup",
+      "stage": "O12",
+      "source": "class A:\n def __getattribute__(self,name): raise ValueError(\"never\")\n def __lt__(self,other): return 7\na=A()\nobject.__setattr__(a,\"__lt__\",None)\nprint(a<3)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "ordering-descriptor-owner",
+      "stage": "O12",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(obj.__class__.__name__,owner.__name__)\n  return lambda other: 7\nclass A: __lt__=D()\nclass B(A): pass\nprint(B()<3)\n",
+      "stdout": "B B\n7\n"
+    },
+    {
+      "id": "ordering-notimplemented-exhausted",
+      "stage": "O12",
+      "source": "class A:\n def __lt__(self,other): return NotImplemented\n def __gt__(self,other): return NotImplemented\nprint(A()<A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "ordering-type-mutation",
+      "stage": "O12",
+      "source": "class A:\n def __lt__(self,other): return 3\na=A()\nprint(a<7)\nA.__lt__=lambda self,other: 7\nprint(a<3)\ndel A.__lt__\ntry: a<3\nexcept TypeError: print(\"removed\")\n",
+      "stdout": "3\n7\nremoved\n"
+    },
+    {
+      "id": "ordering-chain-truth-and-middle-once",
+      "stage": "O12",
+      "source": "class R:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass A:\n def __lt__(self,other):\n  print(\"compare\")\n  return R()\ndef middle():\n print(\"middle\")\n return A()\nr=A()<middle()<A()\nprint(type(r) is R)\n",
+      "stdout": "middle\ncompare\ntruth\ncompare\nTrue\n"
+    },
+    {
+      "id": "ordering-finally-and-active-exception",
+      "stage": "O12",
+      "source": "class A:\n def __le__(self,other): raise\ntry:\n raise ValueError(\"original\")\nexcept ValueError:\n try: A()<=7\n except ValueError as e: print(str(e))\n finally: print(\"cleanup\")\n",
+      "stdout": "original\ncleanup\n"
+    },
+    {
+      "id": "ordering-binding-valueerror",
+      "stage": "O12",
+      "source": "class A:\n @property\n def __lt__(self): raise ValueError(\"binding\")\nA()<7\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        },
+        {
+          "function": "__lt__",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "list-lt-lexicographic",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint([A(1),A(2)]<[A(1),A(3)])\n",
+      "stdout": "eq 1 1\neq 2 3\nTrue\n"
+    },
+    {
+      "id": "list-le-lexicographic",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint([A(1),A(2)]<=[A(1),A(3)])\n",
+      "stdout": "eq 1 1\neq 2 3\nTrue\n"
+    },
+    {
+      "id": "list-gt-lexicographic",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint([A(1),A(2)]>[A(1),A(3)])\n",
+      "stdout": "eq 1 1\neq 2 3\nFalse\n"
+    },
+    {
+      "id": "list-ge-lexicographic",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint([A(1),A(2)]>=[A(1),A(3)])\n",
+      "stdout": "eq 1 1\neq 2 3\nFalse\n"
+    },
+    {
+      "id": "list-prefix-and-identity",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): raise ValueError(\"never\")\na=A()\nx=[a]\ny=[a,7]\nprint(x<y,x<=x,y>x,y>=y)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "list-lt-raw-result",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __lt__(self,other): return result\nresult=[7]\nr=[A()]<[A()]\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "list-le-raw-result",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __le__(self,other): return result\nresult=[7]\nr=[A()]<=[A()]\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "list-gt-raw-result",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __gt__(self,other): return result\nresult=[7]\nr=[A()]>[A()]\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "list-ge-raw-result",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __ge__(self,other): return result\nresult=[7]\nr=[A()]>=[A()]\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "tuple-lt-lexicographic",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint((A(1),A(2))<(A(1),A(3)))\n",
+      "stdout": "eq 1 1\neq 2 3\nTrue\n"
+    },
+    {
+      "id": "tuple-le-lexicographic",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint((A(1),A(2))<=(A(1),A(3)))\n",
+      "stdout": "eq 1 1\neq 2 3\nTrue\n"
+    },
+    {
+      "id": "tuple-gt-lexicographic",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint((A(1),A(2))>(A(1),A(3)))\n",
+      "stdout": "eq 1 1\neq 2 3\nFalse\n"
+    },
+    {
+      "id": "tuple-ge-lexicographic",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint((A(1),A(2))>=(A(1),A(3)))\n",
+      "stdout": "eq 1 1\neq 2 3\nFalse\n"
+    },
+    {
+      "id": "tuple-prefix-and-identity",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): raise ValueError(\"never\")\na=A()\nx=(a,)\ny=(a,7)\nprint(x<y,x<=x,y>x,y>=y)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "tuple-lt-raw-result",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __lt__(self,other): return result\nresult=[7]\nr=(A(),)<(A(),)\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "tuple-le-raw-result",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __le__(self,other): return result\nresult=[7]\nr=(A(),)<=(A(),)\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "tuple-gt-raw-result",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __gt__(self,other): return result\nresult=[7]\nr=(A(),)>(A(),)\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "tuple-ge-raw-result",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __ge__(self,other): return result\nresult=[7]\nr=(A(),)>=(A(),)\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "sequence-equality-truth",
+      "stage": "O13",
+      "source": "class R:\n def __bool__(self):\n  print(\"truth\")\n  return False\nclass A:\n def __eq__(self,other): return R()\n def __lt__(self,other): return 7\nprint([A()]<[A()])\n",
+      "stdout": "truth\n7\n"
+    },
+    {
+      "id": "sequence-mutation-reloads-unequal-pair",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other):\n  x[0]=3\n  y[0]=7\n  return False\nx=[A()]\ny=[A()]\nprint(x<y)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "sequence-mutation-shortens-prefix",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other):\n  del x[0]\n  return False\nx=[A()]\ny=[A()]\nprint(x<y)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "sequence-mutation-truth-shortens-prefix",
+      "stage": "O13",
+      "source": "class R:\n def __bool__(self):\n  del y[0]\n  return False\nclass A:\n def __eq__(self,other): return R()\nx=[A()]\ny=[A()]\nprint(x>=y)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "sequence-mutation-grows-prefix",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other):\n  x.append(7)\n  return True\nx=[A()]\ny=[A()]\nprint(x>y)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "sequence-nested-ordering",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint([[A(1),A(2)]]<[[A(1),A(3)]])\n",
+      "stdout": "eq 1 1\neq 2 3\neq 1 1\neq 2 3\nTrue\n"
+    },
+    {
+      "id": "sequence-equal-length-only-equality",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint([A(1)]<=[A(1)])\n",
+      "stdout": "eq 1 1\nTrue\n"
+    },
+    {
+      "id": "sequence-mismatched-kinds",
+      "stage": "O13",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint([A(1)]<(A(1),))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "sequence-equality-error-frames",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): raise ValueError(\"equal\")\n[A()]<[A()]\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        },
+        {
+          "function": "__eq__",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "sequence-truth-error-frames",
+      "stage": "O13",
+      "source": "class R:\n def __bool__(self): raise ValueError(\"truth\")\nclass A:\n def __eq__(self,other): return R()\n[A()]<[A()]\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "__bool__",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "sequence-order-error-frames",
+      "stage": "O13",
+      "source": "class A:\n def __eq__(self,other): return False\n def __lt__(self,other): raise ValueError(\"order\")\n[A()]<[A()]\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        },
+        {
+          "function": "__lt__",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "slice-eq-raw-fields",
+      "stage": "O14",
+      "source": "print(slice(1,3)==slice(1,7))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "slice-ne-raw-fields",
+      "stage": "O14",
+      "source": "print(slice(1,3)!=slice(1,7))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-lt-raw-fields",
+      "stage": "O14",
+      "source": "print(slice(1,3)<slice(1,7))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-le-raw-fields",
+      "stage": "O14",
+      "source": "print(slice(1,3)<=slice(1,7))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-gt-raw-fields",
+      "stage": "O14",
+      "source": "print(slice(1,3)>slice(1,7))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "slice-ge-raw-fields",
+      "stage": "O14",
+      "source": "print(slice(1,3)>=slice(1,7))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "slice-identity-skips-none",
+      "stage": "O14",
+      "source": "s=slice(None,None,None)\nprint(s==s,s<=s,s>=s,s<s,s>s)\n",
+      "stdout": "True True True False False\n"
+    },
+    {
+      "id": "slice-none-order-error",
+      "stage": "O14",
+      "source": "print(slice(None,3)<slice(1,3))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-cross-type-equality",
+      "stage": "O14",
+      "source": "print(slice(1)==7,slice(1)!=7)\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "slice-cross-type-order",
+      "stage": "O14",
+      "source": "print(slice(1)<7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-raw-ordering-result",
+      "stage": "O14",
+      "source": "class A:\n def __eq__(self,other): return False\n def __le__(self,other): return result\nresult=[7]\nr=slice(A())<=slice(A())\nprint(r is result,r[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "slice-nested-owned-comparison",
+      "stage": "O14",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint(slice(slice(A(1)))<slice(slice(A(2))))\n",
+      "stdout": "eq 1 2\neq 1 2\nTrue\n"
+    },
+    {
+      "id": "slice-field-identity",
+      "stage": "O14",
+      "source": "class A:\n def __eq__(self,other): raise ValueError(\"never\")\na=A()\nprint(slice(a,3)==slice(a,3),slice(a,3)<slice(a,7))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "slice-containing-owned-equality",
+      "stage": "O14",
+      "source": "class A:\n def __eq__(self,other): return True\nx=slice(A())\nprint(x==slice(A()),x!=slice(A()),[x]==[slice(A())],slice(A()) in [x])\n",
+      "stdout": "True False True True\n"
+    },
+    {
+      "id": "slice-field-inequality-uses-equality",
+      "stage": "O14",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"eq\")\n  return True\n def __ne__(self,other): raise ValueError(\"never\")\nprint(slice(A())!=slice(A()))\n",
+      "stdout": "eq\nFalse\n"
+    },
+    {
+      "id": "slice-nested-list-ordering",
+      "stage": "O14",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other):\n  print(\"eq\",self.n,other.n)\n  return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return self.n<=other.n\n def __gt__(self,other): return self.n>other.n\n def __ge__(self,other): return self.n>=other.n\nprint(slice([A(1)])<slice([A(2)]))\n",
+      "stdout": "eq 1 2\neq 1 2\nTrue\n"
+    },
+    {
+      "id": "slice-equality-error-frames",
+      "stage": "O14",
+      "source": "class A:\n def __eq__(self,other): raise ValueError(\"equal\")\nslice(A())==slice(A())\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        },
+        {
+          "function": "__eq__",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "future-metaclass-ordering",
+      "stage": "Future",
+      "source": "class M(type):\n def __lt__(cls,other): return True\nclass A(metaclass=M): pass\nprint(A<7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-slice-hashing",
+      "stage": "Future",
+      "source": "print(hash(slice(1,3))==hash(slice(1,3)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-user-set-ordering",
+      "stage": "Future",
+      "source": "class A: pass\na=A()\nprint({a}<={a})\n",
+      "stdout": "True\n"
+    }
+  ]
+}
