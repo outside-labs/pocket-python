@@ -238,7 +238,7 @@ def smoke(channel=None):
                         assert slot+' at sources/app.py:3' in page.locator('#diagnostic').inner_text()
                     refused('a=[1,2,3]\na[::2]=[7]\n', 'ValueError:')
                     refused('a=[1]\na[:]=iter((7,))\n', 'UnsupportedOperationError:')
-                    refused('print(slice(1,7)==slice(1,7))\n', 'UnsupportedOperationError:')
+                    run('print(slice(1,7)==slice(1,7))\n', 'True\n')
                     assert page.locator('#result').inner_text() == ''
                     run('print((x:=7),x)\n', '7 7\n')
                     refused("print('never')\ntype A=list[int]\n", 'UnsupportedSyntaxError:')

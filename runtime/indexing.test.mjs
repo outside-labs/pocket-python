@@ -176,10 +176,13 @@ test('paused setters, deleters and converted slice mutations retain otherwise te
 });
 
 
-test('deferred slice comparisons refuse before returning a misleading value',async()=>{
-  for(const expression of ['slice(1,7)==slice(1,7)','slice(1,7)!=slice(1,7)','slice(1,7)<slice(2,7)',
-    '[slice(1,7)]==[slice(1,7)]','slice(1,7) in [slice(1,7)]']){
-    const result=await run('print('+expression+')\n');assert.equal(result.error.code,'UNSUPPORTED');assert.equal(result.stdout,'');closed(result);
+test('adopted slice comparisons coexist with the remaining slice boundaries',async()=>{
+  for(const [expression,expected] of [['slice(1,7)==slice(1,7)','True'],['slice(1,7)!=slice(1,7)','False'],['slice(1,7)<slice(2,7)','True'],
+    ['[slice(1,7)]==[slice(1,7)]','True'],['slice(1,7) in [slice(1,7)]','True']]){
+    const result=await run('print('+expression+')\n');assert.equal(result.error,undefined);assert.equal(result.stdout,expected+'\n');closed(result);
+  }
+  for (const expression of ['hash(slice(1,7))','slice(1,7).indices(9)','repr(slice(1,7))']) {
+    const result=await run(expression+'\n');assert.equal(result.error.code,'UNSUPPORTED');closed(result);
   }
   const identity=await run('s=slice(1,7)\nprint(s is s,bool(s),[s]==[s])\n');
   assert.equal(identity.stdout,'True True True\n');assert.equal(identity.error,undefined);closed(identity);

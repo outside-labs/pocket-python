@@ -43,6 +43,9 @@ const pausedSources = [
   'class R:\n def __bool__(self):\n  print("entered")\n  return self.saved[0]==8\nclass A:\n def __eq__(self,other):\n  r=R()\n  r.saved=other\n  return r\n def __lt__(self,other): return other[0]\nprint([1][0]+([A()]<[[7]]))\n',
   'class A:\n def __eq__(self,other): return False\n @property\n def __lt__(self):\n  print("entered")\n  return lambda other: other[0]\nprint([1][0]+([A()]<[[7]]))\n',
   'class A:\n def __init__(self): self.saved=[7]\n def __eq__(self,other): return False\n def __lt__(self,other):\n  print("entered")\n  del x[0]\n  del y[0]\n  return other.saved[0]\nx=[A()]\ny=[A()]\nprint([1][0]+(x<y))\n',
+  'class A:\n @property\n def __eq__(self):\n  print("entered")\n  return lambda other: False\n def __lt__(self,other): return other[0]\nprint([1][0]+(slice(A())<slice([7])))\n',
+  'class R:\n def __bool__(self):\n  print("entered")\n  return self.saved[0]==8\nclass A:\n def __eq__(self,other):\n  r=R()\n  r.saved=other\n  return r\n def __lt__(self,other): return other[0]\nprint([1][0]+(slice(A())<slice([7])))\n',
+  'class A:\n def __eq__(self,other): return False\n @property\n def __lt__(self):\n  print("entered")\n  return lambda other: other[0]\nprint([1][0]+(slice(A())<slice([7])))\n',
 ];
 
 test('paused ordering binding, body and consuming truth survive collection, cancellation and close', async () => {
@@ -80,11 +83,13 @@ test('ordering binding and body share instruction, work, recursion and arena bud
     [binding ? 'return self<7' : 'return self<other', {maxDepth: 12}, undefined, 'PYTHON'],
     ['held=[]\n  while True: held.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
   ]) {
-    const source = 'class A:\n '+(binding ? '@property\n ' : '')+'def __lt__(self'+(binding ? '' : ',other')+'):\n  '+body+'\nA()< [7]\n';
-    const result = await run(source, options, limits);
-    assert.equal(result.error.code, code, JSON.stringify(result.error));
-    if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
-    closed(result.closed);
+    for (const expression of ['A()< [7]', 'slice(A())<slice([7])']) {
+      const source = 'class A:\n '+(binding ? '@property\n ' : '')+'def __lt__(self'+(binding ? '' : ',other')+'):\n  '+body+'\n'+expression+'\n';
+      const result = await run(source, options, limits);
+      assert.equal(result.error.code, code, JSON.stringify(result.error));
+      if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+      closed(result.closed);
+    }
   }
 });
 
@@ -101,6 +106,16 @@ test('reflected NotImplemented reloads the forward slot after callback mutation'
 test('recursive element equality during ordering shares the comparison depth limit', async () => {
   const result = await run('class A:\n def __eq__(self,other): return [self]<[other]\n[A()]<[A()]\n', {maxDepth: 12});
   assert.equal(result.error.type, 'RecursionError'); closed(result.closed);
+});
+
+test('nested slices and recursive slice equality have bounded comparison depth', async () => {
+  for (const source of [
+    'x=1\ny=2\nfor i in range(24):\n x=slice(x)\n y=slice(y)\nx<y\n',
+    'class A:\n def __eq__(self,other): return slice(self)==slice(other)\nslice(A())==slice(A())\n',
+  ]) {
+    const result = await run(source, {maxDepth: 12});
+    assert.equal(result.error.type, 'RecursionError'); closed(result.closed);
+  }
 });
 
 test('ordering dictionaries and user-key sets retain their own boundaries', async () => {

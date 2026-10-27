@@ -2,9 +2,11 @@
 
 The semantic oracle is **CPython 3.14.7**. The executable contract is
 [94 independent source cases](../tests/fixtures/interpreter/indexing.json):
-46 read/conversion cases (I1), 35 mutation cases (I2), and 13 future boundaries
-(I3). Reference-only success records Python behavior; it does not prove engine
+47 read/conversion cases (I1), 40 mutation/comparison cases (I2), one adopted
+iteration case and six future boundaries (I3). Reference-only success records Python behavior; it does not prove engine
 support. `implemented_stages` and exact source-mode reports determine adoption.
+The separately adopted [ordering contract](interpreter-ordering.md) promotes
+the five slice equality/ordering/membership cases to I2.
 
 ## Dispatch and results
 
@@ -72,8 +74,8 @@ teardown. Primitive paths and the eight existing composed resource baselines
 remain required. The offline console must accept new source after reload, preserve
 errors and handle Stop/Restart while a hook is pending.
 
-I3 keeps arithmetic slots, custom iteration, broader slice RHS forms, slice.indices,
-slice repr and hashing deferred. General reflection, native ABI support, packages,
+I3 keeps broader slice RHS forms, slice.indices, slice repr and hashing deferred.
+General reflection, native ABI support, packages,
 async scheduling and release/deployment are separate milestones.
 
 ## Ordered delivery
