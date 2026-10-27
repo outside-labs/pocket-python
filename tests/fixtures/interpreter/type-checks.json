@@ -1,0 +1,481 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-type-checks/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "Base"
+  ],
+  "cases": [
+    {
+      "id": "instance-exact-type-skips-hook",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj):\n  print(\"never\")\n  return False\nclass A(metaclass=M): pass\nprint(isinstance(A(),A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-subtype-still-calls-hook",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj):\n  print(\"check\",cls.__name__)\n  return False\nclass A(metaclass=M): pass\nclass B(A): pass\nprint(isinstance(B(),A))\n",
+      "stdout": "check A\nFalse\n"
+    },
+    {
+      "id": "instance-inherited-hook",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return obj==7\nclass N(M): pass\nclass A(metaclass=N): pass\nprint(isinstance(7,A),isinstance(8,A))\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "instance-class-shadow-ignored",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return True\nclass A(metaclass=M):\n def __instancecheck__(self,obj): return False\nprint(isinstance(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-static-hook",
+      "stage": "O9",
+      "source": "class M(type):\n @staticmethod\n def __instancecheck__(obj): return obj==7\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-classmethod-hook",
+      "stage": "O9",
+      "source": "class M(type):\n @classmethod\n def __instancecheck__(meta,obj): return meta is M\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-descriptor-hook",
+      "stage": "O9",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(obj.__name__,owner.__name__)\n  def check(value): return value==7\n  return check\nclass M(type): __instancecheck__=D()\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "A M\nTrue\n"
+    },
+    {
+      "id": "instance-property-hook",
+      "stage": "O9",
+      "source": "class M(type):\n @property\n def __instancecheck__(cls):\n  print(cls.__name__)\n  return lambda obj: obj==7\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "A\nTrue\n"
+    },
+    {
+      "id": "instance-checker-object",
+      "stage": "O9",
+      "source": "class Checker:\n def __instancecheck__(self,obj): return obj==7\nc=Checker()\nc.__instancecheck__=None\nprint(isinstance(7,c),isinstance(8,c))\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "instance-result-truth",
+      "stage": "O9",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass M(type):\n def __instancecheck__(cls,obj): return Truth()\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "truth\nTrue\n"
+    },
+    {
+      "id": "instance-result-length",
+      "stage": "O9",
+      "source": "class Truth:\n def __len__(self): return 0\nclass M(type):\n def __instancecheck__(cls,obj): return Truth()\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "instance-result-none",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return None\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "instance-result-list",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return [7]\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-result-empty",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return []\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "instance-result-number",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return 7\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-result-notimplemented",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return NotImplemented\nclass A(metaclass=M): pass\nisinstance(7,A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-result-invalid-bool",
+      "stage": "O9",
+      "source": "class Truth:\n def __bool__(self): return 7\nclass M(type):\n def __instancecheck__(cls,obj): return Truth()\nclass A(metaclass=M): pass\nisinstance(7,A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-error-callback",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): raise ValueError(\"original\")\nclass A(metaclass=M): pass\nisinstance(7,A)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "instance-error-attributeerror",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): raise AttributeError(\"original\")\nclass A(metaclass=M): pass\nisinstance(7,A)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "instance-error-stop",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): raise StopIteration(\"original\")\nclass A(metaclass=M): pass\nisinstance(7,A)\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "instance-binding-error",
+      "stage": "O9",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"binding\")\nclass M(type): __instancecheck__=D()\nclass A(metaclass=M): pass\nisinstance(7,A)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "instance-none-hook",
+      "stage": "O9",
+      "source": "class M(type): __instancecheck__=None\nclass A(metaclass=M): pass\nisinstance(7,A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-tuple-short-circuit",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj):\n  print(cls.__name__)\n  return cls.__name__==\"B\"\nclass A(metaclass=M): pass\nclass B(metaclass=M): pass\nprint(isinstance(7,((A,),(B,7))))\n",
+      "stdout": "A\nB\nTrue\n"
+    },
+    {
+      "id": "instance-tuple-invalid-order",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj):\n  print(\"check\")\n  return False\nclass A(metaclass=M): pass\nisinstance(7,(A,7,A))\n",
+      "stdout": "check\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-native-bypass",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return False\nclass A(metaclass=M): pass\nclass B(A): pass\nprint(type.__instancecheck__(A,A()),type.__instancecheck__(A,B()),type.__instancecheck__(A,7))\n",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "instance-super-default",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj):\n  print(\"check\")\n  return super().__instancecheck__(obj)\nclass A(metaclass=M): pass\nclass B(A): pass\nprint(isinstance(B(),A),isinstance(7,A))\n",
+      "stdout": "check\ncheck\nTrue False\n"
+    },
+    {
+      "id": "instance-native-advertised",
+      "stage": "O9",
+      "source": "class A: pass\nclass B:\n @property\n def __class__(self): return A\nprint(type.__instancecheck__(A,B()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-bound-native",
+      "stage": "O9",
+      "source": "class A: pass\nprint(A.__instancecheck__(A()),int.__instancecheck__(True))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "instance-native-no-virtual-subclasses",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,obj):\n  print(\"never\")\n  return True\nclass A(metaclass=M): pass\nprint(type.__instancecheck__(A,7))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "instance-native-invalid-receiver",
+      "stage": "O9",
+      "source": "type.__instancecheck__(7,1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-native-invalid-arity",
+      "stage": "O9",
+      "source": "type.__instancecheck__(int)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-native-keywords",
+      "stage": "O9",
+      "source": "type.__instancecheck__(int,instance=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-signature-before-callback",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj):\n  print(\"never\")\n  return True\nclass A(metaclass=M): pass\nisinstance(7,A,8)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "instance-explicit-preserves-result",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return [7]\nclass A(metaclass=M): pass\nprint(A.__instancecheck__(None))\n",
+      "stdout": "[7]\n"
+    },
+    {
+      "id": "instance-dynamic-metaclass",
+      "stage": "O9",
+      "source": "def check(cls,obj): return obj==7\nM=type(\"M\",(type,),{\"__instancecheck__\":check})\nA=M(\"A\",(),{})\nprint(isinstance(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "instance-mutation-snapshot",
+      "stage": "O9",
+      "source": "def later(cls,obj): return False\nclass M(type):\n def __instancecheck__(cls,obj):\n  M.__instancecheck__=later\n  return True\nclass A(metaclass=M): pass\nprint(isinstance(7,A),isinstance(7,A))\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "instance-type-identity-no-virtual",
+      "stage": "O9",
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return True\nclass A(metaclass=M): pass\nprint(isinstance(7,A),type(7) is int)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "subclass-self-calls-hook",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub):\n  print(\"check\")\n  return False\nclass A(metaclass=M): pass\nprint(issubclass(A,A))\n",
+      "stdout": "check\nFalse\n"
+    },
+    {
+      "id": "subclass-real-subtype-calls-hook",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return False\nclass A(metaclass=M): pass\nclass B(A): pass\nprint(issubclass(B,A))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "subclass-before-first-arg-validation",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return sub==7\nclass A(metaclass=M): pass\nprint(issubclass(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subclass-static-hook",
+      "stage": "O10",
+      "source": "class M(type):\n @staticmethod\n def __subclasscheck__(sub): return True\nclass A(metaclass=M): pass\nprint(issubclass(int,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subclass-classmethod-hook",
+      "stage": "O10",
+      "source": "class M(type):\n @classmethod\n def __subclasscheck__(meta,sub): return meta is M\nclass A(metaclass=M): pass\nprint(issubclass(int,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subclass-inherited-super",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub):\n  print(cls.__name__)\n  return super().__subclasscheck__(sub)\nclass N(M): pass\nclass A(metaclass=N): pass\nclass B(A): pass\nprint(issubclass(B,A),issubclass(int,A))\n",
+      "stdout": "A\nA\nTrue False\n"
+    },
+    {
+      "id": "subclass-descriptor-hook",
+      "stage": "O10",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(obj.__name__,owner.__name__)\n  return lambda sub: True\nclass M(type): __subclasscheck__=D()\nclass A(metaclass=M): pass\nprint(issubclass(7,A))\n",
+      "stdout": "A M\nTrue\n"
+    },
+    {
+      "id": "subclass-property-hook",
+      "stage": "O10",
+      "source": "class M(type):\n @property\n def __subclasscheck__(cls): return lambda sub: True\nclass A(metaclass=M): pass\nprint(issubclass(int,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subclass-class-shadow-ignored",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return True\nclass A(metaclass=M):\n def __subclasscheck__(self,sub): return False\nprint(issubclass(int,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subclass-checker-object",
+      "stage": "O10",
+      "source": "class Checker:\n def __subclasscheck__(self,sub): return sub==7\nc=Checker()\nc.__subclasscheck__=None\nprint(issubclass(7,c),issubclass(8,c))\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "subclass-truth-result",
+      "stage": "O10",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass M(type):\n def __subclasscheck__(cls,sub): return Truth()\nclass A(metaclass=M): pass\nprint(issubclass(int,A))\n",
+      "stdout": "truth\nTrue\n"
+    },
+    {
+      "id": "subclass-result-none",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return None\nclass A(metaclass=M): pass\nprint(issubclass(int,A))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "subclass-result-list",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return [7]\nclass A(metaclass=M): pass\nprint(issubclass(int,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subclass-result-empty",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return []\nclass A(metaclass=M): pass\nprint(issubclass(int,A))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "subclass-notimplemented",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return NotImplemented\nclass A(metaclass=M): pass\nissubclass(int,A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-invalid-bool",
+      "stage": "O10",
+      "source": "class Truth:\n def __bool__(self): return 7\nclass M(type):\n def __subclasscheck__(cls,sub): return Truth()\nclass A(metaclass=M): pass\nissubclass(int,A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-error-callback",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): raise ValueError(\"original\")\nclass A(metaclass=M): pass\nissubclass(int,A)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "subclass-error-attributeerror",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): raise AttributeError(\"original\")\nclass A(metaclass=M): pass\nissubclass(int,A)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "subclass-error-stop",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): raise StopIteration(\"original\")\nclass A(metaclass=M): pass\nissubclass(int,A)\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "subclass-binding-error",
+      "stage": "O10",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"binding\")\nclass M(type): __subclasscheck__=D()\nclass A(metaclass=M): pass\nissubclass(int,A)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "subclass-none-hook",
+      "stage": "O10",
+      "source": "class M(type): __subclasscheck__=None\nclass A(metaclass=M): pass\nissubclass(int,A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-tuple-short-circuit",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub):\n  print(cls.__name__)\n  return cls.__name__==\"B\"\nclass A(metaclass=M): pass\nclass B(metaclass=M): pass\nprint(issubclass(7,((A,),(B,7))))\n",
+      "stdout": "A\nB\nTrue\n"
+    },
+    {
+      "id": "subclass-tuple-invalid-order",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub):\n  print(\"check\")\n  return False\nclass A(metaclass=M): pass\nissubclass(int,(A,7,A))\n",
+      "stdout": "check\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-empty-tuple-before-validation",
+      "stage": "Base",
+      "source": "print(issubclass(7,()))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "subclass-native-bypass",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return False\nclass A(metaclass=M): pass\nclass B(A): pass\nprint(type.__subclasscheck__(A,A),type.__subclasscheck__(A,B),type.__subclasscheck__(A,int))\n",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "subclass-bound-native",
+      "stage": "O10",
+      "source": "class A: pass\nprint(A.__subclasscheck__(A),int.__subclasscheck__(bool))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "subclass-native-invalid-receiver",
+      "stage": "O10",
+      "source": "type.__subclasscheck__(7,int)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-native-invalid-derived",
+      "stage": "O10",
+      "source": "type.__subclasscheck__(int,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-native-invalid-arity",
+      "stage": "O10",
+      "source": "type.__subclasscheck__(int)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-native-keywords",
+      "stage": "O10",
+      "source": "type.__subclasscheck__(int,subclass=bool)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-signature-before-callback",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub):\n  print(\"never\")\n  return True\nclass A(metaclass=M): pass\nissubclass(int,A,8)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-explicit-preserves-result",
+      "stage": "O10",
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return [7]\nclass A(metaclass=M): pass\nprint(A.__subclasscheck__(int))\n",
+      "stdout": "[7]\n"
+    },
+    {
+      "id": "subclass-dynamic-metaclass",
+      "stage": "O10",
+      "source": "def check(cls,sub): return sub is int\nM=type(\"M\",(type,),{\"__subclasscheck__\":check})\nA=M(\"A\",(),{})\nprint(issubclass(int,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subclass-native-does-not-read-advertised",
+      "stage": "O10",
+      "source": "class A: pass\nclass B:\n @property\n def __class__(self):\n  print(\"never\")\n  return A\ntype.__subclasscheck__(A,B())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "future-class-bases-spoof",
+      "stage": "Future",
+      "source": "class Fake:\n __bases__=()\nprint(issubclass(Fake(),object))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "future-metaclass-getattribute",
+      "stage": "Future",
+      "source": "class M(type):\n print(\"body\")\n def __getattribute__(cls,name): return type.__getattribute__(cls,name)\n",
+      "stdout": "body\n"
+    },
+    {
+      "id": "future-metaclass-prepare",
+      "stage": "Future",
+      "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\nclass A(metaclass=M): pass\n",
+      "stdout": ""
+    }
+  ]
+}
