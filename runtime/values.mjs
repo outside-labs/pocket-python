@@ -469,6 +469,18 @@ export class ValueRuntime {
     }
     return this.binary(operation, left, right);
   }
+  repeat(value, count) {
+    count = integer(count);
+    if (count < -9223372036854775808n || count > 9223372036854775807n)
+      this.fail("OverflowError", "cannot fit repetition into an index-sized integer");
+    this.charge(count.toString().length);
+    const source = value.items, size = BigInt(source.length) * (count < 0n ? 0n : count);
+    this.limit(size <= BigInt(VALUE_LIMITS.items), "Container length budget exceeded.");
+    this.charge(Number(size) + 1);
+    if (value instanceof TupleValue && (count === 1n || source.length === 0)) return value;
+    const items = Array.from({length: Number(size)}, (_, index) => source[index % source.length]);
+    return value instanceof TupleValue ? this.tuple(items) : this.list(items);
+  }
   list(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new ListValue(items)); }
   tuple(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new TupleValue(items)); }
   dict(pairs) {
@@ -1184,7 +1196,12 @@ export class ValueRuntime {
     }
     if (!["add", "subtract", "multiply", "floor-divide", "modulo", "divide"].includes(operation)) this.fail("UnsupportedOperationError", "Unknown binary operation.", "UNSUPPORTED");
     if (operation === "multiply" && ((sequence(left) && ["bigint", "boolean"].includes(typeof right)) ||
-        (sequence(right) && ["bigint", "boolean"].includes(typeof left)))) this.fail("UnsupportedOperationError", "Sequence repetition is deferred.", "UNSUPPORTED");
+        (sequence(right) && ["bigint", "boolean"].includes(typeof left)))) {
+      if (!this.numeric) this.fail("UnsupportedOperationError", "Sequence repetition requires the source value profile.", "UNSUPPORTED");
+      const value = sequence(left) ? left : right, count = value === left ? right : left;
+      if (value instanceof StringValue) this.fail("UnsupportedOperationError", "Text repetition requires its own stage.", "UNSUPPORTED");
+      return this.repeat(value, count);
+    }
     if (!numeric(left) || !numeric(right)) this.fail("TypeError", "Numeric operation requires adopted numbers.");
     const cost = value => value instanceof FloatValue ? 16 : integer(value).toString().replace(/^-/, "").length;
     this.charge(["multiply", "floor-divide", "modulo", "divide"].includes(operation) ? cost(left) * cost(right) : Math.max(cost(left), cost(right)));

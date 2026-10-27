@@ -3,67 +3,69 @@
   "suite": "interpreter-repetition/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "R1"
+  ],
   "cases": [
     {
       "id": "list-primitive-0",
       "stage": "R1",
-      "source": "a=[1,2]\nprint(a*0,0*a,a)\n",
+      "source": "a=[1,2]\nb=a*0\nprint(len(b),b==[],b==0*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "[] [] [1, 2]\n"
+      "stdout": "0 True True 2\n"
     },
     {
       "id": "list-primitive-1",
       "stage": "R1",
-      "source": "a=[1,2]\nprint(a*1,1*a,a)\n",
+      "source": "a=[1,2]\nb=a*1\nprint(len(b),b==[1, 2],b==1*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "[1, 2] [1, 2] [1, 2]\n"
+      "stdout": "2 True True 2\n"
     },
     {
       "id": "list-primitive-3",
       "stage": "R1",
-      "source": "a=[1,2]\nprint(a*3,3*a,a)\n",
+      "source": "a=[1,2]\nb=a*3\nprint(len(b),b==[1, 2, 1, 2, 1, 2],b==3*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "[1, 2, 1, 2, 1, 2] [1, 2, 1, 2, 1, 2] [1, 2]\n"
+      "stdout": "6 True True 2\n"
     },
     {
       "id": "list-primitive-minus2",
       "stage": "R1",
-      "source": "a=[1,2]\nprint(a*-2,-2*a,a)\n",
+      "source": "a=[1,2]\nb=a*-2\nprint(len(b),b==[],b==-2*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "[] [] [1, 2]\n"
+      "stdout": "0 True True 2\n"
     },
     {
       "id": "list-primitive-true",
       "stage": "R1",
-      "source": "a=[1,2]\nprint(a*True,True*a,a)\n",
+      "source": "a=[1,2]\nb=a*True\nprint(len(b),b==[1, 2],b==True*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "[1, 2] [1, 2] [1, 2]\n"
+      "stdout": "2 True True 2\n"
     },
     {
       "id": "list-primitive-false",
       "stage": "R1",
-      "source": "a=[1,2]\nprint(a*False,False*a,a)\n",
+      "source": "a=[1,2]\nb=a*False\nprint(len(b),b==[],b==False*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "[] [] [1, 2]\n"
+      "stdout": "0 True True 2\n"
     },
     {
       "id": "list-shallow",
@@ -88,12 +90,12 @@
     {
       "id": "list-augmented",
       "stage": "R1",
-      "source": "a=[1,2]\nb=a\na*=3\nprint(a,b,a is b)\n",
+      "source": "a=[1,2]\nb=a\na*=3\nprint(len(a),len(b),a is b,a[2])\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "[1, 2, 1, 2, 1, 2] [1, 2, 1, 2, 1, 2] True\n"
+      "stdout": "6 6 True 1\n"
     },
     {
       "id": "list-empty-positive",
@@ -206,62 +208,62 @@
     {
       "id": "tuple-primitive-0",
       "stage": "R1",
-      "source": "a=(1,2)\nprint(a*0,0*a,a)\n",
+      "source": "a=(1,2)\nb=a*0\nprint(len(b),b==(),b==0*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "() () (1, 2)\n"
+      "stdout": "0 True True 2\n"
     },
     {
       "id": "tuple-primitive-1",
       "stage": "R1",
-      "source": "a=(1,2)\nprint(a*1,1*a,a)\n",
+      "source": "a=(1,2)\nb=a*1\nprint(len(b),b==(1, 2),b==1*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "(1, 2) (1, 2) (1, 2)\n"
+      "stdout": "2 True True 2\n"
     },
     {
       "id": "tuple-primitive-3",
       "stage": "R1",
-      "source": "a=(1,2)\nprint(a*3,3*a,a)\n",
+      "source": "a=(1,2)\nb=a*3\nprint(len(b),b==(1, 2, 1, 2, 1, 2),b==3*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "(1, 2, 1, 2, 1, 2) (1, 2, 1, 2, 1, 2) (1, 2)\n"
+      "stdout": "6 True True 2\n"
     },
     {
       "id": "tuple-primitive-minus2",
       "stage": "R1",
-      "source": "a=(1,2)\nprint(a*-2,-2*a,a)\n",
+      "source": "a=(1,2)\nb=a*-2\nprint(len(b),b==(),b==-2*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "() () (1, 2)\n"
+      "stdout": "0 True True 2\n"
     },
     {
       "id": "tuple-primitive-true",
       "stage": "R1",
-      "source": "a=(1,2)\nprint(a*True,True*a,a)\n",
+      "source": "a=(1,2)\nb=a*True\nprint(len(b),b==(1, 2),b==True*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "(1, 2) (1, 2) (1, 2)\n"
+      "stdout": "2 True True 2\n"
     },
     {
       "id": "tuple-primitive-false",
       "stage": "R1",
-      "source": "a=(1,2)\nprint(a*False,False*a,a)\n",
+      "source": "a=(1,2)\nb=a*False\nprint(len(b),b==(),b==False*a,len(a))\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "() () (1, 2)\n"
+      "stdout": "0 True True 2\n"
     },
     {
       "id": "tuple-shallow",
@@ -286,12 +288,12 @@
     {
       "id": "tuple-augmented",
       "stage": "R1",
-      "source": "a=(1,2)\nb=a\na*=3\nprint(a,b,a is b)\n",
+      "source": "a=(1,2)\nb=a\na*=3\nprint(len(a),len(b),a is b,a[2])\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "(1, 2, 1, 2, 1, 2) (1, 2) False\n"
+      "stdout": "6 2 False 1\n"
     },
     {
       "id": "tuple-empty-positive",
@@ -404,12 +406,12 @@
     {
       "id": "list-copy-storage",
       "stage": "R1",
-      "source": "a=[1,2]\nb=2*a\nb[0]=9\nprint(a,b,a is b)\n",
+      "source": "a=[1,2]\nb=2*a\nb[0]=9\nprint(a[0],b[0],b[2],len(a),len(b),a is b)\n",
       "profiles": [
         "classes-source/1",
         "core-source/1"
       ],
-      "stdout": "[1, 2] [9, 2, 1, 2] False\n"
+      "stdout": "1 9 1 2 4 False\n"
     },
     {
       "id": "tuple-empty-identity",
@@ -1029,32 +1031,32 @@
     {
       "id": "index-list-mutation-122",
       "stage": "R3",
-      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  a[0]=9\n  a.append(8)\n  return 2\nprint(a*I(),a)\n",
-      "stdout": "[9, 2, 8, 9, 2, 8] [9, 2, 8]\n"
+      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  a[0]=9\n  a.append(8)\n  return 2\nb=a*I()\nprint(len(a),len(b),b==a+a)\n",
+      "stdout": "3 6 True\n"
     },
     {
       "id": "index-list-mutation-123",
       "stage": "R3",
-      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  del a[0]\n  return 2\nprint(a*I(),a)\n",
-      "stdout": "[2, 2] [2]\n"
+      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  del a[0]\n  return 2\nb=a*I()\nprint(len(a),len(b),b==a+a)\n",
+      "stdout": "1 2 True\n"
     },
     {
       "id": "index-list-mutation-124",
       "stage": "R3",
-      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  a[0:2]=[]\n  return 2\nprint(a*I(),a)\n",
-      "stdout": "[] []\n"
+      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  a[0:2]=[]\n  return 2\nb=a*I()\nprint(len(a),len(b),b==a+a)\n",
+      "stdout": "0 0 True\n"
     },
     {
       "id": "index-clears-then-large-count",
       "stage": "R3",
-      "source": "a=[1]\nclass I:\n def __index__(self):\n  del a[0]\n  return 9223372036854775807\nprint(a*I())\n",
-      "stdout": "[]\n"
+      "source": "a=[1]\nclass I:\n def __index__(self):\n  del a[0]\n  return 9223372036854775807\nprint(len(a*I()))\n",
+      "stdout": "0\n"
     },
     {
       "id": "index-empty-called",
       "stage": "R3",
-      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return -2\nprint([]*I(),I()*(),len(\"\"*I()))\n",
-      "stdout": "index\nindex\nindex\n[] () 0\n"
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return -2\nprint(len([]*I()),len(I()*()),len(\"\"*I()))\n",
+      "stdout": "index\nindex\nindex\n0 0 0\n"
     },
     {
       "id": "index-evaluation-once",
