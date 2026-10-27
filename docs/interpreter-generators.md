@@ -34,3 +34,18 @@ roots and external leases. These logical observations make no host RSS claim.
 
 No new host capability, runtime dependency, publication or deployment is included.
 See the [yield expression and generator method reference](https://docs.python.org/3.14/reference/expressions.html#yield-expressions).
+
+## Acceptance
+
+The corpus contains 28 adopted class comparisons and three explicit refusals;
+the shared core selection has 25 comparisons and three refusals. CI runs all
+eight target/profile/driver combinations and requires zero logical teardown.
+Dedicated tests collect between every instruction, retain suspended aliases and
+cycles, and interrupt execution in generator bodies and comprehension callbacks.
+The existing eight composed resource baselines remain unchanged.
+
+Run `python -m examples.interpreter_generators` to build a composed console;
+`--core` selects generators without class protocols. Offline acceptance covers
+new source after reload, method/body errors, hard Stop/Restart and waiting
+class-to-core updates. Assignment expressions in comprehensions, multi-argument
+throw, generator frame introspection and async retain their future boundaries.

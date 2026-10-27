@@ -1,14 +1,14 @@
 """Known source-console assets, canonical LF bytes; refresh with scripts/lock_interpreter.py."""
 
-ENGINE_FINGERPRINT = '03d4255b4396e0016f2b34d86c3968d12f5f9573781a72d37ccd95f244a36d9f'
+ENGINE_FINGERPRINT = '838cf574d88d26ca28e945fd3fa077e7c98bf4e19a4bb202429d54beecbef697'
 ENGINE_FILES = (
     ('browser-protocol.mjs', 10589, '920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76'),
     ('bytecode.mjs', 6836, 'e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4'),
-    ('class-policy.mjs', 1362, '586d8800afd0e5d5ec7d4d3e758dbf56942f7d74207c111c0b32fb4483b0d1f6'),
+    ('class-policy.mjs', 1968, 'e3275e080c2d26584bb318e88d9a0278191815ac072c48e3054fd4c908cb771b'),
     ('class-values.mjs', 15372, '67fc606a6c91f7aeb1d4309cc4a0be33778181cdccb51190e5f76d4969d9b43d'),
     ('function-bytecode.mjs', 20438, 'ca6b3abd73d2be35422eea244b876a851bf98e38836e31a33fa6d18d4252ae68'),
     ('function-objects.mjs', 4277, '06af0ca936de1dd336cb7a2ac13f24efae960ea3fe448c93fb95a2e92213c4e2'),
-    ('functions.mjs', 56452, '3f60a5034ff614f6bc12743194bbcd46096da549a677afb58b00fa5fed8da527'),
+    ('functions.mjs', 56333, '4450009703952a1dab3c62a94dd84aadeee9c0f2fee0a31db44495eddcc20e96'),
     ('interpreter-host.mjs', 7019, '0bb0a64faffcf77e0064258e4cfcaa7a937c4372129849f76901bee91b5a5ae2'),
     ('interpreter-worker.mjs', 8282, '937a97cc49d987492de0bc16021a4a804ef51e4ea5b398f79c92e5d30ac82558'),
     ('library-catalog.mjs', 907, '0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c'),
@@ -20,15 +20,15 @@ ENGINE_FILES = (
     ('module-registry.mjs', 10085, 'f23f8313c0804a052cba155e193df920b0221ef978a06f16c1a22f208dfbef91'),
     ('module-session.mjs', 1470, '08e4ccf16361299c15b99621fdfcef0d9ef93de50d28d738158c7bc85a7c23a3'),
     ('numeric.mjs', 13954, '2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad'),
-    ('operation-runtime.mjs', 87150, 'fab6eed0c35813348cd17b6524ab006b51af6d0bbad7405752de939e65fe354e'),
-    ('operations.mjs', 22088, 'cd872da96bc09f14c105ebb977ea3b5ed1441ec43f538df6d208966dc82bf014'),
+    ('operation-runtime.mjs', 93126, '18aff2a37a30c3fe0deebb51dae85f8200f9674588308941f5147ae10c809c9f'),
+    ('operations.mjs', 23452, 'bd4c064811e6400576cae60bfcdbd35a76c829a25085794f95520d6307fad78e'),
     ('source-compiler.mjs', 35239, '4201a25a0c45b8fba4777c8e98b75e37f3277888708093a77e2827dec5ff7063'),
     ('source-identifiers.mjs', 25949, '1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914'),
     ('source-modules.mjs', 5115, '3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef'),
     ('source-parser.mjs', 33396, '578c6663213e46049c51ba23a52427af8c301943ef67433054a6bf3fb2218ed2'),
     ('source-tokens.mjs', 15061, 'e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54'),
     ('string-printability.mjs', 13287, '355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f'),
-    ('values.mjs', 85128, '07d52caaef9774c1132a02f17420674eb27961676000990d6f60271fd3310d6b'),
+    ('values.mjs', 85194, '3a9b349575ecccd4c933aa9d8fc7877590290812e60074869ef45f4c1abbbdda'),
     ('vm.mjs', 6080, '796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d'),
 )
 ENGINE_IMPORTS = (
@@ -43,6 +43,7 @@ ENGINE_IMPORTS = (
     ('function-bytecode.mjs', 'source-identifiers.mjs'),
     ('function-objects.mjs', 'class-policy.mjs'),
     ('function-objects.mjs', 'operations.mjs'),
+    ('functions.mjs', 'class-policy.mjs'),
     ('functions.mjs', 'class-values.mjs'),
     ('functions.mjs', 'function-bytecode.mjs'),
     ('functions.mjs', 'function-objects.mjs'),
@@ -71,8 +72,10 @@ ENGINE_IMPORTS = (
     ('module-session.mjs', 'memory.mjs'),
     ('module-session.mjs', 'module-context.mjs'),
     ('module-session.mjs', 'values.mjs'),
+    ('operation-runtime.mjs', 'class-policy.mjs'),
     ('operation-runtime.mjs', 'function-objects.mjs'),
     ('operation-runtime.mjs', 'operations.mjs'),
+    ('operations.mjs', 'class-policy.mjs'),
     ('source-compiler.mjs', 'class-policy.mjs'),
     ('source-compiler.mjs', 'function-bytecode.mjs'),
     ('source-compiler.mjs', 'function-objects.mjs'),

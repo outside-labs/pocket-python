@@ -1,5 +1,6 @@
+import {ARITHMETIC_SLOTS} from "./class-policy.mjs";
 import {GeneratorValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -334,6 +335,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       completion = completion.after;
     }
+    if (completion?.kind === "arithmetic-result") {
+      if (!(value instanceof NotImplementedValue)) return valueTask(value, site, completion.after);
+      const inplace = completion.operation.startsWith("inplace-");
+      return arithmeticTask(inplace ? completion.operation.slice(8) : completion.operation, completion.args, site, completion.after,
+        completion.depth, inplace ? 0 : completion.position, inplace ? null : completion.order, inplace || completion.nativeInplace);
+    }
+    if (completion?.kind === "arithmetic-index") {
+      const args = [...completion.args]; args[completion.position] = value;
+      return valueTask(completion.operation.startsWith("inplace-") ? values.inplace(completion.operation.slice(8), ...args) : values.binary(completion.operation, ...args), site, completion.after);
+    }
     if (completion?.kind === "attribute-write") return valueTask(null, site, completion.after);
     if (completion?.kind === "attribute-result") return valueTask(completion.mode === "hasattr" ? true : value, site, completion.after);
     if (completion?.kind === "delegate-bind") return callTask(value, completion.args, [], [], site, completion.after);
@@ -665,6 +676,48 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries = operationRoots(task);
           python("TypeError", task.operation === "call-keyword-duplicate" ? "Call received multiple values for a keyword argument" : "Argument after ** must be a mapping");
         }
+        if (task.kind === "arithmetic") {
+          state.temporaries = operationRoots(task);
+          const [left, right, modulus = null] = args, inplace = task.operation.startsWith("inplace-"), operation = inplace ? task.operation.slice(8) : task.operation;
+          if (modulus instanceof InstanceValue) hard("UNSUPPORTED", "UnsupportedOperationError", "User modulus dispatch requires a separate power stage.");
+          const stem = ARITHMETIC_SLOTS[operation], ordinary = "__" + stem + "__", reflected = "__r" + stem + "__";
+          const rightFirst = task.order ?? (left instanceof InstanceValue && right instanceof InstanceValue && left.type !== right.type &&
+            right.type.mro.includes(left.type) && classes.lookup(right.type, reflected).found &&
+            (!classes.lookup(left.type, reflected).found || classes.lookup(right.type, reflected).value !== classes.lookup(left.type, reflected).value));
+          const candidates = inplace ? [[left, "__i" + stem + "__", right]] : rightFirst ?
+            [[right, reflected, left], [left, ordinary, right]] : [[left, ordinary, right], [right, reflected, left]];
+          let position = task.position, plan = null;
+          for (; position < candidates.length; position++) {
+            charge(1);
+            const [receiver, slot] = candidates[position];
+            if (!(receiver instanceof InstanceValue) || !inplace && slot === reflected && left instanceof InstanceValue && right instanceof InstanceValue && left.type === right.type) continue;
+            plan = classes.special(receiver, slot); if (plan) break;
+          }
+          if (plan) {
+            if (++depth > maxDepth) python("RecursionError", "maximum implicit arithmetic dispatch depth exceeded");
+            const hookArgs = [candidates[position][2], ...(operation === "power" && modulus !== null ? [modulus] : [])];
+            const finish = continuation("arithmetic-result", {operation: task.operation, args, position: position + 1, order: rightFirst, nativeInplace: task.nativeInplace, depth, after: completion});
+            task = plan.kind === "value" ? callTask(plan.value, hookArgs, [], [], site, finish, depth) :
+              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: hookArgs, keywords: [], keywordValues: [], after: finish, depth}), depth);
+            continue;
+          }
+          if (inplace) { task = arithmeticTask(operation, args, site, completion, depth, 0, null, true); continue; }
+          if (task.nativeInplace && operation === "add" && values.isList(left) && right instanceof InstanceValue) {
+            const iterator = classes.lookup(right.type, "__iter__");
+            if (iterator.found ? iterator.value !== null : classes.lookup(right.type, "__getitem__").found)
+              hard("UNSUPPORTED", "UnsupportedOperationError", "List += with a user iterable requires its own sequence stage.");
+          }
+          if (operation === "multiply") {
+            const repeatable = value => values.isString(value) || values.isBinary(value) || values.isList(value) || values.isSequenceType(value, "tuple");
+            const count = repeatable(left) && right instanceof InstanceValue ? 1 : repeatable(right) && left instanceof InstanceValue ? 0 : -1;
+            if (count >= 0 && classes.lookup(args[count].type, "__index__").found) {
+              if (!(values.isBinary(args[1 - count]) || task.nativeInplace && values.isList(left)))
+                hard("UNSUPPORTED", "UnsupportedOperationError", "Ordinary list/tuple/text repetition requires its separate sequence stage.");
+              task = unaryTask("index", args[count], site, continuation("arithmetic-index", {operation: task.nativeInplace ? "inplace-" + operation : operation, args, position: count, order: rightFirst, nativeInplace: task.nativeInplace, depth, after: completion}), depth); continue;
+            }
+          }
+          python("TypeError", "unsupported operands for " + operation);
+        }
         if (task.kind === "consume") {
           state.temporaries = operationRoots(task);
           const {name, receiver} = task, building = ["list", "tuple"].includes(name);
@@ -681,6 +734,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "numeric") {
           state.temporaries = operationRoots(task);
           const name = task.name;
+          if (["pow", "divmod"].includes(name) && args.some(value => value instanceof InstanceValue)) {
+            task = arithmeticTask(name === "pow" ? "power" : "divmod", args.slice(0, name === "pow" && args[2] !== null ? 3 : 2), site, completion, depth); continue;
+          }
           let position = task.position;
           if (name === "range") {
             while (position < args.length && !(args[position] instanceof InstanceValue)) {
@@ -967,6 +1023,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               keywordValues: [], after: finish, depth, fallback: slot === "__repr__" ?
                 {operation: "repr-default", receiver: value, after: completion, depth} : null}), depth);
             continue;
+          }
+          if (value instanceof InstanceValue && ["negative", "positive", "invert"].includes(operation)) {
+            const slot = {negative: "__neg__", positive: "__pos__", invert: "__invert__"}[operation], plan = classes.special(value, slot);
+            if (!plan) python("TypeError", "bad operand type for unary " + operation);
+            if (++depth > maxDepth) python("RecursionError", "maximum implicit arithmetic dispatch depth exceeded");
+            const finish = continuation("relay", {receiver: value, after: completion});
+            task = plan.kind === "value" ? callTask(plan.value, [], [], [], site, finish, depth) :
+              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: finish, depth}), depth); continue;
           }
           if (!(value instanceof InstanceValue) || !["len", "truth", "not"].includes(operation)) {
             task = deliver(values.unary(operation, value), completion, site); continue;

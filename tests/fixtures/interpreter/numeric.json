@@ -961,7 +961,7 @@
     },
     {
       "id": "future-binary-user-slot",
-      "stage": "Future",
+      "stage": "N1",
       "source": "class A:\n def __add__(self,other): return 7\nprint(A()+3)\n",
       "stdout": "7\n"
     },

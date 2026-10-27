@@ -1062,6 +1062,7 @@ export class ValueRuntime {
     if (operation === "less-equal") return this.less(left, right) || this.equal(left, right);
     if (operation === "greater-equal") return this.less(right, left) || this.equal(left, right);
     if (operation === "is") {
+      if (left === null || right === null) return left === right;
       if (typeof left === "bigint" || typeof right === "bigint") this.fail("UnsupportedOperationError", "Integer interning identity is outside this stage.", "UNSUPPORTED");
       return left === right;
     }

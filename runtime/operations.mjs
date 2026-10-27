@@ -1,3 +1,4 @@
+import {ARITHMETIC_SLOTS} from "./class-policy.mjs";
 // Closed internal records. Root order and multiplicity implement the initial
 // resource contract, including copied ancestor roots and the extra init root.
 const records = new WeakSet(), roots = new WeakMap(), heights = new WeakMap();
@@ -122,6 +123,9 @@ export function completion(kind, fields = {}) {
       break;
     case "protocol-result": record = {kind, receiver: fields.receiver, operation: fields.operation, slot: fields.slot, depth: fields.depth ?? 0, after}; break;
     case "optional-truth": record = {kind, receiver: fields.receiver, operation: fields.operation, depth: fields.depth, after}; break;
+    case "arithmetic-result": case "arithmetic-index":
+      record = {kind, operation: fields.operation, args: operands(fields.args), position: fields.position, order: fields.order, nativeInplace: fields.nativeInplace === true, depth: fields.depth, after};
+      arithmeticCheck(record.operation, record.args, record.position, record.order); depthCheck(record.depth); break;
     case "attribute-write": record = {kind, receiver: fields.receiver, after}; break;
     case "attribute-result": record = {kind, receiver: fields.receiver, default: fields.default, mode: fields.mode, after};
       if (!["getattr", "hasattr"].includes(record.mode)) throw new TypeError("Invalid attribute result mode."); break;
@@ -173,6 +177,7 @@ function visit(record) {
     case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
+    case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];
     case "attribute-write": return [record.receiver, ...completionRoots(record.after)];
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
@@ -211,6 +216,15 @@ export function callTask(callable, args, keywords, keywordValues, site, after = 
 export function unaryTask(operation, value, site, after = null, depth = 0, optionalLength = false) {
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "unary", operation, value, site, completion: after, depth, optionalLength});
+}
+const arithmeticCheck = (operation, args, position, order) => {
+  const name = operation.startsWith("inplace-") ? operation.slice(8) : operation;
+  if (!Object.hasOwn(ARITHMETIC_SLOTS, name) || args.length < 2 || args.length > (name === "power" ? 3 : 2) ||
+      !Number.isSafeInteger(position) || position < 0 || position > 2 || ![null, false, true].includes(order)) throw new TypeError("Invalid arithmetic operation.");
+};
+export function arithmeticTask(operation, args, site, after = null, depth = 0, position = 0, order = null, nativeInplace = false) {
+  arithmeticCheck(operation, args, position, order); depthCheck(depth); completionRoots(after);
+  return Object.freeze({kind: "arithmetic", operation, args: operands(args), site, completion: after, depth, position, order, nativeInplace});
 }
 export function numericTask(name, args, site, after = null, depth = 0, position = 0) {
   depthCheck(depth); completionRoots(after); numericPosition(position);
@@ -254,6 +268,7 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
 export function operationRoots(task) {
   switch (task.kind) {
     case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
+    case "arithmetic":
     case "numeric": return [...task.args, ...completionRoots(task.completion)];
     case "consume": return [task.receiver, ...(task.result === null ? [] : [task.result]), ...completionRoots(task.completion)];
     case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
