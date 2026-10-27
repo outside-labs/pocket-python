@@ -599,6 +599,8 @@ export class ValueRuntime {
     if (left === right) return true;
     if (left instanceof BoundMethodValue && right instanceof BoundMethodValue)
       return left.callable === right.callable && left.receiver === right.receiver;
+    if (left instanceof AppendValue && right instanceof AppendValue || left instanceof ValueMethod && right instanceof ValueMethod)
+      return left.receiver === right.receiver && left.name === right.name;
     if (left instanceof StringValue && right instanceof StringValue) {
       this.charge(Math.max(left.points.length, right.points.length));
       return left.points.length === right.points.length && left.points.every((point, i) => point === right.points[i]);
@@ -704,6 +706,10 @@ export class ValueRuntime {
   }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof BoundMethodValue)
+      return this.hashResult(this.identityHash(value.callable) ^ this.identityHash(value.receiver));
+    if (value instanceof AppendValue || value instanceof ValueMethod)
+      return this.hashResult(this.identityHash(value.receiver) ^ BigInt('0x' + hashUnits(Array.from(value.name, char => char.codePointAt(0)))));
     if (value instanceof MemoryViewValue) {
       if (value.cachedHash !== null) return value.cachedHash;
       this.liveView(value);
@@ -764,8 +770,7 @@ export class ValueRuntime {
       return this.hashResult(BigInt.asIntN(64, hash ^ BigInt(parts.length)));
     }
     if (value instanceof ListValue || value instanceof DictValue) this.fail("TypeError", "unhashable mutable value");
-    if (value instanceof SliceValue || value instanceof InstanceValue || value instanceof BoundMethodValue ||
-        value instanceof AppendValue || value instanceof PropertyAccessorValue)
+    if (value instanceof SliceValue || value instanceof InstanceValue || value instanceof PropertyAccessorValue)
       this.fail("UnsupportedOperationError", "This hash value family requires its separate protocol stage.", "UNSUPPORTED");
     return this.identityHash(value);
   }

@@ -57,7 +57,7 @@ stable hashes and equal-value invariants; their concrete implementation-dependen
 hash numbers are not a cross-process or CPython-address promise. Identity hashes
 belong to owned VM objects, not serialized representations or host addresses.
 Hashing mutable list/dict values fails with TypeError. Tuple keys containing user
-instances or bound methods remain explicitly deferred in this slice.
+instances remain separately gated; bound methods follow the [method hash contract](interpreter-object-hashing.md).
 
 At class creation, an own `__eq__` without an own `__hash__` installs a None hash
 slot, even when a parent supplies a hash. Inherited disabling remains effective.
@@ -131,7 +131,7 @@ infinity, definition-time hash disabling, inherited/explicit restoration, stable
 default descriptor identity, cross-module identity, stored hashes, collisions,
 mixed primitive/default/user keys and observable callback failures/mutation.
 Functions, classes, modules and other admitted default identity objects use the
-same owned key path; user and native bound-method hashing remains deferred.
+same owned key path; user and finite native bound-method hashing follows the [method hash contract](interpreter-object-hashing.md).
 
 Identity labels belong to the arena and are cleared on close. Dictionary queries
 hash once, preserve stored-key identity and insertion order, and retain original
