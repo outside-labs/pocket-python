@@ -49,3 +49,7 @@ custom attribute hooks and broader reflection.
 The separately adopted [ordering profile](interpreter-ordering.md) adds four rich
 ordering methods and bounded list/tuple/slice comparisons. Instance attribute
 hooks and custom type checks retain their own adopted contracts.
+
+Ordinary list/tuple/text repetition has a separate [R1–R3 contract](interpreter-repetition.md).
+Its reference matrix records primitive copying, Unicode and owned index fallback
+before the corresponding stages are adopted independently.
