@@ -374,7 +374,7 @@
       "id": "iterated-user-objects",
       "status": "partial",
       "scope": "Owned __iter__/__next__/__contains__, indexed fallback, iter/next signatures and iterator membership search in classes-source/1.",
-      "gaps": "Generators/async protocols, broader iterable-consuming APIs and ordering remain separate.",
+      "gaps": "Async protocols and broader iterable-consuming APIs remain separate; generators have their own finite adopted profile.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -399,8 +399,8 @@
     {
       "id": "user-equality-hash",
       "status": "partial",
-      "scope": "Owned __eq__/__ne__/__hash__, NotImplemented, reflected priority, bounded container equality and user dictionary keys.",
-      "gaps": "Structural dictionary mutation during comparison, tuples containing user instances, bound-method/slice hashing and ordering remain separately gated.",
+      "scope": "Owned __eq__/__ne__/__hash__, NotImplemented, reflected priority, bounded container equality and user dictionary keys. Four rich ordering methods and bounded list/tuple/slice comparisons use the owned machine.",
+      "gaps": "Structural dictionary mutation during comparison, tuples containing user instances, bound-method/slice hashing and user-key set ordering remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -412,20 +412,24 @@
       ],
       "probes": [
         "equality-hook",
-        "builtin-hash"
+        "builtin-hash",
+        "rich-ordering-and-slices"
       ],
       "evidence": [
         "tests/fixtures/interpreter/equality.json:subtype-reflected-first",
         "tests/fixtures/interpreter/equality.json:membership-rich-eq-truth",
         "tests/fixtures/interpreter/equality.json:dictionary-collision-update-delete",
-        "tests/fixtures/interpreter/equality.json:hash-restore-object"
+        "tests/fixtures/interpreter/equality.json:hash-restore-object",
+        "tests/fixtures/interpreter/ordering.json:lt-strict-subclass-priority",
+        "tests/fixtures/interpreter/ordering.json:sequence-mutation-reloads-unequal-pair",
+        "tests/fixtures/interpreter/ordering.json:slice-raw-ordering-result"
       ]
     },
     {
       "id": "further-object-protocols",
       "status": "partial",
-      "scope": "Binary/reflected/in-place arithmetic, unary +,-,~, divmod and power slots through owned descriptor callbacks, with subclass priority and NotImplemented fallback.",
-      "gaps": "Construction, super, richer type relations, metaclasses, custom attribute hooks, builtin subclassing and broader reflection remain separate contracts.",
+      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation.",
+      "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, namespace/identity reflection, bound-method/slice hashing and dynamic source admission remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -436,11 +440,13 @@
       ],
       "probes": [
         "metaclass",
-        "builtin-super"
+        "builtin-super",
+        "rich-ordering-and-slices"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:subclass-priority",
-        "tests/fixtures/interpreter/object-protocols.json:inplace-fallback"
+        "tests/fixtures/interpreter/object-protocols.json:inplace-fallback",
+        "tests/fixtures/interpreter/ordering.json:le-raw-result"
       ]
     },
     {
@@ -1908,8 +1914,8 @@
     {
       "id": "slice",
       "status": "partial",
-      "scope": "classes-source/1: slice(stop), slice(start,stop), slice(start,stop,step), positional only; immutable raw start/stop/step fields.",
-      "gaps": "Core constructor, slice.indices, repr, equality/hash and other reflection are deferred.",
+      "scope": "classes-source/1: slice(stop), slice(start,stop), slice(start,stop,step), positional only; immutable raw start/stop/step fields. Equality, inequality and ordering compare the raw fields through the owned lexicographic machine.",
+      "gaps": "Core constructor, slice.indices, repr, hash and broader descriptor APIs are deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1921,7 +1927,10 @@
       "probes": [
         "builtin-slice"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/ordering.json:slice-lt-raw-fields",
+        "tests/fixtures/interpreter/ordering.json:slice-containing-owned-equality"
+      ]
     },
     {
       "id": "sorted",

@@ -189,6 +189,12 @@ instance layouts,
 custom namespace preparation, broader reflection and async retain separate
 contracts.
 
+The finite [ordering profile](docs/interpreter-ordering.md) adds rich ordering
+methods and bounded list/tuple/slice comparisons, including reflected priority,
+raw results and callback-visible mutation. Run
+`python -m examples.interpreter_ordering` for an ordered-note console composing
+comparison, slice insertion and suspended iteration.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)
