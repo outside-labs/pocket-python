@@ -190,7 +190,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
     resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
-    delegateResult: (...args) => delegateResult(...args)});
+    delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
     const generator = frame.generator, completion = frame.completion;
     state.temporaries.push(generator, ...completionRoots(completion));
@@ -198,13 +198,15 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (!frame.ownsException) frame.activeException = null;
     for (const task of frame.tasks) if (task.type === "try" && !task.previousOwned) task.previous = null;
     generator.status = status; generator.frame = frame;
-    frame.leave(); state.frames.pop();
+    frame.leave(); frame.leave = null; state.frames.pop();
     return completion;
   };
   const yieldGenerator = value => {
     const frame = state.frames.at(-1);
     if (!frame.generator) hard("BYTECODE", "BytecodeError", "Yield requires a generator frame.");
     state.temporaries.push(value);
+    const task = frame.tasks.at(-1);
+    frame.suspensionSite = task.type === "delegate" ? task.site : {function: frame.fn.name, location: state.current.location};
     const mode = frame.generatorMode, site = frame.callsite;
     const completion = leaveGenerator(frame, "suspended");
     if (mode === "close") python("RuntimeError", "generator ignored GeneratorExit");
@@ -214,6 +216,27 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (iterator instanceof GeneratorValue) return {kind: "value", value: allocate(ValueMethod, iterator, name)};
     if (iterator instanceof InstanceValue) return classes.read(iterator, name);
     python("AttributeError", "Delegate has no attribute '" + name + "'");
+  };
+  const injectGenerator = value => {
+    const frame = state.frames.at(-1);
+    addTrace(value, frame.suspensionSite);
+    if (frame.activeException && frame.activeException !== value) mutate(value, () => {
+      const before = value.context; value.context = frame.activeException;
+      return () => { value.context = before; };
+    });
+    handle(new Raised(value));
+  };
+  const definitionSite = callable => {
+    for (const fn of callable.pool.code.functions) for (const block of fn.blocks) {
+      for (let index = 0; index < block.instructions.length; index++) {
+        charge(1);
+        const [op, target] = block.instructions[index];
+        if (["function", "function-defaults"].includes(op) && target === callable.index)
+          return {function: callable.pool.code.functions[callable.index].name,
+            location: block.source ? {filename: block.source.filename, span: block.source.spans[index]} : null};
+      }
+    }
+    return {function: callable.pool.code.functions[callable.index].name, location: null};
   };
   const delegateAdvance = (mode, value) => {
     const frame = state.frames.at(-1), task = frame.tasks.at(-1), site = task.site;
@@ -225,8 +248,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     try { plan = delegateMethod(task.iterator, mode); }
     catch (error) {
       if (!(error instanceof Raised) || error.value.name !== "AttributeError" || mode === "send") throw error;
-      if (mode === "close") { handle(new Raised(task.closing)); return; }
-      handle(new Raised(value)); return;
+      if (mode === "close") { injectGenerator(task.closing); return; }
+      injectGenerator(value); return;
     }
     const args = mode === "close" ? [] : [value];
     if (plan.kind === "value") call(plan.value, args, [], [], site, finish);
@@ -238,7 +261,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const frame = state.frames.at(-1), task = frame.tasks.at(-1);
     if (kind === "delegate-iter") { task.iterator = value; delegateAdvance("send", null); }
     else if (kind === "delegate-next") yieldGenerator(value);
-    else if (kind === "delegate-close") handle(new Raised(task.closing));
+    else if (kind === "delegate-close") injectGenerator(task.closing);
     else { frame.tasks.pop(); frame.tasks.at(-1).stack.push(value); }
     return null;
   };
@@ -251,9 +274,10 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const fresh = generator.status === "created";
     if (fresh && mode === "send" && value !== null) python("TypeError", "can't send non-None value to a just-started generator");
     if (generator.status === "closed" || fresh && mode !== "send") {
+      if (fresh && mode === "throw") addTrace(value, definitionSite(generator.callable));
       generator.status = "closed"; generator.callable = null; generator.bindings.clear();
       if (mode === "close") { dispatch(deliver(null, completion, site)); return; }
-      if (mode === "throw") throw new Raised(value);
+      if (mode === "throw") { addTrace(value, site); throw new Raised(value); }
       python("StopIteration", "");
     }
     state.temporaries.push(generator, value, ...completionRoots(completion));
@@ -275,8 +299,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     generator.status = "running";
     const frame = generator.frame; frame.generatorMode = mode;
     if (frame.tasks.at(-1).type === "delegate") delegateAdvance(mode, value);
-    else if (mode === "close") handle(new Raised(allocate(ExceptionValue, "GeneratorExit", [], "")));
-    else if (mode === "throw") handle(new Raised(value));
+    else if (mode === "close") injectGenerator(allocate(ExceptionValue, "GeneratorExit", [], ""));
+    else if (mode === "throw") injectGenerator(value);
     else if (!fresh) frame.tasks.at(-1).stack.push(value);
   };
   const diagnostic = value => {

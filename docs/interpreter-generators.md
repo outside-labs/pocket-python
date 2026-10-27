@@ -37,8 +37,8 @@ See the [yield expression and generator method reference](https://docs.python.or
 
 ## Acceptance
 
-The corpus contains 28 adopted class comparisons and three explicit refusals;
-the shared core selection has 25 comparisons and three refusals. CI runs all
+The corpus contains 32 adopted class comparisons and three explicit refusals;
+the shared core selection has 29 comparisons and three refusals. CI runs all
 eight target/profile/driver combinations and requires zero logical teardown.
 Dedicated tests collect between every instruction, retain suspended aliases and
 cycles, and interrupt execution in generator bodies and comprehension callbacks.
@@ -49,3 +49,7 @@ Run `python -m examples.interpreter_generators` to build a composed console;
 new source after reload, method/body errors, hard Stop/Restart and waiting
 class-to-core updates. Assignment expressions in comprehensions, multi-argument
 throw, generator frame introspection and async retain their future boundaries.
+
+Injected generator exceptions retain the fresh definition or suspended yield
+frame, delegated yield-from frames and active exception context. The corpus
+checks these frame names and source lines against the pinned executable oracle.

@@ -307,6 +307,91 @@
       "source": "class D:\n def __iter__(self): return self\n def __next__(self): return 1\n @property\n def throw(self): raise AttributeError(\"missing\")\ndef g(): yield from D()\na=g()\nprint(next(a))\ntry: a.throw(ValueError(\"original\"))\nexcept ValueError as e: print(str(e))\n",
       "stdout": "1\noriginal\n",
       "stage": "G1"
+    },
+    {
+      "id": "injected-yield-trace",
+      "stage": "G1",
+      "source": "def g():\n yield 1\na=g()\nnext(a)\na.throw(ValueError(\"injected\"))\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "g",
+          "line": 2
+        }
+      ],
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "injected-fresh-trace",
+      "stage": "G1",
+      "source": "def g():\n yield 1\ng().throw(ValueError(\"fresh\"))\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        },
+        {
+          "function": "g",
+          "line": 1
+        }
+      ],
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "injected-delegated-trace",
+      "stage": "G1",
+      "source": "def inner():\n yield 1\ndef outer():\n yield from inner()\na=outer()\nnext(a)\na.throw(ValueError(\"delegated\"))\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "outer",
+          "line": 4
+        },
+        {
+          "function": "inner",
+          "line": 2
+        }
+      ],
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "injected-active-context",
+      "stage": "G1",
+      "source": "def g():\n try:\n  raise KeyError(\"saved\")\n except KeyError:\n  yield 1\na=g()\nnext(a)\na.throw(ValueError(\"injected\"))\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 8
+        },
+        {
+          "function": "g",
+          "line": 5
+        }
+      ],
+      "error_context_type": "KeyError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     }
   ]
 }

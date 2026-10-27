@@ -43,6 +43,10 @@ def references(corpus_path=CORPUS):
         passed = passed and actual['stdout'] == case.get('stdout', '')
         if 'error_type' in case:
             passed = passed and actual.get('error', {}).get('type') == case['error_type']
+        if 'error_frames' in case:
+            passed = passed and actual.get('error', {}).get('frames') == case['error_frames']
+        if 'error_context_type' in case:
+            passed = passed and (actual.get('error', {}).get('context') or {}).get('type') == case['error_context_type']
         records.append({'id': case['id'], 'stage': case['stage'],
                         'reference_status': 'pass' if passed else 'fail', 'reference': actual})
     return {'schema_version': 1, 'suite': corpus.get('suite', 'interpreter-classes/1'), 'profile': corpus['profile'],
@@ -89,6 +93,12 @@ def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, 
             passed = actual['ok'] == expected['ok'] and actual['stdout'] == expected['stdout']
             if not expected['ok']:
                 passed = passed and actual.get('error', {}).get('type') == expected['error']['type']
+            if 'error_frames' in case:
+                frames = [{'function': frame['function'], 'line': frame['location']['span'][0] if frame.get('location') else None}
+                          for frame in actual.get('error', {}).get('traceback', [])]
+                passed = passed and frames == case['error_frames']
+            if 'error_context_type' in case:
+                passed = passed and (actual.get('error', {}).get('context') or {}).get('type') == case['error_context_type']
             classification = 'reference'
         else:
             passed = not actual['ok'] and actual.get('error', {}).get('code') == 'UNSUPPORTED'

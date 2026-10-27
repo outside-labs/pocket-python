@@ -7,7 +7,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, resumeGenerator, yieldGenerator, delegateResult}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value instanceof NotImplementedValue) return "NotImplemented";
@@ -668,7 +668,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
-        if (task.kind === "unary" && task.operation === "delegate-raise") throw new Raised(task.value);
+        if (task.kind === "unary" && task.operation === "delegate-raise") { injectGenerator(task.value); return; }
         if (task.kind === "unary" && task.operation === "unpack-short") {
           state.temporaries = operationRoots(task); python("ValueError", "Not enough values to unpack");
         }
