@@ -1,6 +1,6 @@
 # Custom instance and subclass checking
 
-The next finite #123 slices adopt custom type checking against CPython 3.14.7.
+The finite #123 slices adopt custom type checking against CPython 3.14.7.
 The `type-checks.json` source corpus is executable reference evidence; stages
 become implemented only after independent execution and ownership checks pass.
 The explicit classes-source/1 profile and bytecode 5 remain the admission boundary.
@@ -46,3 +46,34 @@ deployment change accompanies these protocols.
 Semantic anchors: Python's [custom checking protocol](https://docs.python.org/3.14/reference/datamodel.html#customizing-instance-and-subclass-checks)
 and the pinned [CPython implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/abstract.c).
 The pinned executable decides the finite cases when later documentation differs.
+
+## Accepted evidence
+
+O9/O10 are implemented. The 74-case corpus has 71 adopted comparisons and three
+explicit future refusals. Node and Chromium each pass drain and instruction-boundary
+execution: 296 observations, including 288 measured zero logical teardown records.
+Retained reports verify all 55 input hashes and the corpus hash. The full Node
+suite passes 562 tests, including every-instruction collection, cancellation,
+idempotent close, callback source frames, bounded tuple nesting and real recursion,
+work, instruction and allocation failures in binding, checking and truth phases.
+The eight composed resource observations retain their original exact accounting.
+
+Installed-wheel offline acceptance passes 599 program comparisons and 49
+acceptance groups with 111 Stop/Restart cycles. Newly entered source composes
+metaclass checking, ordinary checker objects, descriptors, truth conversion,
+native defaults and suspended generators after offline reload. Binding, checker
+and truth failures retain Python diagnostics. The waiting class-to-core update
+retains its reduced authority. The earlier construction and attribute corpora
+also adopt their formerly refused metaclass instance-check cases.
+
+Build `python -m examples.interpreter_type_checks` for the composed console. The
+[payload/source record](measurements/2026-10-27-type-checks.json) verifies all 38
+files and receipt hashes of its 609,290-byte payload, including deterministic
+compression and an identical fresh rebuild. The wheel and source distribution
+pass the repository's isolated installation checks. The payload is a local
+example measurement; no timing, device or package compatibility claim follows.
+
+#123 and #33 remain open for namespace/identity reflection, ordering, builtin
+layouts, further metaclass protocols and dynamic source admission. Persistent
+execution, native coroutines, host await and event ownership remain under #34.
+No publication or deployment accompanies this delivery.

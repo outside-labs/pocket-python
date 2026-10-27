@@ -10,7 +10,7 @@ and its ownership tests. Classes remain explicit in classes-source/1, bytecode 5
 | O6 | Ordinary instance reads select `__getattribute__` through the actual type's C3 MRO. Only `AttributeError`, including descriptor-binding errors, enables type-selected `__getattr__`; its own failure is propagated once. The default read retains data-descriptor, instance and non-data-descriptor precedence. `object.__getattribute__` bypasses custom hooks and never invokes the missing-attribute fallback. Functions, static/class methods and descriptor-valued hooks bind through ordinary owned frames. Instance shadows do not replace implicit hooks. |
 | O7 | Writes/deletes select `__setattr__`/`__delattr__` through the actual type, ignoring instance shadows. Implicit mutation ignores the hook's return value; explicit calls preserve it. Direct `object.__setattr__`/`object.__delattr__` bypass custom hooks while retaining existing properties, descriptors, bounded mutation and rollback on allocation failure. Missing/erroring mutation never invokes `__getattr__`. |
 | O8 | Ordinary instance `__class__` reads obey custom hooks and class descriptors/values; the native default otherwise returns the actual type. `type(value)`, implicit protocols and successful actual-type checks bypass advertised identities. `isinstance` traverses bounded nested class-info tuples in order, checking the actual type before an advertised class for each valid candidate. `AttributeError` in the advertised read means false; other exceptions propagate. `super` first accepts real instance/subtype relationships, then tries an advertised class. A missing/invalid/unrelated advertised class produces `TypeError`; other lookup failures propagate. |
-| Future | Custom metaclass attribute/instance/subclass hooks, namespace preparation, class keywords, `__init_subclass__`, `__mro_entries__`, builtin layouts, `__dict__`/mapping proxies, dir/vars/globals/locals/id and dynamic source admission retain separate contracts. Async scheduling and host capabilities remain under #34. |
+| Future | Custom metaclass attribute hooks, namespace preparation, class keywords, `__init_subclass__`, `__mro_entries__`, builtin layouts, `__dict__`/mapping proxies, dir/vars/globals/locals/id and dynamic source admission retain separate contracts. Async scheduling and host capabilities remain under #34. |
 
 The existing bounded string-name contract applies: at most 256 JavaScript code
 units, no identifier normalization for reflective calls, and no private-name
@@ -70,3 +70,7 @@ Build `python -m examples.interpreter_attributes` for the composed console. The
 38 files and receipt hashes for its 604,860-byte payload, with deterministic
 compression and an identical fresh rebuild. This measures the complete local
 example payload; it makes no timing, device or package claim.
+
+The later [type-checking contract](interpreter-type-checks.md) adopts custom
+metaclass instance/subclass checking through separate implicit slots. It does
+not widen metaclass ordinary attribute access or namespace preparation.

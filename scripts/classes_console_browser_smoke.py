@@ -26,6 +26,7 @@ from examples.interpreter_values import SOURCE as VALUES_SOURCE, CORE_SOURCE as 
 from examples.interpreter_generators import SOURCE as GENERATOR_SOURCE, CORE_SOURCE as GENERATOR_CORE_SOURCE
 from examples.interpreter_construction import SOURCE as CONSTRUCTION_SOURCE
 from examples.interpreter_attributes import SOURCE as ATTRIBUTE_SOURCE
+from examples.interpreter_type_checks import SOURCE as TYPE_CHECK_SOURCE
 
 
 def smoke(channel=None):
@@ -81,6 +82,7 @@ def smoke(channel=None):
                     assert 'sets, bytes, bytearrays and memoryviews' in page.locator('#language').inner_text()
                     assert 'construction, super and finite metaclasses' in page.locator('#language').inner_text()
                     assert 'instance attribute hooks and advertised class identities' in page.locator('#language').inner_text()
+                    assert 'custom instance/subclass checks' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -161,12 +163,14 @@ def smoke(channel=None):
                     objects = json.loads((ROOT / 'tests/fixtures/interpreter/object-protocols.json').read_bytes())
                     construction = json.loads((ROOT / 'tests/fixtures/interpreter/construction.json').read_bytes())
                     attributes = json.loads((ROOT / 'tests/fixtures/interpreter/attribute-hooks.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes]:
+                    type_checks = json.loads((ROOT / 'tests/fixtures/interpreter/type-checks.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
                     programs.append(CONSTRUCTION_SOURCE)
                     programs.append(ATTRIBUTE_SOURCE)
+                    programs.append(TYPE_CHECK_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -391,6 +395,16 @@ def smoke(channel=None):
                     refused('class M(type):\n print("never")\n def __getattribute__(self,name): return 7\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == ''
                     checks.append('instance-hook-errors-and-deferred-reflection-retain-offline-boundaries')
+                    run(TYPE_CHECK_SOURCE, 'virtual True True\nactual False False True\nvalues 7 8 True\n')
+                    checks.append('new-custom-checking-composes-with-descriptors-truth-generators-and-native-defaults-offline')
+                    for slot, builtin, argument in [('__instancecheck__', 'isinstance', '7'), ('__subclasscheck__', 'issubclass', 'int')]:
+                        refused('class M(type):\n def '+slot+'(cls,obj):\n  raise ValueError("check")\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n', 'ValueError:')
+                        assert slot+' at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                        refused('class D:\n def __get__(self,obj,owner):\n  raise AttributeError("binding")\nclass M(type): '+slot+'=D()\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n', 'AttributeError:')
+                        assert '__get__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                        refused('class Truth:\n def __bool__(self):\n  raise ValueError("truth")\nclass M(type):\n def '+slot+'(cls,obj): return Truth()\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n', 'ValueError:')
+                        assert '__bool__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    checks.append('custom-check-binding-body-and-truth-errors-retain-offline-source-diagnostics')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -502,6 +516,12 @@ def smoke(channel=None):
                         'class B: pass\nclass Spin:\n @property\n def __class__(self):\n  while True: pass\nprint(isinstance(Spin(),((B,),)))\n',
                         'class B: pass\nclass Spin:\n @property\n def __class__(self):\n  while True: pass\nsuper(B,Spin())\n'
                     ])
+                    for slot, builtin, argument in [('__instancecheck__', 'isinstance', '7'), ('__subclasscheck__', 'issubclass', 'int')]:
+                        busy.extend([
+                            'class M(type):\n def '+slot+'(cls,obj):\n  while True: pass\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n',
+                            'class D:\n def __get__(self,obj,owner):\n  while True: pass\nclass M(type): '+slot+'=D()\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n',
+                            'class Truth:\n def __bool__(self):\n  while True: pass\nclass M(type):\n def '+slot+'(cls,obj): return Truth()\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n'
+                        ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')

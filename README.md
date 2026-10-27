@@ -180,7 +180,12 @@ protocols with suspended generators. The
 [instance attribute profile](docs/interpreter-attribute-hooks.md) adds owned
 __getattribute__/__getattr__, write/delete hooks, native object defaults and
 advertised class checks. Run `python -m examples.interpreter_attributes` for a
-console composing hooks, reflection and generators. Builtin instance layouts,
+console composing hooks, reflection and generators. The finite
+[type-checking profile](docs/interpreter-type-checks.md) adds owned metaclass
+and ordinary checker `__instancecheck__`/`__subclasscheck__`, descriptor binding,
+truth conversion and native type defaults. Run
+`python -m examples.interpreter_type_checks` for a composed console. Builtin
+instance layouts,
 custom namespace preparation, broader reflection and async retain separate
 contracts.
 
