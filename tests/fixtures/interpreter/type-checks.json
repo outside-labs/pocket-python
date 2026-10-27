@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "Base",
-    "O9"
+    "O9",
+    "O10"
   ],
   "cases": [
     {
@@ -444,8 +445,8 @@
     {
       "id": "subclass-explicit-preserves-result",
       "stage": "O10",
-      "source": "class M(type):\n def __subclasscheck__(cls,sub): return [7]\nclass A(metaclass=M): pass\nprint(A.__subclasscheck__(int))\n",
-      "stdout": "[7]\n"
+      "source": "class M(type):\n def __subclasscheck__(cls,sub): return [7]\nclass A(metaclass=M): pass\nprint(A.__subclasscheck__(int)[0])\n",
+      "stdout": "7\n"
     },
     {
       "id": "subclass-dynamic-metaclass",

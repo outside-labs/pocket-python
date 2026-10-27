@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
 import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -347,11 +347,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "check-truth") return valueTask(value, site, completion.after);
     if (completion?.kind === "advertised-super")
       return valueTask(classes.superProxy(completion.type, completion.receiver, value), site, completion.after);
-    if (completion?.kind === "instance-tuple") {
+    if (["instance-tuple", "subclass-tuple"].includes(completion?.kind)) {
       if (value || completion.position === completion.type.items.length) return valueTask(value, site, completion.after);
       charge(1);
-      return instanceTask(completion.receiver, completion.type.items[completion.position], site,
-        continuation("instance-tuple", {...completion, position: completion.position + 1}), completion.depth, completion.nesting + 1);
+      const next = completion.kind === "subclass-tuple" ? subclassTask : instanceTask;
+      return next(completion.receiver, completion.type.items[completion.position], site,
+        continuation(completion.kind, {...completion, position: completion.position + 1}), completion.depth, completion.nesting + 1);
     }
     if (completion?.kind === "new-result") {
       state.temporaries.push(value, ...completionRoots(completion));
@@ -714,26 +715,29 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries = operationRoots(task);
           python("TypeError", "super receiver must be an instance or subtype of its first argument");
         }
-        if (task.kind === "instance") {
+        if (["instance", "subclass"].includes(task.kind)) {
           state.temporaries = operationRoots(task);
           const {receiver, type, nesting} = task;
+          const subclass = task.kind === "subclass", next = subclass ? subclassTask : instanceTask;
+          const slot = subclass ? "__subclasscheck__" : "__instancecheck__", tuple = subclass ? "subclass-tuple" : "instance-tuple";
           if (values.isSequenceType(type, "tuple")) {
             if (nesting >= 32) hard("BUDGET", "ExecutionLimitError", "Class-info tuple nesting budget exceeded");
             if (!type.items.length) { task = valueTask(false, site, completion); continue; }
             charge(1);
-            task = instanceTask(receiver, type.items[0], site,
-              continuation("instance-tuple", {receiver, type, position: 1, nesting, depth, after: completion}), depth, nesting + 1);
+            task = next(receiver, type.items[0], site,
+              continuation(tuple, {receiver, type, position: 1, nesting, depth, after: completion}), depth, nesting + 1);
             continue;
           }
-          if (!task.native && classes.customCheck(type, "__instancecheck__")) {
-            if (classes.typeOf(receiver) === type) { task = valueTask(true, site, completion); continue; }
-            if (++depth > maxDepth) python("RecursionError", "maximum instance-check dispatch depth exceeded");
-            const plan = classes.bindCheck(type, "__instancecheck__");
+          if (!task.native && classes.customCheck(type, slot)) {
+            if (!subclass && classes.typeOf(receiver) === type) { task = valueTask(true, site, completion); continue; }
+            if (++depth > maxDepth) python("RecursionError", "maximum type-check dispatch depth exceeded");
+            const plan = classes.bindCheck(type, slot);
             const target = continuation("check-result", {receiver, type, depth, after: completion});
             task = plan.kind === "value" ? callTask(plan.value, [receiver], [], [], site, target, depth) :
               callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [receiver], keywords: [], keywordValues: [], after: target, depth}), depth);
             continue;
           }
+          if (subclass) { task = valueTask(classes.subclass(receiver, type), site, completion); continue; }
           if (!classes.isType(type)) python("TypeError", "isinstance requires an adopted type");
           if (classes.subclass(classes.typeOf(receiver), type)) { task = valueTask(true, site, completion); continue; }
           if (!classes.needsAdvertised(receiver)) { task = valueTask(false, site, completion); continue; }
@@ -1222,6 +1226,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "type.__instancecheck__") {
             if (keywords.length || args.length !== 2 || !classes.isType(args[0])) python("TypeError", "type.__instancecheck__ requires a type and instance");
             task = instanceTask(args[1], args[0], site, completion, depth, 0, true); continue;
+          }
+          if (callable.name === "issubclass" && (classes.customCheck(args[1], "__subclasscheck__") || values.isSequenceType(args[1], "tuple"))) {
+            if (keywords.length || args.length !== 2) python("TypeError", "issubclass requires two positional arguments");
+            task = subclassTask(args[0], args[1], site, completion, depth); continue;
+          }
+          if (callable.name === "type.__subclasscheck__") {
+            if (keywords.length || args.length !== 2 || !classes.isType(args[0])) python("TypeError", "type.__subclasscheck__ requires a type and subclass");
+            task = subclassTask(args[1], args[0], site, completion, depth, 0, true); continue;
           }
           if (callable.name === "dict") {
             if (args.length || keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Populated dictionary constructors require their separate sequence stage.");

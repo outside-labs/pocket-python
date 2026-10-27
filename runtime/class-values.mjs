@@ -7,7 +7,7 @@ export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, 
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__instancecheck__"]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__"]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -146,7 +146,7 @@ export class ClassRuntime {
     for (const base of this.mro(type).slice(start)) {
       this.charge(1);
       if (base instanceof BuiltinValue) {
-        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__"].includes(name))
+        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
         continue;
       }
@@ -181,8 +181,6 @@ export class ClassRuntime {
   notification(receiver, owner, name) { return this.boundHook(receiver, "__set_name__", [owner, name]); }
   read(receiver, name) {
     this.key(name); this.touch(receiver);
-    if (["__instancecheck__", "__subclasscheck__"].includes(name) && !allowsClassSpecial(name, "attribute"))
-      this.fail("UnsupportedOperationError", "Custom type checking requires its separate protocol stage.", "UNSUPPORTED");
     const value = value => ({kind: "value", value});
     if (receiver instanceof SuperValue) {
       if (name === "__class__") return value(this.builtin("super"));
@@ -198,7 +196,7 @@ export class ClassRuntime {
       if (name === "__class__") return value(this.typeOf(receiver));
       if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(receiver.name, char => char.codePointAt(0))));
       if (this.isType(receiver)) {
-        if (receiver.name !== "type" && name === "__instancecheck__")
+        if (receiver.name !== "type" && ["__instancecheck__", "__subclasscheck__"].includes(name))
           return this.bindAttribute(this.builtin("type." + name), receiver, this.builtin("type"));
         if (name === "__module__") return value(this.values.string(Array.from("builtins", char => char.codePointAt(0))));
         if (name === "__mro__") return value(this.values.tuple(this.mro(receiver)));
@@ -237,7 +235,7 @@ export class ClassRuntime {
     }
     if (!allowsClassSpecial(name, "attribute")) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
-    const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (name === "__instancecheck__" ? this.builtin("type") : null) : null;
+    const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (["__instancecheck__", "__subclasscheck__"].includes(name) ? this.builtin("type") : null) : null;
     const metaItem = metaclass ? this.lookup(metaclass, name) : null;
     const metaDescriptor = metaItem?.found ? this.descriptor(metaItem.value) : null;
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
@@ -268,7 +266,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner)};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__instancecheck__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);
