@@ -669,12 +669,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       }
       else if (frame.callable.pool.code.version === 5 &&
           (["equal", "not-equal"].includes(op) && (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1))) ||
-           Object.hasOwn(ORDERING_SLOTS, op) && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue))) {
+           Object.hasOwn(ORDERING_SLOTS, op) && (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1))))) {
         const right = stack.pop(); dispatch(compareTask(op, stack.pop(), right, summary(frame, cursor)));
       }
-      else if (["less", "less-equal", "greater", "greater-equal"].includes(op) && frame.callable.pool.code.version === 5 &&
-          (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1))))
-        hard("UNSUPPORTED", "UnsupportedOperationError", "Ordering with user values requires its own comparison stage.");
       else if (Object.hasOwn(ARITHMETIC_SLOTS, op.startsWith("inplace-") ? op.slice(8) : op) &&
           (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
         const right = stack.pop(), left = stack.pop(); dispatch(arithmeticTask(op, [left, right], summary(frame, cursor)));

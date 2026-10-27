@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "Base",
-    "O12"
+    "O12",
+    "O13"
   ],
   "cases": [
     {

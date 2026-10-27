@@ -521,7 +521,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "sequence-item") return unaryTask("truth", value, site,
       continuation("sequence-truth", completion), completion.depth);
     if (completion?.kind === "sequence-truth") return value ? sequenceNext(completion, site, completion.position + 1) :
-      valueTask(completion.operation === "not-equal", site, completion.after);
+      sequenceDifferent(completion, site);
     if (completion?.kind === "search-equal") return unaryTask("truth", value, site, continuation("search-truth", completion), completion.depth);
     if (completion?.kind === "search-truth") return value ? valueTask(true, site, completion.after) :
       searchNext(completion.receiver, completion.key, site, completion.after, completion.depth);
@@ -675,8 +675,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return compareTask("equal", a[position], b[position], site,
         continuation("sequence-item", {left, right, operation, position, after, depth}), depth + 1);
     }
-    const equal = a.length === b.length;
-    return valueTask(operation === "equal" ? equal : !equal, site, after);
+    return sequenceLength(record, site);
+  };
+  const sequenceLength = (record, site) => {
+    const {left, right, operation, after} = record;
+    const a = values.comparisonSequence(left), b = values.comparisonSequence(right), equal = a.length === b.length;
+    return valueTask(operation === "equal" ? equal : operation === "not-equal" ? !equal :
+      values.binary(operation, BigInt(a.length), BigInt(b.length)), site, after);
+  };
+  const sequenceDifferent = (record, site) => {
+    const {left, right, operation, position, depth, after} = record;
+    if (["equal", "not-equal"].includes(operation)) return valueTask(operation === "not-equal", site, after);
+    const a = values.comparisonSequence(left), b = values.comparisonSequence(right);
+    // Equality and its truth callback may have changed either list. Select the
+    // current unequal pair only after those callbacks, as the native list does.
+    if (position >= a.length || position >= b.length) return sequenceLength(record, site);
+    return compareTask(operation, a[position], b[position], site, after, depth + 1);
   };
   const checkDictionaryCandidate = record => {
     if (record.receiver.version !== record.version || record.receiver.entries[record.position]?.key !== record.candidate)
@@ -923,14 +937,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           let {left, right} = task;
           const {operation, position} = task;
           const ordering = Object.hasOwn(ORDERING_SLOTS, operation);
-          if (values.isSet(left) && values.isSet(right)) { left = left.storage; right = right.storage; }
+          if (!ordering && values.isSet(left) && values.isSet(right)) { left = left.storage; right = right.storage; }
           if (!(left instanceof InstanceValue || right instanceof InstanceValue)) {
             if (values.sameSequenceKind(left, right)) {
               const a = values.comparisonSequence(left), b = values.comparisonSequence(right);
-              task = a.length !== b.length ? valueTask(operation === "not-equal", site, completion) :
+              task = !ordering && a.length !== b.length ? valueTask(operation === "not-equal", site, completion) :
                 sequenceNext({left, right, operation, after: completion, depth}, site); continue;
             }
-            if (values.isDict(left) && values.isDict(right)) {
+            if (!ordering && values.isDict(left) && values.isDict(right)) {
               task = left.entries.length !== right.entries.length ? valueTask(operation === "not-equal", site, completion) :
                 dictionaryNext({left, right, operation, after: completion, depth, version: left.version, otherVersion: right.version}, site); continue;
             }

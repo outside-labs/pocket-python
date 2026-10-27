@@ -39,6 +39,10 @@ const pausedSources = [
   'class A:\n @property\n def __lt__(self):\n  print("entered")\n  return lambda other: other[0]\nprint([1][0]+(A()< [7]))\n',
   'class A:\n def __lt__(self,other):\n  print("entered")\n  return other[0]\nprint([1][0]+(A()< [7]))\n',
   'class R:\n def __bool__(self):\n  print("entered")\n  return self.saved[0]==7\nclass A:\n def __lt__(self,other):\n  r=R()\n  r.saved=other\n  return r\nprint([7][0]+bool(A()< [7]))\n',
+  'class A:\n @property\n def __eq__(self):\n  print("entered")\n  return lambda other: False\n def __lt__(self,other): return other[0]\nprint([1][0]+([A()]<[[7]]))\n',
+  'class R:\n def __bool__(self):\n  print("entered")\n  return self.saved[0]==8\nclass A:\n def __eq__(self,other):\n  r=R()\n  r.saved=other\n  return r\n def __lt__(self,other): return other[0]\nprint([1][0]+([A()]<[[7]]))\n',
+  'class A:\n def __eq__(self,other): return False\n @property\n def __lt__(self):\n  print("entered")\n  return lambda other: other[0]\nprint([1][0]+([A()]<[[7]]))\n',
+  'class A:\n def __init__(self): self.saved=[7]\n def __eq__(self,other): return False\n def __lt__(self,other):\n  print("entered")\n  del x[0]\n  del y[0]\n  return other.saved[0]\nx=[A()]\ny=[A()]\nprint([1][0]+(x<y))\n',
 ];
 
 test('paused ordering binding, body and consuming truth survive collection, cancellation and close', async () => {
@@ -92,6 +96,18 @@ test('frame-free ordering callable cycles are bounded by implicit dispatch depth
 test('reflected NotImplemented reloads the forward slot after callback mutation', async () => {
   const result = await run('class A:\n def __lt__(self,other): return 3\nclass B(A):\n def __gt__(self,other):\n  A.__lt__=lambda self,other: 7\n  return NotImplemented\nprint(A()<B())\n');
   assert.equal(result.stdout, '7\n'); assert.equal(result.ok, true); closed(result.closed);
+});
+
+test('recursive element equality during ordering shares the comparison depth limit', async () => {
+  const result = await run('class A:\n def __eq__(self,other): return [self]<[other]\n[A()]<[A()]\n', {maxDepth: 12});
+  assert.equal(result.error.type, 'RecursionError'); closed(result.closed);
+});
+
+test('ordering dictionaries and user-key sets retain their own boundaries', async () => {
+  const dictionary = await run('class A: pass\nprint({"a":A()}<{"a":A()})\n');
+  assert.equal(dictionary.error.type, 'TypeError'); closed(dictionary.closed);
+  const set = await run('class A:\n def __hash__(self): return 7\n def __eq__(self,other): raise ValueError("never")\nx={A()}\nprint(x<=x)\n');
+  assert.equal(set.error.code, 'UNSUPPORTED'); assert.equal(set.stdout, ''); closed(set.closed);
 });
 
 test('core admission and metaclass ordering refuse before user effects', async () => {

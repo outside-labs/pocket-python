@@ -87,8 +87,8 @@ test('protocol discovery walks deep and cyclic graphs without host recursion',()
   const cycle=values.list([]);cycle.items.push(cycle);assert.equal(values.hasUserEquality(cycle),false);
 });
 
-test('core builtin admission and unadopted ordering remain explicit',async()=>{
+test('core builtin admission and adopted container ordering remain explicit',async()=>{
   const core=await runSourceRequest({modules:[unit('NotImplemented\n')]});assert.equal(core.error.type,'NameError');closed(core);
   const ordering=await run('class A:\n def __eq__(self,other): return True\nprint([A()]<[A()])\n');
-  assert.equal(ordering.error.code,'UNSUPPORTED');assert.equal(ordering.stdout,'');closed(ordering);
+  assert.equal(ordering.error,undefined);assert.equal(ordering.stdout,'False\n');closed(ordering);
 });
