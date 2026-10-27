@@ -1123,8 +1123,8 @@
     {
       "id": "dir",
       "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "scope": "The builtin name resolves; module namespace invocation explicitly refuses pending its live namespace contract.",
+      "gaps": "Availability alone earns no API support credit; optimized snapshots and custom hooks have separate implementation tasks.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1311,8 +1311,8 @@
     {
       "id": "globals",
       "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "scope": "The builtin name resolves; module namespace invocation explicitly refuses pending its live namespace contract.",
+      "gaps": "Availability alone earns no API support credit; optimized snapshots and custom hooks have separate implementation tasks.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1406,9 +1406,9 @@
     },
     {
       "id": "id",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Positional id(value) for adopted arena objects and None/bool singletons in classes-source/1; stable across collection, mutation and persistent callbacks.",
+      "gaps": "Unboxed integer identity and address/cross-session guarantees remain outside this finite contract.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1420,7 +1420,9 @@
       "probes": [
         "builtin-id"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/reflection.json:identity-alias"
+      ]
     },
     {
       "id": "input",
@@ -1567,8 +1569,8 @@
     {
       "id": "locals",
       "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "scope": "The builtin name resolves; module namespace invocation explicitly refuses pending its live namespace contract.",
+      "gaps": "Availability alone earns no API support credit; optimized snapshots and custom hooks have separate implementation tasks.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2082,8 +2084,8 @@
     {
       "id": "vars",
       "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "scope": "The builtin name resolves; module namespace invocation explicitly refuses pending its live namespace contract.",
+      "gaps": "Availability alone earns no API support credit; optimized snapshots and custom hooks have separate implementation tasks.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
