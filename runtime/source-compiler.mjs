@@ -510,8 +510,26 @@ class Compiler {
         ...(params.vararg ? [params.vararg] : []), ...(params.kwarg ? [params.kwarg] : [])];
       const captured = new Set(this.scopes.filter(child => child.parent === scope)
         .flatMap(child => [...child.free]).filter(key => scope.locals.has(key) && !parameters.includes(key)));
-      const ordered = [...new Set([...parameters, ...scope.locals])];
-      fn.locals = [...ordered.filter(key => !captured.has(key)), ...[...captured].sort(nameOrder)];
+      const ordered = new Set(parameters), remember = key => { if (scope.locals.has(key)) ordered.add(key); };
+      const visitBlock = id => {
+        if (id === null) return;
+        for (const [op, arg, extra, other, final] of fn.blocks[id].instructions) {
+          this.charge(node);
+          if (["load", "store", "delete"].includes(op)) remember(arg);
+          else if (op === "if") { visitBlock(arg); visitBlock(extra); }
+          else if (op === "while") { visitBlock(arg); visitBlock(extra); visitBlock(other); }
+          else if (["for", "for-iterator"].includes(op)) {
+            visitBlock(extra); remember(arg); visitBlock(other); visitBlock(final);
+          } else if (op === "try") {
+            visitBlock(arg);
+            for (const [types, alias, body] of extra) { types.forEach(remember); if (alias) remember(alias); visitBlock(body); }
+            visitBlock(other); visitBlock(final);
+          }
+        }
+      };
+      visitBlock(fn.body);
+      for (const key of scope.locals) ordered.add(key);
+      fn.locals = [...[...ordered].filter(key => !captured.has(key)), ...[...captured].sort(nameOrder)];
     }
   }
   compile() {
