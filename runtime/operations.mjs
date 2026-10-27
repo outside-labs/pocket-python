@@ -134,6 +134,9 @@ export function completion(kind, fields = {}) {
       arithmeticCheck(record.operation, record.args, record.position, record.order); depthCheck(record.depth); break;
     case "attribute-write": record = {kind, receiver: fields.receiver, after}; break;
     case "advertised-instance": case "advertised-super": record = {kind, receiver: fields.receiver, type: fields.type, after}; break;
+    case "check-result": case "check-truth":
+      record = {kind, receiver: fields.receiver, type: fields.type, depth: fields.depth, after};
+      depthCheck(record.depth); break;
     case "instance-tuple": record = {kind, receiver: fields.receiver, type: fields.type, position: fields.position, nesting: fields.nesting, depth: fields.depth, after};
       depthCheck(record.depth);
       if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 131072 ||
@@ -195,7 +198,7 @@ function visit(record) {
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];
     case "attribute-write": return [record.receiver, ...completionRoots(record.after)];
-    case "advertised-instance": case "advertised-super": case "instance-tuple": return [record.receiver, record.type, ...completionRoots(record.after)];
+    case "advertised-instance": case "advertised-super": case "instance-tuple": case "check-result": case "check-truth": return [record.receiver, record.type, ...completionRoots(record.after)];
     case "attribute-fallback": return [record.receiver, record.key, record.hook, ...completionRoots(record.after)];
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
@@ -270,10 +273,11 @@ export function attributeTask(receiver, name, site, after = null, depth = 0, ope
     throw new TypeError("Invalid attribute operation.");
   return Object.freeze({kind: "attribute", receiver, name, key, hook, item, operation, site, completion: after, depth});
 }
-export function instanceTask(receiver, type, site, after = null, depth = 0, nesting = 0) {
+export function instanceTask(receiver, type, site, after = null, depth = 0, nesting = 0, native = false) {
   depthCheck(depth); completionRoots(after);
+  if (typeof native !== "boolean") throw new TypeError("Invalid native instance-check phase.");
   if (!Number.isSafeInteger(nesting) || nesting < 0 || nesting > 32) throw new TypeError("Invalid class-info tuple depth.");
-  return Object.freeze({kind: "instance", receiver, type, nesting, site, completion: after, depth});
+  return Object.freeze({kind: "instance", receiver, type, nesting, native, site, completion: after, depth});
 }
 export function sliceTask(receiver, parts, site, after = null, depth = 0, operation = "get", item = null) {
   depthCheck(depth); completionRoots(after);

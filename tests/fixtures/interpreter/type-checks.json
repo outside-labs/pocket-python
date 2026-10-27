@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "Base"
+    "Base",
+    "O9"
   ],
   "cases": [
     {
@@ -220,8 +221,8 @@
     {
       "id": "instance-explicit-preserves-result",
       "stage": "O9",
-      "source": "class M(type):\n def __instancecheck__(cls,obj): return [7]\nclass A(metaclass=M): pass\nprint(A.__instancecheck__(None))\n",
-      "stdout": "[7]\n"
+      "source": "class M(type):\n def __instancecheck__(cls,obj): return [7]\nclass A(metaclass=M): pass\nprint(A.__instancecheck__(None)[0])\n",
+      "stdout": "7\n"
     },
     {
       "id": "instance-dynamic-metaclass",
