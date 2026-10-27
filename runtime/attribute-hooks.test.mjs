@@ -1,0 +1,84 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runSourceRequest} from './source-request.mjs';
+import {compileSourceModules} from './source-modules.mjs';
+import {ModuleSession} from './module-session.mjs';
+import {Execution} from './functions.mjs';
+import {attributeTask, completion, completionRoots, operationRoots} from './operations.mjs';
+
+const profile = {languageProfile: 'classes-source/1'};
+const unit = source => ({name: 'app', package: false, imports: [], source, notice: 'Synthetic attribute fixture'});
+const run = (source, options = {}, memoryLimits) => runSourceRequest({modules: [unit(source)], compileOptions: profile, options, memoryLimits});
+const closed = stats => { for (const key of ['bytes', 'objects', 'roots', 'frames', 'external']) assert.equal(stats[key], 0, key); };
+const corpus = JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/attribute-hooks.json', import.meta.url)));
+
+for (const fixture of corpus.cases.filter(c => corpus.implemented_stages.includes(c.stage)))
+  test('attribute source: ' + fixture.id, async () => {
+    const result = await run(fixture.source);
+    assert.equal(result.stdout, fixture.stdout);
+    assert.equal(result.error?.type, fixture.error_type, JSON.stringify(result.error));
+    closed(result.closed);
+  });
+
+test('attribute operations retain original names, fallback snapshots and destinations', () => {
+  const receiver = {}, key = {}, hook = {}, outer = {}, after = completion('relay', {receiver: outer});
+  const target = completion('attribute-fallback', {receiver, key, name: 'x', hook, depth: 0, after});
+  assert.deepEqual(completionRoots(target), [receiver, key, hook, outer]);
+  assert.deepEqual(operationRoots(attributeTask(receiver, 'x', null, target, 0, 'get', key)), [receiver, key, null, receiver, key, hook, outer]);
+  assert.throws(() => attributeTask(receiver, 7, null), TypeError);
+  assert.throws(() => attributeTask(receiver, 'x', null, null, 0, 'unknown'), TypeError);
+});
+
+test('read and binding callbacks survive every-instruction collection, cancellation and close', async () => {
+  const sources = [
+    'class A:\n def __getattribute__(self,name):\n  print("entered")\n  return [7]\nprint([1][0]+getattr(A(),"x",[9])[0])\n',
+    'class A:\n def __getattr__(self,name):\n  print("entered")\n  return [7]\nprint([1][0]+A().x[0])\n',
+    'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  def read(name): return [7]\n  return read\nclass A: __getattribute__=D()\nprint([1][0]+A().x[0])\n',
+    'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  raise AttributeError("binding")\nclass A:\n __getattribute__=D()\n def __getattr__(self,name): return [7]\nprint([1][0]+A().x[0])\n',
+    'class A:\n def __getattribute__(self,name):\n  del A.__getattr__\n  print("entered")\n  raise AttributeError("missing")\n def __getattr__(self,name): return [7]\nprint([1][0]+A().x[0])\n',
+  ];
+  for (const source of sources) {
+    const {registry} = await compileSourceModules([unit(source)], profile);
+    try { for (const mode of ['finish', 'cancel', 'close']) {
+      const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+      session.context.begin({shouldCancel: () => cancel}, text => { output += text; });
+      const execution = Execution.modules(session.context);
+      try {
+        while (execution.state !== 'completed') {
+          execution.advance(); session.memory.collect([], {cleanup: true});
+          if (output === 'entered\n') {
+            reached = true;
+            if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+            if (mode === 'close') break;
+          }
+        }
+        assert.ok(reached); if (mode === 'finish') assert.equal(output, 'entered\n8\n');
+      } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+      closed(session.stats());
+    } } finally { registry.close(); }
+  }
+});
+
+test('read hooks preserve source frames and share recursion, work and real allocation limits', async () => {
+  for (const slot of ['__getattribute__', '__getattr__']) {
+    const failure = await run('class A:\n def '+slot+'(self,name):\n  raise ValueError("original")\nA().x\n');
+    assert.equal(failure.error.type, 'ValueError');
+    assert.deepEqual(failure.error.traceback.map(f => [f.function, f.location.span[0]]), [['<module>', 4], [slot, 3]]);
+    closed(failure.closed);
+    for (const [body, options, limits, code] of [
+      ['return self.x', {maxDepth: 12}, undefined, 'PYTHON'],
+      ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+      ['items=[]\n  while True: items.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
+    ]) {
+      const result = await run('class A:\n def '+slot+'(self,name):\n  '+body+'\nA().x\n', options, limits);
+      assert.equal(result.error.code, code); if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+      closed(result.closed);
+    }
+  }
+});
+
+test('deferred special reflection refuses before instance hook effects', async () => {
+  const result = await run('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__dict__")\n');
+  assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
+});

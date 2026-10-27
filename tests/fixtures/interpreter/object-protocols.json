@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O1",
     "O2",
-    "O3"
+    "O3",
+    "O6"
   ],
   "cases": [
     {
@@ -95,7 +96,7 @@
     },
     {
       "id": "hooks-future",
-      "stage": "Future",
+      "stage": "O6",
       "source": "class A:\n def __getattr__(self,name): return 2\nprint(A().x)\n",
       "stdout": "2\n"
     },
