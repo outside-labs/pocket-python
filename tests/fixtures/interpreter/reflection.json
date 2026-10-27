@@ -458,8 +458,8 @@
       "stdout": "True\n"
     },
     {
-      "id": "generator-expression-locals-deferred",
-      "stage": "Future",
+      "id": "generator-expression-locals",
+      "stage": "O18",
       "source": "g=(locals() for x in range(1))\nprint(\"x\" in next(g))\n",
       "stdout": "True\n"
     },
@@ -482,14 +482,14 @@
       "stdout": "True\n"
     },
     {
-      "id": "nonstring-directory-deferred",
-      "stage": "Future",
+      "id": "nonstring-directory",
+      "stage": "O20",
       "source": "class A:\n def __dir__(self): return [2,1]\nprint(dir(A())[0])\n",
       "stdout": "1\n"
     },
     {
-      "id": "length-hint-directory-deferred",
-      "stage": "Future",
+      "id": "length-hint-directory",
+      "stage": "O19",
       "source": "class Items:\n def __iter__(self): return iter((\"x\",))\n def __len__(self):\n  print(\"hint\")\n  return 1\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
       "stdout": "hint\nx\n"
     },
@@ -613,6 +613,314 @@
       "stage": "O16",
       "source": "def f():\n try: x=1\n except ValueError: z=2\n else: y=3\n z=4\n for key in locals(): print(key)\nf()\n",
       "stdout": "x\ny\nz\n"
+    },
+    {
+      "id": "genexpr-implicit-iterator",
+      "stage": "O18",
+      "source": "g=(locals() for x in (7,8))\na=next(g)\nb=next(g)\nprint(list(a)==[\".0\",\"x\"],list(b)==[\".0\",\"x\"],a[\".0\"] is b[\".0\"],a[\"x\"],b[\"x\"])\n",
+      "stdout": "True True True 7 8\n"
+    },
+    {
+      "id": "genexpr-vars-fresh-shallow",
+      "stage": "O18",
+      "source": "saved=[]\ng=([locals(),vars()] for x in (saved,))\na,b=next(g)\nprint(a is b,a[\"x\"] is saved,a[\".0\"] is b[\".0\"])\na[\"x\"]=7\nsaved.append(9)\nprint(b[\"x\"][0])\n",
+      "stdout": "False True True\n9\n"
+    },
+    {
+      "id": "genexpr-dir-sorted",
+      "stage": "O18",
+      "source": "g=(dir() for z in (1,) for a in (2,))\nprint(next(g)==[\".0\",\"a\",\"z\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "genexpr-filters-before-binding",
+      "stage": "O18",
+      "source": "g=(locals() for x in (1,2) if len(locals())==2 for y in (3,) if \"y\" in vars())\na=next(g)\nprint(list(a)==[\".0\",\"x\",\"y\"],a[\"x\"],a[\"y\"])\n",
+      "stdout": "True 1 3\n"
+    },
+    {
+      "id": "genexpr-free-cell-order",
+      "stage": "O18",
+      "source": "def outer(z,a):\n g=(locals() for x in (7,) if z and a)\n return g\nprint(list(next(outer(1,2)))==[\".0\",\"x\",\"a\",\"z\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "genexpr-free-cell-update",
+      "stage": "O18",
+      "source": "def outer():\n saved=[7]\n g=(locals() for x in (1,2) if saved)\n a=next(g)\n saved=[9]\n b=next(g)\n return a[\"saved\"][0],b[\"saved\"][0]\nprint(outer()==(7,9))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "genexpr-aliased-builtin",
+      "stage": "O18",
+      "source": "inspect=locals\ng=(inspect() for item in (4,))\na=next(g)\nprint(list(a)==[\".0\",\"item\"],a[\"item\"])\n",
+      "stdout": "True 4\n"
+    },
+    {
+      "id": "genexpr-immediate-caller",
+      "stage": "O16",
+      "source": "def inspect(): return list(locals())\ng=(inspect() for x in (1,))\nprint(next(g)==[])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "genexpr-nested-scope",
+      "stage": "O18",
+      "source": "g=((locals() for y in (2,)) for x in (1,))\na=next(next(g))\nprint(list(a)==[\".0\",\"y\"],a[\"y\"],\"x\" in a)\n",
+      "stdout": "True 2 False\n"
+    },
+    {
+      "id": "genexpr-unpacked-targets",
+      "stage": "O18",
+      "source": "g=(locals() for z,a in ((7,8),))\nb=next(g)\nprint(list(b)==[\".0\",\"z\",\"a\"],b[\"z\"],b[\"a\"])\n",
+      "stdout": "True 7 8\n"
+    },
+    {
+      "id": "genexpr-snapshot-after-close",
+      "stage": "O18",
+      "source": "g=(locals() for x in ([7],))\na=next(g)\ng.close()\nprint(a[\"x\"][0],\".0\" in a)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "genexpr-lexical-class-cell",
+      "stage": "O18",
+      "source": "class A:\n def f(self): return (locals() for x in (7,) if __class__)\na=next(A().f())\nprint(list(a)==[\".0\",\"x\",\"__class__\"],a[\"__class__\"] is A)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "dir-length-order",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self):\n  print(\"len\")\n  return 2\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nlen\nTrue\n"
+    },
+    {
+      "id": "dir-length-index",
+      "stage": "O19",
+      "source": "class Index:\n def __index__(self):\n  print(\"index\")\n  return 2\nclass Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self): return Index()\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nindex\nTrue\n"
+    },
+    {
+      "id": "dir-length-negative",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self): return -1\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-length-overflow",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self): return 1<<100\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "dir-length-typeerror-default",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self):\n  print(\"len\")\n  raise TypeError(\"ignored\")\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nlen\nTrue\n"
+    },
+    {
+      "id": "dir-length-invalid-default",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self): return \"bad\"\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nTrue\n"
+    },
+    {
+      "id": "dir-length-valueerror",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self): raise ValueError(\"kept\")\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-length-hint-fallback",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self):\n  print(\"len\")\n  raise TypeError(\"ignored\")\n def __length_hint__(self):\n  print(\"hint\")\n  return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nlen\nhint\nTrue\n"
+    },
+    {
+      "id": "dir-length-hint-skipped",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __len__(self): return 0\n def __length_hint__(self): raise ValueError(\"unused\")\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nTrue\n"
+    },
+    {
+      "id": "dir-hint-only",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self):\n  print(\"hint\")\n  return 1\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nhint\nTrue\n"
+    },
+    {
+      "id": "dir-hint-notimplemented",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): return NotImplemented\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nTrue\n"
+    },
+    {
+      "id": "dir-hint-typeerror-default",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): raise TypeError(\"ignored\")\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nTrue\n"
+    },
+    {
+      "id": "dir-hint-valueerror",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): raise ValueError(\"kept\")\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-hint-negative",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): return -1\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-hint-overflow",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): return 1<<100\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "OverflowError"
+    },
+    {
+      "id": "dir-hint-invalid",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): return \"bad\"\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-hint-index-not-converted",
+      "stage": "O19",
+      "source": "class Index:\n def __index__(self): raise ValueError(\"unused\")\nclass Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): return Index()\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-hint-bool",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): return True\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nTrue\n"
+    },
+    {
+      "id": "dir-hint-descriptor",
+      "stage": "O19",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\")\n  return lambda: 0\nclass Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n __length_hint__=D()\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nbind\nTrue\n"
+    },
+    {
+      "id": "dir-hint-descriptor-typeerror",
+      "stage": "O19",
+      "source": "class D:\n def __get__(self,obj,owner): raise TypeError(\"binding\")\nclass Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n __length_hint__=D()\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-length-descriptor-typeerror",
+      "stage": "O19",
+      "source": "class D:\n def __get__(self,obj,owner): raise TypeError(\"binding\")\nclass Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n __len__=D()\n def __length_hint__(self):\n  print(\"hint\")\n  return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nhint\nTrue\n"
+    },
+    {
+      "id": "dir-hint-instance-shadow-bypassed",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self):\n  print(\"iter\")\n  return iter((\"z\",\"a\"))\n def __length_hint__(self): return 0\nclass A:\n def __dir__(self): return Items()\nitems=Items()\nitems.__length_hint__=lambda: 1/0\nclass B:\n def __dir__(self): return items\nprint(dir(B())==[\"a\",\"z\"])\n",
+      "stdout": "iter\nTrue\n"
+    },
+    {
+      "id": "dir-hint-original-not-iterator",
+      "stage": "O19",
+      "source": "class Iterator:\n def __iter__(self): return self\n def __next__(self): raise StopIteration\n def __length_hint__(self): raise ValueError(\"unused\")\nclass Items:\n def __iter__(self): return Iterator()\n def __length_hint__(self):\n  print(\"source\")\n  return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[])\n",
+      "stdout": "source\nTrue\n"
+    },
+    {
+      "id": "dir-iter-error-before-length",
+      "stage": "O19",
+      "source": "class Items:\n def __iter__(self): raise ValueError(\"iter\")\n def __len__(self): print(\"unused\"); return 0\nclass A:\n def __dir__(self): return Items()\ndir(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-hint-mutates-source",
+      "stage": "O19",
+      "source": "saved=[\"z\"]\nclass Items:\n def __iter__(self): return iter(saved)\n def __length_hint__(self):\n  saved.append(\"a\")\n  return 0\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())==[\"a\",\"z\"],saved==[\"z\",\"a\"])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "dir-numeric-entries",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [3,True,2,1.5]\nprint(dir(A())==[True,1.5,2,3])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-singleton-raw-entry",
+      "stage": "O20",
+      "source": "class X: pass\nx=X()\nclass A:\n def __dir__(self): return [x]\nprint(dir(A())[0] is x)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-entry-stability",
+      "stage": "O20",
+      "source": "class Entry:\n def __init__(self,key,label): self.key=key; self.label=label\n def __lt__(self,other): return self.key<other.key\nsaved=[Entry(2,\"z\"),Entry(1,\"a\"),Entry(1,\"b\"),Entry(2,\"y\")]\nclass A:\n def __dir__(self): return saved\nresult=dir(A())\nprint([x.label for x in result]==[\"a\",\"b\",\"z\",\"y\"],[x.label for x in saved]==[\"z\",\"a\",\"b\",\"y\"],result is saved,result[0] is saved[1])\n",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "dir-ordering-raw-truth",
+      "stage": "O20",
+      "source": "class Truth:\n def __init__(self,value): self.value=value\n def __bool__(self): return self.value\nclass Entry:\n def __init__(self,key): self.key=key\n def __lt__(self,other): return Truth(self.key<other.key)\nclass A:\n def __dir__(self): return [Entry(3),Entry(1),Entry(2)]\nprint([x.key for x in dir(A())]==[1,2,3])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-ordering-reflected",
+      "stage": "O20",
+      "source": "class Entry:\n def __init__(self,key): self.key=key\n def __lt__(self,other): return NotImplemented\n def __gt__(self,other): return self.key>other.key\nclass A:\n def __dir__(self): return [Entry(2),Entry(1)]\nprint([x.key for x in dir(A())]==[1,2])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-ordering-subtype-priority",
+      "stage": "O20",
+      "source": "class Entry:\n def __lt__(self,other): raise ValueError(\"unused\")\nclass Child(Entry):\n def __gt__(self,other): return True\nclass A:\n def __dir__(self): return [Child(),Entry()]\na=dir(A())\nprint(type(a[0]) is Entry,type(a[1]) is Child)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "dir-ordering-descriptor",
+      "stage": "O20",
+      "source": "class D:\n def __get__(self,obj,owner): return lambda other: obj.key<other.key\nclass Entry:\n __lt__=D()\n def __init__(self,key): self.key=key\nclass A:\n def __dir__(self): return [Entry(2),Entry(1)]\nprint([x.key for x in dir(A())]==[1,2])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dir-ordering-typeerror",
+      "stage": "O20",
+      "source": "class A:\n def __dir__(self): return [1,\"x\"]\ndir(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-ordering-notimplemented",
+      "stage": "O20",
+      "source": "class Entry:\n def __lt__(self,other): return NotImplemented\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-ordering-error",
+      "stage": "O20",
+      "source": "class Entry:\n def __lt__(self,other): raise ValueError(\"original\")\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dir-ordering-truth-error",
+      "stage": "O20",
+      "source": "class Truth:\n def __bool__(self): raise AttributeError(\"truth\")\nclass Entry:\n def __lt__(self,other): return Truth()\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "dir-ordering-copy-before-comparison",
+      "stage": "O20",
+      "source": "saved=[]\nclass Entry:\n def __init__(self,key): self.key=key\n def __lt__(self,other):\n  saved.append(\"later\")\n  return self.key<other.key\nsaved.append(Entry(2))\nsaved.append(Entry(1))\nclass A:\n def __dir__(self): return saved\na=dir(A())\nprint(len(a),a[0].key,a[1].key,len(saved)>2)\n",
+      "stdout": "2 1 2 True\n"
     }
   ]
 }
