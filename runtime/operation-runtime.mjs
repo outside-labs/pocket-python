@@ -980,8 +980,6 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const repeatable = value => values.isString(value) || values.isBinary(value) || values.isList(value) || values.isSequenceType(value, "tuple");
             const count = repeatable(left) && right instanceof InstanceValue ? 1 : repeatable(right) && left instanceof InstanceValue ? 0 : -1;
             if (count >= 0 && classes.lookup(args[count].type, "__index__").found) {
-              if (!(values.isBinary(args[1 - count]) || task.nativeInplace && values.isList(left)))
-                hard("UNSUPPORTED", "UnsupportedOperationError", "Ordinary list/tuple/text repetition requires its separate sequence stage.");
               task = unaryTask("index", args[count], site, continuation("arithmetic-index", {operation: task.nativeInplace ? "inplace-" + operation : operation, args, position: count, order: rightFirst, nativeInplace: task.nativeInplace, depth, after: completion}), depth); continue;
             }
           }

@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "R1",
-    "R2"
+    "R2",
+    "R3"
   ],
   "cases": [
     {
@@ -1104,12 +1105,6 @@
       "stage": "Future",
       "source": "class Items(list): pass\nprint(len(Items([1])*2))\n",
       "stdout": "2\n"
-    },
-    {
-      "id": "native-repeat-descriptor-deferred",
-      "stage": "Future",
-      "source": "print(list.__mul__([7],2))\n",
-      "stdout": "[7, 7]\n"
     },
     {
       "id": "view-repeat-error",

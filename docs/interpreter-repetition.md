@@ -3,7 +3,7 @@
 R1–R3 continue the finite arithmetic protocol in #123. CPython 3.14.7 is the
 executable reference for `tests/fixtures/interpreter/repetition.json`.
 Reference-only observations do not establish independent execution.
-R1/R2 are implemented in both source profiles; R3 retains its staged boundary.
+R1/R2 are implemented in both source profiles; R3 uses classes-source/1.
 
 | Stage | Contract |
 | --- | --- |
