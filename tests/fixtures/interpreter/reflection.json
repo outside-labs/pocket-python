@@ -10,7 +10,8 @@
     "O18",
     "O19",
     "O20",
-    "O21"
+    "O21",
+    "O22"
   ],
   "cases": [
     {
@@ -1425,6 +1426,315 @@
       "stage": "O21",
       "source": "def f(p):\n try:a=7\n except ValueError:b=8\n else:r=[locals() for x in [1]]\n print(list(r[0])==[\"p\",\"a\",\"x\"])\nf(9)\n",
       "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-module-nested-target-mask",
+      "stage": "O22",
+      "source": "x=9\ny=8\nr=[([locals() for x,y in [(3,4)]],locals()) for x in [1]]\nprint(\"y\" in r[0][1],r[0][0][0][\"y\"],x,y)\n",
+      "stdout": "False 4 9 8\n"
+    },
+    {
+      "id": "comprehension-class-shadow",
+      "stage": "O22",
+      "source": "class A:\n x=9\n r=[locals() for x in [1]]\nprint(A.x,A.r[0][\"x\"],\"__module__\" in A.r[0])\n",
+      "stdout": "9 1 False\n"
+    },
+    {
+      "id": "comprehension-class-nested-closure-shadow",
+      "stage": "O22",
+      "source": "def outer(x):\n class A:\n  r=[(x,[locals() for x in [2]],locals()) for z in [1]]\n return A.r\nr=outer(9)\nprint(r[0][0],r[0][1][0][\"x\"],\"x\" in r[0][2],*list(r[0][2]))\n",
+      "stdout": "9 2 True z x\n"
+    },
+    {
+      "id": "comprehension-class-free-unreferenced",
+      "stage": "O22",
+      "source": "def outer(z):\n class A:\n  r=[locals() for x in [1]]\n return A.r\nr=outer(7)\nprint(list(r[0])==[\"x\"],\"z\" in r[0])\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "comprehension-class-nested-directory",
+      "stage": "O22",
+      "source": "class A:\n r=[([dir() for y in [2]],dir()) for x in [1]]\nprint(A.r[0][0][0]==[\"x\",\"y\"],A.r[0][1]==[\"x\"])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "comprehension-module-aliased-vars",
+      "stage": "O22",
+      "source": "inspect=vars\nr=[inspect() for x in [1]]\nprint(list(r[0])==[\"x\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-module-aliased-dir",
+      "stage": "O22",
+      "source": "inspect=dir\nr=[inspect() for x in [1]]\nprint(r[0]==[\"x\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-module-callback-frame",
+      "stage": "O22",
+      "source": "def helper(p): return locals()\nr=[(helper(x),locals()) for x in [1]]\nprint(list(r[0][0])==[\"p\"],list(r[0][1])==[\"x\"])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "comprehension-module-generator-child",
+      "stage": "O22",
+      "source": "r=[(locals(),(locals() for y in [x])) for x in [1]]\ng=r[0][1]\na=next(g)\ng.close()\nprint(list(r[0][0])==[\"x\"],list(a)==[\".0\",\"y\"],a[\"y\"])\n",
+      "stdout": "True True 1\n"
+    },
+    {
+      "id": "comprehension-module-filter-vars",
+      "stage": "O22",
+      "source": "r=[x for x in [1,2] if vars()[\"x\"]>1]\nprint(r[0])\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "comprehension-module-filter-dir",
+      "stage": "O22",
+      "source": "r=[x for x in [1] if dir()==[\"x\"]]\nprint(r[0])\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "comprehension-class-iterable-live-refusal",
+      "stage": "Future",
+      "source": "class A:\n r=[locals() for x in [vars()]]\n",
+      "stdout": ""
+    },
+    {
+      "id": "comprehension-module-unpack-error",
+      "stage": "O22",
+      "source": "saved=[]\ntry:r=[saved.append(locals()) or [x for x,y in [(1,)]] for x in [7]]\nexcept ValueError:pass\nprint(list(saved[0])==[\"x\"],saved[0][\"x\"])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "comprehension-module-var-signature",
+      "stage": "O22",
+      "source": "r=[locals(7) for x in [1]]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "comprehension-class-snapshot-signature",
+      "stage": "O22",
+      "source": "class A:\n r=[vars(1,2) for x in [1]]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "comprehension-free-cell-nested-shadow",
+      "stage": "O21",
+      "source": "def outer(x):\n def f(p):\n  before=x\n  r=[(x,[locals() for x in [2]],locals()) for z in [1]]\n  print(r[0][0],r[0][1][0][\"x\"],r[0][2][\"x\"],locals()[\"x\"])\n return f\nouter(9)(7)\n",
+      "stdout": "9 2 9 9\n"
+    },
+    {
+      "id": "comprehension-active-target-through-intermediate",
+      "stage": "O21",
+      "source": "def f(x):\n r=[[[locals() for x in [3]] for z in [2]] for x in [1]]\n print(r[0][0][0][\"x\"],locals()[\"x\"])\nf(9)\n",
+      "stdout": "3 9\n"
+    },
+    {
+      "id": "comprehension-active-target-intermediate-snapshot",
+      "stage": "O21",
+      "source": "def f(x):\n r=[[(locals(),[locals() for x in [3]],locals()) for z in [2]] for x in [1]]\n print(r[0][0][0][\"x\"],r[0][0][1][0][\"x\"],r[0][0][2][\"x\"],locals()[\"x\"])\nf(9)\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "comprehension-local-mask-before-nested",
+      "stage": "O21",
+      "source": "def f(y):\n r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n print(\"y\" in r[0][0],r[0][1][0][\"y\"],\"y\" in r[0][2],locals()[\"y\"])\nf(9)\n",
+      "stdout": "False 2 False 9\n"
+    },
+    {
+      "id": "comprehension-audit-parameters-0-False",
+      "source": "def f(x,y):\n r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n for d in [r[0][0],r[0][1][0],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(9,8)\n",
+      "stage": "O21",
+      "stdout": "x\nx 1\nx y\nx 1\ny 2\nx\nx 1\n"
+    },
+    {
+      "id": "comprehension-audit-parameters-0-True",
+      "source": "def f(x,y):\n def closure():return x+y\n r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n for d in [r[0][0],r[0][1][0],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(9,8)\n",
+      "stage": "O21",
+      "stdout": "x closure\nx 1\nx y closure\nx 1\ny 2\nx closure\nx 1\n"
+    },
+    {
+      "id": "comprehension-audit-parameters-1-False",
+      "source": "def f(x,y):\n r=[(locals(),[(locals(),[locals() for x in [3]],locals()) for z in [2]],locals()) for x in [1]]\n for d in [r[0][0],r[0][1][0][0],r[0][1][0][1][0],r[0][1][0][2],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(9,8)\n",
+      "stage": "O21",
+      "stdout": "x y\nx 1\ny 8\ny z\ny 8\nz 2\nx y z\nx 3\ny 8\nz 2\ny z\ny 8\nz 2\nx y\nx 1\ny 8\n"
+    },
+    {
+      "id": "comprehension-audit-parameters-1-True",
+      "source": "def f(x,y):\n def closure():return x+y\n r=[(locals(),[(locals(),[locals() for x in [3]],locals()) for z in [2]],locals()) for x in [1]]\n for d in [r[0][0],r[0][1][0][0],r[0][1][0][1][0],r[0][1][0][2],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(9,8)\n",
+      "stage": "O21",
+      "stdout": "x y closure\nx 1\ny 8\ny closure z\ny 8\nz 2\nx y closure z\nx 3\ny 8\nz 2\ny closure z\ny 8\nz 2\nx y closure\nx 1\ny 8\n"
+    },
+    {
+      "id": "comprehension-audit-parameters-2-False",
+      "source": "def f(x,y):\n r=[(locals(),[(x,locals()) for z in [2]],locals()) for y in [1]]\n for d in [r[0][0],r[0][1][0][1],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(9,8)\n",
+      "stage": "O21",
+      "stdout": "x y\nx 9\ny 1\nx y z\nx 9\ny 1\nz 2\nx y\nx 9\ny 1\n"
+    },
+    {
+      "id": "comprehension-audit-parameters-2-True",
+      "source": "def f(x,y):\n def closure():return x+y\n r=[(locals(),[(x,locals()) for z in [2]],locals()) for y in [1]]\n for d in [r[0][0],r[0][1][0][1],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(9,8)\n",
+      "stage": "O21",
+      "stdout": "x y closure\nx 9\ny 1\nx y closure z\nx 9\ny 1\nz 2\nx y closure\nx 9\ny 1\n"
+    },
+    {
+      "id": "comprehension-audit-parameters-3-False",
+      "source": "def f(x,y):\n r=[(x,locals(),[locals() for x in [2]],locals()) for z in [1]]\n for d in [r[0][1],r[0][2][0],r[0][3]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(9,8)\n",
+      "stage": "O21",
+      "stdout": "x y z\nx 9\ny 8\nz 1\nx y z\nx 2\ny 8\nz 1\nx y z\nx 9\ny 8\nz 1\n"
+    },
+    {
+      "id": "comprehension-audit-parameters-3-True",
+      "source": "def f(x,y):\n def closure():return x+y\n r=[(x,locals(),[locals() for x in [2]],locals()) for z in [1]]\n for d in [r[0][1],r[0][2][0],r[0][3]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(9,8)\n",
+      "stage": "O21",
+      "stdout": "x y closure z\nx 9\ny 8\nz 1\nx y closure z\nx 2\ny 8\nz 1\nx y closure z\nx 9\ny 8\nz 1\n"
+    },
+    {
+      "id": "comprehension-audit-locals-0-False",
+      "source": "def f(p):\n x=9\n y=8\n r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n for d in [r[0][0],r[0][1][0],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(7)\n",
+      "stage": "O21",
+      "stdout": "p x\nx 1\np x y\nx 1\ny 2\np x\nx 1\n"
+    },
+    {
+      "id": "comprehension-audit-locals-0-True",
+      "source": "def f(p):\n x=9\n y=8\n def closure():return x+y\n r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n for d in [r[0][0],r[0][1][0],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(7)\n",
+      "stage": "O21",
+      "stdout": "p closure x\nx 1\np closure x y\nx 1\ny 2\np closure x\nx 1\n"
+    },
+    {
+      "id": "comprehension-audit-locals-1-False",
+      "source": "def f(p):\n x=9\n y=8\n r=[(locals(),[(locals(),[locals() for x in [3]],locals()) for z in [2]],locals()) for x in [1]]\n for d in [r[0][0],r[0][1][0][0],r[0][1][0][1][0],r[0][1][0][2],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(7)\n",
+      "stage": "O21",
+      "stdout": "p x y\nx 1\ny 8\np y z\ny 8\nz 2\np x y z\nx 3\ny 8\nz 2\np y z\ny 8\nz 2\np x y\nx 1\ny 8\n"
+    },
+    {
+      "id": "comprehension-audit-locals-1-True",
+      "source": "def f(p):\n x=9\n y=8\n def closure():return x+y\n r=[(locals(),[(locals(),[locals() for x in [3]],locals()) for z in [2]],locals()) for x in [1]]\n for d in [r[0][0],r[0][1][0][0],r[0][1][0][1][0],r[0][1][0][2],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(7)\n",
+      "stage": "O21",
+      "stdout": "p closure x y\nx 1\ny 8\np closure z y\ny 8\nz 2\np closure x z y\nx 3\ny 8\nz 2\np closure z y\ny 8\nz 2\np closure x y\nx 1\ny 8\n"
+    },
+    {
+      "id": "comprehension-audit-locals-2-False",
+      "source": "def f(p):\n x=9\n y=8\n r=[(locals(),[(x,locals()) for z in [2]],locals()) for y in [1]]\n for d in [r[0][0],r[0][1][0][1],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(7)\n",
+      "stage": "O21",
+      "stdout": "p x y\nx 9\ny 1\np x y z\nx 9\ny 1\nz 2\np x y\nx 9\ny 1\n"
+    },
+    {
+      "id": "comprehension-audit-locals-2-True",
+      "source": "def f(p):\n x=9\n y=8\n def closure():return x+y\n r=[(locals(),[(x,locals()) for z in [2]],locals()) for y in [1]]\n for d in [r[0][0],r[0][1][0][1],r[0][2]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(7)\n",
+      "stage": "O21",
+      "stdout": "p closure y x\nx 9\ny 1\np closure y z x\nx 9\ny 1\nz 2\np closure y x\nx 9\ny 1\n"
+    },
+    {
+      "id": "comprehension-audit-locals-3-False",
+      "source": "def f(p):\n x=9\n y=8\n r=[(x,locals(),[locals() for x in [2]],locals()) for z in [1]]\n for d in [r[0][1],r[0][2][0],r[0][3]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(7)\n",
+      "stage": "O21",
+      "stdout": "p x y z\nx 9\ny 8\nz 1\np x y z\nx 2\ny 8\nz 1\np x y z\nx 9\ny 8\nz 1\n"
+    },
+    {
+      "id": "comprehension-audit-locals-3-True",
+      "source": "def f(p):\n x=9\n y=8\n def closure():return x+y\n r=[(x,locals(),[locals() for x in [2]],locals()) for z in [1]]\n for d in [r[0][1],r[0][2][0],r[0][3]]:\n  print(*list(d))\n  for k in [\"x\",\"y\",\"z\"]:\n   if k in d:print(k,d[k])\nf(7)\n",
+      "stage": "O21",
+      "stdout": "p closure z x y\nx 9\ny 8\nz 1\np closure z x y\nx 2\ny 8\nz 1\np closure z x y\nx 9\ny 8\nz 1\n"
+    },
+    {
+      "id": "comprehension-audit-free-0-False",
+      "source": "def outer(x,y):\n def f(p):\n  saved=x+y\n  r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n  for d in [r[0][0],r[0][1][0],r[0][2]]:\n   print(*list(d))\n   for k in [\"x\",\"y\",\"z\"]:\n    if k in d:print(k,d[k])\n return f\nouter(9,8)(7)\n",
+      "stage": "O21",
+      "stdout": "p saved x y\nx 1\ny 8\np saved x y\nx 1\ny 2\np saved x y\nx 1\ny 8\n"
+    },
+    {
+      "id": "comprehension-audit-free-0-True",
+      "source": "def outer(x,y):\n def f(p):\n  saved=x+y\n  def closure():return x+y\n  r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n  for d in [r[0][0],r[0][1][0],r[0][2]]:\n   print(*list(d))\n   for k in [\"x\",\"y\",\"z\"]:\n    if k in d:print(k,d[k])\n return f\nouter(9,8)(7)\n",
+      "stage": "O21",
+      "stdout": "p saved closure x y\nx 1\ny 8\np saved closure x y\nx 1\ny 2\np saved closure x y\nx 1\ny 8\n"
+    },
+    {
+      "id": "comprehension-audit-free-1-False",
+      "source": "def outer(x,y):\n def f(p):\n  saved=x+y\n  r=[(locals(),[(locals(),[locals() for x in [3]],locals()) for z in [2]],locals()) for x in [1]]\n  for d in [r[0][0],r[0][1][0][0],r[0][1][0][1][0],r[0][1][0][2],r[0][2]]:\n   print(*list(d))\n   for k in [\"x\",\"y\",\"z\"]:\n    if k in d:print(k,d[k])\n return f\nouter(9,8)(7)\n",
+      "stage": "O21",
+      "stdout": "p saved x y\nx 1\ny 8\np saved z x y\nx 9\ny 8\nz 2\np saved x z y\nx 3\ny 8\nz 2\np saved z x y\nx 9\ny 8\nz 2\np saved x y\nx 1\ny 8\n"
+    },
+    {
+      "id": "comprehension-audit-free-1-True",
+      "source": "def outer(x,y):\n def f(p):\n  saved=x+y\n  def closure():return x+y\n  r=[(locals(),[(locals(),[locals() for x in [3]],locals()) for z in [2]],locals()) for x in [1]]\n  for d in [r[0][0],r[0][1][0][0],r[0][1][0][1][0],r[0][1][0][2],r[0][2]]:\n   print(*list(d))\n   for k in [\"x\",\"y\",\"z\"]:\n    if k in d:print(k,d[k])\n return f\nouter(9,8)(7)\n",
+      "stage": "O21",
+      "stdout": "p saved closure x y\nx 1\ny 8\np saved closure z x y\nx 9\ny 8\nz 2\np saved closure x z y\nx 3\ny 8\nz 2\np saved closure z x y\nx 9\ny 8\nz 2\np saved closure x y\nx 1\ny 8\n"
+    },
+    {
+      "id": "comprehension-audit-free-2-False",
+      "source": "def outer(x,y):\n def f(p):\n  saved=x+y\n  r=[(locals(),[(x,locals()) for z in [2]],locals()) for y in [1]]\n  for d in [r[0][0],r[0][1][0][1],r[0][2]]:\n   print(*list(d))\n   for k in [\"x\",\"y\",\"z\"]:\n    if k in d:print(k,d[k])\n return f\nouter(9,8)(7)\n",
+      "stage": "O21",
+      "stdout": "p saved y x\nx 9\ny 1\np saved y z x\nx 9\ny 1\nz 2\np saved y x\nx 9\ny 1\n"
+    },
+    {
+      "id": "comprehension-audit-free-2-True",
+      "source": "def outer(x,y):\n def f(p):\n  saved=x+y\n  def closure():return x+y\n  r=[(locals(),[(x,locals()) for z in [2]],locals()) for y in [1]]\n  for d in [r[0][0],r[0][1][0][1],r[0][2]]:\n   print(*list(d))\n   for k in [\"x\",\"y\",\"z\"]:\n    if k in d:print(k,d[k])\n return f\nouter(9,8)(7)\n",
+      "stage": "O21",
+      "stdout": "p saved closure y x\nx 9\ny 1\np saved closure y z x\nx 9\ny 1\nz 2\np saved closure y x\nx 9\ny 1\n"
+    },
+    {
+      "id": "comprehension-audit-free-3-False",
+      "source": "def outer(x,y):\n def f(p):\n  saved=x+y\n  r=[(x,locals(),[locals() for x in [2]],locals()) for z in [1]]\n  for d in [r[0][1],r[0][2][0],r[0][3]]:\n   print(*list(d))\n   for k in [\"x\",\"y\",\"z\"]:\n    if k in d:print(k,d[k])\n return f\nouter(9,8)(7)\n",
+      "stage": "O21",
+      "stdout": "p saved z x y\nx 9\ny 8\nz 1\np saved z x y\nx 2\ny 8\nz 1\np saved z x y\nx 9\ny 8\nz 1\n"
+    },
+    {
+      "id": "comprehension-audit-free-3-True",
+      "source": "def outer(x,y):\n def f(p):\n  saved=x+y\n  def closure():return x+y\n  r=[(x,locals(),[locals() for x in [2]],locals()) for z in [1]]\n  for d in [r[0][1],r[0][2][0],r[0][3]]:\n   print(*list(d))\n   for k in [\"x\",\"y\",\"z\"]:\n    if k in d:print(k,d[k])\n return f\nouter(9,8)(7)\n",
+      "stage": "O21",
+      "stdout": "p saved closure z x y\nx 9\ny 8\nz 1\np saved closure z x y\nx 2\ny 8\nz 1\np saved closure z x y\nx 9\ny 8\nz 1\n"
+    },
+    {
+      "id": "comprehension-audit-class-0-False",
+      "source": "def outer(x,y):\n class A:\n  r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n return A.r\nr=outer(9,8)\nfor d in [r[0][0],r[0][1][0],r[0][2]]:\n print(*list(d))\n for k in [\"x\",\"y\",\"z\"]:\n  if k in d:print(k,d[k])\n",
+      "stage": "O22",
+      "stdout": "x\nx 1\nx y\nx 1\ny 2\nx\nx 1\n"
+    },
+    {
+      "id": "comprehension-audit-class-0-True",
+      "source": "def outer(x,y):\n class A:\n  r=[(locals(),[locals() for y in [2]],locals()) for x in [1]]\n return A.r\nr=outer(9,8)\nfor d in [r[0][0],r[0][1][0],r[0][2]]:\n print(*list(d))\n for k in [\"x\",\"y\",\"z\"]:\n  if k in d:print(k,d[k])\n",
+      "stage": "O22",
+      "stdout": "x\nx 1\nx y\nx 1\ny 2\nx\nx 1\n"
+    },
+    {
+      "id": "comprehension-audit-class-1-False",
+      "source": "def outer(x,y):\n class A:\n  r=[(locals(),[(locals(),[locals() for x in [3]],locals()) for z in [2]],locals()) for x in [1]]\n return A.r\nr=outer(9,8)\nfor d in [r[0][0],r[0][1][0][0],r[0][1][0][1][0],r[0][1][0][2],r[0][2]]:\n print(*list(d))\n for k in [\"x\",\"y\",\"z\"]:\n  if k in d:print(k,d[k])\n",
+      "stage": "O22",
+      "stdout": "x\nx 1\nz\nz 2\nx z\nx 3\nz 2\nz\nz 2\nx\nx 1\n"
+    },
+    {
+      "id": "comprehension-audit-class-1-True",
+      "source": "def outer(x,y):\n class A:\n  r=[(locals(),[(locals(),[locals() for x in [3]],locals()) for z in [2]],locals()) for x in [1]]\n return A.r\nr=outer(9,8)\nfor d in [r[0][0],r[0][1][0][0],r[0][1][0][1][0],r[0][1][0][2],r[0][2]]:\n print(*list(d))\n for k in [\"x\",\"y\",\"z\"]:\n  if k in d:print(k,d[k])\n",
+      "stage": "O22",
+      "stdout": "x\nx 1\nz\nz 2\nx z\nx 3\nz 2\nz\nz 2\nx\nx 1\n"
+    },
+    {
+      "id": "comprehension-audit-class-2-False",
+      "source": "def outer(x,y):\n class A:\n  r=[(locals(),[(x,locals()) for z in [2]],locals()) for y in [1]]\n return A.r\nr=outer(9,8)\nfor d in [r[0][0],r[0][1][0][1],r[0][2]]:\n print(*list(d))\n for k in [\"x\",\"y\",\"z\"]:\n  if k in d:print(k,d[k])\n",
+      "stage": "O22",
+      "stdout": "y x\nx 9\ny 1\ny z x\nx 9\ny 1\nz 2\ny x\nx 9\ny 1\n"
+    },
+    {
+      "id": "comprehension-audit-class-2-True",
+      "source": "def outer(x,y):\n class A:\n  r=[(locals(),[(x,locals()) for z in [2]],locals()) for y in [1]]\n return A.r\nr=outer(9,8)\nfor d in [r[0][0],r[0][1][0][1],r[0][2]]:\n print(*list(d))\n for k in [\"x\",\"y\",\"z\"]:\n  if k in d:print(k,d[k])\n",
+      "stage": "O22",
+      "stdout": "y x\nx 9\ny 1\ny z x\nx 9\ny 1\nz 2\ny x\nx 9\ny 1\n"
+    },
+    {
+      "id": "comprehension-audit-class-3-False",
+      "source": "def outer(x,y):\n class A:\n  r=[(x,locals(),[locals() for x in [2]],locals()) for z in [1]]\n return A.r\nr=outer(9,8)\nfor d in [r[0][1],r[0][2][0],r[0][3]]:\n print(*list(d))\n for k in [\"x\",\"y\",\"z\"]:\n  if k in d:print(k,d[k])\n",
+      "stage": "O22",
+      "stdout": "z x\nx 9\nz 1\nz x\nx 2\nz 1\nz x\nx 9\nz 1\n"
+    },
+    {
+      "id": "comprehension-audit-class-3-True",
+      "source": "def outer(x,y):\n class A:\n  r=[(x,locals(),[locals() for x in [2]],locals()) for z in [1]]\n return A.r\nr=outer(9,8)\nfor d in [r[0][1],r[0][2][0],r[0][3]]:\n print(*list(d))\n for k in [\"x\",\"y\",\"z\"]:\n  if k in d:print(k,d[k])\n",
+      "stage": "O22",
+      "stdout": "z x\nx 9\nz 1\nz x\nx 2\nz 1\nz x\nx 9\nz 1\n"
     }
   ]
 }
