@@ -48,3 +48,25 @@ The semantic anchors are the Python 3.14
 and [super builtin](https://docs.python.org/3.14/library/functions.html#super).
 The pinned executable reference decides the finite cases when later patch-level
 documentation differs.
+
+## Accepted evidence
+
+The 113-case matrix has 105 adopted comparisons and eight explicit future
+refusals. Node and Chromium each pass draining and instruction-boundary execution:
+452 observations, including 436 measured zero logical teardown records. Source,
+corpus and driver hashes are checked against the retained reports. Dedicated
+tests cover callback source frames, temporary metaclasses, missing/conflicting
+class cells, notification destinations, suspended generators, every-instruction
+collection, cancellation/close and real recursion/work/allocation failures.
+All 385 Node tests pass, including the eight unchanged composed resource cases.
+
+Installed offline console acceptance has 487 program comparisons, 44 acceptance
+groups and 98 Stop/Restart cycles. New source composes construction, super,
+metaclasses and generators after offline reload. Constructor/metaclass errors
+retain their Python source diagnostics; custom preparation remains a refusal.
+The waiting class-to-core update still removes class/library authority.
+
+The [payload and source record](measurements/2026-10-26-construction.json)
+contains all 38 file sizes and hashes for the 592,822-byte construction console,
+including the receipt and deterministic compression observations. This is a
+complete local payload measurement, with no timing, device or package claim.

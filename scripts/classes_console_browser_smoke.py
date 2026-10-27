@@ -24,6 +24,7 @@ from examples.interpreter_functions import SOURCE as FUNCTION_SOURCE, CORE_SOURC
 from examples.interpreter_syntax import SOURCE as SYNTAX_SOURCE, CORE_SOURCE as CORE_SYNTAX_SOURCE
 from examples.interpreter_values import SOURCE as VALUES_SOURCE, CORE_SOURCE as CORE_VALUES_SOURCE
 from examples.interpreter_generators import SOURCE as GENERATOR_SOURCE, CORE_SOURCE as GENERATOR_CORE_SOURCE
+from examples.interpreter_construction import SOURCE as CONSTRUCTION_SOURCE
 
 
 def smoke(channel=None):
@@ -77,6 +78,7 @@ def smoke(channel=None):
                     assert 'iteration and containment' in page.locator('#language').inner_text()
                     assert 'equality and hashing' in page.locator('#language').inner_text()
                     assert 'sets, bytes, bytearrays and memoryviews' in page.locator('#language').inner_text()
+                    assert 'construction, super and finite metaclasses' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -155,10 +157,12 @@ def smoke(channel=None):
                     programs.append(VALUES_SOURCE)
                     generators = json.loads((ROOT / 'tests/fixtures/interpreter/generators.json').read_bytes())
                     objects = json.loads((ROOT / 'tests/fixtures/interpreter/object-protocols.json').read_bytes())
-                    for corpus in [generators, objects]:
+                    construction = json.loads((ROOT / 'tests/fixtures/interpreter/construction.json').read_bytes())
+                    for corpus in [generators, objects, construction]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
+                    programs.append(CONSTRUCTION_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -353,6 +357,18 @@ def smoke(channel=None):
                     refused('class A:\n @property\n def x(self): raise ValueError("body")\nhasattr(A(),"x")\n', 'ValueError:')
                     refused('class A:\n def __add__(self,x): raise KeyError("body")\nA()+1\n', 'KeyError:')
                     checks.append('generator-and-object-body-errors-retain-offline-diagnostics')
+                    run(CONSTRUCTION_SOURCE, 'construction True True offline\nvalues 4 5 Note\ndynamic True offline\n')
+                    run('class OfflineBase:\n def __new__(cls,x): return super().__new__(cls)\n def __init__(self,x): self.x=x\nclass OfflineChild(OfflineBase):\n def __init__(self,x): super().__init__(x+1)\n def values(self):\n  yield self.x\n  yield __class__.__name__\na=OfflineChild(7)\ng=a.values()\nprint(next(g),next(g),isinstance(a,(str,OfflineBase)),issubclass(OfflineChild,OfflineBase))\n', '8 OfflineChild True True\n')
+                    checks.append('new-construction-super-metaclass-and-generator-source-offline')
+                    refused('class A:\n def __new__(cls): raise ValueError("new")\nA()\n', 'ValueError:')
+                    assert '__new__ at sources/app.py:2' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n def __init__(self): return 7\nA()\n', 'TypeError:')
+                    refused('class M(type):\n def __new__(meta,name,bases,ns): raise KeyError("meta")\nclass A(metaclass=M): pass\n', 'KeyError:')
+                    assert '__new__ at sources/app.py:2' in page.locator('#diagnostic').inner_text()
+                    refused('class M(type):\n def __new__(meta,name,bases,ns):\n  del ns["__classcell__"]\n  return type.__new__(meta,name,bases,ns)\nclass A(metaclass=M):\n def f(self): return __class__\n', 'RuntimeError:')
+                    refused('class A:\n def f(self): return super().missing\nA().f()\n', 'AttributeError:')
+                    refused('class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\n', 'UnsupportedSyntaxError:')
+                    checks.append('constructor-super-metaclass-errors-and-future-hooks-retain-offline-diagnostics')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -444,6 +460,16 @@ def smoke(channel=None):
                         'class Spin:\n def __add__(self,other):\n  while True: pass\nSpin()+[7]\n',
                         'class Spin:\n @property\n def __radd__(self):\n  while True: pass\n[7]+Spin()\n',
                         'class Spin:\n @property\n def x(self):\n  while True: pass\ngetattr(Spin(),"x",[7])\n'
+                    ])
+                    busy.extend([
+                        'class Spin:\n def __new__(cls):\n  while True: pass\nSpin()\n',
+                        'class D:\n def __get__(self,obj,owner):\n  while True: pass\nclass Spin: __new__=D()\nSpin()\n',
+                        'class Spin:\n def __new__(cls): return object.__new__(cls)\n def __init__(self):\n  while True: pass\nSpin()\n',
+                        'class Base:\n @property\n def value(self):\n  while True: pass\nclass Spin(Base):\n def read(self): return super().value\nSpin().read()\n',
+                        'class M(type):\n def __new__(meta,name,bases,ns):\n  while True: pass\nclass Spin(metaclass=M): pass\n',
+                        'class M(type):\n def __init__(cls,*args):\n  while True: pass\nclass Spin(metaclass=M): pass\n',
+                        'class M(type):\n def __call__(cls):\n  while True: pass\nclass Spin(metaclass=M): pass\nSpin()\n',
+                        'class D:\n def __set_name__(self,owner,name):\n  while True: pass\nclass M(type): pass\nclass Spin(metaclass=M): value=D()\n'
                     ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])

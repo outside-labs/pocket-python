@@ -172,8 +172,12 @@ functions, yield-from delegation, next/send/throw/close and scoped list/dict/set
 generator comprehensions in both profiles. [Object protocols](docs/interpreter-object-protocols.md)
 add attribute reflection and forward/reflected/in-place arithmetic in the class
 profile. Run `python -m examples.interpreter_generators`, adding `--core` for
-generators without classes. Construction, richer reflection and async retain
-separate contracts.
+generators without classes. The finite [construction profile](docs/interpreter-construction.md)
+adds owned __new__/__init__, super and lexical __class__ cells, type relations
+and type-derived metaclasses with ordinary dictionary namespaces. Run
+`python -m examples.interpreter_construction` for a console composing these
+protocols with suspended generators. Builtin instance layouts, custom namespace
+preparation, further reflection and async retain separate contracts.
 
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership

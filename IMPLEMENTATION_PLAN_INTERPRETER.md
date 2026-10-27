@@ -815,3 +815,25 @@ relations, metaclasses, builtin subclasses, custom attribute hooks, dynamic
 source, comprehension assignment expressions and async remain separately gated.
 The broader #120/#123 and #33/#34 milestones remain open; this checkpoint does
 not select a publication, deployment, dependency or host capability.
+
+### Construction and type checkpoint (2026-10-26)
+
+The finite O3/O4/O5 [construction contract](docs/interpreter-construction.md)
+adopts owned allocation/initialization, explicit and zero-argument super,
+lexical class cells, canonical adopted types and tuple type relations.
+Type-derived metaclasses support selection/conflicts, construction/call hooks,
+descriptors, ordinary dictionary namespaces and class-cell propagation through
+type.__new__. The additive class-meta opcode stays in explicit bytecode 5;
+core-source/1 remains bytecode 4.
+
+Independent Node/Chromium draining/stepped references, collection at instruction
+boundaries, callback resource failures and offline source/Stop/Restart acceptance
+are required. All eight existing composed resource observations remain unchanged.
+The [construction console](examples/interpreter_construction.py) composes
+metaclasses and super with suspended generators.
+
+Builtin instance layouts, custom preparation/mappings, extra class keywords,
+callable metaclass factories, additional metaclass special slots, broader
+reflection, dynamic source and async remain separately tracked in #123/#34.
+The parent milestones remain open. No publication, dependency, service or host
+capability is selected by this construction checkpoint.

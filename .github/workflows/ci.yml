@@ -93,6 +93,8 @@ jobs:
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/generators.json --stepped --report build/generators-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/generators.json --profile core-source/1 --report build/generators-core-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/generators.json --profile core-source/1 --stepped --report build/generators-core-browser-stepped-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/construction.json --report build/construction-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/construction.json --stepped --report build/construction-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-protocols.json --report build/object-protocols-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-protocols.json --stepped --report build/object-protocols-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --report build/classes-browser-report.json
@@ -165,6 +167,7 @@ jobs:
       - run: node --test runtime/syntax.test.mjs
       - run: node --test runtime/function-binding.test.mjs
       - run: node --test runtime/object-protocols.test.mjs
+      - run: node --test runtime/construction.test.mjs
       - run: node --test runtime/generators.test.mjs
       - run: node --test runtime/functions.test.mjs
       - run: node --test runtime/execution.test.mjs
@@ -199,6 +202,8 @@ jobs:
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/generators.json --stepped --report build/generators-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/generators.json --profile core-source/1 --report build/generators-core-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/generators.json --profile core-source/1 --stepped --report build/generators-core-node-stepped-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/construction.json --report build/construction-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/construction.json --stepped --report build/construction-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-protocols.json --report build/object-protocols-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-protocols.json --stepped --report build/object-protocols-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
