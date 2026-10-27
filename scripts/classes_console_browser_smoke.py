@@ -28,6 +28,7 @@ from examples.interpreter_construction import SOURCE as CONSTRUCTION_SOURCE
 from examples.interpreter_attributes import SOURCE as ATTRIBUTE_SOURCE
 from examples.interpreter_type_checks import SOURCE as TYPE_CHECK_SOURCE
 from examples.interpreter_ordering import SOURCE as ORDERING_SOURCE
+from examples.interpreter_reflection import SOURCE as REFLECTION_SOURCE
 
 
 def smoke(channel=None):
@@ -168,7 +169,8 @@ def smoke(channel=None):
                     type_checks = json.loads((ROOT / 'tests/fixtures/interpreter/type-checks.json').read_bytes())
                     ordering = json.loads((ROOT / 'tests/fixtures/interpreter/ordering.json').read_bytes())
                     object_hashing = json.loads((ROOT / 'tests/fixtures/interpreter/object-hashing.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing]:
+                    reflection = json.loads((ROOT / 'tests/fixtures/interpreter/reflection.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -176,6 +178,7 @@ def smoke(channel=None):
                     programs.append(ATTRIBUTE_SOURCE)
                     programs.append(TYPE_CHECK_SOURCE)
                     programs.append(ORDERING_SOURCE)
+                    programs.append(REFLECTION_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -430,6 +433,16 @@ def smoke(channel=None):
                         if 'error_type' in case:
                             refused(case['source'], case['error_type'] + ':')
                     checks.append('method-slice-and-tuple-hash-signatures-and-errors-offline')
+                    run(REFLECTION_SOURCE, 'same True True\nfields revision title 2\nsnapshot True False True\n')
+                    for case in reflection['cases']:
+                        if case['stage'] not in reflection['implemented_stages']:
+                            refused(case['source'], 'UnsupportedOperationError:')
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                        else:
+                            run(case['source'], case['stdout'])
+                    checks.append('identity-snapshots-and-custom-reflection-execute-after-offline-reload')
+                    checks.append('reflection-source-errors-and-live-namespace-refusals-remain-explicit-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -555,6 +568,13 @@ def smoke(channel=None):
                         'class Spin:\n def __eq__(self,other): return False\n @property\n def __le__(self):\n  while True: pass\nslice(Spin())<=slice(Spin())\n',
                         'class Spin:\n @property\n def __eq__(self):\n  while True: pass\nslice(Spin())==slice(Spin())\n',
                     ])
+                    busy.extend([
+                        'class Spin:\n @property\n def __dict__(self):\n  while True: pass\nvars(Spin())\n',
+                        'class Spin:\n def __dir__(self):\n  while True: pass\ndir(Spin())\n',
+                        'class D:\n def __get__(self,obj,owner):\n  while True: pass\nclass Spin: __dir__=D()\ndir(Spin())\n',
+                        'class Spin:\n def __dir__(self):\n  yield "x"\n  while True: pass\ndir(Spin())\n',
+                        'def spin():\n saved=[]\n while True: saved.append(locals())\nspin()\n',
+                    ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
@@ -623,6 +643,9 @@ def smoke(channel=None):
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')
                     refused('hash(7)\n', 'NameError:')
                     refused('NotImplemented\n', 'NameError:')
+                    for name in ['id', 'locals', 'vars', 'dir', 'globals']:
+                        refused(name + '\n', 'NameError:')
+                    checks.append('class-to-core-update-removes-reflection-builtin-authority')
                     run('print(len("okay"),bool([]))\n', '4 False\n')
                     run('print(repr("A😀"),len(str()))\n', "'A😀' 0\n")
                     run('print(7)\n', '7\n')

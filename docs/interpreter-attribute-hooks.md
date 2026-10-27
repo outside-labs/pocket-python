@@ -74,3 +74,10 @@ example payload; it makes no timing, device or package claim.
 The later [type-checking contract](interpreter-type-checks.md) adopts custom
 metaclass instance/subclass checking through separate implicit slots. It does
 not widen metaclass ordinary attribute access or namespace preparation.
+
+The later [O15–O17 reflection contract](interpreter-reflection.md) adopts custom
+instance `__dict__` reads, `vars` and actual-type/metaclass `__dir__`, alongside
+owned object IDs and optimized-function snapshots. Ordinary dictionary storage,
+class mapping proxies, default directories and live module/class/global
+namespaces remain deferred. The earlier directory refusal in this corpus is now
+an adopted O17 comparison.

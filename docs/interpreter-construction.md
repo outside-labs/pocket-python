@@ -82,3 +82,8 @@ The later [custom checking contract](interpreter-type-checks.md) adopts metaclas
 and ordinary checker instance/subclass hooks with owned descriptor/truth phases
 and native type defaults. Actual ancestry and construction remain independent
 of custom virtual relationships.
+
+The later [O15–O17 reflection contract](interpreter-reflection.md) adopts stable
+owned IDs, optimized-function namespace snapshots and custom vars/dir hooks.
+Live namespace mappings, default directories and builtin instance layouts retain
+their separate boundaries.

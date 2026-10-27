@@ -430,8 +430,8 @@
     {
       "id": "further-object-protocols",
       "status": "partial",
-      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes.",
-      "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, namespace/identity reflection and dynamic source admission remain separate contracts.",
+      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented.",
+      "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, live namespace mappings and default directories and dynamic source admission remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -606,8 +606,8 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "getattr/setattr/delattr/hasattr on adopted class attributes through ordinary owned descriptor callbacks.",
-      "gaps": "Dynamic source admission, namespaces, richer types and broader reflection remain deferred.",
+      "scope": "Owned attribute reflection, stable adopted object identities, optimized function namespace snapshots and custom vars/dir hooks in classes-source/1.",
+      "gaps": "Live namespace mappings, default directories, integer identity, dynamic source and broader metaclass/layout reflection remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -622,7 +622,11 @@
         "builtin-globals",
         "builtin-getattr"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/reflection.json:identity-alias",
+        "tests/fixtures/interpreter/reflection.json:locals-fresh-shallow",
+        "tests/fixtures/interpreter/reflection.json:dir-custom-descriptor"
+      ]
     },
     {
       "id": "selected-library-apis",
@@ -1122,9 +1126,9 @@
     },
     {
       "id": "dir",
-      "status": "deferred",
-      "scope": "The builtin name resolves; module namespace invocation explicitly refuses pending its live namespace contract.",
-      "gaps": "Availability alone earns no API support credit; optimized snapshots and custom hooks have separate implementation tasks.",
+      "status": "partial",
+      "scope": "Zero-argument optimized function names; custom actual-type/metaclass __dir__, owned iterable copying and bounded Unicode string sorting with duplicates preserved.",
+      "gaps": "Default directories, module/class namespaces, non-string custom entries and custom iterable length hints remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1134,9 +1138,12 @@
         "INT-OBJECT-01"
       ],
       "probes": [
+        "builtin-dir-custom",
         "builtin-dir"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/reflection.json:dir-custom-descriptor"
+      ]
     },
     {
       "id": "divmod",
@@ -1568,9 +1575,9 @@
     },
     {
       "id": "locals",
-      "status": "deferred",
-      "scope": "The builtin name resolves; module namespace invocation explicitly refuses pending its live namespace contract.",
-      "gaps": "Availability alone earns no API support credit; optimized snapshots and custom hooks have separate implementation tasks.",
+      "status": "partial",
+      "scope": "Fresh shallow snapshots of bound parameters, locals and free cells in optimized functions, lambdas and generators; classes-source/1.",
+      "gaps": "Module/class live mappings, comprehension reflection and frame objects remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1580,9 +1587,12 @@
         "INT-OBJECT-01"
       ],
       "probes": [
+        "builtin-locals-snapshot",
         "builtin-locals"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/reflection.json:locals-fresh-shallow"
+      ]
     },
     {
       "id": "map",
@@ -2083,9 +2093,9 @@
     },
     {
       "id": "vars",
-      "status": "deferred",
-      "scope": "The builtin name resolves; module namespace invocation explicitly refuses pending its live namespace contract.",
-      "gaps": "Availability alone earns no API support credit; optimized snapshots and custom hooks have separate implementation tasks.",
+      "status": "partial",
+      "scope": "Zero-argument optimized function snapshots; one positional user instance reads custom __dict__ through owned descriptors and read hooks, returning its result unchanged.",
+      "gaps": "Ordinary instance storage and function/module/class dictionaries or mapping proxies remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2095,9 +2105,12 @@
         "INT-OBJECT-01"
       ],
       "probes": [
+        "builtin-vars-snapshot",
         "builtin-vars"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/reflection.json:vars-custom-property"
+      ]
     },
     {
       "id": "zip",
