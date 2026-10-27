@@ -455,8 +455,8 @@
       "stdout": "True\n"
     },
     {
-      "id": "comprehension-locals-deferred",
-      "stage": "Future",
+      "id": "module-comprehension-locals",
+      "stage": "O22",
       "source": "a=[locals() for x in range(1)]\nprint(\"x\" in a[0])\n",
       "stdout": "True\n"
     },
@@ -1061,6 +1061,294 @@
       "stage": "O20",
       "source": "class A:\n def __dir__(self): return [-13, -11, -12, 10, 6, 8, 3, 5, 14, 6, -8, 14, 6, -12, -15, -9, 8, -14, 5, -1, 9, -5, 12, 2, 14, 7, -12, 12, -9, 15, -15, -7, -15, -10, 12, -6, 15, 12, 9, 11, -10, 9, -8, -2, 8]\nprint(dir(A())==[-15, -15, -15, -14, -13, -12, -12, -12, -11, -10, -10, -9, -9, -8, -8, -7, -6, -5, -2, -1, 2, 3, 5, 5, 6, 6, 6, 7, 8, 8, 8, 9, 9, 9, 10, 11, 12, 12, 12, 12, 14, 14, 14, 15, 15])\n",
       "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-function-list",
+      "stage": "O21",
+      "source": "def f(p):\n a=7\n r=[locals() for x in [1,2]]\n print(list(r[0])==[\"p\",\"a\",\"x\"],r[0][\"p\"],r[1][\"x\"],\"x\" in locals())\nf(9)\n",
+      "stdout": "True 9 2 False\n"
+    },
+    {
+      "id": "comprehension-function-dict",
+      "stage": "O21",
+      "source": "def f(p):\n r={x:vars() for x in [1,2]}\n print(list(r[1])==[\"p\",\"x\"],r[2][\"x\"],r[1] is r[2])\nf(9)\n",
+      "stdout": "True 2 False\n"
+    },
+    {
+      "id": "comprehension-function-set",
+      "stage": "O21",
+      "source": "def f(p):\n r={tuple(locals()) for x in [1,2]}\n print((\"p\",\"x\") in r,len(r),\"x\" in locals())\nf(9)\n",
+      "stdout": "True 1 False\n"
+    },
+    {
+      "id": "comprehension-function-directory",
+      "stage": "O21",
+      "source": "def f(z,a):\n r=[dir() for x in [1]]\n print(r[0]==[\"a\",\"x\",\"z\"],dir()==[\"a\",\"r\",\"z\"])\nf(1,2)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "comprehension-function-shallow",
+      "stage": "O21",
+      "source": "def f(a):\n r=[locals() for x in [a]]\n r[0][\"x\"].append(7)\n r[0][\"a\"]=None\n print(a[0],r[0][\"x\"] is a,locals()[\"a\"] is a)\nf([])\n",
+      "stdout": "7 True True\n"
+    },
+    {
+      "id": "comprehension-function-shadow",
+      "stage": "O21",
+      "source": "def f(x):\n before=locals()\n r=[locals() for x in [7]]\n print(r[0][\"x\"],locals()[\"x\"],before[\"x\"],list(r[0])==[\"x\",\"before\"])\nf(9)\n",
+      "stdout": "7 9 9 True\n"
+    },
+    {
+      "id": "comprehension-function-empty",
+      "stage": "O21",
+      "source": "def f(x):\n r=[locals() for x in []]\n print(len(r),locals()[\"x\"],\"y\" in locals())\n r=[vars() for y in []]\n print(\"y\" in locals())\nf(9)\n",
+      "stdout": "0 9 False\nFalse\n"
+    },
+    {
+      "id": "comprehension-function-filter",
+      "stage": "O21",
+      "source": "def f(p):\n r=[locals() for x in [1,2] if x>1]\n print(len(r),r[0][\"x\"],\"x\" in locals())\nf(9)\n",
+      "stdout": "1 2 False\n"
+    },
+    {
+      "id": "comprehension-function-filter-snapshot",
+      "stage": "O21",
+      "source": "def f(p):\n r=[x for x in [1] if locals()[\"x\"]==1]\n print(r[0],\"x\" in locals())\nf(9)\n",
+      "stdout": "1 False\n"
+    },
+    {
+      "id": "comprehension-function-nested",
+      "stage": "O21",
+      "source": "def f(p):\n r=[[locals() for y in [x+1]] for x in [1]]\n print(list(r[0][0])==[\"p\",\"x\",\"y\"],r[0][0][\"x\"],r[0][0][\"y\"],\"y\" in locals())\nf(9)\n",
+      "stdout": "True 1 2 False\n"
+    },
+    {
+      "id": "comprehension-function-nested-shadow",
+      "stage": "O21",
+      "source": "def f(x):\n r=[([locals() for x in [2]],locals()) for x in [1]]\n print(r[0][0][0][\"x\"],r[0][1][\"x\"],locals()[\"x\"])\nf(9)\n",
+      "stdout": "2 1 9\n"
+    },
+    {
+      "id": "comprehension-function-clauses",
+      "stage": "O21",
+      "source": "def f(p):\n r=[locals() for x in [1] for y in [2]]\n print(list(r[0])==[\"p\",\"x\",\"y\"],r[0][\"y\"],\"y\" in locals())\nf(9)\n",
+      "stdout": "True 2 False\n"
+    },
+    {
+      "id": "comprehension-function-unpack",
+      "stage": "O21",
+      "source": "def f(p):\n r=[locals() for x,y in [(1,2)]]\n print(list(r[0])==[\"p\",\"x\",\"y\"],r[0][\"x\"],r[0][\"y\"])\nf(9)\n",
+      "stdout": "True 1 2\n"
+    },
+    {
+      "id": "comprehension-function-alias",
+      "stage": "O21",
+      "source": "def f(p):\n inspect=locals\n r=[inspect() for x in [1]]\n print(list(r[0])==[\"p\",\"inspect\",\"x\"],r[0][\"inspect\"] is inspect)\nf(9)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "comprehension-function-captured-value",
+      "stage": "O21",
+      "source": "def f(p):\n a=7\n r=[(a,locals()) for x in [1]]\n print(list(r[0][1])==[\"p\",\"a\",\"x\"])\nf(9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-function-cell-order",
+      "stage": "O21",
+      "source": "def f(p):\n a=7\n r=[locals() for x in [1]]\n def inner(): return a\n print(list(r[0])==[\"p\",\"x\",\"a\"],inner())\nf(9)\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "comprehension-function-cell-through-comp",
+      "stage": "O21",
+      "source": "def f(p):\n a=7\n r=[(lambda:a,locals()) for x in [1]]\n print(list(r[0][1])==[\"p\",\"x\",\"a\"],r[0][0]())\nf(9)\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "comprehension-function-captured-target",
+      "stage": "O21",
+      "source": "def f(p):\n a=7\n r=[(lambda:x,locals()) for x in [1,2]]\n print(list(r[0][1])==[\"p\",\"a\",\"x\"],r[0][0](),r[0][1][\"x\"],\"x\" in locals())\nf(9)\n",
+      "stdout": "True 2 1 False\n"
+    },
+    {
+      "id": "comprehension-function-delete",
+      "stage": "O21",
+      "source": "def f(p):\n a=7\n del a\n r=[locals() for x in [1]]\n print(list(r[0])==[\"p\",\"x\"],\"a\" in locals())\nf(9)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "comprehension-function-error-restore",
+      "stage": "O21",
+      "source": "def f(x):\n saved=[]\n try: r=[saved.append(locals()) or 1//0 for x in [1]]\n except ZeroDivisionError: pass\n print(saved[0][\"x\"],locals()[\"x\"],\"r\" in locals())\nf(9)\n",
+      "stdout": "1 9 False\n"
+    },
+    {
+      "id": "comprehension-function-iterable-before-target",
+      "stage": "O21",
+      "source": "def f(x):\n r=[locals() for x in [locals()[\"x\"]]]\n print(r[0][\"x\"],locals()[\"x\"],list(r[0])==[\"x\"])\nf(9)\n",
+      "stdout": "9 9 True\n"
+    },
+    {
+      "id": "comprehension-function-repeated",
+      "stage": "O21",
+      "source": "def f(p):\n r=[locals() for x in [1]]\n q=[locals() for z in [2]]\n print(list(q[0])==[\"p\",\"r\",\"z\"],\"x\" in q[0])\nf(9)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "comprehension-function-unicode",
+      "stage": "O21",
+      "source": "def f(π):\n r=[locals() for 变量 in [1]]\n print(list(r[0])==[\"π\",\"变量\"],r[0][\"变量\"])\nf(9)\n",
+      "stdout": "True 1\n"
+    },
+    {
+      "id": "comprehension-function-callback",
+      "stage": "O21",
+      "source": "def helper(a): return locals()\ndef f(p):\n r=[(helper(x),locals()) for x in [1]]\n print(list(r[0][0])==[\"a\"],list(r[0][1])==[\"p\",\"x\"])\nf(9)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "comprehension-function-free-order",
+      "stage": "O21",
+      "source": "def outer(z,a):\n def f(p):\n  r=[(z+a,locals()) for x in [1]]\n  print(list(r[0][1])==[\"p\",\"x\",\"a\",\"z\"],r[0][0])\n return f\nouter(7,8)(9)\n",
+      "stdout": "True 15\n"
+    },
+    {
+      "id": "comprehension-function-global",
+      "stage": "O21",
+      "source": "x=7\ndef f(p):\n global x\n r=[locals() for x in [1]]\n print(list(r[0])==[\"p\",\"x\"],x,\"x\" in locals())\nf(9)\n",
+      "stdout": "True 7 False\n"
+    },
+    {
+      "id": "comprehension-generator-function",
+      "stage": "O21",
+      "source": "def f(p):\n yield [locals() for x in [1]][0]\n print(\"x\" in locals())\ng=f(9)\nr=next(g)\nprint(list(r)==[\"p\",\"x\"],r[\"p\"])\ntry: next(g)\nexcept StopIteration: pass\n",
+      "stdout": "True 9\nFalse\n"
+    },
+    {
+      "id": "comprehension-generator-expression",
+      "stage": "O21",
+      "source": "g=([locals() for y in [x]] for x in [1])\nr=next(g)[0]\ng.close()\nprint(list(r)==[\".0\",\"x\",\"y\"],r[\"x\"],r[\"y\"],next(r[\".0\"],7))\n",
+      "stdout": "True 1 1 7\n"
+    },
+    {
+      "id": "comprehension-lambda-function",
+      "stage": "O21",
+      "source": "f=lambda p:[locals() for x in [1]]\nr=f(9)[0]\nprint(list(r)==[\"p\",\"x\"],r[\"p\"])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "comprehension-function-class-cell",
+      "stage": "O21",
+      "source": "class A:\n def f(self):\n  r=[(__class__,locals()) for x in [1]]\n  print(list(r[0][1])==[\"self\",\"x\",\"__class__\"],r[0][0] is A)\nA().f()\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "comprehension-module-vars",
+      "stage": "O22",
+      "source": "r=[vars() for x in [1,2]]\nprint(list(r[0])==[\"x\"],r[0][\"x\"],r[1][\"x\"],r[0] is r[1])\n",
+      "stdout": "True 1 2 False\n"
+    },
+    {
+      "id": "comprehension-module-directory",
+      "stage": "O22",
+      "source": "r=[dir() for z in [1] for a in [2]]\nprint(r[0]==[\"a\",\"z\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-module-dict",
+      "stage": "O22",
+      "source": "r={x:locals() for x in [1]}\nprint(list(r[1])==[\"x\"],r[1][\"x\"])\n",
+      "stdout": "True 1\n"
+    },
+    {
+      "id": "comprehension-module-set",
+      "stage": "O22",
+      "source": "r={tuple(locals()) for x in [1]}\nprint((\"x\",) in r)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-module-shadow",
+      "stage": "O22",
+      "source": "x=9\nr=[locals() for x in [1]]\nprint(list(r[0])==[\"x\"],r[0][\"x\"],x)\n",
+      "stdout": "True 1 9\n"
+    },
+    {
+      "id": "comprehension-module-nested",
+      "stage": "O22",
+      "source": "r=[[locals() for y in [2]] for x in [1]]\nprint(list(r[0][0])==[\"x\",\"y\"],r[0][0][\"x\"],r[0][0][\"y\"])\n",
+      "stdout": "True 1 2\n"
+    },
+    {
+      "id": "comprehension-module-nested-shadow",
+      "stage": "O22",
+      "source": "r=[([locals() for x in [2]],locals()) for x in [1]]\nprint(r[0][0][0][\"x\"],r[0][1][\"x\"],list(r[0][1])==[\"x\"])\n",
+      "stdout": "2 1 True\n"
+    },
+    {
+      "id": "comprehension-module-global-reference",
+      "stage": "O22",
+      "source": "a=7\nr=[(a,locals()) for x in [1]]\nprint(list(r[0][1])==[\"x\"],r[0][0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "comprehension-module-captured-target",
+      "stage": "O22",
+      "source": "r=[(lambda:x,locals()) for x in [1,2]]\nprint(list(r[0][1])==[\"x\"],r[0][0](),r[0][1][\"x\"])\n",
+      "stdout": "True 2 1\n"
+    },
+    {
+      "id": "comprehension-module-alias",
+      "stage": "O22",
+      "source": "inspect=locals\nr=[inspect() for x in [1]]\nprint(list(r[0])==[\"x\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-class-isolation",
+      "stage": "O22",
+      "source": "class A:\n a=7\n r=[locals() for x in [1]]\nprint(list(A.r[0])==[\"x\"],A.r[0][\"x\"],A.a)\n",
+      "stdout": "True 1 7\n"
+    },
+    {
+      "id": "comprehension-class-private",
+      "stage": "O22",
+      "source": "class A:\n r=[vars() for __x in [1]]\nprint(list(A.r[0])==[\"_A__x\"],A.r[0][\"_A__x\"])\n",
+      "stdout": "True 1\n"
+    },
+    {
+      "id": "comprehension-class-free",
+      "stage": "O22",
+      "source": "def outer(z):\n class A:\n  r=[(z,locals()) for x in [1]]\n return A.r\nr=outer(7)\nprint(list(r[0][1])==[\"x\",\"z\"],r[0][0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "comprehension-class-nested",
+      "stage": "O22",
+      "source": "class A:\n r=[[locals() for y in [2]] for x in [1]]\nprint(list(A.r[0][0])==[\"x\",\"y\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-class-directory",
+      "stage": "O22",
+      "source": "class A:\n r=[dir() for z in [1] for a in [2]]\nprint(A.r[0]==[\"a\",\"z\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "comprehension-module-error",
+      "stage": "O22",
+      "source": "saved=[]\ntry: r=[saved.append(locals()) or 1//0 for x in [1]]\nexcept ZeroDivisionError: pass\nprint(list(saved[0])==[\"x\"],saved[0][\"x\"])\n",
+      "stdout": "True 1\n"
+    },
+    {
+      "id": "comprehension-module-snapshot-mutation",
+      "stage": "O22",
+      "source": "a=[]\nr=[locals() for x in [a]]\nr[0][\"x\"].append(7)\nr[0][\"x\"]=None\nprint(a[0],r[0][\"x\"] is None)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "comprehension-module-first-iterable-live-refusal",
+      "stage": "Future",
+      "source": "r=[locals() for x in [locals()]]\n",
+      "stdout": ""
     }
   ]
 }
