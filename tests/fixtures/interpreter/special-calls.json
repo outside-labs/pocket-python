@@ -407,7 +407,7 @@
     },
     {
       "id": "future-new",
-      "stage": "C3-future",
+      "stage": "C3-call",
       "source": "class A:\n def __new__(cls): return 7\nprint(A())\n",
       "stdout": "7\n"
     },

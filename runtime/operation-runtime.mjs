@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS} from "./class-policy.mjs";
 import {GeneratorValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, completionRoots, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -335,6 +335,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       completion = completion.after;
     }
+    if (completion?.kind === "new-result") {
+      state.temporaries.push(value, ...completionRoots(completion));
+      if (!(value instanceof InstanceValue) || !classes.subclass(value.type, completion.type)) return valueTask(value, site, completion.after);
+      return initialize(value, completion.args, completion.keywords, completion.keywordValues, site, completion.after, completion.depth, true);
+    }
     if (completion?.kind === "arithmetic-result") {
       if (!(value instanceof NotImplementedValue)) return valueTask(value, site, completion.after);
       const inplace = completion.operation.startsWith("inplace-");
@@ -575,6 +580,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         continuation("notify", {type, entries, index}));
     }
     return deliver(type, null, site);
+  };
+  const initialize = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
+    const initializer = classes.lookup(instance.type, "__init__", false);
+    if (!initializer.found) {
+      if (!customNew && (args.length || keywords.length)) python("TypeError", instance.type.name + "() takes no arguments");
+      return valueTask(instance, site, after);
+    }
+    const plan = customNew ? classes.bindAttribute(initializer.value, instance, instance.type) : classes.read(instance, "__init__");
+    const target = continuation("init", {instance, after});
+    return plan.kind === "value" ? callTask(plan.value, args, keywords, keywordValues, site, target, depth) :
+      callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args, keywords, keywordValues, after: target, depth}), depth);
   };
   const printNext = (args, index, site, after, depth, prefix = "") => {
     state.temporaries.push(...args);
@@ -1082,15 +1098,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           task = deliver(allocate(PropertyValue, ...fields), completion, site); continue;
         }
         if (callable instanceof ClassValue) {
-          const instance = classes.instance(callable); state.temporaries.push(instance);
-          const initializer = classes.lookup(callable, "__init__");
-          if (!initializer.found) {
-            if (args.length || keywords.length) python("TypeError", callable.name + "() takes no arguments");
-            task = deliver(instance, completion, site); continue;
+          if (classes.hasSlot(callable, "__new__")) {
+            if (++depth > maxDepth) python("RecursionError", "maximum constructor dispatch depth exceeded");
+            const item = classes.lookup(callable, "__new__"), plan = classes.bindAttribute(item.value, null, callable);
+            const target = continuation("new-result", {type: callable, args, keywords, keywordValues, after: completion, depth});
+            const positional = [callable, ...args];
+            task = plan.kind === "value" ? callTask(plan.value, positional, keywords, keywordValues, site, target, depth) :
+              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: positional, keywords, keywordValues, after: target, depth}), depth);
+            continue;
           }
-          const method = classes.get(instance, "__init__");
-          task = callTask(method, args, keywords, keywordValues, site,
-            continuation("init", {instance, after: completion}), depth); continue;
+          const instance = classes.instance(callable); state.temporaries.push(instance);
+          task = initialize(instance, args, keywords, keywordValues, site, completion, depth); continue;
         }
         if (callable instanceof FunctionValue) {
           const bindings = bind(callable, args, keywords, keywordValues);
@@ -1100,6 +1118,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "object.__new__") {
+            if (!args.length || !(args[0] instanceof ClassValue)) python("TypeError", "object.__new__ requires a type");
+            const type = args[0];
+            if ((args.length > 1 || keywords.length) && (classes.hasSlot(type, "__new__") || !classes.hasSlot(type, "__init__")))
+              python("TypeError", "object.__new__ received extra arguments");
+            task = valueTask(classes.instance(type), site, completion); continue;
+          }
+          if (callable.name === "object.__init__") {
+            if (!args.length) python("TypeError", "object.__init__ requires an instance");
+            const value = args[0];
+            if ((args.length > 1 || keywords.length) && (!(value instanceof InstanceValue) ||
+                classes.hasSlot(value.type, "__init__") || !classes.hasSlot(value.type, "__new__")))
+              python("TypeError", "object.__init__ received extra arguments");
+            task = valueTask(null, site, completion); continue;
+          }
           if (["getattr", "setattr", "delattr", "hasattr"].includes(callable.name)) {
             const name = callable.name, writing = name === "setattr" || name === "delattr";
             if (keywords.length || args.length < 2 || args.length > (name === "getattr" || name === "setattr" ? 3 : 2) || name === "setattr" && args.length !== 3)

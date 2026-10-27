@@ -10,7 +10,8 @@ classes-source/1; core-source/1 keeps primitive arithmetic and generator support
 | --- | --- |
 | O1 | getattr(object, name[, default]), hasattr(object, name), setattr(object, name, value), delattr(object, name) on admitted class attributes. Existing descriptor precedence, Python callbacks and metadata rules apply. Names must be strings; only AttributeError is suppressed by defaults/hasattr. No lexical mangling is applied to dynamic strings. |
 | O2 | Binary/reflected/in-place slots for +, -, *, /, //, %, **, shifts and bitwise operators; unary +, -, ~; divmod and two/three-argument pow. Strict right-subclass reflected overrides have priority, same-type reflected fallback is suppressed, NotImplemented advances dispatch, and in-place slots fall back to binary dispatch. Results can be arbitrary owned Python values. |
-| Future | __new__, super, richer type/isinstance/issubclass, builtin subclasses, metaclasses, custom attribute hooks, ordering, dir/vars/globals/locals/id, and dynamic exec/eval/compile/import remain independently gated. Matrix multiplication, user-valued power modulus dispatch and ordinary list/tuple/text repetition require separate slices. Existing bytes repetition and list in-place repetition accept the adopted index hook. |
+| O3 | Allocation and initialization are adopted in the [construction contract](interpreter-construction.md), including __new__ and conditional initialization of its returned value. |
+| Future | super, richer type/isinstance/issubclass, builtin subclasses, metaclasses, custom attribute hooks, ordering, dir/vars/globals/locals/id, and dynamic exec/eval/compile/import remain independently gated. Matrix multiplication, user-valued power modulus dispatch and ordinary list/tuple/text repetition require separate slices. Existing bytes repetition and list in-place repetition accept the adopted index hook. |
 
 Implicit operations consult type/MRO slots and descriptor binding, ignoring
 instance shadow attributes. Signature and callback failures propagate; a method
@@ -28,7 +29,7 @@ and [attribute builtins](https://docs.python.org/3.14/library/functions.html#get
 
 ## Acceptance
 
-The corpus contains 44 adopted comparisons and two explicit construction/hook
+The corpus contains 45 adopted comparisons and one explicit attribute-hook
 refusals. CI runs Node and Chromium through draining and instruction-boundary
 drivers. Dedicated tests cover all twelve binary/reflected/in-place operator
 families, unary hooks, subclass priority, descriptor binding, sequence index

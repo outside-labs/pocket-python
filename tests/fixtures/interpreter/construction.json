@@ -3,7 +3,9 @@
   "suite": "interpreter-construction/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O3"
+  ],
   "cases": [
     {
       "id": "new-original-arguments",

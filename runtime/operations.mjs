@@ -36,6 +36,10 @@ export function completion(kind, fields = {}) {
   switch (kind) {
     case "class": record = {kind, bases: operands(fields.bases), module: fields.module}; break;
     case "init": record = {kind, instance: fields.instance, after}; break;
+    case "new-result":
+      record = {kind, type: fields.type, args: operands(fields.args), keywords: operands(fields.keywords),
+        keywordValues: operands(fields.keywordValues), depth: fields.depth, after};
+      depthCheck(record.depth); break;
     case "relay": record = {kind, receiver: fields.receiver, after}; break;
     case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
@@ -150,6 +154,7 @@ function visit(record) {
   switch (record.kind) {
     case "class": case "condition": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
+    case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "relay": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "hash-result": return [record.receiver, ...completionRoots(record.after)];
     case "numeric-result": case "numeric-index": return [...record.args, ...completionRoots(record.after)];

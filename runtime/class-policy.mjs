@@ -9,7 +9,7 @@ export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
   ...Object.values(ARITHMETIC_SLOTS).flatMap(stem => ["", "r", ...(stem === "divmod" ? [] : ["i"])].map(prefix =>
     ["__" + prefix + stem + "__", Object.freeze({...ordinarySlot, implicit: true})])),
   ...["__neg__", "__pos__", "__invert__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
-  ["__init__", ordinarySlot], ...DESCRIPTOR_HOOKS.map(name => [name, ordinarySlot]),
+  ["__init__", ordinarySlot], ["__new__", ordinarySlot], ...DESCRIPTOR_HOOKS.map(name => [name, ordinarySlot]),
   ["__module__", Object.freeze({define: true})], ["__qualname__", Object.freeze({define: true})]
 ]));
 export const isSpecialName = name => typeof name === "string" && name.startsWith("__") && name.endsWith("__");
