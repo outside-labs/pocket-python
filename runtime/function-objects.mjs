@@ -49,6 +49,9 @@ export class InstanceValue {
 export class BoundMethodValue {
   constructor(callable, receiver) { this.callable = callable; this.receiver = receiver; }
 }
+export class SuperValue {
+  constructor(thisclass, self, selfClass) { this.thisclass = thisclass; this.self = self; this.selfClass = selfClass; Object.freeze(this); }
+}
 export {DESCRIPTOR_HOOKS};
 export class BuiltinValue { constructor(name) { this.name = name; } }
 export class PropertyValue {

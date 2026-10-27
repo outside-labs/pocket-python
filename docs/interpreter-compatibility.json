@@ -237,8 +237,8 @@
     {
       "id": "class-construction",
       "status": "partial",
-      "scope": "Explicit classes-source/1 only: user classes, bounded C3 MRO, __init__, ordinary attributes/deletion and bound methods.",
-      "gaps": "Builtin subclassing, __new__, super, metaclasses, implicit __class__ cells and full reflective behavior are not adopted. Builtin list/tuple bases are explicitly refused with UNSUPPORTED.",
+      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super.",
+      "gaps": "Metaclasses, builtin instance subclassing and broader type/reflection remain separate construction stages.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -253,9 +253,8 @@
         "metaclass"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/classes.json:diamond-mro",
-        "tests/fixtures/interpreter/classes.json:class-body-order",
-        "tests/fixtures/interpreter/classes.json:implicit-class-cell"
+        "tests/fixtures/interpreter/construction.json:new-subclass-init",
+        "tests/fixtures/interpreter/construction.json:super-diamond"
       ]
     },
     {
@@ -1986,9 +1985,9 @@
     },
     {
       "id": "super",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "Explicit bound/unbound and zero-argument super with lexical class cells, current C3 lookup, descriptors and proxy metadata in classes-source/1.",
+      "gaps": "Builtin instance layouts, custom __class__ hooks and proxy reinitialization remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2000,7 +1999,11 @@
       "probes": [
         "builtin-super"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/construction.json:super-diamond",
+        "tests/fixtures/interpreter/construction.json:super-unbound",
+        "tests/fixtures/interpreter/construction.json:super-generator"
+      ]
     },
     {
       "id": "tuple",

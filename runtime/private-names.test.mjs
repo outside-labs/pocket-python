@@ -73,7 +73,7 @@ test('default core syntax and later class features keep their existing refusal b
   assert.equal(compileSource('__x=7\nprint(__x)\n').program.version, 4);
   assert.throws(() => compileSource('class A:\n __x=7\n'), {code: 'UNSUPPORTED'});
   for (const source of ['class A:\n def __matmul__(self,other): return 7\n',
-    'async def f(): pass\n', 'class A:\n def read(self): return __class__\n']) {
+    'async def f(): pass\n', 'class A:\n def __prepare__(self): return {}\n']) {
     const actual = await run("print('never')\n" + source);
     assert.equal(actual.error.code, 'UNSUPPORTED');
     assert.equal(actual.stdout, '');
