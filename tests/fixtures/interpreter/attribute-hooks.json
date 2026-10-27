@@ -1,0 +1,479 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-attribute-hooks/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "read-intercept",
+      "stage": "O6",
+      "source": "class A:\n x=1\n def __getattribute__(self,name):\n  print(\"read\",name)\n  return 7\nprint(A().x)\n",
+      "stdout": "read x\n7\n"
+    },
+    {
+      "id": "read-delegate",
+      "stage": "O6",
+      "source": "class A:\n def __init__(self): self.x=[7]\n def __getattribute__(self,name): return object.__getattribute__(self,name)\nprint(A().x[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "read-inherited-super",
+      "stage": "O6",
+      "source": "class A:\n x=7\n def __getattribute__(self,name):\n  print(\"base\",name)\n  return super().__getattribute__(name)\nclass B(A): pass\nprint(B().x)\n",
+      "stdout": "base x\n7\n"
+    },
+    {
+      "id": "read-missing",
+      "stage": "O6",
+      "source": "class A:\n def __getattr__(self,name): return [name]\na=A()\nprint(a.missing[0],getattr(a,\"two words\")[0])\n",
+      "stdout": "missing two words\n"
+    },
+    {
+      "id": "read-default-before-fallback",
+      "stage": "O6",
+      "source": "class A:\n x=7\n def __getattr__(self,name):\n  print(\"fallback\",name)\n  return 8\na=A()\nprint(a.x,a.other)\n",
+      "stdout": "fallback other\n7 8\n"
+    },
+    {
+      "id": "read-attributeerror-fallback",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name):\n  print(\"first\",name)\n  raise AttributeError(\"missing\")\n def __getattr__(self,name):\n  print(\"second\",name)\n  return 9\nprint(A().x)\n",
+      "stdout": "first x\nsecond x\n9\n"
+    },
+    {
+      "id": "read-propagate-TypeError",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): raise TypeError(\"body\")\n def __getattr__(self,name): print(\"never\")\nA().x\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-propagate-StopIteration",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): raise StopIteration(\"body\")\n def __getattr__(self,name): print(\"never\")\nA().x\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "read-propagate-ValueError",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): raise ValueError(\"body\")\n def __getattr__(self,name): print(\"never\")\nA().x\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "read-fallback-once",
+      "stage": "O6",
+      "source": "class A:\n def __getattr__(self,name):\n  print(\"once\")\n  raise AttributeError(\"still missing\")\nA().x\n",
+      "stdout": "once\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "read-property-fallback",
+      "stage": "O6",
+      "source": "class A:\n @property\n def x(self):\n  print(\"property\")\n  raise AttributeError(\"missing\")\n def __getattr__(self,name): return 7\nprint(A().x)\n",
+      "stdout": "property\n7\n"
+    },
+    {
+      "id": "read-data-descriptor",
+      "stage": "O6",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\n def __set__(self,obj,value): pass\nclass A:\n x=D()\n def __getattribute__(self,name): return object.__getattribute__(self,name)\na=A()\na.x=9\nprint(a.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "read-descriptor-valued-hook",
+      "stage": "O6",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(obj is None,owner.__name__)\n  def read(name): return [name]\n  return read\nclass A: __getattribute__=D()\nprint(A().x[0])\n",
+      "stdout": "False A\nx\n"
+    },
+    {
+      "id": "read-binding-attributeerror",
+      "stage": "O6",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"binding\")\nclass A:\n __getattribute__=D()\n def __getattr__(self,name): return 7\nprint(A().x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "read-fallback-descriptor",
+      "stage": "O6",
+      "source": "class D:\n def __get__(self,obj,owner):\n  def missing(name): return name\n  return missing\nclass A: __getattr__=D()\nprint(A().x)\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "read-staticmethod",
+      "stage": "O6",
+      "source": "class A:\n @staticmethod\n def __getattribute__(name):\n  return name\nprint(A().x)\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "read-classmethod",
+      "stage": "O6",
+      "source": "class A:\n @classmethod\n def __getattribute__(cls,name):\n  return cls.__name__\nprint(A().x)\n",
+      "stdout": "A\n"
+    },
+    {
+      "id": "read-noncallable-hook",
+      "stage": "O6",
+      "source": "class A: __getattribute__=None\nA().x\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-instance-shadow-bypass",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): return 7\na=A()\na.__getattribute__=None\nprint(a.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "read-runtime-slot-mutation",
+      "stage": "O6",
+      "source": "class A: x=1\na=A()\ndef read(self,name): return 7\nA.__getattribute__=read\nprint(a.x)\ndel A.__getattribute__\nprint(a.x)\n",
+      "stdout": "7\n1\n"
+    },
+    {
+      "id": "read-implicit-slots-bypass",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): raise ValueError(\"never\")\n def __len__(self): return 3\n def __add__(self,other): return 7\na=A()\nprint(len(a),bool(a),a+1,type(a) is A,isinstance(a,A))\n",
+      "stdout": "3 True 7 True True\n"
+    },
+    {
+      "id": "read-object-default-no-fallback",
+      "stage": "O6",
+      "source": "class A:\n def __getattr__(self,name): return 7\nobject.__getattribute__(A(),\"x\")\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "read-object-bound-default",
+      "stage": "O6",
+      "source": "class A:\n x=7\n def __getattr__(self,name): return 9\na=A()\nprint(a.__getattribute__(\"x\"))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "read-optional-fallback",
+      "stage": "O6",
+      "source": "class A:\n def __getattr__(self,name): raise AttributeError(\"missing\")\na=A()\nprint(getattr(a,\"x\",[7])[0],hasattr(a,\"x\"))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "read-arbitrary-names",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): return name\na=A()\nprint(getattr(a,\"\"),getattr(a,\"two words\"),getattr(a,\"K\"),getattr(a,\"K\"))\n",
+      "stdout": " two words K K\n"
+    },
+    {
+      "id": "read-signature-25",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): print(\"never\")\ngetattr(A(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-signature-26",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): print(\"never\")\nobject.__getattribute__(A(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-signature-27",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): print(\"never\")\nobject.__getattribute__(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-signature-28",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): print(\"never\")\nobject.__getattribute__(A(),\"x\",1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-signature-29",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): print(\"never\")\nobject.__getattribute__(A(),name=\"x\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-generator-result",
+      "stage": "O6",
+      "source": "class A:\n def __getattribute__(self,name): yield name\nprint(next(A().x))\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "write-intercept",
+      "stage": "O7",
+      "source": "class A:\n def __setattr__(self,name,value):\n  print(name,value)\n  return 9\na=A()\nprint(setattr(a,\"x\",7))\n",
+      "stdout": "x 7\nNone\n"
+    },
+    {
+      "id": "write-delegate",
+      "stage": "O7",
+      "source": "class A:\n def __setattr__(self,name,value): object.__setattr__(self,name,value+1)\na=A()\na.x=6\nprint(a.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "delete-intercept",
+      "stage": "O7",
+      "source": "class A:\n def __delattr__(self,name):\n  print(\"delete\",name)\n  return 9\na=A()\nprint(delattr(a,\"missing\"))\n",
+      "stdout": "delete missing\nNone\n"
+    },
+    {
+      "id": "delete-delegate",
+      "stage": "O7",
+      "source": "class A:\n def __delattr__(self,name): object.__delattr__(self,name)\na=A()\na.x=7\ndel a.x\nprint(hasattr(a,\"x\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "write-inherited-super",
+      "stage": "O7",
+      "source": "class A:\n def __setattr__(self,name,value): super().__setattr__(name,value)\n def __delattr__(self,name): super().__delattr__(name)\nclass B(A): pass\nb=B()\nb.x=7\nprint(b.x)\ndel b.x\nprint(hasattr(b,\"x\"))\n",
+      "stdout": "7\nFalse\n"
+    },
+    {
+      "id": "write-property-order",
+      "stage": "O7",
+      "source": "class A:\n @property\n def x(self): return self.saved\n @x.setter\n def x(self,value):\n  print(\"property\",value)\n  object.__setattr__(self,\"saved\",value)\n def __setattr__(self,name,value):\n  print(\"hook\",name)\n  object.__setattr__(self,name,value)\na=A()\na.x=7\nprint(a.x)\n",
+      "stdout": "hook x\nproperty 7\n7\n"
+    },
+    {
+      "id": "write-descriptor-hook",
+      "stage": "O7",
+      "source": "class D:\n def __get__(self,obj,owner):\n  def write(name,value): object.__setattr__(obj,name,value)\n  return write\nclass A: __setattr__=D()\na=A()\na.x=7\nprint(a.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "delete-descriptor-hook",
+      "stage": "O7",
+      "source": "class D:\n def __get__(self,obj,owner):\n  def remove(name): object.__delattr__(obj,name)\n  return remove\nclass A: __delattr__=D()\na=A()\na.x=7\ndel a.x\nprint(hasattr(a,\"x\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "write-hook-overrides-property",
+      "stage": "O7",
+      "source": "class A:\n @property\n def x(self): return 1\n def __setattr__(self,name,value): print(name,value)\na=A()\na.x=7\nprint(a.x)\n",
+      "stdout": "x 7\n1\n"
+    },
+    {
+      "id": "write-augmented-order",
+      "stage": "O7",
+      "source": "class A:\n def __getattribute__(self,name):\n  print(\"get\",name)\n  return 2\n def __setattr__(self,name,value): print(\"set\",name,value)\na=A()\na.x+=3\n",
+      "stdout": "get x\nset x 5\n"
+    },
+    {
+      "id": "write-native-bound",
+      "stage": "O7",
+      "source": "class A: pass\na=A()\nprint(a.__setattr__(\"x\",7),a.x,a.__delattr__(\"x\"))\n",
+      "stdout": "None 7 None\n"
+    },
+    {
+      "id": "write-noncallable-__setattr__",
+      "stage": "O7",
+      "source": "class A: __setattr__=None\na=A()\na.x=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "write-error-__setattr__",
+      "stage": "O7",
+      "source": "class A:\n def __setattr__(self,*args): raise AttributeError(\"body\")\n def __getattr__(self,name): print(\"never\")\na=A()\na.x=7\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "write-noncallable-__delattr__",
+      "stage": "O7",
+      "source": "class A: __delattr__=None\na=A()\ndel a.x\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "write-error-__delattr__",
+      "stage": "O7",
+      "source": "class A:\n def __delattr__(self,*args): raise AttributeError(\"body\")\n def __getattr__(self,name): print(\"never\")\na=A()\ndel a.x\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "write-runtime-slot",
+      "stage": "O7",
+      "source": "class A: pass\na=A()\ndef write(self,name,value): object.__setattr__(self,name,value+1)\nA.__setattr__=write\na.x=6\ndel A.__setattr__\na.y=8\nprint(a.x,a.y)\n",
+      "stdout": "7 8\n"
+    },
+    {
+      "id": "write-class-bypasses-instance",
+      "stage": "O7",
+      "source": "class A:\n def __setattr__(self,name,value): print(\"never\")\n def __delattr__(self,name): print(\"never\")\nA.x=7\nprint(A.x)\ndel A.x\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "write-signature-48",
+      "stage": "O7",
+      "source": "class A: pass\nobject.__setattr__(A(),7,1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "write-signature-49",
+      "stage": "O7",
+      "source": "class A: pass\nobject.__setattr__(A(),\"x\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "write-signature-50",
+      "stage": "O7",
+      "source": "class A: pass\nobject.__delattr__(A(),\"x\",1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "write-signature-51",
+      "stage": "O7",
+      "source": "class A: pass\nobject.__setattr__(A,\"x\",7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "write-signature-52",
+      "stage": "O7",
+      "source": "class A: pass\nobject.__delattr__(A,\"x\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-property",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self):\n  print(\"advertised\")\n  return B\na=A()\nprint(a.__class__ is B,type(a) is A,isinstance(a,A),isinstance(a,B))\n",
+      "stdout": "advertised\nadvertised\nTrue True True True\n"
+    },
+    {
+      "id": "advertised-class-value",
+      "stage": "O8",
+      "source": "class B: pass\nclass A: __class__=B\na=A()\nprint(a.__class__ is B,isinstance(a,B))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "advertised-hook",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n def __getattribute__(self,name):\n  if name==\"__class__\": return B\n  return object.__getattribute__(self,name)\na=A()\nprint(a.__class__ is B,isinstance(a,B),type(a) is A)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "advertised-non-type",
+      "stage": "O8",
+      "source": "class B: pass\nclass A: __class__=7\nprint(A().__class__,isinstance(A(),B))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "advertised-isinstance-AttributeError",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self): raise AttributeError(\"body\")\nprint(isinstance(A(),B))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "advertised-isinstance-TypeError",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self): raise TypeError(\"body\")\nprint(isinstance(A(),B))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-isinstance-StopIteration",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self): raise StopIteration(\"body\")\nprint(isinstance(A(),B))\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "advertised-tuple-order",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self):\n  print(\"check\")\n  return B\na=A()\nprint(isinstance(a,(A,7)),isinstance(a,(B,A)))\n",
+      "stdout": "check\nTrue True\n"
+    },
+    {
+      "id": "advertised-invalid-tuple",
+      "stage": "O8",
+      "source": "class A:\n def __getattribute__(self,name): print(\"never\")\nprint(isinstance(A(),(7,A)))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-super",
+      "stage": "O8",
+      "source": "class Base:\n def f(self): return 7\nclass B(Base): pass\nclass A:\n @property\n def __class__(self):\n  print(\"check\")\n  return B\na=A()\ns=super(B,a)\nprint(s.f(),s.__self__ is a,s.__self_class__ is B)\n",
+      "stdout": "check\n7 True True\n"
+    },
+    {
+      "id": "advertised-super-real-bypass",
+      "stage": "O8",
+      "source": "class A:\n @property\n def __class__(self): raise ValueError(\"never\")\nclass B(A): pass\nb=B()\ns=super(A,b)\nprint(s.__self_class__ is B,type(b) is B,isinstance(b,A))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "advertised-super-AttributeError",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self): raise AttributeError(\"body\")\nsuper(B,A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-super-ValueError",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n @property\n def __class__(self): raise ValueError(\"body\")\nsuper(B,A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "advertised-super-wrong-type",
+      "stage": "O8",
+      "source": "class B: pass\nclass A: __class__=7\nsuper(B,A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-native-bypass",
+      "stage": "O8",
+      "source": "class B: pass\nclass A:\n def __getattribute__(self,name): return B\na=A()\nprint(a.__class__ is B,object.__getattribute__(a,\"__class__\") is A)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "future-dir-hook",
+      "stage": "Future",
+      "source": "class A:\n def __dir__(self): return [\"x\"]\nprint(dir(A())[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "future-metaclass-hooks",
+      "stage": "Future",
+      "source": "class M(type):\n def __getattribute__(self,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-instance-check",
+      "stage": "Future",
+      "source": "class M(type):\n def __instancecheck__(self,value): return True\nclass A(metaclass=M): pass\nprint(isinstance(7,A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-prepare",
+      "stage": "Future",
+      "source": "class M(type):\n @classmethod\n def __prepare__(cls,name,bases): return {}\nclass A(metaclass=M): pass\nprint(A.__name__)\n",
+      "stdout": "A\n"
+    },
+    {
+      "id": "future-init-subclass",
+      "stage": "Future",
+      "source": "class A:\n def __init_subclass__(cls): print(cls.__name__)\nclass B(A): pass\n",
+      "stdout": "B\n"
+    },
+    {
+      "id": "future-builtin-layout",
+      "stage": "Future",
+      "source": "class A(list): pass\nprint(len(A()))\n",
+      "stdout": "0\n"
+    }
+  ]
+}
