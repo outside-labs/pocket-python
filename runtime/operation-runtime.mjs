@@ -46,7 +46,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     state.temporaries.push(result);
     for (const item of result.items) {
       charge(1);
-      if (values.text(item) === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Non-string directory entries require a separate ordering contract.");
+      if (!values.isString(item)) hard("UNSUPPORTED", "UnsupportedOperationError", "Non-string directory entries require a separate ordering contract.");
     }
     const items = [...result.items];
     items.sort((left, right) => values.less(left, right) ? -1 : values.less(right, left) ? 1 : 0);
@@ -314,6 +314,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "advertised-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
       if (current.kind === "advertised-super" && value.name === "AttributeError") return unaryTask("super-invalid", current.receiver, site, current.after);
       if (current.kind === "attribute-fallback" && value.name === "AttributeError")
@@ -341,7 +342,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return null;
   };
   const deliver = (value, completion, site) => {
-    while (["init", "relay", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
+    while (["init", "relay", "vars-result", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
@@ -470,6 +471,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       appendArgument(completion.receiver, value);
       return unaryTask("next", completion.iterator, site, continuation("call-star-next", completion));
     }
+    if (completion?.kind === "dir-result") {
+      if (value instanceof InstanceValue && classes.hasSlot(value.type, "__len__"))
+        hard("UNSUPPORTED", "UnsupportedOperationError", "Directory iterable length hints require their own contract.");
+      return consumeTask("list", value, site, continuation("dir-sort", {receiver: value, after: completion.after}), completion.depth);
+    }
+    if (completion?.kind === "dir-sort") return valueTask(sortedDirectory(value), site, completion.after);
     if (completion?.kind === "consume-iter") return consumeNext(completion.name, value, completion.result, site, completion.after, completion.depth);
     if (completion?.kind === "consume-next") {
       const {name, receiver, result, after, depth} = completion;
@@ -1091,6 +1098,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "unary") {
           const {operation, value, optionalLength} = task;
           state.temporaries.push(...operationRoots(task));
+          if (operation === "vars-missing") python("TypeError", "vars() argument must have a __dict__ attribute");
           if (["hash", "hash-unhashable"].includes(operation)) {
             if (operation === "hash-unhashable") python("TypeError", "unhashable type");
             if (values.hashParts(value) !== null && values.needsOwnedHash(value)) {
@@ -1546,7 +1554,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (["locals", "vars", "dir"].includes(callable.name)) {
             count("builtin:" + callable.name);
             if (keywords.length || args.length > (callable.name === "locals" ? 0 : 1)) python("TypeError", callable.name + "() received invalid arguments");
-            if (args.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Object namespace reflection requires its adopted hook contract.");
+            if (args.length) {
+              const receiver = args[0];
+              if (callable.name === "vars") {
+                if (!(receiver instanceof InstanceValue)) {
+                  if (values.typeName(receiver) !== null || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
+                      receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
+                  hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");
+                }
+                task = attributeTask(receiver, "__dict__", site, continuation("vars-result", {receiver, after: completion}), depth); continue;
+              }
+              const type = classes.checkingType(receiver);
+              if (type === null || !classes.hasSlot(type, "__dir__"))
+                hard("UNSUPPORTED", "UnsupportedOperationError", "Default directories require their own namespace contract.");
+              if (++depth > maxDepth) python("RecursionError", "maximum implicit directory dispatch depth exceeded");
+              const plan = classes.bindAttribute(classes.lookup(type, "__dir__").value, receiver, type);
+              const target = continuation("dir-result", {receiver, depth, after: completion});
+              task = plan.kind === "value" ? callTask(plan.value, [], [], [], site, target, depth) :
+                callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: target, depth}), depth);
+              continue;
+            }
             const bindings = optimizedBindings();
             if (callable.name === "dir") {
               const names = [];

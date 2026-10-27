@@ -5,6 +5,7 @@ import {runSourceRequest} from './source-request.mjs';
 import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
+import {completion, completionRoots} from './operations.mjs';
 
 const profile = {languageProfile: 'classes-source/1'};
 const unit = source => ({name: 'app', package: false, imports: [], source, notice: 'Synthetic reflection fixture'});
@@ -95,5 +96,63 @@ test('live namespace and comprehension forms refuse explicitly', async () => {
   for (const source of ['locals()\n', 'vars()\n', 'dir()\n', 'globals()\n', 'class A:\n locals()\n',
     '[locals() for x in range(1)]\n', 'next((vars() for x in range(1)))\n']) {
     const result = await run(source); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
+  }
+});
+
+test('reflection continuations retain receivers, iterable owners and outer destinations', () => {
+  const receiver = {}, outer = {}, after = completion('relay', {receiver: outer});
+  for (const kind of ['vars-result', 'dir-result', 'dir-sort'])
+    assert.deepEqual(completionRoots(completion(kind, {receiver, after, depth: 1})), [receiver, outer]);
+  assert.throws(() => completion('dir-result', {receiver, depth: -1}), TypeError);
+});
+
+test('reflection binding, bodies and partial iterable copies survive collection and interruption', async () => {
+  const sources = [
+    'class A:\n @property\n def __dict__(self):\n  print("entered")\n  return [7]\nprint([1][0]+vars(A())[0])\n',
+    'class A:\n def __getattribute__(self,name):\n  print("entered")\n  return [7]\nprint([1][0]+vars(A())[0])\n',
+    'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  return lambda: ("z","a")\nclass A: __dir__=D()\nprint(dir(A())[0])\n',
+    'class A:\n def __dir__(self):\n  yield "z"\n  print("entered")\n  yield "a"\nprint(dir(A())[0])\n',
+    'class M(type):\n @property\n def __dir__(cls):\n  print("entered")\n  return lambda: (cls.__name__,)\nclass A(metaclass=M): pass\nprint(dir(A)[0])\n',
+  ];
+  for (let index = 0; index < sources.length; index++) {
+    const {registry} = await compileSourceModules([unit(sources[index])], profile);
+    try { for (const mode of ['finish', 'cancel', 'close']) {
+      const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+      session.context.begin({shouldCancel: () => cancel}, text => { output += text; }); const execution = Execution.modules(session.context);
+      try {
+        while (execution.state !== 'completed') {
+          execution.advance(); session.memory.collect([], {cleanup: true});
+          if (output === 'entered\n') {
+            reached = true;
+            if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+            if (mode === 'close') break;
+          }
+        }
+        assert.ok(reached); if (mode === 'finish') assert.equal(output, 'entered\n'+['8\n','8\n','a\n','a\n','A\n'][index]);
+      } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+      closed(session.stats());
+    } } finally { registry.close(); }
+  }
+});
+
+test('reflection hooks share recursion, instruction and real allocation limits', async () => {
+  for (const builtin of ['vars', 'dir']) for (const [body, options, limits, expected] of [
+    ['return '+builtin+'(self)', {maxDepth: 12}, undefined, 'PYTHON'],
+    ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
+    ['a=[]\n  while True: a.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
+  ]) {
+    const slot = builtin === 'vars' ? '__dict__' : '__dir__', decorator = builtin === 'vars' ? ' @property\n' : '';
+    const result = await run('class A:\n'+decorator+' def '+slot+'(self):\n  '+body+'\n'+builtin+'(A())\n', options, limits);
+    assert.equal(result.error.code, expected); if (expected === 'PYTHON') assert.equal(result.error.type, 'RecursionError'); closed(result.closed);
+  }
+});
+
+test('reflection method and descriptor failures preserve original Python source frames', async () => {
+  for (const [source, expected] of [
+    ['class A:\n @property\n def __dict__(self):\n  raise ValueError("original")\nvars(A())\n', [['<module>', 5], ['__dict__', 4]]],
+    ['class A:\n def __dir__(self):\n  raise AttributeError("original")\ndir(A())\n', [['<module>', 4], ['__dir__', 3]]],
+    ['class D:\n def __get__(self,obj,owner):\n  raise AttributeError("original")\nclass A: __dir__=D()\ndir(A())\n', [['<module>', 5], ['__get__', 3]]],
+  ]) {
+    const result = await run(source); assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.span[0]]), expected); closed(result.closed);
   }
 });

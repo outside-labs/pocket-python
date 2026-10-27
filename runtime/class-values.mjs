@@ -7,7 +7,7 @@ export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, 
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__"]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 
 export class ClassRuntime {
@@ -228,6 +228,8 @@ export class ClassRuntime {
     }
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
+    if (name === "__dict__" && (receiver instanceof ClassValue || !this.hasSlot(receiver.type, name)))
+      this.fail("UnsupportedOperationError", "Live namespace dictionaries require their own storage contract.", "UNSUPPORTED");
     if (receiver instanceof InstanceValue && name === "__class__") {
       const item = this.lookup(receiver.type, name);
       return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : value(this.classAttribute(receiver));
@@ -246,6 +248,8 @@ export class ClassRuntime {
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
       return this.bindAttribute(metaItem.value, receiver, metaclass);
     const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
+    if (name === "__dir__" && !item.found && !metaItem?.found)
+      this.fail("UnsupportedOperationError", "Default directories require their own namespace contract.", "UNSUPPORTED");
     if (receiver instanceof InstanceValue && (item.value instanceof PropertyValue ||
         descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)))
       return this.bindAttribute(item.value, receiver, owner);

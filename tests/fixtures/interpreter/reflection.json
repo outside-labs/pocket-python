@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O15",
-    "O16"
+    "O16",
+    "O17"
   ],
   "cases": [
     {
@@ -491,6 +492,73 @@
       "stage": "Future",
       "source": "class Items:\n def __iter__(self): return iter((\"x\",))\n def __len__(self):\n  print(\"hint\")\n  return 1\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
       "stdout": "hint\nx\n"
+    },
+    {
+      "id": "dir-custom-iterable",
+      "stage": "O17",
+      "source": "class Items:\n def __iter__(self):\n  yield \"z\"\n  yield \"a\"\nclass A:\n def __dir__(self): return Items()\nfor name in dir(A()): print(name)\n",
+      "stdout": "a\nz\n"
+    },
+    {
+      "id": "dir-custom-index-iteration",
+      "stage": "O17",
+      "source": "class Items:\n def __getitem__(self,index):\n  if index==0: return \"x\"\n  raise IndexError(\"done\")\nclass A:\n def __dir__(self): return Items()\nprint(dir(A())[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "dir-staticmethod",
+      "stage": "O17",
+      "source": "class A:\n @staticmethod\n def __dir__(): return (\"x\",)\nprint(dir(A())[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "dir-classmethod",
+      "stage": "O17",
+      "source": "class A:\n @classmethod\n def __dir__(cls): return (cls.__name__,)\nprint(dir(A())[0])\n",
+      "stdout": "A\n"
+    },
+    {
+      "id": "vars-raw-class-value",
+      "stage": "O17",
+      "source": "class A: __dict__=7\nprint(vars(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "vars-binding-fallback",
+      "stage": "O17",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"binding\")\nclass A:\n __dict__=D()\n def __getattr__(self,name): return 7\nprint(vars(A()))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "vars-descriptor-mutation",
+      "stage": "O17",
+      "source": "class A:\n @property\n def __dict__(self):\n  return {\"x\":self.x}\na=A()\na.x=7\nsaved=vars(a)\na.x=8\nprint(saved[\"x\"],vars(a)[\"x\"])\n",
+      "stdout": "7 8\n"
+    },
+    {
+      "id": "dir-iterator-body-error",
+      "stage": "O17",
+      "source": "class A:\n def __dir__(self):\n  yield \"x\"\n  raise ValueError(\"iteration\")\ndir(A())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "default-directory-descriptor-deferred",
+      "stage": "Future",
+      "source": "class A: pass\nprint(\"__class__\" in object.__dir__(A()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-namespace-descriptor-deferred",
+      "stage": "Future",
+      "source": "class A:\n @property\n def __dict__(self): return 7\nprint(\"__dict__\" in vars(A))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "locals-unicode-free-order",
+      "stage": "O16",
+      "source": "def outer():\n 﨎=1\n 𐐀=2\n def f():\n  print(﨎,𐐀)\n  for name in locals(): print(name)\n f()\nouter()\n",
+      "stdout": "1 2\n﨎\n𐐀\n"
     }
   ]
 }
