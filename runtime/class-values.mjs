@@ -7,7 +7,7 @@ export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, 
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__class__"]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__"]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -27,6 +27,11 @@ export class ClassRuntime {
     if (typeof name !== "string" || name.length > CLASS_LIMITS.name) throw new TypeError("Invalid class attribute name.");
   }
   root() { return this.make(ClassValue, "object", "object", "builtins", [], [], new Map(), true); }
+  validateNamespace(bases, names) {
+    const metaLayout = bases.some(base => base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base));
+    if (metaLayout && [...names].some(key => isSpecialName(key) && !META_SPECIALS.has(key)))
+      this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
+  }
   create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null} = {}) {
     this.key(name);
     if (!dynamic && !isPythonIdentifier(name)) throw new TypeError("Invalid class name.");
@@ -36,9 +41,7 @@ export class ClassRuntime {
     this.touch(root);
     this.bounded(bases.length <= CLASS_LIMITS.bases && namespace.size <= CLASS_LIMITS.attributes, "Class base/namespace budget exceeded.");
     bases = bases.length ? [...bases] : [root]; namespace = new Map(namespace);
-    const metaLayout = bases.some(base => base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base));
-    if (metaLayout && [...namespace.keys()].some(key => isSpecialName(key) && !META_SPECIALS.has(key)))
-      this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
+    this.validateNamespace(bases, namespace.keys());
     if (namespace.has("__eq__") && !namespace.has("__hash__")) namespace.set("__hash__", null);
     this.bounded(namespace.size <= CLASS_LIMITS.attributes, "Class namespace budget exceeded.");
     for (const base of bases) {
