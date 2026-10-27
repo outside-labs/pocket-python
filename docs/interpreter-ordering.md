@@ -101,4 +101,13 @@ same-type fallback, type mutation and original error frames match the oracle.
 Focused lifecycle checks collect during binding, method bodies and consuming
 truth, and verify cancellation, close, recursion and real budget/OOM failures.
 The complete Node suite passes with the existing composed resource baselines.
-O13/O14 remain reference-only until their separate implementation slices.
+O14 remains reference-only until its separate implementation slice.
+
+## Sequence ordering adoption
+
+O13 is implemented. The 29 list/tuple cases join the existing stages for 89
+observations per Node/Chromium driver combination. Equality and truth callbacks
+may replace, shrink or grow lists before the current unequal pair is selected.
+The selected pair, raw ordering result and outer expression survive collection
+and cancellation, including callbacks that remove both operands from their
+lists. Recursive element equality shares the comparison depth limit.

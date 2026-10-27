@@ -564,8 +564,8 @@
       "stdout": "True\n"
     },
     {
-      "id": "future-container-ordering",
-      "stage": "E3",
+      "id": "container-ordering",
+      "stage": "E1",
       "source": "class A:\n def __eq__(self,other): return True\nprint([A()]<[A()])\n",
       "stdout": "False\n"
     },
