@@ -26,6 +26,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     state.outputLeases.push(memory.external(32 + 2 * text.length)); onOutput(text);
   };
   const numericNames = new Set(["range","int","float","complex","abs","round","bin","oct","hex","chr","ord","pow","divmod"]);
+  const optimizedBindings = () => {
+    const frame = state.frames.at(-1);
+    if (frame.fn.kind !== "function" || ["<listcomp>", "<dictcomp>", "<setcomp>", "<genexpr>"].includes(frame.fn.name))
+      hard("UNSUPPORTED", "UnsupportedOperationError", "This scope requires its own live or comprehension namespace contract.");
+    return [...frame.fn.locals.map(name => [name, frame.locals.get(name)]), ...frame.closure].filter(([name, cell]) => {
+      charge(name.length + 1); return cell.bound && !name.startsWith("@source:");
+    });
+  };
+  const namespaceSnapshot = bindings => {
+    const result = values.dict([]); state.temporaries.push(result);
+    for (const [name, cell] of bindings) {
+      const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
+      values.set(result, key, cell.value);
+    }
+    return result;
+  };
+  const sortedDirectory = result => {
+    state.temporaries.push(result);
+    for (const item of result.items) {
+      charge(1);
+      if (values.text(item) === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Non-string directory entries require a separate ordering contract.");
+    }
+    const items = [...result.items];
+    items.sort((left, right) => values.less(left, right) ? -1 : values.less(right, left) ? 1 : 0);
+    return values.list(items);
+  };
   const bindNamed = (labels, args, keywords, keywordValues) => {
     if (args.length > labels.length) python("TypeError", "Too many positional arguments");
     const bound = new Map(labels.slice(0, args.length).map((name, index) => [name, args[index]]));
@@ -1517,7 +1543,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length) python("TypeError", "id() requires one positional value");
             task = valueTask(values.objectId(args[0]), site, completion); continue;
           }
-          if (["globals", "locals", "vars", "dir"].includes(callable.name))
+          if (["locals", "vars", "dir"].includes(callable.name)) {
+            count("builtin:" + callable.name);
+            if (keywords.length || args.length > (callable.name === "locals" ? 0 : 1)) python("TypeError", callable.name + "() received invalid arguments");
+            if (args.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Object namespace reflection requires its adopted hook contract.");
+            const bindings = optimizedBindings();
+            if (callable.name === "dir") {
+              const names = [];
+              for (const [name] of bindings) {
+                const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key); names.push(key);
+              }
+              task = valueTask(sortedDirectory(values.list(names)), site, completion);
+            } else task = valueTask(namespaceSnapshot(bindings), site, completion);
+            continue;
+          }
+          if (callable.name === "globals")
             hard("UNSUPPORTED", "UnsupportedOperationError", "This namespace reflection form requires its adopted namespace contract.");
           if (["hash", "object.__hash__"].includes(callable.name)) {
             count("builtin:" + callable.name);

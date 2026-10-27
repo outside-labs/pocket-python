@@ -498,6 +498,16 @@ class Compiler {
       emit(nodes.at(-1) || node, "end"); return id;
     };
     fn.body = makeBlock(node.body); fn.locals = [...scope.locals].sort();
+    if (this.classes && !isModule && !isClass) {
+      // Optimized namespace order is parameters, ordinary locals, then cells.
+      // Captured parameters stay in their parameter positions.
+      const parameters = [...params.posonly, ...params.positional, ...params.kwonly,
+        ...(params.vararg ? [params.vararg] : []), ...(params.kwarg ? [params.kwarg] : [])];
+      const captured = new Set(this.scopes.filter(child => child.parent === scope)
+        .flatMap(child => [...child.free]).filter(key => scope.locals.has(key) && !parameters.includes(key)));
+      const ordered = [...new Set([...parameters, ...scope.locals])];
+      fn.locals = [...ordered.filter(key => !captured.has(key)), ...[...captured].sort()];
+    }
   }
   compile() {
     this.resolve(); this.scopes.forEach(scope => this.function(scope));

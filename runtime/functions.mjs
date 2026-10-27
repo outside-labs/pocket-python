@@ -186,7 +186,10 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     frame.leave = memory.enter(() => [callable, ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
       ...frame.tasks.flatMap(controlRoots), ...(frame.generator ? [frame.generator] : []), ...completionRoots(frame.completion, true)], {charge, fail: hard});
     state.frames.push(frame);
-    for (const key of fn.locals) {
+    // Keep the established cell allocation/root order; source local order is
+    // independently carried by the verified function for namespace snapshots.
+    const localNames = callable.pool.code.version === 5 && fn.kind === "function" ? [...fn.locals].sort() : fn.locals;
+    for (const key of localNames) {
       let cell = frame.locals.get(key);
       if (!cell) {
         cell = allocate(Cell);

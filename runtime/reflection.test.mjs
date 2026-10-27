@@ -59,3 +59,41 @@ test('identity traversal obeys the shared work limit', async () => {
   const result = await run('saved=[]\nwhile True: id(saved)\n', {maxSteps: 100000, maxWork: 1000});
   assert.equal(result.error.code, 'BUDGET'); closed(result.closed);
 });
+
+test('snapshot values and free cells survive collection, cancellation and close', async () => {
+  const source = 'def outer():\n saved=[7]\n def f(x):\n  before=locals()\n  print("entered")\n  del x\n  return before["x"][0]+saved[0]\n return f\nprint(outer()([1]))\n';
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  try { for (const mode of ['finish', 'cancel', 'close']) {
+    const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+    session.context.begin({shouldCancel: () => cancel}, text => { output += text; }); const execution = Execution.modules(session.context);
+    try {
+      while (execution.state !== 'completed') {
+        execution.advance(); session.memory.collect([], {cleanup: true});
+        if (output === 'entered\n') {
+          reached = true;
+          if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+          if (mode === 'close') break;
+        }
+      }
+      assert.ok(reached); if (mode === 'finish') assert.equal(output, 'entered\n8\n');
+    } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+    closed(session.stats());
+  } } finally { registry.close(); }
+});
+
+test('recursive snapshot graphs share real memory and work budgets', async () => {
+  for (const [body, options, limits, expected] of [
+    ['while True: locals()', {maxSteps: 100000, maxWork: 1000}, undefined, 'BUDGET'],
+    ['saved=[]\n while True: saved.append(locals())', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
+  ]) {
+    const result = await run('def f():\n '+body+'\nf()\n', options, limits);
+    assert.equal(result.error.code, expected); closed(result.closed);
+  }
+});
+
+test('live namespace and comprehension forms refuse explicitly', async () => {
+  for (const source of ['locals()\n', 'vars()\n', 'dir()\n', 'globals()\n', 'class A:\n locals()\n',
+    '[locals() for x in range(1)]\n', 'next((vars() for x in range(1)))\n']) {
+    const result = await run(source); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
+  }
+});
