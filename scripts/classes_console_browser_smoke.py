@@ -25,6 +25,7 @@ from examples.interpreter_syntax import SOURCE as SYNTAX_SOURCE, CORE_SOURCE as 
 from examples.interpreter_values import SOURCE as VALUES_SOURCE, CORE_SOURCE as CORE_VALUES_SOURCE
 from examples.interpreter_generators import SOURCE as GENERATOR_SOURCE, CORE_SOURCE as GENERATOR_CORE_SOURCE
 from examples.interpreter_construction import SOURCE as CONSTRUCTION_SOURCE
+from examples.interpreter_attributes import SOURCE as ATTRIBUTE_SOURCE
 
 
 def smoke(channel=None):
@@ -79,6 +80,7 @@ def smoke(channel=None):
                     assert 'equality and hashing' in page.locator('#language').inner_text()
                     assert 'sets, bytes, bytearrays and memoryviews' in page.locator('#language').inner_text()
                     assert 'construction, super and finite metaclasses' in page.locator('#language').inner_text()
+                    assert 'instance attribute hooks and advertised class identities' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -158,11 +160,13 @@ def smoke(channel=None):
                     generators = json.loads((ROOT / 'tests/fixtures/interpreter/generators.json').read_bytes())
                     objects = json.loads((ROOT / 'tests/fixtures/interpreter/object-protocols.json').read_bytes())
                     construction = json.loads((ROOT / 'tests/fixtures/interpreter/construction.json').read_bytes())
-                    for corpus in [generators, objects, construction]:
+                    attributes = json.loads((ROOT / 'tests/fixtures/interpreter/attribute-hooks.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
                     programs.append(CONSTRUCTION_SOURCE)
+                    programs.append(ATTRIBUTE_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -373,6 +377,20 @@ def smoke(channel=None):
                     for expression in ['b.__class__', 'getattr(b,"__class__")', 'isinstance(b,A)', 'super(A,b)']:
                         run(identity + expression + '\n', 'hook\n')
                     checks.append('advertised-class-identities-execute-offline-hooks-when-required')
+                    run(ATTRIBUTE_SOURCE, 'attributes 8 offline\nidentity True True True\nmissing True False\n')
+                    checks.append('new-instance-attribute-hooks-compose-with-generators-and-reflection-offline')
+                    for slot, signature, invocation in [
+                        ('__getattribute__', 'self,name', 'A().x'),
+                        ('__getattr__', 'self,name', 'getattr(A(),"x",7)'),
+                        ('__setattr__', 'self,name,value', 'A().x=7'),
+                        ('__delattr__', 'self,name', 'del A().x')]:
+                        refused('class A:\n def '+slot+'('+signature+'):\n  raise ValueError("hook")\n'+invocation+'\n', 'ValueError:')
+                        assert slot+' at sources/app.py:3' in page.locator('#diagnostic').inner_text()
+                    refused('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__dict__")\n', 'UnsupportedOperationError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused('class M(type):\n print("never")\n def __getattribute__(self,name): return 7\n', 'UnsupportedOperationError:')
+                    assert page.locator('#result').inner_text() == ''
+                    checks.append('instance-hook-errors-and-deferred-reflection-retain-offline-boundaries')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -474,6 +492,15 @@ def smoke(channel=None):
                         'class M(type):\n def __init__(cls,*args):\n  while True: pass\nclass Spin(metaclass=M): pass\n',
                         'class M(type):\n def __call__(cls):\n  while True: pass\nclass Spin(metaclass=M): pass\nSpin()\n',
                         'class D:\n def __set_name__(self,owner,name):\n  while True: pass\nclass M(type): pass\nclass Spin(metaclass=M): value=D()\n'
+                    ])
+                    busy.extend([
+                        'class Spin:\n def __getattribute__(self,name):\n  while True: pass\nSpin().x\n',
+                        'class Spin:\n def __getattr__(self,name):\n  while True: pass\ngetattr(Spin(),"x",[7])\n',
+                        'class D:\n def __get__(self,obj,owner):\n  while True: pass\nclass Spin: __getattribute__=D()\nSpin().x\n',
+                        'class Spin:\n def __setattr__(self,name,value):\n  while True: pass\nSpin().x=[7]\n',
+                        'class Spin:\n def __delattr__(self,name):\n  while True: pass\ndel Spin().x\n',
+                        'class B: pass\nclass Spin:\n @property\n def __class__(self):\n  while True: pass\nprint(isinstance(Spin(),((B,),)))\n',
+                        'class B: pass\nclass Spin:\n @property\n def __class__(self):\n  while True: pass\nsuper(B,Spin())\n'
                     ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
