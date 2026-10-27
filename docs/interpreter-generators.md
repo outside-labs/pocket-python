@@ -2,7 +2,7 @@
 
 INT-GEN-01 uses the pinned CPython 3.14.7 executable reference. The authored
 `generators.json` corpus separates reference-only evidence from independently
-compiled source. G1 is implemented; G2 remains the next stage. Both require Node and Chromium, both profiles and both
+compiled source. G1 and G2 are implemented. Both require Node and Chromium, both profiles and both
 draining and instruction-boundary execution before acceptance.
 
 | Stage | Finite contract |

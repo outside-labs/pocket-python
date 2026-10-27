@@ -307,6 +307,10 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             }
             task.phase = "test"; block(frame, task.test); return;
           }
+          if (task.phase === "iterable" && task.acquired) {
+            task.owned = true; task.phase = "body"; task.iterator = signal.value;
+            dispatch(unaryTask("next", task.iterator, task.site, continuation("for-next"))); return;
+          }
           if (task.phase === "iterable" && (signal.value instanceof GeneratorValue || signal.value instanceof InstanceValue || signal.value instanceof ProtocolIteratorValue)) {
             task.owned = true; task.phase = "acquire";
             dispatch(unaryTask("iter", signal.value, task.site, continuation("for-iter"))); return;
@@ -521,7 +525,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (op === "if") dispatch(unaryTask("truth", stack.pop(), summary(frame, cursor),
         continuation("condition", {control: "if", body: arg, otherwise: extra})));
       else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth, site: summary(frame, cursor)}); block(frame, arg); }
-      else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null, site: summary(frame, cursor)}); block(frame, extra); }
+      else if (["for", "for-iterator"].includes(op)) { frame.tasks.push({type: "for", acquired: op === "for-iterator", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null, site: summary(frame, cursor)}); block(frame, extra); }
       else if (op === "try") {
         frame.tasks.push({type: "try", phase: "body", instruction: cursor.block.instructions[cursor.pc - 1], previous: frame.activeException, previousOwned: frame.ownsException === true,
           caught: null, pending: null, alias: null, site: state.current.location}); block(frame, arg);

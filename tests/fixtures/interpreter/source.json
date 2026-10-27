@@ -586,19 +586,21 @@
     },
     {
       "id": "unsupported-comprehension",
-      "source": "print('must not run')\nx=[n for n in []]",
+      "source": "print('must not run')\nx=[(z:=n) for n in []]",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"
-      ]
+      ],
+      "phase": "compile"
     },
     {
       "id": "unsupported-set-comprehension",
-      "source": "print('must not run')\nx={n for n in []}",
+      "source": "print('must not run')\nx={(z:=n) for n in []}",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"
-      ]
+      ],
+      "phase": "compile"
     },
     {
       "id": "unsupported-import-star",

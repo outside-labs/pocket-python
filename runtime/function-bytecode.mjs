@@ -47,11 +47,11 @@ export function verifyFunctions(program) {
     fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : []), ...scopeFields]);
     const kind = classes ? fn.kind : functionIndex === 0 ? "module" : "function";
     if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
-    if (!(fn.name === "<module>" && functionIndex === 0) && !(modern && fn.name === "<lambda>" && kind === "function") && !validName(fn.name)) fail("Invalid function name.");
+    if (!(fn.name === "<module>" && functionIndex === 0) && !(modern && ["<lambda>", "<listcomp>", "<dictcomp>", "<setcomp>", "<genexpr>"].includes(fn.name) && kind === "function") && !validName(fn.name)) fail("Invalid function name.");
     if (typeof fn.qualname !== "string" || !fn.qualname || fn.qualname.length > 256) fail("Invalid qualified function name.");
     const variadic = modern ? ["vararg", "kwarg"].filter(key => Object.hasOwn(fn.params, key)) : [];
     fields(fn.params, ["posonly", "positional", "kwonly", "defaults", "kwdefaults", ...variadic]);
-    const params = Object.fromEntries(["posonly", "positional", "kwonly"].map(key => [key, names(fn.params[key], validName)]));
+    const params = Object.fromEntries(["posonly", "positional", "kwonly"].map(key => [key, names(fn.params[key], key === "posonly" && modern ? storageName : validName)]));
     for (const key of variadic) {
       if (!validName(fn.params[key])) fail("Invalid variadic parameter name.");
       params[key] = fn.params[key];
@@ -142,7 +142,7 @@ export function verifyFunctions(program) {
         else if (["jump", "jump-if-false"].includes(op)) { length = 2; if (!integer(arg, block.instructions.length - 1)) fail("Jump outside current block."); }
         else if (op === "if") { length = 3; blockRef(arg, "statement"); blockRef(extra, "statement"); }
         else if (op === "while") { length = 4; blockRef(arg, "expression"); blockRef(extra, "statement"); blockRef(instruction[3], "statement"); }
-        else if (op === "for") {
+        else if (op === "for" || modern && op === "for-iterator") {
           length = 5; if (!writable(arg)) fail("For target requires a writable binding.");
           blockRef(extra, "expression"); blockRef(instruction[3], "statement"); blockRef(instruction[4], "statement");
         } else if (op === "try") {
@@ -159,7 +159,7 @@ export function verifyFunctions(program) {
           if (instruction[4] !== null) blockRef(instruction[4], "statement");
         } else if (!(BINARY.has(op) || UNARY.has(op) || (classes && op === "build-slice") || ["pop", "dup", "swap", "setitem", "slice", "end", "return", "raise", "reraise", "break", "continue"].includes(op))) fail("Unknown function opcode.");
         if (instruction.length !== length || (kind === "class" && op === "return") ||
-            (block.kind === "expression" && ["return", "break", "continue", "if", "while", "for", "try"].includes(op))) fail("Invalid operands or expression control flow.");
+            (block.kind === "expression" && ["return", "break", "continue", "if", "while", "for", "for-iterator", "try"].includes(op))) fail("Invalid operands or expression control flow.");
         return Object.freeze(instruction.map((value, index) => op === "try" && index === 2 ?
           Object.freeze(value.map(handler => Object.freeze([Object.freeze([...handler[0]]), handler[1], handler[2], sourceSpan(handler[3])]))) :
           Array.isArray(value) ? Object.freeze([...value]) : value));
@@ -213,7 +213,7 @@ export function verifyFunctions(program) {
         if (!loop && ["break", "continue"].includes(op)) fail("Loop control requires a containing loop body.");
         if (op === "if") { control(a, loop); control(b, loop); }
         if (op === "while") { control(a, loop); control(b, true); control(c, loop); }
-        if (op === "for") { control(b, loop); control(c, true); control(d, loop); }
+        if (["for", "for-iterator"].includes(op)) { control(b, loop); control(c, true); control(d, loop); }
         if (op === "try") {
           control(a, loop); for (const handler of b) control(handler[2], loop);
           if (c !== null) control(c, loop); if (d !== null) control(d, loop);

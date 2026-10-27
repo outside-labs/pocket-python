@@ -603,7 +603,7 @@
     },
     {
       "id": "comprehension-deferred",
-      "stage": "Future",
+      "stage": "Control",
       "source": "print(len([x for x in range(3)]))\n",
       "stdout": "3\n",
       "profiles": [
