@@ -5,6 +5,9 @@ the executable oracle for `tests/fixtures/interpreter/reflection.json`.
 Reference-only cases specify behavior before independent implementation.
 The APIs retain classes-source/1 and bytecode 5; core-source/1 stays unchanged.
 
+O18 is implemented. O19 and O20 remain reference-only stages until their
+separate implementation changes are accepted.
+
 | Stage | Contract |
 | --- | --- |
 | O18 | `locals()` and zero-argument `vars()` inside generator expressions return fresh shallow snapshots of the acquired outer iterator under `.0`, currently bound targets and captured free cells in Python order. Zero-argument `dir()` sorts those names. Aliased builtins inspect their immediate Python caller. Snapshot mutations cannot rebind cells; escaped iterators and values keep their ordinary identity after suspension and close. Private compiler storage stays hidden. |

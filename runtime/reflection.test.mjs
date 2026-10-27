@@ -94,9 +94,34 @@ test('recursive snapshot graphs share real memory and work budgets', async () =>
 
 test('live namespace and comprehension forms refuse explicitly', async () => {
   for (const source of ['locals()\n', 'vars()\n', 'dir()\n', 'globals()\n', 'class A:\n locals()\n',
-    '[locals() for x in range(1)]\n', 'next((vars() for x in range(1)))\n']) {
+    '[locals() for x in range(1)]\n']) {
     const result = await run(source); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
   }
+});
+
+test('generator-expression snapshots retain iterator and target owners through close and collection', async () => {
+  const source = 'saved=[[7],[8]]\ng=(locals() for x in saved)\na=next(g)\nb=next(g)\ng.close()\nprint(a[".0"] is b[".0"],a["x"][0],b["x"][0],list(a)==[".0","x"])\n';
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  try { for (const mode of ['finish', 'cancel', 'close']) {
+    const session = new ModuleSession(registry); let output = '', cancel = false, advances = 0;
+    session.context.begin({shouldCancel: () => cancel}, text => { output += text; }); const execution = Execution.modules(session.context);
+    try {
+      while (execution.state !== 'completed') {
+        execution.advance(); session.memory.collect([], {cleanup: true});
+        if (++advances === 70 && mode !== 'finish') {
+          if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); }
+          break;
+        }
+      }
+      if (mode === 'finish') assert.equal(output, 'True 7 8 True\n');
+    } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+    closed(session.stats());
+  } } finally { registry.close(); }
+});
+
+test('escaped generator-expression iterator remains usable after the generator closes', async () => {
+  const result = await run('g=(vars() for x in (7,8))\na=next(g)\ng.close()\nprint(next(a[".0"]),a["x"])\n');
+  assert.equal(result.stdout, '8 7\n'); assert.ok(result.ok); closed(result.closed);
 });
 
 test('reflection continuations retain receivers, iterable owners and outer destinations', () => {
