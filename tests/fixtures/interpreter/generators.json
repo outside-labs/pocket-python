@@ -3,7 +3,9 @@
   "suite": "interpreter-generators/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "G1"
+  ],
   "cases": [
     {
       "id": "lazy-binding",
@@ -278,6 +280,32 @@
         "classes-source/1",
         "core-source/1"
       ]
+    },
+    {
+      "id": "caller-exception-isolation",
+      "source": "def g():\n yield 1\n raise\na=g()\ntry: raise ValueError(\"caller\")\nexcept ValueError: print(next(a))\ntry: next(a)\nexcept RuntimeError: print(\"isolated\")\n",
+      "stdout": "1\nisolated\n",
+      "stage": "G1",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "delegation-generatorexit",
+      "source": "def child():\n try: yield 1\n except GeneratorExit: yield 2\ndef parent(): yield from child()\na=parent()\nprint(next(a))\ntry: a.throw(GeneratorExit(\"exit\"))\nexcept RuntimeError: print(\"ignored\")\n",
+      "stdout": "1\nignored\n",
+      "stage": "G1",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "delegate-missing-binding",
+      "source": "class D:\n def __iter__(self): return self\n def __next__(self): return 1\n @property\n def throw(self): raise AttributeError(\"missing\")\ndef g(): yield from D()\na=g()\nprint(next(a))\ntry: a.throw(ValueError(\"original\"))\nexcept ValueError as e: print(str(e))\n",
+      "stdout": "1\noriginal\n",
+      "stage": "G1"
     }
   ]
 }

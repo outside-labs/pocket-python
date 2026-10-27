@@ -1,4 +1,4 @@
-import {FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, callTask, unaryTask, valueTask, itemTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -6,7 +6,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, resumeGenerator, yieldGenerator, delegateResult}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value instanceof NotImplementedValue) return "NotImplemented";
@@ -286,6 +286,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "delegate-bind" && value.name === "AttributeError") return unaryTask("delegate-raise", current.receiver, site);
       if (current.kind.startsWith("call-map-") && (value.name === "AttributeError" || value.name === "KeyError" && current.mode !== "display"))
         return value.name === "KeyError" ? duplicateKeyword(current.receiver, value.args[0] ?? current.key, site, current.after) :
           unaryTask("call-mapping-required", current.receiver, site, current.after);
@@ -295,6 +296,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         return unaryTask("iterator-stop", current.receiver, site, current.after);
       }
       if (value.name !== "StopIteration") continue;
+      if (current.kind === "delegate-next") return valueTask(value.args[0] ?? null, site, continuation("delegate-return", {receiver: current.receiver}));
       if (current.kind === "next-default") return valueTask(current.default, site, current.after);
       if (current.kind === "for-next") return valueTask(null, site, continuation("for-exhausted"));
       if (current.kind === "search-next") return valueTask(false, site, current.after);
@@ -331,6 +333,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       completion = completion.after;
     }
+    if (completion?.kind === "delegate-bind") return callTask(value, completion.args, [], [], site, completion.after);
+    if (completion?.kind.startsWith("delegate-")) return delegateResult(completion.kind, value, site);
     count("deliver:" + (completion?.kind ?? "stack"));
     if (completion?.kind === "display-insert") return valueTask(completion.receiver, site, completion.after);
     if (completion?.kind === "display-iter") return unaryTask("next", value, site,
@@ -650,6 +654,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "unary" && task.operation === "delegate-raise") throw new Raised(task.value);
         if (task.kind === "unary" && task.operation === "unpack-short") {
           state.temporaries = operationRoots(task); python("ValueError", "Not enough values to unpack");
         }
@@ -883,6 +888,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (["iter", "iter-indexed", "next", "iterator-stop"].includes(operation)) {
             if (operation === "iterator-stop") python("StopIteration", "");
+            if (value instanceof GeneratorValue) {
+              if (operation === "iter") { task = deliver(value, completion, site); continue; }
+              resumeGenerator(value, "send", null, site, completion); return;
+            }
             if (value instanceof ProtocolIteratorValue) {
               if (operation === "iter") { task = deliver(value, completion, site); continue; }
               if (value.exhausted) python("StopIteration", "");
@@ -1016,8 +1025,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           task = callTask(method, args, keywords, keywordValues, site,
             continuation("init", {instance, after: completion}), depth); continue;
         }
-        if (callable instanceof FunctionValue) { enter(callable, bind(callable, args, keywords, keywordValues), site, completion); return; }
+        if (callable instanceof FunctionValue) {
+          const bindings = bind(callable, args, keywords, keywordValues);
+          if (callable.pool.code.functions[callable.index].blocks.some(block => block.instructions.some(([op]) => ["yield", "yield-from"].includes(op)))) {
+            task = deliver(allocate(GeneratorValue, callable, bindings), completion, site); continue;
+          }
+          enter(callable, bindings, site, completion); return;
+        }
         if (callable instanceof BuiltinValue) {
+          if (callable instanceof ValueMethod && callable.receiver instanceof GeneratorValue) {
+            if (keywords.length || args.length !== (callable.name === "close" || callable.name === "__iter__" || callable.name === "__next__" ? 0 : 1)) {
+              if (callable.name === "throw" && args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multi-argument generator.throw requires a separate stage.");
+              python("TypeError", "Invalid generator method arguments");
+            }
+            if (callable.name === "__iter__") { task = deliver(callable.receiver, completion, site); continue; }
+            resumeGenerator(callable.receiver, callable.name === "__next__" ? "send" : callable.name, args[0] ?? null, site, completion); return;
+          }
           if (callable instanceof ValueMethod && values.isView(callable.receiver)) {
             if (args.length || keywords.length) {
               if (callable.name === "tobytes" && args.length <= 1 && keywords.every(name => name === "order"))
@@ -1093,7 +1116,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             count("builtin:" + callable.name);
             if (args.length > 1 || keywords.length) python("TypeError", callable.name + "() accepts at most one positional argument");
             const source = args[0];
-            if (args.length && (source instanceof InstanceValue || source instanceof ProtocolIteratorValue)) {
+            if (args.length && (source instanceof GeneratorValue || source instanceof InstanceValue || source instanceof ProtocolIteratorValue)) {
               task = consumeTask(callable.name, source, site, completion, depth); continue;
             }
             if (callable.name === "tuple" && values.isSequenceType(source, "tuple")) { task = valueTask(source, site, completion); continue; }
@@ -1128,8 +1151,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             } else task = unaryTask("hash", args[0], site, completion, depth);
             continue;
           }
-          if (["iter", "next"].includes(callable.name) && state.frames.at(-1).callable.pool.code.version === 5) {
+          if (["iter", "next"].includes(callable.name) && state.frames.at(-1).callable.pool.code.version >= 4) {
             count("builtin:" + callable.name);
+            if (state.frames.at(-1).callable.pool.code.version === 4 && args.length === 2 && !(callable.name === "next" && args[0] instanceof GeneratorValue))
+              hard("UNSUPPORTED", "UnsupportedOperationError", "This two-argument primitive iteration form requires classes-source/1.");
             if (args.length < 1 || args.length > 2 || keywords.length) python("TypeError", callable.name + "() requires one or two positional arguments");
             if (callable.name === "iter" && args.length === 2) {
               if (!classes.callable(args[0])) python("TypeError", "iter() first argument must be callable");

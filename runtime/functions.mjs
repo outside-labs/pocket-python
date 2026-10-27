@@ -1,5 +1,5 @@
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -174,7 +174,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       tasks: [], activeException: state.frames.at(-1)?.activeException || inheritedException, callsite,
       completion, namespaceOrder: fn.kind === "class" ? new Set() : null, returnInstruction: state.current?.instruction ?? null};
     frame.leave = memory.enter(() => [callable, ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
-      ...frame.tasks.flatMap(controlRoots), ...completionRoots(completion, true)], {charge, fail: hard});
+      ...frame.tasks.flatMap(controlRoots), ...(frame.generator ? [frame.generator] : []), ...completionRoots(frame.completion, true)], {charge, fail: hard});
     state.frames.push(frame);
     for (const key of fn.locals) {
       let cell = frame.locals.get(key);
@@ -187,7 +187,97 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     block(frame, fn.body);
   };
   const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack} = operationRuntime({state, memory, values, classes,
-    moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput});
+    moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
+    resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
+    delegateResult: (...args) => delegateResult(...args)});
+  const leaveGenerator = (frame, status) => {
+    const generator = frame.generator, completion = frame.completion;
+    state.temporaries.push(generator, ...completionRoots(completion));
+    frame.completion = null; frame.callsite = null;
+    if (!frame.ownsException) frame.activeException = null;
+    for (const task of frame.tasks) if (task.type === "try" && !task.previousOwned) task.previous = null;
+    generator.status = status; generator.frame = frame;
+    frame.leave(); state.frames.pop();
+    return completion;
+  };
+  const yieldGenerator = value => {
+    const frame = state.frames.at(-1);
+    if (!frame.generator) hard("BYTECODE", "BytecodeError", "Yield requires a generator frame.");
+    state.temporaries.push(value);
+    const mode = frame.generatorMode, site = frame.callsite;
+    const completion = leaveGenerator(frame, "suspended");
+    if (mode === "close") python("RuntimeError", "generator ignored GeneratorExit");
+    dispatch(deliver(value, completion, site));
+  };
+  const delegateMethod = (iterator, name) => {
+    if (iterator instanceof GeneratorValue) return {kind: "value", value: allocate(ValueMethod, iterator, name)};
+    if (iterator instanceof InstanceValue) return classes.read(iterator, name);
+    python("AttributeError", "Delegate has no attribute '" + name + "'");
+  };
+  const delegateAdvance = (mode, value) => {
+    const frame = state.frames.at(-1), task = frame.tasks.at(-1), site = task.site;
+    if (mode === "throw" && value.name === "GeneratorExit") mode = "close";
+    if (mode === "close") task.closing = value instanceof ExceptionValue ? value : allocate(ExceptionValue, "GeneratorExit", [], "");
+    const finish = continuation(mode === "close" ? "delegate-close" : "delegate-next", {receiver: frame.generator});
+    if (mode === "send" && value === null) { dispatch(unaryTask("next", task.iterator, site, finish)); return; }
+    let plan;
+    try { plan = delegateMethod(task.iterator, mode); }
+    catch (error) {
+      if (!(error instanceof Raised) || error.value.name !== "AttributeError" || mode === "send") throw error;
+      if (mode === "close") { handle(new Raised(task.closing)); return; }
+      handle(new Raised(value)); return;
+    }
+    const args = mode === "close" ? [] : [value];
+    if (plan.kind === "value") call(plan.value, args, [], [], site, finish);
+    else call(plan.callable, plan.args, [], [], site, mode === "send" ?
+      continuation("invoke", {args, keywords: [], keywordValues: [], after: finish, depth: 0}) :
+      continuation("delegate-bind", {receiver: mode === "close" ? task.closing : value, args, after: finish}));
+  };
+  const delegateResult = (kind, value, site) => {
+    const frame = state.frames.at(-1), task = frame.tasks.at(-1);
+    if (kind === "delegate-iter") { task.iterator = value; delegateAdvance("send", null); }
+    else if (kind === "delegate-next") yieldGenerator(value);
+    else if (kind === "delegate-close") handle(new Raised(task.closing));
+    else { frame.tasks.pop(); frame.tasks.at(-1).stack.push(value); }
+    return null;
+  };
+  const resumeGenerator = (generator, mode, value, site, completion) => {
+    if (generator.status === "running") python("ValueError", "generator already executing");
+    if (mode === "throw") {
+      if (value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name)) value = allocate(ExceptionValue, value.name, [], "");
+      if (!(value instanceof ExceptionValue)) python("TypeError", "exceptions must derive from BaseException");
+    }
+    const fresh = generator.status === "created";
+    if (fresh && mode === "send" && value !== null) python("TypeError", "can't send non-None value to a just-started generator");
+    if (generator.status === "closed" || fresh && mode !== "send") {
+      generator.status = "closed"; generator.callable = null; generator.bindings.clear();
+      if (mode === "close") { dispatch(deliver(null, completion, site)); return; }
+      if (mode === "throw") throw new Raised(value);
+      python("StopIteration", "");
+    }
+    state.temporaries.push(generator, value, ...completionRoots(completion));
+    if (fresh) {
+      enter(generator.callable, generator.bindings, site, completion);
+      generator.frame = state.frames.at(-1); generator.frame.generator = generator;
+      generator.bindings.clear();
+    } else {
+      if (state.frames.length >= Math.min(maxDepth, memory.limits.maxFrames - 1)) python("RecursionError", "maximum recursion depth exceeded");
+      const frame = generator.frame;
+      const inherited = state.frames.at(-1)?.activeException || inheritedException;
+      if (!frame.ownsException) frame.activeException = inherited;
+      for (const task of frame.tasks) if (task.type === "try" && !task.previousOwned) task.previous = inherited;
+      frame.completion = completion; frame.callsite = site; frame.returnInstruction = state.current?.instruction ?? null;
+      frame.leave = memory.enter(() => [generator, frame.callable, ...frame.locals.values(), frame.activeException,
+        ...frame.tasks.flatMap(controlRoots), ...completionRoots(frame.completion, true)], {charge, fail: hard});
+      state.frames.push(frame);
+    }
+    generator.status = "running";
+    const frame = generator.frame; frame.generatorMode = mode;
+    if (frame.tasks.at(-1).type === "delegate") delegateAdvance(mode, value);
+    else if (mode === "close") handle(new Raised(allocate(ExceptionValue, "GeneratorExit", [], "")));
+    else if (mode === "throw") handle(new Raised(value));
+    else if (!fresh) frame.tasks.at(-1).stack.push(value);
+  };
   const diagnostic = value => {
     const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
     // Copy diagnostics without exporting unleased VM objects or frame locals.
@@ -206,6 +296,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           if (signal.kind === "normal") return;
           frame.tasks.pop(); continue;
         }
+        if (task.type === "delegate") { frame.tasks.pop(); continue; }
         if (task.type === "while" || task.type === "for") {
           if (signal.kind === "break") { frame.tasks.pop(); signal = {kind: "normal"}; continue; }
           if (!["normal", "continue"].includes(signal.kind)) { frame.tasks.pop(); continue; }
@@ -216,7 +307,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             }
             task.phase = "test"; block(frame, task.test); return;
           }
-          if (task.phase === "iterable" && (signal.value instanceof InstanceValue || signal.value instanceof ProtocolIteratorValue)) {
+          if (task.phase === "iterable" && (signal.value instanceof GeneratorValue || signal.value instanceof InstanceValue || signal.value instanceof ProtocolIteratorValue)) {
             task.owned = true; task.phase = "acquire";
             dispatch(unaryTask("iter", signal.value, task.site, continuation("for-iter"))); return;
           }
@@ -234,7 +325,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           const [, body, handlers, otherwise, final] = task.instruction;
           void body;
           if (task.phase === "body" && signal.kind === "raise") {
-            task.phase = "matching"; task.caught = signal.value; frame.activeException = signal.value;
+            task.phase = "matching"; task.caught = signal.value; frame.activeException = signal.value; frame.ownsException = true;
             const clause = handlers.find(([types, , , span]) => {
               state.current = {...state.current, location: task.site ? {filename: task.site.filename, span} : null};
               const resolved = types.map(type => {
@@ -257,23 +348,40 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           }
           if (task.phase === "handler") {
             if (task.alias) store(frame, task.alias, null, false);
-            frame.activeException = task.previous;
+            frame.activeException = task.previous; frame.ownsException = task.previousOwned;
           }
           if (task.phase === "finally") {
             if (signal.kind === "normal") signal = task.pending;
-            frame.activeException = task.previous; frame.tasks.pop(); continue;
+            frame.activeException = task.previous; frame.ownsException = task.previousOwned; frame.tasks.pop(); continue;
           }
           if (final !== null) {
             task.pending = signal; task.phase = "finally";
             frame.activeException = signal.kind === "raise" ? signal.value : task.previous;
+            frame.ownsException = signal.kind === "raise" || task.previousOwned;
             block(frame, final); return;
           }
-          frame.activeException = task.previous; frame.tasks.pop(); continue;
+          frame.activeException = task.previous; frame.ownsException = task.previousOwned; frame.tasks.pop(); continue;
         }
         hard("BYTECODE", "BytecodeError", "Unknown control record.");
       }
       if (["break", "continue"].includes(signal.kind)) hard("BYTECODE", "BytecodeError", "Loop control outside a loop.");
-      const returned = signal.kind === "normal" ? null : signal.value;
+      let returned = signal.kind === "normal" ? null : signal.value;
+      if (frame.generator) {
+        const generator = frame.generator, mode = frame.generatorMode;
+        generator.status = "closed"; generator.frame = null; generator.callable = null; generator.bindings.clear();
+        if (signal.kind === "raise" && returned.name === "StopIteration") {
+          const original = returned;
+          returned = exception("RuntimeError", "generator raised StopIteration");
+          returned.context = original;
+          signal = {kind: "raise", value: returned};
+        }
+        if (signal.kind !== "raise" && mode !== "close") {
+          returned = exception("StopIteration", "", returned === null ? [] : [returned]);
+          signal = {kind: "raise", value: returned};
+        } else if (signal.kind === "raise" && mode === "close" && ["GeneratorExit", "StopIteration"].includes(returned.name)) {
+          returned = null; signal = {kind: "return", value: null};
+        }
+      }
       state.temporaries = [returned, frame.callable];
       const parent = state.frames.at(-2);
       if (!parent) {
@@ -352,6 +460,11 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           store(state.frames.at(-1), "__module__", values.string(Array.from(name, char => char.codePointAt(0))));
           store(state.frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
         }
+      } else if (op === "yield") yieldGenerator(stack.pop());
+      else if (op === "yield-from") {
+        const iterable = stack.pop();
+        frame.tasks.push({type: "delegate", iterator: null, site: summary(frame, cursor)});
+        dispatch(unaryTask("iter", iterable, summary(frame, cursor), continuation("delegate-iter", {receiver: frame.generator})));
       } else if (op === "assertion-error") {
         const args = arg ? [stack.pop()] : [];
         const callable = moduleContext.builtin("AssertionError", () => allocate(BuiltinValue, "AssertionError"));
@@ -383,7 +496,11 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           inheritedException: frame.activeException};
         else {
           const receiver = stack.pop();
-          if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
+          if (receiver instanceof GeneratorValue) {
+            if (!["send", "throw", "close", "__iter__", "__next__"].includes(arg)) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires a separate stage.");
+            stack.push(allocate(ValueMethod, receiver, arg));
+          } else if (receiver instanceof ExceptionValue && arg === "value" && receiver.name === "StopIteration") stack.push(receiver.args[0] ?? null);
+          else if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
           else if (values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));
           else if (values.isSet(receiver)) { values.setMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (values.isView(receiver)) stack.push(values.viewMethod(arg) ? allocate(ValueMethod, receiver, arg) : values.viewAttribute(receiver, arg));
@@ -406,7 +523,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (op === "while") { frame.tasks.push({type: "while", phase: "test", test: arg, body: extra, otherwise: fourth, site: summary(frame, cursor)}); block(frame, arg); }
       else if (op === "for") { frame.tasks.push({type: "for", phase: "iterable", target: arg, body: fourth, otherwise: fifth, iterator: null, site: summary(frame, cursor)}); block(frame, extra); }
       else if (op === "try") {
-        frame.tasks.push({type: "try", phase: "body", instruction: cursor.block.instructions[cursor.pc - 1], previous: frame.activeException,
+        frame.tasks.push({type: "try", phase: "body", instruction: cursor.block.instructions[cursor.pc - 1], previous: frame.activeException, previousOwned: frame.ownsException === true,
           caught: null, pending: null, alias: null, site: state.current.location}); block(frame, arg);
       } else if (["end", "return", "break", "continue"].includes(op)) {
         settle({kind: op === "end" ? "normal" : op, value: op === "return" || cursor.block.kind === "expression" ? stack.pop() : null});
@@ -482,8 +599,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       }
       else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
-      else if (op === "contains" && frame.callable.pool.code.version === 5 &&
-          (stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
+      else if (op === "contains" && (frame.callable.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
+          (stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
            values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));

@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -529,7 +529,7 @@ export class ValueRuntime {
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
     if (value instanceof SetValue) return value.storage.entries.length !== 0;
-    if (value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
+    if (value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
         value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
@@ -750,7 +750,7 @@ export class ValueRuntime {
     const pending = [value], seen = new Set();
     while (pending.length) {
       const item = pending.pop();
-      if (item instanceof InstanceValue || item instanceof ClassValue || item instanceof FunctionValue || item instanceof BuiltinValue ||
+      if (item instanceof GeneratorValue || item instanceof InstanceValue || item instanceof ClassValue || item instanceof FunctionValue || item instanceof BuiltinValue ||
           item instanceof BoundMethodValue || item instanceof PropertyValue || item instanceof MethodWrapperValue ||
           item instanceof NotImplementedValue || item instanceof ModuleValue || item instanceof ProtocolIteratorValue || item instanceof IteratorValue ||
           item instanceof ExceptionValue || item instanceof FloatValue && Number.isNaN(item.value) ||
@@ -961,7 +961,7 @@ export class ValueRuntime {
     if (!sequence(value) && !(value instanceof DictValue || value instanceof SetValue || value instanceof MemoryViewValue)) this.fail("TypeError", "Value is not iterable in this stage.");
     this.charge(1); return this.make(64, [value], () => new IteratorValue(value));
   }
-  isIterator(value) { this.charge(1); return value instanceof IteratorValue || value instanceof ProtocolIteratorValue; }
+  isIterator(value) { this.charge(1); return value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue; }
   next(iterator) {
     if (!(iterator instanceof IteratorValue)) this.fail("TypeError", "next requires an iterator.");
     const value = iterator.value; this.charge(1);
@@ -1245,6 +1245,7 @@ export function valueLayout(value) {
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
   if (value instanceof SetValue) return {bytes: 64, children: [value.storage]};
   if (value instanceof IteratorValue) return value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
+  if (value instanceof GeneratorValue) return {bytes: 128 + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};
   if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};
   if (value instanceof NotImplementedValue) return {bytes: 48, children: []};
   if (value instanceof SliceValue) return {bytes: 88, children: [value.start, value.stop, value.step]};

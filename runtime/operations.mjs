@@ -66,6 +66,7 @@ export function completion(kind, fields = {}) {
       if (!Number.isSafeInteger(record.version) || record.version < 0 || !Number.isSafeInteger(record.otherVersion) || record.otherVersion < 0)
         throw new TypeError("Invalid dictionary comparison versions.");
       break;
+    case "delegate-iter": case "delegate-next": case "delegate-return": case "delegate-close":
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
     case "next-default": record = {kind, receiver: fields.receiver, default: fields.default, after}; break;
     case "binary-result": case "binary-count": case "binary-member":
@@ -121,6 +122,7 @@ export function completion(kind, fields = {}) {
       break;
     case "protocol-result": record = {kind, receiver: fields.receiver, operation: fields.operation, slot: fields.slot, depth: fields.depth ?? 0, after}; break;
     case "optional-truth": record = {kind, receiver: fields.receiver, operation: fields.operation, depth: fields.depth, after}; break;
+    case "delegate-bind": record = {kind, receiver: fields.receiver, args: operands(fields.args), after}; break;
     case "invoke": record = {kind, args: operands(fields.args), keywords: operands(fields.keywords),
       keywordValues: operands(fields.keywordValues), depth: fields.depth, fallback: fields.fallback ?? null, after}; break;
     case "notify": record = {kind, type: fields.type, entries: Object.freeze(fields.entries.map(entry => Object.freeze([...entry]))), index: fields.index};
@@ -148,6 +150,7 @@ function visit(record) {
       ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "dict-build": return [record.receiver, ...record.parts, ...completionRoots(record.after)];
     case "dict-pair": case "dict-value": case "dict-value-truth": return [record.left, record.right, record.value, ...completionRoots(record.after)];
+    case "delegate-iter": case "delegate-next": case "delegate-return": case "delegate-close":
     case "iter-result": case "indexed-result": case "callable-result": return [record.receiver, ...completionRoots(record.after)];
     case "next-default": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "binary-result": case "binary-count": case "binary-member": return [record.receiver, ...completionRoots(record.after)];
@@ -167,6 +170,7 @@ function visit(record) {
     case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
+    case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "notify": return [record.type, ...record.entries.map(entry => entry[1])];
     default: throw new TypeError("Unknown operation root owner.");
@@ -260,6 +264,7 @@ export function operationRoots(task) {
 export function controlRoots(task) {
   switch (task.type) {
     case "block": return task.stack;
+    case "delegate": return [task.iterator, task.closing ?? null];
     case "while": case "for": case "try": return [task.iterator ?? null, task.pending?.value ?? null, task.caught ?? null, task.previous ?? null];
     default: throw new TypeError("Unknown control root owner.");
   }

@@ -232,6 +232,7 @@ class Compiler {
       const expr = value => {
         this.charge(value);
         if (value.kind === "Literal") emit(value, "const", this.constant(value.literal, value));
+        else if (value.kind === "Yield") { value.value ? expr(value.value) : pushNone(value); emit(value, value.delegate ? "yield-from" : "yield"); }
         else if (value.kind === "NamedExpression") { expr(value.value); emit(value, "dup"); emit(value, "store", value.name); }
         else if (value.kind === "Lambda") makeFunction(value);
         else if (value.kind === "Name") value.name === "__debug__" ? emit(value, "const", this.constant({type: "bool", value: true}, value)) : emit(value, "load", value.name);

@@ -453,16 +453,14 @@
     {
       "id": "generator",
       "source": "def f():\n yield 7\nprint(next(f()))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "stdout": "7\n",
+        "error_type": null
       }
     },
     {
