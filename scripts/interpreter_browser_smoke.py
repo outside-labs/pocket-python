@@ -154,8 +154,6 @@ def smoke(channel=None):
                             assert page.locator('#input').input_value().startswith('while True')
                         run(page, f"print('restart {index}')", f'restart {index}\n')
                     checks.append('busy-worker-interrupt-and-eight-offline-restarts')
-                    context.set_offline(False)
-
                     config = json.loads((application / receipt['configuration']).read_bytes())
                     api = page.evaluate('''async ({host,config})=>{
                       const {mountInterpreter}=await import('./'+host);
@@ -208,9 +206,54 @@ def smoke(channel=None):
                         if(live.size!==0||observed.count!==0)throw new Error('Stop leaked listeners/workers.');
                       }
                       if(sessions.size!==8)throw new Error('Restart reused a session.');
+                      let liveOutput='',cancelled=false;
+                      const cooperative=mount({onOutput:text=>{
+                        liveOutput+=text;
+                        if(!cancelled){cancelled=true;if(!cooperative.cancel()||cooperative.cancel())throw new Error('Cancellation was not idempotent.');}
+                      }});
+                      await cooperative.ready;
+                      try{await cooperative.run('try:\\n print("entered")\\n while True: pass\\nfinally: print("wrong")\\n');throw new Error('Executing run was not cancelled.');}
+                      catch(error){if(error.code!=='CANCELLED')throw error;}
+                      if(liveOutput!=='entered\\n'||cooperative.stats().state!=='ready'||cooperative.cancel())throw new Error('Cooperative cancellation changed state or executed finally.');
+                      await cooperative.run('print("after cancel")');
+                      if(liveOutput!=='entered\\nafter cancel\\n')throw new Error('Worker did not recover after cancellation.');
+                      cooperative.stop();
+                      if(live.size!==0||observed.count!==0)throw new Error('Cooperative worker leaked listeners.');
                       return {bounds:checks,sessions:sessions.size,live_workers:live.size,denied_capability:'fetch/1',deadline:'TIMEOUT'};
                     }''', {'host': receipt['engine']['entrypoint'].rsplit('/', 1)[0] + '/interpreter-host.mjs', 'config': config})
                     checks.append('real-worker-limits-grants-stale-malformed-deadline-and-listener-cleanup')
+                    checks.append('offline-live-output-cancels-executing-python-and-recovers-same-worker')
+
+                    events = page.evaluate('''async ({host,source})=>{
+                      const base=new URL(host,location.href);
+                      const {compileSourceModules}=await import(new URL('./source-modules.mjs',base));
+                      const {ModuleSession,MODULE_EVENT_PROFILE}=await import(new URL('./module-session.mjs',base));
+                      const {registry}=await compileSourceModules([{name:'app',package:false,imports:[],source:source+'\\ndef spin():\\n while True: pass\\n',notice:'Synthetic offline module event fixture'}]);
+                      const session=new ModuleSession(registry),closed=[];
+                      const drive=async()=>{while(session.pending){session.pump(3);session.memory.collect([],{cleanup:true});await new Promise(resolve=>setTimeout(resolve,0));}};
+                      const record=value=>Object.fromEntries(value.entries.map(([key,item])=>[String.fromCodePoint(...key.codepoints),Number(item.value)]));
+                      try{
+                        const entry=session.start();do{entry.advance(3);}while(entry.state==='parked');
+                        const callback=session.register('adjust');
+                        const events=[1,2,3].map(value=>session.enqueue(callback,[{type:'int',value:String(value)}]));
+                        await drive();const records=(await Promise.all(events.map(event=>event.result))).map(record);
+                        if(JSON.stringify(records.map(item=>[item.schema,item.revision,item.total]))!==JSON.stringify([[1,1,1],[1,2,3],[1,3,6]]))throw new Error('Persistent event state differs.');
+                        const spin=session.register('spin'),active=session.enqueue(spin),queued=session.enqueue(callback,[{type:'int',value:'99'}]);
+                        session.pump(3);if(!active.cancel()||active.cancel())throw new Error('Parked event cancellation differs.');
+                        await active.result.then(()=>{throw new Error('Cancelled event resolved.');},error=>{if(error.code!=='CANCELLED')throw error;});
+                        queued.cancel();await queued.result.catch(error=>{if(error.code!=='CANCELLED')throw error;});
+                        session.close();closed.push(session.stats());
+                        const fresh=new ModuleSession(registry);
+                        try{fresh.run();if(fresh.read('total').value!=='0')throw new Error('Fresh event session inherited state.');
+                          try{fresh.enqueue(callback);throw new Error('Foreign callback accepted.');}catch(error){if(error.code!=='STALE_HANDLE')throw error;}
+                        }finally{fresh.close();closed.push(fresh.stats());}
+                        if(closed.some(stats=>['bytes','objects','roots','frames','external'].some(key=>stats[key]!==0)))throw new Error('Event owners did not close.');
+                        return {profile:MODULE_EVENT_PROFILE,records,closed};
+                      }finally{session.close();registry.close();}
+                    }''', {'host': receipt['engine']['entrypoint'].rsplit('/', 1)[0] + '/interpreter-host.mjs',
+                           'source': (ROOT / 'examples/interpreter_events.py').read_text()})
+                    checks.append('persistent-callback-fifo-values-cancel-close-and-fresh-session-offline')
+                    context.set_offline(False)
 
                     sibling = context.new_page()
                     sibling.goto(origin + '/neighbor/')
@@ -297,11 +340,13 @@ def smoke(channel=None):
             thread.join(timeout=5)
     hashes = {name: hashlib.sha256((ROOT / name).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
               for name in ['scripts/interpreter_browser_smoke.py', 'src/pocket_python/interpreter.py',
-                           'src/pocket_python/interpreter_templates.py', 'examples/shared_text_metrics/computation.py']}
+                           'src/pocket_python/interpreter_templates.py', 'examples/shared_text_metrics/computation.py',
+                           'examples/interpreter_events.py']}
     return {'schema_version': 1, 'suite': 'interpreter-console/1', 'target': 'browser', 'browser': version,
             'reference': platform.python_version(), 'profile': 'in-house-interpreter/1', 'engine': receipt['engine'],
             'source_execution': True, 'input_mode': 'source', 'artifact_bytes': receipt['size']['artifact_bytes'],
             'artifact_file_count': len(receipt['files']) + 1, 'tool_sha256': hashes, 'cases': cases, 'lifecycle': api,
+            'module_events': events,
             'checks': [{'id': check, 'status': 'pass'} for check in checks], 'network_requests': len(requests),
             'summary': {'pass': len(checks) + len(cases), 'fail': 0}}
 

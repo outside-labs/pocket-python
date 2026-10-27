@@ -117,8 +117,9 @@ O14 is implemented. The complete 112-case matrix has 109 adopted comparisons
 and three explicit future refusals per Node/Chromium driver combination. It
 covers raw fields, identity prefixes, nested slices, reflected peers, equality
 truth, dictionary values, membership and callable sentinels. The five former
-slice-comparison refusals in the indexing matrix are adopted; slice hashing,
-indices, display and broader iterable slice assignment remain refused.
+slice-comparison refusals in the indexing matrix are adopted. Slice hashing now
+follows the [owned hash contract](interpreter-object-hashing.md); indices, display
+and broader iterable slice assignment remain refused.
 
 All 693 Node tests pass, including paused slice equality binding/truth and
 ordering binding, cancellation/close, recursive slice comparison and real

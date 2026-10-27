@@ -167,7 +167,8 @@ def smoke(channel=None):
                     attributes = json.loads((ROOT / 'tests/fixtures/interpreter/attribute-hooks.json').read_bytes())
                     type_checks = json.loads((ROOT / 'tests/fixtures/interpreter/type-checks.json').read_bytes())
                     ordering = json.loads((ROOT / 'tests/fixtures/interpreter/ordering.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering]:
+                    object_hashing = json.loads((ROOT / 'tests/fixtures/interpreter/object-hashing.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -425,6 +426,10 @@ def smoke(channel=None):
                     refused('class A: pass\na=A()\na<=a\n', 'TypeError:')
                     run('print(hash(slice(1,7))==hash(slice(1,7)))\n', 'True\n')
                     checks.append('ordering-binding-body-truth-errors-and-adopted-slice-hash-offline')
+                    for case in object_hashing['cases']:
+                        if 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                    checks.append('method-slice-and-tuple-hash-signatures-and-errors-offline')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -558,7 +563,10 @@ def smoke(channel=None):
                         before = time.perf_counter()
                         page.click('#stop')
                         page.wait_for_function("()=>document.querySelector('#status').textContent==='Stopped'")
-                        assert page.locator('#result').text_content() == ''
+                        output_at_stop = page.locator('#result').text_content()
+                        assert len(output_at_stop) <= 16384
+                        page.wait_for_timeout(25)
+                        assert page.locator('#result').text_content() == output_at_stop
                         stopped.append((time.perf_counter() - before) * 1000)
                         assert stopped[-1] < 3000
                         page.click('#restart')

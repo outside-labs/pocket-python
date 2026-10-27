@@ -400,7 +400,7 @@
       "id": "user-equality-hash",
       "status": "partial",
       "scope": "Owned __eq__/__ne__/__hash__, NotImplemented, reflected priority, bounded container equality and user dictionary keys. Four rich ordering methods and bounded list/tuple/slice comparisons use the owned machine. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes.",
-      "gaps": "Structural dictionary mutation during comparison, user-key set ordering remain separately gated.",
+      "gaps": "Structural dictionary mutation during comparison, broader descriptor hash families and user-key set ordering remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -431,7 +431,7 @@
       "id": "further-object-protocols",
       "status": "partial",
       "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes.",
-      "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, namespace/identity reflection, dynamic source admission remain separate contracts.",
+      "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, namespace/identity reflection and dynamic source admission remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -585,7 +585,7 @@
       "id": "async-language",
       "status": "deferred",
       "scope": "Native coroutine/await semantics, async iteration/generators/context managers and bounded scheduling/cancellation.",
-      "gaps": "Owned instruction stepping is implemented, but multiple parked owners, persistent events and native coroutine syntax are not. Host Promises are not Python coroutines.",
+      "gaps": "Parked ownership, cooperative worker quanta/live output/cancellation and module-events/1 persistent callback queues are implemented. Native coroutine/await syntax, async protocols and awaited host capabilities remain deferred; host Promises are not Python coroutines.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -598,7 +598,10 @@
         "async-functions",
         "async-generator"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/callbacks.json:persistent-global-state",
+        "tests/fixtures/interpreter/callbacks.json:source-errors-and-recovery"
+      ]
     },
     {
       "id": "dynamic-code-reflection",
@@ -1347,7 +1350,7 @@
       "id": "hash",
       "status": "partial",
       "scope": "hash(value), positional-only in classes-source/1; numeric/string/primitive tuple hashes, user __hash__ and owned default identities. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes.",
-      "gaps": "Property accessor hash families remain deferred; exact string/object hash numbers are not a cross-process guarantee.",
+      "gaps": "Property accessor and further reflective hash families remain deferred; exact string/object hash numbers are not a cross-process guarantee.",
       "reference_version": "3.14.7",
       "targets": [
         "node",

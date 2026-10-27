@@ -87,6 +87,13 @@ export function mountInterpreter({application: identity, capabilities: grants = 
         try { peer.send("request", {id, operation: "interpreter.run", arguments: {source: value}, timeout_ms: bounds.deadline_ms}); nextRun++; }
         catch (error) { clearTimeout(timer); pending = null; reject(error); }
       });
+    },
+    cancel() {
+      if (state !== "ready" || !pending || pending.cancelled) return false;
+      pending.cancelled = true;
+      try { peer.send("cancel", {reply_to: pending.id}); }
+      catch (error) { fail(error.detail || failure("PROTOCOL", "Cancellation failed.")); }
+      return true;
     }, stop,
     stats: () => ({state, session, pending: pending ? 1 : 0, listeners: state === "closed" ? 0 : 3, handles: 0, subscriptions: 0,
       limits: bounds, library_profile: {...selected}, language_profile: identity.engine.language_profile})});

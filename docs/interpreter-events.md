@@ -57,3 +57,22 @@ pumps and forced collection. Separate lifecycle tests cover queue/handle/transpo
 caps, stale generations, reentry, OOM, cancellation, close and zero teardown.
 Native coroutines, await, async iterators/generators/context managers and awaited
 host adapters remain subsequent #34 slices.
+
+The source console worker now drives 512-instruction quanta with macrotask yields
+and acknowledged live output. Its host `cancel()` uses the existing cancellation
+protocol and preserves the worker for a fresh source run. Terminal replies remain
+exactly once; Stop/Restart retains authoritative worker termination. This adds
+no event registration capability to the console protocol.
+
+The [counter domain module](../examples/interpreter_events.py) demonstrates
+revisioned state and by-value snapshots for trusted embedding. Installed offline
+browser acceptance imports the verified engine assets, pumps ordered callbacks,
+cancels queued/parked events, checks expired generations and closes both current
+and fresh sessions with zero logical ownership. Durable storage, view adapters
+and a full offline save application remain subsequent acceptance stages.
+
+The [payload and evidence record](measurements/2026-10-27-events.json) pins the
+final engine/corpus/report inputs, 300 passing source observations with measured
+zero teardown, and all 38 files of the 628,575-byte counter example. An identical
+second assembly verifies its file and receipt hashes. These are finite payload
+and semantic observations, without a performance or broader package claim.
