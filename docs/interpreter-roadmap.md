@@ -215,3 +215,20 @@ offline save application require their own finite contracts and evidence. #123
 remains open for namespace reflection, builtin layouts, further metaclass and
 reflective protocols and dynamic source admission. No release or deployment is
 part of this checkpoint.
+
+## Finite namespace reflection checkpoint
+
+[O15–O17](interpreter-reflection.md) add stable adopted object identities,
+fresh optimized-function locals/vars snapshots and custom vars/dir hooks through
+owned descriptor, call and iteration phases. Captured cells and Python namespace
+order remain separate from the engine's established allocation/root order. Custom
+directories copy their iterable and sort bounded string names by Unicode code
+point, retaining duplicates.
+
+Live module/class/global mappings, ordinary instance dictionaries, mapping
+proxies, default directories, comprehension namespace rules and unboxed integer
+identity remain finite follow-ups under #123. Builtin layouts, further metaclass
+protocols and dynamic source admission remain open. #34 still requires native
+coroutine/await and async protocols, an adopted awaited capability and a durable
+offline view/save application. The [reflection example](../examples/interpreter_reflection.py)
+and its acceptance evidence do not broaden host grants or package/device claims.

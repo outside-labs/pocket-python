@@ -1687,6 +1687,45 @@
         "code": null,
         "phase": null
       }
+    },
+    {
+      "id": "builtin-locals-snapshot",
+      "source": "def f(x):\n a=locals()\n a[\"x\"]=9\n print(x,a[\"x\"],a is locals())\nf(7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 9 False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 9 False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-vars-snapshot",
+      "source": "def f(x): return vars()[\"x\"]\nprint(f(7))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "builtin-dir-custom",
+      "source": "class A:\n def __dir__(self): return (\"z\",\"a\")\nfor name in dir(A()): print(name)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "a\nz\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "a\nz\n",
+        "error_type": null
+      }
     }
   ]
 }
