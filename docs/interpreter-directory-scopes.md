@@ -14,6 +14,12 @@ inventory update remain the batch's acceptance task.
 | O19 | A custom `__dir__` result is copied after acquiring its iterator. Consult the original iterable's type-selected `__len__`, then `__length_hint__` if length is absent or raises TypeError. Length accepts the existing index protocol; a hint must itself be an integer. A hint call raising TypeError or returning NotImplemented uses the default. Hint descriptor lookup failures propagate; other callback failures propagate. Negative counts raise ValueError and counts outside the signed 64-bit size range raise OverflowError. Counts above the adopted sequence bound refuse through the shared budget before consumption. Hints do not constrain the number of yielded entries. |
 | O20 | Custom directory entries may be arbitrary adopted values. Return a fresh, stable sorted list using rich less-than and truth conversion, preserving duplicates and entry identities. Copy the iterable completely before comparison callbacks. Descriptor, reflected ordering and truth phases enter ordinary owned frames. The comparison schedule is an implementation choice; callers must not depend on a particular number or sequence of comparisons. |
 
+`__len__` rejects every negative result before signed-size conversion, so even a
+huge negative length raises ValueError. `__length_hint__` converts first: a value
+below the signed minimum raises OverflowError, while the representable negative
+minimum raises ValueError. Descriptor errors and callback errors retain their
+separate recovery phases in both cases.
+
 Inlined list/dict/set comprehension reflection, live module/class/global
 namespaces, instance dictionaries, mapping proxies, default directories, boxed
 integer identity, builtin instance layouts and dynamic source remain separate

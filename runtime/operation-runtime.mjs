@@ -549,6 +549,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "dir-hint-call")
       return valueTask(value, site, continuation("dir-hint-value", completion));
     if (completion?.kind === "dir-hint-value") {
+      // __len__ rejects every negative value before its size conversion;
+      // __length_hint__ performs the signed-size conversion first.
+      if (typeof value === "bigint" && value < -9223372036854775808n)
+        python("OverflowError", "directory length hint is below the signed-64-bit minimum");
       if (!(value instanceof NotImplementedValue)) directoryCount(value);
       return directoryNext(completion, site);
     }
