@@ -179,3 +179,19 @@ the independent-engine alpha gate. Application alpha is a finite supported
 release, followed by continuing broad compatibility work. Package publication,
 hosting, model selection/downloads and new services retain their own concrete
 decisions and acceptance criteria.
+
+## Finite ordering checkpoint
+
+The [O12/O13/O14 ordering profile](interpreter-ordering.md) extends #123 with
+four rich ordering methods and bounded list/tuple/slice comparisons. Its
+112-case matrix compares independently compiled source against CPython 3.14.7
+in Node/Chromium drain/step execution. Raw results, reflected priority,
+descriptor errors and callback-visible list mutation retain owned execution
+and resource limits. The ordered-note console combines comparison with slice
+insertion and generators.
+
+Broader namespace/identity reflection, builtin layouts, metaclass protocols and
+bound-method/slice hashing remain finite follow-ups under #123. Async #34
+remains open for cooperative quanta, session-owned parked executions, persistent
+callbacks/events and an adopted awaited capability; these are not supplied by
+synchronous ordering or the existing generator suspension contract.

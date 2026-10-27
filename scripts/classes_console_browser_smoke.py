@@ -27,6 +27,7 @@ from examples.interpreter_generators import SOURCE as GENERATOR_SOURCE, CORE_SOU
 from examples.interpreter_construction import SOURCE as CONSTRUCTION_SOURCE
 from examples.interpreter_attributes import SOURCE as ATTRIBUTE_SOURCE
 from examples.interpreter_type_checks import SOURCE as TYPE_CHECK_SOURCE
+from examples.interpreter_ordering import SOURCE as ORDERING_SOURCE
 
 
 def smoke(channel=None):
@@ -83,6 +84,7 @@ def smoke(channel=None):
                     assert 'construction, super and finite metaclasses' in page.locator('#language').inner_text()
                     assert 'instance attribute hooks and advertised class identities' in page.locator('#language').inner_text()
                     assert 'custom instance/subclass checks' in page.locator('#language').inner_text()
+                    assert 'list/tuple/slice comparisons' in page.locator('#language').inner_text()
                     assert page.locator('#input').input_value() == SOURCE
                     checks.append('explicit-class-profile-ready-and-initial-source')
                     corpus = json.loads((ROOT / 'tests/fixtures/interpreter/classes.json').read_bytes())
@@ -164,13 +166,15 @@ def smoke(channel=None):
                     construction = json.loads((ROOT / 'tests/fixtures/interpreter/construction.json').read_bytes())
                     attributes = json.loads((ROOT / 'tests/fixtures/interpreter/attribute-hooks.json').read_bytes())
                     type_checks = json.loads((ROOT / 'tests/fixtures/interpreter/type-checks.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks]:
+                    ordering = json.loads((ROOT / 'tests/fixtures/interpreter/ordering.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
                     programs.append(CONSTRUCTION_SOURCE)
                     programs.append(ATTRIBUTE_SOURCE)
                     programs.append(TYPE_CHECK_SOURCE)
+                    programs.append(ORDERING_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -408,6 +412,19 @@ def smoke(channel=None):
                         refused('type(type.'+slot+')()\n', 'TypeError:')
                         refused('int.'+slot+'.__func__\n', 'AttributeError:')
                     checks.append('native-checking-callable-identities-metadata-and-construction-refusal-offline')
+                    run(ORDERING_SOURCE, 'queue offline review save\nprefix True True\nslice True True\ndecision True True\n')
+                    run('class A:\n def __eq__(self,other):\n  x[0]=3\n  y[0]=7\n  return False\nx=[A()]\ny=[A()]\nprint(x<y)\n', 'True\n')
+                    checks.append('new-ordering-sequence-mutation-and-slice-source-after-offline-reload')
+                    for source, prefix, frame in [
+                        ('class A:\n @property\n def __lt__(self): raise ValueError("binding")\nA()<7\n', 'ValueError:', '__lt__ at sources/app.py:3'),
+                        ('class A:\n def __lt__(self,other): raise ValueError("body")\nA()<7\n', 'ValueError:', '__lt__ at sources/app.py:2'),
+                        ('class R:\n def __bool__(self): raise ValueError("truth")\nclass A:\n def __eq__(self,other): return R()\nslice(A())<slice(A())\n', 'ValueError:', '__bool__ at sources/app.py:2'),
+                    ]:
+                        refused(source, prefix)
+                        assert frame in page.locator('#diagnostic').inner_text()
+                    refused('class A: pass\na=A()\na<=a\n', 'TypeError:')
+                    refused('hash(slice(1,7))\n', 'UnsupportedOperationError:')
+                    checks.append('ordering-binding-body-truth-errors-and-future-slice-hash-retain-offline-diagnostics')
                     busy = [
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -525,6 +542,14 @@ def smoke(channel=None):
                             'class D:\n def __get__(self,obj,owner):\n  while True: pass\nclass M(type): '+slot+'=D()\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n',
                             'class Truth:\n def __bool__(self):\n  while True: pass\nclass M(type):\n def '+slot+'(cls,obj): return Truth()\nclass A(metaclass=M): pass\n'+builtin+'('+argument+',A)\n'
                         ])
+                    busy.extend([
+                        'class Spin:\n @property\n def __lt__(self):\n  while True: pass\nSpin()< [7]\n',
+                        'class Spin:\n def __ge__(self,other):\n  while True: pass\nSpin()>= [7]\n',
+                        'class Spin:\n def __eq__(self,other):\n  while True: pass\n[Spin()]<[Spin()]\n',
+                        'class Truth:\n def __bool__(self):\n  while True: pass\nclass Spin:\n def __eq__(self,other): return Truth()\n[Spin()]<=[Spin()]\n',
+                        'class Spin:\n def __eq__(self,other): return False\n @property\n def __le__(self):\n  while True: pass\nslice(Spin())<=slice(Spin())\n',
+                        'class Spin:\n @property\n def __eq__(self):\n  while True: pass\nslice(Spin())==slice(Spin())\n',
+                    ])
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
@@ -579,6 +604,12 @@ def smoke(channel=None):
                     core_generator_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', GENERATOR_CORE_SOURCE], text=True, encoding='utf-8')
                     run(GENERATOR_CORE_SOURCE, core_generator_expected)
                     checks.append('generators-and-comprehensions-retained-after-offline-core-profile-update')
+                    for case in ordering['cases']:
+                        if 'core-source/1' in case.get('profiles', []):
+                            run(case['source'], case['stdout'])
+                    refused('print("never")\nclass A:\n def __lt__(self,other): return True\nA()<7\n', 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    checks.append('primitive-ordering-retained-and-user-ordering-refused-after-core-profile-update')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

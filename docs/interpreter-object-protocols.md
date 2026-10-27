@@ -13,7 +13,7 @@ classes-source/1; core-source/1 keeps primitive arithmetic and generator support
 | O3 | Allocation and initialization are adopted in the [construction contract](interpreter-construction.md), including __new__ and conditional initialization of its returned value. |
 | O4 | Explicit/zero-argument super and lexical class cells follow the [construction contract](interpreter-construction.md). |
 | O5 | Type relations and finite metaclass construction follow the [construction contract](interpreter-construction.md). |
-| Future | builtin instance subclasses, further metaclass protocols, custom attribute hooks, ordering, dir/vars/globals/locals/id, and dynamic exec/eval/compile/import remain independently gated. Matrix multiplication, user-valued power modulus dispatch and ordinary list/tuple/text repetition require separate slices. Existing bytes repetition and list in-place repetition accept the adopted index hook. |
+| Future | builtin instance subclasses, further metaclass protocols, dir/vars/globals/locals/id, and dynamic exec/eval/compile/import remain independently gated. Matrix multiplication, user-valued power modulus dispatch and ordinary list/tuple/text repetition require separate slices. Existing bytes repetition and list in-place repetition accept the adopted index hook. |
 
 Implicit operations consult type/MRO slots and descriptor binding, ignoring
 instance shadow attributes. Signature and callback failures propagate; a method
@@ -45,3 +45,7 @@ errors and Stop/Restart. The finite [construction, super, type-relation and
 metaclass slices](interpreter-construction.md) are also adopted. INT-OBJECT-01
 remains open for builtin instance layouts, additional metaclass protocols,
 custom attribute hooks and broader reflection.
+
+The separately adopted [ordering profile](interpreter-ordering.md) adds four rich
+ordering methods and bounded list/tuple/slice comparisons. Instance attribute
+hooks and custom type checks retain their own adopted contracts.

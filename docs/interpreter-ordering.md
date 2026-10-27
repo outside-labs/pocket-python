@@ -124,3 +124,23 @@ All 693 Node tests pass, including paused slice equality binding/truth and
 ordering binding, cancellation/close, recursive slice comparison and real
 ordering-budget/OOM failures. The shared primitive cases also pass through the
 core source profile. Existing composed resource observations are unchanged.
+
+## Offline acceptance and payload
+
+The [ordered-note console](../examples/interpreter_ordering.py) combines raw
+ordering results and truth conversion, stable insertion using slice mutation,
+list/tuple prefix ordering, slice equality/ordering and suspended generators.
+The installed-wheel console suite passes 696 program comparisons and 53
+acceptance groups with 117 Stop/Restart cycles. Fresh source after offline reload
+exercises ordering, mutation and slices; errors preserve binding/body/truth
+frames. A waiting class-to-core update retains primitive ordering while refusing
+class syntax before effects. All requests remain local static GETs.
+
+The [payload record](measurements/2026-10-27-ordering.json) verifies the corpus,
+all eight class/core Node/Chromium drain/step reports and their source hashes:
+456 observations and 456 measured zero logical teardown records. It verifies
+all 38 example files, receipt hashes and an identical fresh rebuild, totaling
+612,319 bytes. This is a payload observation, not a performance comparison.
+All 693 Node tests and 60 Python tests pass locally (one optional runtime skip);
+isolated wheel/source-distribution allowlist and assembly checks pass. No
+dependency, host authority, publication or deployment change is included.

@@ -1674,6 +1674,21 @@
         "code": null,
         "phase": null
       }
+    },
+    {
+      "id": "rich-ordering-and-slices",
+      "source": "class A:\n def __init__(self,n): self.n=n\n def __eq__(self,other): return self.n==other.n\n def __lt__(self,other): return self.n<other.n\n def __le__(self,other): return [7]\na=A(1)\nb=A(2)\nr=a<=b\nprint([a]<[b],slice(a)<slice(b),r[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 7\n",
+        "error_type": null,
+        "code": null,
+        "phase": null
+      }
     }
   ]
 }
