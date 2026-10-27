@@ -20,6 +20,7 @@ class Compiler {
     this.program = {format: "pocket-python-bytecode", version: this.classes ? 5 : 4, constants: [], functions: []};
     this.constants = new Map(); this.scopes = []; this.scopeOf = new WeakMap(); this.imports = [];
     this.instructions = 0; this.blocks = 0; this.tempSerial = 0;
+    this.namespaceEvents = new Map();
   }
   fail(message, node, code = "UNSUPPORTED", phase = "compile") {
     throw new SourceError(code, message, {filename: this.parsed.filename, span: node.span, phase});
@@ -280,7 +281,16 @@ class Compiler {
         else if (value.kind === "Yield") { value.value ? expr(value.value) : pushNone(value); emit(value, value.delegate ? "yield-from" : "yield"); }
         else if (value.kind === "NamedExpression") { expr(value.value); emit(value, "dup"); emit(value, "store", value.name); }
         else if (value.kind === "Lambda") makeFunction(value);
-        else if (value.kind === "ComprehensionCall") { makeFunction(value.callable); expr(value.iterable); emit(value, "iter"); emit(value, "call", 1, []); }
+        else if (value.kind === "ComprehensionCall") {
+          makeFunction(value.callable); expr(value.iterable); emit(value, "iter");
+          if (this.classes && value.callable.name !== "<genexpr>") {
+            if (!this.namespaceEvents.has(scope.index)) this.namespaceEvents.set(scope.index, new Map());
+            const events = this.namespaceEvents.get(scope.index);
+            if (!events.has(id)) events.set(id, new Map());
+            events.get(id).set(instructions.length, this.scopeOf.get(value.callable));
+          }
+          emit(value, "call", 1, []);
+        }
         else if (value.kind === "Name") value.name === "__debug__" ? emit(value, "const", this.constant({type: "bool", value: true}, value)) : emit(value, "load", value.name);
         else if (["List", "Tuple"].includes(value.kind)) {
           if (value.items.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
@@ -532,8 +542,50 @@ class Compiler {
       fn.locals = [...[...ordered].filter(key => !captured.has(key)), ...[...captured].sort(nameOrder)];
     }
   }
+  comprehensionNamespaces() {
+    const inline = scope => ["<listcomp>", "<dictcomp>", "<setcomp>"].includes(scope.node.name);
+    for (const scope of this.scopes) {
+      if (!["Function", "Lambda"].includes(scope.node.kind) || !inline(scope) && !this.namespaceEvents.has(scope.index)) continue;
+      const group = [scope];
+      for (let index = 0; index < group.length; index++)
+        for (const child of this.scopes) if (child.parent === group[index] && inline(child)) group.push(child);
+      const fn = this.program.functions[scope.index], params = fn.params;
+      const parameters = [...params.posonly, ...params.positional, ...params.kwonly,
+        ...(params.vararg ? [params.vararg] : []), ...(params.kwarg ? [params.kwarg] : [])];
+      const targets = new Set(group.filter(inline).flatMap(item => [...item.locals]).filter(key => !key.startsWith("@source:")));
+      const captured = new Set(this.scopes.filter(child => group.includes(child.parent) && !inline(child))
+        .flatMap(child => [...child.free]).filter(key => scope.locals.has(key) && !parameters.includes(key) && !targets.has(key)));
+      const ordered = new Set(parameters);
+      const visitBlock = (owner, id) => {
+        if (id === null) return;
+        const code = this.program.functions[owner.index];
+        const remember = key => { if (owner.locals.has(key) || owner.free.has(key) && scope.locals.has(key)) ordered.add(key); };
+        for (const [index, [op, arg, extra, other, final]] of code.blocks[id].instructions.entries()) {
+          this.charge(owner.node);
+          const child = this.namespaceEvents.get(owner.index)?.get(id)?.get(index);
+          if (child) visitBlock(child, this.program.functions[child.index].body);
+          if (["load", "store", "delete"].includes(op)) remember(arg);
+          else if (op === "if") { visitBlock(owner, arg); visitBlock(owner, extra); }
+          else if (op === "while") { visitBlock(owner, arg); visitBlock(owner, extra); visitBlock(owner, other); }
+          else if (["for", "for-iterator"].includes(op)) {
+            visitBlock(owner, extra); remember(arg); visitBlock(owner, other); visitBlock(owner, final);
+          } else if (op === "try") {
+            visitBlock(owner, arg); visitBlock(owner, other);
+            for (const [types, alias, body] of extra) { types.forEach(remember); if (alias) remember(alias); visitBlock(owner, body); }
+            visitBlock(owner, final);
+          }
+        }
+      };
+      visitBlock(scope, fn.body);
+      for (const owner of group) for (const key of owner.locals) ordered.add(key);
+      const visible = key => !key.startsWith("@source:") || fn.name === "<genexpr>" && key === params.posonly[0];
+      fn.namespace = [...[...ordered].filter(key => visible(key) && !captured.has(key)), ...[...captured].sort(nameOrder)];
+      if (fn.namespace.length > FUNCTION_LIMITS.names) this.fail("Comprehension namespace budget exceeded.", scope.node, "COMPILE_BUDGET");
+    }
+  }
   compile() {
     this.resolve(); this.scopes.forEach(scope => this.function(scope));
+    if (this.classes) this.comprehensionNamespaces();
     try { verifyFunctions(this.program); }
     catch (error) {
       if (/budget|exceed|nesting|bounded|256|128|1024/i.test(error.message)) this.fail(error.message, this.parsed.module, "COMPILE_BUDGET");

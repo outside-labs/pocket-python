@@ -25,6 +25,10 @@ iteration targets keep local positions even when captured by nested functions.
 Enclosing locals captured only by an inlined comprehension remain in local
 order; real nested functions move ordinary captured locals to cell order.
 Empty, filtered and failed comprehensions do not leak targets.
+The outermost active comprehension hides the enclosing bindings of all targets
+in its nested inlined comprehensions. A nested target absent from the current
+comprehension frame therefore stays absent before and after its nested loop,
+until the outermost comprehension restores the enclosing binding.
 
 The engine may retain its existing owned comprehension frames. Bounded verified
 namespace metadata and active frame overlays must preserve established cell

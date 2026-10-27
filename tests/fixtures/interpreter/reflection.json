@@ -9,7 +9,8 @@
     "O17",
     "O18",
     "O19",
-    "O20"
+    "O20",
+    "O21"
   ],
   "cases": [
     {
@@ -564,8 +565,8 @@
       "stdout": "1 2\n﨎\n𐐀\n"
     },
     {
-      "id": "comprehension-enclosing-locals-deferred",
-      "stage": "Future",
+      "id": "comprehension-enclosing-locals",
+      "stage": "O21",
       "source": "def f():\n a,b=[1,2]\n c=[x for x in range(3)]\n print(len(locals()),\"x\" in locals())\nf()\n",
       "stdout": "3 False\n"
     },
@@ -1349,6 +1350,81 @@
       "stage": "Future",
       "source": "r=[locals() for x in [locals()]]\n",
       "stdout": ""
+    },
+    {
+      "id": "comprehension-free-shadow",
+      "stage": "O21",
+      "source": "def outer(x):\n def f(p):\n  r=[locals() for x in [1]]\n  print(r[0][\"x\"],locals()[\"x\"],list(r[0])==[\"p\",\"x\"])\n return f\nouter(9)(7)\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "comprehension-nonlocal-shadow",
+      "stage": "O21",
+      "source": "def outer(x):\n def f(p):\n  nonlocal x\n  r=[locals() for x in [1]]\n  print(r[0][\"x\"],locals()[\"x\"],list(r[0])==[\"p\",\"x\"])\n return f\nouter(9)(7)\n",
+      "stdout": "1 9 True\n"
+    },
+    {
+      "id": "comprehension-unbound-shadow",
+      "stage": "O21",
+      "source": "def f(p):\n r=[locals() for x in [1]]\n x=9\n print(list(r[0])==[\"p\",\"x\"],r[0][\"x\"],locals()[\"x\"])\nf(7)\n",
+      "stdout": "True 1 9\n"
+    },
+    {
+      "id": "comprehension-later-target-unbound",
+      "stage": "O21",
+      "source": "def f(p):\n saved=[]\n r=[locals() for x in [1] if saved.append(locals()) or True for y in [2]]\n print(list(saved[0])==[\"p\",\"saved\",\"x\"],list(r[0])==[\"p\",\"saved\",\"x\",\"y\"])\nf(7)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "comprehension-nested-unpack-shadow",
+      "stage": "O21",
+      "source": "def f(x,y):\n r=[([locals() for x,y in [(3,4)]],locals()) for x in [1]]\n print(r[0][0][0][\"x\"],r[0][0][0][\"y\"],r[0][1][\"x\"],r[0][1][\"y\"],locals()[\"x\"],locals()[\"y\"])\nf(9,8)\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "comprehension-star-parameters",
+      "stage": "O21",
+      "source": "def f(a,/,b=2,*args,c=3,**kw):\n r=[locals() for x in [1]]\n print(list(r[0])==[\"a\",\"b\",\"c\",\"args\",\"kw\",\"x\"],r[0][\"args\"][0],r[0][\"kw\"][\"z\"])\nf(7,8,9,z=10)\n",
+      "stdout": "True 9 10\n"
+    },
+    {
+      "id": "comprehension-iterable-walrus-deferred",
+      "stage": "Future",
+      "source": "def f(p):\n r=[locals() for x in (a:=[1])]\n print(list(r[0])==[\"p\",\"a\",\"x\"],r[0][\"a\"][0])\nf(7)\n",
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "comprehension-mixed-real-cells",
+      "stage": "O21",
+      "source": "def f(p):\n z=7\n a=8\n r=[(a,locals()) for x in [1]]\n def inner():return z\n print(list(r[0][1])==[\"p\",\"a\",\"x\",\"z\"],inner())\nf(9)\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "comprehension-escaped-target-cell",
+      "stage": "O21",
+      "source": "def f(p):\n x=9\n r=[(lambda:x,locals()) for x in [1]]\n x=8\n print(r[0][0](),r[0][1][\"x\"],locals()[\"x\"])\nf(7)\n",
+      "stdout": "1 1 8\n"
+    },
+    {
+      "id": "comprehension-unwind-nested-shadow",
+      "stage": "O21",
+      "source": "def f(x):\n saved=[]\n try:r=[[(saved.append(locals()),1//0) for x in [2]] for x in [1]]\n except ZeroDivisionError:pass\n print(saved[0][\"x\"],locals()[\"x\"])\nf(9)\n",
+      "stdout": "2 9\n"
+    },
+    {
+      "id": "comprehension-helper-mutation",
+      "stage": "O21",
+      "source": "def f(p):\n a=7\n def update():\n  nonlocal a\n  a=8\n r=[(update(),locals()) for x in [1]]\n print(list(r[0][1])==[\"p\",\"update\",\"x\",\"a\"],r[0][1][\"a\"])\nf(9)\n",
+      "stdout": "True 8\n"
+    },
+    {
+      "id": "comprehension-try-else-order",
+      "stage": "O21",
+      "source": "def f(p):\n try:a=7\n except ValueError:b=8\n else:r=[locals() for x in [1]]\n print(list(r[0])==[\"p\",\"a\",\"x\"])\nf(9)\n",
+      "stdout": "True\n"
     }
   ]
 }
