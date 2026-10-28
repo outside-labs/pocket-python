@@ -571,8 +571,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           inheritedException: frame.activeException};
         else {
           const receiver = stack.pop();
-          if (op === "attribute-get" && receiver instanceof InstanceValue &&
-              (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__") || arg === "__class__" && classes.hasSlot(receiver.type, "__class__")))
+          if (op === "attribute-get" &&
+              (classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && arg === "__class__" && classes.hasSlot(receiver.type, "__class__")))
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
           else if (receiver instanceof GeneratorValue) {

@@ -1,14 +1,14 @@
 """Known source-console assets, canonical LF bytes; refresh with scripts/lock_interpreter.py."""
 
-ENGINE_FINGERPRINT = 'f7f91bcb4eedd5977107544007653c0b8d2e8ac2eb4524b46f4ad29a553ee647'
+ENGINE_FINGERPRINT = 'e3db92d25ca454a80acdadd9ab35e17809c61e696ca8c6ade1037d02586de24e'
 ENGINE_FILES = (
     ('browser-protocol.mjs', 10589, '920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76'),
     ('bytecode.mjs', 6836, 'e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4'),
-    ('class-policy.mjs', 2643, '3b25a5bb9ed4a18aacb873639327e9c9aaa4d14078804b26741a51ce25e959e5'),
-    ('class-values.mjs', 28763, 'b92cceaa07adbe3282d6468fb6a33bf754661d5808dec06cb00cab824fc7eb03'),
+    ('class-policy.mjs', 2707, 'faa28ed5d5c3cfb9cf3c94c4849f002609f09d8b141422e1c390f8d7e774a98a'),
+    ('class-values.mjs', 29826, '89f084ce5de6c8b58ffaab0965cf831986336e57537a728e00443e97ebfd461a'),
     ('function-bytecode.mjs', 22421, '61a764005678277ebee8ead4fa301fe035090bd50fa8a52df3d981b4fe7bf35d'),
     ('function-objects.mjs', 4496, '46d9d7bdd6acedb77cbbfa4f18b3ec57dda15aaab58cb8352c98cf9544944d69'),
-    ('functions.mjs', 63998, '6e85c1abf911a18e0b33ede3716b76ef78694780dc11e0db8555b69617039531'),
+    ('functions.mjs', 64006, 'cf05cfe758eac30d20a290794574ccbab89ca4a1696076b55d6032d5b2086d2f'),
     ('interpreter-host.mjs', 7318, '4afadfd987000afa6221ee73dcd64e9c00a2d13c4324718248d396302a39296d'),
     ('interpreter-worker.mjs', 8855, '324cc23100eb40ef04f2909b805d7abc0c8651b4608b3a61a95470ec7e74e19e'),
     ('library-catalog.mjs', 907, '0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c'),
@@ -20,7 +20,7 @@ ENGINE_FILES = (
     ('module-registry.mjs', 10220, '5c87f42966f7d1094ec9abcdd0e66718d3ccf1cdbfc7fa47c76495e14a21b61d'),
     ('module-session.mjs', 12852, '8474187aa92173689c875d6bf15b31a7eae4dcff62b862b9607ce22e10753df4'),
     ('numeric.mjs', 13954, '2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad'),
-    ('operation-runtime.mjs', 128713, '76bcb612a575b33a54dfd15032138d6af3da898a68800483489ca1d3656392be'),
+    ('operation-runtime.mjs', 129612, 'b955299f43b60325dd30f2639ddee67b66ed6aefe241caa99472b94a4fede1ce'),
     ('operations.mjs', 29399, '0daa9d543ec5ac12534004268811b3a7174d815c16941a9042df78f0d1c2b55e'),
     ('source-compiler.mjs', 42147, '2bc96679f490d8791a5e76353c86654d83dbbe28a93846f5f04de37e2dc13c54'),
     ('source-identifiers.mjs', 25949, '1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914'),

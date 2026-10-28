@@ -5,10 +5,11 @@ import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
-  "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "builtin_function_or_method", "generator", "module", "cell",
+  "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__"]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
+const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__"]);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
 
 export class ClassRuntime {
@@ -111,7 +112,7 @@ export class ClassRuntime {
     let name = this.values.typeName(value);
     if (name === null) {
       if (this.isType(value)) name = "type";
-      else if (value instanceof BuiltinValue) name = NATIVE_CHECK_METHODS.has(value.name) ? "method_descriptor" : "builtin_function_or_method";
+      else if (value instanceof BuiltinValue) name = NATIVE_CHECK_METHODS.has(value.name) ? "method_descriptor" : NATIVE_TYPE_WRAPPERS.has(value.name) ? "wrapper_descriptor" : "builtin_function_or_method";
       else if (value instanceof FunctionValue) name = "function";
       else if (value instanceof BoundMethodValue) name = value.callable instanceof BuiltinValue ?
         NATIVE_CHECK_METHODS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
@@ -132,10 +133,15 @@ export class ClassRuntime {
     return this.typeOf(value);
   }
   needsAdvertised(value) {
-    return value instanceof InstanceValue && ["__class__", "__getattribute__", "__getattr__"].some(name => this.hasSlot(value.type, name));
+    return value instanceof InstanceValue && this.hasSlot(value.type, "__class__") ||
+      ["__getattribute__", "__getattr__"].some(name => this.hasAttributeHook(value, name));
   }
   checkingType(value) {
     return value instanceof ClassValue ? value.metaclass : value instanceof InstanceValue ? value.type : null;
+  }
+  hasAttributeHook(value, name) {
+    const type = this.checkingType(value);
+    return type !== null && this.hasSlot(type, name);
   }
   customCheck(value, name) {
     const type = this.checkingType(value);
@@ -151,7 +157,7 @@ export class ClassRuntime {
     for (const base of this.mro(type).slice(start)) {
       this.charge(1);
       if (base instanceof BuiltinValue) {
-        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__"].includes(name))
+        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
         continue;
       }
@@ -214,7 +220,7 @@ export class ClassRuntime {
     if (receiver instanceof BuiltinValue) {
       if (name === "__class__") return value(this.typeOf(receiver));
       if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(
-        name === "__name__" && NATIVE_CHECK_METHODS.has(receiver.name) ? receiver.name.slice(5) : receiver.name, char => char.codePointAt(0))));
+        name === "__name__" && (NATIVE_CHECK_METHODS.has(receiver.name) || NATIVE_TYPE_WRAPPERS.has(receiver.name)) ? receiver.name.slice(5) : receiver.name, char => char.codePointAt(0))));
       if (this.isType(receiver)) {
         if (receiver.name !== "type" && ["__instancecheck__", "__subclasscheck__"].includes(name))
           return this.bindAttribute(this.builtin("type." + name), receiver, this.builtin("type"));
@@ -236,8 +242,10 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
     if (receiver instanceof BoundMethodValue && name === "__func__" && receiver.callable instanceof BuiltinValue &&
-        (NATIVE_CHECK_METHODS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name)))
+        (NATIVE_CHECK_METHODS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name) || NATIVE_TYPE_WRAPPERS.has(receiver.callable.name)))
       this.fail("AttributeError", "Native methods have no __func__ attribute.");
+    if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && NATIVE_TYPE_WRAPPERS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
+      return value(this.values.string(Array.from(name === "__name__" ? receiver.callable.name.slice(5) : receiver.callable.name, char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
@@ -254,19 +262,19 @@ export class ClassRuntime {
       const item = this.lookup(receiver.type, name);
       return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : value(this.classAttribute(receiver));
     }
-    if (receiver instanceof ClassValue) {
-      if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
-      if (["__name__", "__qualname__", "__module__"].includes(name)) return value(this.values.string(Array.from(
-        receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
-      if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
-    }
-    if (!allowsClassSpecial(name, "attribute")) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
+    if (!allowsClassSpecial(name, "attribute") && !["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name)) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
     const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (["__instancecheck__", "__subclasscheck__"].includes(name) ? this.builtin("type") : null) : null;
     const metaItem = metaclass ? this.lookup(metaclass, name) : null;
     const metaDescriptor = metaItem?.found ? this.descriptor(metaItem.value) : null;
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
       return this.bindAttribute(metaItem.value, receiver, metaclass);
+    if (receiver instanceof ClassValue) {
+      if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
+      if (["__name__", "__qualname__", "__module__"].includes(name)) return value(this.values.string(Array.from(
+        receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
+      if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
+    }
     const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
     if (name === "__dir__" && !item.found && !metaItem?.found)
       this.fail("UnsupportedOperationError", "Default directories require their own namespace contract.", "UNSUPPORTED");
@@ -282,7 +290,7 @@ export class ClassRuntime {
   }
   bindAttribute(value, receiver, owner) {
     if (value instanceof SuperValue && value.self === null && receiver !== null) {
-      if (this.needsAdvertised(receiver) && !this.subclass(receiver.type, value.thisclass))
+      if (this.needsAdvertised(receiver) && !(receiver instanceof ClassValue && this.subclass(receiver, value.thisclass)) && !this.subclass(this.typeOf(receiver), value.thisclass))
         return {kind: "call", callable: this.builtin("super"), args: [value.thisclass, receiver]};
       return {kind: "value", value: this.superProxy(value.thisclass, receiver)};
     }
@@ -295,15 +303,16 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner)};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name)) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);
     if (!isSpecialName(name) || !allowsClassSpecial(name, "implicit"))
       this.fail("UnsupportedOperationError", "This implicit special protocol is outside classes-source/1.", "UNSUPPORTED");
-    if (!(receiver instanceof InstanceValue)) throw new TypeError("Implicit user protocols require an instance.");
-    const item = this.lookup(receiver.type, name);
-    return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : null;
+    const type = this.checkingType(receiver);
+    if (type === null) throw new TypeError("Implicit user protocols require a class or instance.");
+    const item = this.lookup(type, name);
+    return item.found ? this.bindAttribute(item.value, receiver, type) : null;
   }
 
   get(receiver, name) {
