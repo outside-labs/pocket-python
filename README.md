@@ -103,6 +103,9 @@ On PowerShell set `$env:POCKET_PYTHON_RUNTIME = "build/runtime"` before tests.
 Without an explicit runtime fixture path, the real-WASM test is skipped.
 Use `--channel chrome` with the browser script to test an installed Chrome.
 Playwright is a pinned build-only group; it is not a package runtime dependency.
+See [validation suites](docs/testing.md) for the shared local/CI runner and focused
+feature checks.
+
 CI runs real-runtime tests on Linux, macOS and Windows and offline Chromium
 tests on Linux. Distribution checks verify allowlists, metadata, source parity
 and both installed wheel/source artifacts outside the checkout.
