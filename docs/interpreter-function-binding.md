@@ -104,3 +104,8 @@ profiles, pending ownership/resource units and newly entered offline-console
 source with Stop/Restart. Reports retain reference version, source hashes,
 execution driver and logical teardown. Publication, deployment, native ABI,
 library coverage and complete Python compatibility remain separate milestones.
+
+The separate [documentation contract](interpreter-documentation.md) adopts
+function/class source docstrings, owned function documentation and live bound
+method reads. It leaves arbitrary function dictionaries and signatures outside
+this binding slice.

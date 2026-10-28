@@ -2289,15 +2289,14 @@
     {
       "id": "descriptor-binding-future-copy-getter-doc-hook",
       "source": "class Read:\n def __getattribute__(self,name):\n  print(\"documentation\")\n  raise ValueError(\"doc\")\nproperty.getter(property(),Read())\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "documentation\n",
         "error_type": "ValueError"
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "documentation\n",
+        "error_type": "ValueError"
       }
     },
     {
@@ -2857,6 +2856,214 @@
       "engine": {
         "stdout": "lookup\nlookup\nTrue True\n",
         "error_type": null
+      }
+    },
+    {
+      "id": "documentation-function-source-document",
+      "source": "def f():\n \"read the value\"\n return 7\nprint(f.__doc__,f())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "read the value 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "read the value 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-function-mutation-4",
+      "source": "def f(): pass\nx=[7]\nf.__doc__=x\nprint(f.__doc__ is x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\nTrue\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\nTrue\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-bound-function-live-document",
+      "source": "class C:\n def read(self):\n  \"first\"\n  return 7\nm=C().read\nprint(m.__doc__,m())\nC.read.__doc__=[7]\nprint(m.__doc__ is C.read.__doc__)\ndel C.read.__doc__\nprint(m.__doc__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "first 7\nTrue\nNone\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "first 7\nTrue\nNone\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-class-documents",
+      "source": "class A:\n \"base\"\nclass B(A): pass\nprint(A.__doc__,A().__doc__,B.__doc__,B().__doc__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "base base None None\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "base base None None\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-source-document-cleanup-function-2",
+      "source": "def f():\n 'first\\n    second\\n      third\\n '\n return 7\nprint(f.__doc__=='first\\nsecond\\n  third\\n',f())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-explicit-document-4",
+      "source": "x=[7]\np=property(doc=x)\nprint(p.__doc__ is x)\nq=property(None,None,None,x)\nprint(q.__doc__ is x)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-source-getter-document",
+      "source": "def read(obj):\n \"getter source\"\n return 7\np=property(read)\nprint(p.__doc__,p.fget is read)\nread.__doc__=\"changed\"\nprint(p.__doc__,property(read).__doc__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "getter source True\ngetter source changed\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "getter source True\ngetter source changed\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-getter-document-fallback",
+      "source": "class Getter:\n @property\n def __doc__(self): raise AttributeError(\"missing\")\n def __getattr__(self,name):\n  print(name)\n  return [7]\nprint(property(Getter()).__doc__[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__doc__\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__doc__\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-getter-optional-missing",
+      "source": "class Getter:\n def __getattribute__(self,name):\n  print(name)\n  raise AttributeError(\"missing\")\nprint(property(Getter()).__doc__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__doc__\nNone\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__doc__\nNone\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-getter-document-error",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  print(\"lookup\")\n  raise ValueError(\"document\")\nprint(\"before\")\nproperty(Getter())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\nlookup\n",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "before\nlookup\n",
+        "error_type": "ValueError"
+      }
+    },
+    {
+      "id": "documentation-getter-copy-refreshes-document",
+      "source": "def a(obj):\n \"a\"\ndef b(obj):\n \"b\"\np=property(a)\np.__doc__=\"manual\"\nprint(p.getter(b).__doc__)\na.__doc__=\"new a\"\nprint(p.setter(b).__doc__,p.deleter(b).__doc__,p.__doc__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "b\nnew a new a manual\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "b\nnew a new a manual\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-none-document-copy-requeries",
+      "source": "def a(obj):\n \"a\"\np=property(a,doc=\"explicit\")\np.__doc__=None\nprint(p.setter(None).__doc__)\ndel p.__doc__\nprint(p.getter(None).__doc__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "a\na\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "a\na\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-copy-callback-mutates-name",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  print(\"lookup\")\n  if ready: old.__name__=\"after\"\n  return \"doc\"\nready=False\ng=Getter()\nold=property(g)\nold.__name__=\"before\"\nready=True\nnew=old.setter(None)\nprint(new.__name__,old.__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "lookup\nlookup\nafter after\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "lookup\nlookup\nafter after\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-bound-custom-callable-document",
+      "source": "class C: pass\nactive=False\nclass Getter:\n def __getattribute__(self,name):\n  if name==\"__doc__\":\n   if active:\n    print(\"lookup\")\n    return [7]\n   return None\n  return object.__getattribute__(self,name)\nm=classmethod(Getter()).__get__(None,C)\nactive=True\np=property(m)\nprint(p.__doc__[0],m.__doc__[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "lookup\nlookup\n7 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "lookup\nlookup\n7 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-native-rebound-property-copy",
+      "source": "def a(obj):\n \"a\"\ndef b(obj):\n \"b\"\np=property(a)\ncopy=property.getter.__get__(p,property)\nprint(copy(b).__doc__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "b\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "b\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "documentation-native-documentation",
+      "source": "print(property(len).__doc__ is not None)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError"
       }
     }
   ]

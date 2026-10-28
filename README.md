@@ -248,6 +248,14 @@ receiver identities. Run `python -m examples.interpreter_native_descriptors`
 for a console combining validated fields, alternate construction and explicit
 method owners.
 
+The finite [documentation profile](docs/interpreter-documentation.md) adds
+function/class docstrings, owned function documentation and eager property
+documentation with callback-aware accessor copies. Run
+`python -m examples.interpreter_documentation` for a console combining exact
+documents, native copies, property notification names and lazy generators.
+Native/wrapper documentation, live namespaces and broader layouts retain their
+own contracts.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)

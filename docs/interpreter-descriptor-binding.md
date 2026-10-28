@@ -29,8 +29,9 @@ release all logical owners. Preserve the eight composed resource observations.
 
 These operations belong to classes-source/1 and bytecode 5. Core-source/1,
 legacy bytecode admission and host grants retain their existing boundaries.
-Property documentation, live dictionaries,
-builtin layouts and broader descriptor reflection remain separate follow-ups.
+Live dictionaries, builtin layouts and broader descriptor reflection remain
+separate follow-ups. Property documentation is adopted by the later
+[O41/O42 contract](interpreter-documentation.md).
 The later [property-name](interpreter-property-names.md) and
 [native-rebinding](interpreter-native-rebinding.md) slices adopt those operations.
 Native coroutine/await and host adapters remain under #34.
@@ -63,9 +64,8 @@ copies, detached methods, defaults/cells and lazy generators. Offline acceptance
 also covers native validation, retained future refusals, callback Stop/Restart
 and a waiting update that removes class-profile operations.
 
-Getter documentation read hooks remain deferred. A copy whose resulting getter
-has custom attribute read hooks, including a callable wrapped in a Python method,
-refuses before those hooks run. This applies to getter replacement and to
-setter/deleter copies retaining such a getter. Setter/deleter replacements alone
-do not trigger getter documentation lookup. Six pinned future cases record
-CPython's original documentation effects/errors and the explicit engine boundary.
+The later [documentation slice](interpreter-documentation.md) adopts eager getter
+documentation lookup and origin-sensitive copying, including read/fallback hooks
+and custom callables wrapped in Python methods. The six original refusal cases
+now execute in its corpus with their pinned callback output and errors. Native
+documentation retains an explicit boundary.

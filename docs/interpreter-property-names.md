@@ -27,8 +27,10 @@ resource limits; any changed composed resource observation requires an explicit
 accounting explanation. No host callback or untracked side table owns a name.
 
 Only property-name mutation is added. Function/type/native descriptor name
-mutation, property documentation, builtin subclass
+mutation, builtin subclass
 layouts, live dictionaries and dynamic source admission retain their boundaries.
+The later [documentation contract](interpreter-documentation.md) adopts property
+documents and their callback-sensitive accessor copies.
 Missing-accessor diagnostics that would read a user getter's name or format a
 non-primitive assigned name refuse before those deferred callback effects.
 The operations belong to classes-source/1 and bytecode 5. Core/legacy admission

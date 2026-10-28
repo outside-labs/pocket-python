@@ -27,9 +27,10 @@ Preserve the eight existing composed resource observations.
 
 The flag is reflection only: it does not enforce abstract class instantiation,
 adopt `abc`, or add arbitrary function dictionaries. Native getset-descriptor
-reflection, property documentation, builtin subclass layouts, live namespaces
+reflection, builtin subclass layouts, live namespaces
 and dynamic source admission retain their separate boundaries. Wrapper
 construction and other metadata retain their existing finite contracts.
+Property documentation follows the separate [O41/O42 contract](interpreter-documentation.md).
 These operations belong to classes-source/1 and bytecode 5. Core/legacy
 admission and host grants remain explicit. Native coroutine/await and host
 adapters remain under #34.
