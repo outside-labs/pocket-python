@@ -445,7 +445,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const namespace = new Map([...frame.namespaceOrder].filter(key => frame.locals.get(key).bound && !key.startsWith("@source:"))
           .map(key => [key, frame.locals.get(key).value]));
         const completion = frame.completion;
-        state.temporaries.push(...namespace.values(), ...completion.bases);
+        state.temporaries.push(...namespace.values(), ...completion.bases, ...(completion.keywordValues ?? []));
         if (completion.metaclass) state.temporaries.push(completion.metaclass);
         const classCell = frame.locals.get("@source:class");
         if (classCell) state.temporaries.push(classCell);
@@ -460,12 +460,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           }
           const name = values.string(Array.from(frame.fn.name, char => char.codePointAt(0))); state.temporaries.push(name);
           const bases = values.tuple(completion.bases); state.temporaries.push(bases);
-          call(completion.metaclass, [name, bases, dictionary], [], [], frame.callsite,
+          call(completion.metaclass, [name, bases, dictionary], completion.keywords ?? [], completion.keywordValues ?? [], frame.callsite,
             classCell ? continuation("class-created", {cell: classCell}) : null); return;
         }
         const type = classes.create(frame.fn.name, frame.fn.qualname, completion.module, completion.bases, namespace, objectType());
         if (classCell) { state.temporaries.push(type, classCell); setCell(classCell, type); }
-        dispatch(notifyNext(type, [...namespace], 0, frame.callsite)); return;
+        dispatch(notifyNext(type, [...namespace], 0, frame.callsite, null, completion.keywords, completion.keywordValues)); return;
       }
       const completion = frame.completion;
       retainTransfer(state.temporaries, [], completion);
@@ -509,22 +509,26 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         }
         store(frame, arg, null, false);
       }
-      else if (op === "function" || op === "function-defaults" || op === "class" || op === "class-meta") {
+      else if (op === "function" || op === "function-defaults" || op === "class" || op === "class-meta" || op === "class-keywords") {
         const owner = frame.callable.pool;
         const closure = new Map(owner.code.functions[arg].free.map(key => [key,
           frame.fn.kind === "class" ? key === "__class__" && frame.locals.has("@source:class") ? frame.locals.get("@source:class") : frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
         const defaults = op === "function-defaults" ? stack.splice(stack.length - extra - fourth.length) : null;
         const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure, defaults);
-        if (op !== "class" && op !== "class-meta") stack.push(callable);
+        if (op !== "class" && op !== "class-meta" && op !== "class-keywords") stack.push(callable);
         else {
-          const explicit = op === "class-meta" ? stack.pop() : undefined;
+          const keywordValues = op === "class-keywords" ? stack.splice(stack.length - fourth.length) : [];
+          const keywords = op === "class-keywords" ? [...fourth] : [];
+          const metaIndex = keywords.indexOf("metaclass"), hasMeta = op === "class-meta" || metaIndex !== -1;
+          const explicit = op === "class-meta" ? stack.pop() : metaIndex === -1 ? undefined : keywordValues.splice(metaIndex, 1)[0];
+          if (metaIndex !== -1) keywords.splice(metaIndex, 1);
           const bases = stack.splice(stack.length - extra), name = values.text(frame.callable.globals.cells.get("__name__")?.value);
           state.temporaries.push(callable);
           if (name === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Class module metadata requires text in C1.");
           classes.validateNamespace(bases, owner.code.functions[arg].locals);
-          const invalidMetaclass = op === "class-meta" && !classes.isType(explicit) && !classes.callable(explicit);
-          const metaclass = !invalidMetaclass && (op === "class-meta" || bases.some(base => base instanceof ClassValue && base.metaclass !== null)) ? classes.selectMetaclass(bases, explicit) : null;
-          enter(callable, new Map(), summary(frame, cursor), continuation("class", {bases, module: name, metaclass, invalidMetaclass}));
+          const invalidMetaclass = hasMeta && !classes.isType(explicit) && !classes.callable(explicit);
+          const metaclass = !invalidMetaclass && (hasMeta || bases.some(base => base instanceof ClassValue && base.metaclass !== null)) ? classes.selectMetaclass(bases, explicit) : null;
+          enter(callable, new Map(), summary(frame, cursor), continuation("class", {bases, module: name, metaclass, invalidMetaclass, keywords, keywordValues}));
           store(state.frames.at(-1), "__module__", values.string(Array.from(name, char => char.codePointAt(0))));
           store(state.frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
         }

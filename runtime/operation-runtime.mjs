@@ -720,7 +720,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion.after, completion.depth);
     if (completion?.kind === "invoke") return callTask(value, completion.args, completion.keywords,
       completion.keywordValues, site, completion.after, completion.depth);
-    if (completion?.kind === "notify") return notifyNext(completion.type, completion.entries, completion.index, site, completion.after);
+    if (completion?.kind === "notify") return notifyNext(completion.type, completion.entries, completion.index, site, completion.after, completion.keywords, completion.keywordValues);
     if (completion?.kind === "condition") {
       const frame = state.frames.at(-1), task = frame.tasks.at(-1);
       if (completion.control === "if") block(frame, value ? completion.body : completion.otherwise);
@@ -740,8 +740,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     charge(1);
     return unaryTask("hash", parts[position], site, continuation("sequence-hash", {receiver, position, hash, depth, after}), depth + 1);
   };
-  const notifyNext = (type, entries, index, site, after = null) => {
-    state.temporaries.push(type, ...entries.map(entry => entry[1]));
+  const notifyNext = (type, entries, index, site, after = null, keywords = [], keywordValues = []) => {
+    state.temporaries.push(type, ...entries.map(entry => entry[1]), ...keywordValues);
     while (index < entries.length) {
       charge(1);
       count("notify-entry");
@@ -751,14 +751,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const plan = classes.notification(value, type, nameValue);
       if (!plan) continue;
       return callTask(plan.callable, plan.args, [], [], site,
-        continuation("notify", {type, entries, index, after}));
+        continuation("notify", {type, entries, index, keywords, keywordValues, after}));
     }
-    const plan = classes.subclassNotification(type);
+    const plan = classes.subclassNotification(type, keywords.length > 0);
     if (plan) {
       const finish = continuation("subclass-result", {receiver: type, after});
-      return plan.kind === "value" ? callTask(plan.value, [], [], [], site, finish) :
+      return plan.kind === "value" ? callTask(plan.value, [], keywords, keywordValues, site, finish) :
         callTask(plan.callable, plan.args, [], [], site,
-          continuation("invoke", {args: [], keywords: [], keywordValues: [], depth: 0, after: finish}));
+          continuation("invoke", {args: [], keywords, keywordValues, depth: 0, after: finish}));
     }
     return deliver(type, after, site);
   };
@@ -1428,7 +1428,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = constructTask(args[0], args.slice(1), keywords, keywordValues, site, completion, depth); continue;
           }
           if (callable.name === "type.__init__") {
-            if (!args.length || !classes.isType(args[0]) || keywords.length || ![2, 4].includes(args.length))
+            if (!args.length || !classes.isType(args[0]) || args.length === 2 && keywords.length || ![2, 4].includes(args.length))
               python("TypeError", "type.__init__ requires one or three arguments after its receiver");
             task = valueTask(null, site, completion); continue;
           }
@@ -1437,7 +1437,6 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = callTask(classes.builtin("type.__new__"), [callable, ...args], keywords, keywordValues, site, target, depth); continue;
           }
           if (callable.name === "type.__new__") {
-            if (keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Class creation keywords require their separate construction stage.");
             if (args.length !== 4) python("TypeError", "type.__new__ requires a metaclass, name, bases and namespace");
             let [metaclass, nameValue, basesValue, namespaceValue] = args;
             if (!(metaclass instanceof BuiltinValue && metaclass.name === "type") && !classes.isMetaclass(metaclass)) python("TypeError", "type.__new__ requires a subtype of type");
@@ -1463,8 +1462,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (++depth > maxDepth) python("RecursionError", "maximum metaclass construction depth exceeded");
               const item = classes.lookup(selected, "__new__"), plan = classes.bindAttribute(item.value, null, selected);
               const positional = [selected, nameValue, basesValue, namespaceValue];
-              task = plan.kind === "value" ? callTask(plan.value, positional, [], [], site, completion, depth) :
-                callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: positional, keywords: [], keywordValues: [], after: completion, depth}), depth);
+              task = plan.kind === "value" ? callTask(plan.value, positional, keywords, keywordValues, site, completion, depth) :
+                callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: positional, keywords, keywordValues, after: completion, depth}), depth);
               continue;
             }
             metaclass = selected;
@@ -1472,7 +1471,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               {dynamic: true, metaclass: metaclass instanceof ClassValue ? metaclass : null});
             state.temporaries.push(type);
             if (cell) setCell(cell, type);
-            task = notifyNext(type, [...namespace], 0, site, completion); continue;
+            task = notifyNext(type, [...namespace], 0, site, completion, keywords, keywordValues); continue;
           }
           if (classes.isType(callable) && !["type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
             if (callable.name === "method_descriptor") python("TypeError", "cannot create 'method_descriptor' instances");

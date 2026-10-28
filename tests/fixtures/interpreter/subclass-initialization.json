@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O23"
+    "O23",
+    "O24"
   ],
   "cases": [
     {
