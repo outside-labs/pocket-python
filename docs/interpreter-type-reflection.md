@@ -25,6 +25,8 @@ qualification, equality, hashing and no Python `__func__`. A class attribute
 named mro shadows the metaclass's non-data descriptor; ordinary metaclass read
 hooks and descriptors retain their existing owned callback behavior. The native
 helper bypasses those read hooks and never invokes a custom mro callback.
+Qualification of a bound native MRO method on a receiver with a custom metaclass
+read hook remains an explicit refusal before hook effects.
 
 Custom metaclass mro construction is deferred. Definitions, dynamic namespaces
 and direct mutations of that protocol refuse before their deferred effects;
@@ -60,4 +62,6 @@ The executable reference pins patch-level argument and lookup behavior.
 O35 is implemented over the adopted native descriptor allowlist. Its 43 source
 cases pass Node drain, instruction-boundary and parked execution, with original
 receiver/cell ownership, actual memory/work interruption and zero teardown.
-O36 retains reference-only status until its implementation is accepted.
+O36 is implemented for the adopted immutable hierarchies, including ordinary
+metaclass reads and native descriptor rebinding. Custom metaclass MRO
+construction and hooked native method qualification retain explicit refusals.

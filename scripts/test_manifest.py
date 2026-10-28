@@ -55,7 +55,6 @@ REFERENCE_CORPORA = {
     'numeric',
 }
 STAGES = {'numeric': ('N1', 'N2', 'N3', 'N4', 'N5', 'Future'),
-          'type-reflection': ('O35',),
           'sequences': ('Q1', 'Q2', 'Q3', 'Hints')}
 
 
