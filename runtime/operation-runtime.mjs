@@ -376,7 +376,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     state.temporaries.push(result); return valueTask(result, site, record.after);
   };
   const abstractNext = (record, site) => {
-    const accessors = [record.receiver.fget, record.receiver.fset, record.receiver.fdel];
+    const accessors = record.receiver instanceof PropertyValue ?
+      [record.receiver.fget, record.receiver.fset, record.receiver.fdel] : [record.receiver.callable];
     for (let position = record.position; position < accessors.length; position++) {
       charge(1);
       const accessor = accessors[position];
@@ -1557,7 +1558,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (callable.name === "descriptor-abstract") {
             const receiver = args[0];
-            if (!(receiver instanceof PropertyValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid abstract-method flag lookup.");
+            if (!(receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid abstract-method flag lookup.");
             if (++depth > maxDepth) python("RecursionError", "maximum abstract-method flag lookup depth exceeded");
             task = abstractNext({receiver, position: 0, depth, after: completion}, site); continue;
           }
@@ -1619,7 +1620,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
             if (writing && args[0] instanceof ClassValue) python("TypeError", "object attribute mutation requires an ordinary instance");
             const markerLayout = name === "__isabstractmethod__" && (args[0] instanceof FunctionValue ||
-              args[0] instanceof BoundMethodValue || args[0] instanceof PropertyValue);
+              args[0] instanceof BoundMethodValue || args[0] instanceof PropertyValue || args[0] instanceof MethodWrapperValue);
             if (!(args[0] instanceof InstanceValue) && !markerLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }

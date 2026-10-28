@@ -36,9 +36,15 @@ adapters remain under #34.
 
 O39 is implemented. Python function markers and computed property flags use
 owned storage, optional lookup and truth phases. The matrix includes native
-object-default operations for this specific marker, callback-visible changes,+nested lookup/truth errors and read-only descriptor metadata. Wrapper flags
-remain explicit refusals pending O40. Focused lifecycle tests cover parked
+object-default operations for this specific marker, callback-visible changes,
+nested lookup/truth errors and read-only descriptor metadata. Focused lifecycle
+tests cover parked
 collection, cyclic markers, cancellation, close and failed ownership growth.
+O40 is implemented through the same owned lookup/truth phases. Static/class
+method wrappers read the current wrapped marker without invoking the callable,
+including nested properties, wrappers and ordinary bound methods. Detached
+wrappers and their captured cells survive parked collection and cancellation;
+nested flag dispatch obeys the shared recursion budget.
 
 Acceptance requires the pinned source matrix in Node/Chromium drain,
 instruction-boundary and parked execution, focused lifecycle/resource checks,

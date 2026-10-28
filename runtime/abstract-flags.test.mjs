@@ -79,6 +79,23 @@ test('function marker growth rolls back failed arena and foreign-owner transfers
   closed(memory.stats()); closed(foreign.stats());
 });
 
+test('detached and nested wrappers retain callable closures through lookup, truth and cancellation', async () => {
+  for (const wrapper of ['staticmethod', 'classmethod']) {
+    await lifecycle('class Truth:\n def __init__(self,value): self.value=value\n def __bool__(self):\n  print("truth")\n  return bool(self.value)\nclass Flag:\n @property\n def __isabstractmethod__(self):\n  print("lookup")\n  return Truth([7])\nw='+wrapper+'(Flag())\nprint("held")\nprint(w.__isabstractmethod__)\n',
+      'held\nlookup\ntruth\nTrue\n', ['held\n', 'held\nlookup\n', 'held\nlookup\ntruth\n']);
+    await lifecycle('def make():\n saved=[7]\n def read(obj): return saved[0]\n read.__isabstractmethod__=[read,saved]\n return '+wrapper+'(staticmethod(property(read)))\nw=make()\nprint("held")\nprint(w.__isabstractmethod__)\n', 'held\nTrue\n', ['held\n']);
+  }
+});
+
+test('nested wrapper flag dispatch has bounded recursion and cleans parked owners', async () => {
+  const result = await run('w=property()\nfor i in range(30): w=staticmethod(classmethod(w))\nprint("entered")\nw.__isabstractmethod__\n', {maxDepth: 16});
+  assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.type, 'RecursionError'); closed(result.closed);
+  for (const wrapper of ['staticmethod', 'classmethod']) {
+    const busy = await run('class Truth:\n def __bool__(self):\n  print("entered")\n  while True: pass\nclass Flag: __isabstractmethod__=Truth()\n'+wrapper+'(Flag()).__isabstractmethod__\n', {maxSteps: 300});
+    assert.equal(busy.stdout, 'entered\n'); assert.equal(busy.error?.code, 'BUDGET'); closed(busy.closed);
+  }
+});
+
 test('abstract lookup and truth records preserve outer roots and reject invalid phases', () => {
   const receiver = {}, outer = {};
   const after = completion('relay', {receiver: outer});

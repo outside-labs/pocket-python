@@ -281,6 +281,7 @@ export class ClassRuntime {
     }
     if (receiver instanceof MethodWrapperValue) {
       if (name === "__class__") return value(this.builtin(receiver.kind));
+      if (name === "__isabstractmethod__") return {kind: "call", callable: this.builtin("descriptor-abstract"), args: [receiver]};
       if (name === "__get__") return value(this.make(BoundMethodValue, this.builtin(receiver.kind + ".__get__"), receiver));
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
@@ -458,7 +459,7 @@ export class ClassRuntime {
       catch (error) { receiver.abstractFlag = before; throw error; }
       return null;
     }
-    if (name === "__isabstractmethod__" && (receiver instanceof PropertyValue || receiver instanceof BoundMethodValue))
+    if (name === "__isabstractmethod__" && (receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue || receiver instanceof BoundMethodValue))
       this.fail("AttributeError", "Computed abstract-method flags are read-only.");
     if (name === "__name__") {
       if (!(receiver instanceof PropertyValue))
