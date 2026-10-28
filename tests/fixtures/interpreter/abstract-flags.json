@@ -1,0 +1,699 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-abstract-flags/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "empty-property",
+      "stage": "O39",
+      "source": "print(property().__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "ordinary-functions",
+      "stage": "O39",
+      "source": "def read(obj): return 7\nprint(property(read).__isabstractmethod__)\nprint(hasattr(read,\"__isabstractmethod__\"),getattr(read,\"__isabstractmethod__\",None))\n",
+      "stdout": "False\nFalse None\n"
+    },
+    {
+      "id": "function-missing-marker",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nprint(\"before\")\nread.__isabstractmethod__\n",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "function-flag-0",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=None\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "function-flag-1",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=False\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "function-flag-2",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=True\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-flag-3",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=0\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "function-flag-4",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=1\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-flag-5",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=\"\"\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "function-flag-6",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=\"yes\"\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-flag-7",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=[]\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "function-flag-8",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=[7]\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-flag-9",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__={}\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "function-flag-10",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__={\"x\":7}\nprint(property(read).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-marker-identity",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nflag=[7]\nread.__isabstractmethod__=flag\nprint(read.__isabstractmethod__ is flag)\nflag.append(8)\nprint(len(read.__isabstractmethod__))\n",
+      "stdout": "True\n2\n"
+    },
+    {
+      "id": "function-marker-delete",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nsetattr(read,\"__isabstractmethod__\",True)\nprint(read.__isabstractmethod__)\nprint(delattr(read,\"__isabstractmethod__\"),hasattr(read,\"__isabstractmethod__\"))\nprint(property(read).__isabstractmethod__)\ndel read.__isabstractmethod__\n",
+      "stdout": "True\nNone False\nFalse\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "function-decorator-marker",
+      "stage": "O39",
+      "source": "def mark(fn):\n fn.__isabstractmethod__=True\n return fn\nclass C:\n @property\n @mark\n def field(self): return 7\nprint(C.field.__isabstractmethod__,C().field)\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "bound-method-marker",
+      "stage": "O39",
+      "source": "class C:\n def read(self): return 7\nf=C.read\nf.__isabstractmethod__=[7]\nm=C().read\nprint(m.__isabstractmethod__ is f.__isabstractmethod__,property(m).__isabstractmethod__)\ndel f.__isabstractmethod__\nprint(hasattr(m,\"__isabstractmethod__\"),property(m).__isabstractmethod__)\n",
+      "stdout": "True True\nFalse False\n"
+    },
+    {
+      "id": "bound-marker-write",
+      "stage": "O39",
+      "source": "class C:\n def read(self): return 7\nm=C().read\nprint(\"before\")\nm.__isabstractmethod__=True\n",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "bound-marker-delete",
+      "stage": "O39",
+      "source": "class C:\n def read(self): return 7\nm=C().read\nprint(\"before\")\ndel m.__isabstractmethod__\n",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "primitive-accessor-0",
+      "stage": "O39",
+      "source": "print(property(None).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "primitive-accessor-1",
+      "stage": "O39",
+      "source": "print(property(7).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "primitive-accessor-2",
+      "stage": "O39",
+      "source": "print(property(False).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "primitive-accessor-3",
+      "stage": "O39",
+      "source": "print(property(\"text\").__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "primitive-accessor-4",
+      "stage": "O39",
+      "source": "print(property([]).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "primitive-accessor-5",
+      "stage": "O39",
+      "source": "print(property({}).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "primitive-accessor-6",
+      "stage": "O39",
+      "source": "print(property(object()).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "primitive-accessor-7",
+      "stage": "O39",
+      "source": "print(property(len).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "primitive-accessor-8",
+      "stage": "O39",
+      "source": "print(property(property()).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "accessor-order",
+      "stage": "O39",
+      "source": "class Flag:\n def __init__(self,label,result): self.label=label; self.result=result\n @property\n def __isabstractmethod__(self):\n  print(self.label)\n  return self.result\np=property(Flag(\"get\",False),Flag(\"set\",False),Flag(\"del\",True))\nprint(p.__isabstractmethod__)\n",
+      "stdout": "get\nset\ndel\nTrue\n"
+    },
+    {
+      "id": "accessor-short-circuit",
+      "stage": "O39",
+      "source": "class First: __isabstractmethod__=True\nclass Later:\n @property\n def __isabstractmethod__(self):\n  print(\"never\")\n  raise ValueError(\"later\")\nprint(property(First(),Later(),Later()).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "lookup-attribute-error-suppressed",
+      "stage": "O39",
+      "source": "class Missing:\n @property\n def __isabstractmethod__(self):\n  print(\"lookup\")\n  raise AttributeError(\"absent\")\nprint(property(Missing()).__isabstractmethod__)\n",
+      "stdout": "lookup\nFalse\n"
+    },
+    {
+      "id": "lookup-value-error",
+      "stage": "O39",
+      "source": "class Bad:\n @property\n def __isabstractmethod__(self):\n  print(\"lookup\")\n  raise ValueError(\"bad\")\nproperty(Bad()).__isabstractmethod__\n",
+      "stdout": "lookup\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__isabstractmethod__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "lookup-fallback",
+      "stage": "O39",
+      "source": "class Flag:\n def __getattribute__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"primary\")\n   raise AttributeError(\"missing\")\n  return object.__getattribute__(self,name)\n def __getattr__(self,name):\n  print(\"fallback\",name)\n  return True\nprint(property(Flag()).__isabstractmethod__)\n",
+      "stdout": "primary\nfallback __isabstractmethod__\nTrue\n"
+    },
+    {
+      "id": "descriptor-and-truth-order",
+      "stage": "O39",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass D:\n def __get__(self,obj,owner):\n  print(\"descriptor\")\n  return Truth()\nclass Flag: __isabstractmethod__=D()\nprint(property(Flag()).__isabstractmethod__)\n",
+      "stdout": "descriptor\ntruth\nTrue\n"
+    },
+    {
+      "id": "truth-error-AttributeError",
+      "stage": "O39",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise AttributeError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nproperty(Flag()).__isabstractmethod__\n",
+      "stdout": "truth\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__bool__",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "truth-error-ValueError",
+      "stage": "O39",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise ValueError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nproperty(Flag()).__isabstractmethod__\n",
+      "stdout": "truth\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__bool__",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "truth-error-TypeError",
+      "stage": "O39",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  return 7\nclass Flag: __isabstractmethod__=Truth()\nproperty(Flag()).__isabstractmethod__\n",
+      "stdout": "truth\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "truth-length",
+      "stage": "O39",
+      "source": "class Truth:\n def __len__(self):\n  print(\"length\")\n  return 2\nclass Flag: __isabstractmethod__=Truth()\nprint(property(Flag()).__isabstractmethod__)\n",
+      "stdout": "length\nTrue\n"
+    },
+    {
+      "id": "callback-mutates-next-flag",
+      "stage": "O39",
+      "source": "class First:\n @property\n def __isabstractmethod__(self):\n  print(\"first\")\n  second.__isabstractmethod__=True\n  return False\nclass Second: __isabstractmethod__=False\nsecond=Second()\nprint(property(First(),second).__isabstractmethod__)\n",
+      "stdout": "first\nTrue\n"
+    },
+    {
+      "id": "repeated-fresh-lookup",
+      "stage": "O39",
+      "source": "class Flag: __isabstractmethod__=False\nf=Flag()\np=property(f)\nprint(p.__isabstractmethod__)\nf.__isabstractmethod__=[7]\nprint(p.__isabstractmethod__)\ndel f.__isabstractmethod__\nprint(p.__isabstractmethod__)\n",
+      "stdout": "False\nTrue\nFalse\n"
+    },
+    {
+      "id": "nested-property",
+      "stage": "O39",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=True\nprint(property(property(read)).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "copy-tracks-accessors",
+      "stage": "O39",
+      "source": "def read(obj): return obj\ndef write(obj,value): pass\nread.__isabstractmethod__=False\nwrite.__isabstractmethod__=True\np=property(read)\nq=p.setter(write)\nprint(p.__isabstractmethod__,q.__isabstractmethod__)\nwrite.__isabstractmethod__=False\nprint(q.__isabstractmethod__)\n",
+      "stdout": "False True\nFalse\n"
+    },
+    {
+      "id": "metaclass-flag",
+      "stage": "O39",
+      "source": "class M(type):\n @property\n def __isabstractmethod__(cls):\n  print(\"meta\")\n  return True\nclass C(metaclass=M): pass\nprint(property(C).__isabstractmethod__)\n",
+      "stdout": "meta\nTrue\n"
+    },
+    {
+      "id": "property-default-native-read",
+      "stage": "O39",
+      "source": "class Flag: __isabstractmethod__=True\np=property(Flag())\nprint(object.__getattribute__(p,\"__isabstractmethod__\"),getattr(p,\"__isabstractmethod__\"),hasattr(p,\"__isabstractmethod__\"))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "property-readonly-45",
+      "stage": "O39",
+      "source": "p=property()\nprint(p.__isabstractmethod__)\np.__isabstractmethod__=True\n",
+      "stdout": "False\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "property-readonly-46",
+      "stage": "O39",
+      "source": "p=property()\nprint(p.__isabstractmethod__)\ndel p.__isabstractmethod__\n",
+      "stdout": "False\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "property-readonly-47",
+      "stage": "O39",
+      "source": "p=property()\nprint(p.__isabstractmethod__)\nsetattr(p,\"__isabstractmethod__\",True)\n",
+      "stdout": "False\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "property-readonly-48",
+      "stage": "O39",
+      "source": "p=property()\nprint(p.__isabstractmethod__)\ndelattr(p,\"__isabstractmethod__\")\n",
+      "stdout": "False\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "static-function-49",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=None\nw=staticmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "static-function-50",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=False\nw=staticmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "static-function-51",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=True\nw=staticmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "static-function-52",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=[]\nw=staticmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "static-function-53",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=[7]\nw=staticmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "static-missing-function",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nprint(staticmethod(read).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "static-primitive",
+      "stage": "O40",
+      "source": "print(staticmethod(None).__isabstractmethod__,staticmethod(7).__isabstractmethod__)\n",
+      "stdout": "False False\n"
+    },
+    {
+      "id": "static-live-function",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nw=staticmethod(read)\nprint(w.__isabstractmethod__)\nread.__isabstractmethod__=True\nprint(w.__isabstractmethod__)\ndel read.__isabstractmethod__\nprint(w.__isabstractmethod__)\n",
+      "stdout": "False\nTrue\nFalse\n"
+    },
+    {
+      "id": "static-wrapped-property",
+      "stage": "O40",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=True\np=property(read)\nprint(staticmethod(p).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "static-nested-wrapper",
+      "stage": "O40",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=True\nprint(staticmethod(staticmethod(read)).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "static-bound-method",
+      "stage": "O40",
+      "source": "class C:\n def read(self): return 7\nC.read.__isabstractmethod__=True\nprint(staticmethod(C().read).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "static-getattr-fallback",
+      "stage": "O40",
+      "source": "class Flag:\n def __getattr__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"fallback\")\n   return [7]\n  raise AttributeError(name)\nprint(staticmethod(Flag()).__isabstractmethod__)\n",
+      "stdout": "fallback\nTrue\n"
+    },
+    {
+      "id": "static-lookup-AttributeError",
+      "stage": "O40",
+      "source": "class Flag:\n @property\n def __isabstractmethod__(self):\n  print(\"lookup\")\n  raise AttributeError(\"flag\")\nstaticmethod(Flag()).__isabstractmethod__\n",
+      "stdout": "lookup\n"
+    },
+    {
+      "id": "static-lookup-ValueError",
+      "stage": "O40",
+      "source": "class Flag:\n @property\n def __isabstractmethod__(self):\n  print(\"lookup\")\n  raise ValueError(\"flag\")\nstaticmethod(Flag()).__isabstractmethod__\n",
+      "stdout": "lookup\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__isabstractmethod__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "static-truth-attribute-error",
+      "stage": "O40",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise AttributeError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nstaticmethod(Flag()).__isabstractmethod__\n",
+      "stdout": "truth\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__bool__",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "static-readonly-write",
+      "stage": "O40",
+      "source": "w=staticmethod(None)\nprint(w.__isabstractmethod__)\nw.__isabstractmethod__=True\n",
+      "stdout": "False\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "static-readonly-delete",
+      "stage": "O40",
+      "source": "w=staticmethod(None)\nprint(w.__isabstractmethod__)\ndel w.__isabstractmethod__\n",
+      "stdout": "False\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "class-function-66",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=None\nw=classmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "class-function-67",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=False\nw=classmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "class-function-68",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=True\nw=classmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-function-69",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=[]\nw=classmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "class-function-70",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nread.__isabstractmethod__=[7]\nw=classmethod(read)\nprint(w.__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-missing-function",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nprint(classmethod(read).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "class-primitive",
+      "stage": "O40",
+      "source": "print(classmethod(None).__isabstractmethod__,classmethod(7).__isabstractmethod__)\n",
+      "stdout": "False False\n"
+    },
+    {
+      "id": "class-live-function",
+      "stage": "O40",
+      "source": "def read(obj=None): return obj\nw=classmethod(read)\nprint(w.__isabstractmethod__)\nread.__isabstractmethod__=True\nprint(w.__isabstractmethod__)\ndel read.__isabstractmethod__\nprint(w.__isabstractmethod__)\n",
+      "stdout": "False\nTrue\nFalse\n"
+    },
+    {
+      "id": "class-wrapped-property",
+      "stage": "O40",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=True\np=property(read)\nprint(classmethod(p).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-nested-wrapper",
+      "stage": "O40",
+      "source": "def read(obj): return obj\nread.__isabstractmethod__=True\nprint(classmethod(staticmethod(read)).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-bound-method",
+      "stage": "O40",
+      "source": "class C:\n def read(self): return 7\nC.read.__isabstractmethod__=True\nprint(classmethod(C().read).__isabstractmethod__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-getattr-fallback",
+      "stage": "O40",
+      "source": "class Flag:\n def __getattr__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"fallback\")\n   return [7]\n  raise AttributeError(name)\nprint(classmethod(Flag()).__isabstractmethod__)\n",
+      "stdout": "fallback\nTrue\n"
+    },
+    {
+      "id": "class-lookup-AttributeError",
+      "stage": "O40",
+      "source": "class Flag:\n @property\n def __isabstractmethod__(self):\n  print(\"lookup\")\n  raise AttributeError(\"flag\")\nclassmethod(Flag()).__isabstractmethod__\n",
+      "stdout": "lookup\n"
+    },
+    {
+      "id": "class-lookup-ValueError",
+      "stage": "O40",
+      "source": "class Flag:\n @property\n def __isabstractmethod__(self):\n  print(\"lookup\")\n  raise ValueError(\"flag\")\nclassmethod(Flag()).__isabstractmethod__\n",
+      "stdout": "lookup\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__isabstractmethod__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "class-truth-attribute-error",
+      "stage": "O40",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise AttributeError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nclassmethod(Flag()).__isabstractmethod__\n",
+      "stdout": "truth\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__bool__",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "class-readonly-write",
+      "stage": "O40",
+      "source": "w=classmethod(None)\nprint(w.__isabstractmethod__)\nw.__isabstractmethod__=True\n",
+      "stdout": "False\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "class-readonly-delete",
+      "stage": "O40",
+      "source": "w=classmethod(None)\nprint(w.__isabstractmethod__)\ndel w.__isabstractmethod__\n",
+      "stdout": "False\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "function-other-metadata",
+      "stage": "Future",
+      "source": "def f(): pass\nf.other=7\nprint(f.other)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "property-documentation",
+      "stage": "Future",
+      "source": "print(property(doc=\"field\").__doc__)\n",
+      "stdout": "field\n"
+    },
+    {
+      "id": "property-subclass-layout",
+      "stage": "Future",
+      "source": "class P(property): pass\nprint(P().__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "wrapper-subclass-layout",
+      "stage": "Future",
+      "source": "class S(staticmethod): pass\nprint(S(None).__isabstractmethod__)\n",
+      "stdout": "False\n"
+    }
+  ]
+}
