@@ -52,7 +52,7 @@ method cases and two explicit future refusals. Dedicated lifecycle tests retain
 detached native methods, accessor closures and arbitrary class-method owners
 through collection, parked execution, cancellation and idempotent close.
 Resource tests cover accessor recursion and real instruction, work and allocation
-failures. Final cross-target and offline evidence follows in the acceptance slice.
+failures.
 
 Class-method binding creates an ordinary Python method even when its wrapped
 value is a native callable. Its `__func__`, type and callable metadata retain
@@ -60,3 +60,30 @@ that distinction from native method-wrapper values. Equal Python methods still
 share hashes; a Python method and native method-wrapper with the same callable
 and receiver remain distinct dictionary keys. Native subclass-notification
 defaults retain their existing builtin method identities.
+
+## Accepted evidence
+
+All 86 pinned cases pass Node and Chromium draining, instruction-boundary and
+parked execution: 516 observations and 516 measured zero logical teardown
+records. Each source report verifies 58 runtime/driver hashes and the corpus
+digest. All 160 compatibility probes pass on each target; these finite
+observations do not measure a percentage of Python coverage.
+
+All 1,598 Node tests and the 60-test Python suite pass, with one explicit optional
+runtime fixture skip locally. The eight composed resource observations remain
+unchanged. Archive allowlists and four isolated default/compiled wheel/source
+installations pass.
+
+An isolated built-wheel installation passes offline acceptance with 1,221 program
+comparisons, 75 acceptance groups and 155 Stop/Restart cycles. Fresh descriptor
+source executes after offline reload; native getter/setter/deleter callbacks
+stop and restart. A waiting update to core-source refuses the composed example
+before its class effects.
+
+The [descriptor console](../examples/interpreter_native_descriptors.py) and its
+[source/payload record](measurements/2026-10-28-native-descriptors.json) verify all
+38 files and 37 receipt members at 665,505 bytes, including an identical rebuild.
+The record checks all eight source/compatibility reports against 464 current
+input hashes and the offline script/engine identities. This is finite semantic
+and payload evidence. Broader object/namespace work and native async/host
+adapters remain open under #123/#33 and #34.

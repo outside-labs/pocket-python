@@ -299,8 +299,8 @@
     {
       "id": "descriptors-decorators",
       "status": "partial",
-      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots.",
-      "gaps": "Further property/builtin-descriptor reflection and live namespaces retain separate contracts.",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers.",
+      "gaps": "Further property documentation/name/dictionary reflection, native descriptor rebinding APIs, builtin layouts and live namespaces retain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -315,7 +315,17 @@
         "nested-descriptor-set-native-default-and-builtins-ignore-result",
         "nested-descriptor-name-property",
         "nested-descriptor-name-binding-AttributeError",
-        "nested-descriptor-name-snapshot-keeps-removed-entries"
+        "nested-descriptor-name-snapshot-keeps-removed-entries",
+        "native-descriptor-property-get-bound",
+        "native-descriptor-property-set-unbound",
+        "native-descriptor-property-delete-bound",
+        "native-descriptor-property-metadata",
+        "native-descriptor-property-native-binding-validates-receiver",
+        "native-descriptor-staticmethod-wrapped-descriptor-not-called",
+        "native-descriptor-classmethod-inference-bypasses-advertised-class",
+        "native-descriptor-classmethod-explicit-owner-identity",
+        "native-descriptor-classmethod-native-callable-metadata",
+        "native-descriptor-classmethod-native-descriptor-equality"
       ],
       "evidence": [
         "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
@@ -326,7 +336,17 @@
         "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result",
         "tests/fixtures/interpreter/nested-descriptors.json:name-property",
         "tests/fixtures/interpreter/nested-descriptors.json:name-binding-AttributeError",
-        "tests/fixtures/interpreter/nested-descriptors.json:name-snapshot-keeps-removed-entries"
+        "tests/fixtures/interpreter/nested-descriptors.json:name-snapshot-keeps-removed-entries",
+        "tests/fixtures/interpreter/native-descriptors.json:property-get-bound",
+        "tests/fixtures/interpreter/native-descriptors.json:property-set-unbound",
+        "tests/fixtures/interpreter/native-descriptors.json:property-delete-bound",
+        "tests/fixtures/interpreter/native-descriptors.json:property-metadata",
+        "tests/fixtures/interpreter/native-descriptors.json:property-native-binding-validates-receiver",
+        "tests/fixtures/interpreter/native-descriptors.json:staticmethod-wrapped-descriptor-not-called",
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-inference-bypasses-advertised-class",
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-explicit-owner-identity",
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-native-callable-metadata",
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-native-descriptor-equality"
       ]
     },
     {
@@ -1106,8 +1126,8 @@
     {
       "id": "classmethod",
       "status": "partial",
-      "scope": "classmethod(callable), classes-source/1 and accessed-owner binding.",
-      "gaps": "Unrestricted wrapper introspection.",
+      "scope": "classmethod(callable), classes-source/1 and accessed-owner binding. Explicit bound/unbound __get__, actual-type/explicit-owner binding and finite native wrapper metadata/receiver validation are adopted. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers.",
+      "gaps": "Further wrapper documentation/name/dictionary reflection and native descriptor rebinding APIs.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1117,9 +1137,18 @@
         "INT-OBJECT-01"
       ],
       "probes": [
-        "builtin-classmethod"
+        "builtin-classmethod",
+        "native-descriptor-classmethod-inference-bypasses-advertised-class",
+        "native-descriptor-classmethod-explicit-owner-identity",
+        "native-descriptor-classmethod-native-callable-metadata",
+        "native-descriptor-classmethod-native-descriptor-equality"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-inference-bypasses-advertised-class",
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-explicit-owner-identity",
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-native-callable-metadata",
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-native-descriptor-equality"
+      ]
     },
     {
       "id": "compile",
@@ -1904,8 +1933,8 @@
     {
       "id": "property",
       "status": "partial",
-      "scope": "property(fget=None,fset=None,fdel=None,doc=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1.",
-      "gaps": "General property reflection and arbitrary doc behavior.",
+      "scope": "property(fget=None,fset=None,fdel=None,doc=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted.",
+      "gaps": "Further property documentation/name/dictionary reflection and arbitrary doc behavior.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1915,12 +1944,22 @@
         "INT-OBJECT-01"
       ],
       "probes": [
-        "builtin-property"
+        "builtin-property",
+        "native-descriptor-property-get-bound",
+        "native-descriptor-property-set-unbound",
+        "native-descriptor-property-delete-bound",
+        "native-descriptor-property-metadata",
+        "native-descriptor-property-native-binding-validates-receiver"
       ],
       "evidence": [
         "tests/fixtures/interpreter/nested-descriptors.json:set-property",
         "tests/fixtures/interpreter/nested-descriptors.json:delete-property",
-        "tests/fixtures/interpreter/nested-descriptors.json:name-property"
+        "tests/fixtures/interpreter/nested-descriptors.json:name-property",
+        "tests/fixtures/interpreter/native-descriptors.json:property-get-bound",
+        "tests/fixtures/interpreter/native-descriptors.json:property-set-unbound",
+        "tests/fixtures/interpreter/native-descriptors.json:property-delete-bound",
+        "tests/fixtures/interpreter/native-descriptors.json:property-metadata",
+        "tests/fixtures/interpreter/native-descriptors.json:property-native-binding-validates-receiver"
       ]
     },
     {
@@ -2083,8 +2122,8 @@
     {
       "id": "staticmethod",
       "status": "partial",
-      "scope": "staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1.",
-      "gaps": "Unrestricted wrapper introspection.",
+      "scope": "staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1. Explicit bound/unbound __get__, actual-type/explicit-owner binding and finite native wrapper metadata/receiver validation are adopted.",
+      "gaps": "Further wrapper documentation/name/dictionary reflection and native descriptor rebinding APIs.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2094,9 +2133,12 @@
         "INT-OBJECT-01"
       ],
       "probes": [
-        "builtin-staticmethod"
+        "builtin-staticmethod",
+        "native-descriptor-staticmethod-wrapped-descriptor-not-called"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/native-descriptors.json:staticmethod-wrapped-descriptor-not-called"
+      ]
     },
     {
       "id": "str",
