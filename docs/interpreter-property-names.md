@@ -58,3 +58,9 @@ refusals. Node/Chromium drain, instruction-boundary and parked execution pass al
 408 observations. Eleven representative probes extend the compatibility
 inventory to 200 cases per target. The [property console](../examples/interpreter_property_names.py)
 composes assigned names, copies, detached native methods and lazy generators.
+All 408 source observations report zero logical ownership after teardown.
+Installed-wheel offline acceptance passes 1,411 program comparisons, 88 groups
+and 167 Stop/Restart cycles, including reload and a waiting core-profile update.
+The [payload record](measurements/2026-10-28-property-names.json) verifies all 38
+files at 678,706 bytes. The full 1,946-test Node unit suite and ten affected
+Python tests pass. These are finite semantic/source/payload observations.

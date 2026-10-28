@@ -20,7 +20,7 @@ Native operations have canonical unbound identities of type wrapper_descriptor
 and fresh bound values of type method-wrapper. Both expose `__name__`,
 `__qualname__` and `__class__`; bound values expose their original `__self__`
 and have no `__func__`. Properties and static/class method wrappers expose
-their actual `__class__`. Further documentation/name/dictionary reflection,
+their actual `__class__`. Further documentation/dictionary reflection,
 native method rebinding APIs and builtin subclass layouts retain separate
 contracts. Existing property accessor-copy APIs and ordinary implicit binding
 retain their behavior.
