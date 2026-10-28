@@ -300,6 +300,8 @@ export class ClassRuntime {
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
   bindAttribute(value, receiver, owner) {
+    if (receiver !== null && value instanceof BuiltinValue && NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) && !(receiver instanceof PropertyValue))
+      this.fail("TypeError", "Native property descriptor requires a property receiver.");
     if (value instanceof SuperValue && value.self === null && receiver !== null) {
       if (this.needsAdvertised(receiver) && !(receiver instanceof ClassValue && this.subclass(receiver, value.thisclass)) && !this.subclass(this.typeOf(receiver), value.thisclass))
         return {kind: "call", callable: this.builtin("super"), args: [value.thisclass, receiver]};

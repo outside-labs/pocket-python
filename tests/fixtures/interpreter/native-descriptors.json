@@ -279,6 +279,12 @@
       "stdout": "wrong receiver\nTrue\n"
     },
     {
+      "id": "property-native-binding-validates-receiver",
+      "stage": "O29",
+      "source": "class A: read=property.__get__\ntry:\n m=A().read\n print(\"never\")\nexcept TypeError: print(\"wrong receiver\")\n",
+      "stdout": "wrong receiver\n"
+    },
+    {
       "id": "staticmethod-owner-a",
       "stage": "O30",
       "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a)\nprint(r is f)\n",
