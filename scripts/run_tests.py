@@ -25,7 +25,7 @@ def shards(selected, count):
     """Greedy longest-first balancing, retaining manifest order within a shard."""
     if count < 1:
         raise ValueError('Shard count must be positive')
-    if count > 1 and any(check.suite in {'python', 'prepare-browser'} for check in selected):
+    if count > 1 and any(check.suite in {'python', 'prepare-browser', 'smoke'} for check in selected):
         raise ValueError('Preparation and packaging checks must run in order without sharding')
     assignments, totals = [[] for _ in range(count)], [0] * count
     for index, check in sorted(enumerate(selected), key=lambda item: (-item[1].seconds, item[0])):
