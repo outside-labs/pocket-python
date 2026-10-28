@@ -91,3 +91,40 @@ test('metaclass read and binding phases share recursion, work, instruction and r
     assert.ok(result.stdout.includes('entered\n'), phase+' '+JSON.stringify(options)+' '+JSON.stringify(result.error)); closed(result.closed);
   }
 });
+
+test('metaclass mutation binding, bodies and data descriptors retain values across collection and interruption', async () => {
+  for (const [source, markers] of [
+    ['def make():\n class D:\n  def __get__(self,obj,owner):\n   print("bind")\n   def write(name,value):\n    print("write")\n    type.__setattr__(obj,name,value)\n   return write\n class M(type): __setattr__=D()\n return M("A",(),{})\na=make()\na.x=[7]\nprint(a.x[0])\n', ['bind','write']],
+    ['def make():\n class D:\n  def __get__(self,obj,owner):\n   print("bind")\n   def remove(name):\n    print("delete")\n    type.__delattr__(obj,name)\n   return remove\n class M(type): __delattr__=D()\n return M("A",(),{"x":[7]})\na=make()\nsaved=a.x\ndel a.x\nprint(saved[0])\n', ['bind','delete']],
+    ['class M(type):\n @property\n def x(cls): return 9\n @x.setter\n def x(cls,value):\n  print("write")\n  cls.saved=value\nclass A(metaclass=M): pass\nA.x=[7]\nprint(A.saved[0])\n', ['write']],
+    ['class M(type):\n @property\n def x(cls): return 9\n @x.deleter\n def x(cls):\n  print("delete")\n  cls.saved=[7]\nclass A(metaclass=M): pass\ndel A.x\nprint(A.saved[0])\n', ['delete']],
+    ['class M(type):\n def writer(cls): return super().__setattr__\ndef make():\n class A(metaclass=M): pass\n return A.writer()\nf=make()\nprint("held")\nf("x",[7])\nprint(f.__self__.x[0])\n', ['held']],
+  ]) await lifecycle(source, markers.join('\n')+'\n7\n', markers.map((_, i) => markers.slice(0, i+1).join('\n')+'\n'));
+});
+
+test('metaclass mutation hooks and bindings preserve frames and actual activation limits', async () => {
+  for (const slot of ['__setattr__','__delattr__']) {
+    const setting = slot === '__setattr__', signature = setting ? 'cls,name,value' : 'cls,name';
+    const expression = setting ? 'A.x=[7]' : 'del A.x';
+    for (const phase of ['hook','bind']) {
+      const prefix = body => phase === 'bind' ? 'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  '+body+'\nclass M(type): '+slot+'=D()\nclass A(metaclass=M): pass\n'+expression+'\n' :
+        'class M(type):\n def '+slot+'('+signature+'):\n  print("entered")\n  '+body+'\nclass A(metaclass=M): pass\n'+expression+'\n';
+      const failure = await run(prefix('raise ValueError("original")'));
+      assert.equal(failure.error?.type, 'ValueError');
+      assert.deepEqual(failure.error.traceback.map(frame => [frame.function, frame.location.span[0]]),
+        phase === 'bind' ? [['<module>',7],['__get__',4]] : [['<module>',6],[slot,4]]);
+      closed(failure.closed);
+      for (const [body, options, limits, code] of [
+        [setting ? (phase === 'bind' ? 'obj.x=[7]' : 'cls.x=value') : (phase === 'bind' ? 'del obj.x' : 'del cls.x'), {maxDepth: 12}, undefined, 'PYTHON'],
+        ['while True: pass', {maxSteps: 250}, undefined, 'BUDGET'],
+        ['while True: pass', {maxSteps: 100000, maxWork: 30000}, undefined, 'BUDGET'],
+        ['held=[]\n  while True: held.append([7])', {maxSteps: 100000}, {maxBytes: 26000}, 'OOM'],
+      ]) {
+        const result = await run(prefix(body), options, limits);
+        assert.equal(result.error?.code, code, phase+' '+JSON.stringify(result));
+        if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+        assert.ok(result.stdout.includes('entered\n')); closed(result.closed);
+      }
+    }
+  }
+});
