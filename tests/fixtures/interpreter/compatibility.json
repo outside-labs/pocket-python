@@ -1856,6 +1856,45 @@
         "stdout": "",
         "error_type": "OverflowError"
       }
+    },
+    {
+      "id": "subclass-keywords",
+      "source": "class A:\n def __init_subclass__(cls,*,x): cls.saved=x\nclass B(A,x=[7]): pass\nprint(B.saved[0],B.__init_subclass__.__self__ is B)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "subclass-notification-order",
+      "source": "class D:\n def __set_name__(self,owner,name): owner.saved=7\nclass A:\n def __init_subclass__(cls): print(cls.saved)\nclass B(A): field=D()\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-subclass-method",
+      "source": "class A: pass\nhook=A.__init_subclass__\nprint(hook.__self__ is A,hook() is None,type(hook).__name__,hasattr(hook,\"__func__\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True builtin_function_or_method False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True builtin_function_or_method False\n",
+        "error_type": null
+      }
     }
   ]
 }

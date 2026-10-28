@@ -30,6 +30,7 @@ from examples.interpreter_type_checks import SOURCE as TYPE_CHECK_SOURCE
 from examples.interpreter_ordering import SOURCE as ORDERING_SOURCE
 from examples.interpreter_reflection import SOURCE as REFLECTION_SOURCE
 from examples.interpreter_repetition import SOURCE as REPETITION_SOURCE
+from examples.interpreter_subclass_initialization import SOURCE as SUBCLASS_SOURCE
 
 
 def smoke(channel=None):
@@ -173,7 +174,8 @@ def smoke(channel=None):
                     object_hashing = json.loads((ROOT / 'tests/fixtures/interpreter/object-hashing.json').read_bytes())
                     reflection = json.loads((ROOT / 'tests/fixtures/interpreter/reflection.json').read_bytes())
                     repetition = json.loads((ROOT / 'tests/fixtures/interpreter/repetition.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition]:
+                    subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/subclass-initialization.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -460,7 +462,17 @@ def smoke(channel=None):
                             refused(case['source'], case['error_type'] + ':')
                     checks.append('sequence-repetition-aliases-unicode-mutation-and-generators-compose-offline')
                     checks.append('repetition-index-errors-overflow-and-deferred-forms-retain-offline-boundaries')
+                    run(SUBCLASS_SOURCE, 'registered 1 True\nschema note 2 title True\ndynamic 2 True draft dynamic\nnames Note Draft\n')
+                    for case in subclasses['cases']:
+                        if case['stage'] not in subclasses['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                    checks.append('class-registration-notifications-keywords-metaclasses-and-generators-compose-offline')
+                    checks.append('subclass-binding-errors-native-methods-and-deferred-class-forms-retain-offline-boundaries')
                     busy = [
+                        'class A:\n def __init_subclass__(cls,*,x):\n  print("entered")\n  while True: pass\nclass B(A,x=[7]): pass\n',
+                        'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass A: __init_subclass__=D()\nclass B(A,x=[7]): pass\n',
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n @property\n def __call__(self):\n  while True: pass\nSpin()()\n',
                         'class Spin:\n def __len__(self):\n  while True: pass\nlen(Spin())\n',
@@ -683,6 +695,9 @@ def smoke(channel=None):
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
                     run('a=[7]\nb=a*2\na[0]=9\nprint(len(b),b[0],len("😀"*3),len(2*(1,)))\n', '2 7 3 2\n')
                     checks.append('primitive-repetition-retained-after-core-profile-update')
+                    refused(SUBCLASS_SOURCE, 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    checks.append('class-to-core-update-refuses-subclass-keywords-before-effects')
                     run('print(len("okay"),bool([]))\n', '4 False\n')
                     run('print(repr("A😀"),len(str()))\n', "'A😀' 0\n")
                     run('print(7)\n', '7\n')

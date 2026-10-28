@@ -17,7 +17,7 @@ The [O21/O22 comprehension contract](interpreter-comprehension-reflection.md) ad
 
 ## Evidence and interpretation
 
-The 132 trusted probes include representative source programs and all 71 names
+The 138 trusted probes include representative source programs and all 71 names
 in the Python 3.14 built-in-functions index. Builtin exceptions and constants are
 separate language/value surfaces. A positive callable(NAME) result proves name
 availability only, not every signature or value family. Negative availability
@@ -37,9 +37,15 @@ python runtime/check_compatibility.py --target browser --report build/compatibil
 Each report hashes its inventory, corpus and implementation inputs, records the
 actual source output/diagnostic/phase and checks logical teardown. A passing
 observation means the recorded behavior was reproduced. Only supported positive
-cases earn support credit. The current observations contain 89 supported, 35
+cases earn support credit. The current observations contain 99 supported, 35
 deferred and four host-restricted results, with no recorded known divergence.
 These are representative observations, not a percentage of Python coverage.
+
+The [O23/O24 subclass contract](interpreter-subclass-initialization.md) adds
+inherited initialization after descriptor notifications, cooperative C3 binding,
+native bound method identities and explicit class keyword propagation through
+type/metaclass construction. Expanded class bases/keyword mappings and custom
+namespace preparation retain their separate boundaries.
 
 The function-binding and ordinary-syntax contracts adopt their finite signatures
 and expression/target forms. Type aliases, annotations and broader formatting

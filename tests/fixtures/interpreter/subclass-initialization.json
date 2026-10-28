@@ -233,6 +233,12 @@
       "stdout": "True True True\n7\n"
     },
     {
+      "id": "arbitrary-classmethod-target-reflection",
+      "stage": "O23",
+      "source": "for value in (None,[],object(),str):\n class A: method=classmethod(value)\n bound=A.method\n print(bound.__self__ is A,bound.__func__ is value)\n",
+      "stdout": "True True\nTrue True\nTrue True\nTrue True\n"
+    },
+    {
       "id": "keyword-consumption",
       "stage": "O24",
       "source": "class A:\n def __init_subclass__(cls,*,tag): cls.tag=tag\nclass B(A,tag=[7]): pass\nprint(B.tag[0])\n",

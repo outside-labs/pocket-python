@@ -162,6 +162,13 @@ Model tensor execution belongs in an optimized adapter.
 
 ## Compatibility and delivery gates
 
+The finite [O23/O24 class-construction slice](interpreter-subclass-initialization.md)
+extends #123 with inherited subclass initialization and explicit named class
+keywords. Notification order, C3/descriptor binding, native method identity and
+metaclass consumption use owned execution; live namespaces, builtin layouts,
+class preparation/mappings and dynamic source remain later work. Native
+coroutine/await and awaited host-adapter acceptance remain open under #34.
+
 Language semantics, selected stdlib/package use and host APIs have separate
 matrices. CPython's [native extension interface](https://docs.python.org/3.14/extending/extending.html)
 has its own runtime/ABI requirements; broad Python source support or a future

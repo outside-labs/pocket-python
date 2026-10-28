@@ -238,7 +238,7 @@ export class ClassRuntime {
     if (receiver instanceof BoundMethodValue && name === "__func__" && receiver.callable instanceof BuiltinValue &&
         (NATIVE_CHECK_METHODS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name)))
       this.fail("AttributeError", "Native methods have no __func__ attribute.");
-    if (receiver instanceof BoundMethodValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
+    if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);

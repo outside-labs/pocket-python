@@ -183,6 +183,7 @@ jobs:
       - run: node --test runtime/object-hashing.test.mjs
       - run: node --test runtime/reflection.test.mjs
       - run: node --test runtime/repetition.test.mjs
+      - run: node --test runtime/subclass-initialization.test.mjs
       - run: node --test runtime/numeric.test.mjs
       - run: node --test runtime/sequences.test.mjs
       - run: node --test runtime/numeric-callbacks.test.mjs

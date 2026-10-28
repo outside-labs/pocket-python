@@ -241,8 +241,8 @@
     {
       "id": "class-construction",
       "status": "partial",
-      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces.",
-      "gaps": "Builtin instance layouts, custom namespace preparation, further metaclass special slots, callable factories and additional class keywords remain separate.",
+      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction.",
+      "gaps": "Builtin instance layouts, custom namespace preparation, further metaclass special slots, callable factories and expanded class bases/keyword mappings remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -254,13 +254,20 @@
       "probes": [
         "class-protocols",
         "builtin-subclass",
-        "metaclass"
+        "metaclass",
+        "subclass-keywords",
+        "subclass-notification-order",
+        "native-subclass-method"
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:new-subclass-init",
         "tests/fixtures/interpreter/construction.json:super-diamond",
         "tests/fixtures/interpreter/construction.json:metaclass-new-init",
-        "tests/fixtures/interpreter/construction.json:dynamic-winning-metaclass"
+        "tests/fixtures/interpreter/construction.json:dynamic-winning-metaclass",
+        "tests/fixtures/interpreter/subclass-initialization.json:cooperative-diamond",
+        "tests/fixtures/interpreter/subclass-initialization.json:cell-and-notification-order",
+        "tests/fixtures/interpreter/subclass-initialization.json:metaclass-keyword-forwarding",
+        "tests/fixtures/interpreter/subclass-initialization.json:descriptor-keywords"
       ]
     },
     {
