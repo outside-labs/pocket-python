@@ -52,3 +52,9 @@ notifications. Its new name edge requires the documented
 [`execution-accounting/2` revision](interpreter-memory.md): four composed cases
 retain a 104-byte automatic name; all instruction counts and the other four
 observations remain unchanged. Original resource measurements are retained.
+
+The complete 68-case matrix contains 59 adopted comparisons and nine explicit
+refusals. Node/Chromium drain, instruction-boundary and parked execution pass all
+408 observations. Eleven representative probes extend the compatibility
+inventory to 200 cases per target. The [property console](../examples/interpreter_property_names.py)
+composes assigned names, copies, detached native methods and lazy generators.

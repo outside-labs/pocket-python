@@ -302,6 +302,22 @@ coroutine/await, async protocols, awaited host adapters and durable view/save
 acceptance remain under #34. No dependency, host grant, publication or deployment
 is included.
 
+## Property name checkpoint
+
+[O37/O38](interpreter-property-names.md) extend #123 and #33 with arbitrary
+property name values, lazy owned getter-name lookup, independent accessor
+copies and bound/unbound/rebound native name notification. Automatic class
+notification preserves namespace snapshot order, aliases, inheritance and
+subclass/decorator timing. Callback-bearing missing-accessor diagnostics remain
+explicitly deferred. The documented execution-accounting/2 revision retains
+original resource observations alongside the newly owned automatic names.
+
+Property documentation, live namespaces, default directories, builtin layouts,
+broader metaclass protocols and dynamic source remain finite follow-ups. Native
+coroutine/await, async protocols, awaited host adapters and durable view/save
+acceptance remain under #34. No dependency, host grant, release, publication or
+deployment is included.
+
 ## Explicit native descriptor rebinding checkpoint
 
 [O33/O34](interpreter-native-rebinding.md) extend #123 and #33 with bound/unbound

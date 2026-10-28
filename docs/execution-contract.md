@@ -104,6 +104,13 @@ OOM/cancellation and zero bytes/objects/roots/frames/external leases at close.
 CI. Existing class, descriptor, call, len/truth, core and refusal matrices remain
 required.
 
+O38 introduces the explicit `execution-accounting/2` extension for automatic
+property names. The fixture keeps the initial counters as `previous_cases` and
+the adopted counters as `cases`. Four property-bearing cases retain a new
+104-byte name edge, with ordinary mutation preflight/work charges; instructions,
+allocation counts and the other four observations remain unchanged. The
+[memory contract](interpreter-memory.md) specifies the slot/string costs.
+
 Deduplication, different operation metadata charges, independent parked graph
 owners, changed collection boundaries or import scope/depth rules require an
 explicit resource-contract revision. Record old/new counters, threshold behavior

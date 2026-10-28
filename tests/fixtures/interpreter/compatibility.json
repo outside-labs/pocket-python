@@ -2559,6 +2559,149 @@
         "stdout": "",
         "error_type": "UnsupportedOperationError"
       }
+    },
+    {
+      "id": "property-names-assigned-none",
+      "source": "def read(obj): return obj\np=property(read)\nname=None\np.__name__=name\nprint(p.__name__ is name)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-deletion-restores-getter",
+      "source": "def read(obj): return obj\np=property(read)\np.__name__=\"changed\"\ndel p.__name__\ndel p.__name__\nprint(p.__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "read\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "read\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-copy-getter-explicit",
+      "source": "def read(obj): return obj\np=property(read)\nname=[9]\np.__name__=name\nq=p.getter(read)\np.__name__=\"changed\"\nprint(q is p,q.__name__ is name)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-lazy-property-getter-name",
+      "source": "class Getter:\n @property\n def __name__(self):\n  print(\"name\")\n  return \"dynamic\"\np=property(Getter())\nprint(\"made\")\nprint(p.__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "made\nname\ndynamic\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "made\nname\ndynamic\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-lazy-error-ValueError",
+      "source": "class Getter:\n @property\n def __name__(self):\n  print(\"entered\")\n  raise ValueError(\"original\")\np=property(Getter())\nprint(p.__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "entered\n",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "entered\n",
+        "error_type": "ValueError"
+      }
+    },
+    {
+      "id": "property-names-owner-and-name-bypass-hooks",
+      "source": "class Trap:\n def __getattribute__(self,name):\n  print(\"never\")\n  raise ValueError(\"read\")\n def __bool__(self):\n  print(\"never\")\n  raise ValueError(\"truth\")\np=property()\nname=Trap()\np.__set_name__(Trap(),name)\nprint(p.__name__ is name)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-notification-native-metadata",
+      "source": "p=property()\nd=property.__set_name__\nm=p.__set_name__\nprint(type(d).__name__,d.__name__,d.__qualname__,d.__objclass__ is property)\nprint(type(m).__name__,m.__name__,m.__qualname__,m.__self__ is p,hasattr(m,\"__func__\"),hasattr(m,\"__objclass__\"))\nprint(m==p.__set_name__,hash(m)==hash(p.__set_name__),d is property.__set_name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method_descriptor __set_name__ property.__set_name__ True\nbuiltin_function_or_method __set_name__ property.__set_name__ True False False\nTrue True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method_descriptor __set_name__ property.__set_name__ True\nbuiltin_function_or_method __set_name__ property.__set_name__ True False False\nTrue True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-notification-rebound-native",
+      "source": "p=property()\nm=property.__set_name__.__get__(p)\nprint(m(None,\"field\"),p.__name__,m==p.__set_name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "None field True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "None field True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-automatic-alias-order",
+      "source": "def read(obj): return obj\np=property(read)\nclass C:\n first=p\n second=p\nprint(p.__name__,C.first is C.second)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "second True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "second True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-automatic-notification-snapshot",
+      "source": "p=property()\nclass Mutator:\n def __set_name__(self,owner,name):\n  owner.late=p\nclass C:\n first=p\n mutate=Mutator()\n second=p\nprint(p.__name__,C.late is p)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "second True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "second True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "property-names-diagnostic-nested",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property()\np.__name__=[Name()]\np.__get__(object())\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "entered\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError"
+      }
     }
   ]
 }
