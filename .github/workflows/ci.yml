@@ -155,6 +155,7 @@ jobs:
           path: |
             build/*browser-report.json
             build/*browser-stepped-report.json
+            build/*browser-parked-report.json
             build/application-measurements/report.json
             build/application-measurements/compiler-component-report.json
             build/interpreter-measurements/report.json
@@ -333,6 +334,7 @@ jobs:
           path: |
             build/*node-report.json
             build/*node-stepped-report.json
+            build/*node-parked-report.json
             build/interpreter-node-measurements/report.json
             build/classes-reference-report.json
             build/function-binding-reference-report.json
@@ -343,6 +345,7 @@ jobs:
             build/numeric-reference-report.json
             build/private-names-reference-report.json
             build/descriptors-reference-report.json
+            build/nested-descriptors-reference-report.json
             build/special-calls-reference-report.json
             build/length-truth-reference-report.json
             build/execution-reference-report.json
