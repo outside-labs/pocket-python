@@ -191,10 +191,10 @@ export class ClassRuntime {
     return {kind: "call", callable: hook.value, args};
   }
   notification(receiver, owner, name) { return this.boundHook(receiver, "__set_name__", [owner, name]); }
-  subclassNotification(type) {
+  subclassNotification(type, required = false) {
     // Default construction retains the established allocation/work accounting.
     // The new class's own hook is excluded, just as with super(newclass, newclass).
-    if (!type.mro.slice(1).some(base => base instanceof ClassValue && !base.root && base.namespace.has("__init_subclass__"))) return null;
+    if (!required && !type.mro.slice(1).some(base => base instanceof ClassValue && !base.root && base.namespace.has("__init_subclass__"))) return null;
     const item = this.lookup(type, "__init_subclass__", true, 1);
     return this.bindAttribute(item.value, null, type);
   }

@@ -101,8 +101,8 @@ jobs:
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/reflection.json --report build/reflection-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --report build/repetition-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/subclass-initialization.json --stages O23 Future --report build/subclass-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/subclass-initialization.json --stages O23 Future --stepped --report build/subclass-stepped-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/subclass-initialization.json --report build/subclass-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/subclass-initialization.json --stepped --report build/subclass-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --stepped --report build/repetition-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --report build/repetition-core-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --stepped --report build/repetition-core-stepped-browser-report.json
@@ -241,8 +241,8 @@ jobs:
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/reflection.json --report build/reflection-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --report build/repetition-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/subclass-initialization.json --stages O23 Future --report build/subclass-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/subclass-initialization.json --stages O23 Future --stepped --report build/subclass-stepped-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/subclass-initialization.json --report build/subclass-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/subclass-initialization.json --stepped --report build/subclass-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --stepped --report build/repetition-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --report build/repetition-core-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --stepped --report build/repetition-core-stepped-node-report.json

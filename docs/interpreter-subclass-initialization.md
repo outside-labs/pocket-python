@@ -4,8 +4,8 @@ O23/O24 continue #123 against pinned CPython 3.14.7. The executable reference
 matrix is `tests/fixtures/interpreter/subclass-initialization.json`. Reference
 observations alone do not establish independent execution.
 
-O23 is implemented; O24 remains reference-only until keyword propagation is
-accepted. The O23 source matrix and owned lifecycle tests run independently.
+O23 and O24 are implemented. Their source matrix and owned lifecycle tests run
+independently in the adopted class profile.
 
 | Stage | Contract |
 | --- | --- |
@@ -47,6 +47,14 @@ owned lifecycle/resource tests, offline newly entered source, Stop/Restart in
 binding/body phases, class-to-core update boundaries and a complete reproducible
 example payload. No dependency, host grant, release, publication or deployment
 is included.
+
+The bytecode-5 instruction `class-keywords(body, base_count, keyword_names)`
+consumes the evaluated bases followed by one value per keyword name and produces
+the class result. Names are unique normalized identifiers, at most 128; bases
+retain their existing cap of 16. Verification checks class-body kind, lexical
+captures and exact stack shape and freezes the keyword-name array. A sole
+`metaclass` keyword retains the existing `class-meta` instruction. Earlier
+bytecode versions reject the new instruction.
 
 Semantic anchors: the Python 3.14 [class creation protocol](https://docs.python.org/3.14/reference/datamodel.html#customizing-class-creation)
 and pinned [type construction implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).

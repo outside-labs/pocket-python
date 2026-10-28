@@ -52,6 +52,7 @@ class Compiler {
       this.charge(value);
       if (value.kind === "Class") return {...value, bindingName: name(value.name, owner, value),
         bases: rewrite(value.bases, owner), body: rewrite(value.body, value.name),
+        ...(value.keywords ? {keywords: value.keywords.map(item => ({name: item.name, value: rewrite(item.value, owner)}))} : {}),
         ...(value.metaclass ? {metaclass: rewrite(value.metaclass, owner)} : {}),
         ...(value.decorators ? {decorators: rewrite(value.decorators, owner)} : {})};
       if (["Function", "Lambda"].includes(value.kind)) {
@@ -113,7 +114,7 @@ class Compiler {
       if (["Function", "Class", "Lambda"].includes(value.kind)) {
         (value.decorators || []).forEach(visit);
         if (value.kind !== "Lambda") binding(value.bindingName ?? value.name, value);
-        if (value.kind === "Class") { value.bases.forEach(visit); if (value.metaclass) visit(value.metaclass); }
+        if (value.kind === "Class") { value.bases.forEach(visit); if (value.metaclass) visit(value.metaclass); value.keywords?.forEach(item => visit(item.value)); }
         else for (const group of Object.values(value.params)) for (const param of group) if (param.value) visit(param.value);
         this.bind(value, scope); return;
       }
@@ -457,8 +458,13 @@ class Compiler {
           else {
             if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
             value.bases.forEach(expr);
-            if (value.metaclass) expr(value.metaclass);
-            emit(value, value.metaclass ? "class-meta" : "class", this.scopeOf.get(value).index, value.bases.length);
+            if (value.keywords) {
+              value.keywords.forEach(item => expr(item.value));
+              emit(value, "class-keywords", this.scopeOf.get(value).index, value.bases.length, value.keywords.map(item => item.name));
+            } else {
+              if (value.metaclass) expr(value.metaclass);
+              emit(value, value.metaclass ? "class-meta" : "class", this.scopeOf.get(value).index, value.bases.length);
+            }
           }
           if (decorators.length) {
             const result = this.temporary(scope, value); emit(value, "store", result);

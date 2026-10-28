@@ -35,6 +35,7 @@ export function completion(kind, fields = {}) {
   let record;
   switch (kind) {
     case "class": record = {kind, bases: operands(fields.bases), module: fields.module,
+      ...(fields.keywords?.length ? {keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)} : {}),
       ...(fields.metaclass ? {metaclass: fields.metaclass} : {}), ...(fields.invalidMetaclass ? {invalidMetaclass: true} : {})}; break;
     case "class-created": record = {kind, cell: fields.cell, after}; break;
     case "init": record = {kind, instance: fields.instance, after}; break;
@@ -165,7 +166,8 @@ export function completion(kind, fields = {}) {
     case "delegate-bind": record = {kind, receiver: fields.receiver, args: operands(fields.args), after}; break;
     case "invoke": record = {kind, args: operands(fields.args), keywords: operands(fields.keywords),
       keywordValues: operands(fields.keywordValues), depth: fields.depth, fallback: fields.fallback ?? null, after}; break;
-    case "notify": record = {kind, type: fields.type, entries: Object.freeze(fields.entries.map(entry => Object.freeze([...entry]))), index: fields.index, after};
+    case "notify": record = {kind, type: fields.type, entries: Object.freeze(fields.entries.map(entry => Object.freeze([...entry]))), index: fields.index,
+      keywords: operands(fields.keywords ?? []), keywordValues: operands(fields.keywordValues ?? []), after};
       if (record.entries.length > 128) throw new TypeError("Invalid notification snapshot.");
       break;
     case "condition":
@@ -223,7 +225,7 @@ function visit(record) {
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
-    case "notify": return [record.type, ...record.entries.map(entry => entry[1]), ...completionRoots(record.after)];
+    case "notify": return [record.type, ...record.entries.map(entry => entry[1]), ...record.keywordValues, ...completionRoots(record.after)];
     default: throw new TypeError("Unknown operation root owner.");
   }
 }
@@ -233,7 +235,7 @@ export function completionRoots(record, frame = false) {
   if (!records.has(record)) throw new TypeError("Unknown operation root owner.");
   const retained = roots.get(record);
   if (!frame) return retained;
-  if (record.kind === "class") return record.metaclass ? [...record.bases, record.metaclass] : record.bases;
+    if (record.kind === "class") return [...record.bases, ...(record.metaclass ? [record.metaclass] : []), ...(record.keywordValues ?? [])];
   if (record.kind === "init") return [record.instance, ...retained];
   return retained;
 }

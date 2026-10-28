@@ -314,17 +314,20 @@ class Parser {
   classDefinition(decorators = []) {
     const start = this.expect("class"), name = this.name().value, bases = [];
     let metaclass = null;
+    const keywords = [];
     if (this.at("[")) this.unsupported("Generic classes are not adopted.");
     if (this.eat("(")) {
       while (!this.at(")")) {
         if (this.at("*") || this.at("**")) this.unsupported("Expanded class bases and keywords require a separate stage.");
         if (this.kind("name") && this.peek(1).value === "=") {
           const keyword = this.name(); this.expect("=");
-          if (keyword.value !== "metaclass") this.unsupported("Extra class keywords require a separate construction stage.");
-          if (metaclass !== null) this.fail("Duplicate metaclass keyword.");
-          metaclass = this.expression();
+          if (keywords.some(item => item.name === keyword.value)) this.fail("Duplicate class keyword.");
+          if (keywords.length >= 128) this.fail("Class keyword budget exceeded.", this.peek(), "COMPILE_BUDGET");
+          const value = this.expression();
+          keywords.push({name: keyword.value, value});
+          if (keyword.value === "metaclass") metaclass = value;
         } else {
-          if (metaclass !== null) this.fail("Positional class bases follow a keyword.");
+          if (keywords.length) this.fail("Positional class bases follow a keyword.");
           bases.push(this.expression());
         }
         if (!this.eat(",")) break;
@@ -334,7 +337,9 @@ class Parser {
     const before = [this.functionDepth, this.loopDepth]; this.functionDepth = 0; this.loopDepth = 0;
     let body;
     try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
-    return this.node("Class", start, {name, bases, body, ...(metaclass ? {metaclass} : {}), ...(decorators.length ? {decorators} : {})}, body.at(-1));
+    return this.node("Class", start, {name, bases, body,
+      ...(keywords.some(item => item.name !== "metaclass") ? {keywords} : metaclass ? {metaclass} : {}),
+      ...(decorators.length ? {decorators} : {})}, body.at(-1));
   }
   branch(keyword = "if") {
     const start = this.expect(keyword), test = this.namedExpression(), body = this.suite();

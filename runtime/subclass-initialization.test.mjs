@@ -6,6 +6,8 @@ import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
 import {completion, completionRoots} from './operations.mjs';
+import {compileSource} from './source-compiler.mjs';
+import {verifyFunctions} from './function-bytecode.mjs';
 
 const profile = {languageProfile: 'classes-source/1'};
 const unit = source => ({name: 'app', package: false, imports: [], source, notice: 'Synthetic subclass initialization fixture'});
@@ -87,4 +89,66 @@ test('subclass hooks share recursion, instruction, work and real arena limits', 
     if (expected === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
     assert.ok(result.stdout.includes('hook\n')); closed(result.closed);
   }
+});
+
+test('class body and notification records retain copied keyword operands', () => {
+  const type = {}, keyword = {}, descriptor = {}, outer = {}, after = completion('relay', {receiver: outer});
+  const names = ['x'], values = [keyword];
+  const record = completion('class', {bases: [type], module: 'app', keywords: names, keywordValues: values});
+  const notify = completion('notify', {type, entries: [['field', descriptor]], index: 0, keywords: names, keywordValues: values, after});
+  names.pop(); values.pop();
+  assert.deepEqual(completionRoots(record, true), [type, keyword]);
+  assert.deepEqual(completionRoots(notify), [type, descriptor, keyword, outer]);
+  assert.deepEqual(notify.keywords, ['x']);
+});
+
+test('temporary class keywords survive body, notification, descriptor and metaclass phases', async () => {
+  const sources = [
+    'class Name:\n def __set_name__(self,owner,name): print("name")\nclass Hook:\n def __get__(self,obj,owner):\n  print("bind")\n  def hook(*,x):\n   print("hook")\n   owner.saved=x\n  return hook\nclass A: __init_subclass__=Hook()\nclass B(A,x=[7]):\n print("body")\n field=Name()\nprint(B.saved[0])\n',
+    'class M(type):\n def __new__(meta,name,bases,ns,**kw):\n  print("new")\n  return type.__new__(meta,name,bases,ns,**kw)\n def __init__(cls,name,bases,ns,**kw):\n  print("init")\n  cls.saved=kw["x"]\nclass A:\n def __init_subclass__(cls,*,x):\n  print("hook")\n  cls.value=x[0]\nclass B(A,x=[7],metaclass=M): print("body")\nprint(B.saved[0],B.value)\n',
+  ];
+  for (const source of sources) {
+    const expected = source.includes('class M') ? 'body\nnew\nhook\ninit\n7 7\n' : 'body\nname\nbind\nhook\n7\n';
+    const phases = expected.split('\n').slice(0, 4).map((_, i, parts) => parts.slice(0, i + 1).join('\n') + '\n');
+    const {registry} = await compileSourceModules([unit(source)], profile);
+    try { for (const phase of phases) for (const mode of ['finish', 'cancel', 'close']) {
+      const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+      session.context.begin({shouldCancel: () => cancel}, text => { output += text; });
+      const execution = Execution.modules(session.context);
+      try {
+        while (execution.state !== 'completed') {
+          execution.advance(); session.memory.collect([], {cleanup: true});
+          if (output === phase) {
+            reached = true;
+            if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+            if (mode === 'close') break;
+          }
+        }
+        assert.ok(reached, phase);
+        if (mode === 'finish') assert.equal(output, expected);
+      } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+      closed(session.stats());
+    } } finally { registry.close(); }
+  }
+});
+
+test('class keyword bytecode validates names, arity, profile and capture ownership', () => {
+  const source = 'class A:\n def __init_subclass__(cls,*,x): pass\nclass B(A,x=7): pass\n';
+  const raw = () => JSON.parse(JSON.stringify(compileSource(source, profile).program));
+  const instruction = code => code.functions[0].blocks.flatMap(block => block.instructions).find(row => row[0] === 'class-keywords');
+  for (const mutate of [
+    row => { row[3] = []; }, row => { row[3] = ['x', 'x']; }, row => { row[3] = ['not a name']; },
+    row => { row[3] = null; }, row => { row[3] = Array.from({length: 129}, (_, i) => 'k' + i); },
+    row => { row[2] = 17; }, row => { row[1] = 0; }, row => { row.pop(); },
+    row => { row[3] = ['x', 'y']; },
+  ]) {
+    const code = raw(); mutate(instruction(code)); assert.throws(() => verifyFunctions(code), {code: 'BYTECODE'});
+  }
+  const legacy = raw(); legacy.version = 4;
+  assert.throws(() => verifyFunctions(legacy), {code: 'BYTECODE'});
+  assert.throws(() => compileSource(source), {code: 'UNSUPPORTED'});
+  for (const definition of ['class A(x=1,x=2): pass\n', 'class A(x=1,object): pass\n'])
+    assert.throws(() => compileSource(definition, profile), {code: 'SYNTAX'});
+  const excessive = 'class A(' + Array.from({length: 129}, (_, i) => 'k' + i + '=1').join(',') + '): pass\n';
+  assert.throws(() => compileSource(excessive, profile), {code: 'COMPILE_BUDGET'});
 });
