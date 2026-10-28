@@ -7,8 +7,9 @@ export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, 
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__"]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
+const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -61,6 +62,8 @@ export class ClassRuntime {
     }
     if (namespace.get("__new__") instanceof FunctionValue)
       namespace.set("__new__", this.make(MethodWrapperValue, "staticmethod", namespace.get("__new__")));
+    if (namespace.get("__init_subclass__") instanceof FunctionValue)
+      namespace.set("__init_subclass__", this.make(MethodWrapperValue, "classmethod", namespace.get("__init_subclass__")));
     for (const [key, expected] of [["__module__", module], ["__qualname__", qualname]])
       if (namespace.has(key) && this.values.text(namespace.get(key)) !== expected)
         this.fail("UnsupportedOperationError", "Class metadata overrides are outside C1.", "UNSUPPORTED");
@@ -111,7 +114,7 @@ export class ClassRuntime {
       else if (value instanceof BuiltinValue) name = NATIVE_CHECK_METHODS.has(value.name) ? "method_descriptor" : "builtin_function_or_method";
       else if (value instanceof FunctionValue) name = "function";
       else if (value instanceof BoundMethodValue) name = value.callable instanceof BuiltinValue ?
-        NATIVE_CHECK_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
+        NATIVE_CHECK_METHODS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
       else if (value instanceof PropertyValue) name = "property";
       else if (value instanceof MethodWrapperValue) name = value.kind;
       else if (value instanceof SuperValue) name = "super";
@@ -154,6 +157,13 @@ export class ClassRuntime {
       }
       if (!native && base.root && ["__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) continue;
       if (base.namespace.has(name)) return {found: true, value: base.namespace.get(name)};
+      if (native && base.root && name === "__init_subclass__") {
+        const value = this.make(MethodWrapperValue, "classmethod", this.builtin("object.__init_subclass__"));
+        base.namespace.set(name, value);
+        try { const layout = valueLayout(base); this.memory?.resize(base, layout.bytes, layout.children); }
+        catch (error) { base.namespace.delete(name); throw error; }
+        return {found: true, value};
+      }
       if (native && base.root && ["__hash__", "__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) {
         const value = this.make(BuiltinValue, "object." + name);
         base.namespace.set(name, value);
@@ -181,6 +191,13 @@ export class ClassRuntime {
     return {kind: "call", callable: hook.value, args};
   }
   notification(receiver, owner, name) { return this.boundHook(receiver, "__set_name__", [owner, name]); }
+  subclassNotification(type) {
+    // Default construction retains the established allocation/work accounting.
+    // The new class's own hook is excluded, just as with super(newclass, newclass).
+    if (!type.mro.slice(1).some(base => base instanceof ClassValue && !base.root && base.namespace.has("__init_subclass__"))) return null;
+    const item = this.lookup(type, "__init_subclass__", true, 1);
+    return this.bindAttribute(item.value, null, type);
+  }
   read(receiver, name) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
@@ -218,8 +235,11 @@ export class ClassRuntime {
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
-    if (receiver instanceof BoundMethodValue && name === "__func__" && receiver.callable instanceof BuiltinValue && NATIVE_CHECK_METHODS.has(receiver.callable.name))
-      this.fail("AttributeError", "Native checking methods have no __func__ attribute.");
+    if (receiver instanceof BoundMethodValue && name === "__func__" && receiver.callable instanceof BuiltinValue &&
+        (NATIVE_CHECK_METHODS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name)))
+      this.fail("AttributeError", "Native methods have no __func__ attribute.");
+    if (receiver instanceof BoundMethodValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
+      return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {

@@ -8,7 +8,8 @@
     "O4",
     "O5",
     "O8",
-    "O9"
+    "O9",
+    "O23"
   ],
   "cases": [
     {
@@ -571,7 +572,7 @@
     },
     {
       "id": "future-init-subclass",
-      "stage": "Future",
+      "stage": "O23",
       "source": "class A:\n def __init_subclass__(cls): print(\"hook\")\nclass B(A): pass\n",
       "stdout": "hook\n"
     },
