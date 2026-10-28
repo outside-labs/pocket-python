@@ -60,13 +60,6 @@ test('native property copies release partial allocation growth on real arena fai
   assert.equal(result.stdout, 'copying\n'); assert.equal(result.error?.code, 'OOM', JSON.stringify(result.error)); closed(result.closed);
 });
 
-for (const item of corpus.cases.filter(item => item.id.startsWith('future-copy-'))) {
-  test('documentation boundary: '+item.id, async () => {
-    const result = await run(item.source);
-    assert.equal(result.error?.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
-  });
-}
-
 test('detached function binding retains function cells, defaults and the bound receiver through parked collection and interruption', async () => {
   const source = 'def factory():\n captured=[9]\n def read(obj,value=[3]):\n  print("entered")\n  return captured[0]+obj[0]+value[0]\n return read.__get__\nbind=factory()\nm=bind([7],False)\ndel bind\nprint("bound")\nprint(m())\n';
   await lifecycle(source, 'bound\nentered\n19\n', ['bound\n', 'bound\nentered\n']);

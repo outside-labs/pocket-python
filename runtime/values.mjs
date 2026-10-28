@@ -1327,8 +1327,8 @@ export function valueLayout(value) {
     children: [value.type, ...value.attributes.values()]};
   if (value instanceof BoundMethodValue) return {bytes: 64, children: [value.callable, value.receiver]};
   if (value instanceof SuperValue) return {bytes: 72, children: [value.thisclass, value.self, value.selfClass]};
-  if (value instanceof PropertyValue) return {bytes: 80 + (value.propertyName === undefined ? 0 : 8),
-    children: [value.fget, value.fset, value.fdel, ...(value.propertyName === undefined ? [] : [value.propertyName])]};
+  if (value instanceof PropertyValue) return {bytes: 80 + (value.propertyName === undefined ? 0 : 8) + (value.documentation == null ? 0 : 8),
+    children: [value.fget, value.fset, value.fdel, ...(value.propertyName === undefined ? [] : [value.propertyName]), ...(value.documentation == null ? [] : [value.documentation])]};
   if (value instanceof MethodWrapperValue) return {bytes: 64, children: [value.callable]};
   if (value instanceof PropertyAccessorValue) return {bytes: 64, children: [value.property]};
   if (value instanceof AppendValue) return {bytes: 64, children: [value.receiver]};

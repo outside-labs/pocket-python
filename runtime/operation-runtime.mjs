@@ -387,6 +387,31 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     return valueTask(false, site, record.after);
   };
+  const propertyResult = (record, documentation, getterDoc, site) => valueTask(
+    allocate(PropertyValue, ...record.accessors, record.receiver?.propertyName, documentation, getterDoc), site, record.after);
+  const propertyTask = (parts, receiver, site, after, depth) => {
+    const accessors = parts.slice(0, 3), document = parts[3], getter = accessors[0];
+    const record = {receiver, accessors, after};
+    // Pure metadata keeps the established construction path and accounting.
+    // Opaque native metadata is never exposed as a qualified Python value.
+    if (receiver?.getterDoc === null) {
+      if (getter instanceof FunctionValue || getter instanceof ClassValue && !getter.root || getter instanceof InstanceValue)
+        hard("UNSUPPORTED", "UnsupportedOperationError", "Copying unqualified native documentation to a Python getter requires a separate stage.");
+      return propertyResult(record, undefined, null, site);
+    }
+    if (document !== null) return propertyResult(record, document, false, site);
+    if (getter === null) return propertyResult(record, null, false, site);
+    if (getter instanceof FunctionValue) return propertyResult(record, getter.documentation, getter.documentation !== null, site);
+    if (getter instanceof PropertyValue) return propertyResult(record, getter.documentation, getter.documentation === undefined ? null : getter.documentation !== null, site);
+    let callable = getter;
+    while (callable instanceof BoundMethodValue) { charge(1); callable = callable.callable; }
+    if (getter instanceof BoundMethodValue && callable instanceof FunctionValue)
+      return propertyResult(record, callable.documentation, callable.documentation !== null, site);
+    if (!(callable instanceof InstanceValue || callable instanceof ClassValue && !callable.root))
+      return propertyResult(record, undefined, null, site);
+    if (++depth > maxDepth) python("RecursionError", "maximum property documentation lookup depth exceeded");
+    return attributeTask(getter, "__doc__", site, continuation("property-documentation", record), depth);
+  };
   const recover = (value, completion, site) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
@@ -395,6 +420,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
+      if (current.kind === "property-documentation" && value.name === "AttributeError") return propertyResult(current, null, false, site);
       if (current.kind === "abstract-lookup" && value.name === "AttributeError")
         return abstractNext({...current, position: current.position + 1}, site);
       if (current.kind === "advertised-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
@@ -460,6 +486,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       completion = completion.after;
     }
+    if (completion?.kind === "property-documentation") return propertyResult(completion, value, value !== null, site);
     if (completion?.kind === "advertised-instance")
       return valueTask(classes.isType(value) && classes.subclass(value, completion.type), site, completion.after);
     if (completion?.kind === "abstract-lookup") return unaryTask("truth", value, site,
@@ -1388,7 +1415,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof PropertyAccessorValue) {
           if (args.length !== 1 || keywords.length) python("TypeError", "Property accessor copy requires one positional value.");
-          task = deliver(classes.copyProperty(callable.property, callable.name, args[0]), completion, site); continue;
+          task = propertyTask(classes.propertyCopyArguments(callable.property, callable.name, args[0]), callable.property, site, completion, depth); continue;
         }
         if (callable instanceof ClassValue) {
           if (task.kind !== "construct" && callable.metaclass && classes.hasSlot(callable.metaclass, "__call__")) {
@@ -1581,7 +1608,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = args[0];
             if (!(receiver instanceof PropertyValue)) python("TypeError", "Native property copy requires a property receiver");
             if (keywords.length || args.length !== 2) python("TypeError", "Native property copy requires one positional replacement");
-            task = valueTask(classes.copyProperty(receiver, callable.name.slice("property.".length), args[1]), site, completion); continue;
+            task = propertyTask(classes.propertyCopyArguments(receiver, callable.name.slice("property.".length), args[1]), receiver, site, completion, depth); continue;
           }
           if (["staticmethod.__get__", "classmethod.__get__"].includes(callable.name)) {
             const kind = callable.name.slice(0, callable.name.indexOf(".")), receiver = args[0];
@@ -1629,7 +1656,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const markerLayout = name === "__isabstractmethod__" && (args[0] instanceof FunctionValue ||
               args[0] instanceof BoundMethodValue || args[0] instanceof PropertyValue || args[0] instanceof MethodWrapperValue) ||
               name === "__doc__" && (args[0] instanceof FunctionValue || args[0] instanceof BoundMethodValue);
-            if (!(args[0] instanceof InstanceValue) && !markerLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
+            if (!(args[0] instanceof InstanceValue) && !markerLayout && !documentLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
           if (["getattr", "setattr", "delattr", "hasattr"].includes(callable.name)) {
@@ -1853,7 +1881,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "bool" && state.frames.at(-1).callable.pool.code.version === 5 &&
               (args.length > 1 || keywords.length)) python("TypeError", "bool() accepts at most one positional argument");
           let value;
-          if (callable.name === "property") value = classes.property(args, keywords, keywordValues);
+          if (callable.name === "property") {
+            task = propertyTask(classes.propertyArguments(args, keywords, keywordValues), null, site, completion, depth); continue;
+          }
           else if (["staticmethod", "classmethod"].includes(callable.name)) {
             if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
             value = allocate(MethodWrapperValue, callable.name, args[0]);

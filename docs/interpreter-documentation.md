@@ -44,6 +44,8 @@ property documents bypass this boundary. Property subclass layouts, arbitrary
 function dictionaries, module documentation and broader metadata retain their
 separate contracts. Reflection belongs to classes-source/1 and bytecode 5;
 core admission, host grants and async work under #34 remain separate.
+Copies from an unqualified native origin to Python getters refuse before their
+metadata callbacks; qualifying the origin requires a separate native contract.
 
 Reference: [CPython 3.14.7 property implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c).
 
@@ -52,3 +54,10 @@ registry verification; class docstrings enter their original namespace before
 metaclass construction. Undocumented functions/classes keep their previous
 logical layouts. Focused tests cover source metadata, bound reads, exact mutable
 documents, ownership rollback, captured cycles and parked lifecycle cleanup.
+
+O42 is implemented through owned optional lookup and construction phases.
+Selected accessor snapshots, documentation origin and post-callback name copies
+survive parked collection and interruption. Existing descriptor corpora retain
+native-documentation refusals; their now-adopted copy-hook cases are maintained
+in the documentation corpus. Real work, instruction, recursion and arena limits
+are exercised through getter callbacks.

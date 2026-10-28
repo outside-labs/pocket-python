@@ -41,17 +41,17 @@ CORPORA = (
     'function-binding', 'ordinary-syntax', 'value-families', 'generators',
     'construction', 'attribute-hooks', 'type-checks', 'reflection', 'repetition',
     'subclass-initialization', 'metaclass-attributes', 'nested-descriptors',
-    'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'type-reflection', 'execution', 'object-hashing', 'ordering', 'object-protocols',
+    'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'type-reflection', 'execution', 'object-hashing', 'ordering', 'object-protocols',
 )
 CORE_CORPORA = {'sequences', 'function-binding', 'ordinary-syntax', 'value-families',
                 'generators', 'repetition', 'ordering'}
-PARKED_CORPORA = {'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'type-reflection',
+PARKED_CORPORA = {'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'type-reflection',
                   'execution', 'object-hashing'}
 REFERENCE_CORPORA = {
     'classes', 'ordering', 'subclass-initialization', 'metaclass-attributes',
     'function-binding', 'ordinary-syntax', 'value-families', 'iteration', 'equality',
     'indexing', 'private-names', 'descriptors', 'nested-descriptors',
-    'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'type-reflection', 'special-calls', 'length-truth', 'execution', 'formatting',
+    'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'type-reflection', 'special-calls', 'length-truth', 'execution', 'formatting',
     'numeric',
 }
 STAGES = {'numeric': ('N1', 'N2', 'N3', 'N4', 'N5', 'Future'),

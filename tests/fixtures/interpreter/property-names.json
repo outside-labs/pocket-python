@@ -249,8 +249,8 @@
     {
       "id": "property-documentation-refusal",
       "stage": "Future",
-      "source": "def read(obj): return obj\np=property(read)\nprint(p.__doc__)\n",
-      "stdout": "None\n"
+      "source": "print(property(len).__doc__ is not None)\n",
+      "stdout": "True\n"
     },
     {
       "id": "property-abstract-refusal",

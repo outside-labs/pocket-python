@@ -493,8 +493,8 @@
     {
       "id": "future-property-documentation",
       "stage": "Future",
-      "source": "print(property().__doc__)\n",
-      "stdout": "None\n"
+      "source": "print(property(len).__doc__ is not None)\n",
+      "stdout": "True\n"
     },
     {
       "id": "future-live-namespace",
@@ -502,48 +502,6 @@
       "source": "print(globals()[\"__name__\"])\n",
       "stdout": "",
       "error_type": "KeyError"
-    },
-    {
-      "id": "future-copy-getter-doc-hook",
-      "stage": "Future",
-      "source": "class Read:\n def __getattribute__(self,name):\n  print(\"documentation\")\n  raise ValueError(\"doc\")\nproperty.getter(property(),Read())\n",
-      "stdout": "documentation\n",
-      "error_type": "ValueError"
-    },
-    {
-      "id": "future-copy-bound-getter-doc-hook",
-      "stage": "Future",
-      "source": "class Read:\n def __getattribute__(self,name):\n  print(\"documentation\")\n  raise ValueError(\"doc\")\nproperty().getter(Read())\n",
-      "stdout": "documentation\n",
-      "error_type": "ValueError"
-    },
-    {
-      "id": "future-copy-setter-getter-doc-hook",
-      "stage": "Future",
-      "source": "state=[]\nclass Read:\n def __getattribute__(self,name):\n  if name==\"__doc__\" and len(state):\n   print(\"documentation\")\n   raise ValueError(\"doc\")\n  raise AttributeError(name)\np=property(Read())\nstate.append(7)\np.setter(None)\n",
-      "stdout": "documentation\n",
-      "error_type": "ValueError"
-    },
-    {
-      "id": "future-copy-deleter-getter-doc-hook",
-      "stage": "Future",
-      "source": "state=[]\nclass Read:\n def __getattribute__(self,name):\n  if name==\"__doc__\" and len(state):\n   print(\"documentation\")\n   raise ValueError(\"doc\")\n  raise AttributeError(name)\np=property(Read())\nstate.append(7)\np.deleter(None)\n",
-      "stdout": "documentation\n",
-      "error_type": "ValueError"
-    },
-    {
-      "id": "future-copy-getter-metaclass-doc-hook",
-      "stage": "Future",
-      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__doc__\":\n   print(\"documentation\")\n   raise ValueError(\"doc\")\n  return type.__getattribute__(cls,name)\nclass Read(metaclass=M): pass\nproperty.getter(property(),Read)\n",
-      "stdout": "documentation\n",
-      "error_type": "ValueError"
-    },
-    {
-      "id": "future-copy-getter-method-doc-hook",
-      "stage": "Future",
-      "source": "state=[]\nclass Read:\n def __getattribute__(self,name):\n  if name==\"__doc__\" and len(state):\n   print(\"documentation\")\n   raise ValueError(\"doc\")\n  raise AttributeError(name)\n def __call__(self,*args): return 7\nm=classmethod(Read()).__get__(None,list)\nstate.append(7)\nproperty.getter(property(),m)\n",
-      "stdout": "documentation\n",
-      "error_type": "ValueError"
     },
     {
       "id": "copy-setter-read-hooks-remain-unobserved",

@@ -44,6 +44,10 @@ export function completion(kind, fields = {}) {
         keywordValues: operands(fields.keywordValues), depth: fields.depth, after};
       depthCheck(record.depth); break;
     case "relay": case "subclass-result": case "vars-result": case "property-name": record = {kind, receiver: fields.receiver, after}; break;
+    case "property-documentation":
+      record = {kind, receiver: fields.receiver, accessors: operands(fields.accessors), after};
+      if (record.accessors.length !== 3) throw new TypeError("Invalid property documentation operands.");
+      break;
     case "abstract-lookup": case "abstract-truth":
       record = {kind, receiver: fields.receiver, position: fields.position, depth: fields.depth, after};
       depthCheck(record.depth);
@@ -197,6 +201,7 @@ function visit(record) {
     case "abstract-lookup": case "abstract-truth":
     case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":
     case "dir-compare": case "dir-truth": return [record.receiver, ...completionRoots(record.after)];
+    case "property-documentation": return [record.receiver, ...record.accessors, ...completionRoots(record.after)];
     case "dir-length": case "dir-hint-bound": case "dir-hint-call": case "dir-hint-value":
       return [record.receiver, record.iterator, ...completionRoots(record.after)];
     case "sequence-hash": return [record.receiver, record.hash, ...completionRoots(record.after)];
