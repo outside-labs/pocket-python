@@ -382,6 +382,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "dir-length" && value.name === "TypeError") return directoryHint(current, site);
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
+      if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
       if (current.kind === "advertised-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
       if (current.kind === "advertised-super" && value.name === "AttributeError") return unaryTask("super-invalid", current.receiver, site, current.after);
       if (current.kind === "attribute-fallback" && value.name === "AttributeError")
@@ -419,7 +420,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
-    while (["init", "relay", "subclass-result", "vars-result", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
+    while (["init", "relay", "subclass-result", "vars-result", "property-name", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
@@ -1214,6 +1215,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const {operation, value, optionalLength} = task;
           state.temporaries.push(...operationRoots(task));
           if (operation === "vars-missing") python("TypeError", "vars() argument must have a __dict__ attribute");
+          if (operation === "property-name-missing") python("AttributeError", "'property' object has no attribute '__name__'");
           if (["hash", "hash-unhashable"].includes(operation)) {
             if (operation === "hash-unhashable") python("TypeError", "unhashable type");
             if (values.hashParts(value) !== null && values.needsOwnedHash(value)) {
@@ -1530,6 +1532,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length < 2 || args.length > 3) python("TypeError", "Native function binding received invalid arguments");
             if (args[1] === null && (args[2] ?? null) === null) python("TypeError", "__get__(None, None) is invalid");
             task = valueTask(args[1] === null ? args[0] : allocate(BoundMethodValue, args[0], args[1], true), site, completion); continue;
+          }
+          if (callable.name === "property-name") {
+            const receiver = args[0];
+            if (!(receiver instanceof PropertyValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid property name lookup.");
+            if (receiver.fget === null || values.typeName(receiver.fget) !== null)
+              python("AttributeError", "'property' object has no attribute '__name__'");
+            if (++depth > maxDepth) python("RecursionError", "maximum property name lookup depth exceeded");
+            task = attributeTask(receiver.fget, "__name__", site, continuation("property-name", {receiver, after: completion}), depth); continue;
           }
           if (["property.getter", "property.setter", "property.deleter"].includes(callable.name)) {
             const receiver = args[0];

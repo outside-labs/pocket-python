@@ -17,7 +17,7 @@ export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
   ["__module__", Object.freeze({define: true})], ["__qualname__", Object.freeze({define: true})],
   ["__class__", Object.freeze({define: true})],
   ["__dict__", Object.freeze({define: true, attribute: true})],
-  ["__name__", Object.freeze({define: true, attribute: true})],
+  ["__name__", Object.freeze({define: true, attribute: true, mutate: true})],
   ["__base__", Object.freeze({attribute: true, mutate: true})],
   ["__objclass__", Object.freeze({attribute: true, mutate: true})]
 ]));

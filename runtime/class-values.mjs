@@ -266,6 +266,8 @@ export class ClassRuntime {
     }
     if (receiver instanceof PropertyValue) {
       if (name === "__class__") return value(this.builtin("property"));
+      if (name === "__name__") return receiver.propertyName !== undefined ? value(receiver.propertyName) :
+        {kind: "call", callable: this.builtin("property-name"), args: [receiver]};
       if (NATIVE_DESCRIPTOR_WRAPPERS.has("property." + name))
         return value(this.make(BoundMethodValue, this.builtin("property." + name), receiver));
       if (["fget", "fset", "fdel"].includes(name)) return value(receiver[name]);
@@ -438,6 +440,15 @@ export class ClassRuntime {
   }
   mutate(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (name === "__name__") {
+      if (!(receiver instanceof PropertyValue))
+        this.fail("UnsupportedOperationError", "Name mutation is adopted only for properties.", "UNSUPPORTED");
+      const before = receiver.propertyName;
+      receiver.propertyName = remove ? undefined : value;
+      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+      catch (error) { receiver.propertyName = before; throw error; }
+      return null;
+    }
     if (receiver instanceof BuiltinValue && this.isType(receiver)) this.fail("TypeError", "Cannot mutate an immutable native type.");
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
@@ -504,7 +515,7 @@ export class ClassRuntime {
     while (getter instanceof BoundMethodValue) { this.charge(1); getter = getter.callable; }
     if (["__getattribute__", "__getattr__"].some(name => this.hasAttributeHook(getter, name)))
       this.fail("UnsupportedOperationError", "Property getter documentation hooks require their own contract.", "UNSUPPORTED");
-    return this.make(PropertyValue, ...fields);
+    return this.make(PropertyValue, ...fields, property.propertyName);
   }
   isinstance(value, type, depth = 0) {
     if (this.values.isSequenceType(type, "tuple")) {

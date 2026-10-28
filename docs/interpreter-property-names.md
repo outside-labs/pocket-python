@@ -14,6 +14,8 @@ explicit rebinding, actual property receiver validation, native names/owner
 metadata, identity, equality and hashing. It accepts two positional arguments
 after its receiver; keywords and invalid arity/receivers raise TypeError.
 Neither the owner nor the name invokes read, truth, equality or type-check hooks.
+Unboxed integer identity retains its existing refusal; numeric names preserve
+their value without adopting interning.
 
 Getter-name lookup runs only when needed, can return arbitrary adopted values,
 and preserves AttributeError-only optional lookup semantics. Explicit None is
@@ -38,3 +40,9 @@ No dependency, release, publication or deployment is included.
 
 Primary reference: CPython v3.14.7's
 [property implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c).
+
+O37 is implemented. Its 31 adopted cases and four future boundaries pass Node
+drain, instruction-boundary and parked execution. Dedicated tests retain cyclic
+names, accessor cells and copied properties, preserve original callback frames,
+and check actual allocation/work/recursion failures and mutation rollback.
+O38 remains the next dependent implementation stage.

@@ -59,8 +59,10 @@ export class SuperValue {
 export {DESCRIPTOR_HOOKS};
 export class BuiltinValue { constructor(name) { this.name = name; } }
 export class PropertyValue {
-  constructor(fget = null, fset = null, fdel = null) {
-    this.fget = fget; this.fset = fset; this.fdel = fdel; Object.freeze(this);
+  constructor(fget = null, fset = null, fdel = null, propertyName = undefined) {
+    Object.defineProperties(this, {fget: {value: fget, enumerable: true}, fset: {value: fset, enumerable: true},
+      fdel: {value: fdel, enumerable: true}, propertyName: {value: propertyName, writable: true}});
+    Object.seal(this);
   }
 }
 export class MethodWrapperValue {
