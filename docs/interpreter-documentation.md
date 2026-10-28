@@ -30,6 +30,9 @@ bytecode 3/4 reject the field. Class docstrings enter the ordinary namespace in
 source order. Default class documentation is None and does not inherit a base
 class's document; class documentation deletion raises TypeError. This does not
 adopt live class dictionaries or additional function metadata.
+Source documents expand tabs at eight-column stops, remove leading spaces from
+the first line and remove the common space margin of later nonblank lines.
+Leading/trailing blank lines remain. Runtime-assigned documents are unchanged.
 
 Documentation adds an owned edge only for a non-None qualified value. Failed
 growth or foreign-owner mutation restores the prior value. Pending getter
@@ -48,6 +51,7 @@ Copies from an unqualified native origin to Python getters refuse before their
 metadata callbacks; qualifying the origin requires a separate native contract.
 
 Reference: [CPython 3.14.7 property implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c).
+Source cleanup follows the [pinned compiler contract](https://github.com/python/cpython/blob/v3.14.7/Python/compile.c).
 
 O41 is implemented. Function documentation survives source compilation and
 registry verification; class docstrings enter their original namespace before
