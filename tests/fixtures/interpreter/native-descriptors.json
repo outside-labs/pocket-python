@@ -3,7 +3,9 @@
   "suite": "interpreter-native-descriptors/1",
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O29"
+  ],
   "cases": [
     {
       "id": "property-get-bound",
@@ -275,6 +277,12 @@
       "stage": "O29",
       "source": "p=property(lambda obj: obj)\nclass A: read=property.__get__\ntry: A().read(7)\nexcept TypeError: print(\"wrong receiver\")\nprint(A.read is property.__get__)\n",
       "stdout": "wrong receiver\nTrue\n"
+    },
+    {
+      "id": "property-native-binding-validates-receiver",
+      "stage": "O29",
+      "source": "class A: read=property.__get__\ntry:\n m=A().read\n print(\"never\")\nexcept TypeError: print(\"wrong receiver\")\n",
+      "stdout": "wrong receiver\n"
     },
     {
       "id": "staticmethod-owner-a",

@@ -46,3 +46,8 @@ and the pinned CPython implementations of
 [property](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c)
 and [method wrappers](https://github.com/python/cpython/blob/v3.14.7/Objects/funcobject.c).
 The executable reference resolves patch-level differences.
+
+O29 property operations are implemented. The 37 property comparisons and two
+future refusals pass parked Node execution; 128 focused descriptor/lifecycle
+tests pass, including all eight unchanged composed resource observations.
+O30 remains a reference-only stage until its dependent implementation.
