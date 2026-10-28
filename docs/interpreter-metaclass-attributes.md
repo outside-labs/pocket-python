@@ -51,3 +51,32 @@ is included.
 Semantic anchors: the Python 3.14 [attribute protocol](https://docs.python.org/3.14/reference/datamodel.html#customizing-attribute-access)
 and pinned [type implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
 The pinned executable resolves later documentation differences.
+
+## Accepted evidence
+
+The 102-case pinned matrix has 97 adopted comparisons and five explicit future
+refusals. Node and Chromium each pass drain, instruction-boundary and parked
+scope-owner execution: 612 observations and 600 measured zero logical
+teardown records. Each report verifies its 58 source/driver hashes and corpus
+digest. The older type-checking corpus adopts its metaclass read case. All 144
+compatibility probes pass in each target, including six new positive probes.
+
+All 1,448 Node tests pass. Dedicated tests collect between instructions and
+cancel/close in read, fallback, mutation and descriptor phases, preserving
+fallback snapshots, temporary class receivers, native wrappers and pending
+values. Original Python frames and actual recursion/instruction/work/arena
+failures are covered. The eight composed resource observations are unchanged.
+The 60-test Python suite passes with one explicit optional WASM fixture skip;
+archive allowlists and four isolated default/compiled installations pass.
+
+Installed-wheel offline acceptance passes 1,146 program comparisons,
+69 groups and 146 Stop/Restart cycles. Newly entered source combines
+class registration, virtual metadata, audited mutation, native methods and
+generators after offline reload. Descriptor/read/write bodies stop and restart;
+a waiting class-to-core update refuses the class example before source effects.
+
+The [class metadata console](../examples/interpreter_metaclass_attributes.py)
+and its [source/payload record](measurements/2026-10-27-metaclass-attributes.json)
+verify all 38 files and 37 receipt members at 660,355 bytes, including an identical
+fresh rebuild. These are finite semantic and payload observations. Broader
+object/reflection #123 and native async/host-adapter #34 remain open.
