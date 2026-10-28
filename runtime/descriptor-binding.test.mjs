@@ -59,3 +59,36 @@ test('native property copies release partial allocation growth on real arena fai
   const result = await run(source, {maxWork: 20000000}, {maxBytes: 24000});
   assert.equal(result.stdout, 'copying\n'); assert.equal(result.error?.code, 'OOM', JSON.stringify(result.error)); closed(result.closed);
 });
+
+test('detached function binding retains function cells, defaults and the bound receiver through parked collection and interruption', async () => {
+  const source = 'def factory():\n captured=[9]\n def read(obj,value=[3]):\n  print("entered")\n  return captured[0]+obj[0]+value[0]\n return read.__get__\nbind=factory()\nm=bind([7],False)\ndel bind\nprint("bound")\nprint(m())\n';
+  await lifecycle(source, 'bound\nentered\n19\n', ['bound\n', 'bound\nentered\n']);
+});
+
+test('explicitly bound generator retains its receiver and captured cells through parked collection and interruption', async () => {
+  const source = 'def factory():\n captured=[9]\n def read(obj):\n  print("entered")\n  yield obj[0]+captured[0]\n return read.__get__\nbind=factory()\nm=bind([7])\ndel bind\ng=m()\ndel m\nprint("ready")\nprint(next(g))\n';
+  await lifecycle(source, 'ready\nentered\n16\n', ['ready\n', 'ready\nentered\n']);
+});
+
+test('explicit function calls share recursion, instruction, work and actual allocation limits', async () => {
+  const wrap = body => 'def read(obj):\n print("entered")\n '+body+'\nm=read.__get__([7])\nm()\n';
+  for (const [body, options, limits, code] of [
+    ['return read.__get__(obj)()', {}, undefined, 'PYTHON'],
+    ['while True: pass', {maxSteps: 150}, undefined, 'BUDGET'],
+    ['while True: pass', {maxWork: 10000}, undefined, 'BUDGET'],
+    ['return [0]*1024', {}, {maxBytes: 16000}, 'OOM'],
+  ]) {
+    const result = await run(wrap(body), options, limits);
+    assert.equal(result.error?.code, code, JSON.stringify(result.error));
+    if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+    assert.ok(result.stdout.includes('entered\n')); closed(result.closed);
+  }
+});
+
+test('explicit binding retains the core function runtime refusal and class admission boundary', async () => {
+  const result = await runSourceRequest({modules: [unit('print("before")\ndef read(obj): return obj\nread.__get__([7])\n')]});
+  assert.equal(result.error?.code, 'UNSUPPORTED'); assert.equal(result.error?.phase, 'execute');
+  assert.equal(result.stdout, 'before\n'); closed(result.closed);
+  const admission = await runSourceRequest({modules: [unit('print("never")\nclass A: pass\nproperty.getter(None,None)\n')]});
+  assert.equal(admission.error?.code, 'UNSUPPORTED'); assert.equal(admission.stdout, ''); assert.equal(admission.stats, null);
+});

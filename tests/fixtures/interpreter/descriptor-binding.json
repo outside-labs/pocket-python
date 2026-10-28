@@ -4,7 +4,8 @@
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
   "implemented_stages": [
-    "O31"
+    "O31",
+    "O32"
   ],
   "cases": [
     {
@@ -322,7 +323,7 @@
     {
       "id": "function-bind-integer",
       "stage": "O32",
-      "source": "def read(obj,*args,**kwargs): return obj\nobj=7\nm=read.__get__(obj)\nprint(m.__self__ is obj,m.__func__ is read,m() is obj,type(m).__name__)\n",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=7\nm=read.__get__(obj)\nprint(m.__self__ == obj,m.__func__ is read,m() == obj,type(m).__name__)\n",
       "stdout": "True True True method\n"
     },
     {
