@@ -271,7 +271,7 @@ export class ClassRuntime {
       return this.bindAttribute(metaItem.value, receiver, metaclass);
     if (receiver instanceof ClassValue) {
       if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
-      if (["__name__", "__qualname__", "__module__"].includes(name)) return value(this.values.string(Array.from(
+      if (["__name__", "__qualname__", "__module__"].includes(name) && !(name === "__name__" && metaItem?.found)) return value(this.values.string(Array.from(
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
       if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
     }

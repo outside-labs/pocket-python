@@ -629,6 +629,30 @@
       "source": "type.__setattr__(object,\"x\",7)\n",
       "stdout": "",
       "error_type": "TypeError"
+    },
+    {
+      "id": "name-metaclass-value",
+      "stage": "O25",
+      "source": "class M(type): __name__=\"visible\"\nclass A(metaclass=M): pass\nprint(A.__name__,type.__getattribute__(A,\"__name__\"),M.__name__)\n",
+      "stdout": "visible visible M\n"
+    },
+    {
+      "id": "name-class-namespace-priority",
+      "stage": "O25",
+      "source": "class M(type): __name__=\"meta\"\nclass A(metaclass=M): __name__=\"own\"\nclass B(A): pass\nprint(A.__name__,B.__name__)\n",
+      "stdout": "own own\n"
+    },
+    {
+      "id": "name-nondata-descriptor",
+      "stage": "O25",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"name\")\n  return \"visible\"\nclass M(type): __name__=D()\nclass A(metaclass=M): pass\nprint(A.__name__)\n",
+      "stdout": "name\nvisible\n"
+    },
+    {
+      "id": "name-native-data-priority",
+      "stage": "O25",
+      "source": "class A: __name__=\"hidden\"\nclass B(A): pass\nprint(A.__name__,B.__name__)\n",
+      "stdout": "A B\n"
     }
   ]
 }
