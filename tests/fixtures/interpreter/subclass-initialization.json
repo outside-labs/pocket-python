@@ -1,0 +1,401 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-subclass-initialization/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "inherited-classmethod",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls):\n  print(\"hook\",cls.__name__)\n  cls.saved=[7]\nclass B(A): pass\nprint(B.saved[0],B.__init_subclass__.__self__ is B)\n",
+      "stdout": "hook B\n7 True\n"
+    },
+    {
+      "id": "own-hook-not-invoked",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls): print(\"A\",cls.__name__)\nclass B(A):\n def __init_subclass__(cls): print(\"B\",cls.__name__)\nclass C(B): pass\n",
+      "stdout": "A B\nB C\n"
+    },
+    {
+      "id": "grandparent-inheritance",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls): print(cls.__name__)\nclass B(A): pass\nclass C(B): pass\n",
+      "stdout": "B\nC\n"
+    },
+    {
+      "id": "cooperative-diamond",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls):\n  print(\"A\",cls.__name__)\n  super().__init_subclass__()\nclass B(A):\n def __init_subclass__(cls):\n  print(\"B\",cls.__name__)\n  super().__init_subclass__()\nclass C(A):\n def __init_subclass__(cls):\n  print(\"C\",cls.__name__)\n  super().__init_subclass__()\nclass D(B,C): pass\n",
+      "stdout": "A B\nA C\nB D\nC D\nA D\n"
+    },
+    {
+      "id": "noncooperative-first-parent",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls): print(\"A\",cls.__name__)\nclass B:\n def __init_subclass__(cls): print(\"B\",cls.__name__)\nclass C(A,B): pass\n",
+      "stdout": "A C\n"
+    },
+    {
+      "id": "explicit-classmethod",
+      "stage": "O23",
+      "source": "class A:\n @classmethod\n def __init_subclass__(cls): print(cls.__name__)\nclass B(A): pass\n",
+      "stdout": "B\n"
+    },
+    {
+      "id": "staticmethod",
+      "stage": "O23",
+      "source": "class A:\n @staticmethod\n def __init_subclass__(): print(\"static\")\nclass B(A): pass\n",
+      "stdout": "static\n"
+    },
+    {
+      "id": "descriptor-binding",
+      "stage": "O23",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\",obj is None,owner.__name__)\n  def hook():\n   owner.saved=[8]\n   print(\"call\",owner.__name__)\n  return hook\nclass A: __init_subclass__=D()\nclass B(A): pass\nprint(B.saved[0])\n",
+      "stdout": "bind True B\ncall B\n8\n"
+    },
+    {
+      "id": "descriptor-callable-result",
+      "stage": "O23",
+      "source": "class Call:\n def __init__(self,owner): self.owner=owner\n def __call__(self): print(\"call\",self.owner.__name__)\nclass D:\n def __get__(self,obj,owner): return Call(owner)\nclass A: __init_subclass__=D()\nclass B(A): pass\n",
+      "stdout": "call B\n"
+    },
+    {
+      "id": "descriptor-binding-error",
+      "stage": "O23",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"binding\")\n  raise AttributeError(\"original\")\nclass A: __init_subclass__=D()\nclass B(A): print(\"body\")\n",
+      "stdout": "body\nbinding\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "hook-body-error",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls):\n  print(\"hook\")\n  raise ValueError(\"original\")\nclass B(A): print(\"body\")\n",
+      "stdout": "body\nhook\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "noncallable-11",
+      "stage": "O23",
+      "source": "class A: __init_subclass__=None\nclass B(A): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "noncallable-12",
+      "stage": "O23",
+      "source": "class A: __init_subclass__=7\nclass B(A): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "noncallable-13",
+      "stage": "O23",
+      "source": "class A: __init_subclass__=property(lambda self: None)\nclass B(A): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "return-value-ignored",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls): return [7]\nclass B(A): pass\nprint(B.__name__)\n",
+      "stdout": "B\n"
+    },
+    {
+      "id": "generator-not-driven",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls):\n  print(\"never\")\n  yield 7\nclass B(A): pass\nprint(B.__name__)\n",
+      "stdout": "B\n"
+    },
+    {
+      "id": "cell-and-notification-order",
+      "stage": "O23",
+      "source": "def decorate(cls):\n print(\"decorate\",cls.__name__,cls.marker)\n return cls\nclass D:\n def __set_name__(self,owner,name):\n  print(\"name\",name,owner().identity() is owner)\n  owner.marker=7\nclass A:\n def __init_subclass__(cls):\n  print(\"hook\",cls.marker,cls().identity() is cls)\n@decorate\nclass B(A):\n field=D()\n def identity(self): return __class__\n",
+      "stdout": "name field True\nhook 7 True\ndecorate B 7\n"
+    },
+    {
+      "id": "notification-mutates-parent-hook",
+      "stage": "O23",
+      "source": "class A: pass\ndef hook(): print(\"replacement\")\nclass D:\n def __set_name__(self,owner,name): A.__init_subclass__=hook\nclass B(A): x=D()\n",
+      "stdout": "replacement\n"
+    },
+    {
+      "id": "own-hook-excluded-after-notification",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls): print(\"parent\")\nclass D:\n def __set_name__(self,owner,name): owner.__init_subclass__=None\nclass B(A): field=D()\n",
+      "stdout": "parent\n"
+    },
+    {
+      "id": "late-function-no-auto-wrap",
+      "stage": "O23",
+      "source": "class A: pass\ndef hook(): print(\"late\")\nA.__init_subclass__=hook\nclass B(A): pass\n",
+      "stdout": "late\n"
+    },
+    {
+      "id": "late-function-missing-cls",
+      "stage": "O23",
+      "source": "class A: pass\ndef hook(cls): pass\nA.__init_subclass__=hook\nclass B(A): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "late-classmethod",
+      "stage": "O23",
+      "source": "class A: pass\ndef hook(cls): print(cls.__name__)\nA.__init_subclass__=classmethod(hook)\nclass B(A): pass\ndel A.__init_subclass__\nclass C(A): pass\nprint(C.__name__)\n",
+      "stdout": "B\nC\n"
+    },
+    {
+      "id": "dynamic-type-hook",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls): print(\"hook\",cls.__name__)\nB=type(\"B\",(A,),{})\nprint(issubclass(B,A))\n",
+      "stdout": "hook B\nTrue\n"
+    },
+    {
+      "id": "dynamic-type-wraps-function",
+      "stage": "O23",
+      "source": "def hook(cls): print(cls.__name__)\nA=type(\"A\",(),{\"__init_subclass__\":hook})\nclass B(A): pass\n",
+      "stdout": "B\n"
+    },
+    {
+      "id": "metaclass-subclass-hook",
+      "stage": "O23",
+      "source": "class M(type):\n def __init_subclass__(cls):\n  print(\"meta\",cls.__name__)\n  super().__init_subclass__()\nclass N(M): pass\nclass A(metaclass=N): pass\nprint(type(A) is N)\n",
+      "stdout": "meta N\nTrue\n"
+    },
+    {
+      "id": "metaclass-new-hook-init-order",
+      "stage": "O23",
+      "source": "class M(type):\n def __new__(meta,name,bases,ns):\n  print(\"new\",name)\n  return type.__new__(meta,name,bases,ns)\n def __init__(cls,name,bases,ns): print(\"init\",name)\nclass A(metaclass=M):\n def __init_subclass__(cls): print(\"hook\",cls.__name__)\nclass B(A): print(\"body\")\n",
+      "stdout": "new A\ninit A\nbody\nnew B\nhook B\ninit B\n"
+    },
+    {
+      "id": "metaclass-foreign-return-skips-hook",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls): print(\"never\")\nclass M(type):\n def __new__(meta,name,bases,ns): return 7\nclass B(A,metaclass=M): pass\nprint(B)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "failed-definition-keeps-old-binding",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls): raise ValueError(\"fail\")\nB=7\ntry:\n class B(A): pass\nexcept ValueError: print(B)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "nested-creation",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls):\n  print(cls.__name__)\n  if cls.__name__ == \"B\": cls.child=type(\"C\",(A,),{})\nclass B(A): pass\nprint(B.child.__name__)\n",
+      "stdout": "B\nC\nC\n"
+    },
+    {
+      "id": "lambda-auto-wrap",
+      "stage": "O23",
+      "source": "class A: __init_subclass__=lambda cls: print(cls.__name__)\nclass B(A): pass\n",
+      "stdout": "B\n"
+    },
+    {
+      "id": "native-hook-bindings",
+      "stage": "O23",
+      "source": "class A: pass\nfor target in (object,type,A,int):\n hook=target.__init_subclass__\n print(hook.__self__ is target,hook() is None,type(hook).__name__,hasattr(hook,\"__func__\"))\nprint(A().__init_subclass__.__self__ is A)\n",
+      "stdout": "True True builtin_function_or_method False\nTrue True builtin_function_or_method False\nTrue True builtin_function_or_method False\nTrue True builtin_function_or_method False\nTrue\n"
+    },
+    {
+      "id": "native-hook-metadata",
+      "stage": "O23",
+      "source": "class A: pass\nfor target in (object,type,A):\n hook=target.__init_subclass__\n print(hook.__name__,hook.__qualname__)\n",
+      "stdout": "__init_subclass__ object.__init_subclass__\n__init_subclass__ type.__init_subclass__\n__init_subclass__ A.__init_subclass__\n"
+    },
+    {
+      "id": "native-hook-rejects-positional",
+      "stage": "O23",
+      "source": "object.__init_subclass__(1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-hook-rejects-keywords",
+      "stage": "O23",
+      "source": "object.__init_subclass__(x=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "retained-native-hook",
+      "stage": "O23",
+      "source": "def factory():\n class A: pass\n return A.__init_subclass__\nhook=factory()\nprint(hook() is None,hook.__self__.__name__)\n",
+      "stdout": "True A\n"
+    },
+    {
+      "id": "native-hook-equality-hashing",
+      "stage": "O23",
+      "source": "class A: pass\na=A.__init_subclass__\nb=A.__init_subclass__\nprint(a==b,hash(a)==hash(b),a!=object.__init_subclass__)\nd={a:7}\nprint(d[b])\n",
+      "stdout": "True True True\n7\n"
+    },
+    {
+      "id": "keyword-consumption",
+      "stage": "O24",
+      "source": "class A:\n def __init_subclass__(cls,*,tag): cls.tag=tag\nclass B(A,tag=[7]): pass\nprint(B.tag[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "cooperative-keywords",
+      "stage": "O24",
+      "source": "class A:\n def __init_subclass__(cls,*,a,**kwargs):\n  print(\"A\",a)\n  super().__init_subclass__(**kwargs)\nclass B:\n def __init_subclass__(cls,*,b):\n  print(\"B\",b)\n  super().__init_subclass__()\nclass C(A,B,a=7,b=8): pass\n",
+      "stdout": "A 7\nB 8\n"
+    },
+    {
+      "id": "keyword-evaluation-order",
+      "stage": "O24",
+      "source": "def mark(label,value):\n print(label)\n return value\nclass A:\n def __init_subclass__(cls,**kw): print(\"hook\",kw[\"x\"],kw[\"y\"])\nclass B(mark(\"base\",A),x=mark(\"x\",7),metaclass=mark(\"meta\",type),y=mark(\"y\",8)):\n print(\"body\")\n",
+      "stdout": "base\nx\nmeta\ny\nbody\nhook 7 8\n"
+    },
+    {
+      "id": "decorator-expression-order",
+      "stage": "O24",
+      "source": "def deco():\n print(\"decorator expression\")\n def apply(cls):\n  print(\"decorate\",cls.value)\n  return cls\n return apply\ndef value():\n print(\"keyword\")\n return 7\nclass A:\n def __init_subclass__(cls,*,value):\n  print(\"hook\")\n  cls.value=value\n@deco()\nclass B(A,value=value()): print(\"body\")\n",
+      "stdout": "decorator expression\nkeyword\nbody\nhook\ndecorate 7\n"
+    },
+    {
+      "id": "keyword-error-before-body",
+      "stage": "O24",
+      "source": "def fail(): raise ValueError(\"keyword\")\nclass A:\n def __init_subclass__(cls,**kwargs): print(\"never\")\nclass B(A,x=fail()): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "unconsumed-keyword",
+      "stage": "O24",
+      "source": "class A(x=7): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "missing-hook-keyword",
+      "stage": "O23",
+      "source": "class A:\n def __init_subclass__(cls,*,x): print(\"never\")\nclass B(A): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "static-keywords",
+      "stage": "O24",
+      "source": "class A:\n @staticmethod\n def __init_subclass__(*,x): print(x[0])\nclass B(A,x=[7]): pass\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "descriptor-keywords",
+      "stage": "O24",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\",obj is None,owner.__name__)\n  def hook(*,x):\n   owner.saved=x\n   print(x[0])\n  return hook\nclass A: __init_subclass__=D()\nclass B(A,x=[7]): pass\nprint(B.saved[0])\n",
+      "stdout": "bind True B\n7\n7\n"
+    },
+    {
+      "id": "metaclass-keyword-forwarding",
+      "stage": "O24",
+      "source": "class M(type):\n def __new__(meta,name,bases,ns,**kw):\n  print(\"new\",name,kw[\"x\"][0])\n  return type.__new__(meta,name,bases,ns,**kw)\n def __init__(cls,name,bases,ns,**kw):\n  print(\"init\",name,kw[\"x\"][0])\n  type.__init__(cls,name,bases,ns,**kw)\nclass A:\n def __init_subclass__(cls,*,x):\n  print(\"hook\",x[0])\n  cls.saved=x\nclass B(A,x=[7],metaclass=M): pass\nprint(B.saved[0])\n",
+      "stdout": "new B 7\nhook 7\ninit B 7\n7\n"
+    },
+    {
+      "id": "metaclass-consumes-keyword",
+      "stage": "O24",
+      "source": "class M(type):\n def __new__(meta,name,bases,ns,*,x):\n  cls=type.__new__(meta,name,bases,ns)\n  cls.x=x\n  return cls\n def __init__(cls,name,bases,ns,*,x): print(\"init\",x)\nclass A(x=7,metaclass=M): pass\nprint(A.x)\n",
+      "stdout": "init 7\n7\n"
+    },
+    {
+      "id": "inherited-native-type-init-keywords",
+      "stage": "O24",
+      "source": "class M(type):\n def __new__(meta,name,bases,ns,**kw): return type.__new__(meta,name,bases,ns)\nclass A(metaclass=M,x=7): pass\nprint(type(A) is M)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "type-keyword-construction",
+      "stage": "O24",
+      "source": "class A:\n def __init_subclass__(cls,*,x):\n  print(cls.__name__,x[0])\n  cls.saved=x\nB=type(\"B\",(A,),{},x=[7])\nprint(B.saved[0])\n",
+      "stdout": "B 7\n7\n"
+    },
+    {
+      "id": "type-new-keyword-construction",
+      "stage": "O24",
+      "source": "class A:\n def __init_subclass__(cls,*,x): print(x)\nB=type.__new__(type,\"B\",(A,),{},x=7)\nprint(B.__name__)\n",
+      "stdout": "7\nB\n"
+    },
+    {
+      "id": "type-new-selects-more-derived-metaclass",
+      "stage": "O24",
+      "source": "class M(type):\n def __new__(meta,name,bases,ns,**kw):\n  print(\"new\",name,len(kw))\n  return type.__new__(meta,name,bases,ns,**kw)\nclass A(metaclass=M):\n def __init_subclass__(cls,*,x): print(\"hook\",x)\nB=type.__new__(type,\"B\",(A,),{},x=7)\nprint(type(B) is M)\n",
+      "stdout": "new A 0\nnew B 1\nhook 7\nTrue\n"
+    },
+    {
+      "id": "type-call-keywords",
+      "stage": "O24",
+      "source": "class M(type): pass\nclass A:\n def __init_subclass__(cls,*,x): print(x)\nB=type.__call__(M,\"B\",(A,),{},x=7)\nprint(type(B) is M)\n",
+      "stdout": "7\nTrue\n"
+    },
+    {
+      "id": "type-one-argument-keyword-error",
+      "stage": "O24",
+      "source": "type(7,x=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-type-init-three-keywords",
+      "stage": "O24",
+      "source": "print(type.__init__(type,\"A\",(),{},x=7) is None)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-type-init-one-keywords",
+      "stage": "O24",
+      "source": "type.__init__(type,7,x=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "metaclass-subclass-keywords",
+      "stage": "O24",
+      "source": "class M(type):\n def __init_subclass__(cls,*,x): print(\"meta\",cls.__name__,x)\nclass N(M,x=7): pass\nclass A(metaclass=N): pass\nprint(type(A) is N)\n",
+      "stdout": "meta N 7\nTrue\n"
+    },
+    {
+      "id": "hook-keyword-order",
+      "stage": "O24",
+      "source": "class A:\n def __init_subclass__(cls,**kwargs):\n  for key in kwargs: print(key,kwargs[key])\nclass B(A,z=7,a=8): pass\n",
+      "stdout": "z 7\na 8\n"
+    },
+    {
+      "id": "hook-definition-name-shadow",
+      "stage": "O24",
+      "source": "class A:\n def __init_subclass__(cls,*,metaclass): pass\nclass B(A,metaclass=type): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "keywords-are-not-mangled",
+      "stage": "O24",
+      "source": "class A:\n def __init_subclass__(cls,**kw): print(kw[\"__private\"])\nclass Outer:\n class B(A,__private=7): pass\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "deferred-prepare",
+      "stage": "Future",
+      "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\nclass A(metaclass=M): pass\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-mro-entries",
+      "stage": "Future",
+      "source": "class A:\n def __mro_entries__(self,bases): return ()\nclass B(A()): pass\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-expanded-keywords",
+      "stage": "Future",
+      "source": "class A(**{}): pass\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-expanded-bases",
+      "stage": "Future",
+      "source": "class A(*()): pass\n",
+      "stdout": ""
+    }
+  ]
+}

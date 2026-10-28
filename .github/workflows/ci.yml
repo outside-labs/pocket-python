@@ -214,6 +214,7 @@ jobs:
       - run: python scripts/lock_library_profiles.py
       - run: python runtime/check_classes.py --reference-only --report build/classes-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/ordering.json --report build/ordering-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/subclass-initialization.json --report build/subclass-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/ordinary-syntax.json --report build/ordinary-syntax-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/value-families.json --report build/value-families-reference-report.json
