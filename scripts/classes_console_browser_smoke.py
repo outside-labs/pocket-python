@@ -38,6 +38,7 @@ from examples.interpreter_descriptor_binding import SOURCE as DESCRIPTOR_BINDING
 from examples.interpreter_native_rebinding import SOURCE as NATIVE_REBINDING_SOURCE
 from examples.interpreter_type_reflection import SOURCE as TYPE_REFLECTION_SOURCE
 from examples.interpreter_property_names import SOURCE as PROPERTY_NAMES_SOURCE
+from examples.interpreter_abstract_flags import SOURCE as ABSTRACT_FLAGS_SOURCE
 
 
 def smoke(channel=None):
@@ -189,7 +190,8 @@ def smoke(channel=None):
                     native_rebinding = json.loads((ROOT / 'tests/fixtures/interpreter/native-rebinding.json').read_bytes())
                     type_reflection = json.loads((ROOT / 'tests/fixtures/interpreter/type-reflection.json').read_bytes())
                     property_names = json.loads((ROOT / 'tests/fixtures/interpreter/property-names.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names]:
+                    abstract_flags = json.loads((ROOT / 'tests/fixtures/interpreter/abstract-flags.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -206,6 +208,7 @@ def smoke(channel=None):
                     programs.append(NATIVE_REBINDING_SOURCE)
                     programs.append(TYPE_REFLECTION_SOURCE)
                     programs.append(PROPERTY_NAMES_SOURCE)
+                    programs.append(ABSTRACT_FLAGS_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -566,7 +569,25 @@ def smoke(channel=None):
                                     assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
                     checks.append('property-names-copies-and-native-notification-compose-after-offline-reload')
                     checks.append('property-name-errors-and-diagnostic-callback-refusals-remain-explicit-offline')
+                    abstract_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', ABSTRACT_FLAGS_SOURCE], text=True, encoding='utf-8')
+                    run(ABSTRACT_FLAGS_SOURCE, abstract_expected)
+                    for case in abstract_flags['cases']:
+                        if case['stage'] not in abstract_flags['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                            for frame in case.get('error_frames', []):
+                                if frame['function'] != '<module>':
+                                    assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
+                    checks.append('abstract-flags-compose-with-copies-function-markers-and-lazy-generators-offline')
+                    checks.append('abstract-lookup-truth-errors-readonly-flags-and-future-boundaries-offline')
                     busy = [
+                        'class C: pass\nclass Flag:\n def __getattribute__(self,name):\n  if name=="__isabstractmethod__":\n   print("entered")\n   while True: pass\n  return object.__getattribute__(self,name)\nm=classmethod(Flag()).__get__(None,C)\nm.__isabstractmethod__\n',
+                        'class Flag:\n @property\n def __isabstractmethod__(self):\n  print("entered")\n  while True: pass\nproperty(Flag()).__isabstractmethod__\n',
+                        'class Truth:\n def __bool__(self):\n  print("entered")\n  while True: pass\nclass Flag: __isabstractmethod__=Truth()\nstaticmethod(Flag()).__isabstractmethod__\n',
+                        'class Flag:\n @property\n def __isabstractmethod__(self):\n  print("entered")\n  while True: pass\nclassmethod(Flag()).__isabstractmethod__\n',
                         'class Getter:\n @property\n def __name__(self):\n  print("entered")\n  while True: pass\np=property(Getter())\np.__name__\n',
                         'p=property()\nclass D:\n def __set_name__(self,owner,name):\n  print("entered")\n  while True: pass\nclass C:\n first=p\n callback=D()\n last=p\n',
                         'class M(type):\n def __getattribute__(cls,name):\n  print("entered")\n  while True: pass\nclass C(metaclass=M): pass\nC.mro()\n',
@@ -829,6 +850,10 @@ def smoke(channel=None):
                     refused('print("before")\nproperty().__set_name__(None,"field")\n', 'NameError:')
                     assert page.locator('#result').inner_text() == 'before\n'
                     checks.append('class-to-core-update-retains-property-name-boundaries')
+                    refused(ABSTRACT_FLAGS_SOURCE, 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused('def f(): pass\nf.__isabstractmethod__=True\n', 'UnsupportedSyntaxError:')
+                    checks.append('class-to-core-update-retains-abstract-flag-boundaries')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

@@ -195,6 +195,12 @@ composing hierarchy inspection, detached native methods and lazy iteration.
 Custom MRO construction, default directories and live namespace mappings remain
 separate contracts.
 
+The finite [abstract-flag profile](docs/interpreter-abstract-flags.md) adds owned
+function markers and computed property/static/class method flags, including
+optional lookup, truth callbacks and read-only descriptor metadata. The
+[descriptor-flags console](examples/interpreter_abstract_flags.py) composes
+live marker changes, accessor copies and lazy iteration.
+
 The finite [property-name profile](docs/interpreter-property-names.md) adds
 mutable property names, lazy getter-name lookup and native name notification.
 Run `python -m examples.interpreter_property_names` for a console composing

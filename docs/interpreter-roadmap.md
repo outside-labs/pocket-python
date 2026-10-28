@@ -162,6 +162,13 @@ Model tensor execution belongs in an optimized adapter.
 
 ## Compatibility and delivery gates
 
+The finite [O39/O40 descriptor flag slice](interpreter-abstract-flags.md) extends
+#123 with owned function markers and computed property/static/class method
+flags. Optional attribute lookup and truth conversion preserve callback order,
+errors and lifetime bounds. Abstract class enforcement, `abc`, documentation,
+live namespaces and broader descriptor reflection retain separate contracts.
+Native coroutine/await and host-adapter acceptance remain open under #34.
+
 The finite [O23/O24 class-construction slice](interpreter-subclass-initialization.md)
 extends #123 with inherited subclass initialization and explicit named class
 keywords. Notification order, C3/descriptor binding, native method identity and

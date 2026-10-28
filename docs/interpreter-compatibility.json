@@ -311,7 +311,7 @@
     {
       "id": "descriptors-decorators",
       "status": "partial",
-      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification.",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Function abstract markers and computed read-only property/static/class method flags use owned optional lookup and truth conversion, preserving lookup-only AttributeError suppression, order, live changes and callback failures.",
       "gaps": "Further property documentation/dictionary reflection, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
@@ -371,7 +371,19 @@
         "property-names-notification-rebound-native",
         "property-names-automatic-alias-order",
         "property-names-automatic-notification-snapshot",
-        "property-names-diagnostic-nested"
+        "property-names-diagnostic-nested",
+        "abstract-flags-function-decorator-marker",
+        "abstract-flags-function-marker-identity",
+        "abstract-flags-accessor-order",
+        "abstract-flags-accessor-short-circuit",
+        "abstract-flags-lookup-attribute-error-suppressed",
+        "abstract-flags-truth-error-AttributeError",
+        "abstract-flags-callback-mutates-next-flag",
+        "abstract-flags-bound-method-marker",
+        "abstract-flags-staticmethod-native-read",
+        "abstract-flags-classmethod-hooked-lookup",
+        "abstract-flags-staticmethod-nested-attribute-error",
+        "abstract-flags-method-custom-callable-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
@@ -426,7 +438,19 @@
         "tests/fixtures/interpreter/property-names.json:notification-rebound-native",
         "tests/fixtures/interpreter/property-names.json:automatic-alias-order",
         "tests/fixtures/interpreter/property-names.json:automatic-notification-snapshot",
-        "tests/fixtures/interpreter/property-names.json:diagnostic-nested"
+        "tests/fixtures/interpreter/property-names.json:diagnostic-nested",
+        "tests/fixtures/interpreter/abstract-flags.json:function-decorator-marker",
+        "tests/fixtures/interpreter/abstract-flags.json:function-marker-identity",
+        "tests/fixtures/interpreter/abstract-flags.json:accessor-order",
+        "tests/fixtures/interpreter/abstract-flags.json:accessor-short-circuit",
+        "tests/fixtures/interpreter/abstract-flags.json:lookup-attribute-error-suppressed",
+        "tests/fixtures/interpreter/abstract-flags.json:truth-error-AttributeError",
+        "tests/fixtures/interpreter/abstract-flags.json:callback-mutates-next-flag",
+        "tests/fixtures/interpreter/abstract-flags.json:bound-method-marker",
+        "tests/fixtures/interpreter/abstract-flags.json:staticmethod-native-read",
+        "tests/fixtures/interpreter/abstract-flags.json:classmethod-hooked-lookup",
+        "tests/fixtures/interpreter/abstract-flags.json:staticmethod-nested-attribute-error",
+        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook"
       ]
     },
     {
@@ -1218,7 +1242,7 @@
     {
       "id": "classmethod",
       "status": "partial",
-      "scope": "classmethod(callable), classes-source/1 and accessed-owner binding. Explicit bound/unbound __get__, actual-type/explicit-owner binding and finite native wrapper metadata/receiver validation are adopted. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers.",
+      "scope": "classmethod(callable), classes-source/1 and accessed-owner binding. Explicit bound/unbound __get__, actual-type/explicit-owner binding and finite native wrapper metadata/receiver validation are adopted. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Computed read-only __isabstractmethod__ uses owned optional lookup/truth conversion over current accessors or wrapped values (O39/O40).",
       "gaps": "Further wrapper documentation/name/dictionary reflection and native descriptor rebinding APIs.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1233,13 +1257,37 @@
         "native-descriptor-classmethod-inference-bypasses-advertised-class",
         "native-descriptor-classmethod-explicit-owner-identity",
         "native-descriptor-classmethod-native-callable-metadata",
-        "native-descriptor-classmethod-native-descriptor-equality"
+        "native-descriptor-classmethod-native-descriptor-equality",
+        "abstract-flags-function-decorator-marker",
+        "abstract-flags-function-marker-identity",
+        "abstract-flags-accessor-order",
+        "abstract-flags-accessor-short-circuit",
+        "abstract-flags-lookup-attribute-error-suppressed",
+        "abstract-flags-truth-error-AttributeError",
+        "abstract-flags-callback-mutates-next-flag",
+        "abstract-flags-bound-method-marker",
+        "abstract-flags-staticmethod-native-read",
+        "abstract-flags-classmethod-hooked-lookup",
+        "abstract-flags-staticmethod-nested-attribute-error",
+        "abstract-flags-method-custom-callable-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/native-descriptors.json:classmethod-inference-bypasses-advertised-class",
         "tests/fixtures/interpreter/native-descriptors.json:classmethod-explicit-owner-identity",
         "tests/fixtures/interpreter/native-descriptors.json:classmethod-native-callable-metadata",
-        "tests/fixtures/interpreter/native-descriptors.json:classmethod-native-descriptor-equality"
+        "tests/fixtures/interpreter/native-descriptors.json:classmethod-native-descriptor-equality",
+        "tests/fixtures/interpreter/abstract-flags.json:function-decorator-marker",
+        "tests/fixtures/interpreter/abstract-flags.json:function-marker-identity",
+        "tests/fixtures/interpreter/abstract-flags.json:accessor-order",
+        "tests/fixtures/interpreter/abstract-flags.json:accessor-short-circuit",
+        "tests/fixtures/interpreter/abstract-flags.json:lookup-attribute-error-suppressed",
+        "tests/fixtures/interpreter/abstract-flags.json:truth-error-AttributeError",
+        "tests/fixtures/interpreter/abstract-flags.json:callback-mutates-next-flag",
+        "tests/fixtures/interpreter/abstract-flags.json:bound-method-marker",
+        "tests/fixtures/interpreter/abstract-flags.json:staticmethod-native-read",
+        "tests/fixtures/interpreter/abstract-flags.json:classmethod-hooked-lookup",
+        "tests/fixtures/interpreter/abstract-flags.json:staticmethod-nested-attribute-error",
+        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook"
       ]
     },
     {
@@ -2025,7 +2073,7 @@
     {
       "id": "property",
       "status": "partial",
-      "scope": "property(fget=None,fset=None,fdel=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification.",
+      "scope": "property(fget=None,fset=None,fdel=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Computed read-only __isabstractmethod__ uses owned optional lookup/truth conversion over current accessors or wrapped values (O39/O40).",
       "gaps": "Further property documentation/dictionary reflection and arbitrary doc behavior. Copies requiring getter documentation read hooks refuse before those hooks execute. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
@@ -2060,7 +2108,19 @@
         "property-names-notification-rebound-native",
         "property-names-automatic-alias-order",
         "property-names-automatic-notification-snapshot",
-        "property-names-diagnostic-nested"
+        "property-names-diagnostic-nested",
+        "abstract-flags-function-decorator-marker",
+        "abstract-flags-function-marker-identity",
+        "abstract-flags-accessor-order",
+        "abstract-flags-accessor-short-circuit",
+        "abstract-flags-lookup-attribute-error-suppressed",
+        "abstract-flags-truth-error-AttributeError",
+        "abstract-flags-callback-mutates-next-flag",
+        "abstract-flags-bound-method-marker",
+        "abstract-flags-staticmethod-native-read",
+        "abstract-flags-classmethod-hooked-lookup",
+        "abstract-flags-staticmethod-nested-attribute-error",
+        "abstract-flags-method-custom-callable-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/nested-descriptors.json:set-property",
@@ -2089,7 +2149,19 @@
         "tests/fixtures/interpreter/property-names.json:notification-rebound-native",
         "tests/fixtures/interpreter/property-names.json:automatic-alias-order",
         "tests/fixtures/interpreter/property-names.json:automatic-notification-snapshot",
-        "tests/fixtures/interpreter/property-names.json:diagnostic-nested"
+        "tests/fixtures/interpreter/property-names.json:diagnostic-nested",
+        "tests/fixtures/interpreter/abstract-flags.json:function-decorator-marker",
+        "tests/fixtures/interpreter/abstract-flags.json:function-marker-identity",
+        "tests/fixtures/interpreter/abstract-flags.json:accessor-order",
+        "tests/fixtures/interpreter/abstract-flags.json:accessor-short-circuit",
+        "tests/fixtures/interpreter/abstract-flags.json:lookup-attribute-error-suppressed",
+        "tests/fixtures/interpreter/abstract-flags.json:truth-error-AttributeError",
+        "tests/fixtures/interpreter/abstract-flags.json:callback-mutates-next-flag",
+        "tests/fixtures/interpreter/abstract-flags.json:bound-method-marker",
+        "tests/fixtures/interpreter/abstract-flags.json:staticmethod-native-read",
+        "tests/fixtures/interpreter/abstract-flags.json:classmethod-hooked-lookup",
+        "tests/fixtures/interpreter/abstract-flags.json:staticmethod-nested-attribute-error",
+        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook"
       ]
     },
     {
@@ -2252,7 +2324,7 @@
     {
       "id": "staticmethod",
       "status": "partial",
-      "scope": "staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1. Explicit bound/unbound __get__, actual-type/explicit-owner binding and finite native wrapper metadata/receiver validation are adopted.",
+      "scope": "staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1. Explicit bound/unbound __get__, actual-type/explicit-owner binding and finite native wrapper metadata/receiver validation are adopted. Computed read-only __isabstractmethod__ uses owned optional lookup/truth conversion over current accessors or wrapped values (O39/O40).",
       "gaps": "Further wrapper documentation/name/dictionary reflection and native descriptor rebinding APIs.",
       "reference_version": "3.14.7",
       "targets": [
@@ -2264,10 +2336,34 @@
       ],
       "probes": [
         "builtin-staticmethod",
-        "native-descriptor-staticmethod-wrapped-descriptor-not-called"
+        "native-descriptor-staticmethod-wrapped-descriptor-not-called",
+        "abstract-flags-function-decorator-marker",
+        "abstract-flags-function-marker-identity",
+        "abstract-flags-accessor-order",
+        "abstract-flags-accessor-short-circuit",
+        "abstract-flags-lookup-attribute-error-suppressed",
+        "abstract-flags-truth-error-AttributeError",
+        "abstract-flags-callback-mutates-next-flag",
+        "abstract-flags-bound-method-marker",
+        "abstract-flags-staticmethod-native-read",
+        "abstract-flags-classmethod-hooked-lookup",
+        "abstract-flags-staticmethod-nested-attribute-error",
+        "abstract-flags-method-custom-callable-hook"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/native-descriptors.json:staticmethod-wrapped-descriptor-not-called"
+        "tests/fixtures/interpreter/native-descriptors.json:staticmethod-wrapped-descriptor-not-called",
+        "tests/fixtures/interpreter/abstract-flags.json:function-decorator-marker",
+        "tests/fixtures/interpreter/abstract-flags.json:function-marker-identity",
+        "tests/fixtures/interpreter/abstract-flags.json:accessor-order",
+        "tests/fixtures/interpreter/abstract-flags.json:accessor-short-circuit",
+        "tests/fixtures/interpreter/abstract-flags.json:lookup-attribute-error-suppressed",
+        "tests/fixtures/interpreter/abstract-flags.json:truth-error-AttributeError",
+        "tests/fixtures/interpreter/abstract-flags.json:callback-mutates-next-flag",
+        "tests/fixtures/interpreter/abstract-flags.json:bound-method-marker",
+        "tests/fixtures/interpreter/abstract-flags.json:staticmethod-native-read",
+        "tests/fixtures/interpreter/abstract-flags.json:classmethod-hooked-lookup",
+        "tests/fixtures/interpreter/abstract-flags.json:staticmethod-nested-attribute-error",
+        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook"
       ]
     },
     {
