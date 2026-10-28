@@ -128,3 +128,8 @@ test('metaclass mutation hooks and bindings preserve frames and actual activatio
     }
   }
 });
+
+test('non-data metaclass name descriptors retain temporary class owners', async () => {
+  const source = 'def make():\n class D:\n  def __get__(self,obj,owner):\n   print("name")\n   return [7]\n class M(type): __name__=D()\n return M("A",(),{})\nprint([1][0]+make().__name__[0])\n';
+  await lifecycle(source, 'name\n8\n', ['name\n']);
+});
