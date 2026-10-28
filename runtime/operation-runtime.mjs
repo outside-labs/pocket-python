@@ -375,6 +375,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     state.temporaries.push(result); return valueTask(result, site, record.after);
   };
+  const abstractNext = (record, site) => {
+    const accessors = [record.receiver.fget, record.receiver.fset, record.receiver.fdel];
+    for (let position = record.position; position < accessors.length; position++) {
+      charge(1);
+      const accessor = accessors[position];
+      if (accessor === null || values.typeName(accessor) !== null) continue;
+      return attributeTask(accessor, "__isabstractmethod__", site,
+        continuation("abstract-lookup", {...record, position}), record.depth);
+    }
+    return valueTask(false, site, record.after);
+  };
   const recover = (value, completion, site) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
@@ -383,6 +394,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
+      if (current.kind === "abstract-lookup" && value.name === "AttributeError")
+        return abstractNext({...current, position: current.position + 1}, site);
       if (current.kind === "advertised-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
       if (current.kind === "advertised-super" && value.name === "AttributeError") return unaryTask("super-invalid", current.receiver, site, current.after);
       if (current.kind === "attribute-fallback" && value.name === "AttributeError")
@@ -448,6 +461,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "advertised-instance")
       return valueTask(classes.isType(value) && classes.subclass(value, completion.type), site, completion.after);
+    if (completion?.kind === "abstract-lookup") return unaryTask("truth", value, site,
+      continuation("abstract-truth", completion), completion.depth);
+    if (completion?.kind === "abstract-truth") return value ? valueTask(true, site, completion.after) :
+      abstractNext({...completion, position: completion.position + 1}, site);
     if (completion?.kind === "check-result") return unaryTask("truth", value, site,
       continuation("check-truth", completion), completion.depth);
     if (completion?.kind === "check-truth") return valueTask(value, site, completion.after);
@@ -1538,6 +1555,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length !== 3) python("TypeError", "Native property notification requires two positional arguments");
             task = valueTask(classes.mutate(args[0], "__name__", args[2]), site, completion); continue;
           }
+          if (callable.name === "descriptor-abstract") {
+            const receiver = args[0];
+            if (!(receiver instanceof PropertyValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid abstract-method flag lookup.");
+            if (++depth > maxDepth) python("RecursionError", "maximum abstract-method flag lookup depth exceeded");
+            task = abstractNext({receiver, position: 0, depth, after: completion}, site); continue;
+          }
           if (callable.name === "property-name") {
             const receiver = args[0];
             if (!(receiver instanceof PropertyValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid property name lookup.");
@@ -1595,7 +1618,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (name === null) python("TypeError", "attribute name must be string");
             if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
             if (writing && args[0] instanceof ClassValue) python("TypeError", "object attribute mutation requires an ordinary instance");
-            if (!(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            const markerLayout = name === "__isabstractmethod__" && (args[0] instanceof FunctionValue ||
+              args[0] instanceof BoundMethodValue || args[0] instanceof PropertyValue);
+            if (!(args[0] instanceof InstanceValue) && !markerLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
           if (["getattr", "setattr", "delattr", "hasattr"].includes(callable.name)) {

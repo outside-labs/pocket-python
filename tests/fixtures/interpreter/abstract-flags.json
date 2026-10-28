@@ -3,7 +3,9 @@
   "suite": "interpreter-abstract-flags/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O39"
+  ],
   "cases": [
     {
       "id": "empty-property",
@@ -668,6 +670,69 @@
         {
           "function": "<module>",
           "line": 3
+        }
+      ]
+    },
+    {
+      "id": "marker-cycles-and-callable-truth",
+      "stage": "O39",
+      "source": "def f(): pass\nf.__isabstractmethod__=f\nprint(property(f).__isabstractmethod__)\nf.__isabstractmethod__=property()\nprint(property(f).__isabstractmethod__)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "native-function-marker-defaults",
+      "stage": "O39",
+      "source": "def f(): pass\nobject.__setattr__(f,\"__isabstractmethod__\",[7])\nprint(object.__getattribute__(f,\"__isabstractmethod__\")[0],property(f).__isabstractmethod__)\nobject.__delattr__(f,\"__isabstractmethod__\")\nprint(hasattr(f,\"__isabstractmethod__\"))\n",
+      "stdout": "7 True\nFalse\n"
+    },
+    {
+      "id": "native-property-marker-write",
+      "stage": "O39",
+      "source": "p=property()\nobject.__setattr__(p,\"__isabstractmethod__\",True)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "native-property-marker-delete",
+      "stage": "O39",
+      "source": "p=property()\nobject.__delattr__(p,\"__isabstractmethod__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "truth-false-continues",
+      "stage": "O39",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  return False\nclass First: __isabstractmethod__=Truth()\nclass Second:\n @property\n def __isabstractmethod__(self):\n  print(\"second\")\n  return True\nprint(property(First(),Second()).__isabstractmethod__)\n",
+      "stdout": "truth\nsecond\nTrue\n"
+    },
+    {
+      "id": "nested-lookup-suppresses-inner-truth-attribute-error",
+      "stage": "O39",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise AttributeError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nprint(property(property(Flag())).__isabstractmethod__)\n",
+      "stdout": "truth\nFalse\n"
+    },
+    {
+      "id": "marker-default-ignores-instance-attribute-hook",
+      "stage": "O39",
+      "source": "class Flag:\n def __getattribute__(self,name):\n  print(\"hook\",name)\n  return True\nf=Flag()\nprint(object.__getattribute__(f,\"__isabstractmethod__\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
         }
       ]
     },
