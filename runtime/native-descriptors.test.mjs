@@ -75,3 +75,10 @@ test('explicit native property source retains core admission', async () => {
   const result = await runSourceRequest({modules: [unit('print("never")\nclass A: pass\np=property(lambda obj: obj)\np.__get__(A())\n')]});
   assert.equal(result.error?.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); assert.equal(result.stats, null);
 });
+
+for (const kind of ['staticmethod', 'classmethod']) {
+  test(kind+' native binding retains the detached wrapper, closure and explicit owner through parked collection and interruption', async () => {
+    const source = 'def factory():\n captured=[9]\n def callback(*args):\n  print("entered")\n  print(captured[0],len(args)'+(kind === 'classmethod' ? ',args[0][0]' : '')+')\n  return captured\n return '+kind+'(callback).__get__\nbind=factory()\nmethod=bind(None,[7])\ndel bind\nr=method()\nprint(r[0])\n';
+    await lifecycle(source, 'entered\n9 '+(kind === 'classmethod' ? '1 7' : '0')+'\n9\n', ['entered\n']);
+  });
+}

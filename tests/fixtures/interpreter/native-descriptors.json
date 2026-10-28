@@ -4,7 +4,8 @@
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
   "implemented_stages": [
-    "O29"
+    "O29",
+    "O30"
   ],
   "cases": [
     {
@@ -518,6 +519,32 @@
       "stage": "O30",
       "source": "f=lambda x:x\nw=staticmethod(f)\nprint(w([7])[0],w.__get__(None,int) is f,w.__func__ is f)\n",
       "stdout": "7 True True\n"
+    },
+    {
+      "id": "staticmethod-native-binding-validates-receiver",
+      "stage": "O30",
+      "source": "class A: read=staticmethod.__get__\ntry:\n m=A().read\n print(\"never\")\nexcept TypeError: print(\"wrong receiver\")\n",
+      "stdout": "wrong receiver\n"
+    },
+    {
+      "id": "staticmethod-rejects-other-wrapper",
+      "stage": "O30",
+      "source": "staticmethod.__get__(classmethod(lambda obj: obj),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-native-binding-validates-receiver",
+      "stage": "O30",
+      "source": "class A: read=classmethod.__get__\ntry:\n m=A().read\n print(\"never\")\nexcept TypeError: print(\"wrong receiver\")\n",
+      "stdout": "wrong receiver\n"
+    },
+    {
+      "id": "classmethod-rejects-other-wrapper",
+      "stage": "O30",
+      "source": "classmethod.__get__(staticmethod(lambda obj: obj),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
     },
     {
       "id": "future-live-namespace",
