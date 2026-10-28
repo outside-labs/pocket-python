@@ -34,6 +34,7 @@ from examples.interpreter_subclass_initialization import SOURCE as SUBCLASS_SOUR
 from examples.interpreter_metaclass_attributes import SOURCE as METACLASS_SOURCE
 from examples.interpreter_nested_descriptors import SOURCE as NESTED_DESCRIPTOR_SOURCE
 from examples.interpreter_native_descriptors import SOURCE as NATIVE_DESCRIPTOR_SOURCE
+from examples.interpreter_descriptor_binding import SOURCE as DESCRIPTOR_BINDING_SOURCE
 
 
 def smoke(channel=None):
@@ -181,7 +182,8 @@ def smoke(channel=None):
                     metaclasses = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-attributes.json').read_bytes())
                     nested_descriptors = json.loads((ROOT / 'tests/fixtures/interpreter/nested-descriptors.json').read_bytes())
                     native_descriptors = json.loads((ROOT / 'tests/fixtures/interpreter/native-descriptors.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors]:
+                    descriptor_binding = json.loads((ROOT / 'tests/fixtures/interpreter/descriptor-binding.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -194,6 +196,7 @@ def smoke(channel=None):
                     programs.append(METACLASS_SOURCE)
                     programs.append(NESTED_DESCRIPTOR_SOURCE)
                     programs.append(NATIVE_DESCRIPTOR_SOURCE)
+                    programs.append(DESCRIPTOR_BINDING_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -503,6 +506,14 @@ def smoke(channel=None):
                             refused(case['source'], case['error_type'] + ':')
                     checks.append('native-property-methods-and-explicit-wrapper-owners-compose-after-offline-reload')
                     checks.append('native-descriptor-arguments-receivers-and-live-namespace-refusals-remain-explicit-offline')
+                    run(DESCRIPTOR_BINDING_SOURCE, 'copy False True 7\nupdated 11\nbound True True True 11\nclosure 17\nready\nentered\nitem 13\nnative property.getter method-wrapper\n')
+                    for case in descriptor_binding['cases']:
+                        if case['stage'] not in descriptor_binding['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                    checks.append('accessor-copies-and-explicit-function-binding-compose-after-offline-reload')
+                    checks.append('descriptor-copy-binding-validation-and-future-refusals-remain-explicit-offline')
                     busy = [
                         'def callback(obj):\n print("entered")\n while True: pass\np=property(callback)\np.__get__([7])\n',
                         'def callback(obj,value):\n print("entered")\n while True: pass\np=property(None,callback)\np.__set__([7],[8])\n',
@@ -557,6 +568,7 @@ def smoke(channel=None):
                         'class K:\n def __hash__(self): return 7\n def __eq__(self,other):\n  while True: pass\nd={K():[3]}\nd[K()]=[7]\n',
                         'class R:\n def __bool__(self):\n  while True: pass\nclass K:\n def __hash__(self): return 7\n def __eq__(self,other): return R()\nd={K():[3]}\nd[K()]=[7]\n',
                         'class R:\n def __bool__(self):\n  while True: pass\nclass Spin:\n def __eq__(self,other): return R()\nprint(Spin()!=7)\n'])
+                    busy.extend(['def read(obj):\n print("entered")\n while True: pass\np=property.getter(property(),read)\np.__get__([7])\n', 'def write(obj,value):\n print("entered")\n while True: pass\np=property.setter(property(),write)\np.__set__([7],[9])\n', 'def remove(obj):\n print("entered")\n while True: pass\np=property.deleter(property(),remove)\np.__delete__([7])\n', 'def read(obj):\n print("entered")\n while True: pass\nm=read.__get__([7])\ndel read\nm()\n', 'def read(obj):\n print("entered")\n while True: pass\n yield obj\nm=read.__get__([7])\ng=m()\ndel m\nnext(g)\n'])
                     stopped = []
                     for slot, invocation in [('__int__','int(Spin())'), ('__float__','float(Spin())'),
                                              ('__complex__','complex(Spin())'), ('__abs__','abs(Spin())'),
@@ -737,6 +749,11 @@ def smoke(channel=None):
                     refused(NATIVE_DESCRIPTOR_SOURCE, 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     checks.append('class-to-core-update-refuses-native-descriptor-example-before-effects')
+                    refused(DESCRIPTOR_BINDING_SOURCE, 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused('print("before")\ndef read(obj): return obj\nread.__get__([7])\n', 'UnsupportedOperationError:')
+                    assert page.locator('#result').inner_text() == 'before\n'
+                    checks.append('class-to-core-update-retains-explicit-function-binding-refusal')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')
