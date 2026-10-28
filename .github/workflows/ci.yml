@@ -100,10 +100,10 @@ jobs:
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --report build/type-checks-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/reflection.json --report build/reflection-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --stages R1 R2 --report build/repetition-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --stages R1 R2 --stepped --report build/repetition-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --stages R1 R2 --profile core-source/1 --report build/repetition-core-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --stages R1 R2 --profile core-source/1 --stepped --report build/repetition-core-stepped-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --report build/repetition-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --stepped --report build/repetition-stepped-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --report build/repetition-core-browser-report.json
+      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --stepped --report build/repetition-core-stepped-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/reflection.json --stepped --report build/reflection-browser-stepped-report.json
       - run: uv run --no-sync python runtime/check_callbacks.py --target browser --report build/callbacks-browser-report.json
       - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/execution.json --parked --report build/execution-parked-browser-report.json
@@ -237,10 +237,10 @@ jobs:
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --report build/type-checks-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-node-stepped-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/reflection.json --report build/reflection-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --stages R1 R2 --report build/repetition-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --stages R1 R2 --stepped --report build/repetition-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --stages R1 R2 --profile core-source/1 --report build/repetition-core-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --stages R1 R2 --profile core-source/1 --stepped --report build/repetition-core-stepped-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --report build/repetition-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --stepped --report build/repetition-stepped-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --report build/repetition-core-node-report.json
+      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --stepped --report build/repetition-core-stepped-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/reflection.json --stepped --report build/reflection-node-stepped-report.json
       - run: python runtime/check_callbacks.py --target node --report build/callbacks-node-report.json
       - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/execution.json --parked --report build/execution-parked-node-report.json
