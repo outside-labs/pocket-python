@@ -248,7 +248,7 @@ property getter/setter/deleter copies and explicit Python function binding.
 None replacements retain the selected accessor; binding retains the original
 function and target without running their callbacks. Native callable metadata,
 receiver validation, parked ownership and lazy generators have pinned cases.
-Property documentation, live mappings, default directories, broader native
+Live mappings, default directories, broader native
 rebinding and builtin layouts remain separate follow-ups under #123/#33.
 
 The finite [O35/O36 contract](interpreter-type-reflection.md) adds canonical
@@ -267,3 +267,12 @@ and original callback frames. Its 108-case source matrix includes 104 adopted
 comparisons and four explicit future refusals. Twelve representative probes
 extend the inventory to 212 observations per target. Abstract class enforcement,
 `abc`, arbitrary function dictionaries and broader metadata remain separate.
+
+The finite [O41/O42 contract](interpreter-documentation.md) adds function/class
+source docstrings, arbitrary owned function documents and live read-only bound
+method reads. Properties perform eager optional getter lookup and retain exact
+documents through mutation/deletion and origin-sensitive accessor copies.
+Lookup-only AttributeError suppression, callback-visible name changes, native
+copy forms and parked ownership have pinned observations. Source indentation
+cleanup follows CPython 3.14.7. Native/wrapper documentation, live namespaces and
+broader metadata remain separate.

@@ -175,7 +175,7 @@
     {
       "id": "function-binding",
       "status": "partial",
-      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures. Global/nonlocal writes and deletion share the defining module and lexical cells. Variadic positional/keyword parameters pack fresh owned values. Positional starred calls consume owned iterables. Keyword call expansion admits owned dictionaries and keys/getitem mappings with ordered duplicate checks.",
+      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures. Global/nonlocal writes and deletion share the defining module and lexical cells. Variadic positional/keyword parameters pack fresh owned values. Positional starred calls consume owned iterables. Keyword call expansion admits owned dictionaries and keys/getitem mappings with ordered duplicate checks. Function source docstrings use pinned indentation cleanup; arbitrary owned __doc__ assignment/deletion and live read-only bound-method reads are adopted.",
       "gaps": "Construction-hint forms and annotations remain deferred; signatures and error-message comparisons are scoped by interpreter-function-binding.md.",
       "reference_version": "3.14.7",
       "targets": [
@@ -194,7 +194,12 @@
         "starred-call",
         "global-write",
         "nonlocal-write",
-        "keyword-mapping-call"
+        "keyword-mapping-call",
+        "documentation-function-source-document",
+        "documentation-function-mutation-4",
+        "documentation-bound-function-live-document",
+        "documentation-class-documents",
+        "documentation-source-document-cleanup-function-2"
       ],
       "evidence": [
         "tests/fixtures/interpreter/function-binding.json:computed-once",
@@ -203,7 +208,12 @@
         "tests/fixtures/interpreter/function-binding.json:nonlocal-write",
         "tests/fixtures/interpreter/function-binding.json:variadic-mixed-defaults",
         "tests/fixtures/interpreter/function-binding.json:star-multiple",
-        "tests/fixtures/interpreter/function-binding.json:mapping-key-snapshot-order"
+        "tests/fixtures/interpreter/function-binding.json:mapping-key-snapshot-order",
+        "tests/fixtures/interpreter/documentation.json:function-source-document",
+        "tests/fixtures/interpreter/documentation.json:function-mutation-4",
+        "tests/fixtures/interpreter/documentation.json:bound-function-live-document",
+        "tests/fixtures/interpreter/documentation.json:class-documents",
+        "tests/fixtures/interpreter/documentation.json:source-document-cleanup-function-2"
       ]
     },
     {
@@ -241,7 +251,7 @@
     {
       "id": "class-construction",
       "status": "partial",
-      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes.",
+      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Ordinary class docstrings, default None documentation and instance shadowing are adopted.",
       "gaps": "Builtin instance layouts, custom namespace preparation, further metaclass special slots, callable factories and expanded class bases/keyword mappings remain separate. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
@@ -269,7 +279,18 @@
         "type-reflection-mro-explicit-binding",
         "type-reflection-primary-base-metaclass-layout",
         "type-reflection-mro-hooked-method-qualification",
-        "type-reflection-custom-metaclass-mro-definition"
+        "type-reflection-custom-metaclass-mro-definition",
+        "documentation-explicit-document-4",
+        "documentation-source-getter-document",
+        "documentation-getter-document-fallback",
+        "documentation-getter-optional-missing",
+        "documentation-getter-document-error",
+        "documentation-getter-copy-refreshes-document",
+        "documentation-none-document-copy-requeries",
+        "documentation-copy-callback-mutates-name",
+        "documentation-bound-custom-callable-document",
+        "documentation-native-rebound-property-copy",
+        "documentation-native-documentation"
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:new-subclass-init",
@@ -287,7 +308,18 @@
         "tests/fixtures/interpreter/type-reflection.json:mro-explicit-binding",
         "tests/fixtures/interpreter/type-reflection.json:primary-base-metaclass-layout",
         "tests/fixtures/interpreter/type-reflection.json:mro-hooked-method-qualification",
-        "tests/fixtures/interpreter/type-reflection.json:custom-metaclass-mro-definition"
+        "tests/fixtures/interpreter/type-reflection.json:custom-metaclass-mro-definition",
+        "tests/fixtures/interpreter/documentation.json:explicit-document-4",
+        "tests/fixtures/interpreter/documentation.json:source-getter-document",
+        "tests/fixtures/interpreter/documentation.json:getter-document-fallback",
+        "tests/fixtures/interpreter/documentation.json:getter-optional-missing",
+        "tests/fixtures/interpreter/documentation.json:getter-document-error",
+        "tests/fixtures/interpreter/documentation.json:getter-copy-refreshes-document",
+        "tests/fixtures/interpreter/documentation.json:none-document-copy-requeries",
+        "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
+        "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
+        "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
+        "tests/fixtures/interpreter/documentation.json:native-documentation"
       ]
     },
     {
@@ -311,8 +343,8 @@
     {
       "id": "descriptors-decorators",
       "status": "partial",
-      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Function abstract markers and computed read-only property/static/class method flags use owned optional lookup and truth conversion, preserving lookup-only AttributeError suppression, order, live changes and callback failures.",
-      "gaps": "Further property documentation/dictionary reflection, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals.",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Function abstract markers and computed read-only property/static/class method flags use owned optional lookup and truth conversion, preserving lookup-only AttributeError suppression, order, live changes and callback failures. Eager optional getter documentation, explicit documents, exact owned mutation/deletion and origin-sensitive accessor copies preserve lookup-only AttributeError suppression and post-callback notification names.",
+      "gaps": "Native/wrapper documentation, property subclass layouts, live namespaces and further descriptor metadata remain separate. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals. Builtin layouts, custom metaclass MRO construction and hooked native MRO method qualification retain their separate boundaries.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -383,7 +415,18 @@
         "abstract-flags-staticmethod-native-read",
         "abstract-flags-classmethod-hooked-lookup",
         "abstract-flags-staticmethod-nested-attribute-error",
-        "abstract-flags-method-custom-callable-hook"
+        "abstract-flags-method-custom-callable-hook",
+        "documentation-explicit-document-4",
+        "documentation-source-getter-document",
+        "documentation-getter-document-fallback",
+        "documentation-getter-optional-missing",
+        "documentation-getter-document-error",
+        "documentation-getter-copy-refreshes-document",
+        "documentation-none-document-copy-requeries",
+        "documentation-copy-callback-mutates-name",
+        "documentation-bound-custom-callable-document",
+        "documentation-native-rebound-property-copy",
+        "documentation-native-documentation"
       ],
       "evidence": [
         "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
@@ -413,7 +456,7 @@
         "tests/fixtures/interpreter/descriptor-binding.json:function-binding-bypasses-target-owner-hooks",
         "tests/fixtures/interpreter/descriptor-binding.json:function-binding-generator-is-lazy",
         "tests/fixtures/interpreter/descriptor-binding.json:function-binding-original-frames",
-        "tests/fixtures/interpreter/descriptor-binding.json:future-copy-getter-doc-hook",
+        "tests/fixtures/interpreter/documentation.json:descriptor-binding-copy-getter-doc-hook",
         "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved",
         "tests/fixtures/interpreter/native-rebinding.json:method-getter-unbound-copy",
         "tests/fixtures/interpreter/native-rebinding.json:method-__instancecheck__-actual-metaclass",
@@ -450,7 +493,18 @@
         "tests/fixtures/interpreter/abstract-flags.json:staticmethod-native-read",
         "tests/fixtures/interpreter/abstract-flags.json:classmethod-hooked-lookup",
         "tests/fixtures/interpreter/abstract-flags.json:staticmethod-nested-attribute-error",
-        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook"
+        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook",
+        "tests/fixtures/interpreter/documentation.json:explicit-document-4",
+        "tests/fixtures/interpreter/documentation.json:source-getter-document",
+        "tests/fixtures/interpreter/documentation.json:getter-document-fallback",
+        "tests/fixtures/interpreter/documentation.json:getter-optional-missing",
+        "tests/fixtures/interpreter/documentation.json:getter-document-error",
+        "tests/fixtures/interpreter/documentation.json:getter-copy-refreshes-document",
+        "tests/fixtures/interpreter/documentation.json:none-document-copy-requeries",
+        "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
+        "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
+        "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
+        "tests/fixtures/interpreter/documentation.json:native-documentation"
       ]
     },
     {
@@ -614,7 +668,18 @@
         "nested-descriptor-set-native-default-and-builtins-ignore-result",
         "nested-descriptor-name-property",
         "nested-descriptor-name-binding-AttributeError",
-        "nested-descriptor-name-snapshot-keeps-removed-entries"
+        "nested-descriptor-name-snapshot-keeps-removed-entries",
+        "documentation-explicit-document-4",
+        "documentation-source-getter-document",
+        "documentation-getter-document-fallback",
+        "documentation-getter-optional-missing",
+        "documentation-getter-document-error",
+        "documentation-getter-copy-refreshes-document",
+        "documentation-none-document-copy-requeries",
+        "documentation-copy-callback-mutates-name",
+        "documentation-bound-custom-callable-document",
+        "documentation-native-rebound-property-copy",
+        "documentation-native-documentation"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:subclass-priority",
@@ -634,7 +699,18 @@
         "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result",
         "tests/fixtures/interpreter/nested-descriptors.json:name-property",
         "tests/fixtures/interpreter/nested-descriptors.json:name-binding-AttributeError",
-        "tests/fixtures/interpreter/nested-descriptors.json:name-snapshot-keeps-removed-entries"
+        "tests/fixtures/interpreter/nested-descriptors.json:name-snapshot-keeps-removed-entries",
+        "tests/fixtures/interpreter/documentation.json:explicit-document-4",
+        "tests/fixtures/interpreter/documentation.json:source-getter-document",
+        "tests/fixtures/interpreter/documentation.json:getter-document-fallback",
+        "tests/fixtures/interpreter/documentation.json:getter-optional-missing",
+        "tests/fixtures/interpreter/documentation.json:getter-document-error",
+        "tests/fixtures/interpreter/documentation.json:getter-copy-refreshes-document",
+        "tests/fixtures/interpreter/documentation.json:none-document-copy-requeries",
+        "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
+        "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
+        "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
+        "tests/fixtures/interpreter/documentation.json:native-documentation"
       ]
     },
     {
@@ -1342,14 +1418,36 @@
       ],
       "probes": [
         "builtin-delattr",
-        "metaclass-attributes-write-data-descriptor"
+        "metaclass-attributes-write-data-descriptor",
+        "documentation-explicit-document-4",
+        "documentation-source-getter-document",
+        "documentation-getter-document-fallback",
+        "documentation-getter-optional-missing",
+        "documentation-getter-document-error",
+        "documentation-getter-copy-refreshes-document",
+        "documentation-none-document-copy-requeries",
+        "documentation-copy-callback-mutates-name",
+        "documentation-bound-custom-callable-document",
+        "documentation-native-rebound-property-copy",
+        "documentation-native-documentation"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
         "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
         "tests/fixtures/interpreter/nested-descriptors.json:delete-descriptor",
-        "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result"
+        "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result",
+        "tests/fixtures/interpreter/documentation.json:explicit-document-4",
+        "tests/fixtures/interpreter/documentation.json:source-getter-document",
+        "tests/fixtures/interpreter/documentation.json:getter-document-fallback",
+        "tests/fixtures/interpreter/documentation.json:getter-optional-missing",
+        "tests/fixtures/interpreter/documentation.json:getter-document-error",
+        "tests/fixtures/interpreter/documentation.json:getter-copy-refreshes-document",
+        "tests/fixtures/interpreter/documentation.json:none-document-copy-requeries",
+        "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
+        "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
+        "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
+        "tests/fixtures/interpreter/documentation.json:native-documentation"
       ]
     },
     {
@@ -1567,12 +1665,34 @@
       ],
       "probes": [
         "builtin-getattr",
-        "metaclass-attributes-read-hook-error-fallback"
+        "metaclass-attributes-read-hook-error-fallback",
+        "documentation-explicit-document-4",
+        "documentation-source-getter-document",
+        "documentation-getter-document-fallback",
+        "documentation-getter-optional-missing",
+        "documentation-getter-document-error",
+        "documentation-getter-copy-refreshes-document",
+        "documentation-none-document-copy-requeries",
+        "documentation-copy-callback-mutates-name",
+        "documentation-bound-custom-callable-document",
+        "documentation-native-rebound-property-copy",
+        "documentation-native-documentation"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
-        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
+        "tests/fixtures/interpreter/documentation.json:explicit-document-4",
+        "tests/fixtures/interpreter/documentation.json:source-getter-document",
+        "tests/fixtures/interpreter/documentation.json:getter-document-fallback",
+        "tests/fixtures/interpreter/documentation.json:getter-optional-missing",
+        "tests/fixtures/interpreter/documentation.json:getter-document-error",
+        "tests/fixtures/interpreter/documentation.json:getter-copy-refreshes-document",
+        "tests/fixtures/interpreter/documentation.json:none-document-copy-requeries",
+        "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
+        "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
+        "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
+        "tests/fixtures/interpreter/documentation.json:native-documentation"
       ]
     },
     {
@@ -1608,12 +1728,34 @@
       ],
       "probes": [
         "builtin-hasattr",
-        "metaclass-attributes-read-hook-error-fallback"
+        "metaclass-attributes-read-hook-error-fallback",
+        "documentation-explicit-document-4",
+        "documentation-source-getter-document",
+        "documentation-getter-document-fallback",
+        "documentation-getter-optional-missing",
+        "documentation-getter-document-error",
+        "documentation-getter-copy-refreshes-document",
+        "documentation-none-document-copy-requeries",
+        "documentation-copy-callback-mutates-name",
+        "documentation-bound-custom-callable-document",
+        "documentation-native-rebound-property-copy",
+        "documentation-native-documentation"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
-        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
+        "tests/fixtures/interpreter/documentation.json:explicit-document-4",
+        "tests/fixtures/interpreter/documentation.json:source-getter-document",
+        "tests/fixtures/interpreter/documentation.json:getter-document-fallback",
+        "tests/fixtures/interpreter/documentation.json:getter-optional-missing",
+        "tests/fixtures/interpreter/documentation.json:getter-document-error",
+        "tests/fixtures/interpreter/documentation.json:getter-copy-refreshes-document",
+        "tests/fixtures/interpreter/documentation.json:none-document-copy-requeries",
+        "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
+        "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
+        "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
+        "tests/fixtures/interpreter/documentation.json:native-documentation"
       ]
     },
     {
@@ -2073,8 +2215,8 @@
     {
       "id": "property",
       "status": "partial",
-      "scope": "property(fget=None,fset=None,fdel=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Computed read-only __isabstractmethod__ uses owned optional lookup/truth conversion over current accessors or wrapped values (O39/O40).",
-      "gaps": "Further property documentation/dictionary reflection and arbitrary doc behavior. Copies requiring getter documentation read hooks refuse before those hooks execute. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals.",
+      "scope": "property(fget=None,fset=None,fdel=None,doc=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Computed read-only __isabstractmethod__ uses owned optional lookup/truth conversion over current accessors or wrapped values (O39/O40). Eager optional getter documentation, explicit documents, exact owned mutation/deletion and origin-sensitive accessor copies preserve lookup-only AttributeError suppression and post-callback notification names.",
+      "gaps": "Native/wrapper documentation, property subclass layouts, live namespaces and further descriptor metadata remain separate. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2120,7 +2262,18 @@
         "abstract-flags-staticmethod-native-read",
         "abstract-flags-classmethod-hooked-lookup",
         "abstract-flags-staticmethod-nested-attribute-error",
-        "abstract-flags-method-custom-callable-hook"
+        "abstract-flags-method-custom-callable-hook",
+        "documentation-explicit-document-4",
+        "documentation-source-getter-document",
+        "documentation-getter-document-fallback",
+        "documentation-getter-optional-missing",
+        "documentation-getter-document-error",
+        "documentation-getter-copy-refreshes-document",
+        "documentation-none-document-copy-requeries",
+        "documentation-copy-callback-mutates-name",
+        "documentation-bound-custom-callable-document",
+        "documentation-native-rebound-property-copy",
+        "documentation-native-documentation"
       ],
       "evidence": [
         "tests/fixtures/interpreter/nested-descriptors.json:set-property",
@@ -2135,7 +2288,7 @@
         "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-bound-none-retains",
         "tests/fixtures/interpreter/descriptor-binding.json:copy-deleter-metadata",
         "tests/fixtures/interpreter/descriptor-binding.json:copy-getter-bound-equality-hash",
-        "tests/fixtures/interpreter/descriptor-binding.json:future-copy-getter-doc-hook",
+        "tests/fixtures/interpreter/documentation.json:descriptor-binding-copy-getter-doc-hook",
         "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved",
         "tests/fixtures/interpreter/native-rebinding.json:method-getter-unbound-copy",
         "tests/fixtures/interpreter/native-rebinding.json:wrapper-property-get-bind-call",
@@ -2161,7 +2314,18 @@
         "tests/fixtures/interpreter/abstract-flags.json:staticmethod-native-read",
         "tests/fixtures/interpreter/abstract-flags.json:classmethod-hooked-lookup",
         "tests/fixtures/interpreter/abstract-flags.json:staticmethod-nested-attribute-error",
-        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook"
+        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook",
+        "tests/fixtures/interpreter/documentation.json:explicit-document-4",
+        "tests/fixtures/interpreter/documentation.json:source-getter-document",
+        "tests/fixtures/interpreter/documentation.json:getter-document-fallback",
+        "tests/fixtures/interpreter/documentation.json:getter-optional-missing",
+        "tests/fixtures/interpreter/documentation.json:getter-document-error",
+        "tests/fixtures/interpreter/documentation.json:getter-copy-refreshes-document",
+        "tests/fixtures/interpreter/documentation.json:none-document-copy-requeries",
+        "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
+        "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
+        "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
+        "tests/fixtures/interpreter/documentation.json:native-documentation"
       ]
     },
     {
@@ -2272,14 +2436,36 @@
       ],
       "probes": [
         "builtin-setattr",
-        "metaclass-attributes-write-data-descriptor"
+        "metaclass-attributes-write-data-descriptor",
+        "documentation-explicit-document-4",
+        "documentation-source-getter-document",
+        "documentation-getter-document-fallback",
+        "documentation-getter-optional-missing",
+        "documentation-getter-document-error",
+        "documentation-getter-copy-refreshes-document",
+        "documentation-none-document-copy-requeries",
+        "documentation-copy-callback-mutates-name",
+        "documentation-bound-custom-callable-document",
+        "documentation-native-rebound-property-copy",
+        "documentation-native-documentation"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
         "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
         "tests/fixtures/interpreter/nested-descriptors.json:set-property",
-        "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result"
+        "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result",
+        "tests/fixtures/interpreter/documentation.json:explicit-document-4",
+        "tests/fixtures/interpreter/documentation.json:source-getter-document",
+        "tests/fixtures/interpreter/documentation.json:getter-document-fallback",
+        "tests/fixtures/interpreter/documentation.json:getter-optional-missing",
+        "tests/fixtures/interpreter/documentation.json:getter-document-error",
+        "tests/fixtures/interpreter/documentation.json:getter-copy-refreshes-document",
+        "tests/fixtures/interpreter/documentation.json:none-document-copy-requeries",
+        "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
+        "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
+        "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
+        "tests/fixtures/interpreter/documentation.json:native-documentation"
       ]
     },
     {

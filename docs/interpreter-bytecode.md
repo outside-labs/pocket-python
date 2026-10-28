@@ -70,3 +70,9 @@ Version 1 retains the integer-only format described above.
 the verified engine and differential corpus. Select `--engine vm3` and run
 `runtime/check_functions.py` on both Node and browser targets. Bytecode fixtures
 still require build-time lowering; independent source parsing remains INT-08.
+
+Bytecode 5 additionally permits an optional `doc` field on function records,
+referring to a verified immutable string constant. Module/class records and
+bytecode 3/4 reject it. Omitted metadata retains the previous format and default
+None documentation. The [documentation contract](interpreter-documentation.md)
+specifies source cleanup, owned mutation and property construction.

@@ -39,6 +39,7 @@ from examples.interpreter_native_rebinding import SOURCE as NATIVE_REBINDING_SOU
 from examples.interpreter_type_reflection import SOURCE as TYPE_REFLECTION_SOURCE
 from examples.interpreter_property_names import SOURCE as PROPERTY_NAMES_SOURCE
 from examples.interpreter_abstract_flags import SOURCE as ABSTRACT_FLAGS_SOURCE
+from examples.interpreter_documentation import SOURCE as DOCUMENTATION_SOURCE
 
 
 def smoke(channel=None):
@@ -191,7 +192,8 @@ def smoke(channel=None):
                     type_reflection = json.loads((ROOT / 'tests/fixtures/interpreter/type-reflection.json').read_bytes())
                     property_names = json.loads((ROOT / 'tests/fixtures/interpreter/property-names.json').read_bytes())
                     abstract_flags = json.loads((ROOT / 'tests/fixtures/interpreter/abstract-flags.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags]:
+                    documentation = json.loads((ROOT / 'tests/fixtures/interpreter/documentation.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -209,6 +211,7 @@ def smoke(channel=None):
                     programs.append(TYPE_REFLECTION_SOURCE)
                     programs.append(PROPERTY_NAMES_SOURCE)
                     programs.append(ABSTRACT_FLAGS_SOURCE)
+                    programs.append(DOCUMENTATION_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -583,7 +586,23 @@ def smoke(channel=None):
                                     assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
                     checks.append('abstract-flags-compose-with-copies-function-markers-and-lazy-generators-offline')
                     checks.append('abstract-lookup-truth-errors-readonly-flags-and-future-boundaries-offline')
+                    documentation_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', DOCUMENTATION_SOURCE], text=True, encoding='utf-8')
+                    run(DOCUMENTATION_SOURCE, documentation_expected)
+                    for case in documentation['cases']:
+                        if case['stage'] not in documentation['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                            for frame in case.get('error_frames', []):
+                                if frame['function'] != '<module>':
+                                    assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
+                    checks.append('documentation-callbacks-origin-sensitive-copies-and-lazy-generators-compose-offline')
+                    checks.append('documentation-errors-source-frames-and-native-metadata-refusals-remain-explicit-offline')
                     busy = [
+                        'class Getter:\n @property\n def __doc__(self):\n  print("entered")\n  while True: pass\nproperty(Getter())\n',
+                        'ready=False\nclass Getter:\n @property\n def __doc__(self):\n  if ready:\n   print("entered")\n   while True: pass\n  return None\np=property(Getter())\nready=True\np.setter(None)\n',
                         'class C: pass\nclass Flag:\n def __getattribute__(self,name):\n  if name=="__isabstractmethod__":\n   print("entered")\n   while True: pass\n  return object.__getattribute__(self,name)\nm=classmethod(Flag()).__get__(None,C)\nm.__isabstractmethod__\n',
                         'class Flag:\n @property\n def __isabstractmethod__(self):\n  print("entered")\n  while True: pass\nproperty(Flag()).__isabstractmethod__\n',
                         'class Truth:\n def __bool__(self):\n  print("entered")\n  while True: pass\nclass Flag: __isabstractmethod__=Truth()\nstaticmethod(Flag()).__isabstractmethod__\n',
