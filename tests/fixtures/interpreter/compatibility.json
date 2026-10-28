@@ -2312,6 +2312,123 @@
         "stdout": "9 True\n",
         "error_type": null
       }
+    },
+    {
+      "id": "native-rebinding-method-getter-unbound-copy",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.getter\nm=type(d).__get__(d,p,False)\nprint(m==p.getter,hash(m)==hash(p.getter),m is p.getter)\nprint(m([7]).fget[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True False\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True False\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-rebinding-method-__instancecheck__-actual-metaclass",
+      "source": "class M(type):\n def __instancecheck__(cls,value):\n  print(\"custom check\")\n  return False\nclass C(metaclass=M): pass\nd=type.__instancecheck__\nm=d.__get__(C,False)\nprint(m(C()),m.__self__ is C,type(m).__name__,m.__name__,m.__qualname__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True builtin_function_or_method __instancecheck__ C.__instancecheck__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True builtin_function_or_method __instancecheck__ C.__instancecheck__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-rebinding-method-metadata",
+      "source": "p=property()\nd=property.getter\nbind=d.__get__\nu=type(d).__get__\nprint(type(bind).__name__,bind.__class__ is type(bind),bind.__self__ is d,bind.__name__,bind.__qualname__)\nprint(type(u).__name__,u.__name__,u.__qualname__,u is type(d).__get__)\nprint(bind is d.__get__,bind==d.__get__,hash(bind)==hash(d.__get__))\ntry: bind.__func__\nexcept AttributeError: print(\"no function\")\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method-wrapper True True __get__ method_descriptor.__get__\nwrapper_descriptor __get__ method_descriptor.__get__ True\nFalse True True\nno function\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method-wrapper True True __get__ method_descriptor.__get__\nwrapper_descriptor __get__ method_descriptor.__get__ True\nFalse True True\nno function\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-rebinding-method-advertised-layout-ignored",
+      "source": "p=property()\nd=property.getter\nclass Fake:\n @property\n def __class__(self):\n  print(\"advertised\")\n  return property\n def __getattribute__(self,name):\n  print(\"read\")\n  return object.__getattribute__(self,name)\nd.__get__(Fake())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "TypeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "TypeError"
+      }
+    },
+    {
+      "id": "native-rebinding-wrapper-property-get-bind-call",
+      "source": "p=property(lambda obj:obj[0])\nd=property.__get__\nm=d.__get__(p,[])\nprint(m.__self__ is p,m.__name__,m.__qualname__,type(m).__name__)\nprint(m([7]))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __get__ property.__get__ method-wrapper\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __get__ property.__get__ method-wrapper\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-rebinding-wrapper-function-get-bind-call",
+      "source": "def read(obj): return obj[0]\nd=type(read).__get__\nm=d.__get__(read,[])\nprint(m.__self__ is read,m.__name__,m.__qualname__,type(m).__name__)\nprint(m([7],False)())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __get__ function.__get__ method-wrapper\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __get__ function.__get__ method-wrapper\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-rebinding-wrapper-type-read-actual-metaclass",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M): value=7\nm=type.__getattribute__.__get__(C,False)\nprint(\"bound\")\nprint(m(\"value\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "bound\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "bound\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-rebinding-wrapper-recursive-binding-wrappers",
+      "source": "d=property.getter\nu=type(d).__get__\nv=type(u).__get__\np=property()\nm=v.__get__(u)(d)(p)\nprint(m(None).fget is None,m.__self__ is p)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-rebinding-wrapper-type-callback-frames",
+      "source": "class M(type):\n @property\n def value(cls):\n  print(\"entered\")\n  raise ValueError(\"original\")\nclass C(metaclass=M): pass\nm=type.__getattribute__.__get__(C)\nprint(\"bound\")\nm(\"value\")\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "bound\nentered\n",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "bound\nentered\n",
+        "error_type": "ValueError"
+      }
     }
   ]
 }

@@ -301,3 +301,17 @@ descriptor reflection and dynamic source retain their finite contracts. Native
 coroutine/await, async protocols, awaited host adapters and durable view/save
 acceptance remain under #34. No dependency, host grant, publication or deployment
 is included.
+
+## Explicit native descriptor rebinding checkpoint
+
+[O33/O34](interpreter-native-rebinding.md) extend #123 and #33 with bound/unbound
+native descriptor `__get__` over the finite adopted method/wrapper allowlist.
+Actual receiver layouts, None/owner rules, recursive binding handles, native
+metadata and deferred callback execution retain owned frames and shared budgets.
+The [descriptor console](../examples/interpreter_native_rebinding.py) composes
+rebound copies, native type checks, closures and lazy generators offline.
+
+Live namespaces, default directories, builtin layouts, broader descriptor
+reflection and dynamic source retain their finite contracts. Native coroutine/await,
+async protocols, awaited host adapters and durable view/save acceptance remain
+under #34. No dependency, host grant, publication or deployment is included.

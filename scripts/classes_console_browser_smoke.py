@@ -35,6 +35,7 @@ from examples.interpreter_metaclass_attributes import SOURCE as METACLASS_SOURCE
 from examples.interpreter_nested_descriptors import SOURCE as NESTED_DESCRIPTOR_SOURCE
 from examples.interpreter_native_descriptors import SOURCE as NATIVE_DESCRIPTOR_SOURCE
 from examples.interpreter_descriptor_binding import SOURCE as DESCRIPTOR_BINDING_SOURCE
+from examples.interpreter_native_rebinding import SOURCE as NATIVE_REBINDING_SOURCE
 
 
 def smoke(channel=None):
@@ -183,7 +184,8 @@ def smoke(channel=None):
                     nested_descriptors = json.loads((ROOT / 'tests/fixtures/interpreter/nested-descriptors.json').read_bytes())
                     native_descriptors = json.loads((ROOT / 'tests/fixtures/interpreter/native-descriptors.json').read_bytes())
                     descriptor_binding = json.loads((ROOT / 'tests/fixtures/interpreter/descriptor-binding.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding]:
+                    native_rebinding = json.loads((ROOT / 'tests/fixtures/interpreter/native-rebinding.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -197,6 +199,7 @@ def smoke(channel=None):
                     programs.append(NESTED_DESCRIPTOR_SOURCE)
                     programs.append(NATIVE_DESCRIPTOR_SOURCE)
                     programs.append(DESCRIPTOR_BINDING_SOURCE)
+                    programs.append(NATIVE_REBINDING_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -517,7 +520,22 @@ def smoke(channel=None):
                     checks.append('accessor-copies-and-explicit-function-binding-compose-after-offline-reload')
                     checks.append('documentation-sensitive-getter-copies-refuse-before-hook-effects-offline')
                     checks.append('descriptor-copy-binding-validation-and-future-refusals-remain-explicit-offline')
+                    run(NATIVE_REBINDING_SOURCE, 'field 7 False True\nupdated 11\nnative check True True\nhandles builtin_function_or_method method-wrapper True\nclosure 17\nready\nentered\nitem 13\n')
+                    for case in native_rebinding['cases']:
+                        if case['stage'] not in native_rebinding['implemented_stages']:
+                            refused(case['source'], 'UnsupportedOperationError:')
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                            for frame in case.get('error_frames', []):
+                                if frame['function'] != '<module>':
+                                    assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
+                    checks.append('native-descriptor-rebinding-composes-with-offline-copies-type-checks-and-generators')
+                    checks.append('native-rebinding-validation-original-callback-frames-and-future-boundaries-offline')
                     busy = [
+                        'def callback(obj):\n print("entered")\n while True: pass\np=property(callback)\nproperty.__get__.__get__(p)([7])\n',
+                        'def callback(obj):\n print("entered")\n while True: pass\nbind=type(callback).__get__.__get__(callback)\nbind([7])()\n',
+                        'def callback(obj):\n print("entered")\n while True: pass\n yield obj[0]\nbind=type(callback).__get__.__get__(callback)\nnext(bind([7])())\n',
                         'def callback(obj):\n print("entered")\n while True: pass\np=property(callback)\np.__get__([7])\n',
                         'def callback(obj,value):\n print("entered")\n while True: pass\np=property(None,callback)\np.__set__([7],[8])\n',
                         'def callback(obj):\n print("entered")\n while True: pass\np=property(None,None,callback)\np.__delete__([7])\n',
@@ -757,6 +775,11 @@ def smoke(channel=None):
                     refused('print("before")\ndef read(obj): return obj\nread.__get__([7])\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == 'before\n'
                     checks.append('class-to-core-update-retains-explicit-function-binding-refusal')
+                    refused(NATIVE_REBINDING_SOURCE, 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused('print("before")\nproperty.getter.__get__(None,property)\n', 'NameError:')
+                    assert page.locator('#result').inner_text() == 'before\n'
+                    checks.append('class-to-core-update-retains-native-rebinding-boundaries')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')
