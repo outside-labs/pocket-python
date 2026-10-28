@@ -4,7 +4,8 @@
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
   "implemented_stages": [
-    "O33"
+    "O33",
+    "O34"
   ],
   "cases": [
     {
@@ -531,6 +532,133 @@
       "stage": "Future",
       "source": "class C: pass\nC.__dict__\n",
       "stdout": ""
+    },
+    {
+      "id": "method-unbound-cross-kind",
+      "stage": "O33",
+      "source": "d=property.getter\nother=property.__get__\ntype(d).__get__(other,None,False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-implicit-binding-wrapper-wrong-receiver",
+      "stage": "O33",
+      "source": "d=property.getter\nclass C: bind=type(d).__get__\nC().bind\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-unbound-descriptor-none",
+      "stage": "O33",
+      "source": "d=property.getter\ntype(d).__get__(None,None,False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-binding-wrapper-cannot-construct",
+      "stage": "O33",
+      "source": "d=property.getter\ntype(type(d).__get__)()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-unbound-keyword-target",
+      "stage": "O33",
+      "source": "d=property.getter\ntype(d).__get__(d,obj=None,type=property)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-unbound-cross-kind",
+      "stage": "O34",
+      "source": "d=property.__get__\nother=property.getter\ntype(d).__get__(other,None,False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-implicit-binding-wrapper-wrong-receiver",
+      "stage": "O34",
+      "source": "d=property.__get__\nclass C: bind=type(d).__get__\nC().bind\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-unbound-descriptor-none",
+      "stage": "O34",
+      "source": "d=property.__get__\ntype(d).__get__(None,None,False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-binding-wrapper-cannot-construct",
+      "stage": "O34",
+      "source": "d=property.__get__\ntype(type(d).__get__)()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-unbound-keyword-target",
+      "stage": "O34",
+      "source": "d=property.__get__\ntype(d).__get__(d,obj=None,type=property)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-type-check-wrong-target-layout",
+      "stage": "O33",
+      "source": "class Fake:\n @property\n def __class__(self):\n  print(\"advertised\")\n  return type\ntype.__instancecheck__.__get__(Fake(),False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-type-read-actual-metaclass",
+      "stage": "O34",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M): value=7\nm=type.__getattribute__.__get__(C,False)\nprint(\"bound\")\nprint(m(\"value\"))\n",
+      "stdout": "bound\n7\n"
+    },
+    {
+      "id": "wrapper-type-callback-frames",
+      "stage": "O34",
+      "source": "class M(type):\n @property\n def value(cls):\n  print(\"entered\")\n  raise ValueError(\"original\")\nclass C(metaclass=M): pass\nm=type.__getattribute__.__get__(C)\nprint(\"bound\")\nm(\"value\")\n",
+      "stdout": "bound\nentered\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "value",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "wrapper-immutable-type-mutation-lazy",
+      "stage": "O34",
+      "source": "m=type.__setattr__.__get__(int)\nprint(\"bound\")\nm(\"field\",7)\n",
+      "stdout": "bound\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-recursive-binding-wrappers",
+      "stage": "O34",
+      "source": "d=property.getter\nu=type(d).__get__\nv=type(u).__get__\np=property()\nm=v.__get__(u)(d)(p)\nprint(m(None).fget is None,m.__self__ is p)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "wrapper-static-class-layout-mismatch",
+      "stage": "O34",
+      "source": "classmethod.__get__.__get__(staticmethod(lambda:7))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-class-static-layout-mismatch",
+      "stage": "O34",
+      "source": "staticmethod.__get__.__get__(classmethod(lambda cls:7))\n",
+      "stdout": "",
+      "error_type": "TypeError"
     }
   ]
 }

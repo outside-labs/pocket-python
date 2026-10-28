@@ -13,7 +13,7 @@ const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "prop
 const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_COPY_METHODS]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
-const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__"]);
+const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__"]);
 const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name) || NATIVE_BINDING_WRAPPERS.has(name);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
 
@@ -230,6 +230,8 @@ export class ClassRuntime {
       if (name === "__class__") return value(this.typeOf(receiver));
       if (name === "__get__" && NATIVE_METHOD_DESCRIPTORS.has(receiver.name))
         return value(this.make(BoundMethodValue, this.builtin("method_descriptor.__get__"), receiver));
+      if (name === "__get__" && nativeWrapper(receiver.name))
+        return value(this.make(BoundMethodValue, this.builtin("wrapper_descriptor.__get__"), receiver));
       if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(
         name === "__name__" && (NATIVE_METHOD_DESCRIPTORS.has(receiver.name) || nativeWrapper(receiver.name)) ? receiver.name.slice(receiver.name.lastIndexOf(".") + 1) : receiver.name, char => char.codePointAt(0))));
       if (this.isType(receiver)) {
@@ -320,7 +322,7 @@ export class ClassRuntime {
   }
   bindAttribute(value, receiver, owner) {
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_BINDING_WRAPPERS.has(value.name) &&
-        !(receiver instanceof BuiltinValue && NATIVE_METHOD_DESCRIPTORS.has(receiver.name)))
+        this.nativeDescriptorKind(receiver) !== value.name.slice(0, value.name.indexOf(".")))
       this.fail("TypeError", "Native descriptor binding requires a matching descriptor receiver.");
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_COPY_METHODS.has(value.name) && !(receiver instanceof PropertyValue))
       this.fail("TypeError", "Native property copy requires a property receiver.");
@@ -345,12 +347,20 @@ export class ClassRuntime {
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
       value instanceof BuiltinValue && (NATIVE_COPY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }
+  nativeDescriptorKind(value) {
+    return value instanceof BuiltinValue ? NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" :
+      nativeWrapper(value.name) ? "wrapper_descriptor" : null : null;
+  }
   bindNativeDescriptor(kind, descriptor, receiver) {
-    if (!(descriptor instanceof BuiltinValue) || kind !== "method_descriptor" || !NATIVE_METHOD_DESCRIPTORS.has(descriptor.name))
+    if (this.nativeDescriptorKind(descriptor) !== kind)
       this.fail("TypeError", "Native descriptor binding requires a matching descriptor receiver.");
     if (receiver === null) return descriptor;
     this.touch(receiver);
-    if (NATIVE_COPY_METHODS.has(descriptor.name) ? !(receiver instanceof PropertyValue) : !this.isType(receiver))
+    const layout = descriptor.name.slice(0, descriptor.name.indexOf("."));
+    const valid = layout === "type" ? this.isType(receiver) : layout === "property" ? receiver instanceof PropertyValue :
+      layout === "function" ? receiver instanceof FunctionValue : ["staticmethod", "classmethod"].includes(layout) ?
+        receiver instanceof MethodWrapperValue && receiver.kind === layout : this.nativeDescriptorKind(receiver) === layout;
+    if (!valid)
       this.fail("TypeError", "Native descriptor does not apply to this receiver type.");
     return this.make(BoundMethodValue, descriptor, receiver);
   }
