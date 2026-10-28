@@ -87,3 +87,7 @@ The later [O15–O17 reflection contract](interpreter-reflection.md) adopts stab
 owned IDs, optimized-function namespace snapshots and custom vars/dir hooks.
 Live namespace mappings, default directories and builtin instance layouts retain
 their separate boundaries.
+
+The next [O23/O24 contract](interpreter-subclass-initialization.md) specifies
+inherited subclass initialization and explicit class keyword forwarding. Its
+reference matrix precedes independent implementation.
