@@ -7,6 +7,8 @@ import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 const MODULE_NAME = /^[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*$/;
 const NONE = Object.freeze({type: "none"});
+const docstring = node => ["Function", "Class"].includes(node.kind) && node.body[0]?.kind === "Expr" &&
+  node.body[0].value.kind === "Literal" && node.body[0].value.literal.type === "str" ? node.body[0] : null;
 const nameOrder = (left, right) => {
   const a = Array.from(left, char => char.codePointAt(0)), b = Array.from(right, char => char.codePointAt(0));
   for (let index = 0; index < Math.min(a.length, b.length); index++) if (a[index] !== b[index]) return a[index] - b[index];
@@ -85,6 +87,7 @@ class Compiler {
     if (scope.qualname.length > 256) this.fail("Qualified function name budget exceeded.", node, "COMPILE_BUDGET", "bind");
     if (["Function", "Lambda"].includes(node.kind)) for (const group of Object.values(node.params)) for (const param of group) scope.locals.add(param.name);
     if (node.kind === "Class") { scope.locals.add("__module__"); scope.locals.add("__qualname__"); }
+    if (this.classes && node.kind === "Class" && docstring(node)) scope.locals.add("__doc__");
     const binding = (name, site) => {
       if (node.kind === "Class" && ["__module__", "__qualname__"].includes(name))
         this.fail("Class metadata overrides are outside C1.", site, "UNSUPPORTED", "bind");
@@ -256,6 +259,8 @@ class Compiler {
       ...(this.classes ? {kind: isModule ? "module" : isClass ? "class" : "function"} : {}),
       ...(scope.globals.size ? {globals: [...scope.globals].sort()} : {}),
       ...(scope.nonlocals.size ? {nonlocals: [...scope.nonlocals].sort()} : {})};
+    if (this.classes && node.kind === "Function" && docstring(node))
+      fn.doc = this.constant(docstring(node).value.literal, docstring(node));
     this.program.functions[scope.index] = fn;
     const makeBlock = (nodes, expression = false) => {
       this.charge(node);
@@ -412,7 +417,11 @@ class Compiler {
       const statement = value => {
         this.charge(value);
         if (value.kind === "Pass" || value.kind === "Declaration") return;
-        if (value.kind === "Expr") { expr(value.value); emit(value, "pop"); }
+        if (value.kind === "Expr") {
+          expr(value.value);
+          if (this.classes && isClass && value === docstring(node)) emit(value, "store", "__doc__");
+          else emit(value, "pop");
+        }
         else if (value.kind === "Assert") {
           expr(value.test); const failure = emit(value.test, "jump-if-false", 0), done = emit(value, "jump", 0);
           instructions[failure][1] = instructions.length;

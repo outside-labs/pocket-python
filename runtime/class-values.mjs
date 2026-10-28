@@ -7,7 +7,7 @@ export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, 
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
@@ -187,6 +187,7 @@ export class ClassRuntime {
       }
       if (!native && base.root && ["__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) continue;
       if (base.namespace.has(name)) return {found: true, value: base.namespace.get(name)};
+      if (name === "__doc__" && !base.root) return {found: true, value: null};
       if (native && base.root && name === "__init_subclass__") {
         const value = this.make(MethodWrapperValue, "classmethod", this.builtin("object.__init_subclass__"));
         base.namespace.set(name, value);
@@ -288,6 +289,8 @@ export class ClassRuntime {
     }
     if (receiver instanceof BoundMethodValue && name === "__isabstractmethod__")
       return {kind: "call", callable: this.builtin("method-abstract-marker"), args: [receiver]};
+    if (receiver instanceof BoundMethodValue && name === "__doc__")
+      return {kind: "call", callable: this.builtin("method-documentation"), args: [receiver]};
     if (receiver instanceof BoundMethodValue && receiver.pythonMethod) {
       if (name === "__class__") return value(this.builtin("method"));
       if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
@@ -324,6 +327,7 @@ export class ClassRuntime {
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
     if (receiver instanceof FunctionValue && name === "__get__")
       return value(this.make(BoundMethodValue, this.builtin("function.__get__"), receiver));
+    if (receiver instanceof FunctionValue && name === "__doc__") return value(receiver.documentation);
     if (receiver instanceof FunctionValue && name === "__isabstractmethod__") {
       if (receiver.abstractFlag === undefined) this.fail("AttributeError", "Function has no abstract-method marker.");
       return value(receiver.abstractFlag);
@@ -452,6 +456,15 @@ export class ClassRuntime {
   }
   mutate(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (name === "__doc__" && receiver instanceof FunctionValue) {
+      const before = receiver.documentation;
+      receiver.documentation = remove ? null : value;
+      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+      catch (error) { receiver.documentation = before; throw error; }
+      return null;
+    }
+    if (name === "__doc__" && receiver instanceof BoundMethodValue) this.fail("AttributeError", "Method documentation is read-only.");
+    if (name === "__doc__" && receiver instanceof ClassValue && remove) this.fail("TypeError", "Class documentation cannot be deleted.");
     if (name === "__isabstractmethod__" && receiver instanceof FunctionValue) {
       const before = receiver.abstractFlag;
       if (remove && before === undefined) this.fail("AttributeError", "Function has no abstract-method marker.");

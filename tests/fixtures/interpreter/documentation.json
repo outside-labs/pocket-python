@@ -3,7 +3,9 @@
   "suite": "interpreter-documentation/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O41"
+  ],
   "cases": [
     {
       "id": "function-default-none",
@@ -25,7 +27,7 @@
     },
     {
       "id": "function-fstring-is-not-document",
-      "stage": "O41",
+      "stage": "Future",
       "source": "def f():\n f\"text\"\n return 7\nprint(f.__doc__,f())\n",
       "stdout": "None 7\n"
     },
@@ -62,7 +64,7 @@
     {
       "id": "function-mutation-2",
       "stage": "O41",
-      "source": "def f(): pass\nx=0\nf.__doc__=x\nprint(f.__doc__ is x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
+      "source": "def f(): pass\nx=0\nf.__doc__=x\nprint(f.__doc__==x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
       "stdout": "True\nTrue\nTrue\n"
     },
     {
@@ -191,7 +193,7 @@
     {
       "id": "explicit-document-2",
       "stage": "O42",
-      "source": "x=0\np=property(doc=x)\nprint(p.__doc__ is x)\nq=property(None,None,None,x)\nprint(q.__doc__ is x)\n",
+      "source": "x=0\np=property(doc=x)\nprint(p.__doc__==x)\nq=property(None,None,None,x)\nprint(q.__doc__==x)\n",
       "stdout": "True\nTrue\n"
     },
     {

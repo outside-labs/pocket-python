@@ -46,3 +46,9 @@ separate contracts. Reflection belongs to classes-source/1 and bytecode 5;
 core admission, host grants and async work under #34 remain separate.
 
 Reference: [CPython 3.14.7 property implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c).
+
+O41 is implemented. Function documentation survives source compilation and
+registry verification; class docstrings enter their original namespace before
+metaclass construction. Undocumented functions/classes keep their previous
+logical layouts. Focused tests cover source metadata, bound reads, exact mutable
+documents, ownership rollback, captured cycles and parked lifecycle cleanup.
