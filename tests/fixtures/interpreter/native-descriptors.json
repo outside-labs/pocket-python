@@ -1,0 +1,528 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-native-descriptors/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "property-get-bound",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(a)\nprint(r is a.saved,r[0])\n",
+      "stdout": "get\nTrue 7\n"
+    },
+    {
+      "id": "property-set-bound",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nv=[9]\nr=p.__set__(a,v)\nprint(r is None,a.saved is v)\n",
+      "stdout": "set\nTrue True\n"
+    },
+    {
+      "id": "property-delete-bound",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__delete__(a)\nprint(r is None,a.saved[0])\n",
+      "stdout": "delete\nTrue 0\n"
+    },
+    {
+      "id": "property-get-unbound",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=property.__get__(p,a)\nprint(r is a.saved,r[0])\n",
+      "stdout": "get\nTrue 7\n"
+    },
+    {
+      "id": "property-set-unbound",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nv=[9]\nr=property.__set__(p,a,v)\nprint(r is None,a.saved is v)\n",
+      "stdout": "set\nTrue True\n"
+    },
+    {
+      "id": "property-delete-unbound",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=property.__delete__(p,a)\nprint(r is None,a.saved[0])\n",
+      "stdout": "delete\nTrue 0\n"
+    },
+    {
+      "id": "property-owner-None-A",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(None,A)\nprint(r is p,r is a.saved)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "property-owner-None-7",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(None,7)\nprint(r is p,r is a.saved)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "property-owner-None",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(None)\nprint(r is p,r is a.saved)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-owner-None-None",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(None,None)\nprint(r is p,r is a.saved)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-owner-a-None",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(a,None)\nprint(r is p,r is a.saved)\n",
+      "stdout": "get\nFalse True\n"
+    },
+    {
+      "id": "property-owner-a-7",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(a,7)\nprint(r is p,r is a.saved)\n",
+      "stdout": "get\nFalse True\n"
+    },
+    {
+      "id": "property-owner-a-A",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(a,A)\nprint(r is p,r is a.saved)\n",
+      "stdout": "get\nFalse True\n"
+    },
+    {
+      "id": "property-none-target-mutations",
+      "stage": "O29",
+      "source": "def write(obj,value): print(obj is None,value[0])\ndef remove(obj): print(obj is None)\np=property(None,write,remove)\nprint(p.__set__(None,[7]),p.__delete__(None))\n",
+      "stdout": "True 7\nTrue\nNone None\n"
+    },
+    {
+      "id": "property-unrelated-target",
+      "stage": "O29",
+      "source": "p=property(lambda obj: obj)\nv=[7]\nprint(p.__get__(v) is v,p.__get__(None,list) is p)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "property-missing-__get__",
+      "stage": "O29",
+      "source": "p=property()\np.__get__(7)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "property-missing-__set__",
+      "stage": "O29",
+      "source": "p=property()\np.__set__(7,9)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "property-missing-__delete__",
+      "stage": "O29",
+      "source": "p=property()\np.__delete__(7)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "property-arguments-18",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\np.__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-arguments-19",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\np.__get__(7,None,9)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-arguments-20",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\np.__set__(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-arguments-21",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\np.__set__(7,8,9)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-arguments-22",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\np.__delete__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-arguments-23",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\np.__delete__(7,8)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-arguments-24",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\np.__get__(obj=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-arguments-25",
+      "stage": "O29",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\np.__set__(7,value=8)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-receiver-__get__",
+      "stage": "O29",
+      "source": "property.__get__(7,8)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-receiver-__set__",
+      "stage": "O29",
+      "source": "property.__set__(7,8,9)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-receiver-__delete__",
+      "stage": "O29",
+      "source": "property.__delete__(7,8)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-error-__get__",
+      "stage": "O29",
+      "source": "def callback(obj):\n print(\"body\")\n raise ValueError(\"original\")\np=property(callback)\np.__get__([7])\n",
+      "stdout": "body\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "callback",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "property-error-__set__",
+      "stage": "O29",
+      "source": "def callback(obj,value):\n print(\"body\")\n raise ValueError(\"original\")\np=property(None,callback)\np.__set__([7],[8])\n",
+      "stdout": "body\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "callback",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "property-error-__delete__",
+      "stage": "O29",
+      "source": "def callback(obj):\n print(\"body\")\n raise ValueError(\"original\")\np=property(None,None,callback)\np.__delete__([7])\n",
+      "stdout": "body\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "callback",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "property-callable-accessors",
+      "stage": "O29",
+      "source": "class Callback:\n def __call__(self,obj,*args):\n  print(type(obj).__name__,len(args))\n  return [7]\nc=Callback()\np=property(c,c,c)\nprint(p.__get__([1])[0],p.__set__([2],[3]),p.__delete__([4]))\n",
+      "stdout": "list 0\nlist 1\nlist 0\n7 None None\n"
+    },
+    {
+      "id": "property-generator-results",
+      "stage": "O29",
+      "source": "def callback(obj,*args):\n print(\"iterated\")\n yield obj\np=property(callback,callback,callback)\ng=p.__get__([7])\nprint(p.__set__([8],[9]),p.__delete__([0]))\nprint(next(g)[0])\n",
+      "stdout": "None None\niterated\n7\n"
+    },
+    {
+      "id": "property-class-access-without-getter",
+      "stage": "O29",
+      "source": "p=property()\nprint(p.__get__(None,7) is p)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "property-metadata",
+      "stage": "O29",
+      "source": "p=property(lambda obj: obj)\nfor name in [\"__get__\",\"__set__\",\"__delete__\"]:\n u=getattr(property,name)\n b=getattr(p,name)\n print(type(u).__name__,u.__name__,u.__qualname__,u is getattr(property,name))\n print(type(b).__name__,b.__name__,b.__qualname__,b.__self__ is p,hasattr(b,\"__func__\"),b==getattr(p,name))\nprint(p.__class__ is property)\n",
+      "stdout": "wrapper_descriptor __get__ property.__get__ True\nmethod-wrapper __get__ property.__get__ True False True\nwrapper_descriptor __set__ property.__set__ True\nmethod-wrapper __set__ property.__set__ True False True\nwrapper_descriptor __delete__ property.__delete__ True\nmethod-wrapper __delete__ property.__delete__ True False True\nTrue\n"
+    },
+    {
+      "id": "property-native-method-is-descriptor",
+      "stage": "O29",
+      "source": "p=property(lambda obj: obj)\nclass A: read=property.__get__\ntry: A().read(7)\nexcept TypeError: print(\"wrong receiver\")\nprint(A.read is property.__get__)\n",
+      "stdout": "wrong receiver\nTrue\n"
+    },
+    {
+      "id": "staticmethod-owner-a",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a)\nprint(r is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-owner-a-None",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a,None)\nprint(r is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-owner-a-A",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a,A)\nprint(r is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-owner-None-A",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(None,A)\nprint(r is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-owner-None-7",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(None,7)\nprint(r is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-owner-a-7",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a,[7])\nprint(r is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-owner-7",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(7)\nprint(r is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-owner-None",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(None)\nprint(r is f)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-owner-None-None",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=w.__get__(None,None)\nprint(r is f)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-unbound",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nr=staticmethod.__get__(w,a,A)\nprint(r is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-arguments-47",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nw.__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-arguments-48",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nw.__get__(a,None,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-arguments-49",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nw.__get__(obj=a)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-wrong-receiver",
+      "stage": "O30",
+      "source": "staticmethod.__get__(7,8)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-metadata",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=staticmethod(f)\nclass A: pass\na=A()\nu=staticmethod.__get__\nb=w.__get__\nprint(type(u).__name__,u.__name__,u.__qualname__,u is staticmethod.__get__)\nprint(type(b).__name__,b.__name__,b.__qualname__,b.__self__ is w,hasattr(b,\"__func__\"),b==w.__get__)\nprint(w.__class__ is staticmethod)\n",
+      "stdout": "wrapper_descriptor __get__ staticmethod.__get__ True\nmethod-wrapper __get__ staticmethod.__get__ True False True\nTrue\n"
+    },
+    {
+      "id": "staticmethod-wrapped-descriptor-not-called",
+      "stage": "O30",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"never\")\n  return 99\nd=D()\nw=staticmethod(d)\nr=w.__get__(None,7)\nprint(r is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-wrapped-noncallable",
+      "stage": "O30",
+      "source": "v=[7]\nw=staticmethod(v)\nr=w.__get__(None,7)\nprint(r is v)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "classmethod-owner-a",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a)\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "True type\n"
+    },
+    {
+      "id": "classmethod-owner-a-None",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a,None)\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "True type\n"
+    },
+    {
+      "id": "classmethod-owner-a-A",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a,A)\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "True type\n"
+    },
+    {
+      "id": "classmethod-owner-None-A",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(None,A)\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "True type\n"
+    },
+    {
+      "id": "classmethod-owner-None-7",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(None,7)\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "True int\n"
+    },
+    {
+      "id": "classmethod-owner-a-7",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(a,[7])\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "True list\n"
+    },
+    {
+      "id": "classmethod-owner-7",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(7)\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "True type\n"
+    },
+    {
+      "id": "classmethod-owner-None",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(None)\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-owner-None-None",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=w.__get__(None,None)\nprint(r.__func__ is f,type(r.__self__).__name__)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-unbound",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nr=classmethod.__get__(w,a,A)\nprint(r.__self__ is A,r.__func__ is f,r()[0] is A)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "classmethod-arguments-64",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nw.__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-arguments-65",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nw.__get__(a,None,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-arguments-66",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nw.__get__(obj=a)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-wrong-receiver",
+      "stage": "O30",
+      "source": "classmethod.__get__(7,8)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-metadata",
+      "stage": "O30",
+      "source": "def f(*args): return args\nw=classmethod(f)\nclass A: pass\na=A()\nu=classmethod.__get__\nb=w.__get__\nprint(type(u).__name__,u.__name__,u.__qualname__,u is classmethod.__get__)\nprint(type(b).__name__,b.__name__,b.__qualname__,b.__self__ is w,hasattr(b,\"__func__\"),b==w.__get__)\nprint(w.__class__ is classmethod)\n",
+      "stdout": "wrapper_descriptor __get__ classmethod.__get__ True\nmethod-wrapper __get__ classmethod.__get__ True False True\nTrue\n"
+    },
+    {
+      "id": "classmethod-wrapped-descriptor-not-called",
+      "stage": "O30",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"never\")\n  return 99\nd=D()\nw=classmethod(d)\nr=w.__get__(None,7)\nprint(r.__func__ is d,r.__self__)\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "classmethod-wrapped-noncallable",
+      "stage": "O30",
+      "source": "v=[7]\nw=classmethod(v)\nr=w.__get__(None,7)\nprint(r.__func__ is v,r.__self__)\nr()\n",
+      "stdout": "True 7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-inference-bypasses-advertised-class",
+      "stage": "O30",
+      "source": "class A:\n @property\n def __class__(self):\n  print(\"never\")\n  return int\na=A()\nw=classmethod(lambda cls: cls)\nr=w.__get__(a)\nprint(r.__self__ is A,r() is A)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "classmethod-explicit-owner-identity",
+      "stage": "O30",
+      "source": "owner=[7]\nf=lambda cls: cls\nr=classmethod(f).__get__(None,owner)\nprint(r.__self__ is owner,r() is owner)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "staticmethod-direct-call-and-binding",
+      "stage": "O30",
+      "source": "f=lambda x:x\nw=staticmethod(f)\nprint(w([7])[0],w.__get__(None,int) is f,w.__func__ is f)\n",
+      "stdout": "7 True True\n"
+    },
+    {
+      "id": "future-live-namespace",
+      "stage": "Future",
+      "source": "print(globals()[\"__name__\"])\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "future-property-documentation",
+      "stage": "Future",
+      "source": "print(property().__doc__)\n",
+      "stdout": "None\n"
+    }
+  ]
+}

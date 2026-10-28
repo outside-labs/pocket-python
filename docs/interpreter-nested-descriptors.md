@@ -6,6 +6,10 @@ The pinned CPython 3.14.7 matrix is
 does not establish execution by the independent engine. O27 mutation binding,
 O28 name-notification binding and finite offline acceptance are implemented.
 
+The subsequent [native descriptor contract](interpreter-native-descriptors.md)
+specifies explicit property and static/class method wrapper operations separately
+from these implicit custom hooks.
+
 | Stage | Contract |
 | --- | --- |
 | O27 | Select `__set__` and `__delete__` on the descriptor's actual type. Bind a property or custom descriptor with the descriptor instance and its actual type, including inherited hooks. Call the resulting value with the target instance/class and, for assignment, the original value. Ignore its return. Attribute syntax, attribute builtins and native object/type mutation helpers share this behavior. |
