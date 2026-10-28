@@ -43,7 +43,7 @@ export function completion(kind, fields = {}) {
       record = {kind, type: fields.type, args: operands(fields.args), keywords: operands(fields.keywords),
         keywordValues: operands(fields.keywordValues), depth: fields.depth, after};
       depthCheck(record.depth); break;
-    case "relay": case "subclass-result": case "vars-result": record = {kind, receiver: fields.receiver, after}; break;
+    case "relay": case "subclass-result": case "vars-result": case "property-name": record = {kind, receiver: fields.receiver, after}; break;
     case "dir-result": case "dir-iter": case "dir-sort": record = {kind, receiver: fields.receiver, depth: fields.depth ?? 0, after}; depthCheck(record.depth); break;
     case "dir-length": case "dir-hint-bound": case "dir-hint-call": case "dir-hint-value":
       record = {kind, receiver: fields.receiver, iterator: fields.iterator, depth: fields.depth, after}; depthCheck(record.depth); break;
@@ -188,7 +188,7 @@ function visit(record) {
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];
     case "relay": case "subclass-result": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
-    case "hash-result": case "vars-result": case "dir-result": case "dir-iter": case "dir-sort":
+    case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":
     case "dir-compare": case "dir-truth": return [record.receiver, ...completionRoots(record.after)];
     case "dir-length": case "dir-hint-bound": case "dir-hint-call": case "dir-hint-value":
       return [record.receiver, record.iterator, ...completionRoots(record.after)];

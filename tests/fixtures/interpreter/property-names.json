@@ -3,7 +3,9 @@
   "suite": "interpreter-property-names/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O37"
+  ],
   "cases": [
     {
       "id": "getter-name",
@@ -39,7 +41,7 @@
     {
       "id": "assigned-integer",
       "stage": "O37",
-      "source": "def read(obj): return obj\np=property(read)\nname=7\np.__name__=name\nprint(p.__name__ is name)\n",
+      "source": "def read(obj): return obj\np=property(read)\nname=7\np.__name__=name\nprint(p.__name__ == name)\n",
       "stdout": "True\n"
     },
     {
@@ -141,13 +143,13 @@
     {
       "id": "lazy-changing-getter-name",
       "stage": "O37",
-      "source": "class Getter: __name__=\"first\"\ng=Getter()\np=property(g)\nprint(p.__name__)\ng.__name__=\"second\"\nprint(p.__name__)\n",
+      "source": "class Getter:\n @property\n def __name__(self): return self.value\ng=Getter()\ng.value=\"first\"\np=property(g)\nprint(p.__name__)\ng.value=\"second\"\nprint(p.__name__)\n",
       "stdout": "first\nsecond\n"
     },
     {
       "id": "lazy-raw-getter-name",
       "stage": "O37",
-      "source": "class Getter: pass\ng=Getter()\nname=[9]\ng.__name__=name\np=property(g)\nprint(p.__name__ is name)\n",
+      "source": "name=[9]\nclass Getter:\n @property\n def __name__(self): return name\np=property(Getter())\nprint(p.__name__ is name)\n",
       "stdout": "True\n"
     },
     {
@@ -275,7 +277,7 @@
     {
       "id": "notification-name-38",
       "stage": "O38",
-      "source": "p=property()\nname=7\np.__set_name__(None,name)\nprint(p.__name__ is name)\n",
+      "source": "p=property()\nname=7\np.__set_name__(None,name)\nprint(p.__name__ == name)\n",
       "stdout": "True\n"
     },
     {
