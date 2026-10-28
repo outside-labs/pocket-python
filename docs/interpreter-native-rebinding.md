@@ -44,9 +44,15 @@ Primary reference: CPython v3.14.7
 especially `method_get`, `wrapperdescr_get` and `descr_check`. The executable
 reference resolves argument and patch-level details.
 
-O33 is implemented. Its 28 adopted source cases cover property copies and native
+O33 is implemented. Its adopted source cases cover property copies and native
 type checks, including ignored custom metaclass checking hooks. Focused lifecycle
 tests retain detached bindings and accessor cells through parked collection,
-cancellation, idempotent close and actual arena exhaustion. O34 remains a
-separate implementation stage; two future reference cases retain documentation
-and live-namespace refusals.
+cancellation, idempotent close and actual arena exhaustion.
+
+O34 is implemented over the stated allowlist, including recursively rebound
+binding wrappers. The complete 96-case matrix includes original callback
+tracebacks, actual metaclass layouts, immutable type mutation errors, cross-kind
+receiver rejection and two retained documentation/live-namespace refusals.
+Additional lifecycle checks retain rebound function defaults/cells, lazy
+generators and intermediate binding handles through parked collection and
+interruption. Explicit native rebinding remains unavailable in the core profile.
