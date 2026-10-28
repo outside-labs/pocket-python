@@ -228,6 +228,8 @@ export class ClassRuntime {
     }
     if (receiver instanceof BuiltinValue) {
       if (name === "__class__") return value(this.typeOf(receiver));
+      if (name === "__objclass__" && this.nativeDescriptorKind(receiver))
+        return value(this.builtin(receiver.name.slice(0, receiver.name.indexOf("."))));
       if (name === "__get__" && NATIVE_METHOD_DESCRIPTORS.has(receiver.name))
         return value(this.make(BoundMethodValue, this.builtin("method_descriptor.__get__"), receiver));
       if (name === "__get__" && nativeWrapper(receiver.name))
@@ -263,6 +265,16 @@ export class ClassRuntime {
       if (name === "__class__") return value(this.builtin("method"));
       if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
     }
+    if (name === "__objclass__" && receiver instanceof BoundMethodValue &&
+        (receiver.callable instanceof FunctionValue || receiver.callable instanceof BoundMethodValue ||
+          receiver.pythonMethod && this.nativeDescriptorKind(receiver.callable)))
+      return this.read(receiver.callable, name);
+    if (name === "__objclass__" && receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue) {
+      if (nativeWrapper(receiver.callable.name))
+        return value(this.builtin(receiver.callable.name.slice(0, receiver.callable.name.indexOf("."))));
+      if (NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name))
+        this.fail("AttributeError", "Native methods have no __objclass__ attribute.");
+    }
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && name === "__func__" && receiver.callable instanceof BuiltinValue &&
         (NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name) || nativeWrapper(receiver.callable.name)))
       this.fail("AttributeError", "Native methods have no __func__ attribute.");
@@ -282,6 +294,8 @@ export class ClassRuntime {
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
     if (receiver instanceof FunctionValue && name === "__get__")
       return value(this.make(BoundMethodValue, this.builtin("function.__get__"), receiver));
+    if (receiver instanceof FunctionValue && name === "__objclass__")
+      this.fail("AttributeError", "Python functions have no default __objclass__ attribute.");
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
       const fn = receiver.pool.code.functions[receiver.index];
       return value(this.values.string(Array.from(name === "__name__" ? fn.name : fn.qualname, char => char.codePointAt(0))));
@@ -381,6 +395,10 @@ export class ClassRuntime {
   }
   write(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (name === "__objclass__" && (this.nativeDescriptorKind(receiver) || receiver instanceof BoundMethodValue &&
+        (receiver.pythonMethod || receiver.callable instanceof BuiltinValue &&
+          (nativeWrapper(receiver.callable.name) || NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name)))))
+      this.fail("AttributeError", "Native descriptor owner metadata is read-only.");
     if (receiver instanceof SuperValue) this.fail("AttributeError", "super attributes are read-only");
     if (receiver instanceof InstanceValue || receiver instanceof ClassValue && receiver.metaclass) {
       const item = this.lookup(receiver instanceof InstanceValue ? receiver.type : receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;

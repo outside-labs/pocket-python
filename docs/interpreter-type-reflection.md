@@ -56,3 +56,8 @@ Primary references: CPython v3.14.7
 [descriptor metadata](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c)
 and [type hierarchy implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
 The executable reference pins patch-level argument and lookup behavior.
+
+O35 is implemented over the adopted native descriptor allowlist. Its 43 source
+cases pass Node drain, instruction-boundary and parked execution, with original
+receiver/cell ownership, actual memory/work interruption and zero teardown.
+O36 retains reference-only status until its implementation is accepted.
