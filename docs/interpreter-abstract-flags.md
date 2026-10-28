@@ -38,13 +38,26 @@ O39 is implemented. Python function markers and computed property flags use
 owned storage, optional lookup and truth phases. The matrix includes native
 object-default operations for this specific marker, callback-visible changes,
 nested lookup/truth errors and read-only descriptor metadata. Focused lifecycle
-tests cover parked
-collection, cyclic markers, cancellation, close and failed ownership growth.
+tests cover parked collection, cyclic markers, cancellation, close and failed
+ownership growth.
 O40 is implemented through the same owned lookup/truth phases. Static/class
 method wrappers read the current wrapped marker without invoking the callable,
 including nested properties, wrappers and ordinary bound methods. Detached
 wrappers and their captured cells survive parked collection and cancellation;
 nested flag dispatch obeys the shared recursion budget.
+Bound methods wrapping custom callables forward marker reads through owned
+attribute lookup, preserving custom read/fallback hooks and exact marker values.
+
+The complete 108-case matrix contains 104 adopted comparisons and four explicit
+future refusals. Node/Chromium drain, instruction-boundary and parked execution
+pass all 648 observations, with zero logical ownership after teardown. Twelve
+representative probes extend the compatibility inventory to 212 cases per
+target. All 112 feature unit tests and twelve affected Python tests pass; the
+eight composed resource observations remain unchanged. The
+[descriptor-flags console](../examples/interpreter_abstract_flags.py) composes
+function markers, live changes, accessor copies and lazy iteration. Its
+[payload record](measurements/2026-10-28-abstract-flags.json) verifies all 38
+files at 683,662 bytes. These are finite semantic/source/payload observations.
 
 Acceptance requires the pinned source matrix in Node/Chromium drain,
 instruction-boundary and parked execution, focused lifecycle/resource checks,

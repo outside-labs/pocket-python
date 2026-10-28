@@ -147,7 +147,7 @@ issue families; availability alone never certifies an entire type or module.
 | ord | supported | One-character Unicode strings, including non-BMP code points and lone surrogate values; positional-only argument. One-byte bytes/bytearray arguments are also adopted. |  |
 | pow | partial | Two-argument real/integer power, modular integer power/inverse, and complex integer powers from -100 to 100 with finite intermediates; named base/exp/mod keywords. | Remaining complex power/recovery families are INT-NUM-02; user arithmetic slots are INT-OBJECT-01. |
 | print | partial | print(*values) with default space/newline; admitted scalar/exception displays and user __str__/__repr__ callbacks. | Keyword forms and unadopted value displays. |
-| property | partial | Three accessor arguments, accessor decorators and bound/unbound native operations/copies in classes-source/1. None copy replacements retain the accessor. | Documentation/name/dictionary reflection, documentation-sensitive getter copies and arbitrary doc behavior remain deferred. |
+| property | partial | Three accessor arguments, accessor decorators and bound/unbound native operations/copies in classes-source/1. None copy replacements retain the accessor. Property names and computed abstract flags use owned lookup and mutation contracts. | Documentation/dictionary reflection, documentation-sensitive getter copies and arbitrary doc behavior remain deferred. |
 | range | partial | One to three positional integer/index arguments; bounded range values with attributes, truth, length, indexing, slicing, equality and iteration in both source profiles. Class index/equality callbacks use owned frames. | Range methods, hashing, repr and broader reflection remain separately gated. |
 | repr | partial | repr(x), exactly one positional argument: None/bool/int/str or adopted user __repr__. Bytes/bytearray use finite binary representations. | Float/container/default-object and exception representations. |
 | reversed | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
@@ -258,3 +258,12 @@ are independent of the stored hierarchy. Receiver validation, native callable
 identity, metaclass reads and parked lifetimes have pinned source cases. Custom
 metaclass MRO construction and hooked native method qualification retain explicit
 refusals; live namespaces, default directories and broader layouts remain open.
+
+The finite [O39/O40 contract](interpreter-abstract-flags.md) adds arbitrary owned
+function abstract markers and computed read-only property/static/class method
+flags. Accessors are inspected in order using optional lookup and truth
+conversion, with lookup-only AttributeError suppression, live marker changes
+and original callback frames. Its 108-case source matrix includes 104 adopted
+comparisons and four explicit future refusals. Twelve representative probes
+extend the inventory to 212 observations per target. Abstract class enforcement,
+`abc`, arbitrary function dictionaries and broader metadata remain separate.

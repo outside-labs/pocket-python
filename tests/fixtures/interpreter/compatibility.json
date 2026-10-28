@@ -2702,6 +2702,162 @@
         "stdout": "",
         "error_type": "UnsupportedOperationError"
       }
+    },
+    {
+      "id": "abstract-flags-function-decorator-marker",
+      "source": "def mark(fn):\n fn.__isabstractmethod__=True\n return fn\nclass C:\n @property\n @mark\n def field(self): return 7\nprint(C.field.__isabstractmethod__,C().field)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-function-marker-identity",
+      "source": "def read(obj): return obj\nflag=[7]\nread.__isabstractmethod__=flag\nprint(read.__isabstractmethod__ is flag)\nflag.append(8)\nprint(len(read.__isabstractmethod__))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n2\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-accessor-order",
+      "source": "class Flag:\n def __init__(self,label,result): self.label=label; self.result=result\n @property\n def __isabstractmethod__(self):\n  print(self.label)\n  return self.result\np=property(Flag(\"get\",False),Flag(\"set\",False),Flag(\"del\",True))\nprint(p.__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "get\nset\ndel\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "get\nset\ndel\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-accessor-short-circuit",
+      "source": "class First: __isabstractmethod__=True\nclass Later:\n @property\n def __isabstractmethod__(self):\n  print(\"never\")\n  raise ValueError(\"later\")\nprint(property(First(),Later(),Later()).__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-lookup-attribute-error-suppressed",
+      "source": "class Missing:\n @property\n def __isabstractmethod__(self):\n  print(\"lookup\")\n  raise AttributeError(\"absent\")\nprint(property(Missing()).__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "lookup\nFalse\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "lookup\nFalse\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-truth-error-AttributeError",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise AttributeError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nproperty(Flag()).__isabstractmethod__\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "truth\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "truth\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "abstract-flags-callback-mutates-next-flag",
+      "source": "class First:\n @property\n def __isabstractmethod__(self):\n  print(\"first\")\n  second.__isabstractmethod__=True\n  return False\nclass Second: __isabstractmethod__=False\nsecond=Second()\nprint(property(First(),second).__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "first\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "first\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-bound-method-marker",
+      "source": "class C:\n def read(self): return 7\nf=C.read\nf.__isabstractmethod__=[7]\nm=C().read\nprint(m.__isabstractmethod__ is f.__isabstractmethod__,property(m).__isabstractmethod__)\ndel f.__isabstractmethod__\nprint(hasattr(m,\"__isabstractmethod__\"),property(m).__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\nFalse False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\nFalse False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-staticmethod-native-read",
+      "source": "w=staticmethod(None)\nprint(object.__getattribute__(w,\"__isabstractmethod__\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-classmethod-hooked-lookup",
+      "source": "class Flag:\n def __getattribute__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"hook\")\n   return True\n  return object.__getattribute__(self,name)\nprint(classmethod(Flag()).__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "hook\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "hook\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-staticmethod-nested-attribute-error",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise AttributeError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nw=staticmethod(Flag())\nprint(hasattr(w,\"__isabstractmethod__\"),property(w).__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "truth\ntruth\nFalse False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "truth\ntruth\nFalse False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "abstract-flags-method-custom-callable-hook",
+      "source": "class C: pass\nclass Flag:\n def __getattribute__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"lookup\")\n   return True\n  return object.__getattribute__(self,name)\nm=classmethod(Flag()).__get__(None,C)\nprint(m.__isabstractmethod__,property(m).__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "lookup\nlookup\nTrue True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "lookup\nlookup\nTrue True\n",
+        "error_type": null
+      }
     }
   ]
 }
