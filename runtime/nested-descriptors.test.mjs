@@ -88,6 +88,45 @@ test('nested mutation keeps the original callback exception and pending outer ex
   closed(result.closed);
 });
 
+for (const form of ['property', 'descriptor']) {
+  const binding = '  print("bind")\n  saved=[descriptor]\n  def notify(owner,name):\n   print("body",name)\n   if name=="first": del owner.second\n   owner.saved=saved[0]\n   return [99]\n  return notify\n';
+  const source = form === 'property' ? 'class D:\n @property\n def __set_name__(descriptor):\n'+binding :
+    'class Hook:\n def __get__(self,descriptor,owner):\n'+binding+'class D: __set_name__=Hook()\n';
+  test('name '+form+' retains original names, removed entries and binding closures through parked collection and interruption', async () => {
+    await lifecycle(source+'class A:\n first=D()\n second=D()\nprint(type(A.saved).__name__,A.__name__)\n',
+      'bind\nbody first\nbind\nbody second\nD A\n', ['bind\n', 'bind\nbody first\n', 'bind\nbody first\nbind\n', 'bind\nbody first\nbind\nbody second\n']);
+  });
+}
+
+for (const phase of ['bind', 'body']) {
+  const source = body => (phase === 'bind' ? 'class D:\n @property\n def __set_name__(self):\n  print("entered")\n  '+body+'\n' :
+    'def notify(owner,name):\n print("entered")\n '+body.replaceAll('\n  ', '\n ')+'\nclass D: __set_name__=property(lambda self: notify)\n')+'class A: x=D()\n';
+  test('name '+phase+' shares recursion, instruction, work and actual allocation limits', async () => {
+    for (const [body, options, limits, code] of [
+      [phase === 'bind' ? 'return self.__set_name__' : 'type("Nested",(),{"x":D()})', {maxDepth: 12}, undefined, 'PYTHON'],
+      ['while True: pass', {maxSteps: 350}, undefined, 'BUDGET'],
+      ['while True: pass', {maxSteps: 100000, maxWork: 35000}, undefined, 'BUDGET'],
+      ['held=[]\n  while True: held.append([7])', {maxSteps: 100000}, {maxBytes: 28000}, 'OOM'],
+    ]) {
+      const result = await run(source(body), options, limits);
+      assert.equal(result.error?.code, code, JSON.stringify(result));
+      if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+      assert.ok(result.stdout.includes('entered\n'), JSON.stringify(result.error)); closed(result.closed);
+    }
+  });
+}
+
+test('bound constructor callbacks preserve notification and discard completions', async () => {
+  const source = 'class Callback:\n def __init__(self,obj,value):\n  print(value)\nclass D:\n __set_name__=property(lambda self: Callback)\n __set__=property(lambda self: Callback)\nclass A: x=D()\nA().x=7\nprint(A.__name__)\n';
+  await lifecycle(source, 'x\n7\nA\n', ['x\n', 'x\n7\n']);
+});
+
+test('generator results from mutation and name callbacks are discarded without iteration', async () => {
+  const source = 'def callback(obj,value):\n print("never")\n yield value\nclass D:\n __set_name__=property(lambda self: callback)\n __set__=property(lambda self: callback)\nclass A: x=D()\nA().x=7\nprint(A.__name__)\n';
+  const result = await run(source);
+  assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, 'A\n'); closed(result.closed);
+});
+
 test('nested descriptor source retains the explicit core admission boundary', async () => {
   const result = await runSourceRequest({modules: [unit('print("never")\nclass D: __set__=property(lambda self: None)\n')]});
   assert.equal(result.error?.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); assert.equal(result.stats, null);

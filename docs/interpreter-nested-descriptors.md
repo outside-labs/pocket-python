@@ -3,9 +3,9 @@
 O27/O28 refine the remaining descriptor binding work under #123 and #33.
 The pinned CPython 3.14.7 matrix is
 `tests/fixtures/interpreter/nested-descriptors.json`. Reference-only validation
-does not establish execution by the independent engine. O27 mutation binding is
-implemented; O28 name-notification binding and offline acceptance follow as
-separate focused changes.
+does not establish execution by the independent engine. O27 mutation binding and
+O28 name-notification binding are implemented; offline acceptance follows as a
+separate focused change.
 
 | Stage | Contract |
 | --- | --- |

@@ -88,10 +88,12 @@ test('decorator closures resolve in the enclosing scope and private expressions 
 });
 
 
-test('property-valued notification hooks retain their separate binding gate', async () => {
+test('noncallable results from property-valued hooks raise TypeError after binding', async () => {
   for (const source of [
+    'class D:\n def hook(self): return 7\n __set__=property(hook)\nclass A:\n x=D()\nA().x=7\n',
+    'class D:\n def hook(self): return 7\n __delete__=property(hook)\nclass A:\n x=D()\ndel A().x\n',
     'class D:\n def hook(self): return 7\n __set_name__=property(hook)\nclass A:\n x=D()\n'
   ]) {
-    const result = await run(source); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result);
+    const result = await run(source); assert.equal(result.error.type, 'TypeError'); closed(result);
   }
 });
