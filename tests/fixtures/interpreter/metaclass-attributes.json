@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O25"
+    "O25",
+    "O26"
   ],
   "cases": [
     {
@@ -459,6 +460,175 @@
       "stage": "O25",
       "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"binding\")\nclass M(type): __getattr__=D()\nclass A(metaclass=M): pass\nprint(getattr(A,\"x\",7),hasattr(A,\"x\"))\n",
       "stdout": "7 False\n"
+    },
+    {
+      "id": "__setattr__-staticmethod",
+      "stage": "O26",
+      "source": "class M(type):\n @staticmethod\n def __setattr__(name,value): print(name,value[0])\nclass A(metaclass=M): x=9\nA.x=[7]\nprint(A.x)\n",
+      "stdout": "x 7\n9\n"
+    },
+    {
+      "id": "__setattr__-classmethod",
+      "stage": "O26",
+      "source": "class M(type):\n @classmethod\n def __setattr__(meta,name,value): print(name,value[0])\nclass A(metaclass=M): x=9\nA.x=[7]\nprint(A.x)\n",
+      "stdout": "x 7\n9\n"
+    },
+    {
+      "id": "__setattr__-property",
+      "stage": "O26",
+      "source": "class M(type):\n @property\n def __setattr__(cls): return (lambda name,value: print(name,value[0]))\nclass A(metaclass=M): x=9\nA.x=[7]\nprint(A.x)\n",
+      "stdout": "x 7\n9\n"
+    },
+    {
+      "id": "__setattr__-noncallable",
+      "stage": "O26",
+      "source": "class M(type): __setattr__=None\nclass A(metaclass=M): x=9\nA.x=[7]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__setattr__-binding-error",
+      "stage": "O26",
+      "source": "class D:\n def __get__(self,obj,owner): raise ValueError(\"binding\")\nclass M(type): __setattr__=D()\nclass A(metaclass=M): x=9\nA.x=[7]\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__setattr__-inherited-super",
+      "stage": "O26",
+      "source": "class M(type):\n def __setattr__(cls,name,value):\n  print(name)\n  return super().__setattr__(name,value)\nclass N(M): pass\nclass A(metaclass=N): x=9\nA.x=[7]\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "x\nTrue\n"
+    },
+    {
+      "id": "__setattr__-native-reflection",
+      "stage": "O26",
+      "source": "class M(type):\n def method(cls): return super().__setattr__\nclass A(metaclass=M): x=9\nf=A.method()\nprint(type(type.__setattr__).__name__,type.__setattr__.__name__,type.__setattr__.__qualname__)\nprint(type(f).__name__,f.__name__,f.__qualname__,f.__self__ is A,hasattr(f,\"__func__\"))\nf(\"x\",[7])\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "wrapper_descriptor __setattr__ type.__setattr__\nmethod-wrapper __setattr__ type.__setattr__ True False\nTrue\n"
+    },
+    {
+      "id": "__setattr__-native-missing",
+      "stage": "O26",
+      "source": "type.__setattr__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__setattr__-native-name",
+      "stage": "O26",
+      "source": "type.__setattr__(type,7,9)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__setattr__-native-keyword",
+      "stage": "O26",
+      "source": "type.__setattr__(type,\"x\",value=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__delattr__-staticmethod",
+      "stage": "O26",
+      "source": "class M(type):\n @staticmethod\n def __delattr__(name): print(name)\nclass A(metaclass=M): x=9\ndel A.x\nprint(A.x)\n",
+      "stdout": "x\n9\n"
+    },
+    {
+      "id": "__delattr__-classmethod",
+      "stage": "O26",
+      "source": "class M(type):\n @classmethod\n def __delattr__(meta,name): print(name)\nclass A(metaclass=M): x=9\ndel A.x\nprint(A.x)\n",
+      "stdout": "x\n9\n"
+    },
+    {
+      "id": "__delattr__-property",
+      "stage": "O26",
+      "source": "class M(type):\n @property\n def __delattr__(cls): return (lambda name: print(name))\nclass A(metaclass=M): x=9\ndel A.x\nprint(A.x)\n",
+      "stdout": "x\n9\n"
+    },
+    {
+      "id": "__delattr__-noncallable",
+      "stage": "O26",
+      "source": "class M(type): __delattr__=None\nclass A(metaclass=M): x=9\ndel A.x\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__delattr__-binding-error",
+      "stage": "O26",
+      "source": "class D:\n def __get__(self,obj,owner): raise ValueError(\"binding\")\nclass M(type): __delattr__=D()\nclass A(metaclass=M): x=9\ndel A.x\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__delattr__-inherited-super",
+      "stage": "O26",
+      "source": "class M(type):\n def __delattr__(cls,name):\n  print(name)\n  return super().__delattr__(name)\nclass N(M): pass\nclass A(metaclass=N): x=9\ndel A.x\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "x\nFalse\n"
+    },
+    {
+      "id": "__delattr__-native-reflection",
+      "stage": "O26",
+      "source": "class M(type):\n def method(cls): return super().__delattr__\nclass A(metaclass=M): x=9\nf=A.method()\nprint(type(type.__delattr__).__name__,type.__delattr__.__name__,type.__delattr__.__qualname__)\nprint(type(f).__name__,f.__name__,f.__qualname__,f.__self__ is A,hasattr(f,\"__func__\"))\nf(\"x\")\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "wrapper_descriptor __delattr__ type.__delattr__\nmethod-wrapper __delattr__ type.__delattr__ True False\nFalse\n"
+    },
+    {
+      "id": "__delattr__-native-missing",
+      "stage": "O26",
+      "source": "type.__delattr__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__delattr__-native-name",
+      "stage": "O26",
+      "source": "type.__delattr__(type,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__delattr__-native-keyword",
+      "stage": "O26",
+      "source": "type.__delattr__(type,name=\"x\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "direct-hook-result",
+      "stage": "O26",
+      "source": "class M(type):\n def __setattr__(cls,name,value): return 7\n def __delattr__(cls,name): return 9\nclass A(metaclass=M): pass\nprint(M.__setattr__(A,\"x\",1),M.__delattr__(A,\"x\"))\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "mutation-user-descriptors",
+      "stage": "O26",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\n def __set__(self,obj,value): print(\"set\",obj.__name__,value[0])\n def __delete__(self,obj): print(\"delete\",obj.__name__)\nclass M(type): x=D()\nclass A(metaclass=M): x=9\ntype.__setattr__(A,\"x\",[8])\ntype.__delattr__(A,\"x\")\nprint(A.x)\n",
+      "stdout": "set A 8\ndelete A\n7\n"
+    },
+    {
+      "id": "native-write-name-no-set-name",
+      "stage": "O26",
+      "source": "class D:\n def __set_name__(self,owner,name): print(\"never\")\nclass A: pass\ntype.__setattr__(A,\"x\",D())\nprint(type(A.x).__name__)\n",
+      "stdout": "D\n"
+    },
+    {
+      "id": "generic-immutable-native",
+      "stage": "O26",
+      "source": "int.x=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "builtin-immutable-native",
+      "stage": "O26",
+      "source": "setattr(int,\"x\",7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-root-immutable",
+      "stage": "O26",
+      "source": "type.__setattr__(object,\"x\",7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
     }
   ]
 }

@@ -5,7 +5,7 @@ O25/O26 continue #123 against pinned CPython 3.14.7. The executable matrix is
 do not establish independent execution. The explicit classes-source/1 profile
 and bytecode 5 remain the admission boundary; core admission is unchanged.
 
-O25 is implemented; O26 retains its separate mutation implementation task.
+O25 and O26 are implemented within these finite boundaries.
 
 | Stage | Contract |
 | --- | --- |

@@ -928,7 +928,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           state.temporaries.push(...completionRoots(completion));
           let plan;
-          if (["set", "delete"].includes(operation) && classes.hasSlot(receiver.type, removing ? "__delattr__" : "__setattr__"))
+          if (["set", "delete"].includes(operation) && classes.hasAttributeHook(receiver, removing ? "__delattr__" : "__setattr__"))
             plan = classes.special(receiver, removing ? "__delattr__" : "__setattr__");
           else if (operation === "fallback") plan = classes.bindAttribute(task.hook, receiver, classes.checkingType(receiver));
           else if (operation === "get" && classes.hasAttributeHook(receiver, "__getattribute__"))
@@ -1514,13 +1514,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
           }
-          if (callable.name === "type.__getattribute__") {
-            if (keywords.length || args.length !== 2) python("TypeError", "type.__getattribute__ requires a type and name");
-            if (!classes.isType(args[0])) python("TypeError", "type.__getattribute__ requires a type receiver");
+          if (["type.__getattribute__", "type.__setattr__", "type.__delattr__"].includes(callable.name)) {
+            const writing = callable.name !== "type.__getattribute__", setting = callable.name === "type.__setattr__";
+            if (keywords.length || args.length !== (setting ? 3 : 2)) python("TypeError", "Native type attribute operation received invalid arguments");
+            if (!classes.isType(args[0])) python("TypeError", "Native type attribute operation requires a type receiver");
             const name = values.text(args[1]);
             if (name === null) python("TypeError", "attribute name must be string");
             if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
-            task = attributeTask(args[0], name, site, completion, depth, "native-get", args[1]); continue;
+            if (writing && args[0] instanceof BuiltinValue) python("TypeError", "Cannot mutate an immutable native type");
+            task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
           if (["object.__getattribute__", "object.__setattr__", "object.__delattr__"].includes(callable.name)) {
             const writing = callable.name !== "object.__getattribute__", setting = callable.name === "object.__setattr__";
@@ -1542,7 +1544,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = args[0], optional = name === "hasattr" || name === "getattr" && args.length === 3;
             const target = writing ? continuation("attribute-write", {receiver, after: completion}) : optional ?
               continuation("attribute-result", {receiver, default: args[2] ?? null, mode: name, after: completion}) : completion;
-            if (writing && receiver instanceof InstanceValue && classes.hasSlot(receiver.type, name === "setattr" ? "__setattr__" : "__delattr__")) {
+            if (writing && classes.hasAttributeHook(receiver, name === "setattr" ? "__setattr__" : "__delattr__")) {
               task = attributeTask(receiver, attribute, site, completion, depth, name === "setattr" ? "set" : "delete", args[1], null, args[2] ?? null); continue;
             }
             if (!writing &&
