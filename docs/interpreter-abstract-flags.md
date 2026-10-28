@@ -34,6 +34,12 @@ These operations belong to classes-source/1 and bytecode 5. Core/legacy
 admission and host grants remain explicit. Native coroutine/await and host
 adapters remain under #34.
 
+O39 is implemented. Python function markers and computed property flags use
+owned storage, optional lookup and truth phases. The matrix includes native
+object-default operations for this specific marker, callback-visible changes,+nested lookup/truth errors and read-only descriptor metadata. Wrapper flags
+remain explicit refusals pending O40. Focused lifecycle tests cover parked
+collection, cyclic markers, cancellation, close and failed ownership growth.
+
 Acceptance requires the pinned source matrix in Node/Chromium drain,
 instruction-boundary and parked execution, focused lifecycle/resource checks,
 compatibility probes and installed-wheel offline reload, Stop/Restart and

@@ -7,7 +7,7 @@ export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, 
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
@@ -270,6 +270,7 @@ export class ClassRuntime {
     }
     if (receiver instanceof PropertyValue) {
       if (name === "__class__") return value(this.builtin("property"));
+      if (name === "__isabstractmethod__") return {kind: "call", callable: this.builtin("descriptor-abstract"), args: [receiver]};
       if (name === "__name__") return receiver.propertyName !== undefined ? value(receiver.propertyName) :
         {kind: "call", callable: this.builtin("property-name"), args: [receiver]};
       if (NATIVE_DESCRIPTOR_WRAPPERS.has("property." + name))
@@ -284,6 +285,7 @@ export class ClassRuntime {
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
+    if (receiver instanceof BoundMethodValue && name === "__isabstractmethod__") return this.read(receiver.callable, name);
     if (receiver instanceof BoundMethodValue && receiver.pythonMethod) {
       if (name === "__class__") return value(this.builtin("method"));
       if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
@@ -320,6 +322,10 @@ export class ClassRuntime {
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
     if (receiver instanceof FunctionValue && name === "__get__")
       return value(this.make(BoundMethodValue, this.builtin("function.__get__"), receiver));
+    if (receiver instanceof FunctionValue && name === "__isabstractmethod__") {
+      if (receiver.abstractFlag === undefined) this.fail("AttributeError", "Function has no abstract-method marker.");
+      return value(receiver.abstractFlag);
+    }
     if (receiver instanceof FunctionValue && name === "__objclass__")
       this.fail("AttributeError", "Python functions have no default __objclass__ attribute.");
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
@@ -444,6 +450,16 @@ export class ClassRuntime {
   }
   mutate(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (name === "__isabstractmethod__" && receiver instanceof FunctionValue) {
+      const before = receiver.abstractFlag;
+      if (remove && before === undefined) this.fail("AttributeError", "Function has no abstract-method marker.");
+      receiver.abstractFlag = remove ? undefined : value;
+      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+      catch (error) { receiver.abstractFlag = before; throw error; }
+      return null;
+    }
+    if (name === "__isabstractmethod__" && (receiver instanceof PropertyValue || receiver instanceof BoundMethodValue))
+      this.fail("AttributeError", "Computed abstract-method flags are read-only.");
     if (name === "__name__") {
       if (!(receiver instanceof PropertyValue))
         this.fail("UnsupportedOperationError", "Name mutation is adopted only for properties.", "UNSUPPORTED");
