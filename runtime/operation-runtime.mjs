@@ -1533,6 +1533,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args[1] === null && (args[2] ?? null) === null) python("TypeError", "__get__(None, None) is invalid");
             task = valueTask(args[1] === null ? args[0] : allocate(BoundMethodValue, args[0], args[1], true), site, completion); continue;
           }
+          if (callable.name === "property.__set_name__") {
+            if (!(args[0] instanceof PropertyValue)) python("TypeError", "Native property notification requires a property receiver");
+            if (keywords.length || args.length !== 3) python("TypeError", "Native property notification requires two positional arguments");
+            task = valueTask(classes.mutate(args[0], "__name__", args[2]), site, completion); continue;
+          }
           if (callable.name === "property-name") {
             const receiver = args[0];
             if (!(receiver instanceof PropertyValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid property name lookup.");
@@ -1568,7 +1573,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = valueTask(receiver, site, completion); continue;
             }
             const accessor = receiver[reading ? "fget" : setting ? "fset" : "fdel"];
-            if (accessor === null) python("AttributeError", "Property has no " + (reading ? "getter" : setting ? "setter" : "deleter"));
+            if (accessor === null) classes.missingPropertyAccessor(receiver, reading ? "getter" : setting ? "setter" : "deleter");
             const after = reading ? continuation("relay", {receiver, after: completion}) :
               continuation("attribute-write", {receiver, after: completion});
             task = callTask(accessor, setting ? [target, args[2]] : [target], [], [], site, after, depth); continue;

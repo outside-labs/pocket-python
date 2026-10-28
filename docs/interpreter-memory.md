@@ -24,6 +24,17 @@ records, not observed garbage collections or released operating-system pages.
 | Tuple/list | 64 plus 8 per item slot, plus reachable values |
 | Dictionary | 96 plus 48 per entry plus twice stored hash length, plus reachable keys/values |
 | Iterator | 64 plus its retained container |
+| Property | 80 bytes plus accessor edges; an assigned name adds an 8-byte slot and its reachable value |
+
+`execution-accounting/2` adopts O38 automatic property names. Native notification
+retains the already allocated namespace-name string and adds the assigned-name
+slot; mutation preflight contributes its ordinary collection/work charges.
+Four of the eight composed execution cases contain such a property. Their peak
+allocation increases by 104 bytes (8 for the slot and 96 for an eight-code-point
+name), with unchanged instructions, allocations and observable Python behavior.
+The other four observations are unchanged. `execution-resources.json` retains
+the original measurements as `previous_cases` alongside the revised cases.
+Drain, instruction-boundary and parked tests compare the revised contract.
 
 These are versioned accounting rules, not estimates of a particular JavaScript
 engine's RSS. Host object internals, JS engine overhead, transport copies,
