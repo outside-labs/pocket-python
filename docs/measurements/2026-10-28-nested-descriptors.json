@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "scope": "Finite O27/O28 descriptor-valued mutation/name-notification binding. Semantic/source/payload evidence without performance, device, package, native async or host-adapter claims.",
+  "baseline_commit": "be6c5712c250d98cd142c34c96430d5be2151ddc",
+  "measurement_source_revision": "43491e7cfd3bd3b93ca6f944579052c5b2c188ab",
+  "working_tree_modified": true,
+  "engine_fingerprint": "5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7",
+  "corpus": {
+    "path": "tests/fixtures/interpreter/nested-descriptors.json",
+    "size_bytes": 15393,
+    "sha256": "6ca92b2066cffa2babe3ec79334c298869492386eec69a5c8fcf572fc87de3d8",
+    "cases": 42,
+    "implemented_stages": [
+      "O27",
+      "O28"
+    ]
+  },
+  "source_reports": [
+    {
+      "path": "build/nested-notification-node-report.json",
+      "size_bytes": 103332,
+      "sha256": "a3da9a77655b7ce05dffd65872e557acd6ff739208ea28a5e2ea6c62361517e5",
+      "target": "node",
+      "driver": "drain",
+      "host": "v24.19.0",
+      "summary": {
+        "pass": 42,
+        "fail": 0
+      },
+      "zero_teardown_records": 41,
+      "verified_input_hashes": 58
+    },
+    {
+      "path": "build/nested-notification-node-stepped-report.json",
+      "size_bytes": 116139,
+      "sha256": "43ed08b650526648b32166b4628ad125b2a70a263061e25fb835d63f475edcbd",
+      "target": "node",
+      "driver": "instruction-boundary",
+      "host": "v24.19.0",
+      "summary": {
+        "pass": 42,
+        "fail": 0
+      },
+      "zero_teardown_records": 41,
+      "verified_input_hashes": 58
+    },
+    {
+      "path": "build/nested-notification-node-parked-report.json",
+      "size_bytes": 116146,
+      "sha256": "7fcb37c51fc196d42ff7ea2ed5c106fe5777596832ee0274a554dc4de6813a65",
+      "target": "node",
+      "driver": "parked-instruction-boundary",
+      "host": "v24.19.0",
+      "summary": {
+        "pass": 42,
+        "fail": 0
+      },
+      "zero_teardown_records": 41,
+      "verified_input_hashes": 58
+    },
+    {
+      "path": "build/nested-notification-browser-report.json",
+      "size_bytes": 103339,
+      "sha256": "bd28e887953c4364126f2cd2e67dc8133e6e1fb25dbd00bd911bb85c8468548c",
+      "target": "browser",
+      "driver": "drain",
+      "host": "156.0.8078.4",
+      "summary": {
+        "pass": 42,
+        "fail": 0
+      },
+      "zero_teardown_records": 41,
+      "verified_input_hashes": 58
+    },
+    {
+      "path": "build/nested-notification-browser-stepped-report.json",
+      "size_bytes": 116146,
+      "sha256": "59bdf407752eaf530ffd4a5e5506054b3e60a83e4400d6a60ca748690815937d",
+      "target": "browser",
+      "driver": "instruction-boundary",
+      "host": "156.0.8078.4",
+      "summary": {
+        "pass": 42,
+        "fail": 0
+      },
+      "zero_teardown_records": 41,
+      "verified_input_hashes": 58
+    },
+    {
+      "path": "build/nested-notification-browser-parked-report.json",
+      "size_bytes": 116153,
+      "sha256": "e343558a4b5f2e805eeb2e7f334053fd55c47097a20568749179cfa4a487b95c",
+      "target": "browser",
+      "driver": "parked-instruction-boundary",
+      "host": "156.0.8078.4",
+      "summary": {
+        "pass": 42,
+        "fail": 0
+      },
+      "zero_teardown_records": 41,
+      "verified_input_hashes": 58
+    }
+  ],
+  "source_observations": 252,
+  "zero_teardown_observations": 246,
+  "compatibility_reports": [
+    {
+      "path": "build/nested-compatibility-node-report.json",
+      "size_bytes": 298739,
+      "sha256": "7664e83b1bb918cfb3fa3669d7eaabc7ebbe06ed16447531dbce7fb9da95d656",
+      "target": "node",
+      "summary": {
+        "pass": 150,
+        "fail": 0
+      },
+      "observations": {
+        "supported": 111,
+        "deferred": 35,
+        "known-divergence": 0,
+        "host-restricted": 4
+      },
+      "verified_input_hashes": 58
+    },
+    {
+      "path": "build/nested-compatibility-browser-report.json",
+      "size_bytes": 298746,
+      "sha256": "b41219d38cc63ef1b1ee3254d0754c97e9e5b05389cf7c9b8ac4927177383f8f",
+      "target": "browser",
+      "summary": {
+        "pass": 150,
+        "fail": 0
+      },
+      "observations": {
+        "supported": 111,
+        "deferred": 35,
+        "known-divergence": 0,
+        "host-restricted": 4
+      },
+      "verified_input_hashes": 58
+    }
+  ],
+  "offline_acceptance": {
+    "path": "build/nested-installed-offline-browser-report.json",
+    "size_bytes": 199878,
+    "sha256": "f90f4e2b9a0ce31526313a374ffc4cbf8b397589f785c96f30db1df37e521f08",
+    "environment": "isolated built wheel with declared browser-test dependency",
+    "script_sha256": "1a1d09f384ce2909e50fcf498c2cc90e05b88b6c0783f733f68d990f4caec0b4",
+    "browser": "156.0.8078.4",
+    "summary": {
+      "pass": 1242,
+      "fail": 0
+    },
+    "program_comparisons": 1170,
+    "acceptance_groups": 72,
+    "stop_restart_cycles": 152
+  },
+  "node_tests": {
+    "path": "build/nested-notification-all-tests.log",
+    "size_bytes": 291327,
+    "sha256": "108e37891c642d7c4f649f3501993ca4809a634c70f59f0dd0b67341b234454e",
+    "tests": 1504,
+    "failures": 0
+  },
+  "python_tests": {
+    "path": "build/nested-python-tests.log",
+    "size_bytes": 11829,
+    "sha256": "6a6a86794f63ec161ff51d3558e06054c56cbe71c197e7702c7fd304288dc754",
+    "tests": 60,
+    "initial_sandbox_socket_errors": 1,
+    "socket_test_recheck": {
+      "path": "build/nested-python-http-test.log",
+      "size_bytes": 275,
+      "sha256": "0cbe02397cc936a8337da96c66e50e96514f3584218779ca5e2541fa4eaa7a9b"
+    },
+    "remaining_failures": 0,
+    "optional_runtime_skips": 0
+  },
+  "composed_resources": {
+    "path": "tests/fixtures/interpreter/execution-resources.json",
+    "size_bytes": 2698,
+    "sha256": "1efa15cde7472dc4f3346a825a244f15cadc39cfc9b0b82f2458d9da1529ed72",
+    "unchanged_cases": 8
+  },
+  "distributions": {
+    "allowlists_verified": true,
+    "isolated_installations": 4,
+    "verification_log": {
+      "path": "build/nested-distributions.log",
+      "size_bytes": 3582,
+      "sha256": "fc1a99b345987270d96b7c5abe4b7e957fa00a83ac99d6f3cc330f978dadfba7"
+    },
+    "artifacts": [
+      {
+        "path": "build/nested-dist/pocket_python-0.2.0-py3-none-any.whl",
+        "size_bytes": 39972,
+        "sha256": "006e5e1174c0f12de571bb2cc2c8c68ff28680e38247ea8809d9770d74ba865b"
+      },
+      {
+        "path": "build/nested-dist/pocket_python-0.2.0.tar.gz",
+        "size_bytes": 30843,
+        "sha256": "0a4d9275353fd5bf9fa7bda74a102cdec7d53d6eb968a0e66231b9398bbd0a86"
+      }
+    ]
+  },
+  "example": {
+    "source": {
+      "path": "examples/interpreter_nested_descriptors.py",
+      "size_bytes": 2306,
+      "sha256": "75e53cda0a96071f6a971d843f5de2a8cf897ccb931fb493178c94da3407c238"
+    },
+    "output": "build/nested-descriptor-console",
+    "size": {
+      "artifact_bytes": 661205,
+      "assembly_module_bytes": 17181,
+      "data_bytes": 5427,
+      "engine_bytes": 606765,
+      "library_bytes": 0,
+      "notice_bytes": 4127,
+      "receipt_bytes": 26375,
+      "source_bytes": 1330
+    },
+    "files": [
+      {
+        "path": "POCKET-PYTHON.json",
+        "size_bytes": 26375,
+        "sha256": "ff6c39550df08982a7a15a54b65aafbf80ff07bb8e82ab9063a45f87dac31c56"
+      },
+      {
+        "path": "app-a01d484ce94e5201b88eba2628b24f23ccfe78439b15ecf9e17ec0834e48fc86.js",
+        "size_bytes": 8386,
+        "sha256": "a01d484ce94e5201b88eba2628b24f23ccfe78439b15ecf9e17ec0834e48fc86"
+      },
+      {
+        "path": "app-config-22eeb033084e3747330caf7c118408b77ee764e2cec6396eddbfd57d5a7caac0.json",
+        "size_bytes": 1214,
+        "sha256": "22eeb033084e3747330caf7c118408b77ee764e2cec6396eddbfd57d5a7caac0"
+      },
+      {
+        "path": "application/8df64a047df08fb9ad4eba9eab8a2fc349b051d38b256ee8a2cad379f0b4f700/APPLICATION.json",
+        "size_bytes": 1431,
+        "sha256": "8df64a047df08fb9ad4eba9eab8a2fc349b051d38b256ee8a2cad379f0b4f700"
+      },
+      {
+        "path": "application/8df64a047df08fb9ad4eba9eab8a2fc349b051d38b256ee8a2cad379f0b4f700/LICENSES/application.txt",
+        "size_bytes": 1066,
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85"
+      },
+      {
+        "path": "application/8df64a047df08fb9ad4eba9eab8a2fc349b051d38b256ee8a2cad379f0b4f700/sources/app.py",
+        "size_bytes": 1330,
+        "sha256": "98232d77242ec0504a20b9fd70fb93cc852c476ab5625ddb72ef6ac61b9c6192"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/browser-protocol.mjs",
+        "size_bytes": 10589,
+        "sha256": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/bytecode.mjs",
+        "size_bytes": 6836,
+        "sha256": "e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/class-policy.mjs",
+        "size_bytes": 2707,
+        "sha256": "faa28ed5d5c3cfb9cf3c94c4849f002609f09d8b141422e1c390f8d7e774a98a"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/class-values.mjs",
+        "size_bytes": 30190,
+        "sha256": "e9aa18cf2ee42baf052a63f3b76e911c6bf9934c478f213985867523dfb21507"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/function-bytecode.mjs",
+        "size_bytes": 22421,
+        "sha256": "61a764005678277ebee8ead4fa301fe035090bd50fa8a52df3d981b4fe7bf35d"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/function-objects.mjs",
+        "size_bytes": 4496,
+        "sha256": "46d9d7bdd6acedb77cbbfa4f18b3ec57dda15aaab58cb8352c98cf9544944d69"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/functions.mjs",
+        "size_bytes": 64200,
+        "sha256": "110a1f6bcbcd0e7ee6ef9d248151c13bf70f66b4967621c7b663fe7c8c6266fe"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/interpreter-host.mjs",
+        "size_bytes": 7318,
+        "sha256": "4afadfd987000afa6221ee73dcd64e9c00a2d13c4324718248d396302a39296d"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/interpreter-worker.mjs",
+        "size_bytes": 8855,
+        "sha256": "324cc23100eb40ef04f2909b805d7abc0c8651b4608b3a61a95470ec7e74e19e"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/library-catalog.mjs",
+        "size_bytes": 907,
+        "sha256": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/library-selection.mjs",
+        "size_bytes": 3661,
+        "sha256": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/licenses/POCKET-PYTHON.txt",
+        "size_bytes": 1066,
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/licenses/UNICODE.txt",
+        "size_bytes": 1995,
+        "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/memory.mjs",
+        "size_bytes": 8407,
+        "sha256": "b4b8ebbb6f576e2c01e8e28f4e02b1962ca1c5ffb263216278617c2c6bd8bb35"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/module-context.mjs",
+        "size_bytes": 8319,
+        "sha256": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/module-registry.mjs",
+        "size_bytes": 10220,
+        "sha256": "5c87f42966f7d1094ec9abcdd0e66718d3ccf1cdbfc7fa47c76495e14a21b61d"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/module-session.mjs",
+        "size_bytes": 12852,
+        "sha256": "8474187aa92173689c875d6bf15b31a7eae4dcff62b862b9607ce22e10753df4"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/numeric.mjs",
+        "size_bytes": 13954,
+        "sha256": "2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/operation-runtime.mjs",
+        "size_bytes": 130515,
+        "sha256": "cc51f3398a8cf2892934fe80c32f70c506d9e6254351aab8ba97bd4d34344d32"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/operations.mjs",
+        "size_bytes": 29399,
+        "sha256": "0daa9d543ec5ac12534004268811b3a7174d815c16941a9042df78f0d1c2b55e"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/source-compiler.mjs",
+        "size_bytes": 42147,
+        "sha256": "2bc96679f490d8791a5e76353c86654d83dbbe28a93846f5f04de37e2dc13c54"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/source-identifiers.mjs",
+        "size_bytes": 25949,
+        "sha256": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/source-modules.mjs",
+        "size_bytes": 5115,
+        "sha256": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/source-parser.mjs",
+        "size_bytes": 34109,
+        "sha256": "2ba7ecd41fdae750fa28dfb4fced9440d24ba9b96ed515d12b5151b385eebfdd"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/source-tokens.mjs",
+        "size_bytes": 15061,
+        "sha256": "e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/string-printability.mjs",
+        "size_bytes": 13287,
+        "sha256": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/values.mjs",
+        "size_bytes": 89171,
+        "sha256": "9fcba6a7b592464356ad5dca13c39ac02ce6ef9ab12b3c41725652fdc1a211ac"
+      },
+      {
+        "path": "engine/5809b408826005dadd17a5246c127ba272cf1fb4821f6466b6e05eecdafaa7b7/vm.mjs",
+        "size_bytes": 6080,
+        "sha256": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d"
+      },
+      {
+        "path": "icon.svg",
+        "size_bytes": 214,
+        "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691"
+      },
+      {
+        "path": "index.html",
+        "size_bytes": 2232,
+        "sha256": "1bb933501739ae0337a2091b01dce6cf1f363251a70dabcb793722ef48b757f6"
+      },
+      {
+        "path": "manifest.webmanifest",
+        "size_bytes": 336,
+        "sha256": "0d28f5f1d05150bb97becf34a8f4e9f7e41f863765f41b057613f12ce5fd318c"
+      },
+      {
+        "path": "service-worker.js",
+        "size_bytes": 8795,
+        "sha256": "87d4ef02b460f1a7c4d35a93280740aaf1c6f155d9106e142312a42ead061dd1"
+      }
+    ],
+    "receipt_members_verified": 37,
+    "identical_rebuild": true,
+    "gzip_file_bytes": 158189
+  }
+}

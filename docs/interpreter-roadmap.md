@@ -286,3 +286,18 @@ namespace mappings, default directories, builtin layouts, further construction a
 descriptor protocols and dynamic source remain open. Native coroutine/await,
 async protocols, awaited host adapters and durable view/save acceptance remain
 under #34. No dependency, host grant, publication or deployment is included.
+
+## Nested descriptor hook checkpoint
+
+[O27/O28](interpreter-nested-descriptors.md) extend #123 and #33 with owned
+property/custom-descriptor-valued mutation and name-notification hooks. Binding
+and invocation preserve original operands, exceptions, actual-type lookup,
+notification snapshots and class-cell/subclass/decorator order. The field-hook
+console composes validation, native mutation defaults and generators, with
+offline reload, Stop/Restart and a waiting reduced-profile update.
+
+Live namespaces, default directories, builtin layouts, further metaclass and
+descriptor reflection and dynamic source retain their finite contracts. Native
+coroutine/await, async protocols, awaited host adapters and durable view/save
+acceptance remain under #34. No dependency, host grant, publication or deployment
+is included.

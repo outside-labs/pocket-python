@@ -3,9 +3,8 @@
 O27/O28 refine the remaining descriptor binding work under #123 and #33.
 The pinned CPython 3.14.7 matrix is
 `tests/fixtures/interpreter/nested-descriptors.json`. Reference-only validation
-does not establish execution by the independent engine. O27 mutation binding and
-O28 name-notification binding are implemented; offline acceptance follows as a
-separate focused change.
+does not establish execution by the independent engine. O27 mutation binding,
+O28 name-notification binding and finite offline acceptance are implemented.
 
 | Stage | Contract |
 | --- | --- |
@@ -49,3 +48,34 @@ deployment is included.
 Semantic anchors: the Python 3.14 [descriptor protocol](https://docs.python.org/3.14/reference/datamodel.html#implementing-descriptors)
 and pinned [type implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
 The pinned executable resolves behavior that differs in later documentation.
+
+## Accepted evidence
+
+The 42-case matrix contains 40 adopted comparisons and two explicit future
+refusals. Node and Chromium each pass draining, instruction-boundary and parked
+execution: 252 observations and 246 measured zero logical teardown records.
+Every report verifies its 58 source/driver hashes and current corpus digest.
+All 150 compatibility probes pass on each target, including six new positive
+observations. These counts do not measure a percentage of Python coverage.
+
+All 1,504 Node tests pass. Lifecycle tests collect at every instruction and
+cancel/close during binding and invocation, preserving temporary operands,
+callback closures, original names and removed notification entries. Original
+source frames, ignored constructor/generator results and real recursion,
+instruction, work and allocation failures are covered. All eight composed
+resource observations remain unchanged. The 60-test Python suite passes with
+its localhost HTTP test rechecked with socket access; the supplied pinned WASM
+fixture also runs. Archive allowlists and four isolated default/compiled installs
+pass.
+
+An isolated installation of the built wheel passes offline acceptance with
+1,170 program comparisons, 72 acceptance groups and 152 Stop/Restart cycles.
+Newly entered field-hook source runs after offline reload. Setter, deleter and
+name-notification binding/invocation each stop and restart. A waiting update to
+core-source refuses the example before source effects.
+
+The [field-hook console](../examples/interpreter_nested_descriptors.py) and its
+[source/payload record](measurements/2026-10-28-nested-descriptors.json) verify all
+38 files and 37 receipt members at 661,205 bytes, including an identical fresh
+rebuild. This is finite semantic/source/payload evidence. Broader object and
+namespace work under #123/#33 and native async/host adapters under #34 remain open.
