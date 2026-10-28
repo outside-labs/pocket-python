@@ -1,0 +1,514 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-type-reflection/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "owner-copy-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.getter\nprint(d.__objclass__ is property,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "owner-copy-set",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.setter\nprint(d.__objclass__ is property,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "owner-copy-delete",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.deleter\nprint(d.__objclass__ is property,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "owner-instance-check",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type.__instancecheck__\nprint(d.__objclass__ is type,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "owner-subclass-check",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type.__subclasscheck__\nprint(d.__objclass__ is type,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "owner-type-read",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type.__getattribute__\nprint(d.__objclass__ is type,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-type-read",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type.__getattribute__\nm=d.__get__(int)\nprint(m.__objclass__ is type,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-type-write",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type.__setattr__\nprint(d.__objclass__ is type,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-type-write",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type.__setattr__\nm=d.__get__(int)\nprint(m.__objclass__ is type,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-type-delete",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type.__delattr__\nprint(d.__objclass__ is type,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-type-delete",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type.__delattr__\nm=d.__get__(int)\nprint(m.__objclass__ is type,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-property-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.__get__\nprint(d.__objclass__ is property,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-property-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.__get__\nm=d.__get__(property())\nprint(m.__objclass__ is property,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-property-set",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.__set__\nprint(d.__objclass__ is property,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-property-set",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.__set__\nm=d.__get__(property())\nprint(m.__objclass__ is property,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-property-delete",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.__delete__\nprint(d.__objclass__ is property,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-property-delete",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=property.__delete__\nm=d.__get__(property())\nprint(m.__objclass__ is property,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-static-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=staticmethod.__get__\nprint(d.__objclass__ is staticmethod,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-static-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=staticmethod.__get__\nm=d.__get__(staticmethod(f))\nprint(m.__objclass__ is staticmethod,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-class-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=classmethod.__get__\nprint(d.__objclass__ is classmethod,d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-class-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=classmethod.__get__\nm=d.__get__(classmethod(f))\nprint(m.__objclass__ is classmethod,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-function-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type(f).__get__\nprint(d.__objclass__ is type(f),d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-function-get",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type(f).__get__\nm=d.__get__(f)\nprint(m.__objclass__ is type(f),m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-method-binding",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type(property.getter).__get__\nprint(d.__objclass__ is type(property.getter),d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-method-binding",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type(property.getter).__get__\nm=d.__get__(property.getter)\nprint(m.__objclass__ is type(property.getter),m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "owner-wrapper-binding",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type(property.__get__).__get__\nprint(d.__objclass__ is type(property.__get__),d.__objclass__ is d.__objclass__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-owner-wrapper-binding",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nd=type(property.__get__).__get__\nm=d.__get__(property.__get__)\nprint(m.__objclass__ is type(property.__get__),m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "stdout": "True True method-wrapper\n"
+    },
+    {
+      "id": "bound-method-owner-absent-copy",
+      "stage": "O35",
+      "source": "m=property().getter\nprint(hasattr(m,\"__objclass__\"),getattr(m,\"__objclass__\",7))\n",
+      "stdout": "False 7\n"
+    },
+    {
+      "id": "bound-method-owner-error-copy",
+      "stage": "O35",
+      "source": "property().getter.__objclass__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bound-method-owner-absent-check",
+      "stage": "O35",
+      "source": "m=int.__instancecheck__\nprint(hasattr(m,\"__objclass__\"),getattr(m,\"__objclass__\",7))\n",
+      "stdout": "False 7\n"
+    },
+    {
+      "id": "bound-method-owner-error-check",
+      "stage": "O35",
+      "source": "int.__instancecheck__.__objclass__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-readonly-set-method",
+      "stage": "O35",
+      "source": "setattr(property.getter,\"__objclass__\",int)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-readonly-delete-method",
+      "stage": "O35",
+      "source": "delattr(property.getter,\"__objclass__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-readonly-set-wrapper",
+      "stage": "O35",
+      "source": "setattr(property.__get__,\"__objclass__\",int)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-readonly-delete-wrapper",
+      "stage": "O35",
+      "source": "delattr(property.__get__,\"__objclass__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-readonly-set-bound-wrapper",
+      "stage": "O35",
+      "source": "setattr(property().__get__,\"__objclass__\",int)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-readonly-delete-bound-wrapper",
+      "stage": "O35",
+      "source": "delattr(property().__get__,\"__objclass__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-readonly-set-bound-method",
+      "stage": "O35",
+      "source": "setattr(property().getter,\"__objclass__\",int)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-readonly-delete-bound-method",
+      "stage": "O35",
+      "source": "delattr(property().getter,\"__objclass__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "owner-actual-type-no-callback",
+      "stage": "O35",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(\"unexpected\")\n  raise ValueError(\"read\")\nclass C(metaclass=M): pass\nm=type.__getattribute__.__get__(C)\nprint(m.__objclass__ is type)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "owner-nested-binding-handle",
+      "stage": "O35",
+      "source": "d=property.__get__\nb=type(d).__get__.__get__(d)\nprint(b.__objclass__ is type(d),b(property()).__objclass__ is property)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "owner-python-classmethod-wrapper-forwarded",
+      "stage": "O35",
+      "source": "class C: p=classmethod(property.__get__)\nprint(type(C.p).__name__,C.p.__objclass__ is property)\n",
+      "stdout": "method True\n"
+    },
+    {
+      "id": "owner-python-function-and-method-absent",
+      "stage": "O35",
+      "source": "def f(obj): return obj\nclass C: method=f\nprint(hasattr(f,\"__objclass__\"),hasattr(C().method,\"__objclass__\"))\n",
+      "stdout": "False False\n"
+    },
+    {
+      "id": "mro-diamond-fresh-list",
+      "stage": "O36",
+      "source": "class A: pass\nclass B(A): pass\nclass C(A): pass\nclass D(B,C): pass\na=D.mro()\nb=type.mro(D)\nprint(a==[D,B,C,A,object],a==b,a is b)\na.append(int)\nprint(D.mro()==b,list(D.__mro__)==b,D.__base__ is B)\n",
+      "stdout": "True True False\nTrue True True\n"
+    },
+    {
+      "id": "mro-native-types",
+      "stage": "O36",
+      "source": "for C in [bool,int,float,complex,str,list,tuple,dict,range,slice,set,frozenset,bytes,bytearray,memoryview,property,staticmethod,classmethod,super,type,object,Exception,ValueError]:\n a=type.mro(C)\n print(a==list(C.__mro__),a[0] is C)\n",
+      "stdout": "True True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\n"
+    },
+    {
+      "id": "mro-bound-native-types",
+      "stage": "O36",
+      "source": "print(int.mro()==[int,object],bool.mro()==[bool,int,object],object.mro()==[object])\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "mro-metaclass-receiver",
+      "stage": "O36",
+      "source": "class M(type): pass\nclass C(metaclass=M): pass\nprint(type.mro(M)==[M,type,object],C.mro()==[C,object])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "mro-metaclass-unbound",
+      "stage": "O36",
+      "source": "class M(type): pass\nM.mro()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-native-metadata",
+      "stage": "O36",
+      "source": "class C: pass\na=C.mro\nb=C.mro\nprint(type(type.mro).__name__,type(a).__name__,type.mro.__objclass__ is type)\nprint(a.__self__ is C,a.__name__,a.__qualname__,a==b,hash(a)==hash(b),a is b,hasattr(a,\"__func__\"),hasattr(a,\"__objclass__\"))\n",
+      "stdout": "method_descriptor builtin_function_or_method True\nTrue mro C.mro True True False False False\n"
+    },
+    {
+      "id": "mro-explicit-binding",
+      "stage": "O36",
+      "source": "class C: pass\nf=type.mro.__get__(C,False)\nprint(f()==[C,object],type.mro.__get__(None,C) is type.mro)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "mro-binding-no-advertised-hooks",
+      "stage": "O36",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(\"unexpected\")\n  raise ValueError(\"read\")\nclass C(metaclass=M): pass\nf=type.mro.__get__(C)\nprint(f()[0] is C,type.mro(C)[0] is C)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "mro-class-shadow",
+      "stage": "O36",
+      "source": "class C:\n mro=staticmethod(lambda: [7])\nprint(C.mro()==[7],type.mro(C)==[C,object])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "mro-inherited-class-shadow",
+      "stage": "O36",
+      "source": "class A:\n def mro(self): return [7]\nclass C(A): pass\nprint(C.mro(C())==[7],type.mro(C)==[C,A,object])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "mro-metaclass-read-hook",
+      "stage": "O36",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M): pass\nprint(C.mro()[0] is C)\n",
+      "stdout": "mro\nTrue\n"
+    },
+    {
+      "id": "mro-args-missing",
+      "stage": "O36",
+      "source": "type.mro()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-args-excess",
+      "stage": "O36",
+      "source": "type.mro(int,int)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-args-keyword",
+      "stage": "O36",
+      "source": "type.mro(int,self=int)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-args-wrong",
+      "stage": "O36",
+      "source": "type.mro(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-args-none",
+      "stage": "O36",
+      "source": "type.mro(None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-args-bound-extra",
+      "stage": "O36",
+      "source": "int.mro(int)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-args-bound-keyword",
+      "stage": "O36",
+      "source": "int.mro(x=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-args-bind-wrong",
+      "stage": "O36",
+      "source": "type.mro.__get__(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-advertised-type-rejected",
+      "stage": "O36",
+      "source": "class C:\n @property\n def __class__(self):\n  print(\"unexpected\")\n  return type\ntype.mro(C())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-bound-method-owner-error",
+      "stage": "O36",
+      "source": "class C: pass\nC.mro.__objclass__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "mro-source-error-frames",
+      "stage": "O36",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  raise ValueError(\"original\")\nclass C(metaclass=M): pass\nC.mro()\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "__getattribute__",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "primary-base-user-and-native",
+      "stage": "O36",
+      "source": "class A: pass\nclass B: pass\nclass C(A,B): pass\nprint(A.__base__ is object,C.__base__ is A,object.__base__ is None,int.__base__ is object,bool.__base__ is int,ValueError.__base__ is Exception,type.__base__ is object)\n",
+      "stdout": "True True True True True True True\n"
+    },
+    {
+      "id": "primary-base-metaclass-layout",
+      "stage": "O36",
+      "source": "class A: pass\nclass M(A,type): pass\nclass N(type,A): pass\nclass K(type): pass\nclass P(A,K): pass\nprint(M.__base__ is type,N.__base__ is type,P.__base__ is K)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "primary-base-dynamic-type",
+      "stage": "O36",
+      "source": "class A: pass\nB=type(\"B\",(A,),{})\nprint(B.__base__ is A,B.mro()==[B,A,object])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "primary-base-hook-and-native-default",
+      "stage": "O36",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(name)\n  return 7\nclass C(metaclass=M): pass\nprint(C.__base__,type.__getattribute__(C,\"__base__\") is object)\n",
+      "stdout": "__base__\n7 True\n"
+    },
+    {
+      "id": "primary-base-readonly-user-set",
+      "stage": "O36",
+      "source": "class C: pass\nC.__base__=int\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "primary-base-readonly-user-delete",
+      "stage": "O36",
+      "source": "class C: pass\ndel C.__base__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "primary-base-readonly-native-set",
+      "stage": "O36",
+      "source": "class C: pass\nint.__base__=str\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "primary-base-readonly-native-delete",
+      "stage": "O36",
+      "source": "class C: pass\ndel int.__base__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "primary-base-instance-missing",
+      "stage": "O36",
+      "source": "class C: pass\nC().__base__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "custom-metaclass-mro-definition",
+      "stage": "Future",
+      "source": "class M(type):\n print(\"body\")\n def mro(cls): return type.mro(cls)\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
+      "stdout": "body\nC\n"
+    },
+    {
+      "id": "custom-metaclass-mro-dynamic",
+      "stage": "Future",
+      "source": "M=type(\"M\",(type,),{\"mro\":lambda cls:type.mro(cls)})\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
+      "stdout": "C\n"
+    },
+    {
+      "id": "custom-metaclass-mro-mutation",
+      "stage": "Future",
+      "source": "class M(type): pass\nM.mro=lambda cls:type.mro(cls)\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
+      "stdout": "C\n"
+    },
+    {
+      "id": "live-class-namespace",
+      "stage": "Future",
+      "source": "class C: pass\nprint(C.__dict__[\"__module__\"])\n",
+      "stdout": "builtins\n"
+    }
+  ]
+}
