@@ -17,6 +17,8 @@ unbound wrapper_descriptor and fresh bound method-wrapper values. Both expose
 and have no `__func__`. Resulting Python methods expose their original `__self__`
 and `__func__`, match ordinary implicit binding, and preserve the existing method
 equality/hash contract. A wrong native receiver raises TypeError.
+Unboxed integer `is` and `id` retain their existing explicit boundary; binding
+an integer target preserves its numeric value without adopting interning.
 
 Accessor copies are shallow and independent of later calls. Wrapped closures,
 defaults, mutable receivers and accessor values remain owned through detached
@@ -46,4 +48,6 @@ equality/hash, None retention, arbitrary replacements and callback failures.
 Dedicated lifecycle tests retain detached copy handles and copied accessor cells
 through collection, parked execution, cancellation and idempotent close. Real
 arena exhaustion while accumulating copies releases all logical owners.
-O32 remains a reference-only stage until its runtime slice is adopted.
+O32 is implemented with 26 pinned cases, covering original function/receiver
+identity, ignored arbitrary owners, native validation, lazy generators and
+ordinary source errors. Its methods share the existing owned call machinery.

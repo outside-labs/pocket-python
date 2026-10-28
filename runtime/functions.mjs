@@ -592,6 +592,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           else if (arg === "encode" && values.isString(receiver)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
           else if (op === "attribute-get" && (receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+            if (receiver instanceof FunctionValue && arg === "__get__" && frame.callable.pool.code.version !== 5)
+              hard("UNSUPPORTED", "UnsupportedOperationError", "Explicit function binding requires the class profile.");
             const plan = classes.read(receiver, arg);
             if (plan.kind === "value") stack.push(plan.value);
             else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }

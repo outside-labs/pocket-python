@@ -12,7 +12,7 @@ const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclass
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_COPY_METHODS]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
-const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__"]);
+const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
 const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
 
@@ -273,6 +273,8 @@ export class ClassRuntime {
     }
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
+    if (receiver instanceof FunctionValue && name === "__get__")
+      return value(this.make(BoundMethodValue, this.builtin("function.__get__"), receiver));
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
       const fn = receiver.pool.code.functions[receiver.index];
       return value(this.values.string(Array.from(name === "__name__" ? fn.name : fn.qualname, char => char.codePointAt(0))));
@@ -316,7 +318,7 @@ export class ClassRuntime {
       this.fail("TypeError", "Native property copy requires a property receiver.");
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_DESCRIPTOR_WRAPPERS.has(value.name)) {
       const kind = value.name.slice(0, value.name.indexOf("."));
-      if (kind === "property" ? !(receiver instanceof PropertyValue) : !(receiver instanceof MethodWrapperValue) || receiver.kind !== kind)
+      if (kind === "function" ? !(receiver instanceof FunctionValue) : kind === "property" ? !(receiver instanceof PropertyValue) : !(receiver instanceof MethodWrapperValue) || receiver.kind !== kind)
         this.fail("TypeError", "Native descriptor requires a matching receiver.");
     }
     if (value instanceof SuperValue && value.self === null && receiver !== null) {
