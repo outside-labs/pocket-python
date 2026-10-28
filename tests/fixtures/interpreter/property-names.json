@@ -1,0 +1,444 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-property-names/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "getter-name",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nprint(p.__name__,getattr(p,\"__name__\"),hasattr(p,\"__name__\"))\n",
+      "stdout": "read read True\n"
+    },
+    {
+      "id": "missing-name",
+      "stage": "O37",
+      "source": "p=property()\nprint(\"before\")\nprint(p.__name__)\n",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "missing-name-optional",
+      "stage": "O37",
+      "source": "p=property()\nprint(hasattr(p,\"__name__\"),getattr(p,\"__name__\",\"missing\"))\n",
+      "stdout": "False missing\n"
+    },
+    {
+      "id": "assigned-none",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=None\np.__name__=name\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "assigned-integer",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=7\np.__name__=name\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "assigned-list",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=[9]\np.__name__=name\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "assigned-dict",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname={\"x\":9}\np.__name__=name\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "assigned-function",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=read\np.__name__=name\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "assigned-property",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=p\np.__name__=name\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "assigned-type",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=property\np.__name__=name\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "assigned-boolean",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=False\np.__name__=name\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "assignment-without-getter",
+      "stage": "O37",
+      "source": "p=property()\np.__name__=\"assigned\"\nprint(p.__name__)\ndel p.__name__\nprint(hasattr(p,\"__name__\"))\n",
+      "stdout": "assigned\nFalse\n"
+    },
+    {
+      "id": "deletion-restores-getter",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\np.__name__=\"changed\"\ndel p.__name__\ndel p.__name__\nprint(p.__name__)\n",
+      "stdout": "read\n"
+    },
+    {
+      "id": "builtin-mutations",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nprint(setattr(p,\"__name__\",None),p.__name__)\nprint(delattr(p,\"__name__\"),p.__name__)\n",
+      "stdout": "None None\nNone read\n"
+    },
+    {
+      "id": "copy-getter-explicit",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=[9]\np.__name__=name\nq=p.getter(read)\np.__name__=\"changed\"\nprint(q is p,q.__name__ is name)\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "copy-getter-none",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\np.__name__=None\nq=p.getter(None)\ndel p.__name__\nprint(q.__name__,p.__name__)\n",
+      "stdout": "None read\n"
+    },
+    {
+      "id": "copy-setter-explicit",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=[9]\np.__name__=name\nq=p.setter(read)\np.__name__=\"changed\"\nprint(q is p,q.__name__ is name)\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "copy-setter-none",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\np.__name__=None\nq=p.setter(None)\ndel p.__name__\nprint(q.__name__,p.__name__)\n",
+      "stdout": "None read\n"
+    },
+    {
+      "id": "copy-deleter-explicit",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nname=[9]\np.__name__=name\nq=p.deleter(read)\np.__name__=\"changed\"\nprint(q is p,q.__name__ is name)\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "copy-deleter-none",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\np.__name__=None\nq=p.deleter(None)\ndel p.__name__\nprint(q.__name__,p.__name__)\n",
+      "stdout": "None read\n"
+    },
+    {
+      "id": "copy-implicit-follows-replacement",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\ndef other(obj): return obj\nprint(p.getter(other).__name__,p.__name__)\n",
+      "stdout": "other read\n"
+    },
+    {
+      "id": "lazy-changing-getter-name",
+      "stage": "O37",
+      "source": "class Getter: __name__=\"first\"\ng=Getter()\np=property(g)\nprint(p.__name__)\ng.__name__=\"second\"\nprint(p.__name__)\n",
+      "stdout": "first\nsecond\n"
+    },
+    {
+      "id": "lazy-raw-getter-name",
+      "stage": "O37",
+      "source": "class Getter: pass\ng=Getter()\nname=[9]\ng.__name__=name\np=property(g)\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "lazy-property-getter-name",
+      "stage": "O37",
+      "source": "class Getter:\n @property\n def __name__(self):\n  print(\"name\")\n  return \"dynamic\"\np=property(Getter())\nprint(\"made\")\nprint(p.__name__)\n",
+      "stdout": "made\nname\ndynamic\n"
+    },
+    {
+      "id": "lazy-getattr-name",
+      "stage": "O37",
+      "source": "class Getter:\n def __getattr__(self,name):\n  if name==\"__doc__\": return None\n  print(name)\n  return \"fallback\"\np=property(Getter())\nprint(\"made\")\nprint(p.__name__)\n",
+      "stdout": "made\n__name__\nfallback\n"
+    },
+    {
+      "id": "lazy-error-ValueError",
+      "stage": "O37",
+      "source": "class Getter:\n @property\n def __name__(self):\n  print(\"entered\")\n  raise ValueError(\"original\")\np=property(Getter())\nprint(p.__name__)\n",
+      "stdout": "entered\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "__name__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "lazy-error-AttributeError",
+      "stage": "O37",
+      "source": "class Getter:\n @property\n def __name__(self):\n  print(\"entered\")\n  raise AttributeError(\"original\")\np=property(Getter())\nprint(p.__name__)\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "explicit-name-bypasses-getter",
+      "stage": "O37",
+      "source": "class Getter:\n @property\n def __name__(self):\n  print(\"never\")\n  raise ValueError(\"original\")\np=property(Getter())\np.__name__=None\nprint(p.__name__)\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "nested-property-getter",
+      "stage": "O37",
+      "source": "def read(obj): return obj\np=property(read)\nq=property(p)\nprint(q.__name__)\n",
+      "stdout": "read\n"
+    },
+    {
+      "id": "getter-builtin-name",
+      "stage": "O37",
+      "source": "print(property(len).__name__)\n",
+      "stdout": "len\n"
+    },
+    {
+      "id": "getter-integer-missing",
+      "stage": "O37",
+      "source": "p=property(7)\nprint(p.__name__)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "native-name-mutation-refusal",
+      "stage": "Future",
+      "source": "print(\"before\")\nproperty.getter.__name__=\"changed\"\n",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "function-name-mutation-refusal",
+      "stage": "Future",
+      "source": "def read(obj): return obj\np=property(read)\nread.__name__=\"changed\"\n",
+      "stdout": ""
+    },
+    {
+      "id": "property-documentation-refusal",
+      "stage": "Future",
+      "source": "def read(obj): return obj\np=property(read)\nprint(p.__doc__)\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "property-abstract-refusal",
+      "stage": "Future",
+      "source": "def read(obj): return obj\np=property(read)\nprint(p.__isabstractmethod__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "explicit-bound-notification",
+      "stage": "O38",
+      "source": "p=property()\nprint(p.__set_name__(None,\"field\"),p.__name__)\n",
+      "stdout": "None field\n"
+    },
+    {
+      "id": "explicit-unbound-notification",
+      "stage": "O38",
+      "source": "p=property()\nname=[9]\nprint(property.__set_name__(p,None,name),p.__name__ is name)\n",
+      "stdout": "None True\n"
+    },
+    {
+      "id": "notification-name-37",
+      "stage": "O38",
+      "source": "p=property()\nname=None\np.__set_name__(None,name)\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "notification-name-38",
+      "stage": "O38",
+      "source": "p=property()\nname=7\np.__set_name__(None,name)\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "notification-name-39",
+      "stage": "O38",
+      "source": "p=property()\nname=[9]\np.__set_name__(None,name)\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "notification-name-40",
+      "stage": "O38",
+      "source": "p=property()\nname=False\np.__set_name__(None,name)\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "owner-and-name-bypass-hooks",
+      "stage": "O38",
+      "source": "class Trap:\n def __getattribute__(self,name):\n  print(\"never\")\n  raise ValueError(\"read\")\n def __bool__(self):\n  print(\"never\")\n  raise ValueError(\"truth\")\np=property()\nname=Trap()\np.__set_name__(Trap(),name)\nprint(p.__name__ is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "notification-missing",
+      "stage": "O38",
+      "source": "print(\"before\")\nproperty.__set_name__()\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "notification-wrong-receiver",
+      "stage": "O38",
+      "source": "print(\"before\")\nproperty.__set_name__(7,None,\"x\")\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "notification-short",
+      "stage": "O38",
+      "source": "print(\"before\")\nproperty().__set_name__(None)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "notification-long",
+      "stage": "O38",
+      "source": "print(\"before\")\nproperty().__set_name__(None,\"x\",None)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "notification-keywords",
+      "stage": "O38",
+      "source": "print(\"before\")\nproperty().__set_name__(None,name=\"x\")\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "notification-native-metadata",
+      "stage": "O38",
+      "source": "p=property()\nd=property.__set_name__\nm=p.__set_name__\nprint(type(d).__name__,d.__name__,d.__qualname__,d.__objclass__ is property)\nprint(type(m).__name__,m.__name__,m.__qualname__,m.__self__ is p,hasattr(m,\"__func__\"),hasattr(m,\"__objclass__\"))\nprint(m==p.__set_name__,hash(m)==hash(p.__set_name__),d is property.__set_name__)\n",
+      "stdout": "method_descriptor __set_name__ property.__set_name__ True\nbuiltin_function_or_method __set_name__ property.__set_name__ True False False\nTrue True True\n"
+    },
+    {
+      "id": "notification-rebound-native",
+      "stage": "O38",
+      "source": "p=property()\nm=property.__set_name__.__get__(p)\nprint(m(None,\"field\"),p.__name__,m==p.__set_name__)\n",
+      "stdout": "None field True\n"
+    },
+    {
+      "id": "notification-wrong-rebinding",
+      "stage": "O38",
+      "source": "property.__set_name__.__get__(7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "automatic-alias-order",
+      "stage": "O38",
+      "source": "def read(obj): return obj\np=property(read)\nclass C:\n first=p\n second=p\nprint(p.__name__,C.first is C.second)\n",
+      "stdout": "second True\n"
+    },
+    {
+      "id": "automatic-overwrites-explicit",
+      "stage": "O38",
+      "source": "def read(obj): return obj\np=property(read)\np.__name__=\"old\"\nclass C: field=p\nprint(p.__name__)\n",
+      "stdout": "field\n"
+    },
+    {
+      "id": "inheritance-and-late-assignment",
+      "stage": "O38",
+      "source": "def read(obj): return obj\np=property(read)\nclass C: field=p\nclass D(C): pass\nD.other=p\nprint(p.__name__,D.field is C.field)\n",
+      "stdout": "field True\n"
+    },
+    {
+      "id": "automatic-before-subclass-hook",
+      "stage": "O38",
+      "source": "p=property()\nclass Base:\n def __init_subclass__(cls): print(p.__name__)\nclass C(Base): field=p\n",
+      "stdout": "field\n"
+    },
+    {
+      "id": "automatic-notification-snapshot",
+      "stage": "O38",
+      "source": "p=property()\nclass Mutator:\n def __set_name__(self,owner,name):\n  owner.late=p\nclass C:\n first=p\n mutate=Mutator()\n second=p\nprint(p.__name__,C.late is p)\n",
+      "stdout": "second True\n"
+    },
+    {
+      "id": "automatic-nested-notification",
+      "stage": "O38",
+      "source": "p=property()\nclass D:\n def __set_name__(self,owner,name):\n  print(p.__name__)\n  p.__set_name__(owner,\"nested\")\nclass C:\n first=p\n callback=D()\n last=p\nprint(p.__name__)\n",
+      "stdout": "first\nlast\n"
+    },
+    {
+      "id": "decorated-property-name",
+      "stage": "O38",
+      "source": "class C:\n @property\n def field(self): return 9\n @field.setter\n def field(self,value): pass\nprint(C.field.__name__,C().field)\n",
+      "stdout": "field 9\n"
+    },
+    {
+      "id": "dynamic-type-notification",
+      "stage": "O38",
+      "source": "p=property()\nC=type(\"C\",(),{\"field\":p})\nprint(p.__name__,C.field is p)\n",
+      "stdout": "field True\n"
+    },
+    {
+      "id": "notification-copy-isolation",
+      "stage": "O38",
+      "source": "def read(obj): return obj\np=property(read)\np.__set_name__(None,\"original\")\nq=p.setter(read)\nq.__set_name__(None,\"copied\")\nprint(p.__name__,q.__name__)\n",
+      "stdout": "original copied\n"
+    }
+  ]
+}
