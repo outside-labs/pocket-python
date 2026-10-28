@@ -47,7 +47,9 @@ and the pinned CPython implementations of
 and [method wrappers](https://github.com/python/cpython/blob/v3.14.7/Objects/funcobject.c).
 The executable reference resolves patch-level differences.
 
-O29 property operations are implemented. The 37 property comparisons and two
-future refusals pass parked Node execution; 128 focused descriptor/lifecycle
-tests pass, including all eight unchanged composed resource observations.
-O30 remains a reference-only stage until its dependent implementation.
+O29/O30 are implemented. The matrix has 38 property cases, 41 static/class
+method cases and two explicit future refusals. Dedicated lifecycle tests retain
+detached native methods, accessor closures and arbitrary class-method owners
+through collection, parked execution, cancellation and idempotent close.
+Resource tests cover accessor recursion and real instruction, work and allocation
+failures. Final cross-target and offline evidence follows in the acceptance slice.

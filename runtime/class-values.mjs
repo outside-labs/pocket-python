@@ -10,7 +10,7 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
 const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
-const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__"]);
+const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__"]);
 const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
 
@@ -247,6 +247,8 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Property reflection is outside the adopted profile.", "UNSUPPORTED");
     }
     if (receiver instanceof MethodWrapperValue) {
+      if (name === "__class__") return value(this.builtin(receiver.kind));
+      if (name === "__get__") return value(this.make(BoundMethodValue, this.builtin(receiver.kind + ".__get__"), receiver));
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
@@ -300,8 +302,11 @@ export class ClassRuntime {
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
   bindAttribute(value, receiver, owner) {
-    if (receiver !== null && value instanceof BuiltinValue && NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) && !(receiver instanceof PropertyValue))
-      this.fail("TypeError", "Native property descriptor requires a property receiver.");
+    if (receiver !== null && value instanceof BuiltinValue && NATIVE_DESCRIPTOR_WRAPPERS.has(value.name)) {
+      const kind = value.name.slice(0, value.name.indexOf("."));
+      if (kind === "property" ? !(receiver instanceof PropertyValue) : !(receiver instanceof MethodWrapperValue) || receiver.kind !== kind)
+        this.fail("TypeError", "Native descriptor requires a matching receiver.");
+    }
     if (value instanceof SuperValue && value.self === null && receiver !== null) {
       if (this.needsAdvertised(receiver) && !(receiver instanceof ClassValue && this.subclass(receiver, value.thisclass)) && !this.subclass(this.typeOf(receiver), value.thisclass))
         return {kind: "call", callable: this.builtin("super"), args: [value.thisclass, receiver]};

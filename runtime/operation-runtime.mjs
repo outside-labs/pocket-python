@@ -1517,6 +1517,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
           }
+          if (["staticmethod.__get__", "classmethod.__get__"].includes(callable.name)) {
+            const kind = callable.name.slice(0, callable.name.indexOf(".")), receiver = args[0];
+            if (!(receiver instanceof MethodWrapperValue) || receiver.kind !== kind)
+              python("TypeError", "Native method binding requires a matching wrapper receiver");
+            if (keywords.length || args.length < 2 || args.length > 3)
+              python("TypeError", "Native method binding received invalid arguments");
+            if (args[1] === null && (args[2] ?? null) === null) python("TypeError", "__get__(None, None) is invalid");
+            task = valueTask(kind === "staticmethod" ? receiver.callable :
+              allocate(BoundMethodValue, receiver.callable, args[2] ?? classes.typeOf(args[1])), site, completion); continue;
+          }
           if (["property.__get__", "property.__set__", "property.__delete__"].includes(callable.name)) {
             const reading = callable.name === "property.__get__", setting = callable.name === "property.__set__";
             if (!(args[0] instanceof PropertyValue)) python("TypeError", "Native property operation requires a property receiver");
