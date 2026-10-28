@@ -116,7 +116,7 @@ export class ClassRuntime {
       if (this.isType(value)) name = "type";
       else if (value instanceof BuiltinValue) name = NATIVE_CHECK_METHODS.has(value.name) ? "method_descriptor" : nativeWrapper(value.name) ? "wrapper_descriptor" : "builtin_function_or_method";
       else if (value instanceof FunctionValue) name = "function";
-      else if (value instanceof BoundMethodValue) name = value.callable instanceof BuiltinValue ?
+      else if (value instanceof BoundMethodValue) name = !value.pythonMethod && value.callable instanceof BuiltinValue ?
         NATIVE_CHECK_METHODS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
       else if (value instanceof PropertyValue) name = "property";
       else if (value instanceof MethodWrapperValue) name = value.kind;
@@ -194,7 +194,7 @@ export class ClassRuntime {
     const hook = this.lookup(receiver.type, name);
     if (!hook.found) return null;
     if (hook.value instanceof MethodWrapperValue) return {kind: "call",
-      callable: hook.value.kind === "classmethod" ? this.make(BoundMethodValue, hook.value.callable, receiver.type) : hook.value.callable, args};
+      callable: hook.value.kind === "classmethod" ? this.make(BoundMethodValue, hook.value.callable, receiver.type, !NATIVE_CLASS_METHODS.has(hook.value.callable?.name)) : hook.value.callable, args};
     if (hook.value instanceof FunctionValue) return {kind: "call", callable: hook.value, args: [receiver, ...args]};
     if (hook.value instanceof PropertyValue || this.descriptor(hook.value)?.get.found) {
       const plan = this.bindAttribute(hook.value, receiver, receiver.type);
@@ -252,14 +252,18 @@ export class ClassRuntime {
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
-    if (receiver instanceof BoundMethodValue && name === "__func__" && receiver.callable instanceof BuiltinValue &&
+    if (receiver instanceof BoundMethodValue && receiver.pythonMethod) {
+      if (name === "__class__") return value(this.builtin("method"));
+      if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
+    }
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && name === "__func__" && receiver.callable instanceof BuiltinValue &&
         (NATIVE_CHECK_METHODS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name) || nativeWrapper(receiver.callable.name)))
       this.fail("AttributeError", "Native methods have no __func__ attribute.");
-    if (receiver instanceof BoundMethodValue && name === "__class__" && receiver.callable instanceof BuiltinValue && nativeWrapper(receiver.callable.name))
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && name === "__class__" && receiver.callable instanceof BuiltinValue && nativeWrapper(receiver.callable.name))
       return value(this.builtin("method-wrapper"));
-    if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && nativeWrapper(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && nativeWrapper(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from(name === "__name__" ? receiver.callable.name.slice(receiver.callable.name.lastIndexOf(".") + 1) : receiver.callable.name, char => char.codePointAt(0))));
-    if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
@@ -319,7 +323,7 @@ export class ClassRuntime {
     const descriptor = this.descriptor(value);
     if (descriptor?.get.found) return {kind: "call", callable: descriptor.get.value, args: [value, receiver, owner]};
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
-      value.callable : this.make(BoundMethodValue, value.callable, owner)};
+      value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
       value instanceof BuiltinValue && (NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }

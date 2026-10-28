@@ -48,7 +48,10 @@ export class InstanceValue {
   constructor(type) { this.type = type; this.attributes = new Map(); }
 }
 export class BoundMethodValue {
-  constructor(callable, receiver) { this.callable = callable; this.receiver = receiver; }
+  constructor(callable, receiver, pythonMethod = false) {
+    this.callable = callable; this.receiver = receiver;
+    if (pythonMethod) this.pythonMethod = true;
+  }
 }
 export class SuperValue {
   constructor(thisclass, self, selfClass) { this.thisclass = thisclass; this.self = self; this.selfClass = selfClass; Object.freeze(this); }

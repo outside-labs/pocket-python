@@ -616,7 +616,8 @@ export class ValueRuntime {
     }
     if (left === right) return true;
     if (left instanceof BoundMethodValue && right instanceof BoundMethodValue)
-      return left.callable === right.callable && left.receiver === right.receiver;
+      return left.callable === right.callable && left.receiver === right.receiver &&
+        Boolean(left.callable instanceof BuiltinValue && !left.pythonMethod) === Boolean(right.callable instanceof BuiltinValue && !right.pythonMethod);
     if (left instanceof AppendValue && right instanceof AppendValue || left instanceof ValueMethod && right instanceof ValueMethod)
       return left.receiver === right.receiver && left.name === right.name;
     if (left instanceof StringValue && right instanceof StringValue) {

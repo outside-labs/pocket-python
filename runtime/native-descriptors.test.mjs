@@ -82,3 +82,8 @@ for (const kind of ['staticmethod', 'classmethod']) {
     await lifecycle(source, 'entered\n9 '+(kind === 'classmethod' ? '1 7' : '0')+'\n9\n', ['entered\n']);
   });
 }
+
+test('a Python method wrapping a native descriptor retains its accessor receiver and distinct method identity while parked', async () => {
+  const source = 'def factory():\n captured=[9]\n def read(obj):\n  print("entered")\n  return captured\n p=property(read)\n return classmethod(property.__get__).__get__(None,p)\nm=factory()\nprint(type(m).__name__,m.__func__ is property.__get__)\nr=m([7])\nprint(r[0],m.__self__.__class__ is property)\n';
+  await lifecycle(source, 'method True\nentered\n9 True\n', ['method True\n', 'method True\nentered\n']);
+});
