@@ -16,7 +16,8 @@ export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
   ["__init__", ordinarySlot], ["__new__", ordinarySlot], ["__init_subclass__", ordinarySlot], ...DESCRIPTOR_HOOKS.map(name => [name, ordinarySlot]),
   ["__module__", Object.freeze({define: true})], ["__qualname__", Object.freeze({define: true})],
   ["__class__", Object.freeze({define: true})],
-  ["__dict__", Object.freeze({define: true, attribute: true})]
+  ["__dict__", Object.freeze({define: true, attribute: true})],
+  ["__name__", Object.freeze({define: true, attribute: true})]
 ]));
 export const isSpecialName = name => typeof name === "string" && name.startsWith("__") && name.endsWith("__");
 export function allowsClassSpecial(name, context) {

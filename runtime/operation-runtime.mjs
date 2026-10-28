@@ -917,21 +917,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries = operationRoots(task);
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
-          if (!(writing ? allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || name === "__class__"))
+          if (!(writing ? allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name)))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
           state.temporaries.push(key);
           if (writing) completion = continuation("attribute-write", {receiver, after: completion});
-          if (operation === "get" && classes.hasSlot(receiver.type, "__getattr__")) {
-            const hook = classes.lookup(receiver.type, "__getattr__").value;
+          if (operation === "get" && classes.hasAttributeHook(receiver, "__getattr__")) {
+            const hook = classes.lookup(classes.checkingType(receiver), "__getattr__").value;
             completion = continuation("attribute-fallback", {receiver, name, key, hook, depth, after: completion});
           }
           state.temporaries.push(...completionRoots(completion));
           let plan;
           if (["set", "delete"].includes(operation) && classes.hasSlot(receiver.type, removing ? "__delattr__" : "__setattr__"))
             plan = classes.special(receiver, removing ? "__delattr__" : "__setattr__");
-          else if (operation === "fallback") plan = classes.bindAttribute(task.hook, receiver, receiver.type);
-          else if (operation === "get" && classes.hasSlot(receiver.type, "__getattribute__"))
+          else if (operation === "fallback") plan = classes.bindAttribute(task.hook, receiver, classes.checkingType(receiver));
+          else if (operation === "get" && classes.hasAttributeHook(receiver, "__getattribute__"))
             plan = classes.special(receiver, "__getattribute__");
           else {
             plan = writing ? classes.write(receiver, name, task.item, removing) : classes.read(receiver, name);
@@ -1474,7 +1474,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = notifyNext(type, [...namespace], 0, site, completion, keywords, keywordValues); continue;
           }
           if (classes.isType(callable) && !["type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
-            if (callable.name === "method_descriptor") python("TypeError", "cannot create 'method_descriptor' instances");
+            if (["method_descriptor", "wrapper_descriptor"].includes(callable.name)) python("TypeError", "cannot create '" + callable.name + "' instances");
             if (["NoneType", "NotImplementedType"].includes(callable.name)) {
               if (args.length || keywords.length) python("TypeError", callable.name + " takes no arguments");
               task = valueTask(callable.name === "NoneType" ? null : moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, completion); continue;
@@ -1493,7 +1493,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               type = cell.value; receiver = parameter.value;
             }
             if (!classes.isType(type)) python("TypeError", "super requires an adopted type");
-            if (classes.needsAdvertised(receiver) && !classes.subclass(receiver.type, type)) {
+            if (classes.needsAdvertised(receiver) && !(receiver instanceof ClassValue && classes.subclass(receiver, type)) && !classes.subclass(classes.typeOf(receiver), type)) {
               task = attributeTask(receiver, "__class__", site, continuation("advertised-super", {receiver, type, after: completion}), depth); continue;
             }
             task = valueTask(classes.superProxy(type, receiver), site, completion); continue;
@@ -1513,6 +1513,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 classes.hasSlot(value.type, "__init__") || !classes.hasSlot(value.type, "__new__")))
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
+          }
+          if (callable.name === "type.__getattribute__") {
+            if (keywords.length || args.length !== 2) python("TypeError", "type.__getattribute__ requires a type and name");
+            if (!classes.isType(args[0])) python("TypeError", "type.__getattribute__ requires a type receiver");
+            const name = values.text(args[1]);
+            if (name === null) python("TypeError", "attribute name must be string");
+            if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
+            task = attributeTask(args[0], name, site, completion, depth, "native-get", args[1]); continue;
           }
           if (["object.__getattribute__", "object.__setattr__", "object.__delattr__"].includes(callable.name)) {
             const writing = callable.name !== "object.__getattribute__", setting = callable.name === "object.__setattr__";
@@ -1537,8 +1545,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (writing && receiver instanceof InstanceValue && classes.hasSlot(receiver.type, name === "setattr" ? "__setattr__" : "__delattr__")) {
               task = attributeTask(receiver, attribute, site, completion, depth, name === "setattr" ? "set" : "delete", args[1], null, args[2] ?? null); continue;
             }
-            if (!writing && receiver instanceof InstanceValue &&
-                (classes.hasSlot(receiver.type, "__getattribute__") || classes.hasSlot(receiver.type, "__getattr__") || attribute === "__class__" && classes.hasSlot(receiver.type, "__class__"))) {
+            if (!writing &&
+                (classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && attribute === "__class__" && classes.hasSlot(receiver.type, "__class__"))) {
               task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue;
             }
             let plan;

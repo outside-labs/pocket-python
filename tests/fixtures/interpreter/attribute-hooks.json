@@ -9,7 +9,8 @@
     "O8",
     "O9",
     "O17",
-    "O23"
+    "O23",
+    "O25"
   ],
   "cases": [
     {
@@ -453,8 +454,8 @@
       "stdout": "x\n"
     },
     {
-      "id": "future-metaclass-hooks",
-      "stage": "Future",
+      "id": "metaclass-read-hooks",
+      "stage": "O25",
       "source": "class M(type):\n def __getattribute__(self,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n",
       "stdout": "7\n"
     },

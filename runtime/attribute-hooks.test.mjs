@@ -93,8 +93,8 @@ test('deferred special reflection refuses before instance hook effects', async (
   assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
 });
 
-test('instance-only hooks refuse metaclass definitions before class-body effects', async () => {
-  for (const slot of ['__getattribute__', '__getattr__', '__setattr__', '__delattr__', '__class__']) {
+test('deferred metaclass slots refuse definitions before class-body effects', async () => {
+  for (const slot of ['__setattr__', '__delattr__', '__class__']) {
     const result = await run('class M(type):\n print("never")\n '+slot+'=None\n');
     assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
     const dynamic = await run('type("M",(type,),{"'+slot+'":None})\n');

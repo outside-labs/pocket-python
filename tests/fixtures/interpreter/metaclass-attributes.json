@@ -3,7 +3,9 @@
   "suite": "interpreter-metaclass-attributes/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O25"
+  ],
   "cases": [
     {
       "id": "read-intercept",
@@ -414,6 +416,49 @@
       "stage": "Future",
       "source": "class M(type):\n def __setattr__(cls,name,value): print(\"never\")\nclass A(metaclass=M): pass\nA.__dict__={}\n",
       "stdout": "never\n"
+    },
+    {
+      "id": "native-read-builtin-types",
+      "stage": "O25",
+      "source": "print(type.__getattribute__(type,\"__name__\"),type.__getattribute__(int,\"__name__\"))\n",
+      "stdout": "type int\n"
+    },
+    {
+      "id": "wrapper-type-refuses-construction",
+      "stage": "O25",
+      "source": "type(type.__getattribute__)()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-bound-native-hash",
+      "stage": "O25",
+      "source": "class M(type):\n def reader(cls): return super().__getattribute__\nclass A(metaclass=M): x=7\nf=A.reader()\ng=A.reader()\nprint(f==g,hash(f)==hash(g),f.__self__ is A)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "advertised-super-class",
+      "stage": "O25",
+      "source": "class N(type): pass\nclass M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  return N\nclass A(metaclass=M): pass\ns=super(N,A)\nprint(s.__self__ is A,s.__self_class__ is N)\n",
+      "stdout": "read __class__\nTrue True\n"
+    },
+    {
+      "id": "class-super-real-priority",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): raise ValueError(\"never\")\nclass A(metaclass=M): pass\nclass B(A): pass\ns=super(A,B)\nprint(s.__self__ is B,s.__self_class__ is B)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "implicit-check-bypasses-read",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): raise ValueError(\"never\")\n def __instancecheck__(cls,obj): return True\n def __subclasscheck__(cls,obj): return True\nclass A(metaclass=M): pass\nprint(isinstance(7,A),issubclass(int,A))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "fallback-binding-error",
+      "stage": "O25",
+      "source": "class D:\n def __get__(self,obj,owner): raise AttributeError(\"binding\")\nclass M(type): __getattr__=D()\nclass A(metaclass=M): pass\nprint(getattr(A,\"x\",7),hasattr(A,\"x\"))\n",
+      "stdout": "7 False\n"
     }
   ]
 }

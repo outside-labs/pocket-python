@@ -5,6 +5,8 @@ O25/O26 continue #123 against pinned CPython 3.14.7. The executable matrix is
 do not establish independent execution. The explicit classes-source/1 profile
 and bytecode 5 remain the admission boundary; core admission is unchanged.
 
+O25 is implemented; O26 retains its separate mutation implementation task.
+
 | Stage | Contract |
 | --- | --- |
 | O25 | A class read selects `__getattribute__` and `__getattr__` on its actual metaclass, including inherited functions, static/class methods, properties and custom descriptors. Bind with the class receiver and actual metaclass owner. Capture the fallback hook before the initial read; only AttributeError from binding, native lookup or the read body invokes it, once. `getattr` defaults and `hasattr` suppress only the terminal AttributeError. Native `type.__getattribute__` bypasses these hooks, retaining metaclass data-descriptor priority, class MRO lookup and metaclass non-data fallback. Metadata reads follow that same precedence; a metaclass `__name__` property is adopted. |
