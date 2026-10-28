@@ -2285,6 +2285,33 @@
         "stdout": "",
         "error_type": "ValueError"
       }
+    },
+    {
+      "id": "descriptor-binding-future-copy-getter-doc-hook",
+      "source": "class Read:\n def __getattribute__(self,name):\n  print(\"documentation\")\n  raise ValueError(\"doc\")\nproperty.getter(property(),Read())\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "documentation\n",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "descriptor-binding-copy-setter-read-hooks-remain-unobserved",
+      "source": "class Write:\n def __getattribute__(self,name):\n  print(\"never\")\n  raise ValueError(\"doc\")\n def __call__(self,obj,value): obj[0]=value\nq=property.setter(property(),Write())\nobj=[7]\nq.__set__(obj,9)\nprint(obj[0],q.fget is None)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "9 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "9 True\n",
+        "error_type": null
+      }
     }
   ]
 }

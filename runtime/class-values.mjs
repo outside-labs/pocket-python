@@ -428,6 +428,15 @@ export class ClassRuntime {
     });
     return this.make(PropertyValue, ...fields.map(name => assigned.has(name) ? assigned.get(name) : null));
   }
+  copyProperty(property, method, replacement) {
+    const fields = [property.fget, property.fset, property.fdel];
+    if (replacement !== null) fields[{getter: 0, setter: 1, deleter: 2}[method]] = replacement;
+    let getter = fields[0];
+    while (getter instanceof BoundMethodValue) { this.charge(1); getter = getter.callable; }
+    if (["__getattribute__", "__getattr__"].some(name => this.hasAttributeHook(getter, name)))
+      this.fail("UnsupportedOperationError", "Property getter documentation hooks require their own contract.", "UNSUPPORTED");
+    return this.make(PropertyValue, ...fields);
+  }
   isinstance(value, type, depth = 0) {
     if (this.values.isSequenceType(type, "tuple")) {
       this.bounded(depth < 32, "Class-info tuple nesting budget exceeded");

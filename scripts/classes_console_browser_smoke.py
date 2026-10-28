@@ -510,9 +510,12 @@ def smoke(channel=None):
                     for case in descriptor_binding['cases']:
                         if case['stage'] not in descriptor_binding['implemented_stages']:
                             refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            if case['id'].startswith('future-copy-'):
+                                assert page.locator('#result').inner_text() == ''
                         elif 'error_type' in case:
                             refused(case['source'], case['error_type'] + ':')
                     checks.append('accessor-copies-and-explicit-function-binding-compose-after-offline-reload')
+                    checks.append('documentation-sensitive-getter-copies-refuse-before-hook-effects-offline')
                     checks.append('descriptor-copy-binding-validation-and-future-refusals-remain-explicit-offline')
                     busy = [
                         'def callback(obj):\n print("entered")\n while True: pass\np=property(callback)\np.__get__([7])\n',
