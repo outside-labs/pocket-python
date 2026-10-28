@@ -48,6 +48,18 @@ class TestRunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'without sharding'):
                 run_tests.shards(selected, 2)
 
+    def test_explicit_stage_filters_include_every_adopted_stage(self):
+        for check in checks():
+            command = check.command
+            if '--corpus' not in command or '--stages' not in command:
+                continue
+            corpus = json.loads((run_tests.ROOT / command[command.index('--corpus') + 1]).read_bytes())
+            start = command.index('--stages') + 1
+            stop = next((index for index in range(start, len(command))
+                         if command[index].startswith('--')), len(command))
+            with self.subTest(check=check.id):
+                self.assertLessEqual(set(corpus['implemented_stages']), set(command[start:stop]))
+
     def test_pr_retains_regressions_while_full_adds_reference_and_measurements(self):
         pr = run_tests.select_checks(['pr'])
         exhaustive = run_tests.select_checks(['full'])

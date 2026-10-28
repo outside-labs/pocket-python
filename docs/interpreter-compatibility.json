@@ -241,8 +241,8 @@
     {
       "id": "class-construction",
       "status": "partial",
-      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
-      "gaps": "Builtin instance layouts, custom namespace preparation, further metaclass special slots, callable factories and expanded class bases/keyword mappings remain separate.",
+      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes.",
+      "gaps": "Builtin instance layouts, custom namespace preparation, further metaclass special slots, callable factories and expanded class bases/keyword mappings remain separate. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -263,7 +263,13 @@
         "metaclass-attributes-read-bound-native-metaclass",
         "metaclass-attributes-advertised-class-real-first",
         "metaclass-attributes-write-data-descriptor",
-        "metaclass-attributes-write-late-write-hook"
+        "metaclass-attributes-write-late-write-hook",
+        "type-reflection-mro-diamond-fresh-list",
+        "type-reflection-mro-native-metadata",
+        "type-reflection-mro-explicit-binding",
+        "type-reflection-primary-base-metaclass-layout",
+        "type-reflection-mro-hooked-method-qualification",
+        "type-reflection-custom-metaclass-mro-definition"
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:new-subclass-init",
@@ -275,7 +281,13 @@
         "tests/fixtures/interpreter/subclass-initialization.json:metaclass-keyword-forwarding",
         "tests/fixtures/interpreter/subclass-initialization.json:descriptor-keywords",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
-        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
+        "tests/fixtures/interpreter/type-reflection.json:mro-diamond-fresh-list",
+        "tests/fixtures/interpreter/type-reflection.json:mro-native-metadata",
+        "tests/fixtures/interpreter/type-reflection.json:mro-explicit-binding",
+        "tests/fixtures/interpreter/type-reflection.json:primary-base-metaclass-layout",
+        "tests/fixtures/interpreter/type-reflection.json:mro-hooked-method-qualification",
+        "tests/fixtures/interpreter/type-reflection.json:custom-metaclass-mro-definition"
       ]
     },
     {
@@ -299,8 +311,8 @@
     {
       "id": "descriptors-decorators",
       "status": "partial",
-      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes.",
-      "gaps": "Further property documentation/name/dictionary reflection, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute.",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes.",
+      "gaps": "Further property documentation/name/dictionary reflection, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -344,7 +356,11 @@
         "native-rebinding-wrapper-function-get-bind-call",
         "native-rebinding-wrapper-type-read-actual-metaclass",
         "native-rebinding-wrapper-recursive-binding-wrappers",
-        "native-rebinding-wrapper-type-callback-frames"
+        "native-rebinding-wrapper-type-callback-frames",
+        "type-reflection-owner-copy-get",
+        "type-reflection-bound-owner-property-get",
+        "type-reflection-owner-python-classmethod-wrapper-forwarded",
+        "type-reflection-owner-direct-set-wrapper"
       ],
       "evidence": [
         "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
@@ -384,7 +400,11 @@
         "tests/fixtures/interpreter/native-rebinding.json:wrapper-function-get-bind-call",
         "tests/fixtures/interpreter/native-rebinding.json:wrapper-type-read-actual-metaclass",
         "tests/fixtures/interpreter/native-rebinding.json:wrapper-recursive-binding-wrappers",
-        "tests/fixtures/interpreter/native-rebinding.json:wrapper-type-callback-frames"
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-type-callback-frames",
+        "tests/fixtures/interpreter/type-reflection.json:owner-copy-get",
+        "tests/fixtures/interpreter/type-reflection.json:bound-owner-property-get",
+        "tests/fixtures/interpreter/type-reflection.json:owner-python-classmethod-wrapper-forwarded",
+        "tests/fixtures/interpreter/type-reflection.json:owner-direct-set-wrapper"
       ]
     },
     {
@@ -728,8 +748,8 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
-      "gaps": "Live namespace mappings, default directories, integer identity, dynamic source and broader metaclass/layout reflection remain deferred.",
+      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes.",
+      "gaps": "Live namespace mappings, default directories, integer identity, dynamic source and broader metaclass/layout reflection remain deferred. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -746,7 +766,13 @@
         "builtin-genexpr-snapshot",
         "builtin-dir-length-hint",
         "builtin-dir-rich-ordering",
-        "metaclass-attributes-read-hook-error-fallback"
+        "metaclass-attributes-read-hook-error-fallback",
+        "type-reflection-mro-diamond-fresh-list",
+        "type-reflection-mro-native-metadata",
+        "type-reflection-mro-explicit-binding",
+        "type-reflection-primary-base-metaclass-layout",
+        "type-reflection-mro-hooked-method-qualification",
+        "type-reflection-custom-metaclass-mro-definition"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:identity-alias",
@@ -757,7 +783,13 @@
         "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
         "tests/fixtures/interpreter/reflection.json:comprehension-class-private",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
-        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
+        "tests/fixtures/interpreter/type-reflection.json:mro-diamond-fresh-list",
+        "tests/fixtures/interpreter/type-reflection.json:mro-native-metadata",
+        "tests/fixtures/interpreter/type-reflection.json:mro-explicit-binding",
+        "tests/fixtures/interpreter/type-reflection.json:primary-base-metaclass-layout",
+        "tests/fixtures/interpreter/type-reflection.json:mro-hooked-method-qualification",
+        "tests/fixtures/interpreter/type-reflection.json:custom-metaclass-mro-definition"
       ]
     },
     {

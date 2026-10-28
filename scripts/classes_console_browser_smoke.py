@@ -36,6 +36,7 @@ from examples.interpreter_nested_descriptors import SOURCE as NESTED_DESCRIPTOR_
 from examples.interpreter_native_descriptors import SOURCE as NATIVE_DESCRIPTOR_SOURCE
 from examples.interpreter_descriptor_binding import SOURCE as DESCRIPTOR_BINDING_SOURCE
 from examples.interpreter_native_rebinding import SOURCE as NATIVE_REBINDING_SOURCE
+from examples.interpreter_type_reflection import SOURCE as TYPE_REFLECTION_SOURCE
 
 
 def smoke(channel=None):
@@ -185,7 +186,8 @@ def smoke(channel=None):
                     native_descriptors = json.loads((ROOT / 'tests/fixtures/interpreter/native-descriptors.json').read_bytes())
                     descriptor_binding = json.loads((ROOT / 'tests/fixtures/interpreter/descriptor-binding.json').read_bytes())
                     native_rebinding = json.loads((ROOT / 'tests/fixtures/interpreter/native-rebinding.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding]:
+                    type_reflection = json.loads((ROOT / 'tests/fixtures/interpreter/type-reflection.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -200,6 +202,7 @@ def smoke(channel=None):
                     programs.append(NATIVE_DESCRIPTOR_SOURCE)
                     programs.append(DESCRIPTOR_BINDING_SOURCE)
                     programs.append(NATIVE_REBINDING_SOURCE)
+                    programs.append(TYPE_REFLECTION_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -532,7 +535,23 @@ def smoke(channel=None):
                                     assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
                     checks.append('native-descriptor-rebinding-composes-with-offline-copies-type-checks-and-generators')
                     checks.append('native-rebinding-validation-original-callback-frames-and-future-boundaries-offline')
+                    hierarchy_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', TYPE_REFLECTION_SOURCE], text=True, encoding='utf-8')
+                    run(TYPE_REFLECTION_SOURCE, hierarchy_expected)
+                    for case in type_reflection['cases']:
+                        if case['stage'] not in type_reflection['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                            for frame in case.get('error_frames', []):
+                                if frame['function'] != '<module>':
+                                    assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
+                    checks.append('native-owner-and-type-hierarchy-reflection-compose-after-offline-reload')
+                    checks.append('type-reflection-errors-and-deferred-mro-effects-remain-explicit-offline')
                     busy = [
+                        'class M(type):\n def __getattribute__(cls,name):\n  print("entered")\n  while True: pass\nclass C(metaclass=M): pass\nC.mro()\n',
+                        'class M(type):\n def __getattribute__(cls,name):\n  print("entered")\n  while True: pass\nclass C(metaclass=M): pass\nC.__base__\n',
                         'def callback(obj):\n print("entered")\n while True: pass\np=property(callback)\nproperty.__get__.__get__(p)([7])\n',
                         'def callback(obj):\n print("entered")\n while True: pass\nbind=type(callback).__get__.__get__(callback)\nbind([7])()\n',
                         'def callback(obj):\n print("entered")\n while True: pass\n yield obj[0]\nbind=type(callback).__get__.__get__(callback)\nnext(bind([7])())\n',
@@ -780,6 +799,12 @@ def smoke(channel=None):
                     refused('print("before")\nproperty.getter.__get__(None,property)\n', 'NameError:')
                     assert page.locator('#result').inner_text() == 'before\n'
                     checks.append('class-to-core-update-retains-native-rebinding-boundaries')
+                    refused(TYPE_REFLECTION_SOURCE, 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    for source in ['int.mro()\n', 'print(int.__base__)\n']:
+                        refused('print("before")\n'+source, 'UnsupportedOperationError:')
+                        assert page.locator('#result').inner_text() == 'before\n'
+                    checks.append('class-to-core-update-retains-type-reflection-boundaries')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

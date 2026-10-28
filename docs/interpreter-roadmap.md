@@ -315,3 +315,18 @@ Live namespaces, default directories, builtin layouts, broader descriptor
 reflection and dynamic source retain their finite contracts. Native coroutine/await,
 async protocols, awaited host adapters and durable view/save acceptance remain
 under #34. No dependency, host grant, publication or deployment is included.
+
+## Native type reflection checkpoint
+
+[O35/O36](interpreter-type-reflection.md) extend #123 and #33 with native
+descriptor declaring-class metadata, fresh actual C3 hierarchy lists through
+type.mro() and primary-base attributes. Native receiver layouts, callable
+identity, metaclass reads and detached hierarchy lifetimes retain owned frames
+and shared resource limits. The [hierarchy console](../examples/interpreter_type_reflection.py)
+composes these operations with properties and lazy iteration offline.
+
+Custom MRO construction, live namespace mappings, default directories, broader
+descriptor reflection and builtin layouts retain finite follow-ups. Native
+coroutine/await, async protocols, awaited adapters and durable view/save acceptance
+remain open under #34. No dependency, host grant, publication or deployment is
+included.
