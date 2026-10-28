@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     strategy:
@@ -15,6 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     env:
       POCKET_PYTHON_RUNTIME: ${{ github.workspace }}/build/runtime
     steps:
@@ -23,17 +28,22 @@ jobs:
         with:
           version: "0.12.19"
           enable-cache: true
-      - run: uv python install
       - run: uv sync --locked --group compiled-build
-      - run: uv run --no-sync python scripts/prepare_runtime.py
-      - run: uv run --no-sync python scripts/lock_interpreter.py
-      - run: uv run --no-sync python scripts/lock_library_profiles.py
-      - run: uv run --no-sync python -m unittest discover -s tests -v
-      - run: uv build
-      - run: uv run --no-sync python scripts/check_distributions.py
+      - run: uv run --no-sync python scripts/run_tests.py python
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: python-${{ matrix.os }}
+          path: build/test-results/
+          if-no-files-found: error
 
-  browser:
+  interpreter:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       UV_PYTHON: '3.14.7'
     steps:
@@ -45,319 +55,87 @@ jobs:
         with:
           version: "0.12.19"
           enable-cache: true
-      - run: uv python install
+      - run: uv sync --locked
+      - run: uv run --no-sync python scripts/run_tests.py interpreter --shard ${{ matrix.shard }} --shards 4
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: interpreter-${{ matrix.shard }}
+          path: |
+            build/test-results/
+            build/*-report.json
+          if-no-files-found: error
+
+  browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {suite: browser-conformance, shard: 1, shards: 4}
+          - {suite: browser-conformance, shard: 2, shards: 4}
+          - {suite: browser-conformance, shard: 3, shards: 4}
+          - {suite: browser-conformance, shard: 4, shards: 4}
+          - {suite: browser-integration, shard: 1, shards: 3}
+          - {suite: browser-integration, shard: 2, shards: 3}
+          - {suite: browser-integration, shard: 3, shards: 3}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      UV_PYTHON: '3.14.7'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.19.0'
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.19"
+          enable-cache: true
+      - run: uv sync --locked --group browser-tests --group compiled-build
+      - run: uv run --no-sync python scripts/run_tests.py prepare-browser
+      - if: matrix.suite == 'browser-integration'
+        run: uv run --no-sync python scripts/prepare_runtime.py
+      - run: uv run --no-sync python scripts/run_tests.py ${{ matrix.suite }} --shard ${{ matrix.shard }} --shards ${{ matrix.shards }}
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: ${{ matrix.suite }}-${{ matrix.shard }}
+          path: |
+            build/test-results/
+            build/*-report.json
+          if-no-files-found: error
+
+  measurements:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      UV_PYTHON: '3.14.7'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.19.0'
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.19"
+          enable-cache: true
       - run: uv sync --locked --group browser-tests --group compiled-build
       - run: uv run --no-sync python scripts/prepare_runtime.py
-      - run: uv run --no-sync python scripts/prepare_browser.py
-      - run: uv run --no-sync python scripts/compiled_browser_smoke.py --report build/compiled-browser-report.json
-      - run: uv run --no-sync python scripts/shared_application_smoke.py --report build/shared-application-browser-report.json
-      - run: uv run --no-sync python scripts/interpreter_browser_smoke.py --report build/interpreter-console-browser-report.json
-      - run: uv run --no-sync python scripts/library_profiles_browser_smoke.py --report build/library-console-browser-report.json
-      - run: uv run --no-sync python scripts/classes_console_browser_smoke.py --report build/classes-console-browser-report.json
-      - run: uv run --no-sync python scripts/interpreter_measurements.py --compiled --micropython-runtime build/runtime --repeats 3 --output build/interpreter-measurements
+      - run: uv run --no-sync python scripts/run_tests.py prepare-browser
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: outside-labs/Python-JavaScript
           ref: 804a70fa37ef4ca126519c7222d1862966a63d0c
           path: build/compiler-reference
           persist-credentials: false
-      - run: uv run --no-sync python scripts/measure_applications.py --compiler-report build/compiler-reference/docs/measurements/2026-10-20-compiler.json --repeats 3 --output build/application-measurements
-      - run: uv run --no-sync python scripts/browser_smoke.py
-      - run: uv run --no-sync python runtime/check_memory.py --target browser --report build/memory-browser-report.json
-      - run: uv run --no-sync python runtime/browser_smoke.py
-      - run: uv run --no-sync python runtime/check_conformance.py --target browser --report build/interpreter-browser-report.json
-      - run: uv run --no-sync python runtime/check_conformance.py --engine vm1 --target browser --report build/vm1-browser-report.json
-      - run: uv run --no-sync python runtime/check_conformance.py --engine vm2 --target browser --report build/vm2-browser-report.json
-      - run: uv run --no-sync python runtime/check_conformance.py --engine vm3 --target browser --report build/vm3-browser-report.json
-      - run: uv run --no-sync python runtime/check_functions.py --target browser --report build/functions-browser-report.json
-      - run: uv run --no-sync python runtime/check_conformance.py --engine vm4 --target browser --report build/modules-browser-report.json
-      - run: uv run --no-sync python runtime/check_source_tokens.py --target browser --report build/source-tokens-browser-report.json
-      - run: uv run --no-sync python runtime/check_conformance.py --engine source --target browser --report build/source-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/formatting.json --report build/formatting-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/formatting.json --stepped --report build/formatting-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/iteration.json --report build/iteration-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/equality.json --report build/equality-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/equality.json --stepped --report build/equality-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 N3 N4 N5 Future --report build/numeric-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 N3 N4 N5 Future --stepped --report build/numeric-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/iteration.json --stepped --report build/iteration-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/indexing.json --stepped --report build/indexing-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/sequences.json --stages Q1 Q2 Q3 Hints --report build/sequences-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/sequences.json --stages Q1 Q2 Q3 Hints --stepped --report build/sequences-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/sequences.json --profile core-source/1 --report build/sequences-core-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/sequences.json --profile core-source/1 --stepped --report build/sequences-core-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_compatibility.py --target browser --report build/compatibility-browser-report.json
-      - run: uv run --no-sync python runtime/check_library_profiles.py --target browser --report build/library-profiles-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/generators.json --report build/generators-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/generators.json --stepped --report build/generators-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/generators.json --profile core-source/1 --report build/generators-core-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/generators.json --profile core-source/1 --stepped --report build/generators-core-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/construction.json --report build/construction-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/construction.json --stepped --report build/construction-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/attribute-hooks.json --report build/attribute-hooks-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/attribute-hooks.json --stepped --report build/attribute-hooks-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --report build/type-checks-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/reflection.json --report build/reflection-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --report build/repetition-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/subclass-initialization.json --report build/subclass-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/metaclass-attributes.json --report build/metaclass-attributes-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/metaclass-attributes.json --stepped --report build/metaclass-attributes-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/metaclass-attributes.json --parked --report build/metaclass-attributes-browser-parked-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/nested-descriptors.json --report build/nested-descriptors-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/nested-descriptors.json --stepped --report build/nested-descriptors-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/nested-descriptors.json --parked --report build/nested-descriptors-browser-parked-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/native-descriptors.json --report build/native-descriptors-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/native-descriptors.json --stepped --report build/native-descriptors-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/native-descriptors.json --parked --report build/native-descriptors-browser-parked-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/subclass-initialization.json --stepped --report build/subclass-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --stepped --report build/repetition-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --report build/repetition-core-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --stepped --report build/repetition-core-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/reflection.json --stepped --report build/reflection-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_callbacks.py --target browser --report build/callbacks-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/execution.json --parked --report build/execution-parked-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-hashing.json --parked --report build/object-hashing-parked-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-hashing.json --report build/object-hashing-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-hashing.json --stepped --report build/object-hashing-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordering.json --report build/ordering-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordering.json --stepped --report build/ordering-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordering.json --profile core-source/1 --report build/ordering-core-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordering.json --profile core-source/1 --stepped --report build/ordering-core-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-protocols.json --report build/object-protocols-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/object-protocols.json --stepped --report build/object-protocols-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --report build/classes-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/value-families.json --report build/value-families-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/value-families.json --stepped --report build/value-families-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/value-families.json --profile core-source/1 --report build/value-families-core-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/value-families.json --profile core-source/1 --stepped --report build/value-families-core-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --report build/ordinary-syntax-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --stepped --report build/ordinary-syntax-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --profile core-source/1 --report build/ordinary-syntax-core-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/ordinary-syntax.json --profile core-source/1 --stepped --report build/ordinary-syntax-core-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --stepped --report build/function-binding-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --report build/function-binding-core-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --stepped --report build/function-binding-core-browser-stepped-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --stepped --report build/classes-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/private-names.json --stepped --report build/private-names-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/descriptors.json --stepped --report build/descriptors-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/special-calls.json --stepped --report build/special-calls-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/length-truth.json --report build/length-truth-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/length-truth.json --stepped --report build/length-truth-stepped-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/execution.json --report build/execution-browser-report.json
-      - run: uv run --no-sync python runtime/check_classes.py --target browser --corpus tests/fixtures/interpreter/execution.json --stepped --report build/execution-stepped-browser-report.json
+      - run: uv run --no-sync python scripts/run_tests.py reference measurements
       - uses: actions/upload-artifact@v5
         if: always()
         with:
-          name: interpreter-browser-report
+          name: validation-measurements
           path: |
-            build/*browser-report.json
-            build/*browser-stepped-report.json
-            build/*browser-parked-report.json
-            build/application-measurements/report.json
+            build/test-results/
+            build/*-report.json
+            build/*measurements/report.json
             build/application-measurements/compiler-component-report.json
-            build/interpreter-measurements/report.json
-          if-no-files-found: error
-
-  interpreter-prototype:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: '24.19.0'
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: '3.14.7'
-      - run: node --test runtime/prototype.test.mjs
-      - run: node --test runtime/vm.test.mjs
-      - run: node --test runtime/values.test.mjs
-      - run: node --test runtime/value-families.test.mjs
-      - run: node --test runtime/class-values.test.mjs
-      - run: node --test runtime/class-policy.test.mjs
-      - run: node --test runtime/classes.test.mjs
-      - run: node --test runtime/classes-source.test.mjs
-      - run: node --test runtime/private-names.test.mjs
-      - run: node --test runtime/descriptors.test.mjs
-      - run: node --test runtime/nested-descriptors.test.mjs
-      - run: node --test runtime/native-descriptors.test.mjs
-      - run: node --test runtime/special-calls.test.mjs
-      - run: node --test runtime/length-truth.test.mjs
-      - run: node --test runtime/indexing.test.mjs
-      - run: node --test runtime/iteration.test.mjs
-      - run: node --test runtime/equality.test.mjs
-      - run: node --test runtime/hashing.test.mjs
-      - run: node --test runtime/object-hashing.test.mjs
-      - run: node --test runtime/reflection.test.mjs
-      - run: node --test runtime/repetition.test.mjs
-      - run: node --test runtime/subclass-initialization.test.mjs
-      - run: node --test runtime/metaclass-attributes.test.mjs
-      - run: node --test runtime/numeric.test.mjs
-      - run: node --test runtime/sequences.test.mjs
-      - run: node --test runtime/numeric-callbacks.test.mjs
-      - run: node --test runtime/formatting.test.mjs
-      - run: node --test runtime/memory.test.mjs
-      - run: node --test runtime/syntax.test.mjs
-      - run: node --test runtime/function-binding.test.mjs
-      - run: node --test runtime/object-protocols.test.mjs
-      - run: node --test runtime/construction.test.mjs
-      - run: node --test runtime/attribute-hooks.test.mjs
-      - run: node --test runtime/type-checks.test.mjs
-      - run: node --test runtime/ordering.test.mjs
-      - run: node --test runtime/generators.test.mjs
-      - run: node --test runtime/functions.test.mjs
-      - run: node --test runtime/execution.test.mjs
-      - run: node --test runtime/execution-stepping.test.mjs
-      - run: node --test runtime/parked-executions.test.mjs
-      - run: node --test runtime/persistent-callbacks.test.mjs
-      - run: node --test runtime/operations.test.mjs
-      - run: node --test runtime/module-registry.test.mjs
-      - run: node --test runtime/modules.test.mjs
-      - run: node --test runtime/source-tokens.test.mjs
-      - run: node --test runtime/source.test.mjs
-      - run: node --test runtime/str-identity.test.mjs
-      - run: node --test runtime/browser-host.test.mjs
-      - run: node --test runtime/library-profiles.test.mjs
-      - run: python runtime/generate_identifiers.py --check
-      - run: python runtime/generate_printability.py --check
-      - run: python runtime/check_source_tokens.py --report build/source-tokens-node-report.json
-      - run: python runtime/check_conformance.py --engine source --report build/source-node-report.json
-      - run: python scripts/lock_library_profiles.py
-      - run: python runtime/check_classes.py --reference-only --report build/classes-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/ordering.json --report build/ordering-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/subclass-initialization.json --report build/subclass-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/metaclass-attributes.json --report build/metaclass-attributes-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/ordinary-syntax.json --report build/ordinary-syntax-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/value-families.json --report build/value-families-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/iteration.json --report build/iteration-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/equality.json --report build/equality-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/nested-descriptors.json --report build/nested-descriptors-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/native-descriptors.json --report build/native-descriptors-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/length-truth.json --report build/length-truth-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/execution.json --report build/execution-reference-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/formatting.json --report build/formatting-reference-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/generators.json --report build/generators-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/generators.json --stepped --report build/generators-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/generators.json --profile core-source/1 --report build/generators-core-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/generators.json --profile core-source/1 --stepped --report build/generators-core-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/construction.json --report build/construction-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/construction.json --stepped --report build/construction-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/attribute-hooks.json --report build/attribute-hooks-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/attribute-hooks.json --stepped --report build/attribute-hooks-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --report build/type-checks-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/type-checks.json --stepped --report build/type-checks-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/reflection.json --report build/reflection-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --report build/repetition-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/subclass-initialization.json --report build/subclass-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/metaclass-attributes.json --report build/metaclass-attributes-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/metaclass-attributes.json --stepped --report build/metaclass-attributes-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/metaclass-attributes.json --parked --report build/metaclass-attributes-node-parked-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/nested-descriptors.json --report build/nested-descriptors-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/nested-descriptors.json --stepped --report build/nested-descriptors-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/nested-descriptors.json --parked --report build/nested-descriptors-node-parked-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/native-descriptors.json --report build/native-descriptors-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/native-descriptors.json --stepped --report build/native-descriptors-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/native-descriptors.json --parked --report build/native-descriptors-node-parked-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/subclass-initialization.json --stepped --report build/subclass-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --stepped --report build/repetition-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --report build/repetition-core-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/repetition.json --profile core-source/1 --stepped --report build/repetition-core-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/reflection.json --stepped --report build/reflection-node-stepped-report.json
-      - run: python runtime/check_callbacks.py --target node --report build/callbacks-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/execution.json --parked --report build/execution-parked-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-hashing.json --parked --report build/object-hashing-parked-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-hashing.json --report build/object-hashing-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-hashing.json --stepped --report build/object-hashing-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordering.json --report build/ordering-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordering.json --stepped --report build/ordering-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordering.json --profile core-source/1 --report build/ordering-core-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordering.json --profile core-source/1 --stepped --report build/ordering-core-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-protocols.json --report build/object-protocols-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/object-protocols.json --stepped --report build/object-protocols-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --report build/classes-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/value-families.json --report build/value-families-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/value-families.json --stepped --report build/value-families-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/value-families.json --profile core-source/1 --report build/value-families-core-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/value-families.json --profile core-source/1 --stepped --report build/value-families-core-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --report build/ordinary-syntax-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --stepped --report build/ordinary-syntax-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --profile core-source/1 --report build/ordinary-syntax-core-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/ordinary-syntax.json --profile core-source/1 --stepped --report build/ordinary-syntax-core-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --report build/function-binding-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --stepped --report build/function-binding-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --report build/function-binding-core-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/function-binding.json --profile core-source/1 --stepped --report build/function-binding-core-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --stepped --report build/classes-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/private-names.json --stepped --report build/private-names-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/descriptors.json --stepped --report build/descriptors-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/special-calls.json --stepped --report build/special-calls-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/length-truth.json --report build/length-truth-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/length-truth.json --stepped --report build/length-truth-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/execution.json --report build/execution-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/execution.json --stepped --report build/execution-stepped-node-report.json
-      - run: python runtime/check_classes.py --corpus tests/fixtures/interpreter/formatting.json --report build/formatting-node-report.json
-      - run: python runtime/check_classes.py --corpus tests/fixtures/interpreter/formatting.json --stepped --report build/formatting-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/iteration.json --report build/iteration-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/equality.json --report build/equality-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/equality.json --stepped --report build/equality-stepped-node-report.json
-      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/numeric.json --report build/numeric-reference-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 N3 N4 N5 Future --report build/numeric-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/numeric.json --stages N1 N2 N3 N4 N5 Future --stepped --report build/numeric-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/iteration.json --stepped --report build/iteration-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/indexing.json --stepped --report build/indexing-stepped-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/sequences.json --stages Q1 Q2 Q3 Hints --report build/sequences-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/sequences.json --stages Q1 Q2 Q3 Hints --stepped --report build/sequences-node-stepped-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/sequences.json --profile core-source/1 --report build/sequences-core-node-report.json
-      - run: python runtime/check_classes.py --target node --corpus tests/fixtures/interpreter/sequences.json --profile core-source/1 --stepped --report build/sequences-core-node-stepped-report.json
-      - run: python runtime/check_compatibility.py --target node --report build/compatibility-node-report.json
-      - run: python runtime/check_library_profiles.py --report build/library-profiles-node-report.json
-      - run: python scripts/interpreter_measurements.py --no-browser --repeats 3 --output build/interpreter-node-measurements
-        env:
-          PYTHONPATH: src
-      - run: python runtime/check_memory.py --report build/memory-node-report.json
-      - run: python runtime/check_conformance.py --report build/interpreter-node-report.json
-      - run: python runtime/check_conformance.py --engine vm1 --report build/vm1-node-report.json
-      - run: python runtime/check_conformance.py --engine vm2 --report build/vm2-node-report.json
-      - run: python runtime/check_conformance.py --engine vm3 --report build/vm3-node-report.json
-      - run: python runtime/check_functions.py --report build/functions-node-report.json
-      - run: python runtime/check_conformance.py --engine vm4 --report build/modules-node-report.json
-      - uses: actions/upload-artifact@v5
-        if: always()
-        with:
-          name: interpreter-node-report
-          path: |
-            build/*node-report.json
-            build/*node-stepped-report.json
-            build/*node-parked-report.json
-            build/interpreter-node-measurements/report.json
-            build/classes-reference-report.json
-            build/function-binding-reference-report.json
-            build/ordinary-syntax-reference-report.json
-            build/value-families-reference-report.json
-            build/iteration-reference-report.json
-            build/equality-reference-report.json
-            build/numeric-reference-report.json
-            build/private-names-reference-report.json
-            build/descriptors-reference-report.json
-            build/nested-descriptors-reference-report.json
-            build/native-descriptors-reference-report.json
-            build/special-calls-reference-report.json
-            build/length-truth-reference-report.json
-            build/execution-reference-report.json
-            build/formatting-reference-report.json
-            build/indexing-reference-report.json
           if-no-files-found: error
