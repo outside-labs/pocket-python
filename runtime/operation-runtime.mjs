@@ -1517,6 +1517,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
           }
+          if (["property.__get__", "property.__set__", "property.__delete__"].includes(callable.name)) {
+            const reading = callable.name === "property.__get__", setting = callable.name === "property.__set__";
+            if (!(args[0] instanceof PropertyValue)) python("TypeError", "Native property operation requires a property receiver");
+            if (keywords.length || (reading ? args.length < 2 || args.length > 3 : args.length !== (setting ? 3 : 2)))
+              python("TypeError", "Native property operation received invalid arguments");
+            const receiver = args[0], target = args[1];
+            if (reading && target === null) {
+              if ((args[2] ?? null) === null) python("TypeError", "__get__(None, None) is invalid");
+              task = valueTask(receiver, site, completion); continue;
+            }
+            const accessor = receiver[reading ? "fget" : setting ? "fset" : "fdel"];
+            if (accessor === null) python("AttributeError", "Property has no " + (reading ? "getter" : setting ? "setter" : "deleter"));
+            const after = reading ? continuation("relay", {receiver, after: completion}) :
+              continuation("attribute-write", {receiver, after: completion});
+            task = callTask(accessor, setting ? [target, args[2]] : [target], [], [], site, after, depth); continue;
+          }
           if (["type.__getattribute__", "type.__setattr__", "type.__delattr__"].includes(callable.name)) {
             const writing = callable.name !== "type.__getattribute__", setting = callable.name === "type.__setattr__";
             if (keywords.length || args.length !== (setting ? 3 : 2)) python("TypeError", "Native type attribute operation received invalid arguments");
