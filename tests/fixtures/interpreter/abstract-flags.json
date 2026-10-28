@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O39"
+    "O39",
+    "O40"
   ],
   "cases": [
     {
@@ -735,6 +736,94 @@
           "line": 6
         }
       ]
+    },
+    {
+      "id": "staticmethod-native-read",
+      "stage": "O40",
+      "source": "w=staticmethod(None)\nprint(object.__getattribute__(w,\"__isabstractmethod__\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "staticmethod-native-set",
+      "stage": "O40",
+      "source": "w=staticmethod(None)\nobject.__setattr__(w,\"__isabstractmethod__\",True)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "staticmethod-native-delete",
+      "stage": "O40",
+      "source": "w=staticmethod(None)\nobject.__delattr__(w,\"__isabstractmethod__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "staticmethod-hooked-lookup",
+      "stage": "O40",
+      "source": "class Flag:\n def __getattribute__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"hook\")\n   return True\n  return object.__getattribute__(self,name)\nprint(staticmethod(Flag()).__isabstractmethod__)\n",
+      "stdout": "hook\nTrue\n"
+    },
+    {
+      "id": "staticmethod-nested-attribute-error",
+      "stage": "O40",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise AttributeError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nw=staticmethod(Flag())\nprint(hasattr(w,\"__isabstractmethod__\"),property(w).__isabstractmethod__)\n",
+      "stdout": "truth\ntruth\nFalse False\n"
+    },
+    {
+      "id": "classmethod-native-read",
+      "stage": "O40",
+      "source": "w=classmethod(None)\nprint(object.__getattribute__(w,\"__isabstractmethod__\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "classmethod-native-set",
+      "stage": "O40",
+      "source": "w=classmethod(None)\nobject.__setattr__(w,\"__isabstractmethod__\",True)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "classmethod-native-delete",
+      "stage": "O40",
+      "source": "w=classmethod(None)\nobject.__delattr__(w,\"__isabstractmethod__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "classmethod-hooked-lookup",
+      "stage": "O40",
+      "source": "class Flag:\n def __getattribute__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"hook\")\n   return True\n  return object.__getattribute__(self,name)\nprint(classmethod(Flag()).__isabstractmethod__)\n",
+      "stdout": "hook\nTrue\n"
+    },
+    {
+      "id": "classmethod-nested-attribute-error",
+      "stage": "O40",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  raise AttributeError(\"truth\")\nclass Flag: __isabstractmethod__=Truth()\nw=classmethod(Flag())\nprint(hasattr(w,\"__isabstractmethod__\"),property(w).__isabstractmethod__)\n",
+      "stdout": "truth\ntruth\nFalse False\n"
     },
     {
       "id": "function-other-metadata",
