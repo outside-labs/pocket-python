@@ -826,6 +826,41 @@
       "stdout": "truth\ntruth\nFalse False\n"
     },
     {
+      "id": "method-custom-callable-hook",
+      "stage": "O39",
+      "source": "class C: pass\nclass Flag:\n def __getattribute__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"lookup\")\n   return True\n  return object.__getattribute__(self,name)\nm=classmethod(Flag()).__get__(None,C)\nprint(m.__isabstractmethod__,property(m).__isabstractmethod__)\n",
+      "stdout": "lookup\nlookup\nTrue True\n"
+    },
+    {
+      "id": "method-custom-callable-fallback",
+      "stage": "O39",
+      "source": "class C: pass\nclass Flag:\n def __getattr__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"fallback\")\n   return [7]\n  raise AttributeError(name)\nm=classmethod(Flag()).__get__(None,C)\nprint(m.__isabstractmethod__[0],property(m).__isabstractmethod__)\n",
+      "stdout": "fallback\nfallback\n7 True\n"
+    },
+    {
+      "id": "method-custom-callable-error",
+      "stage": "O39",
+      "source": "class C: pass\nclass Flag:\n def __getattribute__(self,name):\n  if name==\"__isabstractmethod__\":\n   print(\"lookup\")\n   raise ValueError(\"marker\")\n  return object.__getattribute__(self,name)\nm=classmethod(Flag()).__get__(None,C)\nm.__isabstractmethod__\n",
+      "stdout": "lookup\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "__getattribute__",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "method-marker-identity-through-nested-bindings",
+      "stage": "O39",
+      "source": "class C: pass\nflag=[7]\nclass Flag:\n @property\n def __isabstractmethod__(self): return flag\nm=classmethod(Flag()).__get__(None,C)\nn=classmethod(m).__get__(None,C)\nprint(n.__isabstractmethod__ is flag,property(n).__isabstractmethod__)\n",
+      "stdout": "True True\n"
+    },
+    {
       "id": "function-other-metadata",
       "stage": "Future",
       "source": "def f(): pass\nf.other=7\nprint(f.other)\n",

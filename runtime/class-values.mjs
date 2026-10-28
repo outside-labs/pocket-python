@@ -286,7 +286,8 @@ export class ClassRuntime {
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
-    if (receiver instanceof BoundMethodValue && name === "__isabstractmethod__") return this.read(receiver.callable, name);
+    if (receiver instanceof BoundMethodValue && name === "__isabstractmethod__")
+      return {kind: "call", callable: this.builtin("method-abstract-marker"), args: [receiver]};
     if (receiver instanceof BoundMethodValue && receiver.pythonMethod) {
       if (name === "__class__") return value(this.builtin("method"));
       if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
