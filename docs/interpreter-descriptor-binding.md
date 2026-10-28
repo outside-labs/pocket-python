@@ -51,3 +51,12 @@ arena exhaustion while accumulating copies releases all logical owners.
 O32 is implemented with 26 pinned cases, covering original function/receiver
 identity, ignored arbitrary owners, native validation, lazy generators and
 ordinary source errors. Its methods share the existing owned call machinery.
+
+All 74 pinned cases pass Node and Chromium drain, step and parked execution:
+444 observations with zero logical owners after teardown. The eight composed
+execution resource observations and legacy VM2/VM3 conformance remain unchanged.
+The compatibility inventory includes eight representative binding/copy probes.
+The [binding console](../examples/interpreter_descriptor_binding.py) composes
+copies, detached methods, defaults/cells and lazy generators. Offline acceptance
+also covers native validation, retained future refusals, callback Stop/Restart
+and a waiting update that removes class-profile operations.

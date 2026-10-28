@@ -69,6 +69,13 @@ later stages. Rich ordering follows its separately adopted contract. Language se
 independent of `--library-profile`;
 both language profiles use the same complete pinned engine.
 
+The [binding console](../examples/interpreter_descriptor_binding.py) combines
+native property accessor copies, explicit function binding, detached closures
+and lazy generators. Build it with
+`uv run python -m examples.interpreter_descriptor_binding` and serve
+`build/descriptor-binding-console`. The [finite contract](interpreter-descriptor-binding.md)
+records supported signatures and remaining reflection boundaries.
+
 Iteration/containment acceptance has 63 source comparisons and 18 Chromium
 acceptance groups. Newly entered offline programs exercise custom next-slot
 binding, indexed membership, next/default and callable sentinels. Twenty-five

@@ -242,3 +242,11 @@ snapshots, metadata descriptor priority and native wrapper identities. Implicit
 special lookup and real type checks retain their priority. Live namespace mappings,
 default directories, layout mutation, namespace preparation and further protocols
 remain separate; #123 and native async/host-adapter #34 remain open.
+
+The finite [O31/O32 contract](interpreter-descriptor-binding.md) adds native
+property getter/setter/deleter copies and explicit Python function binding.
+None replacements retain the selected accessor; binding retains the original
+function and target without running their callbacks. Native callable metadata,
+receiver validation, parked ownership and lazy generators have pinned cases.
+Property documentation, live mappings, default directories, broader native
+rebinding and builtin layouts remain separate follow-ups under #123/#33.

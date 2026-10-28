@@ -2181,6 +2181,110 @@
         "stdout": "method method-wrapper True False False True\n2 7 9 8\n",
         "error_type": null
       }
+    },
+    {
+      "id": "descriptor-binding-copy-getter-unbound",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=property.getter(p,other)\nprint(q is p,q.fget is other,p.fget is read)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "descriptor-binding-copy-setter-bound-none-retains",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=p.setter(None)\nprint(q is p,q.fget is read,q.fset is read,q.fdel is read)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "descriptor-binding-copy-deleter-metadata",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.deleter\nu=property.deleter\nprint(type(m).__name__,m.__class__ is type(m),m.__self__ is p,m.__name__,m.__qualname__)\nprint(type(u).__name__,u.__class__ is type(u),u.__name__,u.__qualname__,u is property.deleter)\ntry: m.__func__\nexcept AttributeError: print(\"no function\")\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "builtin_function_or_method True True deleter property.deleter\nmethod_descriptor True deleter property.deleter True\nno function\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "builtin_function_or_method True True deleter property.deleter\nmethod_descriptor True deleter property.deleter True\nno function\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "descriptor-binding-copy-getter-bound-equality-hash",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.getter\nn=p.getter\nq=property(read,read,read)\nprint(m is n,m==n,hash(m)==hash(n),m==q.getter)\nd={m:7,n:9}\nprint(len(d),d[m])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True True False\n1 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True True False\n1 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "descriptor-binding-function-unbound",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=[7]\nu=type(read).__get__\nm=u(read,obj,None)\nprint(m.__func__ is read,m.__self__ is obj,m() is obj,u is type(read).__get__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "descriptor-binding-function-binding-bypasses-target-owner-hooks",
+      "source": "class A:\n def __getattribute__(self,name):\n  print(\"never\")\n  raise ValueError(\"hook\")\n def __get__(self,*args):\n  print(\"never\")\n  raise ValueError(\"descriptor\")\ndef read(obj): return obj\na=A()\nm=read.__get__(a,a)\nprint(m.__self__ is a,m() is a)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "descriptor-binding-function-binding-generator-is-lazy",
+      "source": "def read(obj):\n print(\"entered\")\n yield obj[0]\nm=read.__get__([7])\ng=m()\nprint(\"ready\")\nprint(next(g))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "ready\nentered\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "ready\nentered\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "descriptor-binding-function-binding-original-frames",
+      "source": "def read(obj):\n raise ValueError(\"read\")\nm=read.__get__([7])\nm()\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "ValueError"
+      }
     }
   ]
 }
