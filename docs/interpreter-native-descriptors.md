@@ -47,9 +47,16 @@ and the pinned CPython implementations of
 and [method wrappers](https://github.com/python/cpython/blob/v3.14.7/Objects/funcobject.c).
 The executable reference resolves patch-level differences.
 
-O29/O30 are implemented. The matrix has 38 property cases, 41 static/class
+O29/O30 are implemented. The matrix has 38 property cases, 46 static/class
 method cases and two explicit future refusals. Dedicated lifecycle tests retain
 detached native methods, accessor closures and arbitrary class-method owners
 through collection, parked execution, cancellation and idempotent close.
 Resource tests cover accessor recursion and real instruction, work and allocation
 failures. Final cross-target and offline evidence follows in the acceptance slice.
+
+Class-method binding creates an ordinary Python method even when its wrapped
+value is a native callable. Its `__func__`, type and callable metadata retain
+that distinction from native method-wrapper values. Equal Python methods still
+share hashes; a Python method and native method-wrapper with the same callable
+and receiver remain distinct dictionary keys. Native subclass-notification
+defaults retain their existing builtin method identities.

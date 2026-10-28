@@ -547,6 +547,36 @@
       "error_type": "TypeError"
     },
     {
+      "id": "classmethod-native-callable-metadata",
+      "stage": "O30",
+      "source": "owner=[7,8]\nm=classmethod(len).__get__(None,owner)\nprint(type(m).__name__,m.__class__ is type(m),m.__self__ is owner,m.__func__ is len,m.__name__,m.__qualname__)\nprint(m())\n",
+      "stdout": "method True True True len len\n2\n"
+    },
+    {
+      "id": "classmethod-native-descriptor-equality",
+      "stage": "O30",
+      "source": "p=property(lambda obj:obj)\nm=classmethod(property.__get__).__get__(None,p)\nn=p.__get__\nprint(type(m).__name__,type(n).__name__,m.__func__ is property.__get__,m==n,n==m,hash(m)==hash(n))\nd={m:7,n:9}\nprint(len(d),d[m],d[n],m([8])[0])\n",
+      "stdout": "method method-wrapper True False False True\n2 7 9 8\n"
+    },
+    {
+      "id": "classmethod-implicit-native-callable",
+      "stage": "O30",
+      "source": "class A: show=classmethod(print)\nm=A.show\nprint(type(m).__name__,m.__func__ is print,m.__self__ is A,m.__name__)\n",
+      "stdout": "method True True print\n"
+    },
+    {
+      "id": "classmethod-native-equals-implicit",
+      "stage": "O30",
+      "source": "class A: show=classmethod(print)\nm=classmethod(print).__get__(None,A)\nprint(m==A.show,hash(m)==hash(A.show))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "classmethod-native-descriptor-metadata",
+      "stage": "O30",
+      "source": "p=property(lambda obj:obj)\nm=classmethod(property.__get__).__get__(None,p)\nprint(m.__name__,m.__qualname__,m.__class__ is type(m),m.__self__ is p)\n",
+      "stdout": "__get__ property.__get__ True True\n"
+    },
+    {
       "id": "future-live-namespace",
       "stage": "Future",
       "source": "print(globals()[\"__name__\"])\n",
