@@ -1,0 +1,434 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-documentation/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "function-default-none",
+      "stage": "O41",
+      "source": "def f(): pass\nprint(f.__doc__ is None)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-source-document",
+      "stage": "O41",
+      "source": "def f():\n \"read the value\"\n return 7\nprint(f.__doc__,f())\n",
+      "stdout": "read the value 7\n"
+    },
+    {
+      "id": "function-later-string-is-not-document",
+      "stage": "O41",
+      "source": "def f():\n pass\n \"later\"\nprint(f.__doc__)\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "function-fstring-is-not-document",
+      "stage": "O41",
+      "source": "def f():\n f\"text\"\n return 7\nprint(f.__doc__,f())\n",
+      "stdout": "None 7\n"
+    },
+    {
+      "id": "function-empty-document",
+      "stage": "O41",
+      "source": "def f():\n \"\"\nprint(f.__doc__==\"\")\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-adjacent-literals",
+      "stage": "O41",
+      "source": "def f():\n \"first\" \"second\"\nprint(f.__doc__)\n",
+      "stdout": "firstsecond\n"
+    },
+    {
+      "id": "lambda-default-none",
+      "stage": "O41",
+      "source": "f=lambda: 7\nprint(f.__doc__,f())\n",
+      "stdout": "None 7\n"
+    },
+    {
+      "id": "function-mutation-0",
+      "stage": "O41",
+      "source": "def f(): pass\nx=None\nf.__doc__=x\nprint(f.__doc__ is x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "function-mutation-1",
+      "stage": "O41",
+      "source": "def f(): pass\nx=False\nf.__doc__=x\nprint(f.__doc__ is x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "function-mutation-2",
+      "stage": "O41",
+      "source": "def f(): pass\nx=0\nf.__doc__=x\nprint(f.__doc__ is x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "function-mutation-3",
+      "stage": "O41",
+      "source": "def f(): pass\nx=\"\"\nf.__doc__=x\nprint(f.__doc__ is x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "function-mutation-4",
+      "stage": "O41",
+      "source": "def f(): pass\nx=[7]\nf.__doc__=x\nprint(f.__doc__ is x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "function-mutation-5",
+      "stage": "O41",
+      "source": "def f(): pass\nx={\"x\":7}\nf.__doc__=x\nprint(f.__doc__ is x)\ndel f.__doc__\nprint(f.__doc__ is None)\ndel f.__doc__\nprint(f.__doc__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "function-cycle",
+      "stage": "O41",
+      "source": "def f(): pass\nf.__doc__=[f]\nprint(f.__doc__[0] is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bound-function-live-document",
+      "stage": "O41",
+      "source": "class C:\n def read(self):\n  \"first\"\n  return 7\nm=C().read\nprint(m.__doc__,m())\nC.read.__doc__=[7]\nprint(m.__doc__ is C.read.__doc__)\ndel C.read.__doc__\nprint(m.__doc__)\n",
+      "stdout": "first 7\nTrue\nNone\n"
+    },
+    {
+      "id": "bound-function-read-only-set",
+      "stage": "O41",
+      "source": "class C:\n def f(self): pass\nm=C().f\nprint(\"before\")\nm.__doc__=7\n",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "bound-function-read-only-delete",
+      "stage": "O41",
+      "source": "class C:\n def f(self): pass\nm=C().f\nprint(\"before\")\ndel m.__doc__\n",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "decorator-sees-document",
+      "stage": "O41",
+      "source": "def decorate(fn):\n print(fn.__doc__)\n return fn\n@decorate\ndef f():\n \"visible\"\n return 7\nprint(f())\n",
+      "stdout": "visible\n7\n"
+    },
+    {
+      "id": "nested-generator-documents",
+      "stage": "O41",
+      "source": "def make(n):\n def read():\n  \"nested\"\n  yield n\n return read\nf=make(7)\nprint(f.__doc__,next(f()))\n",
+      "stdout": "nested 7\n"
+    },
+    {
+      "id": "class-documents",
+      "stage": "O41",
+      "source": "class A:\n \"base\"\nclass B(A): pass\nprint(A.__doc__,A().__doc__,B.__doc__,B().__doc__)\n",
+      "stdout": "base base None None\n"
+    },
+    {
+      "id": "class-manual-document",
+      "stage": "O41",
+      "source": "class C: pass\nx=[7]\nC.__doc__=x\nprint(C.__doc__ is x,C().__doc__ is x)\nc=C()\nc.__doc__=[8]\nprint(c.__doc__[0])\ndel c.__doc__\nprint(c.__doc__ is x)\n",
+      "stdout": "True True\n8\nTrue\n"
+    },
+    {
+      "id": "class-document-delete",
+      "stage": "O41",
+      "source": "class C: pass\nprint(\"before\")\ndel C.__doc__\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "class-document-in-metaclass-namespace",
+      "stage": "O41",
+      "source": "class M(type):\n def __new__(meta,name,bases,ns):\n  print(ns[\"__doc__\"])\n  return type.__new__(meta,name,bases,ns)\nclass C(metaclass=M):\n \"class source\"\nprint(C.__doc__)\n",
+      "stdout": "class source\nclass source\n"
+    },
+    {
+      "id": "native-function-doc-default",
+      "stage": "O41",
+      "source": "def f(): pass\nprint(object.__getattribute__(f,\"__doc__\"))\nobject.__setattr__(f,\"__doc__\",[7])\nprint(f.__doc__[0])\nobject.__delattr__(f,\"__doc__\")\nprint(f.__doc__)\n",
+      "stdout": "None\n7\nNone\n"
+    },
+    {
+      "id": "empty-property",
+      "stage": "O42",
+      "source": "p=property()\nprint(p.__doc__)\np.__doc__=[7]\nprint(p.__doc__[0])\ndel p.__doc__\nprint(p.__doc__)\ndel p.__doc__\nprint(p.__doc__)\n",
+      "stdout": "None\n7\nNone\nNone\n"
+    },
+    {
+      "id": "explicit-document-0",
+      "stage": "O42",
+      "source": "x=None\np=property(doc=x)\nprint(p.__doc__ is x)\nq=property(None,None,None,x)\nprint(q.__doc__ is x)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "explicit-document-1",
+      "stage": "O42",
+      "source": "x=False\np=property(doc=x)\nprint(p.__doc__ is x)\nq=property(None,None,None,x)\nprint(q.__doc__ is x)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "explicit-document-2",
+      "stage": "O42",
+      "source": "x=0\np=property(doc=x)\nprint(p.__doc__ is x)\nq=property(None,None,None,x)\nprint(q.__doc__ is x)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "explicit-document-3",
+      "stage": "O42",
+      "source": "x=\"\"\np=property(doc=x)\nprint(p.__doc__ is x)\nq=property(None,None,None,x)\nprint(q.__doc__ is x)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "explicit-document-4",
+      "stage": "O42",
+      "source": "x=[7]\np=property(doc=x)\nprint(p.__doc__ is x)\nq=property(None,None,None,x)\nprint(q.__doc__ is x)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "explicit-document-5",
+      "stage": "O42",
+      "source": "x={\"x\":7}\np=property(doc=x)\nprint(p.__doc__ is x)\nq=property(None,None,None,x)\nprint(q.__doc__ is x)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "source-getter-document",
+      "stage": "O42",
+      "source": "def read(obj):\n \"getter source\"\n return 7\np=property(read)\nprint(p.__doc__,p.fget is read)\nread.__doc__=\"changed\"\nprint(p.__doc__,property(read).__doc__)\n",
+      "stdout": "getter source True\ngetter source changed\n"
+    },
+    {
+      "id": "decorated-source-document",
+      "stage": "O42",
+      "source": "class C:\n @property\n def x(self):\n  \"value\"\n  return 7\nprint(C.x.__doc__,C().x)\n",
+      "stdout": "value 7\n"
+    },
+    {
+      "id": "none-means-getter-document",
+      "stage": "O42",
+      "source": "def read(obj): pass\nread.__doc__=[7]\np=property(read,doc=None)\nprint(p.__doc__ is read.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bound-method-getter-document",
+      "stage": "O42",
+      "source": "class C:\n def read(self,obj):\n  \"bound\"\n  return 7\np=property(C().read)\nprint(p.__doc__)\n",
+      "stdout": "bound\n"
+    },
+    {
+      "id": "explicit-skips-hook",
+      "stage": "O42",
+      "source": "class Getter:\n def __getattribute__(self,name):\n  print(\"unexpected\")\n  raise ValueError(\"blocked\")\np=property(Getter(),doc=\"explicit\")\nprint(p.__doc__)\n",
+      "stdout": "explicit\n"
+    },
+    {
+      "id": "getter-document-descriptor",
+      "stage": "O42",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  print(\"lookup\")\n  return [7]\np=property(Getter())\nprint(p.__doc__[0])\n",
+      "stdout": "lookup\n7\n"
+    },
+    {
+      "id": "getter-document-fallback",
+      "stage": "O42",
+      "source": "class Getter:\n @property\n def __doc__(self): raise AttributeError(\"missing\")\n def __getattr__(self,name):\n  print(name)\n  return [7]\nprint(property(Getter()).__doc__[0])\n",
+      "stdout": "__doc__\n7\n"
+    },
+    {
+      "id": "getter-optional-missing",
+      "stage": "O42",
+      "source": "class Getter:\n def __getattribute__(self,name):\n  print(name)\n  raise AttributeError(\"missing\")\nprint(property(Getter()).__doc__)\n",
+      "stdout": "__doc__\nNone\n"
+    },
+    {
+      "id": "getter-document-error",
+      "stage": "O42",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  print(\"lookup\")\n  raise ValueError(\"document\")\nprint(\"before\")\nproperty(Getter())\n",
+      "stdout": "before\nlookup\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "__doc__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "document-is-not-truth-tested",
+      "stage": "O42",
+      "source": "class Doc:\n def __bool__(self):\n  print(\"unexpected\")\n  raise ValueError(\"truth\")\nclass Getter: __doc__=Doc()\np=property(Getter())\nprint(p.__doc__ is Getter.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "class-default-getter-document",
+      "stage": "O42",
+      "source": "class Getter: pass\nprint(property(Getter()).__doc__,property(Getter).__doc__)\n",
+      "stdout": "None None\n"
+    },
+    {
+      "id": "class-source-getter-document",
+      "stage": "O42",
+      "source": "class Getter:\n \"class source\"\nprint(property(Getter()).__doc__,property(Getter).__doc__)\n",
+      "stdout": "class source class source\n"
+    },
+    {
+      "id": "metaclass-getter-document",
+      "stage": "O42",
+      "source": "class M(type):\n @property\n def __doc__(cls):\n  print(\"meta\")\n  return [7]\nclass Getter(metaclass=M): pass\nprint(property(Getter).__doc__[0])\n",
+      "stdout": "meta\n7\n"
+    },
+    {
+      "id": "property-cycle",
+      "stage": "O42",
+      "source": "p=property(doc=[])\np.__doc__.append(p)\nprint(p.__doc__[0] is p)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "nested-property-document",
+      "stage": "O42",
+      "source": "inner=property(doc=[7])\np=property(inner)\nprint(p.__doc__ is inner.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "explicit-copy-preserves-document",
+      "stage": "O42",
+      "source": "def a(obj):\n \"a\"\ndef b(obj):\n \"b\"\nx=[7]\np=property(a,doc=x)\nfor q in [p.getter(b),p.setter(b),p.deleter(b)]: print(q.__doc__ is x)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "getter-copy-refreshes-document",
+      "stage": "O42",
+      "source": "def a(obj):\n \"a\"\ndef b(obj):\n \"b\"\np=property(a)\np.__doc__=\"manual\"\nprint(p.getter(b).__doc__)\na.__doc__=\"new a\"\nprint(p.setter(b).__doc__,p.deleter(b).__doc__,p.__doc__)\n",
+      "stdout": "b\nnew a new a manual\n"
+    },
+    {
+      "id": "missing-getter-document-copy-keeps-manual",
+      "stage": "O42",
+      "source": "def a(obj): pass\ndef b(obj):\n \"b\"\np=property(a)\np.__doc__=\"manual\"\nprint(p.getter(b).__doc__)\n",
+      "stdout": "manual\n"
+    },
+    {
+      "id": "none-document-copy-requeries",
+      "stage": "O42",
+      "source": "def a(obj):\n \"a\"\np=property(a,doc=\"explicit\")\np.__doc__=None\nprint(p.setter(None).__doc__)\ndel p.__doc__\nprint(p.getter(None).__doc__)\n",
+      "stdout": "a\na\n"
+    },
+    {
+      "id": "none-replacement-retains-accessors",
+      "stage": "O42",
+      "source": "def a(obj):\n \"a\"\np=property(a,a,a)\nfor q in [p.getter(None),p.setter(None),p.deleter(None)]: print(q.fget is a,q.fset is a,q.fdel is a,q.__doc__)\n",
+      "stdout": "True True True a\nTrue True True a\nTrue True True a\n"
+    },
+    {
+      "id": "copy-callback-mutates-name",
+      "stage": "O42",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  print(\"lookup\")\n  if ready: old.__name__=\"after\"\n  return \"doc\"\nready=False\ng=Getter()\nold=property(g)\nold.__name__=\"before\"\nready=True\nnew=old.setter(None)\nprint(new.__name__,old.__name__)\n",
+      "stdout": "lookup\nlookup\nafter after\n"
+    },
+    {
+      "id": "copy-freezes-selected-accessors",
+      "stage": "O42",
+      "source": "def second(obj): pass\nclass Getter:\n @property\n def __doc__(self):\n  if ready: old.__doc__=\"changed\"\n  return \"doc\"\nready=False\ng=Getter()\nold=property(g,second)\nready=True\nnew=old.setter(None)\nprint(new.fget is g,new.fset is second,new.__doc__,old.__doc__)\n",
+      "stdout": "True True doc changed\n"
+    },
+    {
+      "id": "detached-native-copy",
+      "stage": "O42",
+      "source": "def a(obj):\n \"a\"\ndef b(obj):\n \"b\"\np=property(a)\ncopy=p.getter\ndel p\nq=copy(b)\nprint(q.__doc__,q.fget is b)\nprint(property.setter(q,None).__doc__)\n",
+      "stdout": "b True\nb\n"
+    },
+    {
+      "id": "native-property-document-operations",
+      "stage": "O42",
+      "source": "p=property(doc=[7])\nprint(object.__getattribute__(p,\"__doc__\")[0])\nobject.__setattr__(p,\"__doc__\",[8])\nprint(p.__doc__[0])\nobject.__delattr__(p,\"__doc__\")\nprint(p.__doc__)\n",
+      "stdout": "7\n8\nNone\n"
+    },
+    {
+      "id": "invalid-property-arguments-0",
+      "stage": "O42",
+      "source": "print(\"before\")\nproperty(1,2,3,4,5)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "invalid-property-arguments-1",
+      "stage": "O42",
+      "source": "print(\"before\")\nproperty(None,None,None,\"x\",doc=\"y\")\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "invalid-property-arguments-2",
+      "stage": "O42",
+      "source": "print(\"before\")\nproperty(unknown=7)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "native-documentation",
+      "stage": "Future",
+      "source": "print(property(len).__doc__ is not None)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-documentation",
+      "stage": "Future",
+      "source": "def f():\n \"text\"\nprint(staticmethod(f).__doc__)\n",
+      "stdout": "text\n"
+    },
+    {
+      "id": "arbitrary-function-dictionary",
+      "stage": "Future",
+      "source": "def f(): pass\nf.extra=7\nprint(f.extra)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "property-subclass",
+      "stage": "Future",
+      "source": "class P(property): pass\nprint(P(doc=\"text\").__doc__)\n",
+      "stdout": "text\n"
+    }
+  ]
+}
