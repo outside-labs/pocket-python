@@ -217,6 +217,32 @@ class Compiler {
     if (this.constants.size >= 256) this.fail("Constant pool budget exceeded.", node, "COMPILE_BUDGET");
     const index = this.program.constants.length; this.constants.set(key, index); this.program.constants.push(record); return index;
   }
+  documentation(node) {
+    const lines = [[]]; let column = 0;
+    for (const point of node.value.literal.codepoints) {
+      this.charge(node);
+      if (point === 10) { lines.push([]); column = 0; }
+      else if (point === 9) {
+        const width = 8 - column % 8;
+        this.charge(node, width); lines.at(-1).push(...Array(width).fill(32)); column += width;
+      } else { lines.at(-1).push(point); column = point === 13 ? 0 : column + 1; }
+    }
+    let margin = Infinity;
+    for (const line of lines.slice(1)) {
+      this.charge(node, line.length);
+      let leading = 0; while (line[leading] === 32) leading++;
+      if (leading < line.length) margin = Math.min(margin, leading);
+    }
+    const codepoints = [];
+    for (let index = 0; index < lines.length; index++) {
+      const line = lines[index]; this.charge(node, line.length);
+      let leading = 0;
+      while (line[leading] === 32 && (index === 0 || leading < (margin === Infinity ? 0 : margin))) leading++;
+      if (index) codepoints.push(10);
+      for (const point of line.slice(leading)) codepoints.push(point);
+    }
+    return {type: "str", codepoints};
+  }
   literal(node) {
     if (node.kind === "Literal") return node.literal;
     if (node.kind === "Tuple") return {type: "tuple", items: node.items.map(value => this.literal(value))};
@@ -245,6 +271,8 @@ class Compiler {
   }
   function(scope) {
     const node = scope.node, isModule = node.kind === "Module", isClass = node.kind === "Class";
+    const document = this.classes ? docstring(node) : null;
+    const documentation = document ? this.documentation(document) : null;
     if (scope.locals.size > FUNCTION_LIMITS.names || scope.free.size > FUNCTION_LIMITS.names) this.fail("Binding name budget exceeded.", node, "COMPILE_BUDGET", "bind");
     const params = {posonly: [], positional: [], kwonly: [], defaults: [], kwdefaults: {}};
     if (!isModule && !isClass) {
@@ -259,8 +287,7 @@ class Compiler {
       ...(this.classes ? {kind: isModule ? "module" : isClass ? "class" : "function"} : {}),
       ...(scope.globals.size ? {globals: [...scope.globals].sort()} : {}),
       ...(scope.nonlocals.size ? {nonlocals: [...scope.nonlocals].sort()} : {})};
-    if (this.classes && node.kind === "Function" && docstring(node))
-      fn.doc = this.constant(docstring(node).value.literal, docstring(node));
+    if (node.kind === "Function" && document) fn.doc = this.constant(documentation, document);
     this.program.functions[scope.index] = fn;
     const makeBlock = (nodes, expression = false) => {
       this.charge(node);
@@ -418,8 +445,9 @@ class Compiler {
         this.charge(value);
         if (value.kind === "Pass" || value.kind === "Declaration") return;
         if (value.kind === "Expr") {
-          expr(value.value);
-          if (this.classes && isClass && value === docstring(node)) emit(value, "store", "__doc__");
+          if (value === document) emit(value, "const", this.constant(documentation, value));
+          else expr(value.value);
+          if (isClass && value === document) emit(value, "store", "__doc__");
           else emit(value, "pop");
         }
         else if (value.kind === "Assert") {

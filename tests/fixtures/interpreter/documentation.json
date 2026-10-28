@@ -617,6 +617,228 @@
           "line": 6
         }
       ]
+    },
+    {
+      "id": "source-document-cleanup-function-0",
+      "stage": "O41",
+      "source": "def f():\n '  first'\n return 7\nprint(f.__doc__=='first',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-0",
+      "stage": "O41",
+      "source": "class C:\n '  first'\nprint(C.__doc__=='first',C().__doc__=='first')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-1",
+      "stage": "O41",
+      "source": "def f():\n '\\tfirst\\tmore'\n return 7\nprint(f.__doc__=='first   more',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-1",
+      "stage": "O41",
+      "source": "class C:\n '\\tfirst\\tmore'\nprint(C.__doc__=='first   more',C().__doc__=='first   more')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-2",
+      "stage": "O41",
+      "source": "def f():\n 'first\\n    second\\n      third\\n '\n return 7\nprint(f.__doc__=='first\\nsecond\\n  third\\n',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-2",
+      "stage": "O41",
+      "source": "class C:\n 'first\\n    second\\n      third\\n '\nprint(C.__doc__=='first\\nsecond\\n  third\\n',C().__doc__=='first\\nsecond\\n  third\\n')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-3",
+      "stage": "O41",
+      "source": "def f():\n '\\n\\n   \\n  second\\n    \\n'\n return 7\nprint(f.__doc__=='\\n\\n \\nsecond\\n  \\n',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-3",
+      "stage": "O41",
+      "source": "class C:\n '\\n\\n   \\n  second\\n    \\n'\nprint(C.__doc__=='\\n\\n \\nsecond\\n  \\n',C().__doc__=='\\n\\n \\nsecond\\n  \\n')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-4",
+      "stage": "O41",
+      "source": "def f():\n ' \\n '\n return 7\nprint(f.__doc__=='\\n ',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-4",
+      "stage": "O41",
+      "source": "class C:\n ' \\n '\nprint(C.__doc__=='\\n ',C().__doc__=='\\n ')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-5",
+      "stage": "O41",
+      "source": "def f():\n ''\n return 7\nprint(f.__doc__=='',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-5",
+      "stage": "O41",
+      "source": "class C:\n ''\nprint(C.__doc__=='',C().__doc__=='')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-6",
+      "stage": "O41",
+      "source": "def f():\n '\\t'\n return 7\nprint(f.__doc__=='',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-6",
+      "stage": "O41",
+      "source": "class C:\n '\\t'\nprint(C.__doc__=='',C().__doc__=='')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-7",
+      "stage": "O41",
+      "source": "def f():\n 'first\\n \\t second\\n\\t\\tthird\\n'\n return 7\nprint(f.__doc__=='first\\nsecond\\n       third\\n',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-7",
+      "stage": "O41",
+      "source": "class C:\n 'first\\n \\t second\\n\\t\\tthird\\n'\nprint(C.__doc__=='first\\nsecond\\n       third\\n',C().__doc__=='first\\nsecond\\n       third\\n')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-8",
+      "stage": "O41",
+      "source": "def f():\n '\\xa0first\\n  \\xa0 second'\n return 7\nprint(f.__doc__=='\\xa0first\\n\\xa0 second',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-8",
+      "stage": "O41",
+      "source": "class C:\n '\\xa0first\\n  \\xa0 second'\nprint(C.__doc__=='\\xa0first\\n\\xa0 second',C().__doc__=='\\xa0first\\n\\xa0 second')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-9",
+      "stage": "O41",
+      "source": "def f():\n 'first\\r\\tsecond\\n    third'\n return 7\nprint(f.__doc__=='first\\r        second\\nthird',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-9",
+      "stage": "O41",
+      "source": "class C:\n 'first\\r\\tsecond\\n    third'\nprint(C.__doc__=='first\\r        second\\nthird',C().__doc__=='first\\r        second\\nthird')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-10",
+      "stage": "O41",
+      "source": "def f():\n '\ud83d\ude00\\tvalue\\n\\t  second'\n return 7\nprint(f.__doc__=='\ud83d\ude00       value\\nsecond',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-10",
+      "stage": "O41",
+      "source": "class C:\n '\ud83d\ude00\\tvalue\\n\\t  second'\nprint(C.__doc__=='\ud83d\ude00       value\\nsecond',C().__doc__=='\ud83d\ude00       value\\nsecond')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-11",
+      "stage": "O41",
+      "source": "def f():\n '\\x0b first\\n  second'\n return 7\nprint(f.__doc__=='\\x0b first\\nsecond',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-11",
+      "stage": "O41",
+      "source": "class C:\n '\\x0b first\\n  second'\nprint(C.__doc__=='\\x0b first\\nsecond',C().__doc__=='\\x0b first\\nsecond')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-12",
+      "stage": "O41",
+      "source": "def f():\n 'first\\n \\x0c second\\n  third'\n return 7\nprint(f.__doc__=='first\\n\\x0c second\\n third',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-12",
+      "stage": "O41",
+      "source": "class C:\n 'first\\n \\x0c second\\n  third'\nprint(C.__doc__=='first\\n\\x0c second\\n third',C().__doc__=='first\\n\\x0c second\\n third')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-13",
+      "stage": "O41",
+      "source": "def f():\n 'first\\n   \\n    second\\n      third\\n'\n return 7\nprint(f.__doc__=='first\\n\\nsecond\\n  third\\n',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-13",
+      "stage": "O41",
+      "source": "class C:\n 'first\\n   \\n    second\\n      third\\n'\nprint(C.__doc__=='first\\n\\nsecond\\n  third\\n',C().__doc__=='first\\n\\nsecond\\n  third\\n')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-14",
+      "stage": "O41",
+      "source": "def f():\n '\\n  first\\n  second\\n'\n return 7\nprint(f.__doc__=='\\nfirst\\nsecond\\n',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-14",
+      "stage": "O41",
+      "source": "class C:\n '\\n  first\\n  second\\n'\nprint(C.__doc__=='\\nfirst\\nsecond\\n',C().__doc__=='\\nfirst\\nsecond\\n')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-15",
+      "stage": "O41",
+      "source": "def f():\n '  first\\nsecond'\n return 7\nprint(f.__doc__=='first\\nsecond',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-15",
+      "stage": "O41",
+      "source": "class C:\n '  first\\nsecond'\nprint(C.__doc__=='first\\nsecond',C().__doc__=='first\\nsecond')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-16",
+      "stage": "O41",
+      "source": "def f():\n 'first\\n   '\n return 7\nprint(f.__doc__=='first\\n   ',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-16",
+      "stage": "O41",
+      "source": "class C:\n 'first\\n   '\nprint(C.__doc__=='first\\n   ',C().__doc__=='first\\n   ')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "source-document-cleanup-function-17",
+      "stage": "O41",
+      "source": "def f():\n 'first\\t\\r\\tsecond\\n  third'\n return 7\nprint(f.__doc__=='first   \\r        second\\nthird',f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "source-document-cleanup-class-17",
+      "stage": "O41",
+      "source": "class C:\n 'first\\t\\r\\tsecond\\n  third'\nprint(C.__doc__=='first   \\r        second\\nthird',C().__doc__=='first   \\r        second\\nthird')\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "assigned-documents-keep-whitespace",
+      "stage": "O42",
+      "source": "raw=\"  first\\n    second\\n \"\ndef f(): pass\nf.__doc__=raw\np=property(doc=raw)\nprint(f.__doc__==raw,p.__doc__==raw)\n",
+      "stdout": "True True\n"
     }
   ]
 }
