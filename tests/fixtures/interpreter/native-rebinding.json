@@ -1,0 +1,534 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-native-rebinding/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "method-getter-bound-copy",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.getter\nm=d.__get__(p)\nq=m(None)\nprint(q is p,q.fget is read,m.__self__ is p,m.__name__,m.__qualname__,type(m).__name__)\n",
+      "stdout": "False True True getter property.getter builtin_function_or_method\n"
+    },
+    {
+      "id": "method-getter-unbound-copy",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.getter\nm=type(d).__get__(d,p,False)\nprint(m==p.getter,hash(m)==hash(p.getter),m is p.getter)\nprint(m([7]).fget[0])\n",
+      "stdout": "True True False\n7\n"
+    },
+    {
+      "id": "method-getter-detached",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.getter\nbind=d.__get__\ndel d\nm=bind(p,[])\ndel p,bind\nprint(m(None).fget is read)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-setter-bound-copy",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.setter\nm=d.__get__(p)\nq=m(None)\nprint(q is p,q.fset is read,m.__self__ is p,m.__name__,m.__qualname__,type(m).__name__)\n",
+      "stdout": "False True True setter property.setter builtin_function_or_method\n"
+    },
+    {
+      "id": "method-setter-unbound-copy",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.setter\nm=type(d).__get__(d,p,False)\nprint(m==p.setter,hash(m)==hash(p.setter),m is p.setter)\nprint(m([7]).fset[0])\n",
+      "stdout": "True True False\n7\n"
+    },
+    {
+      "id": "method-setter-detached",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.setter\nbind=d.__get__\ndel d\nm=bind(p,[])\ndel p,bind\nprint(m(None).fget is read)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-deleter-bound-copy",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.deleter\nm=d.__get__(p)\nq=m(None)\nprint(q is p,q.fdel is read,m.__self__ is p,m.__name__,m.__qualname__,type(m).__name__)\n",
+      "stdout": "False True True deleter property.deleter builtin_function_or_method\n"
+    },
+    {
+      "id": "method-deleter-unbound-copy",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.deleter\nm=type(d).__get__(d,p,False)\nprint(m==p.deleter,hash(m)==hash(p.deleter),m is p.deleter)\nprint(m([7]).fdel[0])\n",
+      "stdout": "True True False\n7\n"
+    },
+    {
+      "id": "method-deleter-detached",
+      "stage": "O33",
+      "source": "def read(obj): return obj[0]\np=property(read,read,read)\nd=property.deleter\nbind=d.__get__\ndel d\nm=bind(p,[])\ndel p,bind\nprint(m(None).fget is read)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-__instancecheck__-actual-metaclass",
+      "stage": "O33",
+      "source": "class M(type):\n def __instancecheck__(cls,value):\n  print(\"custom check\")\n  return False\nclass C(metaclass=M): pass\nd=type.__instancecheck__\nm=d.__get__(C,False)\nprint(m(C()),m.__self__ is C,type(m).__name__,m.__name__,m.__qualname__)\n",
+      "stdout": "True True builtin_function_or_method __instancecheck__ C.__instancecheck__\n"
+    },
+    {
+      "id": "method-__instancecheck__-builtin-target",
+      "stage": "O33",
+      "source": "d=type.__instancecheck__\nm=type(d).__get__(d,int,[])\nprint(m(7))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-__subclasscheck__-actual-metaclass",
+      "stage": "O33",
+      "source": "class M(type):\n def __subclasscheck__(cls,value):\n  print(\"custom check\")\n  return False\nclass C(metaclass=M): pass\nd=type.__subclasscheck__\nm=d.__get__(C,False)\nprint(m(C),m.__self__ is C,type(m).__name__,m.__name__,m.__qualname__)\n",
+      "stdout": "True True builtin_function_or_method __subclasscheck__ C.__subclasscheck__\n"
+    },
+    {
+      "id": "method-__subclasscheck__-builtin-target",
+      "stage": "O33",
+      "source": "d=type.__subclasscheck__\nm=type(d).__get__(d,int,[])\nprint(m(bool))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-none-owner-type",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nprint(d.__get__(None,property) is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-none-owner-false",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nprint(d.__get__(None,False) is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-none-owner-list",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nprint(type(d).__get__(d,None,[]) is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-missing",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nd.__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-none",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nd.__get__(None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-both-none",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nd.__get__(None,None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-too-many",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nd.__get__(p,property,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-keyword",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nd.__get__(p,owner=property)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-unbound-missing",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\ntype(d).__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-unbound-wrong",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\ntype(d).__get__(7,None,property)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-wrong-target",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nd.__get__([7],property)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-metadata",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nbind=d.__get__\nu=type(d).__get__\nprint(type(bind).__name__,bind.__class__ is type(bind),bind.__self__ is d,bind.__name__,bind.__qualname__)\nprint(type(u).__name__,u.__name__,u.__qualname__,u is type(d).__get__)\nprint(bind is d.__get__,bind==d.__get__,hash(bind)==hash(d.__get__))\ntry: bind.__func__\nexcept AttributeError: print(\"no function\")\n",
+      "stdout": "method-wrapper True True __get__ method_descriptor.__get__\nwrapper_descriptor __get__ method_descriptor.__get__ True\nFalse True True\nno function\n"
+    },
+    {
+      "id": "method-advertised-layout-ignored",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nclass Fake:\n @property\n def __class__(self):\n  print(\"advertised\")\n  return property\n def __getattribute__(self,name):\n  print(\"read\")\n  return object.__getattribute__(self,name)\nd.__get__(Fake())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "method-owner-hooks-ignored",
+      "stage": "O33",
+      "source": "p=property()\nd=property.getter\nclass Owner:\n def __getattribute__(self,name): raise ValueError(\"read\")\n def __bool__(self): raise ValueError(\"truth\")\nprint(d.__get__(None,Owner()) is d)\nprint(d.__get__(p,Owner()).__self__ is p)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "wrapper-none-owner-type",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nprint(d.__get__(None,property) is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-none-owner-false",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nprint(d.__get__(None,False) is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-none-owner-list",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nprint(type(d).__get__(d,None,[]) is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-missing",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nd.__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-none",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nd.__get__(None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-both-none",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nd.__get__(None,None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-too-many",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nd.__get__(p,property,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-keyword",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nd.__get__(p,owner=property)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-unbound-missing",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\ntype(d).__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-unbound-wrong",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\ntype(d).__get__(7,None,property)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-wrong-target",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nd.__get__([7],property)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-metadata",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nbind=d.__get__\nu=type(d).__get__\nprint(type(bind).__name__,bind.__class__ is type(bind),bind.__self__ is d,bind.__name__,bind.__qualname__)\nprint(type(u).__name__,u.__name__,u.__qualname__,u is type(d).__get__)\nprint(bind is d.__get__,bind==d.__get__,hash(bind)==hash(d.__get__))\ntry: bind.__func__\nexcept AttributeError: print(\"no function\")\n",
+      "stdout": "method-wrapper True True __get__ wrapper_descriptor.__get__\nwrapper_descriptor __get__ wrapper_descriptor.__get__ True\nFalse True True\nno function\n"
+    },
+    {
+      "id": "wrapper-advertised-layout-ignored",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nclass Fake:\n @property\n def __class__(self):\n  print(\"advertised\")\n  return property\n def __getattribute__(self,name):\n  print(\"read\")\n  return object.__getattribute__(self,name)\nd.__get__(Fake())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-owner-hooks-ignored",
+      "stage": "O34",
+      "source": "p=property()\nd=property.__get__\nclass Owner:\n def __getattribute__(self,name): raise ValueError(\"read\")\n def __bool__(self): raise ValueError(\"truth\")\nprint(d.__get__(None,Owner()) is d)\nprint(d.__get__(p,Owner()).__self__ is p)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "wrapper-property-get-bind-call",
+      "stage": "O34",
+      "source": "p=property(lambda obj:obj[0])\nd=property.__get__\nm=d.__get__(p,[])\nprint(m.__self__ is p,m.__name__,m.__qualname__,type(m).__name__)\nprint(m([7]))\n",
+      "stdout": "True __get__ property.__get__ method-wrapper\n7\n"
+    },
+    {
+      "id": "wrapper-property-get-unbound",
+      "stage": "O34",
+      "source": "p=property(lambda obj:obj[0])\nd=property.__get__\nm=type(d).__get__(d,p,False)\nn=d.__get__(p)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is p)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-property-get-wrong-layout",
+      "stage": "O34",
+      "source": "p=property(lambda obj:obj[0])\nd=property.__get__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-property-set-bind-call",
+      "stage": "O34",
+      "source": "p=property(None,lambda obj,value:obj.append(value))\nd=property.__set__\nm=d.__get__(p,[])\nprint(m.__self__ is p,m.__name__,m.__qualname__,type(m).__name__)\nprint(m([],7))\n",
+      "stdout": "True __set__ property.__set__ method-wrapper\nNone\n"
+    },
+    {
+      "id": "wrapper-property-set-unbound",
+      "stage": "O34",
+      "source": "p=property(None,lambda obj,value:obj.append(value))\nd=property.__set__\nm=type(d).__get__(d,p,False)\nn=d.__get__(p)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is p)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-property-set-wrong-layout",
+      "stage": "O34",
+      "source": "p=property(None,lambda obj,value:obj.append(value))\nd=property.__set__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-property-delete-bind-call",
+      "stage": "O34",
+      "source": "p=property(None,None,lambda obj:obj.append(7))\nd=property.__delete__\nm=d.__get__(p,[])\nprint(m.__self__ is p,m.__name__,m.__qualname__,type(m).__name__)\nprint(m([]))\n",
+      "stdout": "True __delete__ property.__delete__ method-wrapper\nNone\n"
+    },
+    {
+      "id": "wrapper-property-delete-unbound",
+      "stage": "O34",
+      "source": "p=property(None,None,lambda obj:obj.append(7))\nd=property.__delete__\nm=type(d).__get__(d,p,False)\nn=d.__get__(p)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is p)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-property-delete-wrong-layout",
+      "stage": "O34",
+      "source": "p=property(None,None,lambda obj:obj.append(7))\nd=property.__delete__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-static-get-bind-call",
+      "stage": "O34",
+      "source": "def read(value): return value\ns=staticmethod(read)\nd=staticmethod.__get__\nm=d.__get__(s,[])\nprint(m.__self__ is s,m.__name__,m.__qualname__,type(m).__name__)\nprint(m(None,False) is read)\n",
+      "stdout": "True __get__ staticmethod.__get__ method-wrapper\nTrue\n"
+    },
+    {
+      "id": "wrapper-static-get-unbound",
+      "stage": "O34",
+      "source": "def read(value): return value\ns=staticmethod(read)\nd=staticmethod.__get__\nm=type(d).__get__(d,s,False)\nn=d.__get__(s)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is s)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-static-get-wrong-layout",
+      "stage": "O34",
+      "source": "def read(value): return value\ns=staticmethod(read)\nd=staticmethod.__get__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-class-get-bind-call",
+      "stage": "O34",
+      "source": "class C: pass\ndef read(cls): return cls\ns=classmethod(read)\nd=classmethod.__get__\nm=d.__get__(s,[])\nprint(m.__self__ is s,m.__name__,m.__qualname__,type(m).__name__)\nprint(m(None,C)() is C)\n",
+      "stdout": "True __get__ classmethod.__get__ method-wrapper\nTrue\n"
+    },
+    {
+      "id": "wrapper-class-get-unbound",
+      "stage": "O34",
+      "source": "class C: pass\ndef read(cls): return cls\ns=classmethod(read)\nd=classmethod.__get__\nm=type(d).__get__(d,s,False)\nn=d.__get__(s)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is s)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-class-get-wrong-layout",
+      "stage": "O34",
+      "source": "class C: pass\ndef read(cls): return cls\ns=classmethod(read)\nd=classmethod.__get__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-function-get-bind-call",
+      "stage": "O34",
+      "source": "def read(obj): return obj[0]\nd=type(read).__get__\nm=d.__get__(read,[])\nprint(m.__self__ is read,m.__name__,m.__qualname__,type(m).__name__)\nprint(m([7],False)())\n",
+      "stdout": "True __get__ function.__get__ method-wrapper\n7\n"
+    },
+    {
+      "id": "wrapper-function-get-unbound",
+      "stage": "O34",
+      "source": "def read(obj): return obj[0]\nd=type(read).__get__\nm=type(d).__get__(d,read,False)\nn=d.__get__(read)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is read)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-function-get-wrong-layout",
+      "stage": "O34",
+      "source": "def read(obj): return obj[0]\nd=type(read).__get__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-type-get-bind-call",
+      "stage": "O34",
+      "source": "class C: value=7\nd=type.__getattribute__\nm=d.__get__(C,[])\nprint(m.__self__ is C,m.__name__,m.__qualname__,type(m).__name__)\nprint(m(\"value\"))\n",
+      "stdout": "True __getattribute__ type.__getattribute__ method-wrapper\n7\n"
+    },
+    {
+      "id": "wrapper-type-get-unbound",
+      "stage": "O34",
+      "source": "class C: value=7\nd=type.__getattribute__\nm=type(d).__get__(d,C,False)\nn=d.__get__(C)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is C)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-type-get-wrong-layout",
+      "stage": "O34",
+      "source": "class C: value=7\nd=type.__getattribute__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-type-set-bind-call",
+      "stage": "O34",
+      "source": "class C: pass\nd=type.__setattr__\nm=d.__get__(C,[])\nprint(m.__self__ is C,m.__name__,m.__qualname__,type(m).__name__)\nprint(m(\"value\",7))\n",
+      "stdout": "True __setattr__ type.__setattr__ method-wrapper\nNone\n"
+    },
+    {
+      "id": "wrapper-type-set-unbound",
+      "stage": "O34",
+      "source": "class C: pass\nd=type.__setattr__\nm=type(d).__get__(d,C,False)\nn=d.__get__(C)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is C)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-type-set-wrong-layout",
+      "stage": "O34",
+      "source": "class C: pass\nd=type.__setattr__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-type-delete-bind-call",
+      "stage": "O34",
+      "source": "class C: value=7\nd=type.__delattr__\nm=d.__get__(C,[])\nprint(m.__self__ is C,m.__name__,m.__qualname__,type(m).__name__)\nprint(m(\"value\"))\n",
+      "stdout": "True __delattr__ type.__delattr__ method-wrapper\nNone\n"
+    },
+    {
+      "id": "wrapper-type-delete-unbound",
+      "stage": "O34",
+      "source": "class C: value=7\nd=type.__delattr__\nm=type(d).__get__(d,C,False)\nn=d.__get__(C)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is C)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-type-delete-wrong-layout",
+      "stage": "O34",
+      "source": "class C: value=7\nd=type.__delattr__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-method-bind-bind-call",
+      "stage": "O34",
+      "source": "p=property()\nd=type(property.getter).__get__\nm=d.__get__(property.getter,[])\nprint(m.__self__ is property.getter,m.__name__,m.__qualname__,type(m).__name__)\nprint(m(p)(None).fget)\n",
+      "stdout": "True __get__ method_descriptor.__get__ method-wrapper\nNone\n"
+    },
+    {
+      "id": "wrapper-method-bind-unbound",
+      "stage": "O34",
+      "source": "p=property()\nd=type(property.getter).__get__\nm=type(d).__get__(d,property.getter,False)\nn=d.__get__(property.getter)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is property.getter)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-method-bind-wrong-layout",
+      "stage": "O34",
+      "source": "p=property()\nd=type(property.getter).__get__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-wrapper-bind-bind-call",
+      "stage": "O34",
+      "source": "p=property()\nd=type(property.__get__).__get__\nm=d.__get__(property.__get__,[])\nprint(m.__self__ is property.__get__,m.__name__,m.__qualname__,type(m).__name__)\nprint(m(p)(None,property) is p)\n",
+      "stdout": "True __get__ wrapper_descriptor.__get__ method-wrapper\nTrue\n"
+    },
+    {
+      "id": "wrapper-wrapper-bind-unbound",
+      "stage": "O34",
+      "source": "p=property()\nd=type(property.__get__).__get__\nm=type(d).__get__(d,property.__get__,False)\nn=d.__get__(property.__get__)\nprint(m is n,m==n,hash(m)==hash(n),m.__self__ is property.__get__)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "wrapper-wrapper-bind-wrong-layout",
+      "stage": "O34",
+      "source": "p=property()\nd=type(property.__get__).__get__\nd.__get__([],False)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "wrapper-function-call-lazy-error",
+      "stage": "O34",
+      "source": "def read(obj):\n print(\"called\")\n raise ValueError(\"original\")\nbind=type(read).__get__.__get__(read,False)\nm=bind([7])\nprint(\"bound\")\nm()\n",
+      "stdout": "bound\ncalled\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "read",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "wrapper-function-lazy-generator",
+      "stage": "O34",
+      "source": "def read(obj):\n print(\"entered\")\n yield obj[0]\nbind=type(read).__get__.__get__(read)\nm=bind([7])\ng=m()\nprint(\"ready\")\nprint(next(g))\n",
+      "stdout": "ready\nentered\n7\n"
+    },
+    {
+      "id": "method-copy-lazy-error",
+      "stage": "O33",
+      "source": "def read(obj):\n print(\"called\")\n raise ValueError(\"original\")\np=property(read)\nm=property.getter.__get__(p)\nq=m(None)\nprint(\"copied\")\nq.__get__([7])\n",
+      "stdout": "copied\ncalled\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 8
+        },
+        {
+          "function": "read",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "future-property-documentation",
+      "stage": "Future",
+      "source": "property().__doc__\n",
+      "stdout": ""
+    },
+    {
+      "id": "future-live-class-namespace",
+      "stage": "Future",
+      "source": "class C: pass\nC.__dict__\n",
+      "stdout": ""
+    }
+  ]
+}
