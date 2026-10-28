@@ -419,12 +419,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
-    while (["init", "relay", "vars-result", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
+    while (["init", "relay", "subclass-result", "vars-result", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
         value = completion.instance;
-      } else if (completion.kind === "item-result") value = null;
+      } else if (completion.kind === "subclass-result") value = completion.receiver;
+      else if (completion.kind === "item-result") value = null;
       else if (completion.kind === "index-result") {
         if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "__index__ returned a non-integer value");
         if (typeof value === "boolean") value = values.int(BigInt(value));
@@ -751,6 +752,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (!plan) continue;
       return callTask(plan.callable, plan.args, [], [], site,
         continuation("notify", {type, entries, index, after}));
+    }
+    const plan = classes.subclassNotification(type);
+    if (plan) {
+      const finish = continuation("subclass-result", {receiver: type, after});
+      return plan.kind === "value" ? callTask(plan.value, [], [], [], site, finish) :
+        callTask(plan.callable, plan.args, [], [], site,
+          continuation("invoke", {args: [], keywords: [], keywordValues: [], depth: 0, after: finish}));
     }
     return deliver(type, after, site);
   };
@@ -1390,6 +1398,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "object.__init_subclass__") {
+            if (args.length !== 1 || keywords.length || !classes.isType(args[0])) python("TypeError", "__init_subclass__ takes no arguments");
+            task = valueTask(null, site, completion); continue;
+          }
           if (callable.name === "isinstance" && (classes.needsAdvertised(args[0]) || classes.customCheck(args[1], "__instancecheck__") ||
               state.frames.at(-1).callable.pool.code.version === 5 && values.isSequenceType(args[1], "tuple"))) {
             if (keywords.length || args.length !== 2) python("TypeError", "isinstance requires two positional arguments");

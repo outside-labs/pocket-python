@@ -4,6 +4,9 @@ O23/O24 continue #123 against pinned CPython 3.14.7. The executable reference
 matrix is `tests/fixtures/interpreter/subclass-initialization.json`. Reference
 observations alone do not establish independent execution.
 
+O23 is implemented; O24 remains reference-only until keyword propagation is
+accepted. The O23 source matrix and owned lifecycle tests run independently.
+
 | Stage | Contract |
 | --- | --- |
 | O23 | After a new class has its lexical class cell filled and all adopted `__set_name__` notifications finish, resolve `__init_subclass__` after that new class in its C3 MRO. Bind with no instance and the new class as dynamic owner, then invoke exactly once. Definition-time Python functions are automatically classmethods; explicit static/class wrappers, callable descriptors and later ordinary mutation keep their own binding rules. Ignore the hook result. Errors prevent name binding, metaclass initialization and decorators while retaining prior effects. |
