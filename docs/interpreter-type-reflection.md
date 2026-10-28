@@ -17,6 +17,8 @@ forward owner metadata from their wrapped descriptor. Ordinary Python functions
 and methods have no default owner attribute. Owner reflection invokes no receiver,
 advertised-class, metaclass checking, equality or truth callback. Assigning or
 deleting the adopted native owner attribute raises AttributeError.
+Both direct assignment/deletion syntax and attribute builtins reach that same
+runtime error, preserving preceding output and source frames.
 
 type.mro accepts exactly one positional actual type, including a receiver
 supplied by binding. Missing/excess/keyword arguments and advertised classes
