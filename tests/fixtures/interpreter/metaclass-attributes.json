@@ -1,0 +1,419 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-metaclass-attributes/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "read-intercept",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  return 7\nclass A(metaclass=M): x=1\nprint(A.x,getattr(A,\"two words\"),A.__class__,type(A) is M)\n",
+      "stdout": "read x\nread two words\nread __class__\n7 7 7 True\n"
+    },
+    {
+      "id": "read-delegate",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): return type.__getattribute__(cls,name)\nclass A(metaclass=M): x=[7]\nprint(A.x[0],A.__name__,A.__class__ is M)\n",
+      "stdout": "7 A True\n"
+    },
+    {
+      "id": "read-super-inherited",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  return super().__getattribute__(name)\nclass N(M): pass\nclass A(metaclass=N): x=7\nprint(A.x)\n",
+      "stdout": "read x\n7\n"
+    },
+    {
+      "id": "read-fallback",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattr__(cls,name):\n  print(\"fallback\",name)\n  return 9\nclass A(metaclass=M): x=7\nprint(A.x,A.missing,getattr(A,\"other\"),hasattr(A,\"last\"))\n",
+      "stdout": "fallback missing\nfallback other\nfallback last\n7 9 9 True\n"
+    },
+    {
+      "id": "read-hook-error-fallback",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  raise AttributeError(\"missing\")\n def __getattr__(cls,name):\n  print(\"fallback\",name)\n  return 9\nclass A(metaclass=M): pass\nprint(A.x)\n",
+      "stdout": "read x\nfallback x\n9\n"
+    },
+    {
+      "id": "read-propagate-TypeError",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): raise TypeError(\"original\")\n def __getattr__(cls,name): print(\"never\")\nclass A(metaclass=M): pass\nA.x\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-propagate-ValueError",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): raise ValueError(\"original\")\n def __getattr__(cls,name): print(\"never\")\nclass A(metaclass=M): pass\nA.x\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "read-propagate-StopIteration",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): raise StopIteration(\"original\")\n def __getattr__(cls,name): print(\"never\")\nclass A(metaclass=M): pass\nA.x\n",
+      "stdout": "",
+      "error_type": "StopIteration"
+    },
+    {
+      "id": "fallback-once",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattr__(cls,name):\n  print(\"once\")\n  raise AttributeError(\"missing\")\nclass A(metaclass=M): pass\nprint(getattr(A,\"x\",7),hasattr(A,\"x\"))\n",
+      "stdout": "once\nonce\n7 False\n"
+    },
+    {
+      "id": "fallback-snapshot-replace",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  M.__getattr__=lambda cls,name: 9\n  raise AttributeError(\"missing\")\n def __getattr__(cls,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "fallback-snapshot-delete",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  del M.__getattr__\n  raise AttributeError(\"missing\")\n def __getattr__(cls,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "fallback-added-too-late",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  M.__getattr__=lambda cls,name: 9\n  raise AttributeError(\"missing\")\nclass A(metaclass=M): pass\nA.x\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__getattribute__-descriptor",
+      "stage": "O25",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\",type.__getattribute__(obj,\"__name__\"),owner.__name__)\n  def read(name): return [name]\n  return read\nclass M(type): __getattribute__=D()\nclass A(metaclass=M): pass\nprint(A.x[0])\n",
+      "stdout": "bind A M\nx\n"
+    },
+    {
+      "id": "__getattribute__-staticmethod",
+      "stage": "O25",
+      "source": "class M(type):\n @staticmethod\n def __getattribute__(name): return [name]\nclass A(metaclass=M): pass\nprint(A.x[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "__getattribute__-classmethod",
+      "stage": "O25",
+      "source": "class M(type):\n @classmethod\n def __getattribute__(meta,name): return [name]\nclass A(metaclass=M): pass\nprint(A.x[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "__getattribute__-property",
+      "stage": "O25",
+      "source": "class M(type):\n @property\n def __getattribute__(cls): return (lambda name: [name])\nclass A(metaclass=M): pass\nprint(A.x[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "__getattribute__-noncallable",
+      "stage": "O25",
+      "source": "class M(type): __getattribute__=None\nclass A(metaclass=M): pass\nA.x\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__getattr__-descriptor",
+      "stage": "O25",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\",type.__getattribute__(obj,\"__name__\"),owner.__name__)\n  def read(name): return [name]\n  return read\nclass M(type): __getattr__=D()\nclass A(metaclass=M): pass\nprint(A.x[0])\n",
+      "stdout": "bind A M\nx\n"
+    },
+    {
+      "id": "__getattr__-staticmethod",
+      "stage": "O25",
+      "source": "class M(type):\n @staticmethod\n def __getattr__(name): return [name]\nclass A(metaclass=M): pass\nprint(A.x[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "__getattr__-classmethod",
+      "stage": "O25",
+      "source": "class M(type):\n @classmethod\n def __getattr__(meta,name): return [name]\nclass A(metaclass=M): pass\nprint(A.x[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "__getattr__-property",
+      "stage": "O25",
+      "source": "class M(type):\n @property\n def __getattr__(cls): return (lambda name: [name])\nclass A(metaclass=M): pass\nprint(A.x[0])\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "__getattr__-noncallable",
+      "stage": "O25",
+      "source": "class M(type): __getattr__=None\nclass A(metaclass=M): pass\nA.x\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-binding-error-fallback",
+      "stage": "O25",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\")\n  raise AttributeError(\"binding\")\nclass M(type):\n __getattribute__=D()\n def __getattr__(cls,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n",
+      "stdout": "bind\n7\n"
+    },
+    {
+      "id": "read-data-descriptor-priority",
+      "stage": "O25",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"get\",type.__getattribute__(obj,\"__name__\"),owner.__name__)\n  return 7\n def __set__(self,obj,value): pass\nclass M(type): x=D()\nclass A(metaclass=M): x=9\nprint(type.__getattribute__(A,\"x\"))\n",
+      "stdout": "get A M\n7\n"
+    },
+    {
+      "id": "read-nondata-class-priority",
+      "stage": "O25",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass M(type): x=D()\nclass A(metaclass=M): x=9\nprint(A.x)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "read-metaclass-property-fallback",
+      "stage": "O25",
+      "source": "class M(type):\n @property\n def x(cls):\n  print(\"property\")\n  raise AttributeError(\"missing\")\n def __getattr__(cls,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n",
+      "stdout": "property\n7\n"
+    },
+    {
+      "id": "read-metadata-descriptor-priority",
+      "stage": "O25",
+      "source": "class M(type):\n @property\n def __name__(cls): return \"visible\"\nclass A(metaclass=M): pass\nprint(A.__name__,type.__getattribute__(A,\"__name__\"))\n",
+      "stdout": "visible visible\n"
+    },
+    {
+      "id": "read-class-hook-shadow",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattr__(cls,name): return 7\nclass A(metaclass=M):\n def __getattr__(self,name): return 9\nprint(A.x,A().x)\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "read-native-no-fallback",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattr__(cls,name): print(\"never\")\nclass A(metaclass=M): pass\ntype.__getattribute__(A,\"x\")\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "read-native-descriptor-identity",
+      "stage": "O25",
+      "source": "class M(type): pass\nclass A(metaclass=M): x=7\nf=M.__getattribute__\nprint(type(f).__name__,f.__name__,f.__qualname__)\nprint(f is type.__getattribute__,f(A,\"x\"))\n",
+      "stdout": "wrapper_descriptor __getattribute__ type.__getattribute__\nTrue 7\n"
+    },
+    {
+      "id": "read-bound-native-metaclass",
+      "stage": "O25",
+      "source": "class M(type):\n def read(cls): return super().__getattribute__\nclass A(metaclass=M): x=7\nf=A.read()\nprint(type(f).__name__,f.__name__,f.__qualname__,f.__self__ is A,hasattr(f,\"__func__\"),f(\"x\"))\n",
+      "stdout": "method-wrapper __getattribute__ type.__getattribute__ True False 7\n"
+    },
+    {
+      "id": "read-native-arity-missing",
+      "stage": "O25",
+      "source": "type.__getattribute__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-native-receiver",
+      "stage": "O25",
+      "source": "type.__getattribute__(7,\"x\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-native-name",
+      "stage": "O25",
+      "source": "type.__getattribute__(type,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-native-arity-extra",
+      "stage": "O25",
+      "source": "type.__getattribute__(type,\"x\",7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "read-native-keyword",
+      "stage": "O25",
+      "source": "type.__getattribute__(type,name=\"x\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-class-real-first",
+      "stage": "O25",
+      "source": "class N(type): pass\nclass M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  if name==\"__class__\": return N\n  return type.__getattribute__(cls,name)\nclass A(metaclass=M): pass\nprint(isinstance(A,M),isinstance(A,N),type(A) is M,A.__class__ is N)\n",
+      "stdout": "read __class__\nread __class__\nTrue True True True\n"
+    },
+    {
+      "id": "advertised-super-real-first",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): raise ValueError(\"never\")\nclass A(metaclass=M): pass\ns=super(M,A)\nprint(s.__self__ is A,s.__self_class__ is M)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "implicit-call-bypasses-read",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): raise ValueError(\"never\")\n def __call__(cls): return 7\nclass A(metaclass=M): pass\nprint(A())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "read-generator",
+      "stage": "O25",
+      "source": "class M(type):\n def __getattribute__(cls,name): yield name\nclass A(metaclass=M): pass\nprint(next(A.x))\n",
+      "stdout": "x\n"
+    },
+    {
+      "id": "__setattr__-delegate",
+      "stage": "O26",
+      "source": "class M(type):\n def __setattr__(cls,name,value):\n  print(\"hook\",name)\n  return type.__setattr__(cls,name,value)\nclass A(metaclass=M): x=[9]\nA.x=[7]\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "hook x\nTrue\n"
+    },
+    {
+      "id": "__setattr__-ignore-result",
+      "stage": "O26",
+      "source": "class M(type):\n def __setattr__(cls,name,value):\n  print(\"hook\",name)\n  return [7]\nclass A(metaclass=M): x=9\nA.x=[7]\nprint(A.x)\n",
+      "stdout": "hook x\n9\n"
+    },
+    {
+      "id": "__setattr__-descriptor",
+      "stage": "O26",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\",obj.__name__,owner.__name__)\n  def write(name,value): type.__setattr__(obj,name,value)\n  return write\nclass M(type): __setattr__=D()\nclass A(metaclass=M): x=7\nA.x=[7]\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "bind A M\nTrue\n"
+    },
+    {
+      "id": "__setattr__-native-no-hook",
+      "stage": "O26",
+      "source": "class M(type):\n def __setattr__(cls,name,value): raise ValueError(\"never\")\nclass A(metaclass=M): x=9\ntype.__setattr__(A,\"x\",7)\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "__setattr__-propagate-AttributeError",
+      "stage": "O26",
+      "source": "class M(type):\n def __setattr__(cls,name,value): raise AttributeError(\"original\")\nclass A(metaclass=M): x=9\nA.x=[7]\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__setattr__-propagate-ValueError",
+      "stage": "O26",
+      "source": "class M(type):\n def __setattr__(cls,name,value): raise ValueError(\"original\")\nclass A(metaclass=M): x=9\nA.x=[7]\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__setattr__-invalid-receiver",
+      "stage": "O26",
+      "source": "type.__setattr__(7,\"x\",9)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__setattr__-immutable-native",
+      "stage": "O26",
+      "source": "type.__setattr__(int,\"x\",9)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__delattr__-delegate",
+      "stage": "O26",
+      "source": "class M(type):\n def __delattr__(cls,name):\n  print(\"hook\",name)\n  return type.__delattr__(cls,name)\nclass A(metaclass=M): x=[9]\ndel A.x\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "hook x\nFalse\n"
+    },
+    {
+      "id": "__delattr__-ignore-result",
+      "stage": "O26",
+      "source": "class M(type):\n def __delattr__(cls,name):\n  print(\"hook\",name)\n  return [7]\nclass A(metaclass=M): x=9\ndel A.x\nprint(A.x)\n",
+      "stdout": "hook x\n9\n"
+    },
+    {
+      "id": "__delattr__-descriptor",
+      "stage": "O26",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\",obj.__name__,owner.__name__)\n  def write(name): type.__delattr__(obj,name)\n  return write\nclass M(type): __delattr__=D()\nclass A(metaclass=M): x=7\ndel A.x\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "bind A M\nFalse\n"
+    },
+    {
+      "id": "__delattr__-native-no-hook",
+      "stage": "O26",
+      "source": "class M(type):\n def __delattr__(cls,name): raise ValueError(\"never\")\nclass A(metaclass=M): x=9\ntype.__delattr__(A,\"x\")\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "__delattr__-propagate-AttributeError",
+      "stage": "O26",
+      "source": "class M(type):\n def __delattr__(cls,name): raise AttributeError(\"original\")\nclass A(metaclass=M): x=9\ndel A.x\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__delattr__-propagate-ValueError",
+      "stage": "O26",
+      "source": "class M(type):\n def __delattr__(cls,name): raise ValueError(\"original\")\nclass A(metaclass=M): x=9\ndel A.x\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "__delattr__-invalid-receiver",
+      "stage": "O26",
+      "source": "type.__delattr__(7,\"x\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__delattr__-immutable-native",
+      "stage": "O26",
+      "source": "type.__delattr__(int,\"x\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "write-data-descriptor",
+      "stage": "O26",
+      "source": "class M(type):\n @property\n def x(cls): return 7\n @x.setter\n def x(cls,value): print(\"set\",value[0])\n @x.deleter\n def x(cls): print(\"delete\")\n def __setattr__(cls,name,value): return super().__setattr__(name,value)\n def __delattr__(cls,name): return super().__delattr__(name)\nclass A(metaclass=M): x=9\nA.x=[8]\ndel A.x\nprint(A.x)\n",
+      "stdout": "set 8\ndelete\n7\n"
+    },
+    {
+      "id": "write-read-hooks-bypassed",
+      "stage": "O26",
+      "source": "class M(type):\n def __getattribute__(cls,name): raise ValueError(\"never\")\n def __setattr__(cls,name,value): print(\"set\",name,value)\n def __delattr__(cls,name): print(\"delete\",name)\nclass A(metaclass=M): pass\nsetattr(A,\"two words\",7)\ndelattr(A,\"two words\")\n",
+      "stdout": "set two words 7\ndelete two words\n"
+    },
+    {
+      "id": "write-late-read-hook",
+      "stage": "O26",
+      "source": "class M(type): pass\nclass A(metaclass=M): pass\nM.__getattr__=lambda cls,name: 7\nprint(A.x)\ndel M.__getattr__\nprint(hasattr(A,\"x\"))\n",
+      "stdout": "7\nFalse\n"
+    },
+    {
+      "id": "write-late-write-hook",
+      "stage": "O26",
+      "source": "class M(type): pass\nclass A(metaclass=M): pass\nM.__setattr__=lambda cls,name,value: print(name,value)\nA.x=7\ndel M.__setattr__\nA.x=9\nprint(A.x)\n",
+      "stdout": "x 7\n9\n"
+    },
+    {
+      "id": "future-prepare",
+      "stage": "Future",
+      "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\nclass A(metaclass=M): pass\nprint(A.__name__)\n",
+      "stdout": "A\n"
+    },
+    {
+      "id": "future-class-dictionary",
+      "stage": "Future",
+      "source": "class M(type): pass\nclass A(metaclass=M): x=7\nprint(A.__dict__[\"x\"])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "future-special-read",
+      "stage": "Future",
+      "source": "class M(type):\n def __getattribute__(cls,name): print(\"never\")\nclass A(metaclass=M): pass\nprint(A.__weakref__ is not None)\n",
+      "stdout": "never\nFalse\n"
+    },
+    {
+      "id": "future-meta-layout",
+      "stage": "Future",
+      "source": "class M(type):\n @property\n def __class__(cls): return type\nclass A(metaclass=M): pass\nprint(A.__class__ is type)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "future-special-write",
+      "stage": "Future",
+      "source": "class M(type):\n def __setattr__(cls,name,value): print(\"never\")\nclass A(metaclass=M): pass\nA.__dict__={}\n",
+      "stdout": "never\n"
+    }
+  ]
+}
