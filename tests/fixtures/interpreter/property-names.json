@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O37",
-    "O38"
+    "O38",
+    "O39"
   ],
   "cases": [
     {
@@ -253,7 +254,7 @@
     },
     {
       "id": "property-abstract-refusal",
-      "stage": "Future",
+      "stage": "O39",
       "source": "def read(obj): return obj\np=property(read)\nprint(p.__isabstractmethod__)\n",
       "stdout": "False\n"
     },

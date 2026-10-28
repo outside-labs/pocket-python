@@ -96,6 +96,12 @@ test('nested wrapper flag dispatch has bounded recursion and cleans parked owner
   }
 });
 
+test('bound marker forwarding retains custom callables and exact temporary marker results', async () => {
+  await lifecycle('class C: pass\nclass Flag:\n def __getattribute__(self,name):\n  if name=="__isabstractmethod__":\n   print("lookup")\n   return [7]\n  return object.__getattribute__(self,name)\nm=classmethod(Flag()).__get__(None,C)\nprint("held")\nprint(m.__isabstractmethod__[0])\n', 'held\nlookup\n7\n', ['held\n', 'held\nlookup\n']);
+  const result = await run('class C: pass\ndef f(): pass\nm=f\nfor i in range(30): m=classmethod(m).__get__(None,C)\nprint("entered")\nm.__isabstractmethod__\n', {maxDepth: 16});
+  assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.type, 'RecursionError'); closed(result.closed);
+});
+
 test('abstract lookup and truth records preserve outer roots and reject invalid phases', () => {
   const receiver = {}, outer = {};
   const after = completion('relay', {receiver: outer});

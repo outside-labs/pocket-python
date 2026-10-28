@@ -27,13 +27,18 @@ resource limits; any changed composed resource observation requires an explicit
 accounting explanation. No host callback or untracked side table owns a name.
 
 Only property-name mutation is added. Function/type/native descriptor name
-mutation, property documentation, abstract-method reflection, builtin subclass
+mutation, property documentation, builtin subclass
 layouts, live dictionaries and dynamic source admission retain their boundaries.
 Missing-accessor diagnostics that would read a user getter's name or format a
 non-primitive assigned name refuse before those deferred callback effects.
 The operations belong to classes-source/1 and bytecode 5. Core/legacy admission
 and host grants stay explicit. Native coroutine/await and host adapters remain
 under #34.
+
+The later [O39/O40 abstract-flag contract](interpreter-abstract-flags.md) adopts
+the former `property-abstract-refusal` observation. That retained case now runs
+as an O39 comparison; the original O37/O38 delivery counts below describe its
+earlier boundary.
 
 Acceptance requires the pinned reference in Node/Chromium drain, instruction
 boundary and parked execution; focused lifecycle/resource tests; compatibility

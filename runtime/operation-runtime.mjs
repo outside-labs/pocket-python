@@ -1556,6 +1556,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length !== 3) python("TypeError", "Native property notification requires two positional arguments");
             task = valueTask(classes.mutate(args[0], "__name__", args[2]), site, completion); continue;
           }
+          if (callable.name === "method-abstract-marker") {
+            const receiver = args[0];
+            if (!(receiver instanceof BoundMethodValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid method marker lookup.");
+            if (++depth > maxDepth) python("RecursionError", "maximum method marker lookup depth exceeded");
+            task = attributeTask(receiver.callable, "__isabstractmethod__", site,
+              continuation("relay", {receiver, after: completion}), depth); continue;
+          }
           if (callable.name === "descriptor-abstract") {
             const receiver = args[0];
             if (!(receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid abstract-method flag lookup.");
