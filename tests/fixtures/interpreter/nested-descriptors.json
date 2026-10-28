@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-nested-descriptors/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "set-property",
+      "stage": "O27",
+      "source": "def callback(obj,value):\n print(\"body\")\n obj.saved=value\n return [99]\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return callback\nclass D:\n def bind(self):\n  print(\"bind\",type(self).__name__)\n  return callback\n __set__=property(bind)\nclass A:\n x=D()\na=A()\na.x=[7]\nprint(a.saved[0])\n",
+      "stdout": "bind D\nbody\n7\n"
+    },
+    {
+      "id": "set-descriptor",
+      "stage": "O27",
+      "source": "def callback(obj,value):\n print(\"body\")\n obj.saved=value\n return [99]\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return callback\nclass D:\n __set__=Hook()\nclass A:\n x=D()\na=A()\na.x=[7]\nprint(a.saved[0])\n",
+      "stdout": "bind D D\nbody\n7\n"
+    },
+    {
+      "id": "set-binding-AttributeError",
+      "stage": "O27",
+      "source": "class D:\n @property\n def __set__(self):\n  print(\"bind\")\n  raise AttributeError(\"binding\")\nclass A:\n x=D()\na=A()\na.x=[7]\n",
+      "stdout": "bind\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "__set__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "set-binding-ValueError",
+      "stage": "O27",
+      "source": "class D:\n @property\n def __set__(self):\n  print(\"bind\")\n  raise ValueError(\"binding\")\nclass A:\n x=D()\na=A()\na.x=[7]\n",
+      "stdout": "bind\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "__set__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "set-noncallable-None",
+      "stage": "O27",
+      "source": "class D:\n @property\n def __set__(self):\n  print(\"bind\")\n  return None\nclass A:\n x=D()\na=A()\na.x=[7]\n",
+      "stdout": "bind\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-noncallable-7",
+      "stage": "O27",
+      "source": "class D:\n @property\n def __set__(self):\n  print(\"bind\")\n  return 7\nclass A:\n x=D()\na=A()\na.x=[7]\n",
+      "stdout": "bind\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-missing-property-getter",
+      "stage": "O27",
+      "source": "class D:\n __set__=property()\nclass A:\n x=D()\na=A()\na.x=[7]\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "set-callable-result",
+      "stage": "O27",
+      "source": "class Callback:\n def __call__(self,obj,value):\n  obj.saved=value\n  return 99\nclass D:\n @property\n def __set__(self): return Callback()\nclass A:\n x=D()\na=A()\na.x=[7]\nprint(a.saved[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "set-bound-result",
+      "stage": "O27",
+      "source": "class Callback:\n def invoke(self,obj,value):\n  obj.saved=value\nclass D:\n @property\n def __set__(self): return Callback().invoke\nclass A:\n x=D()\na=A()\na.x=[7]\nprint(a.saved[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "delete-property",
+      "stage": "O27",
+      "source": "def callback(obj):\n print(\"body\")\n obj.saved=[0]\n return [99]\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return callback\nclass D:\n def bind(self):\n  print(\"bind\",type(self).__name__)\n  return callback\n __delete__=property(bind)\nclass A:\n x=D()\na=A()\ndel a.x\nprint(a.saved[0])\n",
+      "stdout": "bind D\nbody\n0\n"
+    },
+    {
+      "id": "delete-descriptor",
+      "stage": "O27",
+      "source": "def callback(obj):\n print(\"body\")\n obj.saved=[0]\n return [99]\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return callback\nclass D:\n __delete__=Hook()\nclass A:\n x=D()\na=A()\ndel a.x\nprint(a.saved[0])\n",
+      "stdout": "bind D D\nbody\n0\n"
+    },
+    {
+      "id": "delete-binding-AttributeError",
+      "stage": "O27",
+      "source": "class D:\n @property\n def __delete__(self):\n  print(\"bind\")\n  raise AttributeError(\"binding\")\nclass A:\n x=D()\na=A()\ndel a.x\n",
+      "stdout": "bind\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "__delete__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "delete-binding-ValueError",
+      "stage": "O27",
+      "source": "class D:\n @property\n def __delete__(self):\n  print(\"bind\")\n  raise ValueError(\"binding\")\nclass A:\n x=D()\na=A()\ndel a.x\n",
+      "stdout": "bind\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "__delete__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "delete-noncallable-None",
+      "stage": "O27",
+      "source": "class D:\n @property\n def __delete__(self):\n  print(\"bind\")\n  return None\nclass A:\n x=D()\na=A()\ndel a.x\n",
+      "stdout": "bind\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "delete-noncallable-7",
+      "stage": "O27",
+      "source": "class D:\n @property\n def __delete__(self):\n  print(\"bind\")\n  return 7\nclass A:\n x=D()\na=A()\ndel a.x\n",
+      "stdout": "bind\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "delete-missing-property-getter",
+      "stage": "O27",
+      "source": "class D:\n __delete__=property()\nclass A:\n x=D()\na=A()\ndel a.x\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "delete-callable-result",
+      "stage": "O27",
+      "source": "class Callback:\n def __call__(self,obj):\n  obj.saved=[0]\n  return 99\nclass D:\n @property\n def __delete__(self): return Callback()\nclass A:\n x=D()\na=A()\ndel a.x\nprint(a.saved[0])\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "delete-bound-result",
+      "stage": "O27",
+      "source": "class Callback:\n def invoke(self,obj):\n  obj.saved=[0]\nclass D:\n @property\n def __delete__(self): return Callback().invoke\nclass A:\n x=D()\na=A()\ndel a.x\nprint(a.saved[0])\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "set-inherited-owner-and-instance-shadow",
+      "stage": "O27",
+      "source": "class Hook:\n def __get__(self,obj,owner):\n  print(type(obj).__name__,owner.__name__)\n  return write\ndef write(obj,value): obj.saved=value\nclass Base: __set__=Hook()\nclass D(Base): pass\nd=D()\nd.__set__=None\nclass A: x=d\na=A()\na.x=7\nprint(a.saved)\n",
+      "stdout": "D D\n7\n"
+    },
+    {
+      "id": "set-late-slot-replacement",
+      "stage": "O27",
+      "source": "def write(obj,value): obj.saved=value\nclass D: pass\nclass A: x=D()\na=A()\na.x=1\nD.__set__=property(lambda self: write)\na.x=7\nprint(a.x,a.saved)\ndel D.__set__\na.x=9\nprint(a.x,a.saved)\n",
+      "stdout": "1 7\n9 7\n"
+    },
+    {
+      "id": "set-binding-replaces-slot-with-retained-original-callable",
+      "stage": "O27",
+      "source": "def write(obj,value): obj.saved=value\nclass D:\n @property\n def __set__(self):\n  D.__set__=None\n  return write\nclass A: x=D()\na=A()\na.x=7\nprint(a.saved)\ntry: a.x=9\nexcept TypeError: print(a.saved)\n",
+      "stdout": "7\n7\n"
+    },
+    {
+      "id": "set-native-default-and-builtins-ignore-result",
+      "stage": "O27",
+      "source": "def write(obj,value):\n obj.saved=value\n return 99\ndef erase(obj):\n obj.saved=0\n return 99\nclass D:\n __set__=property(lambda self: write)\n __delete__=property(lambda self: erase)\nclass A: x=D()\na=A()\nprint(setattr(a,\"x\",7),a.saved)\nprint(delattr(a,\"x\"),a.saved)\nprint(object.__setattr__(a,\"x\",8),a.saved)\nprint(object.__delattr__(a,\"x\"),a.saved)\n",
+      "stdout": "None 7\nNone 0\nNone 8\nNone 0\n"
+    },
+    {
+      "id": "set-delete-through-metaclass-native-defaults",
+      "stage": "O27",
+      "source": "def write(obj,value): type.__setattr__(obj,\"saved\",value)\ndef erase(obj): type.__setattr__(obj,\"saved\",0)\nclass D:\n __set__=property(lambda self: write)\n __delete__=property(lambda self: erase)\nclass M(type): x=D()\nclass A(metaclass=M): pass\nA.x=7\nprint(A.saved)\nprint(type.__setattr__(A,\"x\",8),A.saved)\ndel A.x\nprint(A.saved)\n",
+      "stdout": "7\nNone 8\n0\n"
+    },
+    {
+      "id": "set-temporary-operands-and-active-finally",
+      "stage": "O27",
+      "source": "saved=[]\ndef write(obj,value):\n saved.append((obj,value))\n raise ValueError(\"body\")\nclass D:\n __set__=property(lambda self: write)\nclass A: x=D()\ndef owner():\n print(\"owner\")\n return A()\ndef value():\n print(\"value\")\n return [7]\ntry: owner().x=value()\nexcept ValueError: print(\"caught\")\nfinally: print(saved[0][1][0],type(saved[0][0]).__name__)\n",
+      "stdout": "value\nowner\ncaught\n7 A\n"
+    },
+    {
+      "id": "set-read-binding-stays-raw",
+      "stage": "O27",
+      "source": "class Hook:\n def __get__(self,obj,owner):\n  print(\"never\")\n  return lambda obj,owner: 7\nclass D: __get__=Hook()\nclass A: x=D()\nA().x\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "name-property",
+      "stage": "O28",
+      "source": "def notify(owner,name):\n print(\"body\",owner.__name__,name)\n return 99\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return notify\nclass D:\n @property\n def __set_name__(self):\n  print(\"bind\",type(self).__name__)\n  return notify\nclass A:\n x=D()\nprint(A.__name__)\n",
+      "stdout": "bind D\nbody A x\nA\n"
+    },
+    {
+      "id": "name-descriptor",
+      "stage": "O28",
+      "source": "def notify(owner,name):\n print(\"body\",owner.__name__,name)\n return 99\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return notify\nclass D:\n __set_name__=Hook()\nclass A:\n x=D()\nprint(A.__name__)\n",
+      "stdout": "bind D D\nbody A x\nA\n"
+    },
+    {
+      "id": "name-binding-AttributeError",
+      "stage": "O28",
+      "source": "class D:\n @property\n def __set_name__(self):\n  print(\"bind\")\n  raise AttributeError(\"binding\")\nclass A:\n x=D()\nprint(A.__name__)\n",
+      "stdout": "bind\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__set_name__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "name-binding-ValueError",
+      "stage": "O28",
+      "source": "class D:\n @property\n def __set_name__(self):\n  print(\"bind\")\n  raise ValueError(\"binding\")\nclass A:\n x=D()\nprint(A.__name__)\n",
+      "stdout": "bind\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__set_name__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "name-noncallable-None",
+      "stage": "O28",
+      "source": "class D:\n @property\n def __set_name__(self): return None\nclass A:\n x=D()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "name-noncallable-7",
+      "stage": "O28",
+      "source": "class D:\n @property\n def __set_name__(self): return 7\nclass A:\n x=D()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "name-unset-property-raises",
+      "stage": "O28",
+      "source": "class D: __set_name__=property()\nclass A: x=D()\nprint(A.__name__)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "name-body-attributeerror-propagates",
+      "stage": "O28",
+      "source": "def notify(owner,name):\n print(\"body\")\n raise AttributeError(\"body\")\nclass D: __set_name__=property(lambda self: notify)\nclass A: x=D()\n",
+      "stdout": "body\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "notify",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "name-failure-preserves-old-binding",
+      "stage": "O28",
+      "source": "def notify(owner,name): raise ValueError(\"body\")\nclass D: __set_name__=property(lambda self: notify)\nA=7\ntry:\n class A: x=D()\nexcept ValueError: print(A)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "name-snapshot-keeps-removed-entries",
+      "stage": "O28",
+      "source": "def notify(owner,name):\n print(name)\n if name==\"first\": del owner.second\nclass D: __set_name__=property(lambda self: notify)\nclass A:\n first=D()\n second=D()\nprint(A.__name__)\n",
+      "stdout": "first\nsecond\nA\n"
+    },
+    {
+      "id": "name-inherited-owner-and-instance-shadow",
+      "stage": "O28",
+      "source": "class Hook:\n def __get__(self,obj,owner):\n  print(type(obj).__name__,owner.__name__)\n  return lambda cls,name: print(cls.__name__,name)\nclass Base: __set_name__=Hook()\nclass D(Base): pass\nd=D()\nd.__set_name__=None\nclass A: x=d\nclass B(A): pass\nA.y=d\n",
+      "stdout": "D D\nA x\n"
+    },
+    {
+      "id": "name-classcell-subclass-and-decorator-order",
+      "stage": "O28",
+      "source": "def notify(owner,name): print(\"name\",owner().owner() is owner,name)\nclass D: __set_name__=property(lambda self: notify)\nclass Base:\n def __init_subclass__(cls): print(\"subclass\",cls.__name__)\ndef decorate(cls):\n print(\"decorate\",cls.__name__)\n return cls\n@decorate\nclass A(Base):\n x=D()\n def owner(self): return __class__\n",
+      "stdout": "name True x\nsubclass A\ndecorate A\n"
+    },
+    {
+      "id": "name-metaclass-and-dynamic-construction",
+      "stage": "O28",
+      "source": "class Callback:\n def __call__(self,owner,name): print(owner.__name__,name)\nclass D: __set_name__=property(lambda self: Callback())\nclass M(type): pass\nclass A(metaclass=M): x=D()\nB=type(\"B\",(),{\"x\":D()})\nprint(A.__name__,B.__name__)\n",
+      "stdout": "A x\nB x\nA B\n"
+    },
+    {
+      "id": "name-binding-mutation-affects-next-entry",
+      "stage": "O28",
+      "source": "def notify(owner,name): print(\"first\",name)\ndef replacement(self,owner,name): print(\"next\",name)\nclass D:\n @property\n def __set_name__(self):\n  D.__set_name__=replacement\n  return notify\nclass A:\n x=D()\n y=D()\n",
+      "stdout": "first x\nnext y\n"
+    },
+    {
+      "id": "name-direct-call-is-ordinary-binding",
+      "stage": "O28",
+      "source": "def notify(owner,name): print(owner.__name__,name)\nclass D: __set_name__=property(lambda self: notify)\nclass A: pass\nD().__set_name__(A,\"manual\")\n",
+      "stdout": "A manual\n"
+    },
+    {
+      "id": "live-class-namespace",
+      "stage": "Future",
+      "source": "class A: pass\nprint(type(vars(A)) is type(vars(A)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "custom-prepared-namespace",
+      "stage": "Future",
+      "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\nclass A(metaclass=M): pass\nprint(A.__name__)\n",
+      "stdout": "A\n"
+    }
+  ]
+}

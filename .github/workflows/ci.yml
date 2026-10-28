@@ -231,6 +231,7 @@ jobs:
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/indexing.json --report build/indexing-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/private-names.json --report build/private-names-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/descriptors.json --report build/descriptors-reference-report.json
+      - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/nested-descriptors.json --report build/nested-descriptors-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/special-calls.json --report build/special-calls-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/length-truth.json --report build/length-truth-reference-report.json
       - run: python runtime/check_classes.py --reference-only --corpus tests/fixtures/interpreter/execution.json --report build/execution-reference-report.json
