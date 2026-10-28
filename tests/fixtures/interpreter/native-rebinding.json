@@ -524,8 +524,8 @@
     {
       "id": "future-property-documentation",
       "stage": "Future",
-      "source": "property().__doc__\n",
-      "stdout": ""
+      "source": "print(property(len).__doc__ is not None)\n",
+      "stdout": "True\n"
     },
     {
       "id": "future-live-class-namespace",

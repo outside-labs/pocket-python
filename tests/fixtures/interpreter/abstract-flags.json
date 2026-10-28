@@ -869,8 +869,8 @@
     {
       "id": "property-documentation",
       "stage": "Future",
-      "source": "print(property(doc=\"field\").__doc__)\n",
-      "stdout": "field\n"
+      "source": "print(property(len).__doc__ is not None)\n",
+      "stdout": "True\n"
     },
     {
       "id": "property-subclass-layout",

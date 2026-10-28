@@ -248,6 +248,7 @@ export class ClassRuntime {
       this.fail("AttributeError", "super has no attribute '" + name + "'.");
     }
     if (receiver instanceof BuiltinValue) {
+      if (name === "__doc__") this.fail("UnsupportedOperationError", "Native documentation requires its own metadata contract.", "UNSUPPORTED");
       if (name === "__class__") return value(this.typeOf(receiver));
       if (name === "__objclass__" && this.nativeDescriptorKind(receiver))
         return value(this.builtin(receiver.name.slice(0, receiver.name.indexOf("."))));
@@ -271,6 +272,11 @@ export class ClassRuntime {
     }
     if (receiver instanceof PropertyValue) {
       if (name === "__class__") return value(this.builtin("property"));
+      if (name === "__doc__") {
+        if (receiver.documentation === undefined && receiver.fget !== null)
+          this.fail("UnsupportedOperationError", "Native getter documentation requires its own metadata contract.", "UNSUPPORTED");
+        return value(receiver.documentation ?? null);
+      }
       if (name === "__isabstractmethod__") return {kind: "call", callable: this.builtin("descriptor-abstract"), args: [receiver]};
       if (name === "__name__") return receiver.propertyName !== undefined ? value(receiver.propertyName) :
         {kind: "call", callable: this.builtin("property-name"), args: [receiver]};
@@ -340,6 +346,8 @@ export class ClassRuntime {
     }
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
+    if (name === "__doc__" && receiver instanceof ClassValue && receiver.root)
+      this.fail("UnsupportedOperationError", "Native documentation requires its own metadata contract.", "UNSUPPORTED");
     if (name === "__dict__" && (receiver instanceof ClassValue || !this.hasSlot(receiver.type, name)))
       this.fail("UnsupportedOperationError", "Live namespace dictionaries require their own storage contract.", "UNSUPPORTED");
     if (receiver instanceof InstanceValue && name === "__class__") {
@@ -456,7 +464,7 @@ export class ClassRuntime {
   }
   mutate(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
-    if (name === "__doc__" && receiver instanceof FunctionValue) {
+    if (name === "__doc__" && (receiver instanceof FunctionValue || receiver instanceof PropertyValue)) {
       const before = receiver.documentation;
       receiver.documentation = remove ? null : value;
       try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
@@ -532,16 +540,15 @@ export class ClassRuntime {
     return value instanceof ClassValue || value instanceof FunctionValue || value instanceof BuiltinValue ||
       value instanceof BoundMethodValue || value instanceof MethodWrapperValue && value.kind === "staticmethod";
   }
-  property(args, keywordNames, keywordValues) {
-    const fields = ["fget", "fset", "fdel"], assigned = new Map();
-    if (args.length > fields.length || keywordNames.includes("doc"))
-      this.fail("UnsupportedOperationError", "Property documentation requires a later stage.", "UNSUPPORTED");
+  propertyArguments(args, keywordNames, keywordValues) {
+    const fields = ["fget", "fset", "fdel", "doc"], assigned = new Map();
+    if (args.length > fields.length) this.fail("TypeError", "Property accepts at most four arguments.");
     args.forEach((value, index) => assigned.set(fields[index], value));
     keywordNames.forEach((name, index) => {
       if (!fields.includes(name) || assigned.has(name)) this.fail("TypeError", "Invalid or duplicate property argument.");
       assigned.set(name, keywordValues[index]);
     });
-    return this.make(PropertyValue, ...fields.map(name => assigned.has(name) ? assigned.get(name) : null));
+    return fields.map(name => assigned.has(name) ? assigned.get(name) : null);
   }
   missingPropertyAccessor(property, operation) {
     const name = property.propertyName;
@@ -552,14 +559,10 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Property name diagnostic callbacks require a separate stage.", "UNSUPPORTED");
     this.fail("AttributeError", "Property has no " + operation + ".");
   }
-  copyProperty(property, method, replacement) {
+  propertyCopyArguments(property, method, replacement) {
     const fields = [property.fget, property.fset, property.fdel];
     if (replacement !== null) fields[{getter: 0, setter: 1, deleter: 2}[method]] = replacement;
-    let getter = fields[0];
-    while (getter instanceof BoundMethodValue) { this.charge(1); getter = getter.callable; }
-    if (["__getattribute__", "__getattr__"].some(name => this.hasAttributeHook(getter, name)))
-      this.fail("UnsupportedOperationError", "Property getter documentation hooks require their own contract.", "UNSUPPORTED");
-    return this.make(PropertyValue, ...fields, property.propertyName);
+    return [...fields, property.getterDoc ? null : property.documentation ?? null];
   }
   isinstance(value, type, depth = 0) {
     if (this.values.isSequenceType(type, "tuple")) {

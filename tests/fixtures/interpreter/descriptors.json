@@ -398,8 +398,8 @@
     {
       "id": "property-doc-reflection",
       "stage": "deferred",
-      "source": "def read(self):\n \"doc\"\n return 7\nclass A:\n x=property(read)\nprint(A.x.__doc__)\n",
-      "stdout": "doc\n"
+      "source": "print(property(len).__doc__ is not None)\n",
+      "stdout": "True\n"
     },
     {
       "id": "staticmethod-setter-hook",

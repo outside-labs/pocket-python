@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O41"
+    "O41",
+    "O42"
   ],
   "cases": [
     {
@@ -431,6 +432,191 @@
       "stage": "Future",
       "source": "class P(property): pass\nprint(P(doc=\"text\").__doc__)\n",
       "stdout": "text\n"
+    },
+    {
+      "id": "falsy-getter-document-copy-0",
+      "stage": "O42",
+      "source": "def a(obj): pass\ndef b(obj): pass\na.__doc__=False\nb.__doc__=\"new\"\np=property(a)\np.__doc__=\"manual\"\nprint(p.getter(b).__doc__)\n",
+      "stdout": "new\n"
+    },
+    {
+      "id": "falsy-getter-document-copy-1",
+      "stage": "O42",
+      "source": "def a(obj): pass\ndef b(obj): pass\na.__doc__=0\nb.__doc__=\"new\"\np=property(a)\np.__doc__=\"manual\"\nprint(p.getter(b).__doc__)\n",
+      "stdout": "new\n"
+    },
+    {
+      "id": "falsy-getter-document-copy-2",
+      "stage": "O42",
+      "source": "def a(obj): pass\ndef b(obj): pass\na.__doc__=\"\"\nb.__doc__=\"new\"\np=property(a)\np.__doc__=\"manual\"\nprint(p.getter(b).__doc__)\n",
+      "stdout": "new\n"
+    },
+    {
+      "id": "falsy-getter-document-copy-3",
+      "stage": "O42",
+      "source": "def a(obj): pass\ndef b(obj): pass\na.__doc__=[]\nb.__doc__=\"new\"\np=property(a)\np.__doc__=\"manual\"\nprint(p.getter(b).__doc__)\n",
+      "stdout": "new\n"
+    },
+    {
+      "id": "copy-lookup-attribute-error",
+      "stage": "O42",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  print(\"lookup\")\n  raise AttributeError(\"missing\")\np=property(Getter())\nprint(p.__doc__)\nq=p.setter(None)\nprint(q.__doc__)\n",
+      "stdout": "lookup\nNone\nlookup\nNone\n"
+    },
+    {
+      "id": "fallback-error-propagates",
+      "stage": "O42",
+      "source": "class Getter:\n @property\n def __doc__(self): raise AttributeError(\"missing\")\n def __getattr__(self,name):\n  print(\"fallback\")\n  raise ValueError(\"doc\")\nproperty(Getter())\n",
+      "stdout": "fallback\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "__getattr__",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "fallback-attribute-error-is-missing",
+      "stage": "O42",
+      "source": "class Getter:\n @property\n def __doc__(self): raise AttributeError(\"missing\")\n def __getattr__(self,name):\n  print(\"fallback\")\n  raise AttributeError(\"gone\")\nprint(property(Getter()).__doc__)\n",
+      "stdout": "fallback\nNone\n"
+    },
+    {
+      "id": "bound-custom-callable-document",
+      "stage": "O42",
+      "source": "class C: pass\nactive=False\nclass Getter:\n def __getattribute__(self,name):\n  if name==\"__doc__\":\n   if active:\n    print(\"lookup\")\n    return [7]\n   return None\n  return object.__getattribute__(self,name)\nm=classmethod(Getter()).__get__(None,C)\nactive=True\np=property(m)\nprint(p.__doc__[0],m.__doc__[0])\n",
+      "stdout": "lookup\nlookup\n7 7\n"
+    },
+    {
+      "id": "native-rebound-property-copy",
+      "stage": "O42",
+      "source": "def a(obj):\n \"a\"\ndef b(obj):\n \"b\"\np=property(a)\ncopy=property.getter.__get__(p,property)\nprint(copy(b).__doc__)\n",
+      "stdout": "b\n"
+    },
+    {
+      "id": "copy-recovers-inside-exception",
+      "stage": "O42",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  print(\"lookup\")\n  raise AttributeError(\"missing\")\ntry:\n raise ValueError(\"original\")\nexcept ValueError:\n p=property(Getter())\n print(p.__doc__)\n try: raise\n except ValueError as error: print(str(error))\n",
+      "stdout": "lookup\nNone\noriginal\n"
+    },
+    {
+      "id": "class-default-shadows-inherited-doc-descriptor",
+      "stage": "O41",
+      "source": "class Base:\n @property\n def __doc__(self):\n  print(\"unexpected\")\n  return \"base\"\nclass C(Base): pass\nprint(C.__doc__,C().__doc__)\n",
+      "stdout": "None None\n"
+    },
+    {
+      "id": "unqualified-copy-before-callback",
+      "stage": "Future",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  print(\"lookup\")\n  return \"doc\"\np=property(len)\nq=p.getter(Getter())\nprint(q.__doc__)\n",
+      "stdout": "lookup\ndoc\n"
+    },
+    {
+      "id": "descriptor-binding-copy-getter-doc-hook",
+      "stage": "O42",
+      "source": "class Read:\n def __getattribute__(self,name):\n  print(\"documentation\")\n  raise ValueError(\"doc\")\nproperty.getter(property(),Read())\n",
+      "stdout": "documentation\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "__getattribute__",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-binding-copy-bound-getter-doc-hook",
+      "stage": "O42",
+      "source": "class Read:\n def __getattribute__(self,name):\n  print(\"documentation\")\n  raise ValueError(\"doc\")\nproperty().getter(Read())\n",
+      "stdout": "documentation\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "__getattribute__",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-binding-copy-setter-getter-doc-hook",
+      "stage": "O42",
+      "source": "state=[]\nclass Read:\n def __getattribute__(self,name):\n  if name==\"__doc__\" and len(state):\n   print(\"documentation\")\n   raise ValueError(\"doc\")\n  raise AttributeError(name)\np=property(Read())\nstate.append(7)\np.setter(None)\n",
+      "stdout": "documentation\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 10
+        },
+        {
+          "function": "__getattribute__",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "descriptor-binding-copy-deleter-getter-doc-hook",
+      "stage": "O42",
+      "source": "state=[]\nclass Read:\n def __getattribute__(self,name):\n  if name==\"__doc__\" and len(state):\n   print(\"documentation\")\n   raise ValueError(\"doc\")\n  raise AttributeError(name)\np=property(Read())\nstate.append(7)\np.deleter(None)\n",
+      "stdout": "documentation\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 10
+        },
+        {
+          "function": "__getattribute__",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "descriptor-binding-copy-getter-metaclass-doc-hook",
+      "stage": "O42",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__doc__\":\n   print(\"documentation\")\n   raise ValueError(\"doc\")\n  return type.__getattribute__(cls,name)\nclass Read(metaclass=M): pass\nproperty.getter(property(),Read)\n",
+      "stdout": "documentation\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 8
+        },
+        {
+          "function": "__getattribute__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "descriptor-binding-copy-getter-method-doc-hook",
+      "stage": "O42",
+      "source": "state=[]\nclass Read:\n def __getattribute__(self,name):\n  if name==\"__doc__\" and len(state):\n   print(\"documentation\")\n   raise ValueError(\"doc\")\n  raise AttributeError(name)\n def __call__(self,*args): return 7\nm=classmethod(Read()).__get__(None,list)\nstate.append(7)\nproperty.getter(property(),m)\n",
+      "stdout": "documentation\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 11
+        },
+        {
+          "function": "__getattribute__",
+          "line": 6
+        }
+      ]
     }
   ]
 }

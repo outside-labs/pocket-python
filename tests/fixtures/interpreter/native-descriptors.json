@@ -586,8 +586,8 @@
     {
       "id": "future-property-documentation",
       "stage": "Future",
-      "source": "print(property().__doc__)\n",
-      "stdout": "None\n"
+      "source": "print(property(len).__doc__ is not None)\n",
+      "stdout": "True\n"
     }
   ]
 }
