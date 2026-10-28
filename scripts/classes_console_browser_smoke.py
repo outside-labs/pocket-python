@@ -406,7 +406,7 @@ def smoke(channel=None):
                     refused('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__weakref__")\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == ''
                     run('class M(type):\n print("body")\n def __getattribute__(cls,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n', 'body\n7\n')
-                    assert page.locator('#result').inner_text() == ''
+                    assert page.locator('#result').inner_text() == 'body\n7\n'
                     checks.append('instance-hook-errors-and-deferred-reflection-retain-offline-boundaries')
                     run(TYPE_CHECK_SOURCE, 'virtual True True\nactual False False True\nvalues 7 8 True\nnative method_descriptor builtin_function_or_method __instancecheck__\n')
                     checks.append('new-custom-checking-composes-with-descriptors-truth-generators-and-native-defaults-offline')
