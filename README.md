@@ -225,6 +225,12 @@ through ordinary owned execution. Run
 `python -m examples.interpreter_nested_descriptors` for a field validation console
 combining these hooks with native mutation defaults and generators.
 
+[Native descriptor operations](docs/interpreter-native-descriptors.md) expose
+explicit property get/set/delete and static/class method binding with retained
+receiver identities. Run `python -m examples.interpreter_native_descriptors`
+for a console combining validated fields, alternate construction and explicit
+method owners.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)

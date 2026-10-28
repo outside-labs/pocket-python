@@ -2051,6 +2051,136 @@
         "stdout": "first\nsecond\nA\n",
         "error_type": null
       }
+    },
+    {
+      "id": "native-descriptor-property-get-bound",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__get__(a)\nprint(r is a.saved,r[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "get\nTrue 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "get\nTrue 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-property-set-unbound",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nv=[9]\nr=property.__set__(p,a,v)\nprint(r is None,a.saved is v)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "set\nTrue True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "set\nTrue True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-property-delete-bound",
+      "source": "class A:\n def __init__(self): self.saved=[7]\n def read(self):\n  print(\"get\")\n  return self.saved\n def write(self,value):\n  print(\"set\")\n  self.saved=value\n  return [99]\n def remove(self):\n  print(\"delete\")\n  self.saved=[0]\n  return [99]\np=property(A.read,A.write,A.remove)\na=A()\nr=p.__delete__(a)\nprint(r is None,a.saved[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "delete\nTrue 0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "delete\nTrue 0\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-property-metadata",
+      "source": "p=property(lambda obj: obj)\nfor name in [\"__get__\",\"__set__\",\"__delete__\"]:\n u=getattr(property,name)\n b=getattr(p,name)\n print(type(u).__name__,u.__name__,u.__qualname__,u is getattr(property,name))\n print(type(b).__name__,b.__name__,b.__qualname__,b.__self__ is p,hasattr(b,\"__func__\"),b==getattr(p,name))\nprint(p.__class__ is property)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "wrapper_descriptor __get__ property.__get__ True\nmethod-wrapper __get__ property.__get__ True False True\nwrapper_descriptor __set__ property.__set__ True\nmethod-wrapper __set__ property.__set__ True False True\nwrapper_descriptor __delete__ property.__delete__ True\nmethod-wrapper __delete__ property.__delete__ True False True\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "wrapper_descriptor __get__ property.__get__ True\nmethod-wrapper __get__ property.__get__ True False True\nwrapper_descriptor __set__ property.__set__ True\nmethod-wrapper __set__ property.__set__ True False True\nwrapper_descriptor __delete__ property.__delete__ True\nmethod-wrapper __delete__ property.__delete__ True False True\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-property-native-binding-validates-receiver",
+      "source": "class A: read=property.__get__\ntry:\n m=A().read\n print(\"never\")\nexcept TypeError: print(\"wrong receiver\")\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "wrong receiver\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "wrong receiver\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-staticmethod-wrapped-descriptor-not-called",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"never\")\n  return 99\nd=D()\nw=staticmethod(d)\nr=w.__get__(None,7)\nprint(r is d)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-classmethod-inference-bypasses-advertised-class",
+      "source": "class A:\n @property\n def __class__(self):\n  print(\"never\")\n  return int\na=A()\nw=classmethod(lambda cls: cls)\nr=w.__get__(a)\nprint(r.__self__ is A,r() is A)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-classmethod-explicit-owner-identity",
+      "source": "owner=[7]\nf=lambda cls: cls\nr=classmethod(f).__get__(None,owner)\nprint(r.__self__ is owner,r() is owner)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-classmethod-native-callable-metadata",
+      "source": "owner=[7,8]\nm=classmethod(len).__get__(None,owner)\nprint(type(m).__name__,m.__class__ is type(m),m.__self__ is owner,m.__func__ is len,m.__name__,m.__qualname__)\nprint(m())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method True True True len len\n2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method True True True len len\n2\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-descriptor-classmethod-native-descriptor-equality",
+      "source": "p=property(lambda obj:obj)\nm=classmethod(property.__get__).__get__(None,p)\nn=p.__get__\nprint(type(m).__name__,type(n).__name__,m.__func__ is property.__get__,m==n,n==m,hash(m)==hash(n))\nd={m:7,n:9}\nprint(len(d),d[m],d[n],m([8])[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method method-wrapper True False False True\n2 7 9 8\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method method-wrapper True False False True\n2 7 9 8\n",
+        "error_type": null
+      }
     }
   ]
 }
