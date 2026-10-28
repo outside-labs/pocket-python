@@ -188,6 +188,13 @@ instance layouts,
 custom namespace preparation, broader reflection and async retain separate
 contracts.
 
+The finite [type-reflection profile](docs/interpreter-type-reflection.md) adds
+native descriptor declaring types, fresh C3 hierarchy lists and primary-base
+attributes. Run `python -m examples.interpreter_type_reflection` for a console
+composing hierarchy inspection, detached native methods and lazy iteration.
+Custom MRO construction, default directories and live namespace mappings remain
+separate contracts.
+
 The finite [ordering profile](docs/interpreter-ordering.md) adds rich ordering
 methods and bounded list/tuple/slice comparisons, including reflected priority,
 raw results and callback-visible mutation. Run

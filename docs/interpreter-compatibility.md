@@ -250,3 +250,11 @@ function and target without running their callbacks. Native callable metadata,
 receiver validation, parked ownership and lazy generators have pinned cases.
 Property documentation, live mappings, default directories, broader native
 rebinding and builtin layouts remain separate follow-ups under #123/#33.
+
+The finite [O35/O36 contract](interpreter-type-reflection.md) adds canonical
+native descriptor `__objclass__` metadata, bound/unbound `type.mro()` and
+read-only primary-base reflection. Returned C3 lists preserve actual types and
+are independent of the stored hierarchy. Receiver validation, native callable
+identity, metaclass reads and parked lifetimes have pinned source cases. Custom
+metaclass MRO construction and hooked native method qualification retain explicit
+refusals; live namespaces, default directories and broader layouts remain open.

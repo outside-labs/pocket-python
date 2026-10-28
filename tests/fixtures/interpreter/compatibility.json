@@ -2429,6 +2429,136 @@
         "stdout": "bound\nentered\n",
         "error_type": "ValueError"
       }
+    },
+    {
+      "id": "type-reflection-owner-copy-get",
+      "source": "def f(obj): return obj\nd=property.getter\nprint(d.__objclass__ is property,d.__objclass__ is d.__objclass__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "type-reflection-bound-owner-property-get",
+      "source": "def f(obj): return obj\nd=property.__get__\nm=d.__get__(property())\nprint(m.__objclass__ is property,m.__objclass__ is d.__objclass__,type(m).__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True method-wrapper\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True method-wrapper\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "type-reflection-owner-python-classmethod-wrapper-forwarded",
+      "source": "class C: p=classmethod(property.__get__)\nprint(type(C.p).__name__,C.p.__objclass__ is property)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "type-reflection-owner-direct-set-wrapper",
+      "source": "print(\"before\")\nproperty.__get__.__objclass__=int\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "type-reflection-mro-diamond-fresh-list",
+      "source": "class A: pass\nclass B(A): pass\nclass C(A): pass\nclass D(B,C): pass\na=D.mro()\nb=type.mro(D)\nprint(a==[D,B,C,A,object],a==b,a is b)\na.append(int)\nprint(D.mro()==b,list(D.__mro__)==b,D.__base__ is B)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True False\nTrue True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True False\nTrue True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "type-reflection-mro-native-metadata",
+      "source": "class C: pass\na=C.mro\nb=C.mro\nprint(type(type.mro).__name__,type(a).__name__,type.mro.__objclass__ is type)\nprint(a.__self__ is C,a.__name__,a.__qualname__,a==b,hash(a)==hash(b),a is b,hasattr(a,\"__func__\"),hasattr(a,\"__objclass__\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method_descriptor builtin_function_or_method True\nTrue mro C.mro True True False False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method_descriptor builtin_function_or_method True\nTrue mro C.mro True True False False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "type-reflection-mro-explicit-binding",
+      "source": "class C: pass\nf=type.mro.__get__(C,False)\nprint(f()==[C,object],type.mro.__get__(None,C) is type.mro)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "type-reflection-primary-base-metaclass-layout",
+      "source": "class A: pass\nclass M(A,type): pass\nclass N(type,A): pass\nclass K(type): pass\nclass P(A,K): pass\nprint(M.__base__ is type,N.__base__ is type,P.__base__ is K)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "type-reflection-mro-hooked-method-qualification",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M): pass\nprint(type.mro.__get__(C).__qualname__)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "__qualname__\nC.mro\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError"
+      }
+    },
+    {
+      "id": "type-reflection-custom-metaclass-mro-definition",
+      "source": "class M(type):\n print(\"body\")\n def mro(cls): return type.mro(cls)\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "body\nC\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError"
+      }
     }
   ]
 }

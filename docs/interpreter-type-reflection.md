@@ -61,9 +61,19 @@ Primary references: CPython v3.14.7
 and [type hierarchy implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
 The executable reference pins patch-level argument and lookup behavior.
 
-O35 is implemented over the adopted native descriptor allowlist. Its 43 source
+O35 is implemented over the adopted native descriptor allowlist. Its source
 cases pass Node drain, instruction-boundary and parked execution, with original
 receiver/cell ownership, actual memory/work interruption and zero teardown.
 O36 is implemented for the adopted immutable hierarchies, including ordinary
 metaclass reads and native descriptor rebinding. Custom metaclass MRO
 construction and hooked native method qualification retain explicit refusals.
+
+The complete 87-case matrix has 82 adopted comparisons and five explicit
+refusals. Node/Chromium drain, instruction-boundary and parked execution pass
+all 522 observations with zero logical teardown. Ten representative probes
+extend the compatibility inventory to 189 cases per target. Installed-wheel
+offline acceptance passes 1,362 program comparisons, 85 groups and 165
+Stop/Restart cycles, including original callback diagnostics, reload and a
+waiting core-profile update. The [hierarchy example](../examples/interpreter_type_reflection.py)
+and its [payload record](measurements/2026-10-28-type-reflection.json) verify all
+38 files at 675,436 bytes. These are finite semantic/source/payload observations.
