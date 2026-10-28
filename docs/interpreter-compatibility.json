@@ -241,7 +241,7 @@
     {
       "id": "class-construction",
       "status": "partial",
-      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction.",
+      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
       "gaps": "Builtin instance layouts, custom namespace preparation, further metaclass special slots, callable factories and expanded class bases/keyword mappings remain separate.",
       "reference_version": "3.14.7",
       "targets": [
@@ -257,7 +257,13 @@
         "metaclass",
         "subclass-keywords",
         "subclass-notification-order",
-        "native-subclass-method"
+        "native-subclass-method",
+        "metaclass-attributes-read-hook-error-fallback",
+        "metaclass-attributes-read-data-descriptor-priority",
+        "metaclass-attributes-read-bound-native-metaclass",
+        "metaclass-attributes-advertised-class-real-first",
+        "metaclass-attributes-write-data-descriptor",
+        "metaclass-attributes-write-late-write-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:new-subclass-init",
@@ -267,7 +273,9 @@
         "tests/fixtures/interpreter/subclass-initialization.json:cooperative-diamond",
         "tests/fixtures/interpreter/subclass-initialization.json:cell-and-notification-order",
         "tests/fixtures/interpreter/subclass-initialization.json:metaclass-keyword-forwarding",
-        "tests/fixtures/interpreter/subclass-initialization.json:descriptor-keywords"
+        "tests/fixtures/interpreter/subclass-initialization.json:descriptor-keywords",
+        "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
       ]
     },
     {
@@ -441,8 +449,8 @@
     {
       "id": "further-object-protocols",
       "status": "partial",
-      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary list/tuple/text repetition preserves shallow aliases, Unicode code points and owned index fallback after arithmetic candidates.",
-      "gaps": "Builtin instance layouts, further metaclass construction/attribute/ordering protocols, live namespace mappings and default directories and dynamic source admission remain separate contracts.",
+      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary list/tuple/text repetition preserves shallow aliases, Unicode code points and owned index fallback after arithmetic candidates. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
+      "gaps": "Builtin instance layouts, further metaclass construction/ordering protocols, live namespace mappings and default directories and dynamic source admission remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -457,7 +465,13 @@
         "rich-ordering-and-slices",
         "sequence-repetition-aliases",
         "sequence-repetition-index",
-        "sequence-repetition-overflow"
+        "sequence-repetition-overflow",
+        "metaclass-attributes-read-hook-error-fallback",
+        "metaclass-attributes-read-data-descriptor-priority",
+        "metaclass-attributes-read-bound-native-metaclass",
+        "metaclass-attributes-advertised-class-real-first",
+        "metaclass-attributes-write-data-descriptor",
+        "metaclass-attributes-write-late-write-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:subclass-priority",
@@ -469,7 +483,9 @@
         "tests/fixtures/interpreter/reflection.json:comprehension-class-private",
         "tests/fixtures/interpreter/repetition.json:list-shallow",
         "tests/fixtures/interpreter/repetition.json:text-codepoints",
-        "tests/fixtures/interpreter/repetition.json:index-list-mutation-122"
+        "tests/fixtures/interpreter/repetition.json:index-list-mutation-122",
+        "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
       ]
     },
     {
@@ -629,7 +645,7 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order.",
+      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
       "gaps": "Live namespace mappings, default directories, integer identity, dynamic source and broader metaclass/layout reflection remain deferred.",
       "reference_version": "3.14.7",
       "targets": [
@@ -646,7 +662,8 @@
         "builtin-getattr",
         "builtin-genexpr-snapshot",
         "builtin-dir-length-hint",
-        "builtin-dir-rich-ordering"
+        "builtin-dir-rich-ordering",
+        "metaclass-attributes-read-hook-error-fallback"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:identity-alias",
@@ -655,7 +672,9 @@
         "tests/fixtures/interpreter/reflection.json:dir-length-hint-fallback",
         "tests/fixtures/interpreter/reflection.json:dir-entry-stability",
         "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
-        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private",
+        "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
       ]
     },
     {
@@ -1117,7 +1136,7 @@
     {
       "id": "delattr",
       "status": "partial",
-      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression.",
+      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
       "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1128,10 +1147,13 @@
         "INT-OBJECT-01"
       ],
       "probes": [
-        "builtin-delattr"
+        "builtin-delattr",
+        "metaclass-attributes-write-data-descriptor"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults"
+        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
+        "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
       ]
     },
     {
@@ -1337,7 +1359,7 @@
     {
       "id": "getattr",
       "status": "partial",
-      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression.",
+      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
       "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1348,10 +1370,13 @@
         "INT-OBJECT-01"
       ],
       "probes": [
-        "builtin-getattr"
+        "builtin-getattr",
+        "metaclass-attributes-read-hook-error-fallback"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults"
+        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
+        "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
       ]
     },
     {
@@ -1375,7 +1400,7 @@
     {
       "id": "hasattr",
       "status": "partial",
-      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression.",
+      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
       "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1386,10 +1411,13 @@
         "INT-OBJECT-01"
       ],
       "probes": [
-        "builtin-hasattr"
+        "builtin-hasattr",
+        "metaclass-attributes-read-hook-error-fallback"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults"
+        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
+        "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
       ]
     },
     {
@@ -1960,7 +1988,7 @@
     {
       "id": "setattr",
       "status": "partial",
-      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression.",
+      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
       "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1971,10 +1999,13 @@
         "INT-OBJECT-01"
       ],
       "probes": [
-        "builtin-setattr"
+        "builtin-setattr",
+        "metaclass-attributes-write-data-descriptor"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults"
+        "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
+        "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
       ]
     },
     {
@@ -2117,7 +2148,7 @@
     {
       "id": "type",
       "status": "partial",
-      "scope": "Canonical type identities for adopted values and three-argument type construction with tuple bases and a bounded string-key dictionary namespace; finite type.__new__/__init__/__call__ and metaclass selection.",
+      "scope": "Canonical type identities for adopted values and three-argument type construction with tuple bases and a bounded string-key dictionary namespace; finite type.__new__/__init__/__call__ and metaclass selection. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
       "gaps": "Custom namespace mappings, callable factories, builtin instance subclasses and further metaclass special slots remain gated.",
       "reference_version": "3.14.7",
       "targets": [
@@ -2128,12 +2159,15 @@
         "INT-OBJECT-01"
       ],
       "probes": [
-        "builtin-type"
+        "builtin-type",
+        "metaclass-attributes-write-data-descriptor"
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:type-primitives",
         "tests/fixtures/interpreter/construction.json:dynamic-type",
-        "tests/fixtures/interpreter/construction.json:metaclass-new-init"
+        "tests/fixtures/interpreter/construction.json:metaclass-new-init",
+        "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
       ]
     },
     {

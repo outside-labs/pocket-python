@@ -275,3 +275,14 @@ directories, builtin instance layouts, further metaclass protocols and dynamic
 source admission retain their finite boundaries. Native coroutine/await, async
 protocols, awaited host adapters and durable view/save acceptance remain under
 #34. No host grant, dependency, publication or deployment accompanies this work.
+
+## Metaclass attribute checkpoint
+
+[O25/O26](interpreter-metaclass-attributes.md) extend #123 with owned actual-metaclass
+read/mutation hooks and native type defaults. Descriptor binding, original fallback
+snapshots, metadata priority, late hook mutation and native callable identities
+compose with subclass registration, generators and offline Stop/Restart. Live
+namespace mappings, default directories, builtin layouts, further construction and
+descriptor protocols and dynamic source remain open. Native coroutine/await,
+async protocols, awaited host adapters and durable view/save acceptance remain
+under #34. No dependency, host grant, publication or deployment is included.

@@ -31,6 +31,7 @@ from examples.interpreter_ordering import SOURCE as ORDERING_SOURCE
 from examples.interpreter_reflection import SOURCE as REFLECTION_SOURCE
 from examples.interpreter_repetition import SOURCE as REPETITION_SOURCE
 from examples.interpreter_subclass_initialization import SOURCE as SUBCLASS_SOURCE
+from examples.interpreter_metaclass_attributes import SOURCE as METACLASS_SOURCE
 
 
 def smoke(channel=None):
@@ -175,7 +176,8 @@ def smoke(channel=None):
                     reflection = json.loads((ROOT / 'tests/fixtures/interpreter/reflection.json').read_bytes())
                     repetition = json.loads((ROOT / 'tests/fixtures/interpreter/repetition.json').read_bytes())
                     subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/subclass-initialization.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses]:
+                    metaclasses = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-attributes.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -185,6 +187,7 @@ def smoke(channel=None):
                     programs.append(ORDERING_SOURCE)
                     programs.append(REFLECTION_SOURCE)
                     programs.append(REPETITION_SOURCE)
+                    programs.append(METACLASS_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -470,6 +473,14 @@ def smoke(channel=None):
                             refused(case['source'], case['error_type'] + ':')
                     checks.append('class-registration-notifications-keywords-metaclasses-and-generators-compose-offline')
                     checks.append('subclass-binding-errors-native-methods-and-deferred-class-forms-retain-offline-boundaries')
+                    run(METACLASS_SOURCE, 'schema Note note-draft 2 True\naudit 4 set:kind delete:temporary False\nversions 2 3\nnative 3 True method-wrapper\n')
+                    for case in metaclasses['cases']:
+                        if case['stage'] not in metaclasses['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                    checks.append('metaclass-reads-fallbacks-audited-mutations-and-native-methods-compose-offline')
+                    checks.append('metaclass-binding-errors-and-deferred-namespaces-remain-explicit-offline')
                     busy = [
                         'class A:\n def __init_subclass__(cls,*,x):\n  print("entered")\n  while True: pass\nclass B(A,x=[7]): pass\n',
                         'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass A: __init_subclass__=D()\nclass B(A,x=[7]): pass\n',
@@ -482,6 +493,7 @@ def smoke(channel=None):
                         'class Spin:\n @property\n def __repr__(self):\n  print("entered")\n  while True: pass\nrepr(Spin())\n',
                         'class Spin:\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n',
                         'class Spin:\n @property\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n']
+                    busy.extend(['class M(type):\n def __getattribute__(cls,name):\n  print("entered")\n  while True: pass\nclass A(metaclass=M): pass\nA.x\n', 'class M(type):\n def __getattr__(cls,name):\n  print("entered")\n  while True: pass\nclass A(metaclass=M): pass\ngetattr(A,"x",[7])\n', 'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass M(type): __getattribute__=D()\nclass A(metaclass=M): pass\nA.x\n', 'class M(type):\n def __setattr__(cls,name,value):\n  print("entered")\n  while True: pass\nclass A(metaclass=M): pass\nA.x=[7]\n', 'class M(type):\n def __delattr__(cls,name):\n  print("entered")\n  while True: pass\nclass A(metaclass=M): x=[7]\ndel A.x\n', 'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass M(type): __setattr__=D()\nclass A(metaclass=M): pass\nA.x=[7]\n'])
                     busy.extend([
                         'def marker():\n print("entered")\n while True: pass\ndef f(p):\n return [(locals(),marker()) for x in [p]]\nf([7])\n',
                         'def marker():\n print("entered")\n while True: pass\nclass A:\n snapshots=[(vars(),marker()) for x in [[7]]]\n',
@@ -685,6 +697,9 @@ def smoke(channel=None):
                     refused('print("never")\nclass A:\n def __lt__(self,other): return True\nA()<7\n', 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     checks.append('primitive-ordering-retained-and-user-ordering-refused-after-core-profile-update')
+                    refused(METACLASS_SOURCE, 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    checks.append('class-to-core-update-refuses-metaclass-source-before-effects')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

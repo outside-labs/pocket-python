@@ -1,5 +1,9 @@
 # Custom instance and subclass checking
 
+The later [O25/O26 metaclass attribute contract](interpreter-metaclass-attributes.md)
+supersedes the earlier metaclass read/mutation refusals below. Live namespace,
+layout and further construction protocols retain their separate boundaries.
+
 The finite #123 slices adopt custom type checking against CPython 3.14.7.
 The `type-checks.json` source corpus is executable reference evidence; stages
 become implemented only after independent execution and ownership checks pass.
