@@ -49,6 +49,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     env:
+      UV_PYTHON: '3.14.7'
       POCKET_PYTHON_RUNTIME: ${{ github.workspace }}/build/runtime
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
