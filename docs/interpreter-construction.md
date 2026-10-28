@@ -1,5 +1,9 @@
 # Construction, super and type relations
 
+The later [O25/O26 metaclass attribute contract](interpreter-metaclass-attributes.md)
+supersedes the earlier metaclass read/mutation refusals below. Live namespace,
+layout and further construction protocols retain their separate boundaries.
+
 INT-OBJECT-01 adopts the following finite construction slices against CPython
 3.14.7. `construction.json` records independent source/reference expectations;
 an authored reference is not evidence that the independent engine implements it.

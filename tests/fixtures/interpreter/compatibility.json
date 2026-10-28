@@ -1895,6 +1895,84 @@
         "stdout": "True True builtin_function_or_method False\n",
         "error_type": null
       }
+    },
+    {
+      "id": "metaclass-attributes-read-hook-error-fallback",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  raise AttributeError(\"missing\")\n def __getattr__(cls,name):\n  print(\"fallback\",name)\n  return 9\nclass A(metaclass=M): pass\nprint(A.x)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "read x\nfallback x\n9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "read x\nfallback x\n9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "metaclass-attributes-read-data-descriptor-priority",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"get\",type.__getattribute__(obj,\"__name__\"),owner.__name__)\n  return 7\n def __set__(self,obj,value): pass\nclass M(type): x=D()\nclass A(metaclass=M): x=9\nprint(type.__getattribute__(A,\"x\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "get A M\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "get A M\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "metaclass-attributes-read-bound-native-metaclass",
+      "source": "class M(type):\n def read(cls): return super().__getattribute__\nclass A(metaclass=M): x=7\nf=A.read()\nprint(type(f).__name__,f.__name__,f.__qualname__,f.__self__ is A,hasattr(f,\"__func__\"),f(\"x\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method-wrapper __getattribute__ type.__getattribute__ True False 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method-wrapper __getattribute__ type.__getattribute__ True False 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "metaclass-attributes-advertised-class-real-first",
+      "source": "class N(type): pass\nclass M(type):\n def __getattribute__(cls,name):\n  print(\"read\",name)\n  if name==\"__class__\": return N\n  return type.__getattribute__(cls,name)\nclass A(metaclass=M): pass\nprint(isinstance(A,M),isinstance(A,N),type(A) is M,A.__class__ is N)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "read __class__\nread __class__\nTrue True True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "read __class__\nread __class__\nTrue True True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "metaclass-attributes-write-data-descriptor",
+      "source": "class M(type):\n @property\n def x(cls): return 7\n @x.setter\n def x(cls,value): print(\"set\",value[0])\n @x.deleter\n def x(cls): print(\"delete\")\n def __setattr__(cls,name,value): return super().__setattr__(name,value)\n def __delattr__(cls,name): return super().__delattr__(name)\nclass A(metaclass=M): x=9\nA.x=[8]\ndel A.x\nprint(A.x)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "set 8\ndelete\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "set 8\ndelete\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "metaclass-attributes-write-late-write-hook",
+      "source": "class M(type): pass\nclass A(metaclass=M): pass\nM.__setattr__=lambda cls,name,value: print(name,value)\nA.x=7\ndel M.__setattr__\nA.x=9\nprint(A.x)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "x 7\n9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "x 7\n9\n",
+        "error_type": null
+      }
     }
   ]
 }

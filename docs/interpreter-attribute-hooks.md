@@ -1,5 +1,9 @@
 # Instance attribute hooks and advertised classes
 
+The later [O25/O26 metaclass attribute contract](interpreter-metaclass-attributes.md)
+supersedes the earlier metaclass read/mutation refusals below. Live namespace,
+layout and further construction protocols retain their separate boundaries.
+
 The next finite #123 slices use CPython 3.14.7 as their executable reference.
 `attribute-hooks.json` records 92 source cases. Reference expectations do not
 establish implementation; each stage is enabled only with independent execution
