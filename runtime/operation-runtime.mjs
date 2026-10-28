@@ -751,7 +751,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const plan = classes.notification(value, type, nameValue);
       if (!plan) continue;
       return callTask(plan.callable, plan.args, [], [], site,
-        continuation("notify", {type, entries, index, keywords, keywordValues, after}));
+        plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], depth: 0,
+          after: continuation("notify", {type, entries, index, keywords, keywordValues, after})}) :
+          continuation("notify", {type, entries, index, keywords, keywordValues, after}));
     }
     const plan = classes.subclassNotification(type, keywords.length > 0);
     if (plan) {
