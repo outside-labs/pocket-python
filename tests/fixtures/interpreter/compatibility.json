@@ -1973,6 +1973,84 @@
         "stdout": "x 7\n9\n",
         "error_type": null
       }
+    },
+    {
+      "id": "nested-descriptor-set-property",
+      "source": "def callback(obj,value):\n print(\"body\")\n obj.saved=value\n return [99]\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return callback\nclass D:\n def bind(self):\n  print(\"bind\",type(self).__name__)\n  return callback\n __set__=property(bind)\nclass A:\n x=D()\na=A()\na.x=[7]\nprint(a.saved[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "bind D\nbody\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "bind D\nbody\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "nested-descriptor-delete-descriptor",
+      "source": "def callback(obj):\n print(\"body\")\n obj.saved=[0]\n return [99]\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return callback\nclass D:\n __delete__=Hook()\nclass A:\n x=D()\na=A()\ndel a.x\nprint(a.saved[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "bind D D\nbody\n0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "bind D D\nbody\n0\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "nested-descriptor-set-native-default-and-builtins-ignore-result",
+      "source": "def write(obj,value):\n obj.saved=value\n return 99\ndef erase(obj):\n obj.saved=0\n return 99\nclass D:\n __set__=property(lambda self: write)\n __delete__=property(lambda self: erase)\nclass A: x=D()\na=A()\nprint(setattr(a,\"x\",7),a.saved)\nprint(delattr(a,\"x\"),a.saved)\nprint(object.__setattr__(a,\"x\",8),a.saved)\nprint(object.__delattr__(a,\"x\"),a.saved)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "None 7\nNone 0\nNone 8\nNone 0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "None 7\nNone 0\nNone 8\nNone 0\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "nested-descriptor-name-property",
+      "source": "def notify(owner,name):\n print(\"body\",owner.__name__,name)\n return 99\nclass Hook:\n def __get__(self,obj,owner):\n  print(\"bind\",type(obj).__name__,owner.__name__)\n  return notify\nclass D:\n @property\n def __set_name__(self):\n  print(\"bind\",type(self).__name__)\n  return notify\nclass A:\n x=D()\nprint(A.__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "bind D\nbody A x\nA\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "bind D\nbody A x\nA\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "nested-descriptor-name-binding-AttributeError",
+      "source": "class D:\n @property\n def __set_name__(self):\n  print(\"bind\")\n  raise AttributeError(\"binding\")\nclass A:\n x=D()\nprint(A.__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "bind\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "bind\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "nested-descriptor-name-snapshot-keeps-removed-entries",
+      "source": "def notify(owner,name):\n print(name)\n if name==\"first\": del owner.second\nclass D: __set_name__=property(lambda self: notify)\nclass A:\n first=D()\n second=D()\nprint(A.__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "first\nsecond\nA\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "first\nsecond\nA\n",
+        "error_type": null
+      }
     }
   ]
 }

@@ -219,6 +219,12 @@ class keywords through type/metaclass construction. Run
 `python -m examples.interpreter_subclass_initialization` for a class registration
 console combining these protocols with suspended iteration.
 
+[Nested descriptor hooks](docs/interpreter-nested-descriptors.md) bind
+property/custom-descriptor-valued setters, deleters and name notifications
+through ordinary owned execution. Run
+`python -m examples.interpreter_nested_descriptors` for a field validation console
+combining these hooks with native mutation defaults and generators.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)

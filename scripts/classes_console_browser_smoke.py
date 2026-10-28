@@ -32,6 +32,7 @@ from examples.interpreter_reflection import SOURCE as REFLECTION_SOURCE
 from examples.interpreter_repetition import SOURCE as REPETITION_SOURCE
 from examples.interpreter_subclass_initialization import SOURCE as SUBCLASS_SOURCE
 from examples.interpreter_metaclass_attributes import SOURCE as METACLASS_SOURCE
+from examples.interpreter_nested_descriptors import SOURCE as NESTED_DESCRIPTOR_SOURCE
 
 
 def smoke(channel=None):
@@ -177,7 +178,8 @@ def smoke(channel=None):
                     repetition = json.loads((ROOT / 'tests/fixtures/interpreter/repetition.json').read_bytes())
                     subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/subclass-initialization.json').read_bytes())
                     metaclasses = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-attributes.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses]:
+                    nested_descriptors = json.loads((ROOT / 'tests/fixtures/interpreter/nested-descriptors.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -188,6 +190,7 @@ def smoke(channel=None):
                     programs.append(REFLECTION_SOURCE)
                     programs.append(REPETITION_SOURCE)
                     programs.append(METACLASS_SOURCE)
+                    programs.append(NESTED_DESCRIPTOR_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -481,7 +484,21 @@ def smoke(channel=None):
                             refused(case['source'], case['error_type'] + ':')
                     checks.append('metaclass-reads-fallbacks-audited-mutations-and-native-methods-compose-offline')
                     checks.append('metaclass-binding-errors-and-deferred-namespaces-remain-explicit-offline')
+                    run(NESTED_DESCRIPTOR_SOURCE, 'field score 7 name:score\npreserved 7\nnative None 7 9\nremoved 0 4 delete:score\n')
+                    for case in nested_descriptors['cases']:
+                        if case['stage'] not in nested_descriptors['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                    checks.append('bound-field-mutation-name-notification-and-validation-compose-offline')
+                    checks.append('nested-hook-binding-errors-and-live-namespace-boundaries-remain-explicit-offline')
                     busy = [
+                        'class D:\n @property\n def __set_name__(self):\n  print("entered")\n  while True: pass\nclass A: x=D()\n',
+                        'def notify(owner,name):\n print("entered")\n while True: pass\nclass D: __set_name__=property(lambda self: notify)\nclass A: x=D()\n',
+                        'class D:\n @property\n def __set__(self):\n  print("entered")\n  while True: pass\nclass A: x=D()\nA().x=[7]\n',
+                        'def write(obj,value):\n print("entered")\n while True: pass\nclass D: __set__=property(lambda self: write)\nclass A: x=D()\nA().x=[7]\n',
+                        'class D:\n @property\n def __delete__(self):\n  print("entered")\n  while True: pass\nclass A: x=D()\ndel A().x\n',
+                        'def remove(obj):\n print("entered")\n while True: pass\nclass D: __delete__=property(lambda self: remove)\nclass A: x=D()\ndel A().x\n',
                         'class A:\n def __init_subclass__(cls,*,x):\n  print("entered")\n  while True: pass\nclass B(A,x=[7]): pass\n',
                         'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass A: __init_subclass__=D()\nclass B(A,x=[7]): pass\n',
                         'class Spin:\n def __call__(self):\n  while True: pass\nSpin()()\n',
@@ -700,6 +717,9 @@ def smoke(channel=None):
                     refused(METACLASS_SOURCE, 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     checks.append('class-to-core-update-refuses-metaclass-source-before-effects')
+                    refused(NESTED_DESCRIPTOR_SOURCE, 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    checks.append('class-to-core-update-refuses-nested-field-hooks-before-effects')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')

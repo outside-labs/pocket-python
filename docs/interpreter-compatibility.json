@@ -299,8 +299,8 @@
     {
       "id": "descriptors-decorators",
       "status": "partial",
-      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1.",
-      "gaps": "Descriptor-valued setter/deleter/name-notification hooks and unrestricted reflection remain refused.",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots.",
+      "gaps": "Further property/builtin-descriptor reflection and live namespaces retain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -309,11 +309,24 @@
       "next_tasks": [
         "INT-OBJECT-01"
       ],
-      "probes": [],
+      "probes": [
+        "nested-descriptor-set-property",
+        "nested-descriptor-delete-descriptor",
+        "nested-descriptor-set-native-default-and-builtins-ignore-result",
+        "nested-descriptor-name-property",
+        "nested-descriptor-name-binding-AttributeError",
+        "nested-descriptor-name-snapshot-keeps-removed-entries"
+      ],
       "evidence": [
         "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
         "tests/fixtures/interpreter/descriptors.json:decorator-expression-and-application-order",
-        "tests/fixtures/interpreter/descriptors.json:descriptor-valued-setter-hook"
+        "tests/fixtures/interpreter/descriptors.json:descriptor-valued-setter-hook",
+        "tests/fixtures/interpreter/nested-descriptors.json:set-property",
+        "tests/fixtures/interpreter/nested-descriptors.json:delete-descriptor",
+        "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result",
+        "tests/fixtures/interpreter/nested-descriptors.json:name-property",
+        "tests/fixtures/interpreter/nested-descriptors.json:name-binding-AttributeError",
+        "tests/fixtures/interpreter/nested-descriptors.json:name-snapshot-keeps-removed-entries"
       ]
     },
     {
@@ -449,7 +462,7 @@
     {
       "id": "further-object-protocols",
       "status": "partial",
-      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary list/tuple/text repetition preserves shallow aliases, Unicode code points and owned index fallback after arithmetic candidates. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
+      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary list/tuple/text repetition preserves shallow aliases, Unicode code points and owned index fallback after arithmetic candidates. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots.",
       "gaps": "Builtin instance layouts, further metaclass construction/ordering protocols, live namespace mappings and default directories and dynamic source admission remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -471,7 +484,13 @@
         "metaclass-attributes-read-bound-native-metaclass",
         "metaclass-attributes-advertised-class-real-first",
         "metaclass-attributes-write-data-descriptor",
-        "metaclass-attributes-write-late-write-hook"
+        "metaclass-attributes-write-late-write-hook",
+        "nested-descriptor-set-property",
+        "nested-descriptor-delete-descriptor",
+        "nested-descriptor-set-native-default-and-builtins-ignore-result",
+        "nested-descriptor-name-property",
+        "nested-descriptor-name-binding-AttributeError",
+        "nested-descriptor-name-snapshot-keeps-removed-entries"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:subclass-priority",
@@ -485,7 +504,13 @@
         "tests/fixtures/interpreter/repetition.json:text-codepoints",
         "tests/fixtures/interpreter/repetition.json:index-list-mutation-122",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
-        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
+        "tests/fixtures/interpreter/nested-descriptors.json:set-property",
+        "tests/fixtures/interpreter/nested-descriptors.json:delete-descriptor",
+        "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result",
+        "tests/fixtures/interpreter/nested-descriptors.json:name-property",
+        "tests/fixtures/interpreter/nested-descriptors.json:name-binding-AttributeError",
+        "tests/fixtures/interpreter/nested-descriptors.json:name-snapshot-keeps-removed-entries"
       ]
     },
     {
@@ -1136,8 +1161,8 @@
     {
       "id": "delattr",
       "status": "partial",
-      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
-      "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
+      "scope": "Positional reflection on adopted class/instance attributes and owned instance/metaclass hooks, including property/custom-descriptor-valued delete hooks. Native object/type mutation defaults preserve original arguments, failures and ignored results.",
+      "gaps": "Live namespaces, default directories, layout mutation and further metaclass protocols remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1153,7 +1178,9 @@
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
-        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
+        "tests/fixtures/interpreter/nested-descriptors.json:delete-descriptor",
+        "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result"
       ]
     },
     {
@@ -1877,7 +1904,7 @@
     {
       "id": "property",
       "status": "partial",
-      "scope": "property(fget=None,fset=None,fdel=None,doc=None) and accessor decorators; classes-source/1.",
+      "scope": "property(fget=None,fset=None,fdel=None,doc=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1.",
       "gaps": "General property reflection and arbitrary doc behavior.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1890,7 +1917,11 @@
       "probes": [
         "builtin-property"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/nested-descriptors.json:set-property",
+        "tests/fixtures/interpreter/nested-descriptors.json:delete-property",
+        "tests/fixtures/interpreter/nested-descriptors.json:name-property"
+      ]
     },
     {
       "id": "range",
@@ -1988,8 +2019,8 @@
     {
       "id": "setattr",
       "status": "partial",
-      "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
-      "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
+      "scope": "Positional reflection on adopted class/instance attributes and owned instance/metaclass hooks, including property/custom-descriptor-valued setter hooks. Native object/type mutation defaults preserve original arguments, failures and ignored results.",
+      "gaps": "Live namespaces, default directories, layout mutation and further metaclass protocols remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2005,7 +2036,9 @@
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:attribute-defaults",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
-        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
+        "tests/fixtures/interpreter/nested-descriptors.json:set-property",
+        "tests/fixtures/interpreter/nested-descriptors.json:set-native-default-and-builtins-ignore-result"
       ]
     },
     {
