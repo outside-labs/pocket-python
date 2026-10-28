@@ -25,11 +25,14 @@ SUITES = {
     'browser-conformance': ('browser-conformance',),
     'browser-integration': ('browser-integration',),
     'measurements': ('measurements',),
+    'smoke': ('smoke',),
     'focused': ('node-unit', 'node-conformance'),
     'interpreter': ('node-unit', 'node-conformance'),
     'browser': ('browser-conformance', 'browser-integration'),
+    'pr': ('python', 'prepare-browser', 'node-unit', 'node-conformance',
+           'browser-conformance', 'browser-integration'),
     'full': ('python', 'prepare-browser', 'node-unit', 'node-conformance',
-             'reference', 'browser-conformance', 'browser-integration', 'measurements'),
+             'reference', 'browser-conformance', 'browser-integration', 'measurements', 'smoke'),
 }
 
 CORPORA = (
@@ -136,4 +139,7 @@ def checks():
     add('application-measurements', 'measurements', 'python', 'scripts/measure_applications.py',
         '--compiler-report', 'build/compiler-reference/docs/measurements/2026-10-20-compiler.json',
         '--repeats', '3', '--output', 'build/application-measurements', seconds=30)
+    add('smoke-build-wheel', 'smoke', 'uv', 'build', '--wheel')
+    add('smoke-installed-cli', 'smoke', 'python', 'scripts/smoke_install.py')
+    add('smoke-interpreter-startup', 'smoke', 'node', 'scripts/startup_smoke.mjs')
     return result

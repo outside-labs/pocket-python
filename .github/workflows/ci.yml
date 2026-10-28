@@ -3,17 +3,45 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
+  schedule:
+    - cron: '23 10 * * *'
+  workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  smoke:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.19.0'
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.19"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run --no-sync python scripts/run_tests.py smoke
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: main-smoke
+          path: build/test-results/
+          if-no-files-found: error
+
   test:
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +66,7 @@ jobs:
           if-no-files-found: error
 
   interpreter:
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     strategy:
       fail-fast: false
       matrix:
@@ -67,6 +96,7 @@ jobs:
           if-no-files-found: error
 
   browser:
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     strategy:
       fail-fast: false
       matrix:
@@ -106,6 +136,7 @@ jobs:
           if-no-files-found: error
 
   measurements:
+    if: github.event_name != 'pull_request' && (github.event_name != 'push' || github.ref != 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -128,7 +159,7 @@ jobs:
           ref: 804a70fa37ef4ca126519c7222d1862966a63d0c
           path: build/compiler-reference
           persist-credentials: false
-      - run: uv run --no-sync python scripts/run_tests.py reference measurements
+      - run: uv run --no-sync python scripts/run_tests.py reference measurements smoke
       - uses: actions/upload-artifact@v5
         if: always()
         with:

@@ -42,10 +42,19 @@ class TestRunnerTests(unittest.TestCase):
         self.assertEqual(run_tests.select_checks(['full', 'focused']), run_tests.select_checks(['full']))
 
     def test_packaging_order_survives_unsharded_selection(self):
-        selected = run_tests.select_checks(['python'])
-        self.assertEqual(run_tests.shards(selected, 1), [selected])
-        with self.assertRaisesRegex(ValueError, 'without sharding'):
-            run_tests.shards(selected, 2)
+        for suite in ('python', 'smoke'):
+            selected = run_tests.select_checks([suite])
+            self.assertEqual(run_tests.shards(selected, 1), [selected])
+            with self.assertRaisesRegex(ValueError, 'without sharding'):
+                run_tests.shards(selected, 2)
+
+    def test_pr_retains_regressions_while_full_adds_reference_and_measurements(self):
+        pr = run_tests.select_checks(['pr'])
+        exhaustive = run_tests.select_checks(['full'])
+        self.assertTrue({check.id for check in pr} < {check.id for check in exhaustive})
+        self.assertFalse({'reference', 'measurements'} & {check.suite for check in pr})
+        self.assertTrue({'node-unit', 'node-conformance', 'browser-conformance',
+                         'browser-integration', 'python'} <= {check.suite for check in pr})
 
     def test_failure_is_reported_and_does_not_hide_later_results(self):
         selected = [Check('fails', 'unit', ('python', '-c', 'print("failure detail"); raise SystemExit(3)')),

@@ -91,24 +91,20 @@ time and memory are separate quantities.
 
 ```sh
 uv sync --locked --group browser-tests --group compiled-build
-uv run python scripts/prepare_runtime.py
-POCKET_PYTHON_RUNTIME=build/runtime uv run python -m unittest discover -s tests -v
-uv run python -m playwright install chromium
-uv run --group browser-tests python scripts/browser_smoke.py
-uv build
-uv run python scripts/check_distributions.py
+UV_PYTHON=3.14.7 uv run --no-sync python scripts/run_tests.py focused --feature native-descriptors
+uv run --no-sync python scripts/run_tests.py python
 ```
 
-On PowerShell set `$env:POCKET_PYTHON_RUNTIME = "build/runtime"` before tests.
-Without an explicit runtime fixture path, the real-WASM test is skipped.
-Use `--channel chrome` with the browser script to test an installed Chrome.
+On PowerShell set `$env:UV_PYTHON = "3.14.7"` for interpreter differential checks.
+The `python` suite supplies the real-WASM fixture path automatically.
 Playwright is a pinned build-only group; it is not a package runtime dependency.
 See [validation suites](docs/testing.md) for the shared local/CI runner and focused
 feature checks.
 
-CI runs real-runtime tests on Linux, macOS and Windows and offline Chromium
-tests on Linux. Distribution checks verify allowlists, metadata, source parity
-and both installed wheel/source artifacts outside the checkout.
+PRs run parallel Node/Chromium regression coverage and Linux/macOS/Windows
+packaging checks. Main pushes run a short installed-wheel and interpreter-startup
+smoke. Exhaustive validation, including measurements and standalone reference
+runs, runs nightly, on manual dispatch and for release tags/publication validation.
 
 ## Compatibility and roadmap
 
