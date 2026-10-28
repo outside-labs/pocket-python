@@ -299,8 +299,8 @@
     {
       "id": "descriptors-decorators",
       "status": "partial",
-      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation.",
-      "gaps": "Further property documentation/name/dictionary reflection, native descriptor rebinding APIs, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute.",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes.",
+      "gaps": "Further property documentation/name/dictionary reflection, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -335,7 +335,16 @@
         "descriptor-binding-function-binding-generator-is-lazy",
         "descriptor-binding-function-binding-original-frames",
         "descriptor-binding-future-copy-getter-doc-hook",
-        "descriptor-binding-copy-setter-read-hooks-remain-unobserved"
+        "descriptor-binding-copy-setter-read-hooks-remain-unobserved",
+        "native-rebinding-method-getter-unbound-copy",
+        "native-rebinding-method-__instancecheck__-actual-metaclass",
+        "native-rebinding-method-metadata",
+        "native-rebinding-method-advertised-layout-ignored",
+        "native-rebinding-wrapper-property-get-bind-call",
+        "native-rebinding-wrapper-function-get-bind-call",
+        "native-rebinding-wrapper-type-read-actual-metaclass",
+        "native-rebinding-wrapper-recursive-binding-wrappers",
+        "native-rebinding-wrapper-type-callback-frames"
       ],
       "evidence": [
         "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
@@ -366,7 +375,16 @@
         "tests/fixtures/interpreter/descriptor-binding.json:function-binding-generator-is-lazy",
         "tests/fixtures/interpreter/descriptor-binding.json:function-binding-original-frames",
         "tests/fixtures/interpreter/descriptor-binding.json:future-copy-getter-doc-hook",
-        "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved"
+        "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved",
+        "tests/fixtures/interpreter/native-rebinding.json:method-getter-unbound-copy",
+        "tests/fixtures/interpreter/native-rebinding.json:method-__instancecheck__-actual-metaclass",
+        "tests/fixtures/interpreter/native-rebinding.json:method-metadata",
+        "tests/fixtures/interpreter/native-rebinding.json:method-advertised-layout-ignored",
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-property-get-bind-call",
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-function-get-bind-call",
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-type-read-actual-metaclass",
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-recursive-binding-wrappers",
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-type-callback-frames"
       ]
     },
     {
@@ -1953,7 +1971,7 @@
     {
       "id": "property",
       "status": "partial",
-      "scope": "property(fget=None,fset=None,fdel=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities.",
+      "scope": "property(fget=None,fset=None,fdel=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes.",
       "gaps": "Further property documentation/name/dictionary reflection and arbitrary doc behavior. Copies requiring getter documentation read hooks refuse before those hooks execute.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1975,7 +1993,9 @@
         "descriptor-binding-copy-deleter-metadata",
         "descriptor-binding-copy-getter-bound-equality-hash",
         "descriptor-binding-future-copy-getter-doc-hook",
-        "descriptor-binding-copy-setter-read-hooks-remain-unobserved"
+        "descriptor-binding-copy-setter-read-hooks-remain-unobserved",
+        "native-rebinding-method-getter-unbound-copy",
+        "native-rebinding-wrapper-property-get-bind-call"
       ],
       "evidence": [
         "tests/fixtures/interpreter/nested-descriptors.json:set-property",
@@ -1991,7 +2011,9 @@
         "tests/fixtures/interpreter/descriptor-binding.json:copy-deleter-metadata",
         "tests/fixtures/interpreter/descriptor-binding.json:copy-getter-bound-equality-hash",
         "tests/fixtures/interpreter/descriptor-binding.json:future-copy-getter-doc-hook",
-        "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved"
+        "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved",
+        "tests/fixtures/interpreter/native-rebinding.json:method-getter-unbound-copy",
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-property-get-bind-call"
       ]
     },
     {
@@ -2255,7 +2277,7 @@
     {
       "id": "type",
       "status": "partial",
-      "scope": "Canonical type identities for adopted values and three-argument type construction with tuple bases and a bounded string-key dictionary namespace; finite type.__new__/__init__/__call__ and metaclass selection. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
+      "scope": "Canonical type identities for adopted values and three-argument type construction with tuple bases and a bounded string-key dictionary namespace; finite type.__new__/__init__/__call__ and metaclass selection. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes.",
       "gaps": "Custom namespace mappings, callable factories, builtin instance subclasses and further metaclass special slots remain gated.",
       "reference_version": "3.14.7",
       "targets": [
@@ -2267,14 +2289,18 @@
       ],
       "probes": [
         "builtin-type",
-        "metaclass-attributes-write-data-descriptor"
+        "metaclass-attributes-write-data-descriptor",
+        "native-rebinding-method-__instancecheck__-actual-metaclass",
+        "native-rebinding-wrapper-type-read-actual-metaclass"
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:type-primitives",
         "tests/fixtures/interpreter/construction.json:dynamic-type",
         "tests/fixtures/interpreter/construction.json:metaclass-new-init",
         "tests/fixtures/interpreter/metaclass-attributes.json:read-delegate",
-        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor"
+        "tests/fixtures/interpreter/metaclass-attributes.json:write-data-descriptor",
+        "tests/fixtures/interpreter/native-rebinding.json:method-__instancecheck__-actual-metaclass",
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-type-read-actual-metaclass"
       ]
     },
     {

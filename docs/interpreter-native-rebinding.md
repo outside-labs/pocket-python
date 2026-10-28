@@ -56,3 +56,14 @@ receiver rejection and two retained documentation/live-namespace refusals.
 Additional lifecycle checks retain rebound function defaults/cells, lazy
 generators and intermediate binding handles through parked collection and
 interruption. Explicit native rebinding remains unavailable in the core profile.
+
+All 96 cases (94 adopted comparisons and two refusals) pass Node/Chromium drain,
+instruction-boundary and parked execution: 576 observations with zero logical
+teardown. The compatibility inventory contains nine representative rebinding
+probes. The [descriptor console](../examples/interpreter_native_rebinding.py)
+composes rebound copies, native type checks, closures and generators. Installed
+wheel acceptance covers offline reload, original callback diagnostics,
+Stop/Restart and a waiting core-profile update. The
+[payload record](measurements/2026-10-28-native-rebinding.json) records the
+38-file, 671,693-byte example and source/compatibility/offline evidence. An
+independent rebuild produces identical bytes; this is no performance claim.
