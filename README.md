@@ -208,6 +208,11 @@ fresh enclosing function snapshots inside list/dict/set comprehensions, and
 isolated snapshots for module/class comprehensions. Nested targets, captured
 cells and escaped values retain Python namespace order and owned lifetimes.
 
+[Sequence repetition](docs/interpreter-repetition.md) adopts shallow list/tuple
+copies and Unicode text multiplication, including owned index callbacks after
+arithmetic fallback. Run `python -m examples.interpreter_repetition` for a console
+combining aliases, callback-visible mutation and generators.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)

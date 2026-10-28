@@ -13,7 +13,7 @@ classes-source/1; core-source/1 keeps primitive arithmetic and generator support
 | O3 | Allocation and initialization are adopted in the [construction contract](interpreter-construction.md), including __new__ and conditional initialization of its returned value. |
 | O4 | Explicit/zero-argument super and lexical class cells follow the [construction contract](interpreter-construction.md). |
 | O5 | Type relations and finite metaclass construction follow the [construction contract](interpreter-construction.md). |
-| Future | builtin instance subclasses, further metaclass protocols, dir/vars/globals/locals/id, and dynamic exec/eval/compile/import remain independently gated. Matrix multiplication, user-valued power modulus dispatch and ordinary list/tuple/text repetition require separate slices. Existing bytes repetition and list in-place repetition accept the adopted index hook. |
+| Future | builtin instance subclasses, further metaclass protocols, dir/vars/globals/locals/id, and dynamic exec/eval/compile/import remain independently gated. Matrix multiplication and user-valued power modulus dispatch require separate slices. Ordinary list/tuple/text repetition follows R1–R3 below; existing bytes repetition and list in-place repetition retain their adopted index hook. |
 
 Implicit operations consult type/MRO slots and descriptor binding, ignoring
 instance shadow attributes. Signature and callback failures propagate; a method
@@ -50,6 +50,5 @@ The separately adopted [ordering profile](interpreter-ordering.md) adds four ric
 ordering methods and bounded list/tuple/slice comparisons. Instance attribute
 hooks and custom type checks retain their own adopted contracts.
 
-Ordinary list/tuple/text repetition has a separate [R1–R3 contract](interpreter-repetition.md).
-Its reference matrix records primitive copying, Unicode and owned index fallback
-before the corresponding stages are adopted independently.
+Ordinary list/tuple/text repetition follows the adopted [R1–R3 contract](interpreter-repetition.md).
+Its reference matrix covers primitive copying, Unicode and owned index fallback.

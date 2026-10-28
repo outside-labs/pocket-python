@@ -47,3 +47,36 @@ an exact reproducible example asset record.
 Semantic anchors: Python 3.14 [sequence operations](https://docs.python.org/3.14/library/stdtypes.html#common-sequence-operations),
 [numeric dispatch](https://docs.python.org/3.14/reference/datamodel.html#emulating-numeric-types)
 and the pinned [multiplication fallback](https://github.com/python/cpython/blob/v3.14.7/Objects/abstract.c).
+
+## Accepted evidence
+
+The complete 136-case class matrix contains 134 semantic comparisons and two
+explicit refusals. Node and Chromium pass draining and instruction-boundary
+execution, together with 60 shared primitive core cases per combination:
+784 observations and 784 measured zero logical teardown records. All 58
+source/driver hashes and the corpus hash match each retained source report.
+Native repetition descriptor lookup retains its existing AttributeError boundary.
+Historical bytecode 2/3 retain their ordinary repetition refusal; the shared value
+path requires the existing source value profile.
+
+All 1,274 Node tests pass, including temporary operands collected between every
+instruction, cancellation and repeated close in binding/index frames, callback
+source diagnostics, local list mutation and real recursion/instruction/work/arena
+failures. The eight composed resource observations are unchanged. The 60-test
+Python suite passes with one optional runtime skip; its localhost HTTP case is
+separately rechecked outside the local sandbox. Archive allowlists and four
+isolated wheel/source default/compiled installations pass. All 135 compatibility
+probes pass in both Node and Chromium.
+
+Installed-wheel offline acceptance passes 1,031 program comparisons and 63
+acceptance groups with 138 Stop/Restart cycles. Newly entered source composes
+repeated mutable records, tuple schedules, generators, Unicode and callback-visible
+list growth. Stop/Restart interrupts temporary sequence operations in descriptor
+binding and index bodies. A waiting class-to-core update preserves primitive
+repetition while removing the existing class/reflection authority.
+
+The [repetition console](../examples/interpreter_repetition.py) has an exact
+[payload/source record](measurements/2026-10-27-repetition.json): all 38 files and
+37 receipt members verify at 652,764 bytes, with an identical fresh rebuild.
+This is finite source and payload evidence, without a performance, device or
+package claim. Broader #123 and native async/host-adapter #34 remain open.
