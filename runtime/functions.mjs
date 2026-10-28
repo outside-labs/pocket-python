@@ -563,7 +563,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         }
         const plan = classes.write(receiver, arg, value, op === "attribute-delete");
         if (plan.kind === "value") stack.push(plan.value);
-        else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("discard")); }
+        else {
+          state.temporaries.push(plan.callable, ...plan.args, ...(plan.invokeArgs ?? []));
+          const after = continuation("discard");
+          call(plan.callable, plan.args, [], [], summary(frame, cursor), plan.kind === "bind-call" ?
+            continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after, depth: 0}) : after);
+        }
       } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
         const owner = frame.callable.pool.module;
         if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");

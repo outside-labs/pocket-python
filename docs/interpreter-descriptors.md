@@ -1,5 +1,9 @@
 # Descriptors and decorators
 
+The [nested hook contract](interpreter-nested-descriptors.md) extends this
+original checkpoint with property/custom-descriptor-valued mutation binding.
+Its separate matrix records current execution and acceptance stages.
+
 INT-09 adopts three more C2 steps in the explicit classes-source/1 profile:
 custom descriptors, native property/method wrappers, and decorator source. They
 reuse verified bytecode 5. The default core-source/1 boundary remains unchanged.
@@ -59,7 +63,7 @@ No new dependency, host grant, opcode or engine fallback is introduced. Updated
 fingerprints identify the compiler/runtime; installed caches keep their complete
 previous graph until a waiting update activates.
 
-Nested descriptor-valued mutation/notification hook binding, property documentation/reflection,
+Nested descriptor-valued notification hook binding, property documentation/reflection,
 metaclasses, builtin subclassing, implicit class cells/super and custom attribute/
 arithmetic/iteration hooks remain refused until their own matrices are adopted.
 This stage does not promise full Python or arbitrary package compatibility.

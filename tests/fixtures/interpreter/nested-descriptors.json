@@ -3,7 +3,9 @@
   "suite": "interpreter-nested-descriptors/1",
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O27"
+  ],
   "cases": [
     {
       "id": "set-property",
