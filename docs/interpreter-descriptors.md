@@ -83,8 +83,9 @@ comparisons, malformed/resource/teardown checks and retained input hashes.
 C3 special methods, async integration and alpha publication retain separate gates.
 
 
-The complete source report contains 66 adopted CPython stdout/error-type
-comparisons and three explicit refusals. Reference validation always covers all 69
+The complete source report contains 68 adopted CPython stdout/error-type
+comparisons and one explicit refusal after the nested mutation extension.
+Reference validation always covers all 69
 programs. During staged development, `--stages` selects source cases and reports
 the omitted stages without treating them as implemented.
 
