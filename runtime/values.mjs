@@ -474,12 +474,13 @@ export class ValueRuntime {
     if (count < -9223372036854775808n || count > 9223372036854775807n)
       this.fail("OverflowError", "cannot fit repetition into an index-sized integer");
     this.charge(count.toString().length);
-    const source = value.items, size = BigInt(source.length) * (count < 0n ? 0n : count);
-    this.limit(size <= BigInt(VALUE_LIMITS.items), "Container length budget exceeded.");
+    const text = value instanceof StringValue, source = text ? value.points : value.items;
+    const size = BigInt(source.length) * (count < 0n ? 0n : count);
+    this.limit(size <= BigInt(text ? VALUE_LIMITS.text : VALUE_LIMITS.items), "Sequence length budget exceeded.");
     this.charge(Number(size) + 1);
-    if (value instanceof TupleValue && (count === 1n || source.length === 0)) return value;
+    if ((text || value instanceof TupleValue) && (count === 1n || source.length === 0)) return value;
     const items = Array.from({length: Number(size)}, (_, index) => source[index % source.length]);
-    return value instanceof TupleValue ? this.tuple(items) : this.list(items);
+    return text ? this.string(items) : value instanceof TupleValue ? this.tuple(items) : this.list(items);
   }
   list(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new ListValue(items)); }
   tuple(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new TupleValue(items)); }
@@ -1199,7 +1200,6 @@ export class ValueRuntime {
         (sequence(right) && ["bigint", "boolean"].includes(typeof left)))) {
       if (!this.numeric) this.fail("UnsupportedOperationError", "Sequence repetition requires the source value profile.", "UNSUPPORTED");
       const value = sequence(left) ? left : right, count = value === left ? right : left;
-      if (value instanceof StringValue) this.fail("UnsupportedOperationError", "Text repetition requires its own stage.", "UNSUPPORTED");
       return this.repeat(value, count);
     }
     if (!numeric(left) || !numeric(right)) this.fail("TypeError", "Numeric operation requires adopted numbers.");
