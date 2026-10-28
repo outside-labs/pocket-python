@@ -1,0 +1,504 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-descriptor-binding/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "copy-getter-unbound",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=property.getter(p,other)\nprint(q is p,q.fget is other,p.fget is read)\n",
+      "stdout": "False True True\n"
+    },
+    {
+      "id": "copy-getter-bound-none-retains",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=p.getter(None)\nprint(q is p,q.fget is read,q.fset is read,q.fdel is read)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-getter-unbound-none-retains",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=property.getter(p,None)\nprint(q is p,q.fget is read,q.fset is read,q.fdel is read)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-getter-empty-none",
+      "stage": "O31",
+      "source": "p=property()\nq=p.getter(None)\nprint(q is p,q.fget is None,q.fset is None,q.fdel is None)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-getter-arbitrary-value-lazy",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=p.getter([7])\nprint(q.fget[0],p.fget is read)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "copy-getter-metadata",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.getter\nu=property.getter\nprint(type(m).__name__,m.__class__ is type(m),m.__self__ is p,m.__name__,m.__qualname__)\nprint(type(u).__name__,u.__class__ is type(u),u.__name__,u.__qualname__,u is property.getter)\ntry: m.__func__\nexcept AttributeError: print(\"no function\")\n",
+      "stdout": "builtin_function_or_method True True getter property.getter\nmethod_descriptor True getter property.getter True\nno function\n"
+    },
+    {
+      "id": "copy-getter-bound-equality-hash",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.getter\nn=p.getter\nq=property(read,read,read)\nprint(m is n,m==n,hash(m)==hash(n),m==q.getter)\nd={m:7,n:9}\nprint(len(d),d[m])\n",
+      "stdout": "False True True False\n1 9\n"
+    },
+    {
+      "id": "copy-getter-detached",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.getter\ndel p\nq=m(other)\nprint(q.fget is other)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "copy-getter-bound-missing",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.getter()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-getter-bound-extra",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.getter(other,other)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-getter-bound-keyword",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.getter(fget=other)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-getter-unbound-missing",
+      "stage": "O31",
+      "source": "property.getter()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-getter-unbound-wrong-receiver",
+      "stage": "O31",
+      "source": "property.getter([7],None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-getter-native-binding-validates-receiver",
+      "stage": "O31",
+      "source": "class A: copy=property.getter\nA().copy\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-setter-unbound",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=property.setter(p,other)\nprint(q is p,q.fset is other,p.fset is read)\n",
+      "stdout": "False True True\n"
+    },
+    {
+      "id": "copy-setter-bound-none-retains",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=p.setter(None)\nprint(q is p,q.fget is read,q.fset is read,q.fdel is read)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-setter-unbound-none-retains",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=property.setter(p,None)\nprint(q is p,q.fget is read,q.fset is read,q.fdel is read)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-setter-empty-none",
+      "stage": "O31",
+      "source": "p=property()\nq=p.setter(None)\nprint(q is p,q.fget is None,q.fset is None,q.fdel is None)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-setter-arbitrary-value-lazy",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=p.setter([7])\nprint(q.fset[0],p.fset is read)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "copy-setter-metadata",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.setter\nu=property.setter\nprint(type(m).__name__,m.__class__ is type(m),m.__self__ is p,m.__name__,m.__qualname__)\nprint(type(u).__name__,u.__class__ is type(u),u.__name__,u.__qualname__,u is property.setter)\ntry: m.__func__\nexcept AttributeError: print(\"no function\")\n",
+      "stdout": "builtin_function_or_method True True setter property.setter\nmethod_descriptor True setter property.setter True\nno function\n"
+    },
+    {
+      "id": "copy-setter-bound-equality-hash",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.setter\nn=p.setter\nq=property(read,read,read)\nprint(m is n,m==n,hash(m)==hash(n),m==q.setter)\nd={m:7,n:9}\nprint(len(d),d[m])\n",
+      "stdout": "False True True False\n1 9\n"
+    },
+    {
+      "id": "copy-setter-detached",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.setter\ndel p\nq=m(other)\nprint(q.fset is other)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "copy-setter-bound-missing",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.setter()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-setter-bound-extra",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.setter(other,other)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-setter-bound-keyword",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.setter(fget=other)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-setter-unbound-missing",
+      "stage": "O31",
+      "source": "property.setter()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-setter-unbound-wrong-receiver",
+      "stage": "O31",
+      "source": "property.setter([7],None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-setter-native-binding-validates-receiver",
+      "stage": "O31",
+      "source": "class A: copy=property.setter\nA().copy\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-deleter-unbound",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=property.deleter(p,other)\nprint(q is p,q.fdel is other,p.fdel is read)\n",
+      "stdout": "False True True\n"
+    },
+    {
+      "id": "copy-deleter-bound-none-retains",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=p.deleter(None)\nprint(q is p,q.fget is read,q.fset is read,q.fdel is read)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-deleter-unbound-none-retains",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=property.deleter(p,None)\nprint(q is p,q.fget is read,q.fset is read,q.fdel is read)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-deleter-empty-none",
+      "stage": "O31",
+      "source": "p=property()\nq=p.deleter(None)\nprint(q is p,q.fget is None,q.fset is None,q.fdel is None)\n",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "copy-deleter-arbitrary-value-lazy",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nq=p.deleter([7])\nprint(q.fdel[0],p.fdel is read)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "copy-deleter-metadata",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.deleter\nu=property.deleter\nprint(type(m).__name__,m.__class__ is type(m),m.__self__ is p,m.__name__,m.__qualname__)\nprint(type(u).__name__,u.__class__ is type(u),u.__name__,u.__qualname__,u is property.deleter)\ntry: m.__func__\nexcept AttributeError: print(\"no function\")\n",
+      "stdout": "builtin_function_or_method True True deleter property.deleter\nmethod_descriptor True deleter property.deleter True\nno function\n"
+    },
+    {
+      "id": "copy-deleter-bound-equality-hash",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.deleter\nn=p.deleter\nq=property(read,read,read)\nprint(m is n,m==n,hash(m)==hash(n),m==q.deleter)\nd={m:7,n:9}\nprint(len(d),d[m])\n",
+      "stdout": "False True True False\n1 9\n"
+    },
+    {
+      "id": "copy-deleter-detached",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\nm=p.deleter\ndel p\nq=m(other)\nprint(q.fdel is other)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "copy-deleter-bound-missing",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.deleter()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-deleter-bound-extra",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.deleter(other,other)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-deleter-bound-keyword",
+      "stage": "O31",
+      "source": "def read(obj): return obj[0]\ndef other(obj): return 9\np=property(read,read,read)\np.deleter(fget=other)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-deleter-unbound-missing",
+      "stage": "O31",
+      "source": "property.deleter()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-deleter-unbound-wrong-receiver",
+      "stage": "O31",
+      "source": "property.deleter([7],None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-deleter-native-binding-validates-receiver",
+      "stage": "O31",
+      "source": "class A: copy=property.deleter\nA().copy\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-shallow-accessors-and-callback-deferral",
+      "stage": "O31",
+      "source": "events=[]\nclass Read:\n def __call__(self,obj):\n  events.append(obj[0])\n  return obj[0]\nr=Read()\np=property(r)\nq=property.setter(p,None)\nprint(p.fget is q.fget,len(events))\nprint(q.__get__([7]),events)\n",
+      "stdout": "True 0\n7 [7]\n"
+    },
+    {
+      "id": "copy-getter-error-frames",
+      "stage": "O31",
+      "source": "def read(obj):\n raise ValueError(\"read\")\np=property.getter(property(),read)\np.__get__([7])\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        },
+        {
+          "function": "read",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "copy-noncallable-getter-fails-at-use",
+      "stage": "O31",
+      "source": "q=property.getter(property(),[7])\nprint(q.fget[0])\nq.__get__([9])\n",
+      "stdout": "7\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-property-ordinary-descriptor",
+      "stage": "O31",
+      "source": "def read(obj): return obj.value\nclass A:\n item=property.getter(property(),read)\na=A()\na.value=7\nprint(a.item,A.item.fget is read)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "function-bind-list",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=[7]\nm=read.__get__(obj)\nprint(m.__self__ is obj,m.__func__ is read,m() is obj,type(m).__name__)\n",
+      "stdout": "True True True method\n"
+    },
+    {
+      "id": "function-bind-integer",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=7\nm=read.__get__(obj)\nprint(m.__self__ is obj,m.__func__ is read,m() is obj,type(m).__name__)\n",
+      "stdout": "True True True method\n"
+    },
+    {
+      "id": "function-bind-false",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=False\nm=read.__get__(obj,None)\nprint(m.__self__ is obj,m.__func__ is read,m() is obj,type(m).__name__)\n",
+      "stdout": "True True True method\n"
+    },
+    {
+      "id": "function-bind-string",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=\"text\"\nm=read.__get__(obj,False)\nprint(m.__self__ is obj,m.__func__ is read,m() is obj,type(m).__name__)\n",
+      "stdout": "True True True method\n"
+    },
+    {
+      "id": "function-bind-function",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=read\nm=read.__get__(obj,read)\nprint(m.__self__ is obj,m.__func__ is read,m() is obj,type(m).__name__)\n",
+      "stdout": "True True True method\n"
+    },
+    {
+      "id": "function-bind-type",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=list\nm=read.__get__(obj,7)\nprint(m.__self__ is obj,m.__func__ is read,m() is obj,type(m).__name__)\n",
+      "stdout": "True True True method\n"
+    },
+    {
+      "id": "function-none-target-type",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nprint(read.__get__(None,list) is read)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-none-target-integer",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nprint(read.__get__(None,7) is read)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-none-target-false",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nprint(read.__get__(None,False) is read)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-unbound",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nobj=[7]\nu=type(read).__get__\nm=u(read,obj,None)\nprint(m.__func__ is read,m.__self__ is obj,m() is obj,u is type(read).__get__)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "function-binding-metadata",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nm=read.__get__\nu=type(read).__get__\nprint(type(m).__name__,m.__class__ is type(m),m.__self__ is read,m.__name__,m.__qualname__)\nprint(type(u).__name__,u.__class__ is type(u),u.__name__,u.__qualname__)\ntry: m.__func__\nexcept AttributeError: print(\"no function\")\n",
+      "stdout": "method-wrapper True True __get__ function.__get__\nwrapper_descriptor True __get__ function.__get__\nno function\n"
+    },
+    {
+      "id": "function-invalid-missing",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nread.__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-invalid-none-missing-owner",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nread.__get__(None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-invalid-none-owner",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nread.__get__(None,None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-invalid-extra",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nread.__get__(7,None,None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-invalid-keyword",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nread.__get__(obj=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-invalid-unbound-missing",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\ntype(read).__get__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-invalid-unbound-wrong-receiver",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\ntype(read).__get__(property(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-invalid-unbound-native-receiver",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\ntype(read).__get__(len,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-binding-bypasses-target-owner-hooks",
+      "stage": "O32",
+      "source": "class A:\n def __getattribute__(self,name):\n  print(\"never\")\n  raise ValueError(\"hook\")\n def __get__(self,*args):\n  print(\"never\")\n  raise ValueError(\"descriptor\")\ndef read(obj): return obj\na=A()\nm=read.__get__(a,a)\nprint(m.__self__ is a,m() is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "function-binding-no-equality-hooks",
+      "stage": "O32",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"never\")\n  raise ValueError(\"equal\")\ndef read(obj): return obj\na=A()\nb=A()\nm=read.__get__(a)\nn=read.__get__(a)\nprint(m is n,m==n,hash(m)==hash(n),m==read.__get__(b))\nd={m:7,n:9}\nprint(len(d),d[m])\n",
+      "stdout": "False True True False\n1 9\n"
+    },
+    {
+      "id": "function-binding-closure-defaults",
+      "stage": "O32",
+      "source": "def factory():\n captured=[9]\n def read(obj,value=[7]):\n  return obj[0]+captured[0]+value[0]\n return read.__get__\nbind=factory()\nm=bind([3])\ndel bind\nprint(m(),m([1]))\n",
+      "stdout": "19 13\n"
+    },
+    {
+      "id": "function-binding-generator-is-lazy",
+      "stage": "O32",
+      "source": "def read(obj):\n print(\"entered\")\n yield obj[0]\nm=read.__get__([7])\ng=m()\nprint(\"ready\")\nprint(next(g))\n",
+      "stdout": "ready\nentered\n7\n"
+    },
+    {
+      "id": "function-binding-original-frames",
+      "stage": "O32",
+      "source": "def read(obj):\n raise ValueError(\"read\")\nm=read.__get__([7])\nm()\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        },
+        {
+          "function": "read",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "function-native-binding-validates-receiver",
+      "stage": "O32",
+      "source": "def read(obj,*args,**kwargs): return obj\nclass A: bind=type(read).__get__\nA().bind\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "function-bound-agrees-with-implicit",
+      "stage": "O32",
+      "source": "class A:\n def read(self): return self\na=A()\nm=A.read.__get__(a)\nprint(m==a.read,hash(m)==hash(a.read),m.__name__,m.__qualname__,m.__class__ is type(a.read))\n",
+      "stdout": "True True read A.read True\n"
+    },
+    {
+      "id": "future-property-documentation",
+      "stage": "Future",
+      "source": "print(property().__doc__)\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "future-live-namespace",
+      "stage": "Future",
+      "source": "print(globals()[\"__name__\"])\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    }
+  ]
+}
