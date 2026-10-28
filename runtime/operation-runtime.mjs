@@ -1369,7 +1369,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (callable instanceof PropertyAccessorValue) {
           if (args.length !== 1 || keywords.length) python("TypeError", "Property accessor copy requires one positional value.");
           const fields = [callable.property.fget, callable.property.fset, callable.property.fdel];
-          fields[{getter: 0, setter: 1, deleter: 2}[callable.name]] = args[0];
+          if (args[0] !== null) fields[{getter: 0, setter: 1, deleter: 2}[callable.name]] = args[0];
           task = deliver(allocate(PropertyValue, ...fields), completion, site); continue;
         }
         if (callable instanceof ClassValue) {
@@ -1516,6 +1516,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 classes.hasSlot(value.type, "__init__") || !classes.hasSlot(value.type, "__new__")))
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
+          }
+          if (["property.getter", "property.setter", "property.deleter"].includes(callable.name)) {
+            const receiver = args[0];
+            if (!(receiver instanceof PropertyValue)) python("TypeError", "Native property copy requires a property receiver");
+            if (keywords.length || args.length !== 2) python("TypeError", "Native property copy requires one positional replacement");
+            const fields = [receiver.fget, receiver.fset, receiver.fdel];
+            if (args[1] !== null) fields[{"property.getter": 0, "property.setter": 1, "property.deleter": 2}[callable.name]] = args[1];
+            task = valueTask(allocate(PropertyValue, ...fields), site, completion); continue;
           }
           if (["staticmethod.__get__", "classmethod.__get__"].includes(callable.name)) {
             const kind = callable.name.slice(0, callable.name.indexOf(".")), receiver = args[0];

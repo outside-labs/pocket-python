@@ -54,7 +54,7 @@ REFERENCE_CORPORA = {
     'native-descriptors', 'descriptor-binding', 'special-calls', 'length-truth', 'execution', 'formatting',
     'numeric',
 }
-STAGES = {'descriptor-binding': ('Future',),
+STAGES = {'descriptor-binding': ('O31', 'Future'),
           'numeric': ('N1', 'N2', 'N3', 'N4', 'N5', 'Future'),
           'sequences': ('Q1', 'Q2', 'Q3', 'Hints')}
 

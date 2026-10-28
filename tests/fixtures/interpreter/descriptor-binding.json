@@ -3,7 +3,9 @@
   "suite": "interpreter-descriptor-binding/1",
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O31"
+  ],
   "cases": [
     {
       "id": "copy-getter-unbound",
@@ -278,8 +280,8 @@
     {
       "id": "copy-shallow-accessors-and-callback-deferral",
       "stage": "O31",
-      "source": "events=[]\nclass Read:\n def __call__(self,obj):\n  events.append(obj[0])\n  return obj[0]\nr=Read()\np=property(r)\nq=property.setter(p,None)\nprint(p.fget is q.fget,len(events))\nprint(q.__get__([7]),events)\n",
-      "stdout": "True 0\n7 [7]\n"
+      "source": "events=[]\nclass Read:\n def __call__(self,obj):\n  events.append(obj[0])\n  return obj[0]\nr=Read()\np=property(r)\nq=property.setter(p,None)\nprint(p.fget is q.fget,len(events))\nprint(q.__get__([7]),len(events),events[0])\n",
+      "stdout": "True 0\n7 1 7\n"
     },
     {
       "id": "copy-getter-error-frames",

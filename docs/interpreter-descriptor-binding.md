@@ -40,3 +40,10 @@ Primary references are the pinned implementations of
 [property copies](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c)
 and [function descriptors](https://github.com/python/cpython/blob/v3.14.7/Objects/funcobject.c).
 The executable reference resolves patch-level differences.
+
+O31 is implemented. Its 46 reference cases cover native copy APIs, metadata,
+equality/hash, None retention, arbitrary replacements and callback failures.
+Dedicated lifecycle tests retain detached copy handles and copied accessor cells
+through collection, parked execution, cancellation and idempotent close. Real
+arena exhaustion while accumulating copies releases all logical owners.
+O32 remains a reference-only stage until its runtime slice is adopted.
