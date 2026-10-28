@@ -65,3 +65,10 @@ survive parked collection and interruption. Existing descriptor corpora retain
 native-documentation refusals; their now-adopted copy-hook cases are maintained
 in the documentation corpus. Real work, instruction, recursion and arena limits
 are exercised through getter callbacks.
+
+The [documentation console](../examples/interpreter_documentation.py) composes
+source documents, origin-sensitive copies, callback-visible notification names
+and lazy generators. Installed-wheel offline acceptance passes 1,587 program
+comparisons, 93 groups and 173 Stop/Restart cycles. The
+[payload record](measurements/2026-10-28-documentation.json) verifies 38 files
+and 691,188 bytes. These are finite semantic/source/payload observations.
