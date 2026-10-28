@@ -43,3 +43,10 @@ Primary reference: CPython v3.14.7
 [descriptor implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c),
 especially `method_get`, `wrapperdescr_get` and `descr_check`. The executable
 reference resolves argument and patch-level details.
+
+O33 is implemented. Its 28 adopted source cases cover property copies and native
+type checks, including ignored custom metaclass checking hooks. Focused lifecycle
+tests retain detached bindings and accessor cells through parked collection,
+cancellation, idempotent close and actual arena exhaustion. O34 remains a
+separate implementation stage; two future reference cases retain documentation
+and live-namespace refusals.
