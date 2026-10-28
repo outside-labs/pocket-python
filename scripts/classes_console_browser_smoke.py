@@ -408,8 +408,8 @@ def smoke(channel=None):
                         assert slot+' at sources/app.py:3' in page.locator('#diagnostic').inner_text()
                     refused('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__weakref__")\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == ''
-                    refused('class M(type):\n print("never")\n def __getattribute__(self,name): return 7\n', 'UnsupportedOperationError:')
-                    assert page.locator('#result').inner_text() == ''
+                    run('class M(type):\n print("body")\n def __getattribute__(cls,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n', 'body\n7\n')
+                    assert page.locator('#result').inner_text() == 'body\n7\n'
                     checks.append('instance-hook-errors-and-deferred-reflection-retain-offline-boundaries')
                     run(TYPE_CHECK_SOURCE, 'virtual True True\nactual False False True\nvalues 7 8 True\nnative method_descriptor builtin_function_or_method __instancecheck__\n')
                     checks.append('new-custom-checking-composes-with-descriptors-truth-generators-and-native-defaults-offline')
