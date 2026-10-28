@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O37"
+    "O37",
+    "O38"
   ],
   "cases": [
     {
@@ -441,6 +442,102 @@
       "stage": "O38",
       "source": "def read(obj): return obj\np=property(read)\np.__set_name__(None,\"original\")\nq=p.setter(read)\nq.__set_name__(None,\"copied\")\nprint(p.__name__,q.__name__)\n",
       "stdout": "original copied\n"
+    },
+    {
+      "id": "failed-class-retains-notified-name",
+      "stage": "O38",
+      "source": "p=property()\nC=\"previous\"\nclass D:\n def __set_name__(self,owner,name): raise ValueError(\"original\")\ntry:\n class C:\n  first=p\n  stop=D()\n  last=p\nexcept ValueError: print(C,p.__name__)\n",
+      "stdout": "previous first\n"
+    },
+    {
+      "id": "decorator-sees-notification",
+      "stage": "O38",
+      "source": "p=property()\ndef decorate(cls):\n print(p.__name__)\n return cls\n@decorate\nclass C: field=p\n",
+      "stdout": "field\n"
+    },
+    {
+      "id": "private-property-name",
+      "stage": "O38",
+      "source": "p=property()\nclass C: __field=p\nprint(p.__name__)\n",
+      "stdout": "_C__field\n"
+    },
+    {
+      "id": "notification-null-binding",
+      "stage": "O38",
+      "source": "property.__set_name__.__get__(None,None)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "diagnostic-get",
+      "stage": "Future",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property()\np.__name__=Name()\np.__get__(object())\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "diagnostic-set",
+      "stage": "Future",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property(lambda obj:0)\np.__name__=Name()\np.__set__(object(),7)\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "diagnostic-delete",
+      "stage": "Future",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property(lambda obj:0)\np.__name__=Name()\np.__delete__(object())\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "diagnostic-implicit",
+      "stage": "Future",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property()\nclass C: field=p\np.__name__=Name()\nC().field\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "id": "diagnostic-nested",
+      "stage": "Future",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property()\np.__name__=[Name()]\np.__get__(object())\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        }
+      ]
     }
   ]
 }

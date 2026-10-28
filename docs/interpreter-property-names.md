@@ -29,6 +29,8 @@ accounting explanation. No host callback or untracked side table owns a name.
 Only property-name mutation is added. Function/type/native descriptor name
 mutation, property documentation, abstract-method reflection, builtin subclass
 layouts, live dictionaries and dynamic source admission retain their boundaries.
+Missing-accessor diagnostics that would read a user getter's name or format a
+non-primitive assigned name refuse before those deferred callback effects.
 The operations belong to classes-source/1 and bytecode 5. Core/legacy admission
 and host grants stay explicit. Native coroutine/await and host adapters remain
 under #34.
@@ -45,4 +47,8 @@ O37 is implemented. Its 31 adopted cases and four future boundaries pass Node
 drain, instruction-boundary and parked execution. Dedicated tests retain cyclic
 names, accessor cells and copied properties, preserve original callback frames,
 and check actual allocation/work/recursion failures and mutation rollback.
-O38 remains the next dependent implementation stage.
+O38 is implemented, including explicit native rebinding and automatic namespace
+notifications. Its new name edge requires the documented
+[`execution-accounting/2` revision](interpreter-memory.md): four composed cases
+retain a 104-byte automatic name; all instruction counts and the other four
+observations remain unchanged. Original resource measurements are retained.

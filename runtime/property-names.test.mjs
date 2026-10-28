@@ -26,6 +26,13 @@ for (const item of corpus.cases.filter(item => corpus.implemented_stages.include
     closed(result.closed);
   });
 }
+for (const item of corpus.cases.filter(item => item.id.startsWith('diagnostic-'))) {
+  test('property diagnostic refusal: ' + item.id, async () => {
+    const result = await run(item.source);
+    assert.equal(result.error?.code, 'UNSUPPORTED', JSON.stringify(result.error));
+    assert.equal(result.stdout, ''); closed(result.closed);
+  });
+}
 
 async function lifecycle(source, expected, phases) {
   const {registry} = await compileSourceModules([unit(source)], profile);
@@ -66,6 +73,8 @@ test('name growth preflights arena ownership and restores the exact previous val
     const foreignName = other.values.list([]); foreignRoots.push(foreignName);
     assert.throws(() => classes.write(p, '__name__', foreignName), {code: 'STALE_HANDLE'});
     assert.equal(p.propertyName, p);
+    assert.throws(() => classes.notification(p, null, foreignName), {code: 'STALE_HANDLE'});
+    assert.equal(p.propertyName, p);
     const huge = new ValueRuntime().string(new Array(4000).fill(65));
     assert.throws(() => classes.write(p, '__name__', huge), {code: 'OOM'});
     assert.equal(p.propertyName, p);
@@ -73,6 +82,23 @@ test('name growth preflights arena ownership and restores the exact previous val
     classes.write(p, '__name__', null, true); assert.equal(p.propertyName, undefined);
   } finally { leave(); memory.close(); foreignLeave(); foreign.close(); }
   closed(memory.stats()); closed(foreign.stats());
+});
+
+test('detached native notifications and namespace snapshots survive collection at callback boundaries', async () => {
+  await lifecycle('def make():\n p=property()\n return p.__set_name__\nm=make()\nprint("held")\nprint(m(None,[9]),m.__self__.__name__[0])\n', 'held\nNone 9\n', ['held\n']);
+  await lifecycle('p=property()\nclass D:\n def __set_name__(self,owner,name):\n  print("entered")\n  print(p.__name__)\n  p.__set_name__(owner,[9])\nclass C:\n first=p\n callback=D()\n last=p\nprint(p.__name__)\n', 'entered\nfirst\nlast\n', ['entered\n', 'entered\nfirst\n']);
+});
+
+test('property names retain source profile and unrelated mutation boundaries', async () => {
+  for (const source of ['p=property()\np.__name__="x"\n', 'property().__set_name__(None,"x")\n']) {
+    const result = await runSourceRequest({modules: [unit(source)]});
+    assert.ok(['UNSUPPORTED', 'PYTHON'].includes(result.error?.code));
+    if (result.error?.code === 'PYTHON') assert.equal(result.error.type, 'NameError');
+    if (result.closed) closed(result.closed);
+  }
+  for (const source of ['def f(): pass\nf.__name__="x"\n', 'class C: pass\nC.__name__="x"\n']) {
+    const result = await run(source); assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+  }
 });
 
 test('lazy names and assigned edges obey actual recursion, work, instruction and arena limits', async () => {

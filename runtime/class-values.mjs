@@ -10,7 +10,8 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
 const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
-const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_COPY_METHODS, "type.mro"]);
+const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
+const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro"]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__"]);
@@ -178,7 +179,7 @@ export class ClassRuntime {
     for (const base of this.mro(type).slice(start)) {
       this.charge(1);
       if (base instanceof BuiltinValue) {
-        if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_COPY_METHODS.has(base.name + "." + name) || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
+        if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_PROPERTY_METHODS.has(base.name + "." + name) || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
           return {found: true, value: this.builtin(base.name + "." + name)};
         if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
@@ -221,7 +222,10 @@ export class ClassRuntime {
     }
     return {kind: "call", callable: hook.value, args};
   }
-  notification(receiver, owner, name) { return this.boundHook(receiver, "__set_name__", [owner, name]); }
+  notification(receiver, owner, name) {
+    if (receiver instanceof PropertyValue) { this.mutate(receiver, "__name__", name); return null; }
+    return this.boundHook(receiver, "__set_name__", [owner, name]);
+  }
   subclassNotification(type, required = false) {
     // Default construction retains the established allocation/work accounting.
     // The new class's own hook is excluded, just as with super(newclass, newclass).
@@ -271,7 +275,7 @@ export class ClassRuntime {
       if (NATIVE_DESCRIPTOR_WRAPPERS.has("property." + name))
         return value(this.make(BoundMethodValue, this.builtin("property." + name), receiver));
       if (["fget", "fset", "fdel"].includes(name)) return value(receiver[name]);
-      if (NATIVE_COPY_METHODS.has("property." + name)) return value(this.make(BoundMethodValue, this.builtin("property." + name), receiver));
+      if (NATIVE_PROPERTY_METHODS.has("property." + name)) return value(this.make(BoundMethodValue, this.builtin("property." + name), receiver));
       this.fail("UnsupportedOperationError", "Property reflection is outside the adopted profile.", "UNSUPPORTED");
     }
     if (receiver instanceof MethodWrapperValue) {
@@ -308,7 +312,7 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Hooked native MRO method qualification requires a separate stage.", "UNSUPPORTED");
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && (NATIVE_CHECK_METHODS.has(receiver.callable.name) || receiver.callable.name === "type.mro") && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + receiver.callable.name.slice("type.".length), char => char.codePointAt(0))));
-    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_COPY_METHODS.has(receiver.callable.name)) {
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_PROPERTY_METHODS.has(receiver.callable.name)) {
       if (name === "__class__") return value(this.typeOf(receiver));
       if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
     }
@@ -361,7 +365,7 @@ export class ClassRuntime {
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_BINDING_WRAPPERS.has(value.name) &&
         this.nativeDescriptorKind(receiver) !== value.name.slice(0, value.name.indexOf(".")))
       this.fail("TypeError", "Native descriptor binding requires a matching descriptor receiver.");
-    if (receiver !== null && value instanceof BuiltinValue && NATIVE_COPY_METHODS.has(value.name) && !(receiver instanceof PropertyValue))
+    if (receiver !== null && value instanceof BuiltinValue && NATIVE_PROPERTY_METHODS.has(value.name) && !(receiver instanceof PropertyValue))
       this.fail("TypeError", "Native property copy requires a property receiver.");
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_DESCRIPTOR_WRAPPERS.has(value.name)) {
       const kind = value.name.slice(0, value.name.indexOf("."));
@@ -374,7 +378,7 @@ export class ClassRuntime {
       return {kind: "value", value: this.superProxy(value.thisclass, receiver)};
     }
     if (receiver !== null && value instanceof PropertyValue) {
-      if (value.fget === null) this.fail("AttributeError", "Property has no getter.");
+      if (value.fget === null) this.missingPropertyAccessor(value, "getter");
       return {kind: "call", callable: value.fget, args: [receiver]};
     }
     const descriptor = this.descriptor(value);
@@ -382,7 +386,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && (NATIVE_COPY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   nativeDescriptorKind(value) {
     return value instanceof BuiltinValue ? NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" :
@@ -427,7 +431,7 @@ export class ClassRuntime {
       const item = this.lookup(receiver instanceof InstanceValue ? receiver.type : receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.value instanceof PropertyValue) {
         const callable = item.value[remove ? "fdel" : "fset"];
-        if (callable === null) this.fail("AttributeError", "Property has no " + (remove ? "deleter" : "setter") + ".");
+        if (callable === null) this.missingPropertyAccessor(item.value, remove ? "deleter" : "setter");
         return {kind: "call", callable, args: remove ? [receiver] : [receiver, value]};
       }
       if (descriptor && (descriptor.set.found || descriptor.delete.found)) {
@@ -507,6 +511,15 @@ export class ClassRuntime {
       assigned.set(name, keywordValues[index]);
     });
     return this.make(PropertyValue, ...fields.map(name => assigned.has(name) ? assigned.get(name) : null));
+  }
+  missingPropertyAccessor(property, operation) {
+    const name = property.propertyName;
+    let getter = property.fget;
+    while (getter instanceof BoundMethodValue) { this.charge(1); getter = getter.callable; }
+    if (name !== undefined ? !(name === null || typeof name === "boolean" || typeof name === "bigint" || this.values.isString(name)) :
+        getter instanceof InstanceValue || getter instanceof PropertyValue || getter instanceof ClassValue && getter.metaclass !== null)
+      this.fail("UnsupportedOperationError", "Property name diagnostic callbacks require a separate stage.", "UNSUPPORTED");
+    this.fail("AttributeError", "Property has no " + operation + ".");
   }
   copyProperty(property, method, replacement) {
     const fields = [property.fget, property.fset, property.fdel];
