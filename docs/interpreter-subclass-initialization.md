@@ -58,3 +58,33 @@ bytecode versions reject the new instruction.
 
 Semantic anchors: the Python 3.14 [class creation protocol](https://docs.python.org/3.14/reference/datamodel.html#customizing-class-creation)
 and pinned [type construction implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+## Accepted evidence
+
+The 63-case source matrix contains 59 adopted comparisons and four explicit
+future refusals. Node and Chromium pass drain and instruction-boundary execution:
+252 observations and 236 measured zero logical teardown records. Each report
+verifies its 58 source/driver hashes and corpus digest. All 138 compatibility
+probes pass in each target, including the three added positive class probes.
+
+All 1,341 Node tests pass. Dedicated tests retain temporary classes, descriptor
+closures, lexical cells and keyword operands across collection between every
+instruction, cancellation and repeated close in class bodies, notifications,
+binding, hooks and metaclass phases. Original Python source frames and real
+recursion/instruction/work/arena failures are covered. All eight composed
+resource observations remain unchanged. The 60-test Python suite passes with
+one optional runtime skip and its localhost HTTP test separately rechecked with
+socket access. Archive allowlists and four isolated installations pass.
+
+Installed-wheel offline acceptance has 1,079 program comparisons, 66 acceptance
+groups and 140 Stop/Restart cycles. Newly entered source registers classes
+through cooperative keyword-consuming hooks after offline reload, composes
+descriptor notifications, metaclasses and generators, preserves errors and
+refuses expanded class forms. Stop/Restart interrupts binding and hook bodies;
+a waiting class-to-core update refuses the class example before source effects.
+
+The [class registration console](../examples/interpreter_subclass_initialization.py)
+has a complete [payload/source record](measurements/2026-10-27-subclass-initialization.json):
+all 38 files and 37 receipt members verify at 657,479 bytes, with an identical
+fresh rebuild. These are finite semantic and payload observations. Broader
+object/reflection #123 and native async/host-adapter #34 remain open.
