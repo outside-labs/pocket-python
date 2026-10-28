@@ -10,7 +10,7 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
 const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
-const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_COPY_METHODS]);
+const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_COPY_METHODS, "type.mro"]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__"]);
@@ -37,8 +37,13 @@ export class ClassRuntime {
   root() { return this.make(ClassValue, "object", "object", "builtins", [], [], new Map(), true); }
   validateNamespace(bases, names) {
     const metaLayout = bases.some(base => base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base));
-    if (metaLayout && [...names].some(key => isSpecialName(key) && !META_SPECIALS.has(key)))
-      this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
+    if (metaLayout) {
+      const entries = [...names];
+      if (entries.includes("mro") || bases.some(base => base instanceof ClassValue && this.hasSlot(base, "mro")))
+        this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
+      if (entries.some(key => isSpecialName(key) && !META_SPECIALS.has(key)))
+        this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
+    }
   }
   create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null} = {}) {
     this.key(name);
@@ -110,6 +115,17 @@ export class ClassRuntime {
     while (name === "bool" || EXCEPTIONS[name]) { name = name === "bool" ? "int" : EXCEPTIONS[name]; result.push(this.builtin(name)); }
     result.push(this.builtin("object")); return result;
   }
+  primaryBase(type) {
+    if (!(type instanceof ClassValue)) return this.mro(type)[1] ?? null;
+    if (type.root) return null;
+    // Only ordinary object and type-derived instance layouts are adopted.
+    // A type-derived base supplies the native layout even after an ordinary base.
+    for (const base of type.bases) {
+      this.charge(1);
+      if (base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base)) return base;
+    }
+    return type.bases[0];
+  }
   typeOf(value) {
     this.touch(value);
     if (value instanceof InstanceValue) return value.type;
@@ -164,7 +180,7 @@ export class ClassRuntime {
       if (base instanceof BuiltinValue) {
         if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_COPY_METHODS.has(base.name + "." + name) || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
           return {found: true, value: this.builtin(base.name + "." + name)};
-        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__"].includes(name))
+        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
         continue;
       }
@@ -237,10 +253,11 @@ export class ClassRuntime {
       if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(
         name === "__name__" && (NATIVE_METHOD_DESCRIPTORS.has(receiver.name) || nativeWrapper(receiver.name)) ? receiver.name.slice(receiver.name.lastIndexOf(".") + 1) : receiver.name, char => char.codePointAt(0))));
       if (this.isType(receiver)) {
-        if (receiver.name !== "type" && ["__instancecheck__", "__subclasscheck__"].includes(name))
+        if (receiver.name !== "type" && ["__instancecheck__", "__subclasscheck__", "mro"].includes(name))
           return this.bindAttribute(this.builtin("type." + name), receiver, this.builtin("type"));
         if (name === "__module__") return value(this.values.string(Array.from("builtins", char => char.codePointAt(0))));
         if (name === "__mro__") return value(this.values.tuple(this.mro(receiver)));
+        if (name === "__base__") return value(this.primaryBase(receiver));
         if (name === "__bases__") return value(this.values.tuple([this.mro(receiver)[1]]));
         const item = this.lookup(receiver, name);
         if (item.found) return this.bindAttribute(item.value, null, receiver);
@@ -284,7 +301,10 @@ export class ClassRuntime {
       return value(this.values.string(Array.from(name === "__name__" ? receiver.callable.name.slice(receiver.callable.name.lastIndexOf(".") + 1) : receiver.callable.name, char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
-    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_CHECK_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue &&
+        receiver.callable.name === "type.mro" && name === "__qualname__" && this.hasAttributeHook(receiver.receiver, "__getattribute__"))
+      this.fail("UnsupportedOperationError", "Hooked native MRO method qualification requires a separate stage.", "UNSUPPORTED");
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && (NATIVE_CHECK_METHODS.has(receiver.callable.name) || receiver.callable.name === "type.mro") && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + receiver.callable.name.slice("type.".length), char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_COPY_METHODS.has(receiver.callable.name)) {
       if (name === "__class__") return value(this.typeOf(receiver));
@@ -308,9 +328,9 @@ export class ClassRuntime {
       const item = this.lookup(receiver.type, name);
       return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : value(this.classAttribute(receiver));
     }
-    if (!allowsClassSpecial(name, "attribute") && !["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name)) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
+    if (!allowsClassSpecial(name, "attribute") && !["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__base__", "__mro__"].includes(name)) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
-    const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (["__instancecheck__", "__subclasscheck__"].includes(name) ? this.builtin("type") : null) : null;
+    const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (["__instancecheck__", "__subclasscheck__", "mro"].includes(name) ? this.builtin("type") : null) : null;
     const metaItem = metaclass ? this.lookup(metaclass, name) : null;
     const metaDescriptor = metaItem?.found ? this.descriptor(metaItem.value) : null;
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
@@ -320,6 +340,7 @@ export class ClassRuntime {
       if (["__name__", "__qualname__", "__module__"].includes(name) && !(name === "__name__" && metaItem?.found)) return value(this.values.string(Array.from(
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
       if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
+      if (name === "__base__") return value(this.primaryBase(receiver));
     }
     const item = this.lookup(owner, name), descriptor = item.found ? this.descriptor(item.value) : null;
     if (name === "__dir__" && !item.found && !metaItem?.found)
@@ -359,7 +380,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && (NATIVE_COPY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && (NATIVE_COPY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   nativeDescriptorKind(value) {
     return value instanceof BuiltinValue ? NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" :
@@ -421,6 +442,9 @@ export class ClassRuntime {
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
+    if (receiver instanceof ClassValue && name === "__base__") this.fail("AttributeError", "Primary base metadata is read-only.");
+    if (receiver instanceof ClassValue && this.isMetaclass(receiver) && name === "mro")
+      this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
     if (receiver instanceof ClassValue && this.isMetaclass(receiver) && isSpecialName(name) && !META_SPECIALS.has(name))
       this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
     if (!allowsClassSpecial(name, "mutate")) this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
@@ -508,6 +532,8 @@ export class ClassRuntime {
     }
     if (!(selected instanceof BuiltinValue && selected.name === "type") && !this.isMetaclass(selected))
       this.fail("UnsupportedOperationError", "Non-type metaclass constructors require a separate stage", "UNSUPPORTED");
+    if (selected instanceof ClassValue && this.hasSlot(selected, "mro"))
+      this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
     return selected;
   }
 }

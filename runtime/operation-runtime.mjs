@@ -1482,6 +1482,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
             hard("UNSUPPORTED", "UnsupportedOperationError", "Construction of reflected implementation types requires a separate stage.");
           }
+          if (callable.name === "type.mro") {
+            if (keywords.length || args.length !== 1 || !classes.isType(args[0]))
+              python("TypeError", "type.mro requires one positional actual type");
+            task = valueTask(values.list(classes.mro(args[0])), site, completion); continue;
+          }
           if (callable.name === "super") {
             if (keywords.length || args.length > 2) python("TypeError", "super received invalid arguments");
             let type = args[0], receiver = args[1] ?? null;

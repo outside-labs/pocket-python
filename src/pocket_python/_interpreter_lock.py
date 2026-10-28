@@ -1,11 +1,11 @@
 """Known source-console assets, canonical LF bytes; refresh with scripts/lock_interpreter.py."""
 
-ENGINE_FINGERPRINT = 'ab58017dac00820f602511b74b9d367becd14124a5e990e71518bf5769d90a28'
+ENGINE_FINGERPRINT = 'da2a12c63288e46e14b61dc8e58d6631d3a22faceff9129d5005c1be6960ce74'
 ENGINE_FILES = (
     ('browser-protocol.mjs', 10589, '920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76'),
     ('bytecode.mjs', 6836, 'e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4'),
-    ('class-policy.mjs', 2707, 'faa28ed5d5c3cfb9cf3c94c4849f002609f09d8b141422e1c390f8d7e774a98a'),
-    ('class-values.mjs', 37847, '50f9b9867ee75200e3b2cc6cae1154410a4c77eadc9c0d08ad64bb82e67d0960'),
+    ('class-policy.mjs', 2771, '54f23e5ace228f04179d1c391cc7b9fee02a336239d3255acec0afe5a511a680'),
+    ('class-values.mjs', 39794, '995c3d44b4d3a39e414a81e96a448d77adc894657df9e0451b6aeac7eaa78b38'),
     ('function-bytecode.mjs', 22421, '61a764005678277ebee8ead4fa301fe035090bd50fa8a52df3d981b4fe7bf35d'),
     ('function-objects.mjs', 4572, 'f3040f471c2e2142fec1d0002dec7fd2554ef6c6da32c13e24f717ecb71022c5'),
     ('functions.mjs', 64506, 'c74d29ec5794e3c9ad96649546a38b87096076f40411131973aed256202ea38c'),
@@ -20,7 +20,7 @@ ENGINE_FILES = (
     ('module-registry.mjs', 10220, '5c87f42966f7d1094ec9abcdd0e66718d3ccf1cdbfc7fa47c76495e14a21b61d'),
     ('module-session.mjs', 12852, '8474187aa92173689c875d6bf15b31a7eae4dcff62b862b9607ce22e10753df4'),
     ('numeric.mjs', 13954, '2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad'),
-    ('operation-runtime.mjs', 134296, '234a5fd103cf0c6f7040ea4d3792faf829433a4890ab11ec296bc5d71fa35282'),
+    ('operation-runtime.mjs', 134612, 'fb5b15521abb93eaa0e2a37f6f4ba269f390d8e81159055074607230a4431b1f'),
     ('operations.mjs', 29399, '0daa9d543ec5ac12534004268811b3a7174d815c16941a9042df78f0d1c2b55e'),
     ('source-compiler.mjs', 42147, '2bc96679f490d8791a5e76353c86654d83dbbe28a93846f5f04de37e2dc13c54'),
     ('source-identifiers.mjs', 25949, '1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914'),
