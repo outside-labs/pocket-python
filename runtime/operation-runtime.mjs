@@ -1515,6 +1515,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
           }
+          if (callable.name === "method_descriptor.__get__") {
+            if (keywords.length || args.length < 2 || args.length > 3) python("TypeError", "Native descriptor binding received invalid arguments");
+            if (args[1] === null && (args[2] ?? null) === null) python("TypeError", "__get__(None, None) is invalid");
+            task = valueTask(classes.bindNativeDescriptor("method_descriptor", args[0], args[1]), site, completion); continue;
+          }
           if (callable.name === "function.__get__") {
             if (!(args[0] instanceof FunctionValue)) python("TypeError", "Native function binding requires a Python function receiver");
             if (keywords.length || args.length < 2 || args.length > 3) python("TypeError", "Native function binding received invalid arguments");

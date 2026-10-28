@@ -13,7 +13,8 @@ const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "prop
 const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_COPY_METHODS]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
-const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name);
+const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__"]);
+const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name) || NATIVE_BINDING_WRAPPERS.has(name);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
 
 export class ClassRuntime {
@@ -161,7 +162,7 @@ export class ClassRuntime {
     for (const base of this.mro(type).slice(start)) {
       this.charge(1);
       if (base instanceof BuiltinValue) {
-        if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_COPY_METHODS.has(base.name + "." + name)))
+        if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_COPY_METHODS.has(base.name + "." + name) || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
           return {found: true, value: this.builtin(base.name + "." + name)};
         if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
@@ -227,6 +228,8 @@ export class ClassRuntime {
     }
     if (receiver instanceof BuiltinValue) {
       if (name === "__class__") return value(this.typeOf(receiver));
+      if (name === "__get__" && NATIVE_METHOD_DESCRIPTORS.has(receiver.name))
+        return value(this.make(BoundMethodValue, this.builtin("method_descriptor.__get__"), receiver));
       if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(
         name === "__name__" && (NATIVE_METHOD_DESCRIPTORS.has(receiver.name) || nativeWrapper(receiver.name)) ? receiver.name.slice(receiver.name.lastIndexOf(".") + 1) : receiver.name, char => char.codePointAt(0))));
       if (this.isType(receiver)) {
@@ -267,6 +270,8 @@ export class ClassRuntime {
       return value(this.values.string(Array.from(name === "__name__" ? receiver.callable.name.slice(receiver.callable.name.lastIndexOf(".") + 1) : receiver.callable.name, char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_CHECK_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
+      return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + receiver.callable.name.slice("type.".length), char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_COPY_METHODS.has(receiver.callable.name)) {
       if (name === "__class__") return value(this.typeOf(receiver));
       if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
@@ -314,6 +319,9 @@ export class ClassRuntime {
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
   bindAttribute(value, receiver, owner) {
+    if (receiver !== null && value instanceof BuiltinValue && NATIVE_BINDING_WRAPPERS.has(value.name) &&
+        !(receiver instanceof BuiltinValue && NATIVE_METHOD_DESCRIPTORS.has(receiver.name)))
+      this.fail("TypeError", "Native descriptor binding requires a matching descriptor receiver.");
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_COPY_METHODS.has(value.name) && !(receiver instanceof PropertyValue))
       this.fail("TypeError", "Native property copy requires a property receiver.");
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_DESCRIPTOR_WRAPPERS.has(value.name)) {
@@ -335,7 +343,16 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && (NATIVE_COPY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && (NATIVE_COPY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+  }
+  bindNativeDescriptor(kind, descriptor, receiver) {
+    if (!(descriptor instanceof BuiltinValue) || kind !== "method_descriptor" || !NATIVE_METHOD_DESCRIPTORS.has(descriptor.name))
+      this.fail("TypeError", "Native descriptor binding requires a matching descriptor receiver.");
+    if (receiver === null) return descriptor;
+    this.touch(receiver);
+    if (NATIVE_COPY_METHODS.has(descriptor.name) ? !(receiver instanceof PropertyValue) : !this.isType(receiver))
+      this.fail("TypeError", "Native descriptor does not apply to this receiver type.");
+    return this.make(BoundMethodValue, descriptor, receiver);
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);
