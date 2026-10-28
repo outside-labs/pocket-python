@@ -311,8 +311,8 @@
     {
       "id": "descriptors-decorators",
       "status": "partial",
-      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes.",
-      "gaps": "Further property documentation/name/dictionary reflection, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals.",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification.",
+      "gaps": "Further property documentation/dictionary reflection, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -360,7 +360,18 @@
         "type-reflection-owner-copy-get",
         "type-reflection-bound-owner-property-get",
         "type-reflection-owner-python-classmethod-wrapper-forwarded",
-        "type-reflection-owner-direct-set-wrapper"
+        "type-reflection-owner-direct-set-wrapper",
+        "property-names-assigned-none",
+        "property-names-deletion-restores-getter",
+        "property-names-copy-getter-explicit",
+        "property-names-lazy-property-getter-name",
+        "property-names-lazy-error-ValueError",
+        "property-names-owner-and-name-bypass-hooks",
+        "property-names-notification-native-metadata",
+        "property-names-notification-rebound-native",
+        "property-names-automatic-alias-order",
+        "property-names-automatic-notification-snapshot",
+        "property-names-diagnostic-nested"
       ],
       "evidence": [
         "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
@@ -404,7 +415,18 @@
         "tests/fixtures/interpreter/type-reflection.json:owner-copy-get",
         "tests/fixtures/interpreter/type-reflection.json:bound-owner-property-get",
         "tests/fixtures/interpreter/type-reflection.json:owner-python-classmethod-wrapper-forwarded",
-        "tests/fixtures/interpreter/type-reflection.json:owner-direct-set-wrapper"
+        "tests/fixtures/interpreter/type-reflection.json:owner-direct-set-wrapper",
+        "tests/fixtures/interpreter/property-names.json:assigned-none",
+        "tests/fixtures/interpreter/property-names.json:deletion-restores-getter",
+        "tests/fixtures/interpreter/property-names.json:copy-getter-explicit",
+        "tests/fixtures/interpreter/property-names.json:lazy-property-getter-name",
+        "tests/fixtures/interpreter/property-names.json:lazy-error-ValueError",
+        "tests/fixtures/interpreter/property-names.json:owner-and-name-bypass-hooks",
+        "tests/fixtures/interpreter/property-names.json:notification-native-metadata",
+        "tests/fixtures/interpreter/property-names.json:notification-rebound-native",
+        "tests/fixtures/interpreter/property-names.json:automatic-alias-order",
+        "tests/fixtures/interpreter/property-names.json:automatic-notification-snapshot",
+        "tests/fixtures/interpreter/property-names.json:diagnostic-nested"
       ]
     },
     {
@@ -2003,8 +2025,8 @@
     {
       "id": "property",
       "status": "partial",
-      "scope": "property(fget=None,fset=None,fdel=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes.",
-      "gaps": "Further property documentation/name/dictionary reflection and arbitrary doc behavior. Copies requiring getter documentation read hooks refuse before those hooks execute.",
+      "scope": "property(fget=None,fset=None,fdel=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification.",
+      "gaps": "Further property documentation/dictionary reflection and arbitrary doc behavior. Copies requiring getter documentation read hooks refuse before those hooks execute. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2027,7 +2049,18 @@
         "descriptor-binding-future-copy-getter-doc-hook",
         "descriptor-binding-copy-setter-read-hooks-remain-unobserved",
         "native-rebinding-method-getter-unbound-copy",
-        "native-rebinding-wrapper-property-get-bind-call"
+        "native-rebinding-wrapper-property-get-bind-call",
+        "property-names-assigned-none",
+        "property-names-deletion-restores-getter",
+        "property-names-copy-getter-explicit",
+        "property-names-lazy-property-getter-name",
+        "property-names-lazy-error-ValueError",
+        "property-names-owner-and-name-bypass-hooks",
+        "property-names-notification-native-metadata",
+        "property-names-notification-rebound-native",
+        "property-names-automatic-alias-order",
+        "property-names-automatic-notification-snapshot",
+        "property-names-diagnostic-nested"
       ],
       "evidence": [
         "tests/fixtures/interpreter/nested-descriptors.json:set-property",
@@ -2045,7 +2078,18 @@
         "tests/fixtures/interpreter/descriptor-binding.json:future-copy-getter-doc-hook",
         "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved",
         "tests/fixtures/interpreter/native-rebinding.json:method-getter-unbound-copy",
-        "tests/fixtures/interpreter/native-rebinding.json:wrapper-property-get-bind-call"
+        "tests/fixtures/interpreter/native-rebinding.json:wrapper-property-get-bind-call",
+        "tests/fixtures/interpreter/property-names.json:assigned-none",
+        "tests/fixtures/interpreter/property-names.json:deletion-restores-getter",
+        "tests/fixtures/interpreter/property-names.json:copy-getter-explicit",
+        "tests/fixtures/interpreter/property-names.json:lazy-property-getter-name",
+        "tests/fixtures/interpreter/property-names.json:lazy-error-ValueError",
+        "tests/fixtures/interpreter/property-names.json:owner-and-name-bypass-hooks",
+        "tests/fixtures/interpreter/property-names.json:notification-native-metadata",
+        "tests/fixtures/interpreter/property-names.json:notification-rebound-native",
+        "tests/fixtures/interpreter/property-names.json:automatic-alias-order",
+        "tests/fixtures/interpreter/property-names.json:automatic-notification-snapshot",
+        "tests/fixtures/interpreter/property-names.json:diagnostic-nested"
       ]
     },
     {

@@ -29,8 +29,10 @@ release all logical owners. Preserve the eight composed resource observations.
 
 These operations belong to classes-source/1 and bytecode 5. Core-source/1,
 legacy bytecode admission and host grants retain their existing boundaries.
-Property documentation/names, live dictionaries, native descriptor rebinding,
+Property documentation, live dictionaries,
 builtin layouts and broader descriptor reflection remain separate follow-ups.
+The later [property-name](interpreter-property-names.md) and
+[native-rebinding](interpreter-native-rebinding.md) slices adopt those operations.
 Native coroutine/await and host adapters remain under #34.
 
 Acceptance requires pinned Node/Chromium source comparisons with drain,

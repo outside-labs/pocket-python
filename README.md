@@ -195,6 +195,11 @@ composing hierarchy inspection, detached native methods and lazy iteration.
 Custom MRO construction, default directories and live namespace mappings remain
 separate contracts.
 
+The finite [property-name profile](docs/interpreter-property-names.md) adds
+mutable property names, lazy getter-name lookup and native name notification.
+Run `python -m examples.interpreter_property_names` for a console composing
+accessor copies, detached native methods and generators.
+
 The finite [ordering profile](docs/interpreter-ordering.md) adds rich ordering
 methods and bounded list/tuple/slice comparisons, including reflected priority,
 raw results and callback-visible mutation. Run

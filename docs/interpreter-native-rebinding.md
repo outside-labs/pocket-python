@@ -9,6 +9,10 @@ Reference-only results do not establish independent execution.
 | O33 | Bound and unbound `method_descriptor.__get__(target, owner=None, /)` bind the adopted `property.getter/setter/deleter` and `type.__instancecheck__/__subclasscheck__` descriptors. A non-None target must have the descriptor's actual native receiver layout. Binding produces a fresh native callable retaining the original descriptor and target. |
 | O34 | Bound and unbound `wrapper_descriptor.__get__` bind the adopted `type.__getattribute__/__setattr__/__delattr__`, `property.__get__/__set__/__delete__`, `staticmethod.__get__`, `classmethod.__get__`, `function.__get__`, and the two native descriptor `__get__` wrappers themselves. Binding produces a fresh native method-wrapper with the same receiver rules. |
 
+The later [type-reflection](interpreter-type-reflection.md) and
+[property-name](interpreter-property-names.md) slices extend the method
+allowlist with `type.mro` and `property.__set_name__`, respectively.
+
 Both APIs return the original descriptor when target is None and owner is
 non-None. Both target and owner None raise TypeError. Owner is otherwise ignored,
 including arbitrary adopted false-valued objects. These finite descriptors do

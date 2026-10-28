@@ -37,6 +37,7 @@ from examples.interpreter_native_descriptors import SOURCE as NATIVE_DESCRIPTOR_
 from examples.interpreter_descriptor_binding import SOURCE as DESCRIPTOR_BINDING_SOURCE
 from examples.interpreter_native_rebinding import SOURCE as NATIVE_REBINDING_SOURCE
 from examples.interpreter_type_reflection import SOURCE as TYPE_REFLECTION_SOURCE
+from examples.interpreter_property_names import SOURCE as PROPERTY_NAMES_SOURCE
 
 
 def smoke(channel=None):
@@ -187,7 +188,8 @@ def smoke(channel=None):
                     descriptor_binding = json.loads((ROOT / 'tests/fixtures/interpreter/descriptor-binding.json').read_bytes())
                     native_rebinding = json.loads((ROOT / 'tests/fixtures/interpreter/native-rebinding.json').read_bytes())
                     type_reflection = json.loads((ROOT / 'tests/fixtures/interpreter/type-reflection.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection]:
+                    property_names = json.loads((ROOT / 'tests/fixtures/interpreter/property-names.json').read_bytes())
+                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -203,6 +205,7 @@ def smoke(channel=None):
                     programs.append(DESCRIPTOR_BINDING_SOURCE)
                     programs.append(NATIVE_REBINDING_SOURCE)
                     programs.append(TYPE_REFLECTION_SOURCE)
+                    programs.append(PROPERTY_NAMES_SOURCE)
                     for program in programs:
                         expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
                                                            text=True, encoding='utf-8', timeout=5)
@@ -549,7 +552,23 @@ def smoke(channel=None):
                                     assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
                     checks.append('native-owner-and-type-hierarchy-reflection-compose-after-offline-reload')
                     checks.append('type-reflection-errors-and-deferred-mro-effects-remain-explicit-offline')
+                    run(PROPERTY_NAMES_SOURCE, 'names field snapshot 7\nidentity True\nfallback read\nnative builtin_function_or_method True\nindependent field detached\nfield field\nfield detached\nlookup\nfield lazy\n')
+                    for case in property_names['cases']:
+                        if case['stage'] not in property_names['implemented_stages']:
+                            refused(case['source'], 'UnsupportedOperationError:')
+                            if case['id'].startswith('diagnostic-'):
+                                assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                            for frame in case.get('error_frames', []):
+                                if frame['function'] != '<module>':
+                                    assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
+                    checks.append('property-names-copies-and-native-notification-compose-after-offline-reload')
+                    checks.append('property-name-errors-and-diagnostic-callback-refusals-remain-explicit-offline')
                     busy = [
+                        'class Getter:\n @property\n def __name__(self):\n  print("entered")\n  while True: pass\np=property(Getter())\np.__name__\n',
+                        'p=property()\nclass D:\n def __set_name__(self,owner,name):\n  print("entered")\n  while True: pass\nclass C:\n first=p\n callback=D()\n last=p\n',
                         'class M(type):\n def __getattribute__(cls,name):\n  print("entered")\n  while True: pass\nclass C(metaclass=M): pass\nC.mro()\n',
                         'class M(type):\n def __getattribute__(cls,name):\n  print("entered")\n  while True: pass\nclass C(metaclass=M): pass\nC.__base__\n',
                         'def callback(obj):\n print("entered")\n while True: pass\np=property(callback)\nproperty.__get__.__get__(p)([7])\n',
@@ -805,6 +824,11 @@ def smoke(channel=None):
                         refused('print("before")\n'+source, 'UnsupportedOperationError:')
                         assert page.locator('#result').inner_text() == 'before\n'
                     checks.append('class-to-core-update-retains-type-reflection-boundaries')
+                    refused(PROPERTY_NAMES_SOURCE, 'UnsupportedSyntaxError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused('print("before")\nproperty().__set_name__(None,"field")\n', 'NameError:')
+                    assert page.locator('#result').inner_text() == 'before\n'
+                    checks.append('class-to-core-update-retains-property-name-boundaries')
                     refused('slice(7)\n', 'NameError:')
                     refused('next(iter([]),7)\n', 'UnsupportedOperationError:')
                     refused('iter(str,7)\n', 'UnsupportedOperationError:')
