@@ -300,7 +300,7 @@
       "id": "descriptors-decorators",
       "status": "partial",
       "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation.",
-      "gaps": "Further property documentation/name/dictionary reflection, native descriptor rebinding APIs, builtin layouts and live namespaces retain separate contracts.",
+      "gaps": "Further property documentation/name/dictionary reflection, native descriptor rebinding APIs, builtin layouts and live namespaces retain separate contracts. Copies requiring getter documentation read hooks refuse before those hooks execute.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -333,7 +333,9 @@
         "descriptor-binding-function-unbound",
         "descriptor-binding-function-binding-bypasses-target-owner-hooks",
         "descriptor-binding-function-binding-generator-is-lazy",
-        "descriptor-binding-function-binding-original-frames"
+        "descriptor-binding-function-binding-original-frames",
+        "descriptor-binding-future-copy-getter-doc-hook",
+        "descriptor-binding-copy-setter-read-hooks-remain-unobserved"
       ],
       "evidence": [
         "tests/fixtures/interpreter/descriptors.json:property-get-set-delete",
@@ -362,7 +364,9 @@
         "tests/fixtures/interpreter/descriptor-binding.json:function-unbound",
         "tests/fixtures/interpreter/descriptor-binding.json:function-binding-bypasses-target-owner-hooks",
         "tests/fixtures/interpreter/descriptor-binding.json:function-binding-generator-is-lazy",
-        "tests/fixtures/interpreter/descriptor-binding.json:function-binding-original-frames"
+        "tests/fixtures/interpreter/descriptor-binding.json:function-binding-original-frames",
+        "tests/fixtures/interpreter/descriptor-binding.json:future-copy-getter-doc-hook",
+        "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved"
       ]
     },
     {
@@ -1950,7 +1954,7 @@
       "id": "property",
       "status": "partial",
       "scope": "property(fget=None,fset=None,fdel=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities.",
-      "gaps": "Further property documentation/name/dictionary reflection and arbitrary doc behavior.",
+      "gaps": "Further property documentation/name/dictionary reflection and arbitrary doc behavior. Copies requiring getter documentation read hooks refuse before those hooks execute.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1969,7 +1973,9 @@
         "descriptor-binding-copy-getter-unbound",
         "descriptor-binding-copy-setter-bound-none-retains",
         "descriptor-binding-copy-deleter-metadata",
-        "descriptor-binding-copy-getter-bound-equality-hash"
+        "descriptor-binding-copy-getter-bound-equality-hash",
+        "descriptor-binding-future-copy-getter-doc-hook",
+        "descriptor-binding-copy-setter-read-hooks-remain-unobserved"
       ],
       "evidence": [
         "tests/fixtures/interpreter/nested-descriptors.json:set-property",
@@ -1983,7 +1989,9 @@
         "tests/fixtures/interpreter/descriptor-binding.json:copy-getter-unbound",
         "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-bound-none-retains",
         "tests/fixtures/interpreter/descriptor-binding.json:copy-deleter-metadata",
-        "tests/fixtures/interpreter/descriptor-binding.json:copy-getter-bound-equality-hash"
+        "tests/fixtures/interpreter/descriptor-binding.json:copy-getter-bound-equality-hash",
+        "tests/fixtures/interpreter/descriptor-binding.json:future-copy-getter-doc-hook",
+        "tests/fixtures/interpreter/descriptor-binding.json:copy-setter-read-hooks-remain-unobserved"
       ]
     },
     {
