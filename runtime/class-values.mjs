@@ -9,6 +9,8 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
+const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
+const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_COPY_METHODS]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__"]);
 const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name);
@@ -114,10 +116,10 @@ export class ClassRuntime {
     let name = this.values.typeName(value);
     if (name === null) {
       if (this.isType(value)) name = "type";
-      else if (value instanceof BuiltinValue) name = NATIVE_CHECK_METHODS.has(value.name) ? "method_descriptor" : nativeWrapper(value.name) ? "wrapper_descriptor" : "builtin_function_or_method";
+      else if (value instanceof BuiltinValue) name = NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" : nativeWrapper(value.name) ? "wrapper_descriptor" : "builtin_function_or_method";
       else if (value instanceof FunctionValue) name = "function";
       else if (value instanceof BoundMethodValue) name = !value.pythonMethod && value.callable instanceof BuiltinValue ?
-        NATIVE_CHECK_METHODS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
+        NATIVE_METHOD_DESCRIPTORS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
       else if (value instanceof PropertyValue) name = "property";
       else if (value instanceof MethodWrapperValue) name = value.kind;
       else if (value instanceof SuperValue) name = "super";
@@ -159,7 +161,7 @@ export class ClassRuntime {
     for (const base of this.mro(type).slice(start)) {
       this.charge(1);
       if (base instanceof BuiltinValue) {
-        if (native && NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name))
+        if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_COPY_METHODS.has(base.name + "." + name)))
           return {found: true, value: this.builtin(base.name + "." + name)};
         if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
@@ -226,7 +228,7 @@ export class ClassRuntime {
     if (receiver instanceof BuiltinValue) {
       if (name === "__class__") return value(this.typeOf(receiver));
       if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(
-        name === "__name__" && (NATIVE_CHECK_METHODS.has(receiver.name) || nativeWrapper(receiver.name)) ? receiver.name.slice(receiver.name.lastIndexOf(".") + 1) : receiver.name, char => char.codePointAt(0))));
+        name === "__name__" && (NATIVE_METHOD_DESCRIPTORS.has(receiver.name) || nativeWrapper(receiver.name)) ? receiver.name.slice(receiver.name.lastIndexOf(".") + 1) : receiver.name, char => char.codePointAt(0))));
       if (this.isType(receiver)) {
         if (receiver.name !== "type" && ["__instancecheck__", "__subclasscheck__"].includes(name))
           return this.bindAttribute(this.builtin("type." + name), receiver, this.builtin("type"));
@@ -243,7 +245,7 @@ export class ClassRuntime {
       if (NATIVE_DESCRIPTOR_WRAPPERS.has("property." + name))
         return value(this.make(BoundMethodValue, this.builtin("property." + name), receiver));
       if (["fget", "fset", "fdel"].includes(name)) return value(receiver[name]);
-      if (["getter", "setter", "deleter"].includes(name)) return value(this.make(PropertyAccessorValue, name, receiver));
+      if (NATIVE_COPY_METHODS.has("property." + name)) return value(this.make(BoundMethodValue, this.builtin("property." + name), receiver));
       this.fail("UnsupportedOperationError", "Property reflection is outside the adopted profile.", "UNSUPPORTED");
     }
     if (receiver instanceof MethodWrapperValue) {
@@ -257,7 +259,7 @@ export class ClassRuntime {
       if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
     }
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && name === "__func__" && receiver.callable instanceof BuiltinValue &&
-        (NATIVE_CHECK_METHODS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name) || nativeWrapper(receiver.callable.name)))
+        (NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name) || nativeWrapper(receiver.callable.name)))
       this.fail("AttributeError", "Native methods have no __func__ attribute.");
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && name === "__class__" && receiver.callable instanceof BuiltinValue && nativeWrapper(receiver.callable.name))
       return value(this.builtin("method-wrapper"));
@@ -265,6 +267,10 @@ export class ClassRuntime {
       return value(this.values.string(Array.from(name === "__name__" ? receiver.callable.name.slice(receiver.callable.name.lastIndexOf(".") + 1) : receiver.callable.name, char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_COPY_METHODS.has(receiver.callable.name)) {
+      if (name === "__class__") return value(this.typeOf(receiver));
+      if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
+    }
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
@@ -306,6 +312,8 @@ export class ClassRuntime {
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
   bindAttribute(value, receiver, owner) {
+    if (receiver !== null && value instanceof BuiltinValue && NATIVE_COPY_METHODS.has(value.name) && !(receiver instanceof PropertyValue))
+      this.fail("TypeError", "Native property copy requires a property receiver.");
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_DESCRIPTOR_WRAPPERS.has(value.name)) {
       const kind = value.name.slice(0, value.name.indexOf("."));
       if (kind === "property" ? !(receiver instanceof PropertyValue) : !(receiver instanceof MethodWrapperValue) || receiver.kind !== kind)
@@ -325,7 +333,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && (NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && (NATIVE_COPY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   special(receiver, name) {
     this.key(name); this.touch(receiver);

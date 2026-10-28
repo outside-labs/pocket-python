@@ -125,8 +125,8 @@ test("native descriptor layouts retain accessors and functions without exporting
   try {
     const fn = method("read"), property = s.runtime.make(PropertyValue, fn), wrapper = s.runtime.make(MethodWrapperValue, "staticmethod", fn);
     const copy = s.runtime.get(property, "setter"); s.roots.push(copy, wrapper);
-    assert.ok(copy instanceof PropertyAccessorValue); assert.equal(copy.property, property);
-    s.memory.collect(); assert.equal(s.runtime.get(copy.property, "fget"), fn);
+    assert.ok(copy instanceof BoundMethodValue); assert.equal(copy.receiver, property);
+    s.memory.collect(); assert.equal(s.runtime.get(copy.receiver, "fget"), fn);
     for (const value of [property, wrapper, copy]) {
       assert.equal(s.runtime.values.truth(value), true);
       assert.throws(() => encodeValue(value), {name: "TypeError"});
