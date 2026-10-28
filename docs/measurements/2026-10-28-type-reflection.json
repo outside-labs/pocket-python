@@ -159,9 +159,10 @@
   "local_checks": {
     "focused_node_tests": 89,
     "adjacent_class_descriptor_construction_execution_tests": 140,
-    "focused_python_tests": 9,
+    "focused_python_tests": 10,
     "composed_resource_observations_unchanged": 8,
-    "broad_regression_coverage": "Parallel PR workflow; final run links are retained in the PRs."
+    "broad_regression_coverage": "Parallel PR workflow; final run links are retained in the PRs.",
+    "validation_inventory_guard": "Rejects any explicit source stage filter that omits adopted corpus stages; the prior O35-only filter fails on all six target/driver checks."
   },
   "example": {
     "path": "examples/interpreter_type_reflection.py",
