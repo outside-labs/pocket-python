@@ -427,13 +427,13 @@
     },
     {
       "id": "descriptor-valued-setter-hook",
-      "stage": "deferred",
+      "stage": "C2-native",
       "source": "class Hook:\n def __get__(self,obj,owner): return write\ndef write(obj,value): obj.saved=value\nclass D:\n __set__=Hook()\nclass A:\n x=D()\na=A()\na.x=7\nprint(a.saved)\n",
       "stdout": "7\n"
     },
     {
       "id": "property-valued-setter-hook",
-      "stage": "deferred",
+      "stage": "C2-native",
       "source": "class Hook:\n def read(self): return write\nclass D:\n __set__=property(Hook.read)\ndef write(obj,value): obj.saved=value\nclass A:\n x=D()\na=A()\na.x=7\nprint(a.saved)\n",
       "stdout": "7\n"
     }

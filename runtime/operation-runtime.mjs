@@ -935,7 +935,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             plan = classes.special(receiver, "__getattribute__");
           else {
             plan = writing ? classes.write(receiver, name, task.item, removing) : classes.read(receiver, name);
-            task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth);
+            task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site,
+              plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after: completion, depth}) : completion, depth);
             continue;
           }
           if (++depth > maxDepth) python("RecursionError", "maximum attribute dispatch depth exceeded");
@@ -1559,7 +1560,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = recovery; continue;
             }
             task = plan.kind === "value" ? valueTask(writing ? null : name === "hasattr" ? true : plan.value, site, completion) :
-              callTask(plan.callable, plan.args, [], [], site, target, depth);
+              callTask(plan.callable, plan.args, [], [], site,
+                plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after: target, depth}) : target, depth);
             continue;
           }
           if (callable instanceof ValueMethod && callable.receiver instanceof GeneratorValue) {

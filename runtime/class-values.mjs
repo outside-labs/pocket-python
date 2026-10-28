@@ -192,8 +192,12 @@ export class ClassRuntime {
     if (hook.value instanceof MethodWrapperValue) return {kind: "call",
       callable: hook.value.kind === "classmethod" ? this.make(BoundMethodValue, hook.value.callable, receiver.type) : hook.value.callable, args};
     if (hook.value instanceof FunctionValue) return {kind: "call", callable: hook.value, args: [receiver, ...args]};
-    if (hook.value instanceof PropertyValue || this.descriptor(hook.value)?.get.found)
-      this.fail("UnsupportedOperationError", "Descriptor-valued mutation/notification hooks require a later stage.", "UNSUPPORTED");
+    if (hook.value instanceof PropertyValue || this.descriptor(hook.value)?.get.found) {
+      if (name === "__set_name__")
+        this.fail("UnsupportedOperationError", "Descriptor-valued notification hooks require a later stage.", "UNSUPPORTED");
+      const plan = this.bindAttribute(hook.value, receiver, receiver.type);
+      return {kind: "bind-call", callable: plan.callable, args: plan.args, invokeArgs: args};
+    }
     return {kind: "call", callable: hook.value, args};
   }
   notification(receiver, owner, name) { return this.boundHook(receiver, "__set_name__", [owner, name]); }
