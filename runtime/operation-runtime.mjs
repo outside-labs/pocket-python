@@ -1556,11 +1556,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length !== 3) python("TypeError", "Native property notification requires two positional arguments");
             task = valueTask(classes.mutate(args[0], "__name__", args[2]), site, completion); continue;
           }
-          if (callable.name === "method-abstract-marker") {
+          if (["method-abstract-marker", "method-documentation"].includes(callable.name)) {
             const receiver = args[0];
             if (!(receiver instanceof BoundMethodValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid method marker lookup.");
             if (++depth > maxDepth) python("RecursionError", "maximum method marker lookup depth exceeded");
-            task = attributeTask(receiver.callable, "__isabstractmethod__", site,
+            task = attributeTask(receiver.callable, callable.name === "method-documentation" ? "__doc__" : "__isabstractmethod__", site,
               continuation("relay", {receiver, after: completion}), depth); continue;
           }
           if (callable.name === "descriptor-abstract") {
@@ -1627,7 +1627,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
             if (writing && args[0] instanceof ClassValue) python("TypeError", "object attribute mutation requires an ordinary instance");
             const markerLayout = name === "__isabstractmethod__" && (args[0] instanceof FunctionValue ||
-              args[0] instanceof BoundMethodValue || args[0] instanceof PropertyValue || args[0] instanceof MethodWrapperValue);
+              args[0] instanceof BoundMethodValue || args[0] instanceof PropertyValue || args[0] instanceof MethodWrapperValue) ||
+              name === "__doc__" && (args[0] instanceof FunctionValue || args[0] instanceof BoundMethodValue);
             if (!(args[0] instanceof InstanceValue) && !markerLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }

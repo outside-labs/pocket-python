@@ -21,6 +21,7 @@ export class FunctionValue {
     this.pool = pool; this.index = index; this.globals = globals; this.closure = closure;
     this.defaults = defaults === null ? null : Object.freeze([...defaults]);
     this.abstractFlag = undefined;
+    this.documentation = pool?.code.functions[index]?.doc === undefined ? null : pool.code.constants[pool.code.functions[index].doc];
   }
 }
 export class GeneratorValue {

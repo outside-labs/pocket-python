@@ -1,6 +1,7 @@
 import {verify, BytecodeError} from "./bytecode.mjs";
 import {EXCEPTIONS} from "./function-objects.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
+import {ValueRuntime} from "./values.mjs";
 
 export const FUNCTION_LIMITS = Object.freeze({functions: 128, blocks: 512, instructions: 4096,
   names: 128, depth: 32, stack: 256});
@@ -45,9 +46,12 @@ export function verifyFunctions(program) {
   const functions = Array.from(program.functions, (fn, functionIndex) => {
     const scopeFields = modern ? ["globals", "nonlocals"].filter(key => Object.hasOwn(fn, key)) : [];
     const namespaceFields = classes ? ["namespace", "namespaceCells"].filter(key => Object.hasOwn(fn, key)) : [];
-    fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : []), ...scopeFields, ...namespaceFields]);
+    const docFields = classes && Object.hasOwn(fn, "doc") ? ["doc"] : [];
+    fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : []), ...scopeFields, ...namespaceFields, ...docFields]);
     const kind = classes ? fn.kind : functionIndex === 0 ? "module" : "function";
     if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
+    if (docFields.length && (kind !== "function" || !integer(fn.doc, constants.length - 1) || !new ValueRuntime().isString(constants[fn.doc])))
+      fail("Function documentation requires a string constant in bytecode 5.");
     if (!(fn.name === "<module>" && functionIndex === 0) && !(modern && ["<lambda>", "<listcomp>", "<dictcomp>", "<setcomp>", "<genexpr>"].includes(fn.name) && kind === "function") && !validName(fn.name)) fail("Invalid function name.");
     if (typeof fn.qualname !== "string" || !fn.qualname || fn.qualname.length > 256) fail("Invalid qualified function name.");
     const variadic = modern ? ["vararg", "kwarg"].filter(key => Object.hasOwn(fn.params, key)) : [];
@@ -232,7 +236,7 @@ export function verifyFunctions(program) {
     };
     control(fn.body, false);
     if (reached.size !== blocks.length) fail("Function contains an unreferenced block.");
-    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {}), ...Object.fromEntries(scopeFields.map(key => [key, key === "globals" ? globals : nonlocals])), ...(namespace ? {namespace} : {}), ...(namespaceCells ? {namespaceCells} : {})});
+    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {}), ...Object.fromEntries(scopeFields.map(key => [key, key === "globals" ? globals : nonlocals])), ...(namespace ? {namespace} : {}), ...(namespaceCells ? {namespaceCells} : {}), ...(docFields.length ? {doc: fn.doc} : {})});
   });
   for (const fn of functions) if (fn.namespace) {
     const group = new Set([fn]);
