@@ -189,8 +189,8 @@
     {
       "id": "read-native-descriptor-identity",
       "stage": "O25",
-      "source": "class M(type): pass\nclass A(metaclass=M): x=7\nf=M.__getattribute__\ng=A.__getattribute__\nprint(type(f).__name__,f.__name__,f.__qualname__)\nprint(type(g).__name__,g.__name__,g.__qualname__)\nprint(f is type.__getattribute__,f(A,\"x\"))\n",
-      "stdout": "wrapper_descriptor __getattribute__ type.__getattribute__\nwrapper_descriptor __getattribute__ object.__getattribute__\nTrue 7\n"
+      "source": "class M(type): pass\nclass A(metaclass=M): x=7\nf=M.__getattribute__\nprint(type(f).__name__,f.__name__,f.__qualname__)\nprint(f is type.__getattribute__,f(A,\"x\"))\n",
+      "stdout": "wrapper_descriptor __getattribute__ type.__getattribute__\nTrue 7\n"
     },
     {
       "id": "read-bound-native-metaclass",

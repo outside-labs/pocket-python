@@ -12,9 +12,9 @@ and bytecode 5 remain the admission boundary; core admission is unchanged.
 
 Explicit native helpers validate positional signatures, receiver and bounded
 string names before callbacks. Unbound type helpers have canonical
-`method_descriptor` identity, bare `__name__` and type-qualified `__qualname__`.
+`wrapper_descriptor` identity, bare `__name__` and type-qualified `__qualname__`.
 Bindings obtained through metaclass inheritance or `super` retain their class
-receiver and `builtin_function_or_method` identity and have no Python `__func__`.
+receiver and `method-wrapper` identity and have no Python `__func__`.
 Native helper reads on further builtin layouts retain their existing boundaries.
 
 Real `type()` and successful actual-type instance checks bypass advertised class
