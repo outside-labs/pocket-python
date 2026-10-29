@@ -580,6 +580,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               (classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && arg === "__class__" && classes.hasSlot(receiver.type, "__class__")))
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
+          else if (op === "attribute-get" && arg === "__dir__" && frame.callable.pool.code.version === 5 && classes.hasFixedDirectory(receiver))
+            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (receiver instanceof GeneratorValue) {
             if (!["send", "throw", "close", "__iter__", "__next__"].includes(arg)) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires a separate stage.");
             stack.push(allocate(ValueMethod, receiver, arg));
