@@ -238,7 +238,7 @@ export class ClassRuntime {
     const item = this.lookup(type, "__init_subclass__", true, 1);
     return this.bindAttribute(item.value, null, type);
   }
-  read(receiver, name, native = false) {
+  read(receiver, name, native = false, key = null) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
     if (receiver instanceof SuperValue) {
@@ -341,11 +341,11 @@ export class ClassRuntime {
         this.fail("UnsupportedOperationError", "Native method reflection requires its own contract.", "UNSUPPORTED");
       if (native) this.fail("AttributeError", "Method has no native attribute '" + name + "'.");
       return {kind: "call", callable: this.builtin("method-attribute"),
-        args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
+        args: [receiver, key ?? this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     }
     if (receiver instanceof FunctionValue && name === "__class__") return value(this.builtin("function"));
     if (receiver instanceof FunctionValue && name === "__dict__") return value(this.functionDictionary(receiver));
-    if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name);
+    if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name, "get", null, key);
     if (receiver instanceof FunctionValue && name === "__doc__") return value(receiver.documentation);
     if (receiver instanceof FunctionValue && name === "__module__") return value(receiver.identityModule ?? null);
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
@@ -453,13 +453,13 @@ export class ClassRuntime {
     if (result.kind !== "value") this.fail("UnsupportedOperationError", "Descriptor calls require VM execution frames.", "UNSUPPORTED");
     return result.value;
   }
-  write(receiver, name, value, remove = false) {
+  write(receiver, name, value, remove = false, key = null) {
     this.key(name); this.touch(receiver);
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
       this.fail("AttributeError", "Method attributes are read-only.");
     }
-    if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name, remove ? "delete" : "set", value);
+    if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name, remove ? "delete" : "set", value, key);
     if (name === "__objclass__" && (this.nativeDescriptorKind(receiver) || receiver instanceof BoundMethodValue &&
         (receiver.pythonMethod || receiver.callable instanceof BuiltinValue &&
           (nativeWrapper(receiver.callable.name) || NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name)))))
@@ -491,13 +491,13 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Native function methods require their own contract.", "UNSUPPORTED");
     this.fail("AttributeError", "Function has no attribute '" + name + "'.");
   }
-  functionEntry(receiver, name, operation = "get", item = null) {
+  functionEntry(receiver, name, operation = "get", item = null, key = null) {
     if (FUNCTION_DEFERRED_DATA.has(name))
       this.fail("UnsupportedOperationError", "Native function metadata requires its own contract.", "UNSUPPORTED");
     const value = value => ({kind: "value", value});
     const dictionary = operation === "set" ? this.functionDictionary(receiver) : receiver.attributes;
     if (dictionary === null) return value(this.functionMissing(receiver, name, operation));
-    const key = this.values.string(Array.from(name, char => char.codePointAt(0)));
+    key ??= this.values.string(Array.from(name, char => char.codePointAt(0)));
     if (this.values.dictionaryNeedsProtocol(dictionary, key)) return {kind: "call",
       callable: this.builtin("function-dictionary-" + operation), args: [receiver, dictionary, key, item]};
     if (operation === "set") return value(this.values.set(dictionary, key, item));

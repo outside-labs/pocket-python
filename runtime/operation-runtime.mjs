@@ -991,7 +991,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           else if (operation === "get" && classes.hasAttributeHook(receiver, "__getattribute__"))
             plan = classes.special(receiver, "__getattribute__");
           else {
-            plan = writing ? classes.write(receiver, name, task.item, removing) : classes.read(receiver, name, operation === "native-get");
+            plan = writing ? classes.write(receiver, name, task.item, removing, key) : classes.read(receiver, name, operation === "native-get", key);
             task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site,
               plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after: completion, depth}) : completion, depth);
             continue;
@@ -1706,7 +1706,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue;
             }
             let plan;
-            try { plan = writing ? classes.write(receiver, attribute, args[2] ?? null, name === "delattr") : classes.read(receiver, attribute); }
+            try { plan = writing ? classes.write(receiver, attribute, args[2] ?? null, name === "delattr", args[1]) : classes.read(receiver, attribute, false, args[1]); }
             catch (error) {
               const recovery = error instanceof Raised && recover(error.value, target, site);
               if (!recovery) throw error;
