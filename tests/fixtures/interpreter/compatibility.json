@@ -3248,6 +3248,307 @@
         "code": "UNSUPPORTED",
         "phase": "execute"
       }
+    },
+    {
+      "id": "function-dictionaries-live-empty-dictionary",
+      "source": "def f(): return 7\nd=f.__dict__\nprint(d is f.__dict__,vars(f) is d,len(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 0\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-attribute-dictionary-alias",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nf.tag=v\nprint(d[\"tag\"] is v,f.tag is v)\nd[\"tag\"]=[9]\nprint(f.tag[0])\ndel f.tag\nprint(len(d),hasattr(f,\"tag\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n9\n0 False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n9\n0 False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-replacement-keeps-old-alias",
+      "source": "def f(): return 7\nd=f.__dict__\nd[\"old\"]=3\nr={\"new\":[]};f.__dict__=r\nprint(f.__dict__ is r,vars(f) is r,d[\"old\"],hasattr(f,\"old\"),f.new is r[\"new\"])\nf.next=7\nprint(r[\"next\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 3 False True\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 3 False True\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-data-priority-__dict__",
+      "source": "def f(): return 7\nd=f.__dict__\nbefore=getattr(f,'__dict__')\nd['__dict__']=[9]\nprint(getattr(f,'__dict__') is before,d['__dict__'][0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-get-shadow-does-not-change-binding",
+      "source": "def f(): return 7\nd=f.__dict__\nf.__get__=9\nclass C: read=f\nc=C()\nprint(f.__get__,c.read.__func__ is f,c.read.__self__ is c)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "9 True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "9 True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-abstract-markers-share-dictionary",
+      "source": "def f(): return 7\nd=f.__dict__\nf.__isabstractmethod__=[1]\nprint(d[\"__isabstractmethod__\"] is f.__isabstractmethod__,property(f).__isabstractmethod__)\nd[\"__isabstractmethod__\"]=False\nprint(property(f).__isabstractmethod__)\ndel d[\"__isabstractmethod__\"]\nprint(hasattr(f,\"__isabstractmethod__\"),property(f).__isabstractmethod__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\nFalse\nFalse False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\nFalse\nFalse False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-native-function-access",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nobject.__setattr__(f,\"tag\",v)\nprint(object.__getattribute__(f,\"tag\") is v,object.__getattribute__(f,\"__dict__\") is d)\nobject.__delattr__(f,\"tag\")\nprint(hasattr(f,\"tag\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\nFalse\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\nFalse\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-collision-read-write-delete",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"equal\",other)\n  return other==\"tag\"\nk=Key();f.__dict__={k:[7]}\nprint(f.tag[0]);f.tag=[9];print(f.tag[0]);del f.tag;print(len(f.__dict__))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "equal tag\n7\nequal tag\nequal tag\n9\nequal tag\n0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "equal tag\n7\nequal tag\nequal tag\n9\nequal tag\n0\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-collision-replacement-snapshot",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  f.__dict__={\"tag\":9}\n  return True\nf.__dict__={Key():7}\nprint(f.tag,f.tag)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-collision-set-replacement-snapshot",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  f.__dict__={\"tag\":3}\n  return True\nk=Key();old={k:7};f.__dict__=old\nf.tag=9\nprint(f.tag,len(old))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "3 1\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "3 1\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-collision-error-is-not-missing",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise KeyError(\"callback\")\nf.__dict__={Key():7}\ngetattr(f,\"tag\",99)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "KeyError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "KeyError"
+      }
+    },
+    {
+      "id": "function-dictionaries-method-live-dictionary",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nprint(m.__dict__ is d,vars(m) is d)\nf.tag=[3]\nprint(m.tag is f.tag)\nf.__dict__={\"tag\":[9]}\nprint(m.tag[0],m.__dict__ is f.__dict__,len(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\nTrue\n9 True 1\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\nTrue\n9 True 1\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-method-native-bypass-tag",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=[]\nf.__objclass__=C\ntry: object.__getattribute__(m,'tag')\nexcept AttributeError: print(\"bypass\")\nprint(getattr(m,'tag') is getattr(f,'tag'))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "bypass\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "bypass\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-method-custom-getattribute",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print(\"lookup\",name)\n return [7]\nCallable.__getattribute__=lookup\nprint(m.tag[0],m.__dict__[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "lookup tag\nlookup __dict__\n7 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "lookup tag\nlookup __dict__\n7 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-nested-method-custom-dictionary",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): pass\nm=C().read\nn=classmethod(m).__get__(None,C)\nC.read.tag=[]\nprint(n.tag is C.read.tag,n.__dict__ is C.read.__dict__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-method-live-marker-native-bypass",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self):\n  \"doc\"\n  pass\nm=C().read\nC.read.__isabstractmethod__=True\ntry: object.__getattribute__(m,\"__isabstractmethod__\")\nexcept AttributeError: print(\"bypass\")\nprint(m.__isabstractmethod__,object.__getattribute__(m,\"__doc__\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "bypass\nTrue doc\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "bypass\nTrue doc\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-method-native-get-deferred",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): pass\nC().read.__get__\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "function-dictionaries-dictionary-structural-collision-deferred",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del f.__dict__[self]\n  return True\nf.__dict__={Key():7}\ngetattr(f,\"tag\",99)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "function-dictionaries-explicit-name-identity-ordinary",
+      "source": "def f(): return 7\nd=f.__dict__\nname=\"not an identifier\"\nsetattr(f,name,7)\nprint(next(iter(d)) is name)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-explicit-name-identity-native",
+      "source": "def f(): return 7\nd=f.__dict__\nname=\"not an identifier\"\nobject.__setattr__(f,name,7)\nprint(next(iter(d)) is name)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-equal-name-retains-first-key",
+      "source": "def f(): return 7\nd=f.__dict__\nn=2;first=\"x \"*n;second=\"x \"*n\nsetattr(f,first,7);setattr(f,second,9)\nname=next(iter(d))\nprint(name is first,name is second,getattr(f,first))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True False 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True False 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-collision-retains-supplied-lookup-key",
+      "source": "def f(): return 7\nd=f.__dict__\nname=\"tag\"\nclass Key:\n def __hash__(self): return hash(name)\n def __eq__(self,other):\n  print(other is name)\n  return True\nf.__dict__={Key():7}\nprint(getattr(f,name))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-dictionaries-method-retains-supplied-lookup-key",
+      "source": "def f(): return 7\nd=f.__dict__\nname=\"tag\"\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,key):\n print(key is name)\n return 7\nCallable.__getattribute__=lookup\nprint(getattr(m,name))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n7\n",
+        "error_type": null
+      }
     }
   ]
 }

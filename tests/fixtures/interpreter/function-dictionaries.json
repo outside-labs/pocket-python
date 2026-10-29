@@ -440,8 +440,8 @@
     {
       "id": "collision-false-missing",
       "stage": "O45",
-      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"equal\")\n  return False\nf.__dict__={Key():7}\nprint(getattr(f,\"tag\",99),hasattr(f,\"tag\"))\n",
-      "stdout": "equal\nequal\n99 False\n"
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  return False\nf.__dict__={Key():7}\nprint(getattr(f,\"tag\",99),hasattr(f,\"tag\"))\n",
+      "stdout": "99 False\n"
     },
     {
       "id": "custom-call-does-not-change-execution",

@@ -65,3 +65,7 @@ Stop/Restart cycles. The
 [payload record](measurements/2026-10-28-function-metadata.json) verifies 38 files
 and 693,839 bytes, with an identical rebuild. These are finite semantic/source/
 payload observations. Broader reflection and async work remain under #123/#34.
+
+The later [O45/O46 function dictionary contract](interpreter-function-dictionaries.md)
+adopts live custom function attributes and bound-method fallback. Broader native
+metadata, instance/module/class live mappings and async remain separate work.

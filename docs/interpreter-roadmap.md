@@ -353,3 +353,14 @@ broader metaclass protocols and dynamic source remain finite follow-ups. Native
 coroutine/await, async protocols, awaited host adapters and durable view/save
 acceptance remain under #34. No dependency, host grant, release, publication or
 deployment is included.
+
+## Live function dictionary checkpoint
+
+[O45/O46](interpreter-function-dictionaries.md) extend #123/#33 with live function
+dictionaries and bound-method custom attribute fallback. Dictionary replacements,
+collision callbacks and decorator state preserve exact identities and owned
+parked lifetimes. The decorator console composes retained methods and generators.
+Instance/module/class live mappings, default directories, broader native metadata
+and dynamic source retain their finite contracts. Native coroutine/await, async
+protocols and host adapters remain under #34. No host grant, dependency, release
+or deployment is included.

@@ -109,3 +109,7 @@ The separate [documentation contract](interpreter-documentation.md) adopts
 function/class source docstrings, owned function documentation and live bound
 method reads. It leaves arbitrary function dictionaries and signatures outside
 this binding slice.
+
+The later [O45/O46 function dictionary contract](interpreter-function-dictionaries.md)
+adopts live custom function attributes and bound-method fallback. Broader native
+metadata, instance/module/class live mappings and async remain separate work.
