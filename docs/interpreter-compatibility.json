@@ -213,7 +213,7 @@
         "function-metadata-method-custom-fallback-__name__",
         "function-metadata-method-native-read-__name__",
         "function-metadata-method-name-descriptor",
-        "function-metadata-function-dictionary-deferred"
+        "function-metadata-function-defaults-deferred"
       ],
       "evidence": [
         "tests/fixtures/interpreter/function-binding.json:computed-once",
@@ -241,7 +241,7 @@
         "tests/fixtures/interpreter/function-metadata.json:method-custom-fallback-__name__",
         "tests/fixtures/interpreter/function-metadata.json:method-native-read-__name__",
         "tests/fixtures/interpreter/function-metadata.json:method-name-descriptor",
-        "tests/fixtures/interpreter/function-metadata.json:function-dictionary-deferred"
+        "tests/fixtures/interpreter/function-metadata.json:function-defaults-deferred"
       ]
     },
     {

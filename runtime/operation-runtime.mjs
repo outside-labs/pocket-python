@@ -528,6 +528,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return valueTask(completion.operation.startsWith("inplace-") ? values.inplace(completion.operation.slice(8), ...args) : values.binary(completion.operation, ...args), site, completion.after);
     }
     if (completion?.kind === "attribute-write") return valueTask(null, site, completion.after);
+    if (completion?.kind === "function-entry") {
+      const result = value.items[0] ? value.items[1] : classes.functionMissing(completion.receiver, values.text(completion.key), completion.operation);
+      return valueTask(result, site, completion.after);
+    }
     if (completion?.kind === "attribute-result") return valueTask(completion.mode === "hasattr" ? true : value, site, completion.after);
     if (completion?.kind === "delegate-bind") return callTask(value, completion.args, [], [], site, completion.after);
     if (completion?.kind.startsWith("delegate-")) return delegateResult(completion.kind, value, site);
@@ -903,6 +907,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const {receiver, key, item, hash, operation, completion: destination} = record, after = record.after ?? destination ?? null;
     const found = position >= 0;
     if (operation === "contains") return valueTask(found, site, after);
+    if (operation === "remove-probe") {
+      if (found) values.commitDictionary(receiver, key, null, hash, position, true);
+      return valueTask(values.tuple([found, null]), site, after);
+    }
     if (operation === "probe") return valueTask(values.tuple([found, found ? receiver.entries[position].value : null]), site, after);
     if (operation === "set") return valueTask(values.commitDictionary(receiver, key, item, hash, position), site, after);
     if (operation === "discard" && !found) return valueTask(null, site, after);
@@ -965,8 +973,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries = operationRoots(task);
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
-          const identityWrite = writing && (receiver instanceof FunctionValue || classes.isPythonMethod(receiver)) && ["__name__", "__qualname__", "__module__"].includes(name);
-          if (!(writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name)))
+          const identityWrite = writing && classes.isPythonMethod(receiver) && ["__name__", "__qualname__", "__module__"].includes(name);
+          if (!(receiver instanceof FunctionValue || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
           state.temporaries.push(key);
@@ -1584,6 +1592,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length !== 3) python("TypeError", "Native property notification requires two positional arguments");
             task = valueTask(classes.mutate(args[0], "__name__", args[2]), site, completion); continue;
           }
+          if (callable.name.startsWith("function-dictionary-")) {
+            const [receiver, dictionary, key, item] = args, operation = callable.name.slice("function-dictionary-".length);
+            if (!(receiver instanceof FunctionValue) || !values.isDict(dictionary) || !values.isString(key) || args.length !== 4 || keywords.length)
+              throw new TypeError("Invalid function dictionary operation.");
+            const after = continuation("function-entry", {receiver, key, operation, after: completion});
+            task = dictionaryTask(dictionary, key, site, operation === "set" ? continuation("relay", {receiver, after: completion}) : after,
+              depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
+          }
           if (["method-abstract-marker", "method-documentation", "method-name", "method-qualname", "method-module"].includes(callable.name)) {
             const receiver = args[0];
             if (!(receiver instanceof BoundMethodValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid method marker lookup.");
@@ -1660,7 +1676,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               name === "__doc__" && (args[0] instanceof FunctionValue || args[0] instanceof BoundMethodValue);
             const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
             const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && (args[0] instanceof FunctionValue || classes.isPythonMethod(args[0]));
-            if (!(args[0] instanceof InstanceValue) && !markerLayout && !documentLayout && !identityLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            if (!(args[0] instanceof InstanceValue || args[0] instanceof FunctionValue) && !markerLayout && !documentLayout && !identityLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             if (identityLayout && !writing && classes.isPythonMethod(args[0])) python("AttributeError", "Method identity metadata requires ordinary callable fallback.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
@@ -1813,7 +1829,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length) {
               const receiver = args[0];
               if (callable.name === "vars") {
-                if (!(receiver instanceof InstanceValue)) {
+                if (!(receiver instanceof InstanceValue || receiver instanceof FunctionValue)) {
                   if (values.typeName(receiver) !== null || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
                       receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");

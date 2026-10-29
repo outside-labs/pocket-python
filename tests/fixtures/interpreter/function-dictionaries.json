@@ -3,7 +3,9 @@
   "suite": "interpreter-function-dictionaries/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O45"
+  ],
   "cases": [
     {
       "id": "live-empty-dictionary",
@@ -237,7 +239,17 @@
       "stage": "O45",
       "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise KeyError(\"callback\")\nf.__dict__={Key():7}\ngetattr(f,\"tag\",99)\n",
       "error_type": "KeyError",
-      "stdout": ""
+      "stdout": "",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "__eq__",
+          "line": 5
+        }
+      ]
     },
     {
       "id": "collision-attribute-error",
@@ -307,13 +319,13 @@
     },
     {
       "id": "method-native-bypass-__name__",
-      "stage": "O46",
+      "stage": "O45",
       "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\nf.__objclass__=C\ntry: object.__getattribute__(m,'__name__')\nexcept AttributeError: print(\"bypass\")\nprint(getattr(m,'__name__') is getattr(f,'__name__'))\n",
       "stdout": "bypass\nTrue\n"
     },
     {
       "id": "method-native-fields-priority",
-      "stage": "O46",
+      "stage": "O45",
       "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nd[\"__self__\"]=9;d[\"__func__\"]=9;d[\"__class__\"]=9\nprint(m.__func__ is f,m.__self__.__class__ is C,m.__class__ is type(m))\n",
       "stdout": "True True True\n"
     },
@@ -352,7 +364,17 @@
       "stage": "O46",
       "source": "def f(): return 7\nd=f.__dict__\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name): raise ValueError(\"original\")\nCallable.__getattribute__=lookup\nm.tag\n",
       "error_type": "ValueError",
-      "stdout": ""
+      "stdout": "",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "lookup",
+          "line": 5
+        }
+      ]
     },
     {
       "id": "deferred-__code__",

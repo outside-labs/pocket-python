@@ -68,12 +68,12 @@ test('function marker growth rolls back failed arena and foreign-owner transfers
     classes.write(fn, '__isabstractmethod__', fn);
     const foreignFlag = other.values.list([]); foreignRoots.push(foreignFlag);
     assert.throws(() => classes.write(fn, '__isabstractmethod__', foreignFlag), {code: 'STALE_HANDLE'});
-    assert.equal(fn.abstractFlag, fn);
+    assert.equal(classes.get(fn, '__isabstractmethod__'), fn);
     const huge = new ValueRuntime().string(new Array(4000).fill(65));
     assert.throws(() => classes.write(fn, '__isabstractmethod__', huge), {code: 'OOM'});
-    assert.equal(fn.abstractFlag, fn);
+    assert.equal(classes.get(fn, '__isabstractmethod__'), fn);
     memory.collect([], {cleanup: true}); assert.equal(classes.get(fn, '__isabstractmethod__'), fn);
-    classes.write(fn, '__isabstractmethod__', null, true); assert.equal(fn.abstractFlag, undefined);
+    classes.write(fn, '__isabstractmethod__', null, true); assert.equal(classes.get(fn, '__dict__').entries.length, 0);
     assert.throws(() => classes.write(fn, '__isabstractmethod__', null, true), {code: 'PYTHON', name: 'AttributeError'});
   } finally { leave(); memory.close(); foreignLeave(); foreign.close(); }
   closed(memory.stats()); closed(foreign.stats());
@@ -130,6 +130,6 @@ test('abstract flags preserve core admission and unrelated function metadata bou
   const result = await runSourceRequest({modules: [unit('def f(): pass\nf.__isabstractmethod__=True\n')]});
   assert.equal(result.error?.code, 'UNSUPPORTED');
   if (result.closed) closed(result.closed);
-  const other = await run('def f(): pass\nf.other=True\n');
+  const other = await run('def f(): pass\nf.__code__\n');
   assert.equal(other.error?.code, 'UNSUPPORTED'); closed(other.closed);
 });

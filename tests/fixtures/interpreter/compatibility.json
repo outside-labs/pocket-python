@@ -3236,11 +3236,11 @@
       }
     },
     {
-      "id": "function-metadata-function-dictionary-deferred",
-      "source": "def f(): pass\nprint(f.__dict__)\n",
+      "id": "function-metadata-function-defaults-deferred",
+      "source": "def f(): pass\nf.__defaults__\n",
       "classification": "deferred",
       "reference": {
-        "stdout": "{}\n",
+        "stdout": "",
         "error_type": null
       },
       "engine": {

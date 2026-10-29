@@ -46,3 +46,9 @@ dependency, host grant, release, publication or deployment change is included.
 Reference implementations:
 [function attributes](https://github.com/python/cpython/blob/v3.14.7/Objects/funcobject.c)
 and [method lookup](https://github.com/python/cpython/blob/v3.14.7/Objects/classobject.c).
+
+O45 is implemented with lazy arena-owned dictionaries and collision probes on the
+shared machine. Pinned source cases cover replacement, aliases, marker storage,
+native access and exact callback errors. Focused ownership checks cover foreign
+arena transfers, actual allocation failure, cycles, parked collection,
+cancellation, close and shared recursion/work/instruction limits.

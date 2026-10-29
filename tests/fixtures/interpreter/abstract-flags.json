@@ -861,10 +861,10 @@
       "stdout": "True True\n"
     },
     {
-      "id": "function-other-metadata",
+      "id": "function-code-metadata",
       "stage": "Future",
-      "source": "def f(): pass\nf.other=7\nprint(f.other)\n",
-      "stdout": "7\n"
+      "source": "def f(): pass\nf.__code__\n",
+      "stdout": ""
     },
     {
       "id": "property-documentation",

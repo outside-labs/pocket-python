@@ -422,10 +422,10 @@
       "stdout": "text\n"
     },
     {
-      "id": "arbitrary-function-dictionary",
+      "id": "function-defaults-deferred",
       "stage": "Future",
-      "source": "def f(): pass\nf.extra=7\nprint(f.extra)\n",
-      "stdout": "7\n"
+      "source": "def f(): pass\nf.__defaults__\n",
+      "stdout": ""
     },
     {
       "id": "property-subclass",
@@ -741,13 +741,13 @@
     {
       "id": "source-document-cleanup-function-10",
       "stage": "O41",
-      "source": "def f():\n '\ud83d\ude00\\tvalue\\n\\t  second'\n return 7\nprint(f.__doc__=='\ud83d\ude00       value\\nsecond',f())\n",
+      "source": "def f():\n '😀\\tvalue\\n\\t  second'\n return 7\nprint(f.__doc__=='😀       value\\nsecond',f())\n",
       "stdout": "True 7\n"
     },
     {
       "id": "source-document-cleanup-class-10",
       "stage": "O41",
-      "source": "class C:\n '\ud83d\ude00\\tvalue\\n\\t  second'\nprint(C.__doc__=='\ud83d\ude00       value\\nsecond',C().__doc__=='\ud83d\ude00       value\\nsecond')\n",
+      "source": "class C:\n '😀\\tvalue\\n\\t  second'\nprint(C.__doc__=='😀       value\\nsecond',C().__doc__=='😀       value\\nsecond')\n",
       "stdout": "True True\n"
     },
     {

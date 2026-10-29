@@ -648,10 +648,10 @@
       "stdout": "renamed\n"
     },
     {
-      "id": "function-dictionary-deferred",
+      "id": "function-defaults-deferred",
       "stage": "Future",
-      "source": "def f(): pass\nprint(f.__dict__)\n",
-      "stdout": "{}\n"
+      "source": "def f(): pass\nf.__defaults__\n",
+      "stdout": ""
     },
     {
       "id": "function-code-deferred",
