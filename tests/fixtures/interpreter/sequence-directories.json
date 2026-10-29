@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-sequence-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "range-sorted-directory",
+      "source": "value=range(7,20,2)\nprint(*dir(value))\n",
+      "stage": "O58",
+      "stdout": "__bool__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __reversed__ __setattr__ __sizeof__ __str__ __subclasshook__ count index start step stop\n"
+    },
+    {
+      "id": "range-raw-directory",
+      "source": "value=range(7,20,2)\nprint(*object.__dir__(value))\n",
+      "stage": "O58",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __bool__ __len__ __getitem__ __contains__ __reversed__ __reduce__ count index start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "range-bound-directory",
+      "source": "value=range(7,20,2)\nprint(*value.__dir__())\n",
+      "stage": "O58",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __bool__ __len__ __getitem__ __contains__ __reversed__ __reduce__ count index start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "range-fresh-lists",
+      "source": "value=range(7,20,2)\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O58",
+      "stdout": "False False 35 True\n"
+    },
+    {
+      "id": "range-fresh-raw-lists",
+      "source": "value=range(7,20,2)\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O58",
+      "stdout": "False False 35\n"
+    },
+    {
+      "id": "range-native-binding",
+      "source": "value=range(7,20,2)\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O58",
+      "stdout": "True __dir__ range.__dir__ True\n"
+    },
+    {
+      "id": "range-native-getattribute",
+      "source": "value=range(7,20,2)\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
+      "stage": "O58",
+      "stdout": "True 35\n"
+    },
+    {
+      "id": "range-builtin-getattr",
+      "source": "value=range(7,20,2)\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O58",
+      "stdout": "True True 35\n"
+    },
+    {
+      "id": "range-retained-caller",
+      "source": "value=range(7,20,2)\nd=value.__dir__\ndel value\nprint(len(d()),d.__self__.start,d.__self__.stop,d.__self__.step)\n",
+      "stage": "O58",
+      "stdout": "35 7 20 2\n"
+    },
+    {
+      "id": "range-nested-callers",
+      "source": "value=range(7,20,2)\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O58",
+      "stdout": "30 35\n"
+    },
+    {
+      "id": "range-write",
+      "source": "value=range(7,20,2)\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "range-native-write",
+      "source": "value=range(7,20,2)\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "range-delete",
+      "source": "value=range(7,20,2)\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "range-native-delete",
+      "source": "value=range(7,20,2)\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "range-extra-argument",
+      "source": "value=range(7,20,2)\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-keyword",
+      "source": "value=range(7,20,2)\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-sorted-directory",
+      "source": "value=slice(7,20,2)\nprint(*dir(value))\n",
+      "stage": "O58",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ indices start step stop\n"
+    },
+    {
+      "id": "slice-raw-directory",
+      "source": "value=slice(7,20,2)\nprint(*object.__dir__(value))\n",
+      "stage": "O58",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ indices __reduce__ start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "slice-bound-directory",
+      "source": "value=slice(7,20,2)\nprint(*value.__dir__())\n",
+      "stage": "O58",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ indices __reduce__ start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "slice-fresh-lists",
+      "source": "value=slice(7,20,2)\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O58",
+      "stdout": "False False 28 True\n"
+    },
+    {
+      "id": "slice-fresh-raw-lists",
+      "source": "value=slice(7,20,2)\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O58",
+      "stdout": "False False 28\n"
+    },
+    {
+      "id": "slice-native-binding",
+      "source": "value=slice(7,20,2)\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O58",
+      "stdout": "True __dir__ slice.__dir__ True\n"
+    },
+    {
+      "id": "slice-native-getattribute",
+      "source": "value=slice(7,20,2)\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
+      "stage": "O58",
+      "stdout": "True 28\n"
+    },
+    {
+      "id": "slice-builtin-getattr",
+      "source": "value=slice(7,20,2)\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O58",
+      "stdout": "True True 28\n"
+    },
+    {
+      "id": "slice-retained-caller",
+      "source": "value=slice(7,20,2)\nd=value.__dir__\ndel value\nprint(len(d()),d.__self__.start,d.__self__.stop,d.__self__.step)\n",
+      "stage": "O58",
+      "stdout": "28 7 20 2\n"
+    },
+    {
+      "id": "slice-nested-callers",
+      "source": "value=slice(7,20,2)\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O58",
+      "stdout": "30 28\n"
+    },
+    {
+      "id": "slice-write",
+      "source": "value=slice(7,20,2)\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "slice-native-write",
+      "source": "value=slice(7,20,2)\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "slice-delete",
+      "source": "value=slice(7,20,2)\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "slice-native-delete",
+      "source": "value=slice(7,20,2)\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "slice-extra-argument",
+      "source": "value=slice(7,20,2)\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-keyword",
+      "source": "value=slice(7,20,2)\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O58",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-shapes",
+      "source": "for value in (range(0),range(7),range(20,7,-2),range(10**40,10**40+3)):\n print(len(dir(value)),value.start,value.stop,value.step)\n",
+      "stage": "O58",
+      "stdout": "35 0 0 1\n35 0 7 1\n35 20 7 -2\n35 10000000000000000000000000000000000000000 10000000000000000000000000000000000000003 1\n"
+    },
+    {
+      "id": "huge-range-no-length-or-iteration",
+      "source": "value=range(10**40)\nprint(len(dir(value)),len(value.__dir__()),value.stop==10**40)\n",
+      "stage": "O58",
+      "stdout": "35 35 True\n"
+    },
+    {
+      "id": "range-iterator-position",
+      "source": "value=range(7,11)\nit=iter(value)\nprint(next(it))\nprint(len(dir(value)),len(value.__dir__()),next(it))\n",
+      "stage": "O58",
+      "stdout": "7\n35 35 8\n"
+    },
+    {
+      "id": "slice-arbitrary-fields",
+      "source": "fields=(None,NotImplemented,True,[7],{\"x\":9})\nfor field in fields:\n value=slice(field,field,field)\n print(len(dir(value)),len(value.__dir__()))\n",
+      "stage": "O58",
+      "stdout": "28 28\n28 28\n28 28\n28 28\n28 28\n"
+    },
+    {
+      "id": "slice-field-hooks-isolated",
+      "source": "class Field:\n def __getattribute__(self,name): raise RuntimeError(\"read\")\n def __index__(self): raise RuntimeError(\"index\")\n def __hash__(self): raise RuntimeError(\"hash\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\nfield=Field()\nvalue=slice(field,field,field)\nprint(len(dir(value)),len(value.__dir__()))\n",
+      "stage": "O58",
+      "stdout": "28 28\n"
+    },
+    {
+      "id": "slice-cyclic-fields-retained",
+      "source": "field=[]\nvalue=slice(field,field,field)\nfield.append(value)\nd=value.__dir__\ndel value\ndel field\nprint(len(d()),d.__self__.start[0] is d.__self__,d.__self__.stop is d.__self__.step)\n",
+      "stage": "O58",
+      "stdout": "28 True True\n"
+    },
+    {
+      "id": "slice-field-mutation",
+      "source": "field=[7]\nvalue=slice(field,field,field)\na=dir(value)\nfield.append(value)\nprint(a==dir(value),value.start[1] is value,len(value.__dir__()))\n",
+      "stage": "O58",
+      "stdout": "True True 28\n"
+    },
+    {
+      "id": "cross-layout-native-rebinding",
+      "source": "a=range(7)\nb=slice(7)\nd=object.__dir__.__get__(a)\ne=object.__dir__.__get__(b,type(a))\nprint(d.__self__ is a,e.__self__ is b,len(d()),len(e()),d.__qualname__,e.__qualname__)\n",
+      "stage": "O58",
+      "stdout": "True True 35 28 range.__dir__ slice.__dir__\n"
+    },
+    {
+      "id": "lazy-generators",
+      "source": "values=(range(7),slice(7),range(10**40),slice(NotImplemented))\nprint(*(len(dir(value)) for value in values))\n",
+      "stage": "O58",
+      "stdout": "35 28 35 28\n"
+    },
+    {
+      "id": "unread-range-reduction",
+      "source": "value=range(7)\nvalue.__reduce__()\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "unread-slice-reduction",
+      "source": "value=slice(7)\nvalue.__reduce__()\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "other-default-directory",
+      "source": "dir(())\n",
+      "stage": "Future",
+      "stdout": ""
+    }
+  ]
+}
