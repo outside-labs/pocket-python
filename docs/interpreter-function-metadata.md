@@ -60,7 +60,8 @@ retained methods, renamed property getters, module snapshots and lazy labels.
 The 86-case source matrix passes six Node/Chromium driver combinations: 516
 observations with zero logical teardown. Fourteen representative probes extend
 the inventory to 242 observations per target. Installed-wheel offline acceptance
-passes 1,636 program comparisons and 95 acceptance groups. The
+passes 1,636 program comparisons and 95 acceptance groups, including 176
+Stop/Restart cycles. The
 [payload record](measurements/2026-10-28-function-metadata.json) verifies 38 files
 and 693,839 bytes, with an identical rebuild. These are finite semantic/source/
 payload observations. Broader reflection and async work remain under #123/#34.

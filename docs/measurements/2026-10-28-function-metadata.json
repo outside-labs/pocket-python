@@ -138,7 +138,8 @@
       "fail": 0
     },
     "program_comparisons": 1636,
-    "acceptance_groups": 95
+    "acceptance_groups": 95,
+    "stop_restart_cycles": 176
   },
   "resource_contract": {
     "path": "tests/fixtures/interpreter/execution-resources.json",
