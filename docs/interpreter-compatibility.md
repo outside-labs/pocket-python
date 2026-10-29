@@ -33,11 +33,16 @@ source/dynamic class directories and native type.__dir__ binding, preserving liv
 depth-first base merging and retained class graphs. Further native type layouts
 and custom metaclass namespace reflection remain separate.
 
+The [O63 numeric type directory contract](interpreter-numeric-type-directories.md)
+adds bool/int/float/complex/NoneType/NotImplementedType directories, native raw
+order and bound receiver identity, including ordinary advertised type namespaces.
+Native entry reads and type mapping access remain separate contracts.
+
 The [O21/O22 comprehension contract](interpreter-comprehension-reflection.md) adds optimized enclosing and isolated module/class comprehension snapshots, with nested target masking, captured-cell ordering and restored bindings.
 
 ## Evidence and interpretation
 
-The 138 trusted probes include representative source programs and all 71 names
+The 586 trusted probes include representative source programs and all 71 names
 in the Python 3.14 built-in-functions index. Builtin exceptions and constants are
 separate language/value surfaces. A positive callable(NAME) result proves name
 availability only, not every signature or value family. Negative availability
@@ -57,7 +62,7 @@ python runtime/check_compatibility.py --target browser --report build/compatibil
 Each report hashes its inventory, corpus and implementation inputs, records the
 actual source output/diagnostic/phase and checks logical teardown. A passing
 observation means the recorded behavior was reproduced. Only supported positive
-cases earn support credit. The current observations contain 243 supported, 48
+cases earn support credit. The current observations contain 512 supported, 70
 deferred and four host-restricted results, with no recorded known divergence.
 These are representative observations, not a percentage of Python coverage.
 
