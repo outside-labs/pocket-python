@@ -396,3 +396,7 @@ No dependency, host grant, release, publication or deployment is included.
 ## Generator directory checkpoint
 
 [O55](interpreter-generator-directories.md) extends #123/#33 with state-independent generator directories, exact native caller binding and owned suspended-frame lifetimes. The composed console covers send, close and lazy iteration offline. Listed metadata retains separate read contracts; broader layouts, live namespaces and dynamic source remain open. Native async/host adapters remain under #34.
+
+## Native iterator directory checkpoint
+
+[O56](interpreter-iterator-directories.md) extends #123/#33 with directories for existing native container, indexed and callable-sentinel iterators. Exact sources/sentinels survive detached native callers and parked collection. The reference audit also corrects ASCII/general Unicode and short/long range native identities. User instance/class/module/wrapper/value directories, live namespaces, unread native APIs and dynamic source retain finite follow-ups. Native async/host adapters remain under #34.

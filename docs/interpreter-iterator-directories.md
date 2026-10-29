@@ -42,3 +42,9 @@ References: pinned [indexed/callable iterators](https://github.com/python/cpytho
 [text iterators](https://github.com/python/cpython/blob/v3.14.7/Objects/unicodeobject.c),
 [range iterators](https://github.com/python/cpython/blob/v3.14.7/Objects/rangeobject.c)
 and [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 88 pinned cases pass six Node/Chromium drain, instruction-boundary and parked drivers: 528 observations with zero logical teardown failures. The 98 feature units cover detached cyclic sources, exact sentinel ownership, memory backing storage, source mutation/release, native binding, cancellation and real resource failures. The adjacent execution checks preserve the eight composed resource observations.
+
+The [iterator console](../examples/interpreter_iterator_directories.py) composes layout names, mutation, canonical native identities, retained indexed sources, callable-sentinel iteration and generator directories. Installed offline acceptance includes the matrix, composed example, Stop/Restart and a waiting reduced-profile update. The [payload record](measurements/2026-10-29-iterator-directories.json) records the exact example files. These are finite semantic/source/payload observations.
+
+The combined inventory has 431 passing probes in each target. Together O55/O56 provide 768 source observations with zero logical teardown failures.

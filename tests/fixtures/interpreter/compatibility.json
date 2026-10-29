@@ -5379,6 +5379,321 @@
         "error_type": "UnsupportedOperationError",
         "code": "UNSUPPORTED"
       }
+    },
+    {
+      "id": "iterator-directories-list-sorted-directory",
+      "source": "it=iter([7,9])\nprint(*dir(it))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-list-raw-directory",
+      "source": "it=iter([7,9])\nprint(*object.__dir__(it))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-ascii-native-binding",
+      "source": "it=iter(\"ab\")\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ str_ascii_iterator.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ str_ascii_iterator.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-unicode-native-binding",
+      "source": "it=iter(\"\u00e9\ud83d\ude00\")\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ str_iterator.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ str_iterator.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-dict-preserved-state",
+      "source": "it=iter({\"key\":7})\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "key True None 27\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "key True None 27\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-longrange-native-binding",
+      "source": "it=iter(range(10**40,10**40+2))\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ longrange_iterator.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ longrange_iterator.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-set-preserved-state",
+      "source": "it=iter({7})\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 True None 27\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 True None 27\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-memory-native-binding",
+      "source": "it=iter(memoryview(b\"ab\"))\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ memory_iterator.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ memory_iterator.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-indexed-preserved-state",
+      "source": "class Indexed:\n def __getitem__(self,i):\n  if i>=2: raise IndexError\n  return i+7\nit=iter(Indexed())\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 True 8 28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 True 8 28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-callable-preserved-state",
+      "source": "values=iter((7,9,0))\ndef produce(): return next(values)\nit=iter(produce,0)\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 True 9 26\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 True 9 26\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-exhausted-state",
+      "source": "it=iter([7,9])\na=dir(it)\nnext(it)\nnext(it)\nnext(it,None)\nprint(a==dir(it),len(it.__dir__()),next(it,None))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 28 None\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 28 None\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-native-write",
+      "source": "it=iter([7,9])\nprint(\"before\")\nobject.__setattr__(it,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "iterator-directories-list-mutation",
+      "source": "items=[7,9]\nit=iter(items)\nnext(it)\nitems[1]=11\nitems.append(13)\nprint(len(dir(it)),next(it),next(it))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "28 11 13\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "28 11 13\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-dictionary-invalidated",
+      "source": "items={\"a\":7}\nit=iter(items)\nitems[\"b\"]=9\nprint(len(dir(it)))\nnext(it)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "27\n",
+        "error_type": "RuntimeError"
+      },
+      "engine": {
+        "stdout": "27\n",
+        "error_type": "RuntimeError"
+      }
+    },
+    {
+      "id": "iterator-directories-set-invalidated",
+      "source": "items={7}\nit=iter(items)\nitems.add(9)\nprint(len(dir(it)))\nnext(it)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "27\n",
+        "error_type": "RuntimeError"
+      },
+      "engine": {
+        "stdout": "27\n",
+        "error_type": "RuntimeError"
+      }
+    },
+    {
+      "id": "iterator-directories-released-memory",
+      "source": "view=memoryview(b\"ab\")\nit=iter(view)\nview.release()\nprint(len(dir(it)),len(it.__dir__()))\nnext(it)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "26 26\n",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "26 26\n",
+        "error_type": "ValueError"
+      }
+    },
+    {
+      "id": "iterator-directories-indexed-hooks-not-read",
+      "source": "class Indexed:\n def __getattribute__(self,name): raise ValueError(\"never\")\n def __getitem__(self,i): return i+7\nit=iter(Indexed())\nprint(len(dir(it)),next(it))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "28 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "28 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-callable-not-called",
+      "source": "def produce(): raise ValueError(\"never\")\nit=iter(produce,0)\nprint(len(dir(it)),len(it.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "26 26\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "26 26\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-sentinel-not-compared",
+      "source": "class Sentinel:\n def __eq__(self,other): raise ValueError(\"never\")\n def __hash__(self): raise ValueError(\"never\")\nit=iter(lambda: 7,Sentinel())\nprint(len(dir(it)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "26\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "26\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-cyclic-indexed-retention",
+      "source": "class Indexed:\n def __getitem__(self,i): return i+7\nvalue=Indexed()\nit=iter(value)\nvalue.saved=it\nd=it.__dir__\ndel it\ndel value\ndel Indexed\nprint(len(d()),next(d.__self__))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "28 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "28 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-cyclic-callable-retention",
+      "source": "class Produce:\n def __call__(self): return 7\nvalue=Produce()\nit=iter(value,0)\nvalue.saved=it\nd=it.__dir__\ndel it\ndel value\ndel Produce\nprint(len(d()),next(d.__self__))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "26 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "26 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "iterator-directories-deferred-reduction",
+      "source": "it=iter([7,9])\nprint(it.__reduce__())\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "(<built-in function iter>, ([7, 9],), 0)\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "iterator-directories-deferred-state",
+      "source": "it=iter([7,9])\nit.__setstate__(1)\nprint(next(it))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "iterator-directories-user-iterator-directory",
+      "source": "class User:\n def __iter__(self): return self\n def __next__(self): return 7\nprint(len(dir(User())))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "31\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
     }
   ]
 }

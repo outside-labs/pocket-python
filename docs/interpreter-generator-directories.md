@@ -48,3 +48,5 @@ lazy iteration. Installed offline acceptance includes the matrix, composed
 example, Stop/Restart and a waiting reduced-profile update. The
 [payload record](measurements/2026-10-29-generator-directories.json) records the
 exact example files. These are finite semantic/source/payload observations.
+
+The combined inventory has 431 passing probes in each target. Together O55/O56 provide 768 source observations with zero logical teardown failures.
