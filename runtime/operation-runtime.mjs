@@ -243,6 +243,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     return valueTask(receiver, site, after);
   };
+  const functionDirectoryNext = (record, site) => {
+    state.temporaries.push(record.receiver, record.result);
+    const names = classes.functionDirectoryNames();
+    while (record.position < names.length) {
+      const key = values.string(Array.from(names[record.position], char => char.codePointAt(0)));
+      state.temporaries.push(key);
+      const next = {...record, position: record.position + 1};
+      if (values.dictionaryNeedsProtocol(record.result, key))
+        return dictionaryTask(record.result, key, site, continuation("function-dir-merge", next), record.depth, "set", null);
+      values.set(record.result, key, null); record = next;
+    }
+    return valueTask(values.list(record.result.entries.map(entry => entry.key)), site, record.after);
+  };
   const argumentOwner = receiver => {
     if (!(receiver instanceof CallArguments)) hard("BYTECODE", "BytecodeError", "Call assembly requires its owned argument record.");
   };
@@ -609,6 +622,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       appendArgument(completion.receiver, value);
       return unaryTask("next", completion.iterator, site, continuation("call-star-next", completion));
     }
+    if (completion?.kind === "function-dir-merge") return functionDirectoryNext(completion, site);
     if (completion?.kind === "dir-result") {
       const after = continuation("dir-sort", {receiver: value, depth: completion.depth, after: completion.after});
       return value instanceof InstanceValue ? unaryTask("iter", value, site,
@@ -636,8 +650,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (!(value instanceof NotImplementedValue)) directoryCount(value);
       return directoryNext(completion, site);
     }
-    if (completion?.kind === "dir-sort")
+    if (completion?.kind === "dir-sort") {
+      if (completion.receiver instanceof FunctionValue && value.items.every(item => values.isString(item)))
+        return valueTask(sortedDirectory(value), site, completion.after);
       return directorySort({receiver: value, index: 1, lower: 0, upper: 1, depth: completion.depth, after: completion.after}, site);
+    }
     if (completion?.kind === "dir-compare")
       return unaryTask("truth", value, site, continuation("dir-truth", completion), completion.depth);
     if (completion?.kind === "dir-truth") {
@@ -1864,6 +1881,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length) python("TypeError", "id() requires one positional value");
             task = valueTask(values.objectId(args[0]), site, completion); continue;
           }
+          if (callable.name === "object.__dir__") {
+            if (args.length !== 1 || keywords.length) python("TypeError", "object.__dir__ requires one positional receiver");
+            const receiver = args[0];
+            if (!(receiver instanceof FunctionValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "Default directories for this layout require their own stage.");
+            const dictionary = classes.functionDictionary(receiver); state.temporaries.push(dictionary);
+            const result = values.copyDictionary(dictionary); state.temporaries.push(result);
+            task = functionDirectoryNext({receiver, result, position: 0, depth, after: completion}, site); continue;
+          }
           if (callable.name === "mappingproxy.get") {
             const [receiver, key, fallback = null] = args;
             if (!(receiver instanceof ClassNamespaceValue) || args.length < 2 || args.length > 3 || keywords.length)
@@ -1883,6 +1908,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");
                 }
                 task = attributeTask(receiver, "__dict__", site, continuation("vars-result", {receiver, after: completion}), depth); continue;
+              }
+              if (receiver instanceof FunctionValue) {
+                const after = continuation("dir-sort", {receiver, depth, after: continuation("relay", {receiver, after: completion})});
+                task = callTask(classes.builtin("object.__dir__"), [receiver], [], [], site, after, depth); continue;
               }
               const type = classes.checkingType(receiver);
               if (type === null || !classes.hasSlot(type, "__dir__"))

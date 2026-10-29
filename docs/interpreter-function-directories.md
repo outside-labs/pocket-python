@@ -49,3 +49,9 @@ is included.
 
 Reference: [pinned generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c)
 and [function metadata](https://github.com/python/cpython/blob/v3.14.7/Objects/funcobject.c).
+
+O50 is implemented with an exhaustive owned merge continuation and raw
+dictionary copies. Primitive text-only merging/sorting stays in the charged
+value runtime; callback-bearing keys use ordinary dictionary and comparison
+frames. Native collision truth conversion and AttributeError/KeyError retain
+their original behavior.
