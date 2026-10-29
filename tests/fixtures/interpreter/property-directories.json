@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-property-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "native-directory",
+      "source": "p=property()\nprint(*dir(p))\n",
+      "stage": "O53",
+      "stdout": "__class__ __delattr__ __delete__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __isabstractmethod__ __le__ __lt__ __name__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __set__ __set_name__ __setattr__ __sizeof__ __str__ __subclasshook__ deleter fdel fget fset getter setter\n"
+    },
+    {
+      "id": "native-unsorted-directory",
+      "source": "p=property()\nprint(*object.__dir__(p))\n",
+      "stage": "O53",
+      "stdout": "__new__ __get__ __set__ __delete__ __init__ getter setter deleter __set_name__ fget fset fdel __doc__ __name__ __isabstractmethod__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "bound-unsorted-directory",
+      "source": "p=property()\nprint(*p.__dir__())\n",
+      "stage": "O53",
+      "stdout": "__new__ __get__ __set__ __delete__ __init__ getter setter deleter __set_name__ fget fset fdel __doc__ __name__ __isabstractmethod__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "fresh-lists",
+      "source": "p=property()\na=dir(p)\nb=dir(p)\na.append(\"only-copy\")\nprint(a is b,\"only-copy\" in b,len(b))\n",
+      "stage": "O53",
+      "stdout": "False False 36\n"
+    },
+    {
+      "id": "raw-list-independence",
+      "source": "p=property()\na=p.__dir__()\na[0]=\"changed\"\nprint(p.__dir__()[0],len(a),len(dir(p)))\n",
+      "stage": "O53",
+      "stdout": "__new__ 36 36\n"
+    },
+    {
+      "id": "bound-native-metadata",
+      "source": "p=property()\nd=p.__dir__\nprint(d.__self__ is p,d.__name__,d.__qualname__,type(d).__name__,len(d()))\n",
+      "stage": "O53",
+      "stdout": "True __dir__ property.__dir__ builtin_function_or_method 36\n"
+    },
+    {
+      "id": "native-getattribute",
+      "source": "p=property()\nd=object.__getattribute__(p,\"__dir__\")\nprint(d.__self__ is p,len(d()))\n",
+      "stage": "O53",
+      "stdout": "True 36\n"
+    },
+    {
+      "id": "unbound-native-binding",
+      "source": "p=property()\nd=object.__dir__.__get__(p)\nprint(d.__self__ is p,d.__qualname__,len(d()),object.__dir__.__objclass__ is object)\n",
+      "stage": "O53",
+      "stdout": "True property.__dir__ 36 True\n"
+    },
+    {
+      "id": "native-rebinding",
+      "source": "p=property()\nq=property()\nd=object.__dir__.__get__(q,property)\nprint(d.__self__ is q,d()==p.__dir__())\n",
+      "stage": "O53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "retained-native-caller",
+      "source": "def f(self): return 7\np=property(f)\nd=p.__dir__\ndel p\ndel f\nprint(len(d()),d.__self__.fget(None))\n",
+      "stage": "O53",
+      "stdout": "36 7\n"
+    },
+    {
+      "id": "cyclic-property-retention",
+      "source": "def f(self): return 7\np=property(f)\nf.saved=p\nd=p.__dir__\ndel p\ndel f\nprint(d.__self__.fget.saved is d.__self__,len(d()))\n",
+      "stage": "O53",
+      "stdout": "True 36\n"
+    },
+    {
+      "id": "arbitrary-metadata-not-listed",
+      "source": "p=property()\np.__name__=[7]\np.__doc__={\"tag\":9}\nprint(\"tag\" in dir(p),\"__dict__\" in dir(p),len(dir(p)))\n",
+      "stage": "O53",
+      "stdout": "False False 36\n"
+    },
+    {
+      "id": "metadata-mutation",
+      "source": "p=property()\na=dir(p)\np.__name__=\"renamed\"\np.__doc__=[7]\ndel p.__name__\ndel p.__doc__\nprint(dir(p)==a,\"renamed\" in dir(p))\n",
+      "stage": "O53",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "lazy-name-not-read",
+      "source": "class Getter:\n def __call__(self,owner): return 7\n def __getattribute__(self,name): raise ValueError(\"never\")\np=property(Getter(),None,None,\"explicit\")\nprint(len(dir(p)),len(p.__dir__()))\n",
+      "stage": "O53",
+      "stdout": "36 36\n"
+    },
+    {
+      "id": "abstract-flag-not-read",
+      "source": "class Getter:\n def __call__(self,owner): return 7\n @property\n def __isabstractmethod__(self): raise ValueError(\"never\")\np=property(Getter(),None,None,\"explicit\")\nprint(len(dir(p)))\n",
+      "stage": "O53",
+      "stdout": "36\n"
+    },
+    {
+      "id": "metadata-callbacks-not-run",
+      "source": "class Value:\n def __hash__(self): raise ValueError(\"never\")\n def __bool__(self): raise ValueError(\"never\")\n def __lt__(self,other): raise ValueError(\"never\")\np=property()\np.__name__=Value()\np.__doc__=Value()\nprint(len(dir(p)))\n",
+      "stage": "O53",
+      "stdout": "36\n"
+    },
+    {
+      "id": "getter-not-called",
+      "source": "def f(self): raise ValueError(\"never\")\np=property(f)\nprint(len(dir(p)),p.fget is f)\n",
+      "stage": "O53",
+      "stdout": "36 True\n"
+    },
+    {
+      "id": "accessor-copies",
+      "source": "def get(self): return 7\ndef set(self,value): pass\ndef delete(self): pass\np=property(get)\nq=p.setter(set).deleter(delete)\nprint(p is q,dir(p)==dir(q),q.fset is set,q.fdel is delete)\n",
+      "stage": "O53",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "automatic-class-names",
+      "source": "class C:\n @property\n def field(self): return 7\np=C.field\nprint(p.__name__,\"field\" in dir(p),len(dir(p)),C().field)\n",
+      "stage": "O53",
+      "stdout": "field False 36 7\n"
+    },
+    {
+      "id": "class-mutation-not-listed",
+      "source": "class C:\n @property\n def field(self): return 7\np=C.field\nC.extra=9\ndel C.field\nprint(\"extra\" in dir(p),len(dir(p)))\n",
+      "stage": "O53",
+      "stdout": "False 36\n"
+    },
+    {
+      "id": "metaclass-hooks-not-called",
+      "source": "class M(type): pass\nclass C(metaclass=M): field=property()\np=C.field\ndef read(cls,name): raise ValueError(\"never\")\nM.__getattribute__=read\nprint(len(dir(p)))\n",
+      "stage": "O53",
+      "stdout": "36\n"
+    },
+    {
+      "id": "lazy-directory-observations",
+      "source": "p=property()\ndef names():\n yield dir(p)\n yield dir(p)\ng=names()\na=next(g)\np.__name__=[9]\nb=next(g)\nprint(a==b,a is b,len(b))\n",
+      "stage": "O53",
+      "stdout": "True False 36\n"
+    },
+    {
+      "id": "write-readonly",
+      "source": "p=property()\np.__dir__=7\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "delete-readonly",
+      "source": "p=property()\ndel p.__dir__\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-write-readonly",
+      "source": "p=property()\nobject.__setattr__(p,\"__dir__\",7)\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-delete-readonly",
+      "source": "p=property()\nobject.__delattr__(p,\"__dir__\")\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "extra-bound-argument",
+      "source": "p=property()\np.__dir__(7)\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bound-keyword",
+      "source": "p=property()\np.__dir__(tag=7)\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "missing-unbound-receiver",
+      "source": "p=property()\nobject.__dir__()\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "extra-unbound-receiver",
+      "source": "p=property()\nobject.__dir__(p,p)\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unbound-keyword",
+      "source": "p=property()\nobject.__dir__(self=p)\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-extra-argument",
+      "source": "p=property()\ndir(p,p)\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dir-keyword",
+      "source": "p=property()\ndir(value=p)\n",
+      "stage": "O53",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "other-wrapper-layout",
+      "source": "print(\"__dict__\" in dir(staticmethod(lambda:None)))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "ordinary-instance-layout",
+      "source": "class C: pass\nprint(\"__dict__\" in dir(C()))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-type-layout",
+      "source": "print(\"__get__\" in dir(property))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "listed-method-not-adopted",
+      "source": "p=property()\np.__reduce__()\n",
+      "stage": "Future",
+      "stdout": "",
+      "error_type": "TypeError"
+    }
+  ]
+}
