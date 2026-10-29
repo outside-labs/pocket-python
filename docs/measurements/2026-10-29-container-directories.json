@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "scope": "container-directories: finite semantic/source/payload observations; no performance, device or package claim.",
+  "baseline_commit": "20a798e8bb8403ddeca39ec61525a84a21d0c8f3",
+  "measurement_source_revision": "19b25b3719e0b71370e950381bd7e7dbc169d747",
+  "working_tree_modified": true,
+  "engine_fingerprint": "1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a",
+  "corpus": {
+    "path": "tests/fixtures/interpreter/container-directories.json",
+    "size_bytes": 23592,
+    "sha256": "d0cc7af45f52007abe2c4b4a123b124adb1f5e577eb6d7f3aa9daf1213addaa4",
+    "cases": 79,
+    "implemented_stages": [
+      "O59"
+    ]
+  },
+  "source_reports": [
+    {
+      "path": "build/container-directories-classes-drain-node-report.json",
+      "size_bytes": 193077,
+      "sha256": "1e06760f363fd6d527cd7ae2837c6137a7ce7555abb842e59e2bf9c4a532c25b",
+      "target": "node",
+      "driver": "drain",
+      "summary": {
+        "pass": 79,
+        "fail": 0
+      },
+      "zero_teardown_records": 79
+    },
+    {
+      "path": "build/container-directories-classes-stepped-node-report.json",
+      "size_bytes": 221199,
+      "sha256": "c5399125cf08318ee186c6fb667629621727f3fcace107cc35c08a37934c7e8a",
+      "target": "node",
+      "driver": "stepped",
+      "summary": {
+        "pass": 79,
+        "fail": 0
+      },
+      "zero_teardown_records": 79
+    },
+    {
+      "path": "build/container-directories-classes-parked-node-report.json",
+      "size_bytes": 221206,
+      "sha256": "8bb92fce8edee1070cc5befb6e55f32ab28328c9f10c8711e926e607831ed019",
+      "target": "node",
+      "driver": "parked",
+      "summary": {
+        "pass": 79,
+        "fail": 0
+      },
+      "zero_teardown_records": 79
+    },
+    {
+      "path": "build/container-directories-classes-drain-browser-report.json",
+      "size_bytes": 193084,
+      "sha256": "8768908a2213a63ff9b46d7233f79780823be88e787ee7365d8ebe436b9982c1",
+      "target": "browser",
+      "driver": "drain",
+      "summary": {
+        "pass": 79,
+        "fail": 0
+      },
+      "zero_teardown_records": 79
+    },
+    {
+      "path": "build/container-directories-classes-stepped-browser-report.json",
+      "size_bytes": 221206,
+      "sha256": "06db7fb45d4cf815badd2d326a588cbb8b1e2ea3ed1158c5c8a423d6089e3426",
+      "target": "browser",
+      "driver": "stepped",
+      "summary": {
+        "pass": 79,
+        "fail": 0
+      },
+      "zero_teardown_records": 79
+    },
+    {
+      "path": "build/container-directories-classes-parked-browser-report.json",
+      "size_bytes": 221213,
+      "sha256": "1c2b6fa69f73486a9f2600da0156f4e83ad02759af16d1c9fa634ecde67d57f2",
+      "target": "browser",
+      "driver": "parked",
+      "summary": {
+        "pass": 79,
+        "fail": 0
+      },
+      "zero_teardown_records": 79
+    }
+  ],
+  "example_payload": {
+    "path": "build/container-directories-console",
+    "engine_fingerprint": "1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a",
+    "complete_payload_bytes": 730971,
+    "files": [
+      {
+        "path": "POCKET-PYTHON.json",
+        "sha256": "0e18734a1112b1d8e157de0c4824b2020a0794c4fc7a9f0194b252915e421e02",
+        "size_bytes": 26604,
+        "bucket": "receipt_bytes",
+        "gzip_bytes": 3530
+      },
+      {
+        "path": "app-cc1f38a6cf1d594bd17f2892c213bf1b80f4c1f7e57f4caac791d36da1cd7027.js",
+        "sha256": "cc1f38a6cf1d594bd17f2892c213bf1b80f4c1f7e57f4caac791d36da1cd7027",
+        "size_bytes": 8596,
+        "bucket": "assembly_module_bytes",
+        "gzip_bytes": 3181
+      },
+      {
+        "path": "app-config-70ff16568edc5e90f0b266a7da385ece38560aac3405c0f8ecb089178cf0ab49.json",
+        "sha256": "70ff16568edc5e90f0b266a7da385ece38560aac3405c0f8ecb089178cf0ab49",
+        "size_bytes": 1214,
+        "bucket": "data_bytes",
+        "gzip_bytes": 561
+      },
+      {
+        "path": "application/aeaa1326aad44c07dc8d35071d420a6ed98cb3374c6d516278df947b1385db81/APPLICATION.json",
+        "sha256": "aeaa1326aad44c07dc8d35071d420a6ed98cb3374c6d516278df947b1385db81",
+        "size_bytes": 1431,
+        "bucket": "data_bytes",
+        "gzip_bytes": 711
+      },
+      {
+        "path": "application/aeaa1326aad44c07dc8d35071d420a6ed98cb3374c6d516278df947b1385db81/LICENSES/application.txt",
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+        "size_bytes": 1066,
+        "bucket": "notice_bytes",
+        "gzip_bytes": 646
+      },
+      {
+        "path": "application/aeaa1326aad44c07dc8d35071d420a6ed98cb3374c6d516278df947b1385db81/sources/app.py",
+        "sha256": "6628217554acd252b69c8144a27a7ca56727ce14ba231597e443025c401938fc",
+        "size_bytes": 1014,
+        "bucket": "application_source_bytes",
+        "gzip_bytes": 476
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/browser-protocol.mjs",
+        "sha256": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76",
+        "size_bytes": 10589,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 3464
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/bytecode.mjs",
+        "sha256": "e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4",
+        "size_bytes": 6836,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 2355
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/class-policy.mjs",
+        "sha256": "c2c938d5c7fcbc3e0cecb57701bef2e44be3ef49531cfbaa72e710ac8028ec3c",
+        "size_bytes": 3020,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 1034
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/class-values.mjs",
+        "sha256": "7c22285b0953a66e5f4f8842f0081fcd6800fa7a30356283aa95f72eea4e46a6",
+        "size_bytes": 68104,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 12494
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/function-bytecode.mjs",
+        "sha256": "6c8c960d90cbe1a5030c22ac1ab93f33749b06e3ea3ae61e237bb3997390ef96",
+        "size_bytes": 22820,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 6033
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/function-objects.mjs",
+        "sha256": "e4dbe7fc9ca821383e0c22cfcdfe8f5b3f05d3589d520dc553faa8285e4bd968",
+        "size_bytes": 5496,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 1704
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/functions.mjs",
+        "sha256": "123588cd395455c6f5b301f00dabffd4b795e0bbe5671dbe1664d1dd1eff3de8",
+        "size_bytes": 64791,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 14808
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/interpreter-host.mjs",
+        "sha256": "4afadfd987000afa6221ee73dcd64e9c00a2d13c4324718248d396302a39296d",
+        "size_bytes": 7318,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 2483
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/interpreter-worker.mjs",
+        "sha256": "324cc23100eb40ef04f2909b805d7abc0c8651b4608b3a61a95470ec7e74e19e",
+        "size_bytes": 8855,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 2911
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/library-catalog.mjs",
+        "sha256": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c",
+        "size_bytes": 907,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 504
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/library-selection.mjs",
+        "sha256": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a",
+        "size_bytes": 3661,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 1469
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/licenses/POCKET-PYTHON.txt",
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+        "size_bytes": 1066,
+        "bucket": "notice_bytes",
+        "gzip_bytes": 646
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/licenses/UNICODE.txt",
+        "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+        "size_bytes": 1995,
+        "bucket": "notice_bytes",
+        "gzip_bytes": 1063
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/memory.mjs",
+        "sha256": "b4b8ebbb6f576e2c01e8e28f4e02b1962ca1c5ffb263216278617c2c6bd8bb35",
+        "size_bytes": 8407,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 2626
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/module-context.mjs",
+        "sha256": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca",
+        "size_bytes": 8319,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 2697
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/module-registry.mjs",
+        "sha256": "43eb1bc646da60a6b5336caef1ea6ea940b6a88db3fe679c550c62b828704c89",
+        "size_bytes": 10280,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 3450
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/module-session.mjs",
+        "sha256": "8474187aa92173689c875d6bf15b31a7eae4dcff62b862b9607ce22e10753df4",
+        "size_bytes": 12852,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 3672
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/numeric.mjs",
+        "sha256": "2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad",
+        "size_bytes": 13954,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 4311
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/operation-runtime.mjs",
+        "sha256": "de1c423a7b62fa2a4e32a2c450068944b73810590eb8ce950a9989495c3d9999",
+        "size_bytes": 150832,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 26894
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/operations.mjs",
+        "sha256": "0d9f5b1362b3e54f87370c1cba5be72842e8b214293e70fff016a5915edb7762",
+        "size_bytes": 31715,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 5235
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/source-compiler.mjs",
+        "sha256": "0dcdcd202303f9a05b49f4e3c3bae75f0c26153b068c081b4021c87ddf9e115b",
+        "size_bytes": 44099,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 10147
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/source-identifiers.mjs",
+        "sha256": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914",
+        "size_bytes": 25949,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 6247
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/source-modules.mjs",
+        "sha256": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef",
+        "size_bytes": 5115,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 1866
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/source-parser.mjs",
+        "sha256": "2ba7ecd41fdae750fa28dfb4fced9440d24ba9b96ed515d12b5151b385eebfdd",
+        "size_bytes": 34109,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 7950
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/source-tokens.mjs",
+        "sha256": "e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54",
+        "size_bytes": 15061,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 4470
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/string-printability.mjs",
+        "sha256": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f",
+        "size_bytes": 13287,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 3903
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/values.mjs",
+        "sha256": "7c486c271db7238753eb5ff28f53db6d0d06d63996d8fe04d11e70f098ddba97",
+        "size_bytes": 93928,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 19824
+      },
+      {
+        "path": "engine/1c6f75c1d4bae0e10cef6a5f8b00d25ad5eda853a0c7d589756f865d3f85ea9a/vm.mjs",
+        "sha256": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d",
+        "size_bytes": 6080,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 1920
+      },
+      {
+        "path": "icon.svg",
+        "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691",
+        "size_bytes": 214,
+        "bucket": "data_bytes",
+        "gzip_bytes": 183
+      },
+      {
+        "path": "index.html",
+        "sha256": "5bdf25483b27d2d6adcc54325492c20cb2c9c08cbbf4a20408374be91d662d79",
+        "size_bytes": 2248,
+        "bucket": "data_bytes",
+        "gzip_bytes": 1144
+      },
+      {
+        "path": "manifest.webmanifest",
+        "sha256": "9299b74a1641cbac875b10433de2cddc0e329e9e5292632af351c5385f82c8c6",
+        "size_bytes": 344,
+        "bucket": "data_bytes",
+        "gzip_bytes": 215
+      },
+      {
+        "path": "service-worker.js",
+        "sha256": "6af4deda3c4dd43c914b641add1bf82253e0b663d4c7ae3fed09da41a89d01e3",
+        "size_bytes": 8795,
+        "bucket": "assembly_module_bytes",
+        "gzip_bytes": 3010
+      }
+    ]
+  },
+  "compatibility_node": {
+    "path": "build/container-directories-compatibility-node-report.json",
+    "size_bytes": 1072515,
+    "sha256": "093391ec0f59df4a5575c4f7258bb7bf736d6ebcdabc4ee3ec4620785ac0af97",
+    "summary": {
+      "pass": 497,
+      "fail": 0
+    },
+    "observations": {
+      "supported": 431,
+      "deferred": 62,
+      "known-divergence": 0,
+      "host-restricted": 4
+    }
+  },
+  "compatibility_browser": {
+    "path": "build/container-directories-compatibility-browser-report.json",
+    "size_bytes": 1072522,
+    "sha256": "3d35d420fb8bca6afeb1d992e13d3dce5760eef6b1bb47df1386117d51a6ddfa",
+    "summary": {
+      "pass": 497,
+      "fail": 0
+    },
+    "observations": {
+      "supported": 431,
+      "deferred": 62,
+      "known-divergence": 0,
+      "host-restricted": 4
+    }
+  }
+}

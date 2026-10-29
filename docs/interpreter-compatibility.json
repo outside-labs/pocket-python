@@ -1058,7 +1058,7 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46). Ordinary instance dictionaries are live with exact replacement/deletion aliases and owned collision callbacks (O47/O48). O49 adds fresh read-only keyed class namespace views, live mutations and unbound stored descriptors with metaclass priority. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains.",
+      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46). Ordinary instance dictionaries are live with exact replacement/deletion aliases and owned collision callbacks (O47/O48). O49 adds fresh read-only keyed class namespace views, live mutations and unbound stored descriptors with metaclass priority. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O59 adds str/list/tuple/dict default directories, preserving native merge order, cyclic graphs, contents, iterator positions and exact native caller binding without contained callbacks.",
       "gaps": "Default directories of other layouts, unread code/global/annotation metadata, module/class-body namespaces, class mapping enumeration/native layout entries, integer identity and dynamic source remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1173,7 +1173,29 @@
         "native-callable-directories-accessor-hooks-not-called",
         "native-callable-directories-python-bound-native-callable",
         "native-callable-directories-native-write-readonly",
-        "native-callable-directories-native-documentation-still-separate"
+        "native-callable-directories-native-documentation-still-separate",
+        "container-directories-str-sorted-directory",
+        "container-directories-str-raw-directory",
+        "container-directories-str-native-binding",
+        "container-directories-str-retained-caller",
+        "container-directories-list-sorted-directory",
+        "container-directories-list-raw-directory",
+        "container-directories-list-native-binding",
+        "container-directories-list-retained-caller",
+        "container-directories-tuple-sorted-directory",
+        "container-directories-tuple-raw-directory",
+        "container-directories-tuple-native-binding",
+        "container-directories-tuple-retained-caller",
+        "container-directories-dict-sorted-directory",
+        "container-directories-dict-raw-directory",
+        "container-directories-dict-native-binding",
+        "container-directories-dict-retained-caller",
+        "container-directories-list-cycle-retained",
+        "container-directories-tuple-list-cycle-retained",
+        "container-directories-dict-cycle-retained",
+        "container-directories-content-hooks-isolated",
+        "container-directories-unread-text-reduction",
+        "container-directories-unread-list-reduction"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:identity-alias",
@@ -1281,7 +1303,8 @@
         "tests/fixtures/interpreter/native-callable-directories.json:accessor-hooks-not-called",
         "tests/fixtures/interpreter/native-callable-directories.json:python-bound-native-callable",
         "tests/fixtures/interpreter/native-callable-directories.json:native-write-readonly",
-        "tests/fixtures/interpreter/native-callable-directories.json:native-documentation-still-separate"
+        "tests/fixtures/interpreter/native-callable-directories.json:native-documentation-still-separate",
+        "tests/fixtures/interpreter/container-directories.json:str-sorted-directory"
       ]
     },
     {
@@ -1843,7 +1866,7 @@
     {
       "id": "dir",
       "status": "partial",
-      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O55 adds state-independent generator directories and exact native receiver binding without running or resuming generator bodies. O56 adds actual-layout native iterator directories for adopted container/indexed/callable forms, preserving positions and exact native source/sentinel ownership without invoking callbacks. O57 adds numeric/singleton default directories with bool-before-int native merging, retained native caller chains and no conversion or truth callbacks. O58 adds range/raw-slice default directories without range iteration or arbitrary field callbacks, retaining cyclic field graphs through detached native callers.",
+      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O55 adds state-independent generator directories and exact native receiver binding without running or resuming generator bodies. O56 adds actual-layout native iterator directories for adopted container/indexed/callable forms, preserving positions and exact native source/sentinel ownership without invoking callbacks. O57 adds numeric/singleton default directories with bool-before-int native merging, retained native caller chains and no conversion or truth callbacks. O58 adds range/raw-slice default directories without range iteration or arbitrary field callbacks, retaining cyclic field graphs through detached native callers. O59 adds str/list/tuple/dict default directories, preserving native merge order, cyclic graphs, contents, iterator positions and exact native caller binding without contained callbacks.",
       "gaps": "Default directories of other layouts, unread code/global/annotation metadata, module/class-body namespaces, class mapping enumeration/native layout entries, integer identity and dynamic source remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1994,7 +2017,29 @@
         "sequence-directories-cross-layout-native-rebinding",
         "sequence-directories-lazy-generators",
         "sequence-directories-unread-range-reduction",
-        "sequence-directories-unread-slice-reduction"
+        "sequence-directories-unread-slice-reduction",
+        "container-directories-str-sorted-directory",
+        "container-directories-str-raw-directory",
+        "container-directories-str-native-binding",
+        "container-directories-str-retained-caller",
+        "container-directories-list-sorted-directory",
+        "container-directories-list-raw-directory",
+        "container-directories-list-native-binding",
+        "container-directories-list-retained-caller",
+        "container-directories-tuple-sorted-directory",
+        "container-directories-tuple-raw-directory",
+        "container-directories-tuple-native-binding",
+        "container-directories-tuple-retained-caller",
+        "container-directories-dict-sorted-directory",
+        "container-directories-dict-raw-directory",
+        "container-directories-dict-native-binding",
+        "container-directories-dict-retained-caller",
+        "container-directories-list-cycle-retained",
+        "container-directories-tuple-list-cycle-retained",
+        "container-directories-dict-cycle-retained",
+        "container-directories-content-hooks-isolated",
+        "container-directories-unread-text-reduction",
+        "container-directories-unread-list-reduction"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:dir-custom-descriptor",
@@ -2137,7 +2182,8 @@
         "tests/fixtures/interpreter/sequence-directories.json:cross-layout-native-rebinding",
         "tests/fixtures/interpreter/sequence-directories.json:lazy-generators",
         "tests/fixtures/interpreter/sequence-directories.json:unread-range-reduction",
-        "tests/fixtures/interpreter/sequence-directories.json:unread-slice-reduction"
+        "tests/fixtures/interpreter/sequence-directories.json:unread-slice-reduction",
+        "tests/fixtures/interpreter/container-directories.json:str-sorted-directory"
       ]
     },
     {
