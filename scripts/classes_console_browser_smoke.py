@@ -41,6 +41,7 @@ from examples.interpreter_property_names import SOURCE as PROPERTY_NAMES_SOURCE
 from examples.interpreter_abstract_flags import SOURCE as ABSTRACT_FLAGS_SOURCE
 from examples.interpreter_documentation import SOURCE as DOCUMENTATION_SOURCE
 from examples.interpreter_function_metadata import SOURCE as FUNCTION_METADATA_SOURCE
+from examples.interpreter_function_dictionaries import SOURCE as FUNCTION_DICTIONARIES_SOURCE
 
 
 def smoke(channel=None):
@@ -195,7 +196,8 @@ def smoke(channel=None):
                     abstract_flags = json.loads((ROOT / 'tests/fixtures/interpreter/abstract-flags.json').read_bytes())
                     documentation = json.loads((ROOT / 'tests/fixtures/interpreter/documentation.json').read_bytes())
                     function_metadata = json.loads((ROOT / 'tests/fixtures/interpreter/function-metadata.json').read_bytes())
-                    for corpus in [generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    function_dictionaries = json.loads((ROOT / 'tests/fixtures/interpreter/function-dictionaries.json').read_bytes())
+                    for corpus in [function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -616,7 +618,23 @@ def smoke(channel=None):
                                     assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
                     checks.append('function-metadata-composes-with-properties-retained-methods-and-lazy-generators-offline')
                     checks.append('function-metadata-validation-source-frames-and-method-fallback-boundaries-offline')
+                    dictionaries_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', FUNCTION_DICTIONARIES_SOURCE], text=True, encoding='utf-8')
+                    run(FUNCTION_DICTIONARIES_SOURCE, dictionaries_expected)
+                    for case in function_dictionaries['cases']:
+                        if case['stage'] not in function_dictionaries['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                            for frame in case.get('error_frames', []):
+                                if frame['function'] != '<module>':
+                                    assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
+                    checks.append('function-dictionaries-compose-with-decorators-retained-methods-and-lazy-generators-offline')
+                    checks.append('function-dictionary-replacement-native-bypass-and-callback-errors-remain-explicit-offline')
                     busy = [
+                        'def f(): pass\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nf.__dict__={Key():7}\nf.tag\n',
+                        'class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print("entered")\n while True: pass\nCallable.__getattribute__=lookup\nm.tag\n',
                         *['class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print("entered")\n while True: pass\nCallable.__getattribute__=lookup\nm.' + name + '\n' for name in ['__name__', '__qualname__', '__module__']],
                         'class Getter:\n @property\n def __doc__(self):\n  print("entered")\n  while True: pass\nproperty(Getter())\n',
                         'ready=False\nclass Getter:\n @property\n def __doc__(self):\n  if ready:\n   print("entered")\n   while True: pass\n  return None\np=property(Getter())\nready=True\np.setter(None)\n',
@@ -897,6 +915,8 @@ def smoke(channel=None):
                     refused('NotImplemented\n', 'NameError:')
                     for name in ['id', 'locals', 'vars', 'dir', 'globals']:
                         refused(name + '\n', 'NameError:')
+                    refused('def f(): pass\nf.__dict__\n', 'UnsupportedOperationError:')
+                    checks.append('class-to-core-update-retains-function-dictionary-boundary')
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
                     run('a=[7]\nb=a*2\na[0]=9\nprint(len(b),b[0],len("😀"*3),len(2*(1,)))\n', '2 7 3 2\n')
                     checks.append('primitive-repetition-retained-after-core-profile-update')

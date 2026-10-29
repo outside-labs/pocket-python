@@ -283,5 +283,11 @@ method metadata. Owned callable lookup preserves custom read/descriptor/fallback
 hooks and source errors, while direct native reads retain their bypass behavior.
 Its 86-case matrix has 83 adopted comparisons and three explicit refusals; fourteen
 representative probes extend this inventory to 242 observations per target.
-Arbitrary function dictionaries, native/wrapper metadata, live namespaces and the
+Native/wrapper metadata, broader live namespaces and the
 async/browser-adapter work under #34 retain their separate contracts.
+
+[O45/O46](interpreter-function-dictionaries.md) add live function dictionaries,
+replacement aliases, ordinary marker storage and owned bound-method attribute
+fallback. Their 83-case matrix and 23 representative probes retain explicit
+native-wrapper/structural-collision boundaries. Ordinary instance/module/class
+live mappings, default directories and async/browser adapters remain separate.

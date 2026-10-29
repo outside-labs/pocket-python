@@ -290,3 +290,8 @@ Development [version 4 verified modules](docs/interpreter-modules.md) add explic
 imports, session cache identity, relative packages and a supplied small library
 profile. The original text-metrics computation runs through this independent VM;
 newly entered source uses the independent source front end.
+
+[Live function dictionaries](docs/interpreter-function-dictionaries.md) expose
+custom decorator state through functions and retained bound methods, with live
+replacement aliases and owned collision callbacks. Run
+`python -m examples.interpreter_function_dictionaries` for the decorator console.

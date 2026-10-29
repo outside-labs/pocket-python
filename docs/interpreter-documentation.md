@@ -72,3 +72,7 @@ and lazy generators. Installed-wheel offline acceptance passes 1,587 program
 comparisons, 93 groups and 173 Stop/Restart cycles. The
 [payload record](measurements/2026-10-28-documentation.json) verifies 38 files
 and 691,188 bytes. These are finite semantic/source/payload observations.
+
+The later [O45/O46 function dictionary contract](interpreter-function-dictionaries.md)
+adopts live custom function attributes and bound-method fallback. Broader native
+metadata, instance/module/class live mappings and async remain separate work.
