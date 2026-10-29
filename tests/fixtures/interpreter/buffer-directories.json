@@ -3,7 +3,9 @@
   "suite": "interpreter-buffer-directories/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O60"
+  ],
   "cases": [
     {
       "id": "set-sorted-directory",
@@ -614,15 +616,14 @@
       "stdout": "57 44 78 91 55\n"
     },
     {
-      "id": "unread-bytes-reduction",
-      "source": "b\"abc\".__reduce__()\n",
+      "id": "unread-bytes-hex",
+      "source": "b\"abc\".hex()\n",
       "stage": "Future",
-      "stdout": "",
-      "error_type": "TypeError"
+      "stdout": ""
     },
     {
-      "id": "unread-view-buffer",
-      "source": "memoryview(b\"abc\").__buffer__\n",
+      "id": "unread-view-cast",
+      "source": "memoryview(b\"abc\").cast(\"B\")\n",
       "stage": "Future",
       "stdout": ""
     },

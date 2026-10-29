@@ -344,6 +344,9 @@ export class ValueRuntime {
     if (value instanceof ListValue) return "list";
     if (value instanceof TupleValue) return "tuple";
     if (value instanceof DictValue) return "dict";
+    if (value instanceof SetValue) return value.frozen ? "frozenset" : "set";
+    if (value instanceof BinaryValue) return value.mutable ? "bytearray" : "bytes";
+    if (value instanceof MemoryViewValue) return "memoryview";
     return null;
   }
   typeName(value) {
