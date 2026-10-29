@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O50",
     "O51",
-    "O52"
+    "O52",
+    "O61"
   ],
   "cases": [
     {
@@ -222,7 +223,7 @@
     },
     {
       "id": "ordinary-instance-directory",
-      "stage": "Future",
+      "stage": "O61",
       "source": "class C: pass\nprint(\"__dict__\" in dir(C()))\n",
       "stdout": "True\n"
     },

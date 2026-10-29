@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O56"
+    "O56",
+    "O61"
   ],
   "cases": [
     {
@@ -81,27 +82,27 @@
     },
     {
       "id": "unicode-sorted-directory",
-      "source": "it=iter(\"\u00e9\ud83d\ude00\")\nprint(*dir(it))\n",
+      "source": "it=iter(\"é😀\")\nprint(*dir(it))\n",
       "stage": "O56",
       "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
     },
     {
       "id": "unicode-raw-directory",
-      "source": "it=iter(\"\u00e9\ud83d\ude00\")\nprint(*object.__dir__(it))\n",
+      "source": "it=iter(\"é😀\")\nprint(*object.__dir__(it))\n",
       "stage": "O56",
       "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
     },
     {
       "id": "unicode-native-binding",
-      "source": "it=iter(\"\u00e9\ud83d\ude00\")\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "source": "it=iter(\"é😀\")\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
       "stage": "O56",
       "stdout": "True __dir__ str_iterator.__dir__ True\n"
     },
     {
       "id": "unicode-preserved-state",
-      "source": "it=iter(\"\u00e9\ud83d\ude00\")\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "source": "it=iter(\"é😀\")\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
       "stage": "O56",
-      "stdout": "\u00e9 True \ud83d\ude00 28\n"
+      "stdout": "é True 😀 28\n"
     },
     {
       "id": "dict-sorted-directory",
@@ -617,7 +618,7 @@
     {
       "id": "user-iterator-directory",
       "source": "class User:\n def __iter__(self): return self\n def __next__(self): return 7\nprint(len(dir(User())))\n",
-      "stage": "Future",
+      "stage": "O61",
       "stdout": "31\n"
     },
     {

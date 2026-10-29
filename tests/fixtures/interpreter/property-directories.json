@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O53"
+    "O53",
+    "O61"
   ],
   "cases": [
     {
@@ -225,7 +226,7 @@
     {
       "id": "ordinary-instance-layout",
       "source": "class C: pass\nprint(\"__dict__\" in dir(C()))\n",
-      "stage": "Future",
+      "stage": "O61",
       "stdout": "True\n"
     },
     {

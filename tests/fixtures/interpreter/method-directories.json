@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O51",
     "O52",
-    "O54"
+    "O54",
+    "O61"
   ],
   "cases": [
     {
@@ -41,9 +42,9 @@
     },
     {
       "id": "unicode-order",
-      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={\"\ud83d\ude00\":7,\"\u03c9\":9,\"\u00e9\":11,\"a\":13}\nprint(*dir(m)[-4:])\n",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={\"😀\":7,\"ω\":9,\"é\":11,\"a\":13}\nprint(*dir(m)[-4:])\n",
       "stage": "O51",
-      "stdout": "a \u00e9 \u03c9 \ud83d\ude00\n"
+      "stdout": "a é ω 😀\n"
     },
     {
       "id": "native-key-identity",
@@ -299,7 +300,7 @@
     {
       "id": "ordinary-instance-directory",
       "source": "class C: pass\nprint(\"__dict__\" in dir(C()))\n",
-      "stage": "Future",
+      "stage": "O61",
       "stdout": "True\n"
     },
     {

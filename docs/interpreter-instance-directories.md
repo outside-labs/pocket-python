@@ -42,3 +42,11 @@ collisions, truth callbacks, retained cyclic graphs, real limits and core admiss
 The initial dynamic reference cases now explicitly set the module name so the
 oracle and engine start with the same globals. Adjacent reflection, instance
 dictionary, operation ownership and execution coverage passes.
+
+The installed offline console exercises positive/error/refusal cases, retained native
+callers, Stop/Restart and a waiting core-profile update. Compatibility probes now
+qualify ordinary instances and user iterators formerly listed as deferred. The
+[instance example](../examples/interpreter_instance_directories.py) composes live
+dictionaries, advertised classes and lazy generators. Its
+[payload record](measurements/2026-10-29-instance-directories.json) verifies all
+38 files at 741,544 bytes. These are finite semantic/source/payload observations.
