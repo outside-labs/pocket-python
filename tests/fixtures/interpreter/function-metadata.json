@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O43"
+    "O43",
+    "O44"
   ],
   "cases": [
     {
@@ -460,29 +461,29 @@
     {
       "id": "method-custom-lookup-__name__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  print(name)\n  return [7]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__name__[0])\n",
-      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__name__\n7\n"
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print(name)\n return [7]\nCallable.__getattribute__=lookup\nprint(m.__name__[0])\n",
+      "stdout": "__name__\n7\n"
     },
     {
       "id": "method-custom-fallback-__name__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  raise AttributeError(\"lookup\")\n def __getattr__(self,name):\n  print(name)\n  return [9]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__name__[0])\n",
-      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__name__\n9\n"
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise AttributeError(\"lookup\")\ndef fallback(self,name):\n print(name)\n return [9]\nCallable.__getattribute__=lookup\nCallable.__getattr__=fallback\nprint(m.__name__[0])\n",
+      "stdout": "__name__\n9\n"
     },
     {
       "id": "method-custom-error-__name__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  raise ValueError(\"original\")\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__name__)\n",
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise ValueError(\"original\")\nCallable.__getattribute__=lookup\nprint(m.__name__)\n",
       "stdout": "",
       "error_type": "ValueError",
       "error_frames": [
         {
           "function": "<module>",
-          "line": 4
+          "line": 6
         },
         {
-          "function": "__getattribute__",
-          "line": 3
+          "function": "lookup",
+          "line": 4
         }
       ]
     },
@@ -534,29 +535,29 @@
     {
       "id": "method-custom-lookup-__qualname__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  print(name)\n  return [7]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__qualname__[0])\n",
-      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__qualname__\n7\n"
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print(name)\n return [7]\nCallable.__getattribute__=lookup\nprint(m.__qualname__[0])\n",
+      "stdout": "__qualname__\n7\n"
     },
     {
       "id": "method-custom-fallback-__qualname__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  raise AttributeError(\"lookup\")\n def __getattr__(self,name):\n  print(name)\n  return [9]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__qualname__[0])\n",
-      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__qualname__\n9\n"
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise AttributeError(\"lookup\")\ndef fallback(self,name):\n print(name)\n return [9]\nCallable.__getattribute__=lookup\nCallable.__getattr__=fallback\nprint(m.__qualname__[0])\n",
+      "stdout": "__qualname__\n9\n"
     },
     {
       "id": "method-custom-error-__qualname__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  raise ValueError(\"original\")\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__qualname__)\n",
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise ValueError(\"original\")\nCallable.__getattribute__=lookup\nprint(m.__qualname__)\n",
       "stdout": "",
       "error_type": "ValueError",
       "error_frames": [
         {
           "function": "<module>",
-          "line": 4
+          "line": 6
         },
         {
-          "function": "__getattribute__",
-          "line": 3
+          "function": "lookup",
+          "line": 4
         }
       ]
     },
@@ -608,29 +609,29 @@
     {
       "id": "method-custom-lookup-__module__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  print(name)\n  return [7]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__module__[0])\n",
-      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__module__\n7\n"
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print(name)\n return [7]\nCallable.__getattribute__=lookup\nprint(m.__module__[0])\n",
+      "stdout": "__module__\n7\n"
     },
     {
       "id": "method-custom-fallback-__module__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  raise AttributeError(\"lookup\")\n def __getattr__(self,name):\n  print(name)\n  return [9]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__module__[0])\n",
-      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__module__\n9\n"
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise AttributeError(\"lookup\")\ndef fallback(self,name):\n print(name)\n return [9]\nCallable.__getattribute__=lookup\nCallable.__getattr__=fallback\nprint(m.__module__[0])\n",
+      "stdout": "__module__\n9\n"
     },
     {
       "id": "method-custom-error-__module__",
       "stage": "O44",
-      "source": "class Callable:\n def __getattribute__(self,name):\n  raise ValueError(\"original\")\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__module__)\n",
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise ValueError(\"original\")\nCallable.__getattribute__=lookup\nprint(m.__module__)\n",
       "stdout": "",
       "error_type": "ValueError",
       "error_frames": [
         {
           "function": "<module>",
-          "line": 4
+          "line": 6
         },
         {
-          "function": "__getattribute__",
-          "line": 3
+          "function": "lookup",
+          "line": 4
         }
       ]
     },
@@ -663,6 +664,126 @@
       "stage": "Future",
       "source": "def f(): pass\nprint(staticmethod(f).__doc__)\n",
       "stdout": "None\n"
+    },
+    {
+      "id": "method-native-readonly-__name__-set",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nobject.__setattr__(m,\"__name__\",7)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-native-readonly-__name__-delete",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nobject.__delattr__(m,\"__name__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-nested-__name__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C: pass\ndef f(): pass\nm=classmethod(f).__get__(None,C)\nn=classmethod(m).__get__(None,C)\nprint(getattr(n,\"__name__\")==getattr(f,\"__name__\"))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-optional-attributeerror-__name__",
+      "stage": "O44",
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise AttributeError(\"missing\")\nCallable.__getattribute__=lookup\nprint(getattr(m,\"__name__\",7),hasattr(m,\"__name__\"))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "method-native-readonly-__qualname__-set",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nobject.__setattr__(m,\"__qualname__\",7)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-native-readonly-__qualname__-delete",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nobject.__delattr__(m,\"__qualname__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-nested-__qualname__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C: pass\ndef f(): pass\nm=classmethod(f).__get__(None,C)\nn=classmethod(m).__get__(None,C)\nprint(getattr(n,\"__qualname__\")==getattr(f,\"__qualname__\"))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-optional-attributeerror-__qualname__",
+      "stage": "O44",
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise AttributeError(\"missing\")\nCallable.__getattribute__=lookup\nprint(getattr(m,\"__qualname__\",7),hasattr(m,\"__qualname__\"))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "method-native-readonly-__module__-set",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nobject.__setattr__(m,\"__module__\",7)\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-native-readonly-__module__-delete",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nobject.__delattr__(m,\"__module__\")\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-nested-__module__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C: pass\ndef f(): pass\nm=classmethod(f).__get__(None,C)\nn=classmethod(m).__get__(None,C)\nprint(getattr(n,\"__module__\")==getattr(f,\"__module__\"))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-optional-attributeerror-__module__",
+      "stage": "O44",
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise AttributeError(\"missing\")\nCallable.__getattribute__=lookup\nprint(getattr(m,\"__module__\",7),hasattr(m,\"__module__\"))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "method-name-descriptor",
+      "stage": "O44",
+      "source": "active=False\nclass Callable:\n @property\n def __name__(self):\n  if active:\n   print(\"descriptor\")\n   return [7]\n  return \"initial\"\nm=classmethod(Callable()).__get__(None,object)\nactive=True\nprint(m.__name__[0])\n",
+      "stdout": "descriptor\n7\n"
     }
   ]
 }

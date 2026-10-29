@@ -107,6 +107,7 @@ export class ClassRuntime {
     return type.mro.some(base => base instanceof ClassValue && !base.root && base.namespace.has(name));
   }
   isType(value) { return value instanceof ClassValue || value?.constructor === BuiltinValue && NATIVE_TYPES.has(value.name); }
+  isPythonMethod(value) { return value instanceof BoundMethodValue && (value.pythonMethod || !(value.callable instanceof BuiltinValue)); }
   isMetaclass(value) { return value instanceof ClassValue && value.mro.some(base => base instanceof BuiltinValue && base.name === "type"); }
   mro(type) {
     if (type instanceof ClassValue) return type.mro;
@@ -297,9 +298,10 @@ export class ClassRuntime {
       return {kind: "call", callable: this.builtin("method-abstract-marker"), args: [receiver]};
     if (receiver instanceof BoundMethodValue && name === "__doc__")
       return {kind: "call", callable: this.builtin("method-documentation"), args: [receiver]};
-    if (receiver instanceof BoundMethodValue && receiver.pythonMethod) {
+    if (this.isPythonMethod(receiver)) {
       if (name === "__class__") return value(this.builtin("method"));
-      if (["__name__", "__qualname__"].includes(name)) return this.read(receiver.callable, name);
+      if (["__name__", "__qualname__", "__module__"].includes(name))
+        return {kind: "call", callable: this.builtin("method-" + name.slice(2, -2)), args: [receiver]};
     }
     if (name === "__objclass__" && receiver instanceof BoundMethodValue &&
         (receiver.callable instanceof FunctionValue || receiver.callable instanceof BoundMethodValue ||
@@ -476,6 +478,8 @@ export class ClassRuntime {
   }
   mutate(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (this.isPythonMethod(receiver) && ["__name__", "__qualname__", "__module__"].includes(name))
+      this.fail("AttributeError", "Method identity metadata is read-only.");
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__", "__module__"].includes(name)) {
       if (name !== "__module__" && (remove || !this.values.isString(value)))
         this.fail("TypeError", "Function " + name + " must be set to a string.");

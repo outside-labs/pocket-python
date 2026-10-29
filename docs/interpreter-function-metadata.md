@@ -10,6 +10,10 @@ not establish independent execution.
 | O43 | Python function `__name__` and `__qualname__` retain exact adopted strings; assignment accepts arbitrary bounded text, including empty text and non-identifiers, without coercion. Deletion and non-string assignment raise TypeError. Renaming does not change the other field, lexical scope, binding or code traceback names. `__module__` snapshots the defining globals' current `__name__`, or None if absent, at function creation. It accepts arbitrary owned values; deletion resets it to None. |
 | O44 | Ordinary bound methods expose their callable's current name, qualification and module through owned attribute lookup. Reads preserve descriptor/read/fallback hooks and their errors on custom wrapped callables. Assignments and deletions raise AttributeError. A retained method observes later function mutations while preserving its receiver/function identity. |
 
+The method's ordinary attribute fallback supplies these three fields. Direct
+`object.__getattribute__` reads bypass that fallback and raise AttributeError;
+direct native writes/deletions also raise AttributeError.
+
 Default names have stable identity on repeated reads. Mutation preserves the
 assigned object's exact identity and never calls its string, truth, equality or
 hash hooks. Module metadata is a definition-time snapshot, independent of later
@@ -42,3 +46,9 @@ O43 is implemented. Its 47 adopted source cases cover exact text identities,
 invalid/deleted names, independent qualification, executable identity, arbitrary
 module snapshots and native reflection. Focused ownership tests exercise real
 allocation failure, foreign arenas, cycles and parked cancellation/close.
+
+O44 is implemented with owned callable lookup and relay destinations. Its
+adopted cases include original errors/source frames, AttributeError fallback,
+descriptors, nested bound methods and native bypass behavior. Detached closures
+and the original method remain alive across parked collection; callback tests
+exercise cancellation, close, recursion and real instruction/work/arena limits.
