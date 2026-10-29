@@ -59,3 +59,10 @@ replacement during reads/writes/deletions, nested methods, live markers and
 explicit structural-collision/native-wrapper refusals. Native method `__get__`
 and `__call__` reflection retain separate contracts. Focused lifecycle tests
 retain detached callables and results through descriptor callbacks and parking.
+
+Explicit `setattr` and native object attribute operations preserve a supplied
+name string when inserting a new custom key; replacing an equal key retains the
+first stored key. Supplied lookup names also survive dictionary collision and
+ordinary method-fallback callbacks. This does not promise CPython interning
+between source literals or implicit attribute names. Five identity regressions
+extend the matrix to 83 cases.

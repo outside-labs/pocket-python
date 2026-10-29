@@ -504,6 +504,36 @@
       "stage": "Future",
       "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del f.__dict__[self]\n  return True\nf.__dict__={Key():7}\ngetattr(f,\"tag\",99)\n",
       "stdout": ""
+    },
+    {
+      "id": "explicit-name-identity-ordinary",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nname=\"not an identifier\"\nsetattr(f,name,7)\nprint(next(iter(d)) is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "explicit-name-identity-native",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nname=\"not an identifier\"\nobject.__setattr__(f,name,7)\nprint(next(iter(d)) is name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "equal-name-retains-first-key",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nn=2;first=\"x \"*n;second=\"x \"*n\nsetattr(f,first,7);setattr(f,second,9)\nname=next(iter(d))\nprint(name is first,name is second,getattr(f,first))\n",
+      "stdout": "True False 9\n"
+    },
+    {
+      "id": "collision-retains-supplied-lookup-key",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nname=\"tag\"\nclass Key:\n def __hash__(self): return hash(name)\n def __eq__(self,other):\n  print(other is name)\n  return True\nf.__dict__={Key():7}\nprint(getattr(f,name))\n",
+      "stdout": "True\n7\n"
+    },
+    {
+      "id": "method-retains-supplied-lookup-key",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nname=\"tag\"\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,key):\n print(key is name)\n return 7\nCallable.__getattribute__=lookup\nprint(getattr(m,name))\n",
+      "stdout": "True\n7\n"
     }
   ]
 }
