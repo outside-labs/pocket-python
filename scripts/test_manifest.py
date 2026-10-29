@@ -43,11 +43,11 @@ CORPORA = (
     'subclass-initialization', 'metaclass-attributes', 'nested-descriptors',
     'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection', 'execution', 'object-hashing', 'ordering', 'object-protocols',
 )
-CORE_CORPORA = {'sequences', 'function-binding', 'function-dictionaries', 'ordinary-syntax', 'value-families',
+CORE_CORPORA = {'sequences', 'function-binding', 'ordinary-syntax', 'value-families',
                 'generators', 'repetition', 'ordering'}
 PARKED_CORPORA = {'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
                   'execution', 'object-hashing'}
-REFERENCE_CORPORA = {'function-dictionaries',
+REFERENCE_CORPORA = {
     'classes', 'ordering', 'subclass-initialization', 'metaclass-attributes',
     'function-binding', 'function-dictionaries', 'ordinary-syntax', 'value-families', 'iteration', 'equality',
     'indexing', 'private-names', 'descriptors', 'nested-descriptors',
