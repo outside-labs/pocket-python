@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O52"
+    "O52",
+    "O54"
   ],
   "cases": [
     {
@@ -198,7 +199,7 @@
     {
       "id": "native-method-directory",
       "source": "class C: tag=[7]\np=C.__dict__\nprint(\"__self__\" in dir(p.get))\n",
-      "stage": "Future",
+      "stage": "O54",
       "stdout": "True\n"
     }
   ]

@@ -88,6 +88,20 @@ const PROPERTY_DIRECTORY_KEYS = Object.freeze([
   "deleter", "__set_name__", "fget", "fset", "fdel", "__doc__", "__name__",
   "__isabstractmethod__", ...OBJECT_DIRECTORY_KEYS
 ]);
+const NATIVE_DESCRIPTOR_DIRECTORY_KEYS = Object.freeze([
+  "__repr__", "__call__", "__get__", "__reduce__", "__objclass__", "__name__",
+  "__doc__", "__qualname__", "__text_signature__", ...OBJECT_DIRECTORY_KEYS
+]);
+const NATIVE_METHOD_DIRECTORY_KEYS = Object.freeze([
+  "__repr__", "__hash__", "__call__", "__lt__", "__le__", "__eq__", "__ne__",
+  "__gt__", "__ge__", "__reduce__", "__module__", "__doc__", "__name__",
+  "__qualname__", "__self__", "__text_signature__", ...OBJECT_DIRECTORY_KEYS
+]);
+const NATIVE_WRAPPER_DIRECTORY_KEYS = Object.freeze([
+  "__repr__", "__hash__", "__call__", "__lt__", "__le__", "__eq__", "__ne__",
+  "__gt__", "__ge__", "__reduce__", "__self__", "__objclass__", "__name__",
+  "__qualname__", "__doc__", "__text_signature__", ...OBJECT_DIRECTORY_KEYS
+]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -321,6 +335,8 @@ export class ClassRuntime {
       }
       this.fail("AttributeError", "super has no attribute '" + name + "'.");
     }
+    if (name === "__dir__" && this.nativeCallableDirectoryKind(receiver) !== null)
+      return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
     if (receiver instanceof BuiltinValue) {
       if (name === "__dict__" && this.isType(receiver))
         this.fail("UnsupportedOperationError", "Native type dictionaries require their own layout contract.", "UNSUPPORTED");
@@ -620,12 +636,28 @@ export class ClassRuntime {
     if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
-  hasFixedDirectory(receiver) { return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue; }
+  nativeCallableDirectoryKind(receiver) {
+    const kind = this.nativeDescriptorKind(receiver);
+    if (kind !== null) return kind;
+    if (receiver instanceof BoundMethodValue && !this.isPythonMethod(receiver) && receiver.callable instanceof BuiltinValue) {
+      if (nativeWrapper(receiver.callable.name)) return "method-wrapper";
+      if (NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name))
+        return "builtin_function_or_method";
+    }
+    return null;
+  }
+  hasFixedDirectory(receiver) {
+    return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || this.nativeCallableDirectoryKind(receiver) !== null;
+  }
   directoryNames(receiver) {
     if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
     if (receiver instanceof ClassNamespaceValue) return NAMESPACE_VIEW_DIRECTORY_KEYS;
     if (receiver instanceof PropertyValue) return PROPERTY_DIRECTORY_KEYS;
     if (this.isPythonMethod(receiver)) return METHOD_DIRECTORY_KEYS;
+    const kind = this.nativeCallableDirectoryKind(receiver);
+    if (kind === "method_descriptor" || kind === "wrapper_descriptor") return NATIVE_DESCRIPTOR_DIRECTORY_KEYS;
+    if (kind === "builtin_function_or_method") return NATIVE_METHOD_DIRECTORY_KEYS;
+    if (kind === "method-wrapper") return NATIVE_WRAPPER_DIRECTORY_KEYS;
     throw new TypeError("Invalid native directory receiver.");
   }
   functionDictionary(receiver) {
