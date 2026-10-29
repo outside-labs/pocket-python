@@ -60,3 +60,20 @@ mutation failures propagate unchanged. The expanded source matrix includes
 explicit refusals, including structural dictionary mutation during comparison.
 Lifecycle checks detach receivers, dictionaries and class descriptors during
 parked callbacks, then finish, cancel or close with zero logical owners remaining.
+
+All 67 pinned source cases (61 comparisons and six explicit refusals) pass through
+Node and Chromium drain, instruction-boundary and parked execution: 402
+observations with 402 zero logical teardowns. Retained reports verify 348 current
+runtime/driver hashes. Thirty representative probes extend the compatibility
+inventory to 295 observations per target. All 71 feature units, 556 adjacent
+units and 22 affected Python tests pass; the eight composed execution
+observations remain unchanged.
+
+The [instance-state console](../examples/interpreter_instance_dictionaries.py)
+composes replacement/deletion aliases, retained methods, properties, lazy
+generators and dictionary replacement during collision callbacks. Installed-wheel
+offline acceptance passes 1,754 program comparisons, 100 groups and 181
+Stop/Restart cycles. The [payload record](measurements/2026-10-28-instance-dictionaries.json)
+verifies all 38 files at 706,001 bytes, with an identical fresh rebuild. These are
+finite semantic/source/payload observations. Broader reflection remains under
+#123/#33 and native async/host adapters remain under #34.

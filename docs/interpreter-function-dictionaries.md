@@ -39,7 +39,7 @@ resource changes must be attributable to newly required storage/work.
 
 This belongs to classes-source/1 and bytecode 5. Function code/default/annotation/
 closure objects, native function attributes, static/class method wrapper
-dictionaries, instance/module/class live mappings and default directories remain
+dictionaries, module/class live mappings and default directories remain
 separate work. Native coroutine/await and host adapters remain under #34. No
 dependency, host grant, release, publication or deployment change is included.
 
@@ -83,3 +83,7 @@ The [payload record](measurements/2026-10-28-function-dictionaries.json) verifie
 checks and 18 affected Python checks pass; the eight composed execution
 observations remain unchanged. These are finite semantic/source/payload
 observations. Broader reflection and async remain under #123/#34.
+
+The subsequent [O47/O48 contract](interpreter-instance-dictionaries.md) adopts
+ordinary instance dictionaries while retaining the function-specific deletion
+and descriptor boundaries above.

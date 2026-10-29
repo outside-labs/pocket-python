@@ -42,6 +42,7 @@ from examples.interpreter_abstract_flags import SOURCE as ABSTRACT_FLAGS_SOURCE
 from examples.interpreter_documentation import SOURCE as DOCUMENTATION_SOURCE
 from examples.interpreter_function_metadata import SOURCE as FUNCTION_METADATA_SOURCE
 from examples.interpreter_function_dictionaries import SOURCE as FUNCTION_DICTIONARIES_SOURCE
+from examples.interpreter_instance_dictionaries import SOURCE as INSTANCE_DICTIONARIES_SOURCE
 
 
 def smoke(channel=None):
@@ -197,7 +198,8 @@ def smoke(channel=None):
                     documentation = json.loads((ROOT / 'tests/fixtures/interpreter/documentation.json').read_bytes())
                     function_metadata = json.loads((ROOT / 'tests/fixtures/interpreter/function-metadata.json').read_bytes())
                     function_dictionaries = json.loads((ROOT / 'tests/fixtures/interpreter/function-dictionaries.json').read_bytes())
-                    for corpus in [function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    instance_dictionaries = json.loads((ROOT / 'tests/fixtures/interpreter/instance-dictionaries.json').read_bytes())
+                    for corpus in [instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(GENERATOR_SOURCE)
@@ -632,7 +634,23 @@ def smoke(channel=None):
                                     assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
                     checks.append('function-dictionaries-compose-with-decorators-retained-methods-and-lazy-generators-offline')
                     checks.append('function-dictionary-replacement-native-bypass-and-callback-errors-remain-explicit-offline')
+                    instances_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', INSTANCE_DICTIONARIES_SOURCE], text=True, encoding='utf-8')
+                    run(INSTANCE_DICTIONARIES_SOURCE, instances_expected)
+                    for case in instance_dictionaries['cases']:
+                        if case['stage'] not in instance_dictionaries['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                            for frame in case.get('error_frames', []):
+                                if frame['function'] != '<module>':
+                                    assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
+                    checks.append('instance-dictionaries-compose-with-retained-methods-properties-and-lazy-generators-offline')
+                    checks.append('instance-dictionary-replacement-deletion-callback-errors-and-reflection-boundaries-offline')
                     busy = [
+                        *['class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nc.__dict__={Key():7}\n' + operation + '\n'
+                          for operation in ['c.tag', 'c.tag=9', 'del c.tag']],
                         'def f(): pass\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nf.__dict__={Key():7}\nf.tag\n',
                         'class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print("entered")\n while True: pass\nCallable.__getattribute__=lookup\nm.tag\n',
                         *['class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print("entered")\n while True: pass\nCallable.__getattribute__=lookup\nm.' + name + '\n' for name in ['__name__', '__qualname__', '__module__']],
