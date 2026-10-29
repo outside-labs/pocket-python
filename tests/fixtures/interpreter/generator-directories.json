@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-generator-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "sorted-directory",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(*dir(g))\n",
+      "stage": "O55",
+      "stdout": "__class__ __class_getitem__ __del__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __lt__ __name__ __ne__ __new__ __next__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ close gi_code gi_frame gi_running gi_suspended gi_yieldfrom send throw\n"
+    },
+    {
+      "id": "raw-directory",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(*object.__dir__(g))\n",
+      "stage": "O55",
+      "stdout": "__repr__ __iter__ __next__ __del__ send throw close __sizeof__ __class_getitem__ __name__ __qualname__ gi_yieldfrom gi_running gi_frame gi_suspended gi_code __doc__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "bound-directory",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(*g.__dir__())\n",
+      "stage": "O55",
+      "stdout": "__repr__ __iter__ __next__ __del__ send throw close __sizeof__ __class_getitem__ __name__ __qualname__ gi_yieldfrom gi_running gi_frame gi_suspended gi_code __doc__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "fresh-lists",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\na=dir(g)\nb=dir(g)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O55",
+      "stdout": "False False 38\n"
+    },
+    {
+      "id": "fresh-raw-lists",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\na=object.__dir__(g)\nb=g.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O55",
+      "stdout": "False False 38\n"
+    },
+    {
+      "id": "native-binding",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nd=object.__dir__.__get__(g)\nprint(d.__self__ is g,d.__name__,d.__qualname__,d()==g.__dir__())\n",
+      "stage": "O55",
+      "stdout": "True __dir__ generator.__dir__ True\n"
+    },
+    {
+      "id": "native-rebinding",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nh=produce()\nd=object.__dir__.__get__(h,type(g))\nprint(d.__self__ is h,d()==g.__dir__(),next(g),next(h))\n",
+      "stage": "O55",
+      "stdout": "True True 7 7\n"
+    },
+    {
+      "id": "native-getattribute",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nd=object.__getattribute__(g,\"__dir__\")\nprint(d.__self__ is g,d.__name__,d.__qualname__,len(d()))\n",
+      "stage": "O55",
+      "stdout": "True __dir__ generator.__dir__ 38\n"
+    },
+    {
+      "id": "builtin-getattr",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nd=getattr(g,\"__dir__\")\nprint(hasattr(g,\"__dir__\"),d.__self__ is g,len(d()))\n",
+      "stage": "O55",
+      "stdout": "True True 38\n"
+    },
+    {
+      "id": "retained-caller",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nd=g.__dir__\ndel g\ndel produce\nprint(len(d()),next(d.__self__))\n",
+      "stage": "O55",
+      "stdout": "38 7\n"
+    },
+    {
+      "id": "nested-native-callers",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nd=g.__dir__.__dir__\ndel g\ndel produce\nprint(len(d()),next(d.__self__.__self__))\n",
+      "stage": "O55",
+      "stdout": "30 7\n"
+    },
+    {
+      "id": "created-does-not-run",
+      "source": "def produce():\n print(\"entered\")\n yield 7\ng=produce()\nprint(len(dir(g)),len(g.__dir__()))\nprint(next(g))\n",
+      "stage": "O55",
+      "stdout": "38 38\nentered\n7\n"
+    },
+    {
+      "id": "suspended-does-not-resume",
+      "source": "def produce():\n yield 7\n print(\"resumed\")\n yield 9\ng=produce()\nprint(next(g))\na=dir(g)\nprint(len(a),len(g.__dir__()))\nprint(next(g))\n",
+      "stage": "O55",
+      "stdout": "7\n38 38\nresumed\n9\n"
+    },
+    {
+      "id": "exhausted-state",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\na=dir(g)\nprint(next(g),next(g),next(g,None))\nprint(a==dir(g),next(g,None),len(g.__dir__()))\n",
+      "stage": "O55",
+      "stdout": "7 9 None\nTrue None 38\n"
+    },
+    {
+      "id": "closed-state",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\na=dir(g)\ng.close()\nprint(a==dir(g),next(g,None),len(g.__dir__()))\n",
+      "stage": "O55",
+      "stdout": "True None 38\n"
+    },
+    {
+      "id": "suspended-close",
+      "source": "def produce():\n try:\n  yield 7\n finally:\n  print(\"closed\")\ng=produce()\na=dir(g)\nprint(next(g))\ng.close()\nprint(a==dir(g),next(g,None))\n",
+      "stage": "O55",
+      "stdout": "7\nclosed\nTrue None\n"
+    },
+    {
+      "id": "running-generator",
+      "source": "def produce():\n print(len(dir(g)),len(g.__dir__()))\n yield 7\ng=produce()\nprint(next(g),next(g,None))\n",
+      "stage": "O55",
+      "stdout": "38 38\n7 None\n"
+    },
+    {
+      "id": "delegated-state",
+      "source": "def produce():\n yield from (7,9)\ng=produce()\na=dir(g)\nprint(next(g),a==dir(g),next(g),next(g,None))\n",
+      "stage": "O55",
+      "stdout": "7 True 9 None\n"
+    },
+    {
+      "id": "send-state",
+      "source": "def produce():\n x=yield 7\n yield x\ng=produce()\nprint(next(g))\nprint(len(dir(g)),g.send(9),next(g,None))\n",
+      "stage": "O55",
+      "stdout": "7\n38 9 None\n"
+    },
+    {
+      "id": "generator-expression",
+      "source": "g=(x+1 for x in (6,8))\nprint(len(dir(g)),len(g.__dir__()),next(g),next(g))\n",
+      "stage": "O55",
+      "stdout": "38 38 7 9\n"
+    },
+    {
+      "id": "function-attributes-not-listed",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nproduce.extra=7\nproduce.__name__=\"renamed\"\nprint(\"extra\" in dir(g),\"renamed\" in dir(g),len(dir(g)),next(g))\n",
+      "stage": "O55",
+      "stdout": "False False 38 7\n"
+    },
+    {
+      "id": "frame-locals-not-listed",
+      "source": "def produce():\n secret=7\n yield secret\ng=produce()\nprint(next(g),\"secret\" in dir(g),len(g.__dir__()))\n",
+      "stage": "O55",
+      "stdout": "7 False 38\n"
+    },
+    {
+      "id": "retained-cyclic-generator",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nproduce.saved=g\nd=g.__dir__\ndel g\ndel produce\nprint(len(d()),next(d.__self__))\n",
+      "stage": "O55",
+      "stdout": "38 7\n"
+    },
+    {
+      "id": "retained-callback-values",
+      "source": "class Value:\n def __hash__(self): raise ValueError(\"never\")\n def __bool__(self): raise ValueError(\"never\")\n def __getattribute__(self,name): raise ValueError(\"never\")\nvalue=Value()\ndef produce(arg):\n yield arg\ng=produce(value)\nprint(len(dir(g)),next(g) is value)\n",
+      "stage": "O55",
+      "stdout": "38 True\n"
+    },
+    {
+      "id": "bound-extra-argument",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\ng.__dir__(7)\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "bound-keyword",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\ng.__dir__(unexpected=7)\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "native-extra-argument",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\nobject.__dir__(g,7)\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "native-keyword",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\nobject.__dir__(g=g)\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "dir-extra-argument",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\ndir(g,7)\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "dir-keyword",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\ndir(value=g)\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "direct-write",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\ng.__dir__=7\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "direct-delete",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\ndel g.__dir__\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "builtin-write",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\nsetattr(g,\"__dir__\",7)\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "builtin-delete",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\ndelattr(g,\"__dir__\")\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "native-write",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\nobject.__setattr__(g,\"__dir__\",7)\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "native-delete",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\nobject.__delattr__(g,\"__dir__\")\n",
+      "stage": "O55",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "unread-frame",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(g.gi_frame is None)\n",
+      "stage": "Future",
+      "stdout": "False\n"
+    },
+    {
+      "id": "unread-code",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(g.gi_code is None)\n",
+      "stage": "Future",
+      "stdout": "False\n"
+    },
+    {
+      "id": "wrapper-directory-boundary",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(len(dir(staticmethod(produce))))\n",
+      "stage": "Future",
+      "stdout": "36\n"
+    },
+    {
+      "id": "class-directory-boundary",
+      "source": "class C: pass\nprint(len(dir(C)))\n",
+      "stage": "Future",
+      "stdout": "29\n"
+    }
+  ]
+}
