@@ -1,0 +1,388 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-instance-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "root-sorted",
+      "source": "value=object()\nprint(*dir(value))\n",
+      "stage": "O61",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "root-raw",
+      "source": "value=object()\nprint(*object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "__new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ __doc__\n"
+    },
+    {
+      "id": "root-bound",
+      "source": "value=object()\nprint(*value.__dir__())\n",
+      "stage": "O61",
+      "stdout": "__new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ __doc__\n"
+    },
+    {
+      "id": "root-fresh",
+      "source": "value=object()\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b)==len(set(b)))\n",
+      "stage": "O61",
+      "stdout": "False False True\n"
+    },
+    {
+      "id": "root-binding",
+      "source": "value=object()\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "True __dir__ object.__dir__ True\n"
+    },
+    {
+      "id": "ordinary-sorted",
+      "source": "class A: pass\nvalue=A()\nprint(*dir(value))\n",
+      "stage": "O61",
+      "stdout": "__class__ __delattr__ __dict__ __dir__ __doc__ __eq__ __firstlineno__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __module__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __static_attributes__ __str__ __subclasshook__ __weakref__\n"
+    },
+    {
+      "id": "ordinary-raw",
+      "source": "class A: pass\nvalue=A()\nprint(*object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "__module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "ordinary-bound",
+      "source": "class A: pass\nvalue=A()\nprint(*value.__dir__())\n",
+      "stage": "O61",
+      "stdout": "__module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "ordinary-fresh",
+      "source": "class A: pass\nvalue=A()\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b)==len(set(b)))\n",
+      "stage": "O61",
+      "stdout": "False False True\n"
+    },
+    {
+      "id": "ordinary-binding",
+      "source": "class A: pass\nvalue=A()\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "True __dir__ A.__dir__ True\n"
+    },
+    {
+      "id": "dynamic-sorted",
+      "source": "A=type(\"A\",(),{\"z\":7})\nvalue=A()\nprint(*dir(value))\n",
+      "stage": "O61",
+      "stdout": "__class__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __weakref__ z\n"
+    },
+    {
+      "id": "dynamic-raw",
+      "source": "A=type(\"A\",(),{\"z\":7})\nvalue=A()\nprint(*object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "z __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "dynamic-bound",
+      "source": "A=type(\"A\",(),{\"z\":7})\nvalue=A()\nprint(*value.__dir__())\n",
+      "stage": "O61",
+      "stdout": "z __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "dynamic-fresh",
+      "source": "A=type(\"A\",(),{\"z\":7})\nvalue=A()\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b)==len(set(b)))\n",
+      "stage": "O61",
+      "stdout": "False False True\n"
+    },
+    {
+      "id": "dynamic-binding",
+      "source": "A=type(\"A\",(),{\"z\":7})\nvalue=A()\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "True __dir__ A.__dir__ True\n"
+    },
+    {
+      "id": "inherited-sorted",
+      "source": "class A: a=1\nclass B(A): b=2\nvalue=B()\nprint(*dir(value))\n",
+      "stage": "O61",
+      "stdout": "__class__ __delattr__ __dict__ __dir__ __doc__ __eq__ __firstlineno__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __module__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __static_attributes__ __str__ __subclasshook__ __weakref__ a b\n"
+    },
+    {
+      "id": "inherited-raw",
+      "source": "class A: a=1\nclass B(A): b=2\nvalue=B()\nprint(*object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "__module__ __firstlineno__ b __static_attributes__ __doc__ a __dict__ __weakref__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "inherited-bound",
+      "source": "class A: a=1\nclass B(A): b=2\nvalue=B()\nprint(*value.__dir__())\n",
+      "stage": "O61",
+      "stdout": "__module__ __firstlineno__ b __static_attributes__ __doc__ a __dict__ __weakref__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "inherited-fresh",
+      "source": "class A: a=1\nclass B(A): b=2\nvalue=B()\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b)==len(set(b)))\n",
+      "stage": "O61",
+      "stdout": "False False True\n"
+    },
+    {
+      "id": "inherited-binding",
+      "source": "class A: a=1\nclass B(A): b=2\nvalue=B()\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "True __dir__ B.__dir__ True\n"
+    },
+    {
+      "id": "diamond-sorted",
+      "source": "class A: a=1\nclass B(A): b=2\nclass C(A): c=3\nclass D(B,C): d=4\nvalue=D()\nprint(*dir(value))\n",
+      "stage": "O61",
+      "stdout": "__class__ __delattr__ __dict__ __dir__ __doc__ __eq__ __firstlineno__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __module__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __static_attributes__ __str__ __subclasshook__ __weakref__ a b c d\n"
+    },
+    {
+      "id": "diamond-raw",
+      "source": "class A: a=1\nclass B(A): b=2\nclass C(A): c=3\nclass D(B,C): d=4\nvalue=D()\nprint(*object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "__module__ __firstlineno__ d __static_attributes__ __doc__ b a __dict__ __weakref__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ c\n"
+    },
+    {
+      "id": "diamond-bound",
+      "source": "class A: a=1\nclass B(A): b=2\nclass C(A): c=3\nclass D(B,C): d=4\nvalue=D()\nprint(*value.__dir__())\n",
+      "stage": "O61",
+      "stdout": "__module__ __firstlineno__ d __static_attributes__ __doc__ b a __dict__ __weakref__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ c\n"
+    },
+    {
+      "id": "diamond-fresh",
+      "source": "class A: a=1\nclass B(A): b=2\nclass C(A): c=3\nclass D(B,C): d=4\nvalue=D()\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b)==len(set(b)))\n",
+      "stage": "O61",
+      "stdout": "False False True\n"
+    },
+    {
+      "id": "diamond-binding",
+      "source": "class A: a=1\nclass B(A): b=2\nclass C(A): c=3\nclass D(B,C): d=4\nvalue=D()\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==object.__dir__(value))\n",
+      "stage": "O61",
+      "stdout": "True __dir__ D.__dir__ True\n"
+    },
+    {
+      "id": "own-live-keys",
+      "source": "class A: pass\nv=A()\nv.z=7\nv.a=8\nprint(*object.__dir__(v))\nd=v.__dict__\nv.__dict__={\"replacement\":9}\nprint(\"replacement\" in dir(v),\"z\" in dir(v),d[\"z\"])\ndel v.replacement\nprint(\"replacement\" in dir(v))\n",
+      "stage": "O61",
+      "stdout": "z a __module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nTrue False 7\nFalse\n"
+    },
+    {
+      "id": "class-live-keys",
+      "source": "class A: old=7\nv=A()\nprint(\"old\" in dir(v))\nA.new=8\ndel A.old\nprint(\"old\" in dir(v),\"new\" in dir(v))\n",
+      "stage": "O61",
+      "stdout": "True\nFalse True\n"
+    },
+    {
+      "id": "source-document-and-equality",
+      "source": "class A:\n \"doc\"\n def __eq__(self,other): return True\nv=A()\nprint(*object.__dir__(v))\n",
+      "stage": "O61",
+      "stdout": "__module__ __firstlineno__ __doc__ __eq__ __static_attributes__ __dict__ __weakref__ __hash__ __new__ __repr__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "source-dictionary-shadow",
+      "source": "class A:\n @property\n def __dict__(self): return {\"virtual\":7}\nprint(*object.__dir__(A()))\n",
+      "stage": "O61",
+      "stdout": "virtual __module__ __firstlineno__ __dict__ __static_attributes__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "dynamic-document-equality",
+      "source": "def equal(a,b): return True\nA=type(\"A\",(),{\"z\":7,\"__eq__\":equal})\nprint(*object.__dir__(A()))\n",
+      "stage": "O61",
+      "stdout": "z __eq__ __dict__ __weakref__ __doc__ __hash__ __new__ __repr__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "custom-dictionary-nondict",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"dictionary\")\n  return [\"ignored\"]\nv=A()\nprint(\"ignored\" in dir(v),\"__class__\" in dir(v))\n",
+      "stage": "O61",
+      "stdout": "dictionary\ndictionary\nFalse True\n"
+    },
+    {
+      "id": "custom-dictionary-missing",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"dictionary\")\n  raise AttributeError(\"missing\")\nprint(\"__class__\" in dir(A()))\n",
+      "stage": "O61",
+      "stdout": "dictionary\nTrue\n"
+    },
+    {
+      "id": "custom-dictionary-error",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"dictionary\")\n  raise ValueError(\"original\")\ndir(A())\n",
+      "stage": "O61",
+      "stdout": "dictionary\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__dict__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "read-hooks-order",
+      "source": "class A:\n def __getattribute__(self,name):\n  print(name)\n  return object.__getattribute__(self,name)\nv=A()\nv.z=7\nprint(\"z\" in dir(v))\n",
+      "stage": "O61",
+      "stdout": "__dict__\n__class__\nTrue\n"
+    },
+    {
+      "id": "fallback-dictionary",
+      "source": "class A:\n @property\n def __dict__(self): raise AttributeError(\"missing\")\n def __getattr__(self,name):\n  print(name)\n  return {\"virtual\":7}\nprint(\"virtual\" in dir(A()))\n",
+      "stage": "O61",
+      "stdout": "__dict__\nTrue\n"
+    },
+    {
+      "id": "advertised-class",
+      "source": "class B: advertised=7\nclass A:\n @property\n def __class__(self):\n  print(\"class\")\n  return B\nv=A()\nv.own=8\nprint(\"own\" in dir(v),\"advertised\" in dir(v))\n",
+      "stage": "O61",
+      "stdout": "class\nclass\nTrue True\n"
+    },
+    {
+      "id": "advertised-class-missing",
+      "source": "class A:\n @property\n def __class__(self):\n  print(\"class\")\n  raise AttributeError(\"missing\")\nv=A()\nv.own=8\nprint(*dir(v))\n",
+      "stage": "O61",
+      "stdout": "class\nown\n"
+    },
+    {
+      "id": "advertised-class-error",
+      "source": "class A:\n @property\n def __class__(self):\n  print(\"class\")\n  raise ValueError(\"original\")\ndir(A())\n",
+      "stage": "O61",
+      "stdout": "class\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "__class__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "dictionary-copy-before-class",
+      "source": "saved={\"original\":7}\nclass B: base=1\nclass A:\n @property\n def __dict__(self): return saved\n @property\n def __class__(self):\n  saved[\"later\"]=9\n  return B\nv=A()\nresult=dir(v)\nprint(\"original\" in result,\"later\" in result,\"later\" in saved)\n",
+      "stage": "O61",
+      "stdout": "True False True\n"
+    },
+    {
+      "id": "instance-shadow-does-not-override-slot",
+      "source": "class A: pass\nv=A()\nv.__dir__=lambda: [\"shadow\"]\nprint(v.__dir__()[0],\"__class__\" in dir(v),\"shadow\" in dir(v))\n",
+      "stage": "O61",
+      "stdout": "shadow True False\n"
+    },
+    {
+      "id": "native-bypass-custom-directory",
+      "source": "class A:\n def __dir__(self): return [\"custom\"]\nv=A()\nprint(dir(v)[0],\"__class__\" in object.__dir__(v))\n",
+      "stage": "O61",
+      "stdout": "custom True\n"
+    },
+    {
+      "id": "native-bypass-readhook-for-method",
+      "source": "class A:\n def __getattribute__(self,name):\n  if name==\"__dir__\": raise RuntimeError(\"read\")\n  return object.__getattribute__(self,name)\nv=A()\nprint(\"__class__\" in object.__getattribute__(v,\"__dir__\")())\n",
+      "stage": "O61",
+      "stdout": "True\n"
+    },
+    {
+      "id": "arbitrary-string-keys",
+      "source": "class A: pass\nv=A()\nv.__dict__={\"\":1,\"a b\":2,\"𐀀\":3,\"\":4}\nresult=dir(v)\nprint(result[0],result[-2],result[-1],\"a b\" in result)\n",
+      "stage": "O61",
+      "stdout": "  𐀀 True\n"
+    },
+    {
+      "id": "nonstring-raw-identities",
+      "source": "class Key: pass\nkey=Key()\nclass A: pass\nv=A()\nv.__dict__={key:7}\nresult=object.__dir__(v)\nprint(result[0] is key)\n",
+      "stage": "O61",
+      "stdout": "True\n"
+    },
+    {
+      "id": "nonstring-sort-error",
+      "source": "class A: pass\nv=A()\nv.__dict__={7:8}\nprint(\"before\")\ndir(v)\n",
+      "stage": "O61",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "native-collision-identity",
+      "source": "class Key:\n def __hash__(self): return hash(\"__doc__\")\n def __eq__(self,other):\n  print(\"equal\",other)\n  return other==\"__doc__\"\nkey=Key()\nclass A: pass\nv=A()\nv.__dict__={key:7}\nresult=object.__dir__(v)\nprint(result[0] is key,len(result))\n",
+      "stage": "O61",
+      "stdout": "equal __doc__\nequal __doc__\nTrue 29\n"
+    },
+    {
+      "id": "native-collision-truth",
+      "source": "class Truth:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass Key:\n def __hash__(self): return hash(\"__doc__\")\n def __eq__(self,other):\n  print(\"equal\",other)\n  return Truth()\nkey=Key()\nclass A: pass\nv=A()\nv.__dict__={key:7}\nprint(object.__dir__(v)[0] is key)\n",
+      "stage": "O61",
+      "stdout": "equal __doc__\ntruth\nequal __doc__\ntruth\nTrue\n"
+    },
+    {
+      "id": "native-collision-error",
+      "source": "class Key:\n def __hash__(self): return hash(\"__doc__\")\n def __eq__(self,other):\n  print(\"collision\")\n  raise ValueError(\"original\")\nkey=Key()\nclass A: pass\nv=A()\nv.__dict__={key:7}\nobject.__dir__(v)\n",
+      "stage": "O61",
+      "stdout": "collision\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 10
+        },
+        {
+          "function": "__eq__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "retained-cyclic-receiver",
+      "source": "class A: pass\nv=A()\nv.saved=v\nd=v.__dir__\ndel v\ndel A\nprint(\"saved\" in d(),d.__self__.saved is d.__self__)\n",
+      "stage": "O61",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "nested-retained-callers",
+      "source": "class A: pass\nv=A()\nv.saved=v\nd=v.__dir__.__dir__\ndel v\ndel A\nprint(len(d()),d.__self__.__self__.saved is d.__self__.__self__)\n",
+      "stage": "O61",
+      "stdout": "30 True\n"
+    },
+    {
+      "id": "missing-receiver",
+      "source": "print(\"before\")\nobject.__dir__()\n",
+      "stage": "O61",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "extra-arguments",
+      "source": "print(\"before\")\nobject.__dir__(object(),7)\n",
+      "stage": "O61",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "keyword-argument",
+      "source": "print(\"before\")\nobject.__dir__(object(),extra=7)\n",
+      "stage": "O61",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "custom-metaclass-namespace",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"virtual\":7}\nclass A(metaclass=Meta): pass\nprint(\"virtual\" in dir(A()))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "advertised-nonclass",
+      "source": "class A:\n @property\n def __class__(self): return None\nprint(*dir(A()))\n",
+      "stage": "Future",
+      "stdout": "\n"
+    },
+    {
+      "id": "default-class-directory",
+      "source": "class A: pass\nprint(\"__class__\" in dir(A))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    }
+  ]
+}
