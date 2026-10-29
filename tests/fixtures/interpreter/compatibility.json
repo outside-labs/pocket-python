@@ -4300,15 +4300,14 @@
     {
       "id": "function-directories-bound-method-directory",
       "source": "class C:\n def f(self): pass\nprint(\"__func__\" in dir(C().f))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {

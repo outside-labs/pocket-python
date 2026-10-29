@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O50"
+    "O50",
+    "O51"
   ],
   "cases": [
     {
@@ -214,7 +215,7 @@
     },
     {
       "id": "bound-method-directory",
-      "stage": "Future",
+      "stage": "O51",
       "source": "class C:\n def f(self): pass\nprint(\"__func__\" in dir(C().f))\n",
       "stdout": "True\n"
     },

@@ -66,6 +66,12 @@ const FUNCTION_DIRECTORY_KEYS = Object.freeze([
   "__class__",
   "__doc__"
 ]);
+const METHOD_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__call__", "__getattribute__",
+  "__lt__", "__le__", "__eq__", "__ne__", "__gt__", "__ge__", "__get__",
+  "__reduce__", "__func__", "__self__", "__doc__",
+  ...FUNCTION_DIRECTORY_KEYS.slice(18)
+]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -361,6 +367,7 @@ export class ClassRuntime {
       return {kind: "call", callable: this.builtin("method-documentation"), args: [receiver]};
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") return value(this.builtin("method"));
+      if (name === "__dir__") return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
       if (["__name__", "__qualname__", "__module__"].includes(name)) {
         if (native) this.fail("AttributeError", "Method metadata requires ordinary callable fallback.");
         return {kind: "call", callable: this.builtin("method-" + name.slice(2, -2)), args: [receiver]};
@@ -594,7 +601,11 @@ export class ClassRuntime {
     if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
-  functionDirectoryNames() { return FUNCTION_DIRECTORY_KEYS; }
+  directoryNames(receiver) {
+    if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
+    if (this.isPythonMethod(receiver)) return METHOD_DIRECTORY_KEYS;
+    throw new TypeError("Invalid native directory receiver.");
+  }
   functionDictionary(receiver) {
     if (receiver.attributes === null) this.functionMetadata(receiver, "attributes", this.values.dict([]));
     return receiver.attributes;

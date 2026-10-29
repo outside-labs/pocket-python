@@ -243,18 +243,24 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     return valueTask(receiver, site, after);
   };
-  const functionDirectoryNext = (record, site) => {
+  const nativeDirectoryNext = (record, site) => {
     state.temporaries.push(record.receiver, record.result);
-    const names = classes.functionDirectoryNames();
+    const names = classes.directoryNames(record.receiver);
     while (record.position < names.length) {
       const key = values.string(Array.from(names[record.position], char => char.codePointAt(0)));
       state.temporaries.push(key);
       const next = {...record, position: record.position + 1};
       if (values.dictionaryNeedsProtocol(record.result, key))
-        return dictionaryTask(record.result, key, site, continuation("function-dir-merge", next), record.depth, "set", null);
+        return dictionaryTask(record.result, key, site, continuation("native-dir-merge", next), record.depth, "set", null);
       values.set(record.result, key, null); record = next;
     }
     return valueTask(values.list(record.result.entries.map(entry => entry.key)), site, record.after);
+  };
+  const methodDirectory = (record, dictionary, site) => {
+    state.temporaries.push(record.receiver, dictionary);
+    const result = values.isDict(dictionary) ? values.copyDictionary(dictionary) : values.dict([]);
+    state.temporaries.push(result);
+    return nativeDirectoryNext({...record, result, position: 0}, site);
   };
   const argumentOwner = receiver => {
     if (!(receiver instanceof CallArguments)) hard("BYTECODE", "BytecodeError", "Call assembly requires its owned argument record.");
@@ -431,6 +437,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     for (let current = completion; current; current = current.after) {
       if (current.kind === "dir-length" && value.name === "TypeError") return directoryHint(current, site);
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
+      if (current.kind === "method-dir-dictionary" && value.name === "AttributeError") return methodDirectory(current, null, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
@@ -622,7 +629,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       appendArgument(completion.receiver, value);
       return unaryTask("next", completion.iterator, site, continuation("call-star-next", completion));
     }
-    if (completion?.kind === "function-dir-merge") return functionDirectoryNext(completion, site);
+    if (completion?.kind === "method-dir-dictionary") return methodDirectory(completion, value, site);
+    if (completion?.kind === "native-dir-merge") return nativeDirectoryNext(completion, site);
     if (completion?.kind === "dir-result") {
       const after = continuation("dir-sort", {receiver: value, depth: completion.depth, after: completion.after});
       return value instanceof InstanceValue ? unaryTask("iter", value, site,
@@ -1884,10 +1892,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "object.__dir__") {
             if (args.length !== 1 || keywords.length) python("TypeError", "object.__dir__ requires one positional receiver");
             const receiver = args[0];
+            if (classes.isPythonMethod(receiver)) {
+              task = attributeTask(receiver, "__dict__", site,
+                continuation("method-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
+            }
             if (!(receiver instanceof FunctionValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "Default directories for this layout require their own stage.");
             const dictionary = classes.functionDictionary(receiver); state.temporaries.push(dictionary);
             const result = values.copyDictionary(dictionary); state.temporaries.push(result);
-            task = functionDirectoryNext({receiver, result, position: 0, depth, after: completion}, site); continue;
+            task = nativeDirectoryNext({receiver, result, position: 0, depth, after: completion}, site); continue;
           }
           if (callable.name === "mappingproxy.get") {
             const [receiver, key, fallback = null] = args;
@@ -1909,7 +1921,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 }
                 task = attributeTask(receiver, "__dict__", site, continuation("vars-result", {receiver, after: completion}), depth); continue;
               }
-              if (receiver instanceof FunctionValue) {
+              if (receiver instanceof FunctionValue || classes.isPythonMethod(receiver)) {
                 const after = continuation("dir-sort", {receiver, depth, after: continuation("relay", {receiver, after: completion})});
                 task = callTask(classes.builtin("object.__dir__"), [receiver], [], [], site, after, depth); continue;
               }

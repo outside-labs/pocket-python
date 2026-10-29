@@ -3,7 +3,9 @@
   "suite": "interpreter-method-directories/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O51"
+  ],
   "cases": [
     {
       "id": "native-directory",
@@ -19,9 +21,9 @@
     },
     {
       "id": "fresh-lists",
-      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.tag=7\na=dir(m)\nb=dir(m)\na.append(\"copy\")\nprint(a is b,\"tag\" in b,\"copy\" in b,list(m.__dict__))\n",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.tag=7\na=dir(m)\nb=dir(m)\na.append(\"copy\")\nprint(a is b,\"tag\" in b,\"copy\" in b,list(m.__dict__)==[\"tag\"])\n",
       "stage": "O51",
-      "stdout": "False True False ['tag']\n"
+      "stdout": "False True False True\n"
     },
     {
       "id": "live-function-keys",
