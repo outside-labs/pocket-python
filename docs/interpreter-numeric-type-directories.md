@@ -39,3 +39,11 @@ feature units cover native binding, canonical receiver retention, cyclic adverti
 instance graphs, cancellation, close, real shared limits and core admission.
 Adjacent directory/namespace/resource tests and 23 affected Python checks pass;
 the eight composed execution/resource observations remain unchanged.
+
+Compatibility probes and the installed offline console cover native errors,
+immutable types, retained caller Stop/Restart and core-profile updates. The
+[numeric type example](../examples/interpreter_numeric_type_directories.py)
+composes the adopted types, advertised namespaces and lazy generators. Its
+[payload record](measurements/2026-10-29-numeric-type-directories.json) verifies
+all 38 files at 743,694 bytes and an identical fresh rebuild. These are finite
+semantic/source/payload observations.

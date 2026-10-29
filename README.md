@@ -224,6 +224,12 @@ directories preserve native names and owned receiver lifetimes. Function and
 method lists include the callable's live dictionary keys.
 Run `python -m examples.interpreter_method_directories` or
 `python -m examples.interpreter_namespace_view_directories` for composed examples.
+
+The [numeric type directory contract](docs/interpreter-numeric-type-directories.md)
+adds sorted and raw native directories for bool/int/float/complex and the types of
+None/NotImplemented, preserving canonical native binding and ordinary advertised
+type namespaces. Run `python -m examples.interpreter_numeric_type_directories`
+for the composed console. Listed names retain their separate read/API boundaries.
 Broader live namespace mappings and other default directories retain separate
 contracts.
 
