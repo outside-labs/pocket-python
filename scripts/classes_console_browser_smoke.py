@@ -52,6 +52,7 @@ from examples.interpreter_native_callable_directories import SOURCE as NATIVE_CA
 from examples.interpreter_generator_directories import SOURCE as GENERATOR_DIRECTORIES_SOURCE
 from examples.interpreter_iterator_directories import SOURCE as ITERATOR_DIRECTORIES_SOURCE
 from examples.interpreter_numeric_directories import SOURCE as NUMERIC_DIRECTORIES_SOURCE
+from examples.interpreter_sequence_directories import SOURCE as SEQUENCE_DIRECTORIES_SOURCE
 
 
 def smoke(channel=None):
@@ -217,7 +218,8 @@ def smoke(channel=None):
                     generator_directories = json.loads((ROOT / 'tests/fixtures/interpreter/generator-directories.json').read_bytes())
                     iterator_directories = json.loads((ROOT / 'tests/fixtures/interpreter/iterator-directories.json').read_bytes())
                     numeric_directories = json.loads((ROOT / 'tests/fixtures/interpreter/numeric-directories.json').read_bytes())
-                    for corpus in [numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    sequence_directories = json.loads((ROOT / 'tests/fixtures/interpreter/sequence-directories.json').read_bytes())
+                    for corpus in [sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -771,7 +773,20 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('numeric-directories-compose-with-singletons-large-values-native-binding-and-lazy-generators-offline')
                     checks.append('numeric-directories-retain-layout-and-unboxed-identity-boundaries-offline')
+                    sequence_directories_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', SEQUENCE_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(SEQUENCE_DIRECTORIES_SOURCE, sequence_directories_expected)
+                    for case in sequence_directories['cases']:
+                        if case['stage'] not in sequence_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('range-slice-directories-compose-with-huge-ranges-cyclic-fields-and-native-binding-offline')
+                    checks.append('range-slice-directories-preserve-field-hook-isolation-and-unread-api-boundaries-offline')
                     busy = [
+                        'value=range(10**30)\nd=value.__dir__\ndel value\nprint("entered")\nwhile True: d()\n',
+                        'field=[]\nvalue=slice(field,field,field)\nfield.append(value)\nd=value.__dir__\ndel value\ndel field\nprint("entered")\nwhile True: dir(d.__self__)\n',
                         'value=10**30+7\nd=value.__dir__\ndel value\nprint("entered")\nwhile True: d()\n',
                         'd=(2+3j).__dir__.__dir__\nprint("entered")\nwhile True: dir(d.__self__.__self__)\n',
                         'class Indexed:\n def __getitem__(self,i): return i+7\nvalue=Indexed()\nit=iter(value)\nvalue.saved=it\nd=it.__dir__\ndel it\ndel value\ndel Indexed\nprint("entered")\nwhile True: d()\n',
@@ -1085,6 +1100,10 @@ def smoke(channel=None):
                     refused('value=7\nvalue.__dir__()\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == ''
                     checks.append('class-to-core-update-retains-numeric-directory-boundary')
+                    refused('value=range(7)\nvalue.__dir__()\n', 'UnsupportedOperationError:')
+                    assert page.locator('#result').inner_text() == ''
+                    refused('slice(7)\n', 'NameError:')
+                    checks.append('class-to-core-update-retains-range-directory-and-slice-constructor-boundaries')
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
                     run('a=[7]\nb=a*2\na[0]=9\nprint(len(b),b[0],len("😀"*3),len(2*(1,)))\n', '2 7 3 2\n')
                     checks.append('primitive-repetition-retained-after-core-profile-update')

@@ -1843,7 +1843,7 @@
     {
       "id": "dir",
       "status": "partial",
-      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O55 adds state-independent generator directories and exact native receiver binding without running or resuming generator bodies. O56 adds actual-layout native iterator directories for adopted container/indexed/callable forms, preserving positions and exact native source/sentinel ownership without invoking callbacks. O57 adds numeric/singleton default directories with bool-before-int native merging, retained native caller chains and no conversion or truth callbacks.",
+      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O55 adds state-independent generator directories and exact native receiver binding without running or resuming generator bodies. O56 adds actual-layout native iterator directories for adopted container/indexed/callable forms, preserving positions and exact native source/sentinel ownership without invoking callbacks. O57 adds numeric/singleton default directories with bool-before-int native merging, retained native caller chains and no conversion or truth callbacks. O58 adds range/raw-slice default directories without range iteration or arbitrary field callbacks, retaining cyclic field graphs through detached native callers.",
       "gaps": "Default directories of other layouts, unread code/global/annotation metadata, module/class-body namespaces, class mapping enumeration/native layout entries, integer identity and dynamic source remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1977,7 +1977,24 @@
         "numeric-directories-numeric-state-variants",
         "numeric-directories-lazy-generators",
         "numeric-directories-unread-dictionary",
-        "numeric-directories-unboxed-integer-identity"
+        "numeric-directories-unboxed-integer-identity",
+        "sequence-directories-range-sorted-directory",
+        "sequence-directories-range-raw-directory",
+        "sequence-directories-range-native-binding",
+        "sequence-directories-range-native-write",
+        "sequence-directories-slice-sorted-directory",
+        "sequence-directories-slice-raw-directory",
+        "sequence-directories-slice-native-binding",
+        "sequence-directories-slice-native-write",
+        "sequence-directories-huge-range-no-length-or-iteration",
+        "sequence-directories-range-iterator-position",
+        "sequence-directories-slice-field-hooks-isolated",
+        "sequence-directories-slice-cyclic-fields-retained",
+        "sequence-directories-slice-field-mutation",
+        "sequence-directories-cross-layout-native-rebinding",
+        "sequence-directories-lazy-generators",
+        "sequence-directories-unread-range-reduction",
+        "sequence-directories-unread-slice-reduction"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:dir-custom-descriptor",
@@ -2103,7 +2120,24 @@
         "tests/fixtures/interpreter/numeric-directories.json:numeric-state-variants",
         "tests/fixtures/interpreter/numeric-directories.json:lazy-generators",
         "tests/fixtures/interpreter/numeric-directories.json:unread-dictionary",
-        "tests/fixtures/interpreter/numeric-directories.json:unboxed-integer-identity"
+        "tests/fixtures/interpreter/numeric-directories.json:unboxed-integer-identity",
+        "tests/fixtures/interpreter/sequence-directories.json:range-sorted-directory",
+        "tests/fixtures/interpreter/sequence-directories.json:range-raw-directory",
+        "tests/fixtures/interpreter/sequence-directories.json:range-native-binding",
+        "tests/fixtures/interpreter/sequence-directories.json:range-native-write",
+        "tests/fixtures/interpreter/sequence-directories.json:slice-sorted-directory",
+        "tests/fixtures/interpreter/sequence-directories.json:slice-raw-directory",
+        "tests/fixtures/interpreter/sequence-directories.json:slice-native-binding",
+        "tests/fixtures/interpreter/sequence-directories.json:slice-native-write",
+        "tests/fixtures/interpreter/sequence-directories.json:huge-range-no-length-or-iteration",
+        "tests/fixtures/interpreter/sequence-directories.json:range-iterator-position",
+        "tests/fixtures/interpreter/sequence-directories.json:slice-field-hooks-isolated",
+        "tests/fixtures/interpreter/sequence-directories.json:slice-cyclic-fields-retained",
+        "tests/fixtures/interpreter/sequence-directories.json:slice-field-mutation",
+        "tests/fixtures/interpreter/sequence-directories.json:cross-layout-native-rebinding",
+        "tests/fixtures/interpreter/sequence-directories.json:lazy-generators",
+        "tests/fixtures/interpreter/sequence-directories.json:unread-range-reduction",
+        "tests/fixtures/interpreter/sequence-directories.json:unread-slice-reduction"
       ]
     },
     {

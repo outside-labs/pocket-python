@@ -400,3 +400,15 @@ No dependency, host grant, release, publication or deployment is included.
 ## Native iterator directory checkpoint
 
 [O56](interpreter-iterator-directories.md) extends #123/#33 with directories for existing native container, indexed and callable-sentinel iterators. Exact sources/sentinels survive detached native callers and parked collection. The reference audit also corrects ASCII/general Unicode and short/long range native identities. User instance/class/module/wrapper/value directories, live namespaces, unread native APIs and dynamic source retain finite follow-ups. Native async/host adapters remain under #34.
+
+## Numeric, singleton, range and slice directory checkpoint
+
+[O57](interpreter-numeric-directories.md) extends #123/#33 with default directories
+for None, NotImplemented, bool, int, float and complex.
+[O58](interpreter-sequence-directories.md) adds adopted range/raw-slice directories.
+Charged native merging and owned sorting preserve actual layout names and retained
+caller lifetimes. Collection leaves ranges uniterated and invokes no arbitrary
+slice-field protocols; detached cyclic field graphs remain owned. Integer identity,
+unread native APIs, wrapper/super namespaces, remaining default layouts, live
+module/class namespaces and dynamic source retain their separate contracts.
+Native async/host adapters remain under #34.

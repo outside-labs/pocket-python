@@ -308,3 +308,5 @@ The finite [generator directory profile](docs/interpreter-generator-directories.
 The finite [native iterator directory profile](docs/interpreter-iterator-directories.md) covers the adopted container, indexed and callable-sentinel iterator layouts. Directory collection preserves iteration state, source/sentinel ownership and native caller identities. Run `python -m examples.interpreter_iterator_directories` for the composed console.
 
 The finite [numeric and singleton directory profile](docs/interpreter-numeric-directories.md) covers None, NotImplemented, bool, int, float and complex values. Run `python -m examples.interpreter_numeric_directories` for a composed console. Native method names and integer identity retain their existing separate boundaries.
+
+The finite [range and slice directory profile](docs/interpreter-sequence-directories.md) preserves large-range iteration state and arbitrary cyclic slice fields without invoking their protocols. Run `python -m examples.interpreter_sequence_directories` for the composed console. Listed native methods retain their separate API contracts.
