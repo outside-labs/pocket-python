@@ -7228,15 +7228,14 @@
     {
       "id": "class-directories-native-type-namespace",
       "source": "print(len(dir(int)))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "74\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "74\n",
+        "error_type": null
       }
     },
     {

@@ -32,3 +32,10 @@ composed resource observations remain required. No dependency, host grant, relea
 publication or deployment is included.
 
 Reference: pinned [native type directories and recursive namespace merging](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+The 63-case source matrix has 58 adopted comparisons and five explicit refusals.
+All six Node/Chromium drain, instruction-boundary and parked drivers pass. The 75
+feature units cover native binding, canonical receiver retention, cyclic advertised
+instance graphs, cancellation, close, real shared limits and core admission.
+Adjacent directory/namespace/resource tests and 23 affected Python checks pass;
+the eight composed execution/resource observations remain unchanged.

@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O62"
+    "O62",
+    "O63"
   ],
   "cases": [
     {
@@ -353,7 +354,7 @@
     {
       "id": "native-type-namespace",
       "source": "print(len(dir(int)))\n",
-      "stage": "Future",
+      "stage": "O63",
       "stdout": "74\n"
     },
     {

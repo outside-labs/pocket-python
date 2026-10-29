@@ -856,6 +856,18 @@ export class ClassRuntime {
       receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind) ||
       this.values.isRange(receiver) || this.values.isSlice(receiver) || this.containerDirectoryNames(receiver) !== null || this.numericDirectoryNames(receiver) !== null || this.nativeCallableDirectoryKind(receiver) !== null;
   }
+  nativeTypeDirectoryNames(type) {
+    if (!(type instanceof BuiltinValue)) return null;
+    switch (type.name) {
+      case "bool": return BOOL_DIRECTORY_KEYS;
+      case "int": return INT_DIRECTORY_KEYS;
+      case "float": return FLOAT_DIRECTORY_KEYS;
+      case "complex": return COMPLEX_DIRECTORY_KEYS;
+      case "NoneType": return NONE_DIRECTORY_KEYS;
+      case "NotImplementedType": return NOT_IMPLEMENTED_DIRECTORY_KEYS;
+      default: return null;
+    }
+  }
   directoryNames(receiver) {
     const container = this.containerDirectoryNames(receiver);
     if (container !== null) return container;
@@ -884,6 +896,8 @@ export class ClassRuntime {
   }
   ownClassDirectoryNames(type) {
     this.touch(type); this.charge(1);
+    const native = this.nativeTypeDirectoryNames(type);
+    if (native !== null) return native;
     if (!(type instanceof ClassValue) || type.metaclass !== null || this.isMetaclass(type))
       this.fail("UnsupportedOperationError", "Further class namespace reflection requires a separate directory contract.", "UNSUPPORTED");
     if (type.root) return OBJECT_DIRECTORY_KEYS;
@@ -910,6 +924,8 @@ export class ClassRuntime {
   }
   classDirectoryEntry(type, name) {
     this.touch(type); this.charge(1);
+    // Finite native lists already include base keys; enumeration does not read entries.
+    if (this.nativeTypeDirectoryNames(type) !== null) return null;
     if (type.namespace.has(name)) return type.namespace.get(name);
     if (this.ownClassDirectoryNames(type).includes(name)) return null;
     this.fail("KeyError", "Class directory namespace changed during merging.");

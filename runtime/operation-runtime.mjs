@@ -267,8 +267,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     while (true) {
       if (record.owner === null || record.position === record.names.length) {
         if (record.owner !== null) {
-          charge(record.owner.bases.length + 1);
-          record = {...record, pending: [...record.owner.bases, ...record.pending]};
+          const bases = record.owner instanceof BuiltinValue ? [] : record.owner.bases;
+          charge(bases.length + 1);
+          record = {...record, pending: [...bases, ...record.pending]};
         }
         if (!record.pending.length) return valueTask(values.list(record.result.entries.map(entry => entry.key)), site, record.after);
         if (record.pending.length > 1024) hard("BUDGET", "ExecutionLimitError", "Class directory traversal budget exceeded.");
