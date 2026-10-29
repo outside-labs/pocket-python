@@ -1843,7 +1843,7 @@
     {
       "id": "dir",
       "status": "partial",
-      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains.",
+      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O55 adds state-independent generator directories and exact native receiver binding without running or resuming generator bodies.",
       "gaps": "Default directories of other layouts, unread code/global/annotation metadata, module/class-body namespaces, class mapping enumeration/native layout entries, integer identity and dynamic source remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1912,7 +1912,21 @@
         "native-callable-directories-accessor-hooks-not-called",
         "native-callable-directories-python-bound-native-callable",
         "native-callable-directories-native-write-readonly",
-        "native-callable-directories-native-documentation-still-separate"
+        "native-callable-directories-native-documentation-still-separate",
+        "generator-directories-sorted-directory",
+        "generator-directories-raw-directory",
+        "generator-directories-native-binding",
+        "generator-directories-native-getattribute",
+        "generator-directories-retained-caller",
+        "generator-directories-created-does-not-run",
+        "generator-directories-suspended-does-not-resume",
+        "generator-directories-exhausted-state",
+        "generator-directories-closed-state",
+        "generator-directories-running-generator",
+        "generator-directories-retained-cyclic-generator",
+        "generator-directories-native-write",
+        "generator-directories-unread-frame",
+        "generator-directories-unread-code"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:dir-custom-descriptor",
@@ -1973,7 +1987,21 @@
         "tests/fixtures/interpreter/native-callable-directories.json:accessor-hooks-not-called",
         "tests/fixtures/interpreter/native-callable-directories.json:python-bound-native-callable",
         "tests/fixtures/interpreter/native-callable-directories.json:native-write-readonly",
-        "tests/fixtures/interpreter/native-callable-directories.json:native-documentation-still-separate"
+        "tests/fixtures/interpreter/native-callable-directories.json:native-documentation-still-separate",
+        "tests/fixtures/interpreter/generator-directories.json:sorted-directory",
+        "tests/fixtures/interpreter/generator-directories.json:raw-directory",
+        "tests/fixtures/interpreter/generator-directories.json:native-binding",
+        "tests/fixtures/interpreter/generator-directories.json:native-getattribute",
+        "tests/fixtures/interpreter/generator-directories.json:retained-caller",
+        "tests/fixtures/interpreter/generator-directories.json:created-does-not-run",
+        "tests/fixtures/interpreter/generator-directories.json:suspended-does-not-resume",
+        "tests/fixtures/interpreter/generator-directories.json:exhausted-state",
+        "tests/fixtures/interpreter/generator-directories.json:closed-state",
+        "tests/fixtures/interpreter/generator-directories.json:running-generator",
+        "tests/fixtures/interpreter/generator-directories.json:retained-cyclic-generator",
+        "tests/fixtures/interpreter/generator-directories.json:native-write",
+        "tests/fixtures/interpreter/generator-directories.json:unread-frame",
+        "tests/fixtures/interpreter/generator-directories.json:unread-code"
       ]
     },
     {

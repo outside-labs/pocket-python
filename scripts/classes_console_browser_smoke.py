@@ -49,6 +49,7 @@ from examples.interpreter_method_directories import SOURCE as METHOD_DIRECTORIES
 from examples.interpreter_namespace_view_directories import SOURCE as NAMESPACE_VIEW_DIRECTORIES_SOURCE
 from examples.interpreter_property_directories import SOURCE as PROPERTY_DIRECTORIES_SOURCE
 from examples.interpreter_native_callable_directories import SOURCE as NATIVE_CALLABLE_DIRECTORIES_SOURCE
+from examples.interpreter_generator_directories import SOURCE as GENERATOR_DIRECTORIES_SOURCE
 
 
 def smoke(channel=None):
@@ -211,7 +212,8 @@ def smoke(channel=None):
                     namespace_view_directories = json.loads((ROOT / 'tests/fixtures/interpreter/namespace-view-directories.json').read_bytes())
                     property_directories = json.loads((ROOT / 'tests/fixtures/interpreter/property-directories.json').read_bytes())
                     native_callable_directories = json.loads((ROOT / 'tests/fixtures/interpreter/native-callable-directories.json').read_bytes())
-                    for corpus in [native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    generator_directories = json.loads((ROOT / 'tests/fixtures/interpreter/generator-directories.json').read_bytes())
+                    for corpus in [generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -732,7 +734,20 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('native-callable-directories-compose-with-descriptors-retained-properties-live-views-and-lazy-generators-offline')
                     checks.append('native-callable-directories-preserve-actual-layouts-hook-isolation-and-later-builtin-boundaries-offline')
+                    generator_directories_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', GENERATOR_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(GENERATOR_DIRECTORIES_SOURCE, generator_directories_expected)
+                    for case in generator_directories['cases']:
+                        if case['stage'] not in generator_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('generator-directories-compose-with-suspension-send-close-retained-callers-and-lazy-generators-offline')
+                    checks.append('generator-directory-collection-preserves-state-and-unread-metadata-boundaries-offline')
                     busy = [
+                        'g=(x for x in (7,9))\nd=g.__dir__\ndel g\nprint("entered")\nwhile True: d()\n',
+                        'def produce(value):\n local=value\n yield 1\n yield local\ng=produce([7])\nnext(g)\nproduce.saved=g\nd=g.__dir__\ndel g\ndel produce\nprint("entered")\nwhile True: dir(d.__self__)\n',
                         'def f(self): return 7\np=property(f)\nmethod=p.getter\nf.saved=method\nd=method.__dir__\ndel p\ndel f\ndel method\nprint("entered")\nwhile True: d()\n',
                         'def f(self): return 7\np=property(f)\nmethod=p.__get__\nf.saved=method\nd=method.__dir__\ndel p\ndel f\ndel method\nprint("entered")\nwhile True: d()\n',
                         'def f(self): return 7\np=property(f)\nf.saved=p\nd=p.__dir__\ndel p\ndel f\nprint("entered")\nwhile True: d()\n',
@@ -1031,6 +1046,9 @@ def smoke(channel=None):
                         refused(name + '\n', 'NameError:')
                     refused('def f(): pass\nf.__dict__\n', 'UnsupportedOperationError:')
                     checks.append('class-to-core-update-retains-function-dictionary-boundary')
+                    refused(GENERATOR_DIRECTORIES_SOURCE, 'NameError:')
+                    refused('g=(x for x in (7,9))\ng.__dir__()\n', 'UnsupportedOperationError:')
+                    checks.append('class-to-core-update-retains-generator-directory-boundary')
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
                     run('a=[7]\nb=a*2\na[0]=9\nprint(len(b),b[0],len("😀"*3),len(2*(1,)))\n', '2 7 3 2\n')
                     checks.append('primitive-repetition-retained-after-core-profile-update')

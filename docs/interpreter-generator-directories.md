@@ -34,3 +34,17 @@ release, publication or deployment is included.
 
 References: [pinned generator layout](https://github.com/python/cpython/blob/v3.14.7/Objects/genobject.c)
 and [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 40 pinned cases pass six Node/Chromium drain, instruction-boundary and
+parked drivers: 240 observations with zero logical teardown failures. The 46
+feature units cover retained cyclic callers, suspended locals, running generator
+introspection, cancellation, repeated close and real resource failures. Adjacent
+generator, execution and native directory checks preserve the eight composed
+resource observations.
+
+The [generator console](../examples/interpreter_generator_directories.py)
+composes directories with send, suspension, close, retained native callers and
+lazy iteration. Installed offline acceptance includes the matrix, composed
+example, Stop/Restart and a waiting reduced-profile update. The
+[payload record](measurements/2026-10-29-generator-directories.json) records the
+exact example files. These are finite semantic/source/payload observations.

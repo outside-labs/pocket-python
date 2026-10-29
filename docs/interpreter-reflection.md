@@ -117,3 +117,5 @@ callbacks. Other default layouts and native metadata retain their own contracts.
 distinguish adopted method/wrapper descriptors and their bound native layouts.
 Receiver chains retain exact properties, live views and functions without
 consulting their dictionaries or hooks.
+
+[O55 generator directories](interpreter-generator-directories.md) add fresh sorted and raw native lists without starting, resuming or closing the generator. Detached callers retain the suspended frame and values; unread frame/code metadata and other layouts retain separate contracts.
