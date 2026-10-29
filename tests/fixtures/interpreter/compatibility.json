@@ -4560,15 +4560,14 @@
     {
       "id": "method-directories-native-method-directory",
       "source": "class C: pass\nprint(\"__self__\" in dir(C.mro))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -4744,15 +4743,14 @@
     {
       "id": "namespace-view-directories-native-method-directory",
       "source": "class C: tag=[7]\np=C.__dict__\nprint(\"__self__\" in dir(p.get))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {

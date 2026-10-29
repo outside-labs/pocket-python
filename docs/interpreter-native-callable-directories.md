@@ -2,7 +2,8 @@
 
 O54 continues #123 and #33 against pinned CPython 3.14.7. The independently
 authored `native-callable-directories.json` matrix separates reference cases
-from engine adoption.
+from engine adoption. O54 is implemented through charged native collection
+and owned sorting.
 
 The existing native descriptor allowlist gains fresh sorted default directories
 and unsorted native `object.__dir__` collection. Unbound method descriptors and
@@ -14,7 +15,7 @@ Python bound methods retain O51, including classmethod-wrapped callables.
 
 The allowlist is the existing native method descriptors, descriptor/type/binding
 wrappers and native `object.__init_subclass__` binding. Ordinary builtin
-functions, primitive value methods, native type directories and wrapper objects
+functions, unclassified native object/type defaults, primitive value methods, native type directories and wrapper objects
 such as staticmethod/classmethod retain separate contracts. This stage does not
 infer a directory from an arbitrary internal callable name.
 
