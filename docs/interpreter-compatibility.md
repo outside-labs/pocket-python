@@ -305,3 +305,8 @@ coroutine/await/browser host adapters remain separate contracts.
 namespace views. Lookup, membership and get return stored own values without
 descriptor binding, preserve metaclass priority and retain detached classes.
 Enumeration, native layouts and callback-bearing query keys remain separate.
+
+[O50](interpreter-function-directories.md) adds fresh default function
+directories and raw native directory calls. Private dictionary copies preserve
+key identities while native merging and sorting use owned callbacks. Listing
+a native name does not adopt its metadata API; other default layouts remain open.

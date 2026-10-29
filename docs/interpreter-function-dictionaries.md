@@ -87,3 +87,7 @@ observations. Broader reflection and async remain under #123/#34.
 The subsequent [O47/O48 contract](interpreter-instance-dictionaries.md) adopts
 ordinary instance dictionaries while retaining the function-specific deletion
 and descriptor boundaries above.
+
+The [O50 function directory contract](interpreter-function-directories.md)
+adopts native function/object directory names combined with the live function
+dictionary. Other default directory layouts and unread metadata remain separate.

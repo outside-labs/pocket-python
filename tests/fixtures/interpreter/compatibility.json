@@ -4127,6 +4127,241 @@
       "engine": {
         "stdout": "set __dict__\ndelete __dict__\n7\n"
       }
+    },
+    {
+      "id": "function-directories-native-directory",
+      "source": "def f(): pass\nprint(*dir(f))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__annotate__ __annotations__ __builtins__ __call__ __class__ __closure__ __code__ __defaults__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __globals__ __gt__ __hash__ __init__ __init_subclass__ __kwdefaults__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __type_params__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__annotate__ __annotations__ __builtins__ __call__ __class__ __closure__ __code__ __defaults__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __globals__ __gt__ __hash__ __init__ __init_subclass__ __kwdefaults__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __type_params__\n"
+      }
+    },
+    {
+      "id": "function-directories-native-unsorted-directory",
+      "source": "def f(): pass\nprint(*object.__dir__(f))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __call__ __get__ __closure__ __globals__ __builtins__ __code__ __defaults__ __kwdefaults__ __annotations__ __annotate__ __dict__ __doc__ __module__ __name__ __qualname__ __type_params__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __call__ __get__ __closure__ __globals__ __builtins__ __code__ __defaults__ __kwdefaults__ __annotations__ __annotate__ __dict__ __doc__ __module__ __name__ __qualname__ __type_params__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+      }
+    },
+    {
+      "id": "function-directories-live-add-replace-delete",
+      "source": "def f(): pass\na=dir(f)\nf.tag=7\nb=dir(f)\nf.tag=9\nprint(\"tag\" in a,\"tag\" in b,len(dir(f))==len(b))\ndel f.tag\nprint(\"tag\" in dir(f),\"tag\" in b)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True True\nFalse True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True True\nFalse True\n"
+      }
+    },
+    {
+      "id": "function-directories-dictionary-replacement",
+      "source": "def f(): pass\nf.old=7\na=dir(f)\nf.__dict__={\"fresh\":9}\nb=dir(f)\nprint(\"old\" in a,\"old\" in b,\"fresh\" in b,list(f.__dict__)==[\"fresh\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True False True True\n"
+      }
+    },
+    {
+      "id": "function-directories-unicode-order",
+      "source": "def f(): pass\nf.__dict__={\"😀\":7,\"ω\":9,\"é\":11,\"a\":13}\nprint(*dir(f)[-4:])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "a é ω 😀\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "a é ω 😀\n"
+      }
+    },
+    {
+      "id": "function-directories-supplied-native-key-identity",
+      "source": "def f(): pass\nkey=\"__na\"+\"me__\"\nf.__dict__={key:7}\nr=dir(f)\nprint([n for n in r if n==\"__name__\"][0] is key)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n"
+      }
+    },
+    {
+      "id": "function-directories-shadowed-directory-hook",
+      "source": "def f(): pass\nf.__dir__=lambda: [\"custom\"]\nprint(f.__dir__()[0],\"__code__\" in dir(f),\"__dir__\" in dir(f))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "custom True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "custom True True\n"
+      }
+    },
+    {
+      "id": "function-directories-default-bound-method",
+      "source": "def f(): pass\nm=f.__dir__\nprint(m.__name__,m.__qualname__,m.__self__ is f,type(m).__name__)\nprint(len(m()),\"__code__\" in m())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__dir__ function.__dir__ True builtin_function_or_method\n39 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__dir__ function.__dir__ True builtin_function_or_method\n39 True\n"
+      }
+    },
+    {
+      "id": "function-directories-native-merge-collisions",
+      "source": "events=[]\nclass Key:\n def __hash__(self): return hash(\"__new__\")\n def __lt__(self,other): return True\n def __gt__(self,other): return False\n def __eq__(self,other):\n  events.append(other)\n  return True\ndef f(): pass\nk=Key()\nf.__dict__={k:7}\nr=dir(f)\nprint(r[0] is k,len(r),len(events),events[0],events[1])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 39 2 __new__ __new__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 39 2 __new__ __new__\n"
+      }
+    },
+    {
+      "id": "function-directories-raw-copy-does-not-rehash",
+      "source": "calls=[]\nclass Key:\n def __hash__(self):\n  calls.append(7)\n  return hash(\"__new__\")\n def __eq__(self,other): return False\n def __lt__(self,other): return True\n def __gt__(self,other): return False\ndef f(): pass\nk=Key()\nf.__dict__={k:7}\nr=dir(f)\nprint(len(calls),r[0] is k,len(r))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "1 True 40\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "1 True 40\n"
+      }
+    },
+    {
+      "id": "function-directories-merge-replacement-snapshot",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __lt__(self,other): return True\n def __gt__(self,other): return False\n def __eq__(self,other):\n  f.__dict__={\"fresh\":9}\n  return True\ndef f(): pass\nk=Key()\nf.__dict__={k:7,\"tag\":11}\nr=dir(f)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,\"tag\" in names,\"fresh\" in names,list(f.__dict__)[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True False fresh\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True False fresh\n"
+      }
+    },
+    {
+      "id": "function-directories-merge-deletion-snapshot",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __lt__(self,other): return True\n def __gt__(self,other): return False\n def __eq__(self,other):\n  if \"tag\" in f.__dict__: del f.__dict__[\"tag\"]\n  return True\ndef f(): pass\nk=Key()\nf.__dict__={k:7,\"tag\":11}\nr=dir(f)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,\"tag\" in names,len(f.__dict__))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 1\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 1\n"
+      }
+    },
+    {
+      "id": "function-directories-sort-error",
+      "source": "class Key:\n def __lt__(self,other): raise ValueError(\"sort\")\n def __gt__(self,other): raise ValueError(\"sort\")\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "ValueError"
+      }
+    },
+    {
+      "id": "function-directories-sort-mutation-preserves-selected-copy",
+      "source": "class Key:\n def __lt__(self,other):\n  f.__dict__={\"fresh\":9}\n  return True\n def __gt__(self,other):\n  f.__dict__={\"fresh\":9}\n  return False\ndef f(): pass\nk=Key()\nf.__dict__={k:7,\"tag\":11}\nr=dir(f)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,\"tag\" in names,\"fresh\" in names,\"fresh\" in f.__dict__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True False True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True False True\n"
+      }
+    },
+    {
+      "id": "function-directories-bound-method-directory",
+      "source": "class C:\n def f(self): pass\nprint(\"__func__\" in dir(C().f))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "function-directories-metadata-listing-does-not-adopt-reads",
+      "source": "def f(): pass\nr=dir(f)\nf.__builtins__\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "function-directories-merge-truth-callback",
+      "source": "events=[]\nclass Truth:\n def __bool__(self):\n  events.append(7)\n  f.__dict__={\"fresh\":9}\n  return True\nclass Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): return Truth()\n def __lt__(self,other): return True\n def __gt__(self,other): return False\ndef f(): pass\nk=Key()\nf.__dict__={k:7,\"tag\":11}\nr=dir(f)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,len(events),\"tag\" in names,\"fresh\" in names)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 2 True False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 2 True False\n"
+      }
+    },
+    {
+      "id": "function-directories-merge-attributeerror",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): raise AttributeError(\"original\")\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "function-directories-merge-keyerror",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): raise KeyError(\"original\")\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "KeyError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "KeyError"
+      }
     }
   ]
 }
