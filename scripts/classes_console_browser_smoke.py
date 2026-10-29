@@ -1046,7 +1046,7 @@ def smoke(channel=None):
                         refused(name + '\n', 'NameError:')
                     refused('def f(): pass\nf.__dict__\n', 'UnsupportedOperationError:')
                     checks.append('class-to-core-update-retains-function-dictionary-boundary')
-                    refused(GENERATOR_DIRECTORIES_SOURCE, 'NameError:')
+                    refused(GENERATOR_DIRECTORIES_SOURCE, 'UnsupportedSyntaxError:')
                     refused('g=(x for x in (7,9))\ng.__dir__()\n', 'UnsupportedOperationError:')
                     checks.append('class-to-core-update-retains-generator-directory-boundary')
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
