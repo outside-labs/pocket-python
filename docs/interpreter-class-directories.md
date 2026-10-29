@@ -41,3 +41,12 @@ frames. The 80 feature units and 352 adjacent namespace/instance/generator/type/
 rebinding/execution units pass. Existing composed resource observations remain
 unchanged. Six Node/Chromium source drivers exercise drain, instruction-boundary
 and parked execution.
+
+Compatibility probes qualify both ordinary directory slices while retaining the
+remaining namespace boundaries. The installed offline console covers native
+receiver/metadata errors, retained class caller Stop/Restart and core-profile
+updates alongside O61. The [class example](../examples/interpreter_class_directories.py)
+composes class/instance directories, live bases, detached native methods and lazy
+generators. Its [payload record](measurements/2026-10-29-class-directories.json)
+verifies 38 files at 742,996 bytes. These are finite semantic/source/payload
+observations.

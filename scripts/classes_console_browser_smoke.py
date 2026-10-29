@@ -58,6 +58,7 @@ from examples.interpreter_container_directories import SOURCE as CONTAINER_DIREC
 
 from examples.interpreter_buffer_directories import SOURCE as BUFFER_DIRECTORIES_SOURCE
 from examples.interpreter_instance_directories import SOURCE as INSTANCE_DIRECTORIES_SOURCE
+from examples.interpreter_class_directories import SOURCE as CLASS_DIRECTORIES_SOURCE
 
 
 def smoke(channel=None):
@@ -227,7 +228,8 @@ def smoke(channel=None):
                     container_directories = json.loads((ROOT / 'tests/fixtures/interpreter/container-directories.json').read_bytes())
                     buffer_directories = json.loads((ROOT / 'tests/fixtures/interpreter/buffer-directories.json').read_bytes())
                     instance_directories = json.loads((ROOT / 'tests/fixtures/interpreter/instance-directories.json').read_bytes())
-                    for corpus in [instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    class_directories = json.loads((ROOT / 'tests/fixtures/interpreter/class-directories.json').read_bytes())
+                    for corpus in [class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -825,7 +827,21 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('instance-directories-compose-with-live-dictionaries-advertised-classes-and-lazy-generators-offline')
                     checks.append('instance-directories-preserve-collision-errors-and-namespace-boundaries-offline')
+                    class_directories_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', CLASS_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(CLASS_DIRECTORIES_SOURCE, class_directories_expected)
+                    for case in class_directories['cases']:
+                        if case['stage'] not in class_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('class-directories-compose-with-live-bases-native-binding-and-instance-directories-offline')
+                    checks.append('class-directories-preserve-native-receiver-errors-and-metaclass-namespace-boundaries-offline')
                     busy = [
+                        'class Base: marker=7\nclass A(Base): pass\nA.saved=A\nd=type.__dir__.__get__(A)\ndel A\ndel Base\nprint("entered")\nwhile True: d()\n',
+                        'class A: marker=7\nd=type.__dir__.__get__(A).__dir__\ndel A\nprint("entered")\nwhile True: d.__self__()\n',
+
                         'class A: pass\nv=A()\nv.saved=v\nd=v.__dir__\ndel v\nprint("entered")\nwhile True: d()\n',
                         'class A:\n @property\n def __dict__(self): return {"virtual":7}\nv=A()\nprint("entered")\nwhile True: dir(v)\n',
 
@@ -1162,6 +1178,8 @@ def smoke(channel=None):
                     checks.append('class-to-core-update-retains-buffer-directories-boundaries')
                     refused('dir(object())\n', 'NameError:')
                     checks.append('class-to-core-update-retains-instance-directory-admission')
+                    refused('type.__dir__(object)\n', 'NameError:')
+                    checks.append('class-to-core-update-retains-class-directory-admission')
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
                     run('a=[7]\nb=a*2\na[0]=9\nprint(len(b),b[0],len("😀"*3),len(2*(1,)))\n', '2 7 3 2\n')
                     checks.append('primitive-repetition-retained-after-core-profile-update')
