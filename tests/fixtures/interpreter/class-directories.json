@@ -3,7 +3,9 @@
   "suite": "interpreter-class-directories/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O62"
+  ],
   "cases": [
     {
       "id": "root-sorted",
@@ -377,6 +379,245 @@
       "source": "class A: pass\nprint(len(list(A.__dict__)))\n",
       "stage": "Future",
       "stdout": "6\n"
+    },
+    {
+      "id": "descriptor-name-set",
+      "source": "class A: pass\nd=type.__dir__\nprint(\"before\")\nsetattr(d,'__name__',7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-name-delete",
+      "source": "class A: pass\nd=type.__dir__\nprint(\"before\")\ndelattr(d,'__name__')\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-qualname-set",
+      "source": "class A: pass\nd=type.__dir__\nprint(\"before\")\nsetattr(d,'__qualname__',7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-qualname-delete",
+      "source": "class A: pass\nd=type.__dir__\nprint(\"before\")\ndelattr(d,'__qualname__')\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-self-set",
+      "source": "class A: pass\nd=type.__dir__\nprint(\"before\")\nsetattr(d,'__self__',7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-self-delete",
+      "source": "class A: pass\nd=type.__dir__\nprint(\"before\")\ndelattr(d,'__self__')\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-objclass-set",
+      "source": "class A: pass\nd=type.__dir__\nprint(\"before\")\nsetattr(d,'__objclass__',7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "descriptor-objclass-delete",
+      "source": "class A: pass\nd=type.__dir__\nprint(\"before\")\ndelattr(d,'__objclass__')\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "bound-name-set",
+      "source": "class A: pass\nd=type.__dir__.__get__(A)\nprint(\"before\")\nsetattr(d,'__name__',7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "bound-name-delete",
+      "source": "class A: pass\nd=type.__dir__.__get__(A)\nprint(\"before\")\ndelattr(d,'__name__')\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "bound-qualname-set",
+      "source": "class A: pass\nd=type.__dir__.__get__(A)\nprint(\"before\")\nsetattr(d,'__qualname__',7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "bound-qualname-delete",
+      "source": "class A: pass\nd=type.__dir__.__get__(A)\nprint(\"before\")\ndelattr(d,'__qualname__')\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "bound-self-set",
+      "source": "class A: pass\nd=type.__dir__.__get__(A)\nprint(\"before\")\nsetattr(d,'__self__',7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "bound-self-delete",
+      "source": "class A: pass\nd=type.__dir__.__get__(A)\nprint(\"before\")\ndelattr(d,'__self__')\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "bound-objclass-set",
+      "source": "class A: pass\nd=type.__dir__.__get__(A)\nprint(\"before\")\nsetattr(d,'__objclass__',7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "bound-objclass-delete",
+      "source": "class A: pass\nd=type.__dir__.__get__(A)\nprint(\"before\")\ndelattr(d,'__objclass__')\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "namespace-descriptor-rejects-instance-binding",
+      "source": "class Holder: directory=type.__dir__\nprint(\"before\")\nHolder().directory\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "namespace-descriptor-raw-on-class",
+      "source": "class Holder: directory=type.__dir__\nprint(Holder.directory is type.__dir__)\n",
+      "stage": "O62",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-binding-handle-directory",
+      "source": "class A: marker=7\nd=type.__dir__.__get__(A)\nprint(len(dir(type.__dir__)),len(dir(d)),len(dir(d.__dir__)),\"marker\" in d())\n",
+      "stage": "O62",
+      "stdout": "30 30 30 True\n"
+    },
+    {
+      "id": "custom-metaclass-native-qualification",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nd=type.__dir__.__get__(A)\nprint(d.__qualname__)\n",
+      "stage": "Future",
+      "stdout": "__qualname__\nA.__dir__\n"
     }
   ]
 }

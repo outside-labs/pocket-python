@@ -1928,6 +1928,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length) python("TypeError", "id() requires one positional value");
             task = valueTask(values.objectId(args[0]), site, completion); continue;
           }
+          if (callable.name === "type.__dir__") {
+            if (args.length !== 1 || keywords.length || !classes.isType(args[0]))
+              python("TypeError", "type.__dir__ requires one positional actual type");
+            const receiver = args[0], result = values.dict([]); state.temporaries.push(receiver, result);
+            task = classDirectoryNext({receiver, result, pending: [receiver], owner: null, names: [], position: 0, depth, after: completion}, site); continue;
+          }
           if (callable.name === "object.__dir__") {
             if (args.length !== 1 || keywords.length) python("TypeError", "object.__dir__ requires one positional receiver");
             const receiver = args[0];
@@ -1973,6 +1979,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 task = callTask(classes.builtin("object.__dir__"), [receiver], [], [], site, after, depth); continue;
               }
               const type = classes.checkingType(receiver);
+              if (classes.isType(receiver) && (type === null || !classes.hasSlot(type, "__dir__"))) {
+                const after = continuation("dir-sort", {receiver, depth, after: continuation("relay", {receiver, after: completion})});
+                task = callTask(classes.builtin("type.__dir__"), [receiver], [], [], site, after, depth); continue;
+              }
               if (receiver instanceof InstanceValue && !classes.hasSlot(type, "__dir__")) {
                 const after = continuation("dir-sort", {receiver, depth, after: continuation("relay", {receiver, after: completion})});
                 task = callTask(classes.builtin("object.__dir__"), [receiver], [], [], site, after, depth); continue;

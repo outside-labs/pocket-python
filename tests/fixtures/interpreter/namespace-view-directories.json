@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O52",
-    "O54"
+    "O54",
+    "O62"
   ],
   "cases": [
     {
@@ -193,7 +194,7 @@
     {
       "id": "ordinary-class-directory",
       "source": "class C: pass\nprint(\"__dict__\" in dir(C))\n",
-      "stage": "Future",
+      "stage": "O62",
       "stdout": "True\n"
     },
     {

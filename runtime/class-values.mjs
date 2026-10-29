@@ -11,7 +11,7 @@ const META_SPECIALS = new Set(["__dict__", "__new__", "__init__", "__init_subcla
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
-const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro", "mappingproxy.get", "object.__dir__"]);
+const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro", "type.__dir__", "mappingproxy.get", "object.__dir__"]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__"]);
@@ -452,7 +452,7 @@ export class ClassRuntime {
       if (base instanceof BuiltinValue) {
         if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_PROPERTY_METHODS.has(base.name + "." + name) || base.name === "mappingproxy" && name === "get" || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
           return {found: true, value: this.builtin(base.name + "." + name)};
-        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro"].includes(name))
+        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro", "__dir__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
         continue;
       }
@@ -607,9 +607,9 @@ export class ClassRuntime {
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue &&
-        receiver.callable.name === "type.mro" && name === "__qualname__" && this.hasAttributeHook(receiver.receiver, "__getattribute__"))
+        ["type.mro", "type.__dir__"].includes(receiver.callable.name) && name === "__qualname__" && this.hasAttributeHook(receiver.receiver, "__getattribute__"))
       this.fail("UnsupportedOperationError", "Hooked native MRO method qualification requires a separate stage.", "UNSUPPORTED");
-    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && (NATIVE_CHECK_METHODS.has(receiver.callable.name) || receiver.callable.name === "type.mro") && ["__name__", "__qualname__"].includes(name))
+    if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && (NATIVE_CHECK_METHODS.has(receiver.callable.name) || ["type.mro", "type.__dir__"].includes(receiver.callable.name)) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + receiver.callable.name.slice("type.".length), char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_PROPERTY_METHODS.has(receiver.callable.name)) {
       if (name === "__class__") return value(this.typeOf(receiver));
@@ -689,6 +689,9 @@ export class ClassRuntime {
     return this.bindAttribute(item.value, receiver instanceof ClassValue ? null : receiver, owner);
   }
   bindAttribute(value, receiver, owner) {
+    if (value instanceof BuiltinValue && value.name === "type.__dir__" && receiver !== null)
+      return {kind: "value", value: this.bindNativeDescriptor("method_descriptor", value, receiver)};
+
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_BINDING_WRAPPERS.has(value.name) &&
         this.nativeDescriptorKind(receiver) !== value.name.slice(0, value.name.indexOf(".")))
       this.fail("TypeError", "Native descriptor binding requires a matching descriptor receiver.");
@@ -713,7 +716,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["mappingproxy.get", "object.__dir__"].includes(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["mappingproxy.get", "object.__dir__"].includes(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro", "type.__dir__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   nativeDescriptorKind(value) {
     return value instanceof BuiltinValue ? NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" :
@@ -750,6 +753,11 @@ export class ClassRuntime {
   write(receiver, name, value, remove = false, key = null) {
     this.key(name); this.touch(receiver);
     if (name === "__dir__" && this.hasFixedDirectory(receiver)) this.fail("AttributeError", "Native directory attributes are read-only.");
+    if (["__name__", "__qualname__", "__self__", "__objclass__"].includes(name) &&
+        (receiver instanceof BuiltinValue && receiver.name === "type.__dir__" ||
+         receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && receiver.callable.name === "type.__dir__"))
+      this.fail("AttributeError", "Native directory method metadata is read-only.");
+
     if (receiver instanceof ClassNamespaceValue) this.fail("AttributeError", "Class namespace view attributes are read-only.");
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
