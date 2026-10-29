@@ -62,6 +62,8 @@ from examples.interpreter_class_directories import SOURCE as CLASS_DIRECTORIES_S
 
 from examples.interpreter_numeric_type_directories import SOURCE as NUMERIC_TYPE_DIRECTORIES_SOURCE
 
+from examples.interpreter_container_type_directories import SOURCE as CONTAINER_TYPE_DIRECTORIES_SOURCE
+
 
 def smoke(channel=None):
     checks, cases = [], []
@@ -232,7 +234,8 @@ def smoke(channel=None):
                     instance_directories = json.loads((ROOT / 'tests/fixtures/interpreter/instance-directories.json').read_bytes())
                     class_directories = json.loads((ROOT / 'tests/fixtures/interpreter/class-directories.json').read_bytes())
                     numeric_type_directories = json.loads((ROOT / 'tests/fixtures/interpreter/numeric-type-directories.json').read_bytes())
-                    for corpus in [numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    container_type_directories = json.loads((ROOT / 'tests/fixtures/interpreter/container-type-directories.json').read_bytes())
+                    for corpus in [container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -852,7 +855,20 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('numeric-type-directories-compose-with-native-binding-advertised-namespaces-and-lazy-generators-offline')
                     checks.append('numeric-type-directories-preserve-receiver-errors-and-unread-mapping-boundaries-offline')
+                    container_type_directories_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', CONTAINER_TYPE_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(CONTAINER_TYPE_DIRECTORIES_SOURCE, container_type_directories_expected)
+                    for case in container_type_directories['cases']:
+                        if case['stage'] not in container_type_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('container-type-directories-compose-with-native-binding-advertised-namespaces-and-lazy-generators-offline')
+                    checks.append('container-type-directories-preserve-receiver-errors-and-unread-mapping-boundaries-offline')
                     busy = [
+                        'd=type.__dir__.__get__(dict)\nprint("entered")\nwhile True: d()\n',
+                        'd=type.__dir__.__get__(dict).__dir__\nprint("entered")\nwhile True: d.__self__()\n',
                         'd=type.__dir__.__get__(int)\nprint("entered")\nwhile True: d()\n',
                         'd=type.__dir__.__get__(int).__dir__\nprint("entered")\nwhile True: d.__self__()\n',
                         'class Base: marker=7\nclass A(Base): pass\nA.saved=A\nd=type.__dir__.__get__(A)\ndel A\ndel Base\nprint("entered")\nwhile True: d()\n',
@@ -1196,6 +1212,9 @@ def smoke(channel=None):
                     checks.append('class-to-core-update-retains-instance-directory-admission')
                     refused('type.__dir__(object)\n', 'NameError:')
                     checks.append('class-to-core-update-retains-class-directory-admission')
+                    refused('dir(dict)\n', 'NameError:')
+                    refused('type.__dir__(dict)\n', 'NameError:')
+                    checks.append('class-to-core-update-retains-container-type-directories-admission')
                     refused('dir(int)\n', 'NameError:')
                     refused('type.__dir__(int)\n', 'NameError:')
                     checks.append('class-to-core-update-retains-numeric-type-directories-admission')

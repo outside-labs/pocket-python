@@ -230,6 +230,11 @@ adds sorted and raw native directories for bool/int/float/complex and the types 
 None/NotImplemented, preserving canonical native binding and ordinary advertised
 type namespaces. Run `python -m examples.interpreter_numeric_type_directories`
 for the composed console. Listed names retain their separate read/API boundaries.
+
+The [container type directory contract](docs/interpreter-container-type-directories.md)
+adds the native sequence/container/buffer type namespaces, preserving contents,
+iterator positions, aliases and released-view data restrictions. Run
+`python -m examples.interpreter_container_type_directories` for the composed console.
 Broader live namespace mappings and other default directories retain separate
 contracts.
 
