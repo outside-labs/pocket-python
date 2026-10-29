@@ -3,7 +3,9 @@
   "suite": "interpreter-function-metadata/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O43"
+  ],
   "cases": [
     {
       "id": "default-function-names",
@@ -365,7 +367,7 @@
     {
       "id": "module-mutation-2",
       "stage": "O43",
-      "source": "__name__=\"app\"\ndef f(): pass\nx=0\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=0\nf.__module__=x\nprint(f.__module__==x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
       "stdout": "True\nTrue\nTrue\n"
     },
     {

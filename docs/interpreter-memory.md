@@ -36,6 +36,15 @@ The other four observations are unchanged. `execution-resources.json` retains
 the original measurements as `previous_cases` alongside the revised cases.
 Drain, instruction-boundary and parked tests compare the revised contract.
 
+`execution-accounting/3` adds definition-time module snapshots to ordinary
+bytecode-5 functions. Each non-None module/name/qualification field adds an
+eight-byte edge and retains its reachable value; default name strings are
+created lazily. All eight composed cases retain the previous instruction,
+allocation, collection and root/frame counts. Their module edges add 8–24 live
+bytes and 8–32 peak bytes, with normal traversal work. The preceding counters
+remain in `accounting_2_cases`, and internal entry functions and bytecode 3/4
+keep their prior storage. Failed mutation restores the old edge.
+
 These are versioned accounting rules, not estimates of a particular JavaScript
 engine's RSS. Host object internals, JS engine overhead, transport copies,
 verifier snapshots and bounded primitive temporaries have separate bounds or

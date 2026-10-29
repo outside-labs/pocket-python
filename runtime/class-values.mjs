@@ -334,6 +334,7 @@ export class ClassRuntime {
     if (receiver instanceof FunctionValue && name === "__get__")
       return value(this.make(BoundMethodValue, this.builtin("function.__get__"), receiver));
     if (receiver instanceof FunctionValue && name === "__doc__") return value(receiver.documentation);
+    if (receiver instanceof FunctionValue && name === "__module__") return value(receiver.identityModule ?? null);
     if (receiver instanceof FunctionValue && name === "__isabstractmethod__") {
       if (receiver.abstractFlag === undefined) this.fail("AttributeError", "Function has no abstract-method marker.");
       return value(receiver.abstractFlag);
@@ -341,8 +342,13 @@ export class ClassRuntime {
     if (receiver instanceof FunctionValue && name === "__objclass__")
       this.fail("AttributeError", "Python functions have no default __objclass__ attribute.");
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
-      const fn = receiver.pool.code.functions[receiver.index];
-      return value(this.values.string(Array.from(name === "__name__" ? fn.name : fn.qualname, char => char.codePointAt(0))));
+      const field = name === "__name__" ? "identityName" : "identityQualname";
+      if (receiver[field] === undefined) {
+        const fn = receiver.pool.code.functions[receiver.index];
+        const text = this.values.string(Array.from(name === "__name__" ? fn.name : fn.qualname, char => char.codePointAt(0)));
+        this.functionMetadata(receiver, field, text);
+      }
+      return value(receiver[field]);
     }
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
@@ -462,8 +468,19 @@ export class ClassRuntime {
     }
     return {kind: "value", value: this.mutate(receiver, name, value, remove)};
   }
+  functionMetadata(receiver, field, value) {
+    const before = receiver[field]; receiver[field] = value;
+    try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+    catch (error) { receiver[field] = before; throw error; }
+    return null;
+  }
   mutate(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (receiver instanceof FunctionValue && ["__name__", "__qualname__", "__module__"].includes(name)) {
+      if (name !== "__module__" && (remove || !this.values.isString(value)))
+        this.fail("TypeError", "Function " + name + " must be set to a string.");
+      return this.functionMetadata(receiver, name === "__name__" ? "identityName" : name === "__qualname__" ? "identityQualname" : "identityModule", remove ? null : value);
+    }
     if (name === "__doc__" && (receiver instanceof FunctionValue || receiver instanceof PropertyValue)) {
       const before = receiver.documentation;
       receiver.documentation = remove ? null : value;

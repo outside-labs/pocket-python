@@ -22,6 +22,10 @@ export class FunctionValue {
     this.defaults = defaults === null ? null : Object.freeze([...defaults]);
     this.abstractFlag = undefined;
     this.documentation = pool?.code.functions[index]?.doc === undefined ? null : pool.code.constants[pool.code.functions[index].doc];
+    this.identityName = undefined; this.identityQualname = undefined;
+    const ordinary = pool?.code.version === 5 && index !== 0 && pool.code.functions[index]?.kind === "function";
+    const module = ordinary ? globals?.cells.get("__name__") : null;
+    this.identityModule = ordinary ? module?.bound ? module.value : null : undefined;
   }
 }
 export class GeneratorValue {

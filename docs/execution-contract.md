@@ -111,6 +111,15 @@ the adopted counters as `cases`. Four property-bearing cases retain a new
 allocation counts and the other four observations remain unchanged. The
 [memory contract](interpreter-memory.md) specifies the slot/string costs.
 
+O43 adds `execution-accounting/3`: ordinary bytecode-5 functions retain a
+definition-time module snapshot (eight bytes when non-None). Default name and
+qualification strings are retained lazily when read. The eight revised cases
+preserve instructions, allocations, collection counts and root/frame counts;
+their retained module edges add 8–24 live bytes and 8–32 peak bytes, with normal
+graph traversal work. Prior accounting/2 observations remain in
+`accounting_2_cases`; the original observations remain in `previous_cases`.
+Bytecode-3/4 and internal module/class entries keep their previous layouts.
+
 Deduplication, different operation metadata charges, independent parked graph
 owners, changed collection boundaries or import scope/depth rules require an
 explicit resource-contract revision. Record old/new counters, threshold behavior
