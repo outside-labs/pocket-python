@@ -316,3 +316,9 @@ directories, native directory binding and ordinary callable dictionary lookup.
 Private copies preserve identities through native merge and sorting callbacks;
 lookup-only AttributeError recovery preserves merge and sort failures. Native
 builtin methods and other default layouts retain separate contracts.
+
+[O52](interpreter-namespace-view-directories.md) adds native directory names
+for adopted class namespace mappingproxy views, raw native ordering and bound
+receiver metadata. Class contents and metaclass hooks do not contribute names.
+Listing deferred mapping methods does not adopt enumeration, length or copy;
+retained native callers keep detached live class views alive.

@@ -4570,6 +4570,190 @@
         "code": "UNSUPPORTED",
         "phase": "execute"
       }
+    },
+    {
+      "id": "namespace-view-directories-native-directory",
+      "source": "class C: tag=[7]\np=C.__dict__\nprint(*dir(p))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __ior__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __reduce__ __reduce_ex__ __repr__ __reversed__ __ror__ __setattr__ __sizeof__ __str__ __subclasshook__ copy get items keys values\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __ior__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __reduce__ __reduce_ex__ __repr__ __reversed__ __ror__ __setattr__ __sizeof__ __str__ __subclasshook__ copy get items keys values\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-native-unsorted-directory",
+      "source": "class C: tag=[7]\np=C.__dict__\nprint(*object.__dir__(p))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __or__ __ror__ __ior__ __len__ __getitem__ __contains__ get keys values items copy __class_getitem__ __reversed__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __or__ __ror__ __ior__ __len__ __getitem__ __contains__ get keys values items copy __class_getitem__ __reversed__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-class-keys-not-listed",
+      "source": "class C: tag=[7]\np=C.__dict__\nprint(\"tag\" in dir(p),\"copy\" in dir(p),\"__func__\" in dir(p))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-live-class-mutation",
+      "source": "class C: tag=[7]\np=C.__dict__\na=dir(p)\nC.new=9\nC.tag=11\ndel C.new\nprint(dir(p)==a,p[\"tag\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 11\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 11\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-bound-native-metadata",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=p.__dir__\nprint(d.__self__ is p,d.__name__,d.__qualname__,type(d).__name__,len(d()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ mappingproxy.__dir__ builtin_function_or_method 38\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ mappingproxy.__dir__ builtin_function_or_method 38\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-native-getattribute",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=object.__getattribute__(p,\"__dir__\")\nprint(d.__self__ is p,len(d()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 38\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 38\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-unbound-native-binding",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=object.__dir__.__get__(p)\nprint(d.__self__ is p,d.__qualname__,len(d()),object.__dir__.__objclass__ is object)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True mappingproxy.__dir__ 38 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True mappingproxy.__dir__ 38 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-retained-native-caller",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=p.__dir__\ndel p\ndel C\nprint(len(d()),d.__self__[\"tag\"][0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "38 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "38 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-cyclic-view-retention",
+      "source": "class C: tag=[7]\np=C.__dict__\nC.saved=p\nd=p.__dir__\ndel p\ndel C\nprint(d.__self__[\"saved\"] is d.__self__,len(d()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 38\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 38\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-metaclass-hooks-not-read",
+      "source": "class M(type): pass\nclass C(metaclass=M): tag=7\np=C.__dict__\ndef read(cls,name): raise ValueError(\"never\")\nM.__getattribute__=read\nprint(len(dir(p)),p[\"tag\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "38 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "38 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-stored-special-names",
+      "source": "class C:\n copy=7\n __dir__=9\n __class__=11\np=C.__dict__\nprint(len(dir(p)),p[\"copy\"],p[\"__dir__\"],p[\"__class__\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "38 7 9 11\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "38 7 9 11\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "namespace-view-directories-lookup-still-readonly",
+      "source": "class C: tag=[7]\np=C.__dict__\np.__dir__=lambda:[]\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "namespace-view-directories-copy-listing-does-not-adopt",
+      "source": "class C: tag=[7]\np=C.__dict__\np.copy()\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "namespace-view-directories-native-method-directory",
+      "source": "class C: tag=[7]\np=C.__dict__\nprint(\"__self__\" in dir(p.get))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
     }
   ]
 }

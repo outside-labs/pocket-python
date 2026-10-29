@@ -425,5 +425,24 @@
       }
     ]
   },
-  "execution_accounting": "All eight earlier composed execution observations remain unchanged."
+  "execution_accounting": "All eight earlier composed execution observations remain unchanged.",
+  "offline_acceptance": {
+    "path": "build/method-directories-offline-report.json",
+    "size_bytes": 318088,
+    "sha256": "9539dd6170ff21ec556d8e545a5712db20c1ffab09ee833bf2ef9b144fb04726",
+    "wheel": {
+      "path": "build/o51-dist/pocket_python-0.2.0-py3-none-any.whl",
+      "size_bytes": 40725,
+      "sha256": "6d9f8ab955c455b4c593ec81fdf3e73b0f164e9d7ee6d32c582e8aa2f7fc9496"
+    },
+    "program_comparisons": 1850,
+    "acceptance_groups": 106,
+    "stop_restart_cycles": 189,
+    "summary": {
+      "pass": 1956,
+      "fail": 0
+    },
+    "browser": "156.0.8078.4",
+    "script_sha256": "e20816c181d0de867433ac6440e5dcc6246e7d947bfb7ce5815b287fe916d687"
+  }
 }

@@ -34,3 +34,17 @@ change.
 
 References: [pinned mappingproxy layout](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c)
 and [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 31 pinned cases pass through six Node/Chromium drain, instruction-boundary
+and parked drivers: 186 observations with 186 zero logical teardowns. Reports
+verify 348 runtime/driver hashes. All 2,617 Node units and 22 affected Python
+checks pass; a subsequent native-write boundary test brings feature coverage
+to 34 units. All eight composed resource observations remain unchanged.
+The inventory has 359 passing probes per target.
+
+The [namespace view console](../examples/interpreter_namespace_view_directories.py)
+composes keyed views, retained methods, native binding and lazy generators. Its
+[payload record](measurements/2026-10-29-namespace-view-directories.json) verifies
+every file and receipt member. Installed-wheel offline acceptance is part of
+the shared browser integration checks. Broader reflection remains under
+#123/#33; native async/browser adapters remain under #34.
