@@ -45,6 +45,10 @@ The inventory has 359 passing probes per target.
 The [namespace view console](../examples/interpreter_namespace_view_directories.py)
 composes keyed views, retained methods, native binding and lazy generators. Its
 [payload record](measurements/2026-10-29-namespace-view-directories.json) verifies
-every file and receipt member. Installed-wheel offline acceptance is part of
-the shared browser integration checks. Broader reflection remains under
+all 38 files at 718,517 bytes. Installed-wheel offline acceptance passes
+1,870 programs, 108 groups and 190 Stop/Restart cycles. Broader reflection remains under
 #123/#33; native async/browser adapters remain under #34.
+
+The related method corpus also passes all six drivers against this engine.
+Together both matrices provide 474 observations and 474 zero logical teardowns;
+source/corpus hashes retain the exact final directory implementation.

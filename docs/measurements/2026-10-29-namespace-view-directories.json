@@ -2,7 +2,7 @@
   "schema_version": 1,
   "scope": "namespace-view-directories: finite semantic/source/payload observations; no performance, device or package claim.",
   "baseline_commit": "4251cef2b1e5a28d75b5e0499de7324233d0a611",
-  "measurement_source_revision": "921f6132baa8beaa28683be3acbe987979eba85e",
+  "measurement_source_revision": "e3c84d20e703eca1fb69dc0a36191b28f89b2b92",
   "working_tree_modified": true,
   "engine_fingerprint": "fe29bf61b15b7089d03c03f320bb7f1a0a890e1594765a8004c49a8b9089155d",
   "corpus": {
@@ -131,6 +131,25 @@
       }
     }
   ],
+  "offline_acceptance": {
+    "path": "build/namespace-view-directories-offline-report.json",
+    "size_bytes": 322370,
+    "sha256": "4661184c387205d01bbf2b3522913c8ee5e911f41d57acdd03d4d6629f348dc3",
+    "wheel": {
+      "path": "build/o52-dist/pocket_python-0.2.0-py3-none-any.whl",
+      "size_bytes": 40724,
+      "sha256": "8143516d6903bad87ec1c4515a94921adcc8f00388ce182bd3ead7d7c177dd52"
+    },
+    "program_comparisons": 1870,
+    "acceptance_groups": 108,
+    "stop_restart_cycles": 190,
+    "summary": {
+      "pass": 1978,
+      "fail": 0
+    },
+    "browser": "156.0.8078.4",
+    "script_sha256": "b82cda008254be7f8dad3e6f8e78a6eb88710aa6ab39a2b3eb4e69746ae76c6e"
+  },
   "example": {
     "path": "examples/interpreter_namespace_view_directories.py",
     "size_bytes": 1661,
@@ -425,5 +444,81 @@
       }
     ]
   },
-  "execution_accounting": "All eight earlier composed execution observations remain unchanged."
+  "execution_accounting": "All eight earlier composed execution observations remain unchanged.",
+  "related_method_source_reports": [
+    {
+      "path": "build/final-method-directories-drain-node-report.json",
+      "size_bytes": 112441,
+      "sha256": "6c6074221b428c91e80ad3b627cf56ed5d5a72eeff04bc6d06af98993f48a688",
+      "target": "node",
+      "driver": "drain",
+      "summary": {
+        "pass": 48,
+        "fail": 0
+      },
+      "zero_teardown_records": 48
+    },
+    {
+      "path": "build/final-method-directories-stepped-node-report.json",
+      "size_bytes": 138045,
+      "sha256": "53201a27c7bbc4bc173e8e029e016b52b356376cf3ab6c07e3197f82089e2580",
+      "target": "node",
+      "driver": "stepped",
+      "summary": {
+        "pass": 48,
+        "fail": 0
+      },
+      "zero_teardown_records": 48
+    },
+    {
+      "path": "build/final-method-directories-parked-node-report.json",
+      "size_bytes": 138052,
+      "sha256": "782d288031247c695955642b7a90e28d89e06f7678f6d328b7608aa9883ed6ef",
+      "target": "node",
+      "driver": "parked",
+      "summary": {
+        "pass": 48,
+        "fail": 0
+      },
+      "zero_teardown_records": 48
+    },
+    {
+      "path": "build/final-method-directories-drain-browser-report.json",
+      "size_bytes": 112448,
+      "sha256": "c0472588519250793f980542eca7269b3b53d50d46a7bd6d9828ca9e67e1ddd2",
+      "target": "browser",
+      "driver": "drain",
+      "summary": {
+        "pass": 48,
+        "fail": 0
+      },
+      "zero_teardown_records": 48
+    },
+    {
+      "path": "build/final-method-directories-stepped-browser-report.json",
+      "size_bytes": 138052,
+      "sha256": "e13dbd9900b2a0346e5075c26c1fd375c705ba73548d18af56678bd7e9335ca9",
+      "target": "browser",
+      "driver": "stepped",
+      "summary": {
+        "pass": 48,
+        "fail": 0
+      },
+      "zero_teardown_records": 48
+    },
+    {
+      "path": "build/final-method-directories-parked-browser-report.json",
+      "size_bytes": 138059,
+      "sha256": "abf47057d1b6e25982605ce03cd67ae5b09b1eb91963132f407a4a6ce559637a",
+      "target": "browser",
+      "driver": "parked",
+      "summary": {
+        "pass": 48,
+        "fail": 0
+      },
+      "zero_teardown_records": 48
+    }
+  ],
+  "combined_directory_source_observations": 474,
+  "combined_directory_zero_teardown_records": 474
 }
