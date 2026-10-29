@@ -31,3 +31,17 @@ publication or deployment is included.
 
 The reference uses the pinned [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c)
 and the installed CPython 3.14.7 native numeric/singleton namespaces.
+
+All 97 pinned cases pass six Node/Chromium drain, instruction-boundary and parked
+drivers: 582 observations with zero logical teardown. Feature units cover retained
+native chains, collection, cancellation and real shared resource failures; the
+eight existing composed resource observations remain unchanged. The compatibility
+inventory passes 458 probes per target.
+
+The [numeric console](../examples/interpreter_numeric_directories.py) composes
+native layouts, boolean inheritance, detached large integers and lazy generators.
+Offline acceptance includes the source matrix, errors/refusals, Stop/Restart and
+a waiting core-profile update. The [payload record](measurements/2026-10-29-numeric-directories.json)
+verifies the exact 38-file example. These are finite semantic/source/payload
+observations. Repeated directories and large numeric expressions retain the
+configured execution budgets.
