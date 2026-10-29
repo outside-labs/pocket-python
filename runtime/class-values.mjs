@@ -88,6 +88,12 @@ const PROPERTY_DIRECTORY_KEYS = Object.freeze([
   "deleter", "__set_name__", "fget", "fset", "fdel", "__doc__", "__name__",
   "__isabstractmethod__", ...OBJECT_DIRECTORY_KEYS
 ]);
+const GENERATOR_DIRECTORY_KEYS = Object.freeze([
+  "__repr__", "__iter__", "__next__", "__del__", "send", "throw", "close",
+  "__sizeof__", "__class_getitem__", "__name__", "__qualname__", "gi_yieldfrom",
+  "gi_running", "gi_frame", "gi_suspended", "gi_code", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
 const NATIVE_DESCRIPTOR_DIRECTORY_KEYS = Object.freeze([
   "__repr__", "__call__", "__get__", "__reduce__", "__objclass__", "__name__",
   "__doc__", "__qualname__", "__text_signature__", ...OBJECT_DIRECTORY_KEYS
@@ -335,7 +341,7 @@ export class ClassRuntime {
       }
       this.fail("AttributeError", "super has no attribute '" + name + "'.");
     }
-    if (name === "__dir__" && this.nativeCallableDirectoryKind(receiver) !== null)
+    if (name === "__dir__" && this.hasFixedDirectory(receiver))
       return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
     if (receiver instanceof BuiltinValue) {
       if (name === "__dict__" && this.isType(receiver))
@@ -647,12 +653,13 @@ export class ClassRuntime {
     return null;
   }
   hasFixedDirectory(receiver) {
-    return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || this.nativeCallableDirectoryKind(receiver) !== null;
+    return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue || this.nativeCallableDirectoryKind(receiver) !== null;
   }
   directoryNames(receiver) {
     if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
     if (receiver instanceof ClassNamespaceValue) return NAMESPACE_VIEW_DIRECTORY_KEYS;
     if (receiver instanceof PropertyValue) return PROPERTY_DIRECTORY_KEYS;
+    if (receiver instanceof GeneratorValue) return GENERATOR_DIRECTORY_KEYS;
     if (this.isPythonMethod(receiver)) return METHOD_DIRECTORY_KEYS;
     const kind = this.nativeCallableDirectoryKind(receiver);
     if (kind === "method_descriptor" || kind === "wrapper_descriptor") return NATIVE_DESCRIPTOR_DIRECTORY_KEYS;

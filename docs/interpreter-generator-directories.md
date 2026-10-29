@@ -1,8 +1,9 @@
 # Generator directories
 
 O55 continues #123, #33 and #120 against pinned CPython 3.14.7. The
-independently authored `generator-directories.json` matrix records reference
-behavior before engine adoption.
+independently authored `generator-directories.json` matrix separates reference
+behavior from engine adoption. O55 uses charged native collection and owned
+sorting.
 
 Generator objects gain fresh sorted `dir(g)` lists and unsorted native
 `object.__dir__(g)` / `g.__dir__()` lists. Native collection merges the pinned

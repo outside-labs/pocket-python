@@ -3,7 +3,9 @@
   "suite": "interpreter-generator-directories/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O55"
+  ],
   "cases": [
     {
       "id": "sorted-directory",
