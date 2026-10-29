@@ -56,6 +56,8 @@ from examples.interpreter_sequence_directories import SOURCE as SEQUENCE_DIRECTO
 
 from examples.interpreter_container_directories import SOURCE as CONTAINER_DIRECTORIES_SOURCE
 
+from examples.interpreter_buffer_directories import SOURCE as BUFFER_DIRECTORIES_SOURCE
+
 
 def smoke(channel=None):
     checks, cases = [], []
@@ -798,7 +800,21 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('container-directories-compose-with-native-binding-retained-graphs-and-lazy-generators-offline')
                     checks.append('container-directories-preserve-contents-state-hook-isolation-and-unread-api-boundaries-offline')
+                    buffer_directories_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', BUFFER_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(BUFFER_DIRECTORIES_SOURCE, buffer_directories_expected)
+                    for case in buffer_directories['cases']:
+                        if case['stage'] not in buffer_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('buffer-directories-compose-with-native-binding-retained-graphs-and-lazy-generators-offline')
+                    checks.append('buffer-directories-preserve-contents-state-hook-isolation-and-unread-api-boundaries-offline')
                     busy = [
+                        'value={7,9}\nd=value.__dir__\ndel value\nprint("entered")\nwhile True: d()\n',
+                        'storage=bytearray(b"abc")\nvalue=memoryview(storage)[::2]\nd=value.__dir__.__dir__\ndel value\ndel storage\nprint("entered")\nwhile True: dir(d.__self__.__self__)\n',
+
                         'value=[]\nvalue.append(value)\nd=value.__dir__\ndel value\nprint("entered")\nwhile True: d()\n',
                         'value={"a":[7]}\nd=value.__dir__.__dir__\ndel value\nprint("entered")\nwhile True: dir(d.__self__.__self__)\n',
 
@@ -1124,6 +1140,9 @@ def smoke(channel=None):
                     refused('value=[]\nvalue.__dir__()\n', 'UnsupportedOperationError:')
                     refused('value={}\nvalue.__dir__()\n', 'UnsupportedOperationError:')
                     checks.append('class-to-core-update-retains-container-directories-boundaries')
+                    refused('value=set()\nvalue.__dir__()\n', 'UnsupportedOperationError:')
+                    refused('value=memoryview(b"abc")\nvalue.__dir__()\n', 'UnsupportedOperationError:')
+                    checks.append('class-to-core-update-retains-buffer-directories-boundaries')
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
                     run('a=[7]\nb=a*2\na[0]=9\nprint(len(b),b[0],len("😀"*3),len(2*(1,)))\n', '2 7 3 2\n')
                     checks.append('primitive-repetition-retained-after-core-profile-update')

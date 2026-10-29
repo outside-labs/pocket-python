@@ -35,3 +35,14 @@ References: pinned [set namespaces](https://github.com/python/cpython/blob/v3.14
 [bytearray namespaces](https://github.com/python/cpython/blob/v3.14.7/Objects/bytearrayobject.c),
 [memoryview namespaces](https://github.com/python/cpython/blob/v3.14.7/Objects/memoryobject.c)
 and [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 99 pinned cases pass six Node/Chromium drain, instruction-boundary and parked
+drivers: 594 observations with zero logical teardown. The 116 feature units cover
+native receiver cycles, mutable/readonly/strided aliases, released views,
+collection/cancellation/close, real limits and explicit core-profile refusals.
+The inventory passes 522 probes per target. The
+[set/buffer console](../examples/interpreter_buffer_directories.py) composes these
+layouts with native binding and lazy generators. Offline acceptance covers both
+directory batches, errors/refusals, Stop/Restart and a waiting reduced-profile
+update. The [payload record](measurements/2026-10-29-buffer-directories.json)
+verifies all 38 example files. These are finite semantic/source/payload observations.

@@ -6558,6 +6558,333 @@
         "error_type": "UnsupportedOperationError",
         "code": "UNSUPPORTED"
       }
+    },
+    {
+      "id": "buffer-directories-set-sorted-directory",
+      "source": "value={7}\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__and__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __iand__ __init__ __init_subclass__ __ior__ __isub__ __iter__ __ixor__ __le__ __len__ __lt__ __ne__ __new__ __or__ __rand__ __reduce__ __reduce_ex__ __repr__ __ror__ __rsub__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __xor__ add clear copy difference difference_update discard intersection intersection_update isdisjoint issubset issuperset pop remove symmetric_difference symmetric_difference_update union update\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__and__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __iand__ __init__ __init_subclass__ __ior__ __isub__ __iter__ __ixor__ __le__ __len__ __lt__ __ne__ __new__ __or__ __rand__ __reduce__ __reduce_ex__ __repr__ __ror__ __rsub__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __xor__ add clear copy difference difference_update discard intersection intersection_update isdisjoint issubset issuperset pop remove symmetric_difference symmetric_difference_update union update\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-set-raw-directory",
+      "source": "value={7}\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __isub__ __iand__ __ixor__ __ior__ __len__ __contains__ add clear copy discard difference difference_update intersection intersection_update isdisjoint issubset issuperset pop __reduce__ remove __sizeof__ symmetric_difference symmetric_difference_update union update __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __isub__ __iand__ __ixor__ __ior__ __len__ __contains__ add clear copy discard difference difference_update intersection intersection_update isdisjoint issubset issuperset pop __reduce__ remove __sizeof__ symmetric_difference symmetric_difference_update union update __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-set-native-binding",
+      "source": "value={7}\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ set.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ set.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-set-retained-caller",
+      "source": "value={7}\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "57 57\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "57 57\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-frozenset-sorted-directory",
+      "source": "value=frozenset((7,))\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__and__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __rand__ __reduce__ __reduce_ex__ __repr__ __ror__ __rsub__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __xor__ copy difference intersection isdisjoint issubset issuperset symmetric_difference union\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__and__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __rand__ __reduce__ __reduce_ex__ __repr__ __ror__ __rsub__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __xor__ copy difference intersection isdisjoint issubset issuperset symmetric_difference union\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-frozenset-raw-directory",
+      "source": "value=frozenset((7,))\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ copy difference intersection isdisjoint issubset issuperset __reduce__ __sizeof__ symmetric_difference union __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ copy difference intersection isdisjoint issubset issuperset __reduce__ __sizeof__ symmetric_difference union __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-frozenset-native-binding",
+      "source": "value=frozenset((7,))\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ frozenset.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ frozenset.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-frozenset-retained-caller",
+      "source": "value=frozenset((7,))\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "44 44\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "44 44\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-bytes-sorted-directory",
+      "source": "value=b\"abc\"\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__add__ __buffer__ __bytes__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition removeprefix removesuffix replace rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__add__ __buffer__ __bytes__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition removeprefix removesuffix replace rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-bytes-raw-directory",
+      "source": "value=b\"abc\"\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ __bytes__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition replace removeprefix removesuffix rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ __bytes__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition replace removeprefix removesuffix rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-bytes-native-binding",
+      "source": "value=b\"abc\"\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ bytes.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ bytes.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-bytes-retained-caller",
+      "source": "value=b\"abc\"\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "78 78\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "78 78\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-bytearray-sorted-directory",
+      "source": "value=bytearray(b\"abc\")\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__add__ __alloc__ __buffer__ __class__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __iadd__ __imul__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __release_buffer__ __repr__ __rmod__ __rmul__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove removeprefix removesuffix replace resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__add__ __alloc__ __buffer__ __class__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __iadd__ __imul__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __release_buffer__ __repr__ __rmod__ __rmul__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove removeprefix removesuffix replace resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-bytearray-raw-directory",
+      "source": "value=bytearray(b\"abc\")\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __buffer__ __release_buffer__ __mod__ __rmod__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __alloc__ __reduce__ __reduce_ex__ __sizeof__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove replace removeprefix removesuffix resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __hash__ __getattribute__ __setattr__ __delattr__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __buffer__ __release_buffer__ __mod__ __rmod__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __alloc__ __reduce__ __reduce_ex__ __sizeof__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove replace removeprefix removesuffix resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __hash__ __getattribute__ __setattr__ __delattr__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-bytearray-native-binding",
+      "source": "value=bytearray(b\"abc\")\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ bytearray.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ bytearray.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-bytearray-retained-caller",
+      "source": "value=bytearray(b\"abc\")\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "91 91\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "91 91\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-memoryview-sorted-directory",
+      "source": "value=memoryview(b\"abc\")\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__buffer__ __class__ __class_getitem__ __delattr__ __delitem__ __dir__ __doc__ __enter__ __eq__ __exit__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __release_buffer__ __repr__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ _from_flags c_contiguous cast contiguous count f_contiguous format hex index itemsize nbytes ndim obj readonly release shape strides suboffsets tobytes tolist toreadonly\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__buffer__ __class__ __class_getitem__ __delattr__ __delitem__ __dir__ __doc__ __enter__ __eq__ __exit__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __release_buffer__ __repr__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ _from_flags c_contiguous cast contiguous count f_contiguous format hex index itemsize nbytes ndim obj readonly release shape strides suboffsets tobytes tolist toreadonly\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-memoryview-raw-directory",
+      "source": "value=memoryview(b\"abc\")\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __release_buffer__ __len__ __getitem__ __setitem__ __delitem__ release tobytes hex tolist cast toreadonly _from_flags count index __enter__ __exit__ __class_getitem__ obj nbytes readonly itemsize format ndim shape strides suboffsets c_contiguous f_contiguous contiguous __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __release_buffer__ __len__ __getitem__ __setitem__ __delitem__ release tobytes hex tolist cast toreadonly _from_flags count index __enter__ __exit__ __class_getitem__ obj nbytes readonly itemsize format ndim shape strides suboffsets c_contiguous f_contiguous contiguous __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-memoryview-native-binding",
+      "source": "value=memoryview(b\"abc\")\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ memoryview.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ memoryview.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-memoryview-retained-caller",
+      "source": "value=memoryview(b\"abc\")\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "55 55\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "55 55\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-set-content-hooks-isolated",
+      "source": "class Item:\n def __hash__(self): return 7\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\n def __dir__(self): raise RuntimeError(\"directory\")\nitem=Item()\nvalues=(set((item,)),frozenset((item,)))\ndef forbidden(self): raise RuntimeError(\"rehash\")\nItem.__hash__=forbidden\nprint(*(len(dir(value)) for value in values))\nprint(*(len(value.__dir__()) for value in values))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "57 44\n57 44\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "57 44\n57 44\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-set-key-cycle-retained",
+      "source": "class Item:\n def __hash__(self): return 7\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\n def __dir__(self): raise RuntimeError(\"directory\")\nitem=Item()\nvalue=set((item,))\nitem.saved=value\nd=value.__dir__\ndel value\ndel item\ndel Item\nprint(len(d()),next(iter(d.__self__)).saved is d.__self__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "57 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "57 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-frozen-key-cycle-retained",
+      "source": "class Item:\n def __hash__(self): return 7\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\n def __dir__(self): raise RuntimeError(\"directory\")\nitem=Item()\nvalue=frozenset((item,))\nitem.saved=value\nd=value.__dir__\ndel value\ndel item\ndel Item\nprint(len(d()),next(iter(d.__self__)).saved is d.__self__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "44 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "44 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "buffer-directories-unread-bytes-hex",
+      "source": "b\"abc\".hex()\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "buffer-directories-unread-view-cast",
+      "source": "memoryview(b\"abc\").cast(\"B\")\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
     }
   ]
 }

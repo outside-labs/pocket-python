@@ -18,6 +18,11 @@ adds sorted/default and raw native directories for str/list/tuple/dict, preservi
 contents, cyclic graphs, iterator positions and exact native receiver binding.
 Listed native APIs retain separate read and operation boundaries.
 
+The [O60 set/buffer directory contract](interpreter-buffer-directories.md) adds
+set/frozenset/bytes/bytearray/memoryview layouts, preserving hash entries, mutable
+storage, view aliases and directories after release. Released-view data access,
+unread APIs and core-profile directory admission retain explicit boundaries.
+
 The [O21/O22 comprehension contract](interpreter-comprehension-reflection.md) adds optimized enclosing and isolated module/class comprehension snapshots, with nested target masking, captured-cell ordering and restored bindings.
 
 ## Evidence and interpretation
