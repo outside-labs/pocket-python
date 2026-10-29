@@ -4,7 +4,8 @@
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
   "implemented_stages": [
-    "O62"
+    "O62",
+    "O65"
   ],
   "cases": [
     {
@@ -530,6 +531,23 @@
       "source": "class Descriptor:\n def __get__(self,obj,owner): raise RuntimeError(\"bind\")\nclass A: entry=Descriptor()\nitem=A.__dict__\nprint(len(dir(type(item))),\"entry\" in dir(type(item)),\"entry\" in A.__dict__)\n",
       "stage": "O65",
       "stdout": "38 False True\n"
+    },
+    {
+      "id": "advertised-collision-error",
+      "source": "class Key:\n def __hash__(self): return hash(\"__call__\")\n def __eq__(self,other):\n  raise ValueError(\"collision\")\nkey=Key()\nclass A:\n @property\n def __class__(self): return type(object.__dir__)\na=A()\na.__dict__[key]=7\nprint(\"before\")\nobject.__dir__(a)\n",
+      "stage": "O65",
+      "stdout": "before\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 12
+        },
+        {
+          "function": "__eq__",
+          "line": 4
+        }
+      ]
     }
   ]
 }

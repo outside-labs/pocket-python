@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O53",
-    "O61"
+    "O61",
+    "O65"
   ],
   "cases": [
     {
@@ -232,7 +233,7 @@
     {
       "id": "native-type-layout",
       "source": "print(\"__get__\" in dir(property))\n",
-      "stage": "Future",
+      "stage": "O65",
       "stdout": "True\n"
     },
     {
