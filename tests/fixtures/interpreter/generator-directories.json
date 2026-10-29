@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O55"
+    "O55",
+    "O62"
   ],
   "cases": [
     {
@@ -328,7 +329,7 @@
     {
       "id": "class-directory-boundary",
       "source": "class C: pass\nprint(len(dir(C)))\n",
-      "stage": "Future",
+      "stage": "O62",
       "stdout": "29\n"
     }
   ]

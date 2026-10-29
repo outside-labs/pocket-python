@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O61"
+    "O61",
+    "O62"
   ],
   "cases": [
     {
@@ -383,7 +384,7 @@
     {
       "id": "default-class-directory",
       "source": "class A: pass\nprint(\"__class__\" in dir(A))\n",
-      "stage": "Future",
+      "stage": "O62",
       "stdout": "True\n"
     },
     {

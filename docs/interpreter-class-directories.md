@@ -33,3 +33,11 @@ composed resource observations remain required. No dependency, host grant,
 release, publication or deployment is included.
 
 Reference: pinned [native type directory and recursive class merging](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+The 74 pinned cases include 68 adopted comparisons and six explicit refusals.
+Native binding rejects an ordinary instance even when the method is stored in a
+class namespace; native metadata mutation preserves AttributeError and original
+frames. The 80 feature units and 352 adjacent namespace/instance/generator/type/
+rebinding/execution units pass. Existing composed resource observations remain
+unchanged. Six Node/Chromium source drivers exercise drain, instruction-boundary
+and parked execution.
