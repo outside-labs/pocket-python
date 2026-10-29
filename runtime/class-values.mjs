@@ -238,7 +238,7 @@ export class ClassRuntime {
     const item = this.lookup(type, "__init_subclass__", true, 1);
     return this.bindAttribute(item.value, null, type);
   }
-  read(receiver, name) {
+  read(receiver, name, native = false) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
     if (receiver instanceof SuperValue) {
@@ -297,19 +297,19 @@ export class ClassRuntime {
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
-    if (receiver instanceof BoundMethodValue && name === "__isabstractmethod__")
+    if (receiver instanceof BoundMethodValue && name === "__isabstractmethod__") {
+      if (native && this.isPythonMethod(receiver)) this.fail("AttributeError", "Method marker requires ordinary callable fallback.");
       return {kind: "call", callable: this.builtin("method-abstract-marker"), args: [receiver]};
+    }
     if (receiver instanceof BoundMethodValue && name === "__doc__")
       return {kind: "call", callable: this.builtin("method-documentation"), args: [receiver]};
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") return value(this.builtin("method"));
-      if (["__name__", "__qualname__", "__module__"].includes(name))
+      if (["__name__", "__qualname__", "__module__"].includes(name)) {
+        if (native) this.fail("AttributeError", "Method metadata requires ordinary callable fallback.");
         return {kind: "call", callable: this.builtin("method-" + name.slice(2, -2)), args: [receiver]};
+      }
     }
-    if (name === "__objclass__" && receiver instanceof BoundMethodValue &&
-        (receiver.callable instanceof FunctionValue || receiver.callable instanceof BoundMethodValue ||
-          receiver.pythonMethod && this.nativeDescriptorKind(receiver.callable)))
-      return this.read(receiver.callable, name);
     if (name === "__objclass__" && receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue) {
       if (nativeWrapper(receiver.callable.name))
         return value(this.builtin(receiver.callable.name.slice(0, receiver.callable.name.indexOf("."))));
@@ -336,6 +336,13 @@ export class ClassRuntime {
     }
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
+    if (this.isPythonMethod(receiver)) {
+      if (FUNCTION_DEFERRED_METHODS.has(name) || name === "__get__")
+        this.fail("UnsupportedOperationError", "Native method reflection requires its own contract.", "UNSUPPORTED");
+      if (native) this.fail("AttributeError", "Method has no native attribute '" + name + "'.");
+      return {kind: "call", callable: this.builtin("method-attribute"),
+        args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
+    }
     if (receiver instanceof FunctionValue && name === "__class__") return value(this.builtin("function"));
     if (receiver instanceof FunctionValue && name === "__dict__") return value(this.functionDictionary(receiver));
     if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name);
@@ -448,6 +455,10 @@ export class ClassRuntime {
   }
   write(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (this.isPythonMethod(receiver)) {
+      if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
+      this.fail("AttributeError", "Method attributes are read-only.");
+    }
     if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name, remove ? "delete" : "set", value);
     if (name === "__objclass__" && (this.nativeDescriptorKind(receiver) || receiver instanceof BoundMethodValue &&
         (receiver.pythonMethod || receiver.callable instanceof BuiltinValue &&

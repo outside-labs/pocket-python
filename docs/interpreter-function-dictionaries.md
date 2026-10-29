@@ -52,3 +52,10 @@ shared machine. Pinned source cases cover replacement, aliases, marker storage,
 native access and exact callback errors. Focused ownership checks cover foreign
 arena transfers, actual allocation failure, cycles, parked collection,
 cancellation, close and shared recursion/work/instruction limits.
+
+O46 is implemented with owned wrapped-callable lookup, preserving native bypass
+and method data-field priority. The 78-case matrix includes callback dictionary
+replacement during reads/writes/deletions, nested methods, live markers and
+explicit structural-collision/native-wrapper refusals. Native method `__get__`
+and `__call__` reflection retain separate contracts. Focused lifecycle tests
+retain detached callables and results through descriptor callbacks and parking.
