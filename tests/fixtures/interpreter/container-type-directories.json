@@ -1,0 +1,711 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-container-type-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O62"
+  ],
+  "cases": [
+    {
+      "id": "str-sorted",
+      "source": "value=str\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__add__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ capitalize casefold center count encode endswith expandtabs find format format_map index isalnum isalpha isascii isdecimal isdigit isidentifier islower isnumeric isprintable isspace istitle isupper join ljust lower lstrip maketrans partition removeprefix removesuffix replace rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n"
+    },
+    {
+      "id": "str-raw",
+      "source": "value=str\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ encode replace split rsplit join capitalize casefold title center count expandtabs find partition index ljust lower lstrip rfind rindex rjust rstrip rpartition splitlines strip swapcase translate upper startswith endswith removeprefix removesuffix isascii islower isupper istitle isspace isdecimal isdigit isnumeric isalpha isalnum isidentifier isprintable zfill format format_map __format__ maketrans __sizeof__ __getnewargs__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n"
+    },
+    {
+      "id": "str-bound",
+      "source": "value=str\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ encode replace split rsplit join capitalize casefold title center count expandtabs find partition index ljust lower lstrip rfind rindex rjust rstrip rpartition splitlines strip swapcase translate upper startswith endswith removeprefix removesuffix isascii islower isupper istitle isspace isdecimal isdigit isnumeric isalpha isalnum isidentifier isprintable zfill format format_map __format__ maketrans __sizeof__ __getnewargs__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n"
+    },
+    {
+      "id": "str-fresh",
+      "source": "value=str\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "str-binding-metadata",
+      "source": "value=str\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ str.__dir__ True False False\n"
+    },
+    {
+      "id": "str-instance-agreement",
+      "source": "value=str\nitem=\"a😀\"\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "str-advertised-namespace",
+      "source": "value=str\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "list-sorted",
+      "source": "value=list\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__add__ __class__ __class_getitem__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __iadd__ __imul__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __reversed__ __rmul__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ append clear copy count extend index insert pop remove reverse sort\n"
+    },
+    {
+      "id": "list-raw",
+      "source": "value=list\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __reversed__ __sizeof__ clear copy append insert extend pop remove index count reverse sort __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "list-bound",
+      "source": "value=list\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __reversed__ __sizeof__ clear copy append insert extend pop remove index count reverse sort __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "list-fresh",
+      "source": "value=list\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "list-binding-metadata",
+      "source": "value=list\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ list.__dir__ True False False\n"
+    },
+    {
+      "id": "list-instance-agreement",
+      "source": "value=list\nitem=[7]\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "list-advertised-namespace",
+      "source": "value=list\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "tuple-sorted",
+      "source": "value=tuple\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__add__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ count index\n"
+    },
+    {
+      "id": "tuple-raw",
+      "source": "value=tuple\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ index count __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "tuple-bound",
+      "source": "value=tuple\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ index count __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "tuple-fresh",
+      "source": "value=tuple\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "tuple-binding-metadata",
+      "source": "value=tuple\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ tuple.__dir__ True False False\n"
+    },
+    {
+      "id": "tuple-instance-agreement",
+      "source": "value=tuple\nitem=(7,)\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "tuple-advertised-namespace",
+      "source": "value=tuple\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "dict-sorted",
+      "source": "value=dict\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__class__ __class_getitem__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __ior__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __reduce__ __reduce_ex__ __repr__ __reversed__ __ror__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ clear copy fromkeys get items keys pop popitem setdefault update values\n"
+    },
+    {
+      "id": "dict-raw",
+      "source": "value=dict\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __or__ __ror__ __ior__ __len__ __getitem__ __setitem__ __delitem__ __contains__ __sizeof__ get setdefault pop popitem keys items values update fromkeys clear copy __reversed__ __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "dict-bound",
+      "source": "value=dict\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __or__ __ror__ __ior__ __len__ __getitem__ __setitem__ __delitem__ __contains__ __sizeof__ get setdefault pop popitem keys items values update fromkeys clear copy __reversed__ __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "dict-fresh",
+      "source": "value=dict\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "dict-binding-metadata",
+      "source": "value=dict\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ dict.__dir__ True False False\n"
+    },
+    {
+      "id": "dict-instance-agreement",
+      "source": "value=dict\nitem={\"a\":7}\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "dict-advertised-namespace",
+      "source": "value=dict\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "range-sorted",
+      "source": "value=range\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__bool__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __reversed__ __setattr__ __sizeof__ __str__ __subclasshook__ count index start step stop\n"
+    },
+    {
+      "id": "range-raw",
+      "source": "value=range\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __bool__ __len__ __getitem__ __contains__ __reversed__ __reduce__ count index start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "range-bound",
+      "source": "value=range\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __bool__ __len__ __getitem__ __contains__ __reversed__ __reduce__ count index start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "range-fresh",
+      "source": "value=range\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "range-binding-metadata",
+      "source": "value=range\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ range.__dir__ True False False\n"
+    },
+    {
+      "id": "range-instance-agreement",
+      "source": "value=range\nitem=range(7)\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "range-advertised-namespace",
+      "source": "value=range\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "slice-sorted",
+      "source": "value=slice\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ indices start step stop\n"
+    },
+    {
+      "id": "slice-raw",
+      "source": "value=slice\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ indices __reduce__ start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "slice-bound",
+      "source": "value=slice\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ indices __reduce__ start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "slice-fresh",
+      "source": "value=slice\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "slice-binding-metadata",
+      "source": "value=slice\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ slice.__dir__ True False False\n"
+    },
+    {
+      "id": "slice-instance-agreement",
+      "source": "value=slice\nitem=slice(7)\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "slice-advertised-namespace",
+      "source": "value=slice\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "set-sorted",
+      "source": "value=set\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__and__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __iand__ __init__ __init_subclass__ __ior__ __isub__ __iter__ __ixor__ __le__ __len__ __lt__ __ne__ __new__ __or__ __rand__ __reduce__ __reduce_ex__ __repr__ __ror__ __rsub__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __xor__ add clear copy difference difference_update discard intersection intersection_update isdisjoint issubset issuperset pop remove symmetric_difference symmetric_difference_update union update\n"
+    },
+    {
+      "id": "set-raw",
+      "source": "value=set\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __isub__ __iand__ __ixor__ __ior__ __len__ __contains__ add clear copy discard difference difference_update intersection intersection_update isdisjoint issubset issuperset pop __reduce__ remove __sizeof__ symmetric_difference symmetric_difference_update union update __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "set-bound",
+      "source": "value=set\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __isub__ __iand__ __ixor__ __ior__ __len__ __contains__ add clear copy discard difference difference_update intersection intersection_update isdisjoint issubset issuperset pop __reduce__ remove __sizeof__ symmetric_difference symmetric_difference_update union update __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "set-fresh",
+      "source": "value=set\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "set-binding-metadata",
+      "source": "value=set\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ set.__dir__ True False False\n"
+    },
+    {
+      "id": "set-instance-agreement",
+      "source": "value=set\nitem={7}\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "set-advertised-namespace",
+      "source": "value=set\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "frozenset-sorted",
+      "source": "value=frozenset\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__and__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __rand__ __reduce__ __reduce_ex__ __repr__ __ror__ __rsub__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __xor__ copy difference intersection isdisjoint issubset issuperset symmetric_difference union\n"
+    },
+    {
+      "id": "frozenset-raw",
+      "source": "value=frozenset\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ copy difference intersection isdisjoint issubset issuperset __reduce__ __sizeof__ symmetric_difference union __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "frozenset-bound",
+      "source": "value=frozenset\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ copy difference intersection isdisjoint issubset issuperset __reduce__ __sizeof__ symmetric_difference union __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "frozenset-fresh",
+      "source": "value=frozenset\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "frozenset-binding-metadata",
+      "source": "value=frozenset\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ frozenset.__dir__ True False False\n"
+    },
+    {
+      "id": "frozenset-instance-agreement",
+      "source": "value=frozenset\nitem=frozenset((7,))\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "frozenset-advertised-namespace",
+      "source": "value=frozenset\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "bytes-sorted",
+      "source": "value=bytes\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__add__ __buffer__ __bytes__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition removeprefix removesuffix replace rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n"
+    },
+    {
+      "id": "bytes-raw",
+      "source": "value=bytes\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ __bytes__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition replace removeprefix removesuffix rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytes-bound",
+      "source": "value=bytes\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ __bytes__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition replace removeprefix removesuffix rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytes-fresh",
+      "source": "value=bytes\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "bytes-binding-metadata",
+      "source": "value=bytes\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ bytes.__dir__ True False False\n"
+    },
+    {
+      "id": "bytes-instance-agreement",
+      "source": "value=bytes\nitem=b\"abc\"\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bytes-advertised-namespace",
+      "source": "value=bytes\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "bytearray-sorted",
+      "source": "value=bytearray\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__add__ __alloc__ __buffer__ __class__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __iadd__ __imul__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __release_buffer__ __repr__ __rmod__ __rmul__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove removeprefix removesuffix replace resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n"
+    },
+    {
+      "id": "bytearray-raw",
+      "source": "value=bytearray\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __buffer__ __release_buffer__ __mod__ __rmod__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __alloc__ __reduce__ __reduce_ex__ __sizeof__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove replace removeprefix removesuffix resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __hash__ __getattribute__ __setattr__ __delattr__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytearray-bound",
+      "source": "value=bytearray\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __buffer__ __release_buffer__ __mod__ __rmod__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __alloc__ __reduce__ __reduce_ex__ __sizeof__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove replace removeprefix removesuffix resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __hash__ __getattribute__ __setattr__ __delattr__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytearray-fresh",
+      "source": "value=bytearray\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "bytearray-binding-metadata",
+      "source": "value=bytearray\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ bytearray.__dir__ True False False\n"
+    },
+    {
+      "id": "bytearray-instance-agreement",
+      "source": "value=bytearray\nitem=bytearray(b\"abc\")\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bytearray-advertised-namespace",
+      "source": "value=bytearray\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "memoryview-sorted",
+      "source": "value=memoryview\nprint(*dir(value))\n",
+      "stage": "O64",
+      "stdout": "__buffer__ __class__ __class_getitem__ __delattr__ __delitem__ __dir__ __doc__ __enter__ __eq__ __exit__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __release_buffer__ __repr__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ _from_flags c_contiguous cast contiguous count f_contiguous format hex index itemsize nbytes ndim obj readonly release shape strides suboffsets tobytes tolist toreadonly\n"
+    },
+    {
+      "id": "memoryview-raw",
+      "source": "value=memoryview\nprint(*type.__dir__(value))\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __release_buffer__ __len__ __getitem__ __setitem__ __delitem__ release tobytes hex tolist cast toreadonly _from_flags count index __enter__ __exit__ __class_getitem__ obj nbytes readonly itemsize format ndim shape strides suboffsets c_contiguous f_contiguous contiguous __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "memoryview-bound",
+      "source": "value=memoryview\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "stage": "O64",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __release_buffer__ __len__ __getitem__ __setitem__ __delitem__ release tobytes hex tolist cast toreadonly _from_flags count index __enter__ __exit__ __class_getitem__ obj nbytes readonly itemsize format ndim shape strides suboffsets c_contiguous f_contiguous contiguous __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "memoryview-fresh",
+      "source": "value=memoryview\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "stage": "O64",
+      "stdout": "False False False False True\n"
+    },
+    {
+      "id": "memoryview-binding-metadata",
+      "source": "value=memoryview\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "stage": "O62",
+      "stdout": "True __dir__ memoryview.__dir__ True False False\n"
+    },
+    {
+      "id": "memoryview-instance-agreement",
+      "source": "value=memoryview\nitem=memoryview(b\"abc\")\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "memoryview-advertised-namespace",
+      "source": "value=memoryview\nclass A:\n own=7\n @property\n def __class__(self): return value\nitem=A()\nitem.saved=9\nnames=object.__dir__(item)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "stage": "O64",
+      "stdout": "saved False True True\n"
+    },
+    {
+      "id": "descriptor-rebinding",
+      "source": "a=type.__dir__.__get__(str)\nb=type.__dir__.__get__(memoryview,7)\nprint(a.__self__ is str,b.__self__ is memoryview,a()==type.__dir__(str),b()==type.__dir__(memoryview),a is b)\n",
+      "stage": "O64",
+      "stdout": "True True True True False\n"
+    },
+    {
+      "id": "descriptor-none-owner",
+      "source": "print(type.__dir__.__get__(None,str) is type.__dir__)\n",
+      "stage": "O62",
+      "stdout": "True\n"
+    },
+    {
+      "id": "stored-descriptor-unbound",
+      "source": "class A: native=type.__dir__\nprint(A.native is type.__dir__,A.native(str)==type.__dir__(str))\n",
+      "stage": "O64",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "retained-native-chain",
+      "source": "d=type.__dir__.__get__(str).__dir__\nprint(len(d()),d.__self__.__self__ is str,d.__self__()==type.__dir__(str))\n",
+      "stage": "O64",
+      "stdout": "30 True True\n"
+    },
+    {
+      "id": "listed-native-apis",
+      "source": "names=dir(str)\nprint(\"__sizeof__\" in names,\"__getstate__\" in names,\"__dir__\" in names,\"__mro__\" in names)\n",
+      "stage": "O64",
+      "stdout": "True True True False\n"
+    },
+    {
+      "id": "advertised-first-key-identity",
+      "source": "key=\"__\"+\"doc__\"\nclass A:\n @property\n def __class__(self): return str\nitem=A()\nitem.__dict__[key]=7\nnames=object.__dir__(item)\nprint(names[0] is key,names[0],len(names)==len(dir(str)))\n",
+      "stage": "O64",
+      "stdout": "True __doc__ True\n"
+    },
+    {
+      "id": "wrong-receiver",
+      "source": "print(\"before\")\ntype.__dir__(7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "missing-receiver",
+      "source": "print(\"before\")\ntype.__dir__()\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "extra-arguments",
+      "source": "print(\"before\")\ntype.__dir__(str,7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "keyword-arguments",
+      "source": "print(\"before\")\ntype.__dir__(str,extra=7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "bound-extra-arguments",
+      "source": "print(\"before\")\ntype.__dir__.__get__(str)(7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "bound-keyword-arguments",
+      "source": "print(\"before\")\ntype.__dir__.__get__(str)(extra=7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "immutable-type-set",
+      "source": "print(\"before\")\nsetattr(str,\"added\",7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "immutable-type-delete",
+      "source": "print(\"before\")\ndelattr(str,\"__doc__\")\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "bound-metadata-set",
+      "source": "print(\"before\")\nsetattr(type.__dir__.__get__(str),\"__name__\",7)\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "bound-metadata-delete",
+      "source": "print(\"before\")\ndelattr(type.__dir__.__get__(str),\"__qualname__\")\n",
+      "stage": "O62",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "native-type-mapping",
+      "source": "print(len(str.__dict__))\n",
+      "stage": "Future",
+      "stdout": "70\n"
+    },
+    {
+      "id": "object-directory-of-type",
+      "source": "print(len(object.__dir__(str)))\n",
+      "stage": "Future",
+      "stdout": "49\n"
+    },
+    {
+      "id": "metaclass-native-namespace",
+      "source": "print(len(dir(type)))\n",
+      "stage": "Future",
+      "stdout": "49\n"
+    },
+    {
+      "id": "custom-metaclass-namespace",
+      "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint(len(type.__dir__(A)))\n",
+      "stage": "Future",
+      "stdout": "29\n"
+    },
+    {
+      "id": "wrapper-directory",
+      "source": "def f(): pass\nprint(len(dir(staticmethod(f))))\n",
+      "stage": "Future",
+      "stdout": "36\n"
+    },
+    {
+      "id": "released-view-type",
+      "source": "storage=bytearray(b\"abc\")\nview=memoryview(storage)[::2]\ncls=type(view)\nview.release()\nprint(dir(cls)==dir(view),len(type.__dir__(cls)))\n",
+      "stage": "O64",
+      "stdout": "True 55\n"
+    },
+    {
+      "id": "view-alias-authority",
+      "source": "storage=bytearray(b\"abcd\")\nview=memoryview(storage)[::-2]\ncls=type(view)\nprint(len(dir(cls)))\nview[0]=90\nprint(storage[3],view[0],view.tobytes()==b\"Zb\")\n",
+      "stage": "O64",
+      "stdout": "55\n90 90 True\n"
+    },
+    {
+      "id": "list-iterator-state",
+      "source": "items=[7,9]\nit=iter(items)\nprint(next(it))\nprint(len(dir(type(items))))\nitems.append(11)\nprint(next(it),next(it))\n",
+      "stage": "O64",
+      "stdout": "7\n48\n9 11\n"
+    },
+    {
+      "id": "dictionary-keys-not-invoked",
+      "source": "class Key:\n def __hash__(self): return 7\nkey=Key()\nitems={key:9}\nkey.saved=items\ndef forbidden(self): raise RuntimeError(\"hash\")\nKey.__hash__=forbidden\nprint(len(dir(type(items))),next(iter(items)).saved is items)\n",
+      "stage": "O64",
+      "stdout": "46 True\n"
+    },
+    {
+      "id": "cyclic-container-state",
+      "source": "items=[]\nitems.append(items)\nprint(len(type.__dir__(type(items))),items[0] is items)\n",
+      "stage": "O64",
+      "stdout": "48 True\n"
+    },
+    {
+      "id": "source-class-directory-still-live",
+      "source": "class A: marker=7\nbefore=dir(A)\nA.later=9\nprint(\"later\" in before,\"later\" in dir(A),len(dir(dict)))\n",
+      "stage": "O64",
+      "stdout": "False True 46\n"
+    },
+    {
+      "id": "iterator-type-namespace",
+      "source": "print(len(dir(type(iter([])))))\n",
+      "stage": "Future",
+      "stdout": "28\n"
+    }
+  ]
+}
