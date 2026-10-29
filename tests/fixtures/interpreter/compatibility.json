@@ -6047,6 +6047,229 @@
         "error_type": "UnsupportedOperationError",
         "code": "UNSUPPORTED"
       }
+    },
+    {
+      "id": "sequence-directories-range-sorted-directory",
+      "source": "value=range(7,20,2)\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__bool__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __reversed__ __setattr__ __sizeof__ __str__ __subclasshook__ count index start step stop\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__bool__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __reversed__ __setattr__ __sizeof__ __str__ __subclasshook__ count index start step stop\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-range-raw-directory",
+      "source": "value=range(7,20,2)\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __bool__ __len__ __getitem__ __contains__ __reversed__ __reduce__ count index start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __bool__ __len__ __getitem__ __contains__ __reversed__ __reduce__ count index start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-range-native-binding",
+      "source": "value=range(7,20,2)\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ range.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ range.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-range-native-write",
+      "source": "value=range(7,20,2)\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "sequence-directories-slice-sorted-directory",
+      "source": "value=slice(7,20,2)\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ indices start step stop\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ indices start step stop\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-slice-raw-directory",
+      "source": "value=slice(7,20,2)\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ indices __reduce__ start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ indices __reduce__ start stop step __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-slice-native-binding",
+      "source": "value=slice(7,20,2)\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ slice.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ slice.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-slice-native-write",
+      "source": "value=slice(7,20,2)\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "sequence-directories-huge-range-no-length-or-iteration",
+      "source": "value=range(10**40)\nprint(len(dir(value)),len(value.__dir__()),value.stop==10**40)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "35 35 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "35 35 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-range-iterator-position",
+      "source": "value=range(7,11)\nit=iter(value)\nprint(next(it))\nprint(len(dir(value)),len(value.__dir__()),next(it))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7\n35 35 8\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7\n35 35 8\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-slice-field-hooks-isolated",
+      "source": "class Field:\n def __getattribute__(self,name): raise RuntimeError(\"read\")\n def __index__(self): raise RuntimeError(\"index\")\n def __hash__(self): raise RuntimeError(\"hash\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\nfield=Field()\nvalue=slice(field,field,field)\nprint(len(dir(value)),len(value.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "28 28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "28 28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-slice-cyclic-fields-retained",
+      "source": "field=[]\nvalue=slice(field,field,field)\nfield.append(value)\nd=value.__dir__\ndel value\ndel field\nprint(len(d()),d.__self__.start[0] is d.__self__,d.__self__.stop is d.__self__.step)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "28 True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "28 True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-slice-field-mutation",
+      "source": "field=[7]\nvalue=slice(field,field,field)\na=dir(value)\nfield.append(value)\nprint(a==dir(value),value.start[1] is value,len(value.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-cross-layout-native-rebinding",
+      "source": "a=range(7)\nb=slice(7)\nd=object.__dir__.__get__(a)\ne=object.__dir__.__get__(b,type(a))\nprint(d.__self__ is a,e.__self__ is b,len(d()),len(e()),d.__qualname__,e.__qualname__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 35 28 range.__dir__ slice.__dir__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 35 28 range.__dir__ slice.__dir__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-lazy-generators",
+      "source": "values=(range(7),slice(7),range(10**40),slice(NotImplemented))\nprint(*(len(dir(value)) for value in values))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "35 28 35 28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "35 28 35 28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "sequence-directories-unread-range-reduction",
+      "source": "value=range(7)\nvalue.__reduce__()\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "sequence-directories-unread-slice-reduction",
+      "source": "value=slice(7)\nvalue.__reduce__()\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
     }
   ]
 }

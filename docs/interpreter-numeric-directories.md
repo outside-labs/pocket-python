@@ -36,7 +36,7 @@ All 97 pinned cases pass six Node/Chromium drain, instruction-boundary and parke
 drivers: 582 observations with zero logical teardown. Feature units cover retained
 native chains, collection, cancellation and real shared resource failures; the
 eight existing composed resource observations remain unchanged. The compatibility
-inventory passes 458 probes per target.
+inventory passes 475 probes per target.
 
 The [numeric console](../examples/interpreter_numeric_directories.py) composes
 native layouts, boolean inheritance, detached large integers and lazy generators.

@@ -33,3 +33,16 @@ release, publication or deployment is included.
 References: pinned [range namespaces](https://github.com/python/cpython/blob/v3.14.7/Objects/rangeobject.c),
 [slice namespaces](https://github.com/python/cpython/blob/v3.14.7/Objects/sliceobject.c)
 and [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 44 pinned cases pass six Node/Chromium drain, instruction-boundary and parked
+drivers: 264 observations with zero logical teardown. The 52 feature units cover
+cyclic container/instance/function fields, detached native chains, cancellation,
+collection and real limits. The eight composed resource observations remain
+unchanged. Together O57/O58 provide 846 passing source observations and 846 zero
+logical teardowns; the final inventory passes 475 probes per target.
+
+The [range/slice console](../examples/interpreter_sequence_directories.py) composes
+large ranges, retained cyclic fields, native binding and lazy generators. Offline
+acceptance covers both matrices, error/refusal boundaries, Stop/Restart and a
+waiting reduced-profile update. The [payload record](measurements/2026-10-29-sequence-directories.json)
+verifies all 38 example files. These are finite semantic/source/payload observations.

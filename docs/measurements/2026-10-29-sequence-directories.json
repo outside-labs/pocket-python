@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "scope": "sequence-directories: finite semantic/source/payload observations; no performance, device or package claim.",
+  "baseline_commit": "f38c0216071cc06c9efa6a45b4ea575ef02fe464",
+  "measurement_source_revision": "30c5b2b6c52000f44ae70bb2565cab2e9e43666f",
+  "working_tree_modified": true,
+  "engine_fingerprint": "5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4",
+  "corpus": {
+    "path": "tests/fixtures/interpreter/sequence-directories.json",
+    "size_bytes": 12320,
+    "sha256": "75cecc51e479bfcfc839e98fa8393da793df06b98d29078b9e1a3d43ccbc2eaf",
+    "cases": 44,
+    "implemented_stages": [
+      "O58"
+    ]
+  },
+  "source_reports": [
+    {
+      "path": "build/sequence-directories-classes-drain-node-report.json",
+      "size_bytes": 106250,
+      "sha256": "153edc16d13ee91db428ef05a6421f0a1edeff0c10c366ac4a6e8a7d2d68c44d",
+      "target": "node",
+      "driver": "drain",
+      "summary": {
+        "pass": 44,
+        "fail": 0
+      },
+      "zero_teardown_records": 44
+    },
+    {
+      "path": "build/sequence-directories-classes-stepped-node-report.json",
+      "size_bytes": 122974,
+      "sha256": "cee4336d11f1f781c23adaf20702b48f84267b9c3246c6df791c37926a8920a4",
+      "target": "node",
+      "driver": "stepped",
+      "summary": {
+        "pass": 44,
+        "fail": 0
+      },
+      "zero_teardown_records": 44
+    },
+    {
+      "path": "build/sequence-directories-classes-parked-node-report.json",
+      "size_bytes": 122981,
+      "sha256": "d82bd9dc064c748537b129427e4b23e3988cb9143128a19454f06b1796b6aa4d",
+      "target": "node",
+      "driver": "parked",
+      "summary": {
+        "pass": 44,
+        "fail": 0
+      },
+      "zero_teardown_records": 44
+    },
+    {
+      "path": "build/sequence-directories-classes-drain-browser-report.json",
+      "size_bytes": 106257,
+      "sha256": "c327a02971c8b573ce62d5a9ac0dfb123b9e119a09b6aa19541df7cf3d85cbbc",
+      "target": "browser",
+      "driver": "drain",
+      "summary": {
+        "pass": 44,
+        "fail": 0
+      },
+      "zero_teardown_records": 44
+    },
+    {
+      "path": "build/sequence-directories-classes-stepped-browser-report.json",
+      "size_bytes": 122981,
+      "sha256": "f86ed48f9aa225e291fd7965925490c0ddc981ad4f97dba6518fcbb6c6007c4c",
+      "target": "browser",
+      "driver": "stepped",
+      "summary": {
+        "pass": 44,
+        "fail": 0
+      },
+      "zero_teardown_records": 44
+    },
+    {
+      "path": "build/sequence-directories-classes-parked-browser-report.json",
+      "size_bytes": 122988,
+      "sha256": "d084248795fae148ee2ecf94f6f130beb28ef1382f4226a96c4a545a654b08a3",
+      "target": "browser",
+      "driver": "parked",
+      "summary": {
+        "pass": 44,
+        "fail": 0
+      },
+      "zero_teardown_records": 44
+    }
+  ],
+  "example_payload": {
+    "path": "build/sequence-directories-console",
+    "engine_fingerprint": "5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4",
+    "complete_payload_bytes": 728061,
+    "files": [
+      {
+        "path": "POCKET-PYTHON.json",
+        "size_bytes": 26610,
+        "sha256": "bedb5b70c759027817dd7523de10223baa6c12423f95d0cffc073238f3fcf714"
+      },
+      {
+        "path": "app-618f22aea7705dd9dabdf499a0d10f34d9af11aad3ea00b39279df9efa101729.js",
+        "size_bytes": 8596,
+        "sha256": "618f22aea7705dd9dabdf499a0d10f34d9af11aad3ea00b39279df9efa101729"
+      },
+      {
+        "path": "app-config-f93f343049804323e2872f7c050f46614cc303ac862853e76453e36fc0f2e0df.json",
+        "size_bytes": 1214,
+        "sha256": "f93f343049804323e2872f7c050f46614cc303ac862853e76453e36fc0f2e0df"
+      },
+      {
+        "path": "application/54fb4934a4707a3e25dd753246b96790b4015f686e9b6905eb5279eb6f118d24/APPLICATION.json",
+        "size_bytes": 1431,
+        "sha256": "54fb4934a4707a3e25dd753246b96790b4015f686e9b6905eb5279eb6f118d24"
+      },
+      {
+        "path": "application/54fb4934a4707a3e25dd753246b96790b4015f686e9b6905eb5279eb6f118d24/LICENSES/application.txt",
+        "size_bytes": 1066,
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85"
+      },
+      {
+        "path": "application/54fb4934a4707a3e25dd753246b96790b4015f686e9b6905eb5279eb6f118d24/sources/app.py",
+        "size_bytes": 1007,
+        "sha256": "45fde780f8be6b7421de0182a6b543dee845379bc4a9c81be2196de601ad99e9"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/browser-protocol.mjs",
+        "size_bytes": 10589,
+        "sha256": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/bytecode.mjs",
+        "size_bytes": 6836,
+        "sha256": "e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/class-policy.mjs",
+        "size_bytes": 3020,
+        "sha256": "c2c938d5c7fcbc3e0cecb57701bef2e44be3ef49531cfbaa72e710ac8028ec3c"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/class-values.mjs",
+        "size_bytes": 65439,
+        "sha256": "cada32b881f7cf410eb18b0ae5002d0637654c7fe02e3a3b9c94c2990c369700"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/function-bytecode.mjs",
+        "size_bytes": 22820,
+        "sha256": "6c8c960d90cbe1a5030c22ac1ab93f33749b06e3ea3ae61e237bb3997390ef96"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/function-objects.mjs",
+        "size_bytes": 5496,
+        "sha256": "e4dbe7fc9ca821383e0c22cfcdfe8f5b3f05d3589d520dc553faa8285e4bd968"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/functions.mjs",
+        "size_bytes": 64791,
+        "sha256": "123588cd395455c6f5b301f00dabffd4b795e0bbe5671dbe1664d1dd1eff3de8"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/interpreter-host.mjs",
+        "size_bytes": 7318,
+        "sha256": "4afadfd987000afa6221ee73dcd64e9c00a2d13c4324718248d396302a39296d"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/interpreter-worker.mjs",
+        "size_bytes": 8855,
+        "sha256": "324cc23100eb40ef04f2909b805d7abc0c8651b4608b3a61a95470ec7e74e19e"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/library-catalog.mjs",
+        "size_bytes": 907,
+        "sha256": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/library-selection.mjs",
+        "size_bytes": 3661,
+        "sha256": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/licenses/POCKET-PYTHON.txt",
+        "size_bytes": 1066,
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/licenses/UNICODE.txt",
+        "size_bytes": 1995,
+        "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/memory.mjs",
+        "size_bytes": 8407,
+        "sha256": "b4b8ebbb6f576e2c01e8e28f4e02b1962ca1c5ffb263216278617c2c6bd8bb35"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/module-context.mjs",
+        "size_bytes": 8319,
+        "sha256": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/module-registry.mjs",
+        "size_bytes": 10280,
+        "sha256": "43eb1bc646da60a6b5336caef1ea6ea940b6a88db3fe679c550c62b828704c89"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/module-session.mjs",
+        "size_bytes": 12852,
+        "sha256": "8474187aa92173689c875d6bf15b31a7eae4dcff62b862b9607ce22e10753df4"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/numeric.mjs",
+        "size_bytes": 13954,
+        "sha256": "2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/operation-runtime.mjs",
+        "size_bytes": 150832,
+        "sha256": "de1c423a7b62fa2a4e32a2c450068944b73810590eb8ce950a9989495c3d9999"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/operations.mjs",
+        "size_bytes": 31715,
+        "sha256": "0d9f5b1362b3e54f87370c1cba5be72842e8b214293e70fff016a5915edb7762"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/source-compiler.mjs",
+        "size_bytes": 44099,
+        "sha256": "0dcdcd202303f9a05b49f4e3c3bae75f0c26153b068c081b4021c87ddf9e115b"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/source-identifiers.mjs",
+        "size_bytes": 25949,
+        "sha256": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/source-modules.mjs",
+        "size_bytes": 5115,
+        "sha256": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/source-parser.mjs",
+        "size_bytes": 34109,
+        "sha256": "2ba7ecd41fdae750fa28dfb4fced9440d24ba9b96ed515d12b5151b385eebfdd"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/source-tokens.mjs",
+        "size_bytes": 15061,
+        "sha256": "e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/string-printability.mjs",
+        "size_bytes": 13287,
+        "sha256": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/values.mjs",
+        "size_bytes": 93666,
+        "sha256": "22799bb2f4a2a2798b537d12659f5987949989ad1bfa32fdc184d04ba87de11c"
+      },
+      {
+        "path": "engine/5b8b6a1c9b44f9618a53c948eb53c522794df040a8645fb72ad4b5bddbce6dd4/vm.mjs",
+        "size_bytes": 6080,
+        "sha256": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d"
+      },
+      {
+        "path": "icon.svg",
+        "size_bytes": 214,
+        "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691"
+      },
+      {
+        "path": "index.html",
+        "size_bytes": 2260,
+        "sha256": "87c2f15682bc0df735e9ce709b22acaebb76ac02e25c08b59e2887514758b095"
+      },
+      {
+        "path": "manifest.webmanifest",
+        "size_bytes": 350,
+        "sha256": "39c0856dce8fb43e409d3f24e44cae42ce74cb1cbdd43b8505f6151abe02a226"
+      },
+      {
+        "path": "service-worker.js",
+        "size_bytes": 8795,
+        "sha256": "f3e8f34612d5f35d8461d9704d06eb2b362e7b774f3a664ecd3a7d5356c128c2"
+      }
+    ]
+  },
+  "compatibility_node": {
+    "path": "build/sequence-directories-compatibility-node-report.json",
+    "size_bytes": 1019644,
+    "sha256": "6e727740e2e9ca507fcf6b34dc28be3724d989d953a88b1496c74d9e0f884cf9",
+    "summary": {
+      "pass": 475,
+      "fail": 0
+    },
+    "observations": {
+      "supported": 411,
+      "deferred": 60,
+      "known-divergence": 0,
+      "host-restricted": 4
+    }
+  },
+  "compatibility_browser": {
+    "path": "build/sequence-directories-compatibility-browser-report.json",
+    "size_bytes": 1019651,
+    "sha256": "a472a2ba8ccc1ee56ca50f12c1890925597e197a3aef86c489937cb5d7e39419",
+    "summary": {
+      "pass": 475,
+      "fail": 0
+    },
+    "observations": {
+      "supported": 411,
+      "deferred": 60,
+      "known-divergence": 0,
+      "host-restricted": 4
+    }
+  }
+}
