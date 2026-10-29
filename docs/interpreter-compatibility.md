@@ -310,3 +310,9 @@ Enumeration, native layouts and callback-bearing query keys remain separate.
 directories and raw native directory calls. Private dictionary copies preserve
 key identities while native merging and sorting use owned callbacks. Listing
 a native name does not adopt its metadata API; other default layouts remain open.
+
+[O51](interpreter-method-directories.md) adds default bound Python method
+directories, native directory binding and ordinary callable dictionary lookup.
+Private copies preserve identities through native merge and sorting callbacks;
+lookup-only AttributeError recovery preserves merge and sort failures. Native
+builtin methods and other default layouts retain separate contracts.

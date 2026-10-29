@@ -41,3 +41,16 @@ does not change. No dependency, host grant, publication or deployment is include
 
 References: [pinned generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c)
 and [method lookup](https://github.com/python/cpython/blob/v3.14.7/Objects/classobject.c).
+
+All 48 pinned cases pass through six Node/Chromium drain, instruction-boundary
+and parked drivers: 288 observations with 288 zero logical teardowns. Reports
+verify 348 runtime/driver hashes. There are 108 directory units, 388 adjacent
+units and 22 affected Python checks; all eight composed resource observations
+remain unchanged. The inventory has 345 probes per target.
+
+The [method directory console](../examples/interpreter_method_directories.py)
+composes retained methods, live callable dictionaries, native binding and lazy
+generators. Its [payload record](measurements/2026-10-29-method-directories.json)
+verifies every file and receipt member. Installed-wheel offline acceptance is
+part of the shared browser integration checks. Broader reflection remains under
+#123/#33; native async/browser adapters remain under #34.
