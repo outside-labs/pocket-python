@@ -55,3 +55,19 @@ dictionary copies. Primitive text-only merging/sorting stays in the charged
 value runtime; callback-bearing keys use ordinary dictionary and comparison
 frames. Native collision truth conversion and AttributeError/KeyError retain
 their original behavior.
+
+All 42 pinned cases pass through six Node/Chromium drain, instruction-boundary
+and parked drivers: 252 observations with 252 zero logical teardowns. The
+reports verify 348 current runtime/driver hashes. All 51 feature units and
+adjacent reflection, dictionary and execution checks pass; the eight composed
+resource observations remain unchanged. The inventory has 329 passing probes
+per target.
+
+The [function directory console](../examples/interpreter_function_directories.py)
+composes class namespace reads, retained methods, dictionary replacement and
+lazy directory observations. Installed-wheel offline acceptance passes
+1,815 programs, 104 groups and 186 Stop/Restart cycles. The
+[payload record](measurements/2026-10-29-function-directories.json) verifies all
+38 files at 715,871 bytes. These are finite semantic/source/payload
+observations. Broader reflection remains under #123/#33; native async/browser
+adapters remain under #34.

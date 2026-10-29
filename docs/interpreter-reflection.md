@@ -97,3 +97,7 @@ This is a finite payload observation, without a performance or package claim.
 The [O49 keyed class namespace contract](interpreter-class-namespaces.md)
 supersedes earlier blanket class-mapping refusals. Enumeration and native
 layout/source metadata entries retain explicit boundaries.
+
+The [O50 function directory contract](interpreter-function-directories.md)
+adopts native function/object directory names combined with the live function
+dictionary. Other default directory layouts and unread metadata remain separate.

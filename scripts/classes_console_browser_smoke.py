@@ -44,6 +44,7 @@ from examples.interpreter_function_metadata import SOURCE as FUNCTION_METADATA_S
 from examples.interpreter_function_dictionaries import SOURCE as FUNCTION_DICTIONARIES_SOURCE
 from examples.interpreter_instance_dictionaries import SOURCE as INSTANCE_DICTIONARIES_SOURCE
 from examples.interpreter_class_namespaces import SOURCE as CLASS_NAMESPACES_SOURCE
+from examples.interpreter_function_directories import SOURCE as FUNCTION_DIRECTORIES_SOURCE
 
 
 def smoke(channel=None):
@@ -201,9 +202,11 @@ def smoke(channel=None):
                     function_dictionaries = json.loads((ROOT / 'tests/fixtures/interpreter/function-dictionaries.json').read_bytes())
                     instance_dictionaries = json.loads((ROOT / 'tests/fixtures/interpreter/instance-dictionaries.json').read_bytes())
                     class_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/class-namespaces.json').read_bytes())
-                    for corpus in [class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    function_directories = json.loads((ROOT / 'tests/fixtures/interpreter/function-directories.json').read_bytes())
+                    for corpus in [function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
+                    programs.append(FUNCTION_DIRECTORIES_SOURCE)
                     programs.append(CLASS_NAMESPACES_SOURCE)
                     programs.append(GENERATOR_SOURCE)
                     programs.append(CONSTRUCTION_SOURCE)
@@ -662,7 +665,21 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('keyed-class-namespaces-compose-with-stored-descriptors-retained-methods-and-lazy-generators-offline')
                     checks.append('keyed-class-namespace-readonly-errors-and-enumeration-boundaries-offline')
+                    directories_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', FUNCTION_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(FUNCTION_DIRECTORIES_SOURCE, directories_expected)
+                    for case in function_directories['cases']:
+                        if case['stage'] not in function_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('default-function-directories-compose-with-live-dictionaries-retained-methods-and-lazy-generators-offline')
+                    checks.append('function-directory-native-merge-callbacks-errors-and-other-layout-boundaries-offline')
                     busy = [
+                        'class Key:\n def __hash__(self): return hash("__new__")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n',
+                        'class Key:\n def __gt__(self,other):\n  print("entered")\n  while True: pass\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n',
+                        'class Truth:\n def __bool__(self):\n  print("entered")\n  while True: pass\nclass Key:\n def __hash__(self): return hash("__new__")\n def __eq__(self,other): return Truth()\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n',
                         'class C: tag=[7]\np=C.__dict__\nC.saved=p\ndel C\nprint("entered")\nwhile True: p["tag"]\n',
                         'class M(type):\n @property\n def __dict__(cls):\n  print("entered")\n  while True: pass\nclass C(metaclass=M): pass\nvars(C)\n',
                         *['class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nc.__dict__={Key():7}\n' + operation + '\n'
