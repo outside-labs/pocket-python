@@ -868,6 +868,14 @@ export class ClassRuntime {
       case "NotImplementedType": return NOT_IMPLEMENTED_DIRECTORY_KEYS;
       case "range": return RANGE_DIRECTORY_KEYS;
       case "slice": return SLICE_DIRECTORY_KEYS;
+      case "function": return FUNCTION_DIRECTORY_KEYS;
+      case "method": return METHOD_DIRECTORY_KEYS;
+      case "method_descriptor":
+      case "wrapper_descriptor": return NATIVE_DESCRIPTOR_DIRECTORY_KEYS;
+      case "builtin_function_or_method": return NATIVE_METHOD_DIRECTORY_KEYS;
+      case "method-wrapper": return NATIVE_WRAPPER_DIRECTORY_KEYS;
+      case "property": return PROPERTY_DIRECTORY_KEYS;
+      case "mappingproxy": return NAMESPACE_VIEW_DIRECTORY_KEYS;
       default: return null;
     }
   }
