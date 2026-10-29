@@ -339,6 +339,13 @@ export class ValueRuntime {
     return name === "list" ? value instanceof ListValue : name === "tuple" ? value instanceof TupleValue :
       name === "range" && value instanceof RangeValue;
   }
+  containerDirectoryType(value) {
+    if (value instanceof StringValue) return "str";
+    if (value instanceof ListValue) return "list";
+    if (value instanceof TupleValue) return "tuple";
+    if (value instanceof DictValue) return "dict";
+    return null;
+  }
   typeName(value) {
     this.charge(1);
     if (value === null) return "NoneType";

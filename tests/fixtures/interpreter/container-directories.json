@@ -3,7 +3,9 @@
   "suite": "interpreter-container-directories/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O59"
+  ],
   "cases": [
     {
       "id": "str-sorted-directory",

@@ -229,7 +229,7 @@
     {
       "id": "native-other-layout",
       "stage": "Future",
-      "source": "print(\"__iter__\" in object.__dir__([]))\n",
+      "source": "print(\"__func__\" in object.__dir__(staticmethod(lambda:7)))\n",
       "stdout": "True\n"
     },
     {
