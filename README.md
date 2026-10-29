@@ -220,7 +220,8 @@ Run `python -m examples.interpreter_reflection` for a console combining those
 protocols. Finite default [function](docs/interpreter-function-directories.md),
 [bound method](docs/interpreter-method-directories.md) and
 [class namespace view](docs/interpreter-namespace-view-directories.md)
-directories preserve native names, live custom keys and owned receiver lifetimes.
+directories preserve native names and owned receiver lifetimes. Function and
+method lists include the callable's live dictionary keys.
 Run `python -m examples.interpreter_method_directories` or
 `python -m examples.interpreter_namespace_view_directories` for composed examples.
 Broader live namespace mappings and other default directories retain separate
