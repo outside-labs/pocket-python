@@ -1,0 +1,304 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-native-callable-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "method-descriptor-directory",
+      "source": "d=object.__dir__\nprint(*dir(d))\n",
+      "stage": "O54",
+      "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n"
+    },
+    {
+      "id": "method-descriptor-raw-directory",
+      "source": "d=object.__dir__\nprint(*object.__dir__(d))\n",
+      "stage": "O54",
+      "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "method-descriptor-fresh-lists",
+      "source": "d=object.__dir__\na=dir(d)\nb=dir(d)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O54",
+      "stdout": "False False 30\n"
+    },
+    {
+      "id": "method-descriptor-native-binding",
+      "source": "d=object.__dir__\ncall=object.__dir__.__get__(d)\nprint(call.__self__ is d,call.__name__,call.__qualname__,call()==d.__dir__())\n",
+      "stage": "O54",
+      "stdout": "True __dir__ method_descriptor.__dir__ True\n"
+    },
+    {
+      "id": "method-descriptor-native-getattribute",
+      "source": "d=object.__dir__\ncall=object.__getattribute__(d,\"__dir__\")\nprint(call.__self__ is d,len(call()))\n",
+      "stage": "O54",
+      "stdout": "True 30\n"
+    },
+    {
+      "id": "wrapper-descriptor-directory",
+      "source": "d=property.__get__\nprint(*dir(d))\n",
+      "stage": "O54",
+      "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n"
+    },
+    {
+      "id": "wrapper-descriptor-raw-directory",
+      "source": "d=property.__get__\nprint(*object.__dir__(d))\n",
+      "stage": "O54",
+      "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "wrapper-descriptor-fresh-lists",
+      "source": "d=property.__get__\na=dir(d)\nb=dir(d)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O54",
+      "stdout": "False False 30\n"
+    },
+    {
+      "id": "wrapper-descriptor-native-binding",
+      "source": "d=property.__get__\ncall=object.__dir__.__get__(d)\nprint(call.__self__ is d,call.__name__,call.__qualname__,call()==d.__dir__())\n",
+      "stage": "O54",
+      "stdout": "True __dir__ wrapper_descriptor.__dir__ True\n"
+    },
+    {
+      "id": "wrapper-descriptor-native-getattribute",
+      "source": "d=property.__get__\ncall=object.__getattribute__(d,\"__dir__\")\nprint(call.__self__ is d,len(call()))\n",
+      "stage": "O54",
+      "stdout": "True 30\n"
+    },
+    {
+      "id": "native-method-directory",
+      "source": "d=property().getter\nprint(*dir(d))\n",
+      "stage": "O54",
+      "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n"
+    },
+    {
+      "id": "native-method-raw-directory",
+      "source": "d=property().getter\nprint(*object.__dir__(d))\n",
+      "stage": "O54",
+      "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __module__ __doc__ __name__ __qualname__ __self__ __text_signature__ __new__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "native-method-fresh-lists",
+      "source": "d=property().getter\na=dir(d)\nb=dir(d)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O54",
+      "stdout": "False False 30\n"
+    },
+    {
+      "id": "native-method-native-binding",
+      "source": "d=property().getter\ncall=object.__dir__.__get__(d)\nprint(call.__self__ is d,call.__name__,call.__qualname__,call()==d.__dir__())\n",
+      "stage": "O54",
+      "stdout": "True __dir__ builtin_function_or_method.__dir__ True\n"
+    },
+    {
+      "id": "native-method-native-getattribute",
+      "source": "d=property().getter\ncall=object.__getattribute__(d,\"__dir__\")\nprint(call.__self__ is d,len(call()))\n",
+      "stage": "O54",
+      "stdout": "True 30\n"
+    },
+    {
+      "id": "method-wrapper-directory",
+      "source": "d=property().__get__\nprint(*dir(d))\n",
+      "stage": "O54",
+      "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n"
+    },
+    {
+      "id": "method-wrapper-raw-directory",
+      "source": "d=property().__get__\nprint(*object.__dir__(d))\n",
+      "stage": "O54",
+      "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __self__ __objclass__ __name__ __qualname__ __doc__ __text_signature__ __new__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "method-wrapper-fresh-lists",
+      "source": "d=property().__get__\na=dir(d)\nb=dir(d)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O54",
+      "stdout": "False False 30\n"
+    },
+    {
+      "id": "method-wrapper-native-binding",
+      "source": "d=property().__get__\ncall=object.__dir__.__get__(d)\nprint(call.__self__ is d,call.__name__,call.__qualname__,call()==d.__dir__())\n",
+      "stage": "O54",
+      "stdout": "True __dir__ method-wrapper.__dir__ True\n"
+    },
+    {
+      "id": "method-wrapper-native-getattribute",
+      "source": "d=property().__get__\ncall=object.__getattribute__(d,\"__dir__\")\nprint(call.__self__ is d,len(call()))\n",
+      "stage": "O54",
+      "stdout": "True 30\n"
+    },
+    {
+      "id": "method-layout-differences",
+      "source": "p=property()\na=dir(property.getter)\nb=dir(p.getter)\nc=dir(p.__get__)\nprint(\"__get__\" in a,\"__self__\" in a,\"__module__\" in b,\"__objclass__\" in b,\"__objclass__\" in c,\"__module__\" in c)\n",
+      "stage": "O54",
+      "stdout": "True False True False True False\n"
+    },
+    {
+      "id": "native-type-methods",
+      "source": "class C: pass\nprint(dir(C.mro)==dir(C.__instancecheck__),dir(type.mro)==dir(object.__dir__))\n",
+      "stage": "O54",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "native-class-method",
+      "source": "class C: pass\nd=C.__init_subclass__\nprint(type(d).__name__,\"__self__\" in dir(d),\"__get__\" in dir(d))\n",
+      "stage": "O54",
+      "stdout": "builtin_function_or_method True False\n"
+    },
+    {
+      "id": "namespace-get-method",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=p.get\nprint(\"__self__\" in dir(d),d(\"tag\")[0],len(dir(d)))\n",
+      "stage": "O54",
+      "stdout": "True 7 30\n"
+    },
+    {
+      "id": "binding-handle",
+      "source": "d=object.__dir__.__get__\nprint(type(d).__name__,\"__objclass__\" in dir(d),\"__self__\" in dir(d),\"__module__\" in dir(d))\n",
+      "stage": "O54",
+      "stdout": "method-wrapper True True False\n"
+    },
+    {
+      "id": "recursive-binding-handle",
+      "source": "d=object.__dir__.__get__.__dir__\ne=d.__dir__\nprint(type(d).__name__,type(e).__name__,len(dir(e)),e.__self__ is d)\n",
+      "stage": "O54",
+      "stdout": "builtin_function_or_method builtin_function_or_method 30 True\n"
+    },
+    {
+      "id": "retained-property-native-method",
+      "source": "def f(self): return 7\np=property(f)\nmethod=p.getter\nd=method.__dir__\ndel p\ndel method\ndel f\nprint(len(d()),d.__self__.__self__.fget(None))\n",
+      "stage": "O54",
+      "stdout": "30 7\n"
+    },
+    {
+      "id": "retained-property-wrapper",
+      "source": "def f(self): return 7\np=property(f)\nmethod=p.__get__\nd=method.__dir__\ndel p\ndel method\ndel f\nprint(len(d()),d.__self__.__self__.fget(None))\n",
+      "stage": "O54",
+      "stdout": "30 7\n"
+    },
+    {
+      "id": "cyclic-native-receiver",
+      "source": "def f(self): return 7\np=property(f)\nmethod=p.getter\nf.saved=method\nd=method.__dir__\ndel p\ndel method\ndel f\nprint(d.__self__.__self__.fget.saved is d.__self__,len(d()))\n",
+      "stage": "O54",
+      "stdout": "True 30\n"
+    },
+    {
+      "id": "retained-live-namespace-method",
+      "source": "class C: tag=[7]\np=C.__dict__\nmethod=p.get\nC.saved=method\nd=method.__dir__\ndel C\ndel p\ndel method\nprint(d.__self__(\"tag\")[0],d.__self__(\"saved\") is d.__self__,len(d()))\n",
+      "stage": "O54",
+      "stdout": "7 True 30\n"
+    },
+    {
+      "id": "receiver-dictionary-not-listed",
+      "source": "def f(self): return 7\nf.custom=[9]\nd=f.__get__\nprint(\"custom\" in dir(d),\"__self__\" in dir(d),len(dir(d)))\n",
+      "stage": "O54",
+      "stdout": "False True 30\n"
+    },
+    {
+      "id": "receiver-hooks-not-called",
+      "source": "class M(type): pass\nclass C(metaclass=M): pass\nd=C.mro\ndef read(cls,name): raise ValueError(\"never\")\nM.__getattribute__=read\nprint(len(dir(d)),len(d.__dir__()))\n",
+      "stage": "O54",
+      "stdout": "30 30\n"
+    },
+    {
+      "id": "accessor-hooks-not-called",
+      "source": "class Getter:\n def __call__(self,owner): return 7\n def __getattribute__(self,name): raise ValueError(\"never\")\np=property(Getter(),None,None,\"explicit\")\nprint(len(dir(p.getter)),len(dir(p.__get__)))\n",
+      "stage": "O54",
+      "stdout": "30 30\n"
+    },
+    {
+      "id": "lazy-native-observations",
+      "source": "p=property()\nd=p.getter\ndef names():\n yield dir(d)\n yield dir(d)\ng=names()\na=next(g)\np.__name__=[9]\np.__doc__=[7]\nb=next(g)\nprint(a==b,a is b,len(b))\n",
+      "stage": "O54",
+      "stdout": "True False 30\n"
+    },
+    {
+      "id": "write-native-readonly",
+      "source": "d=property.getter\nd.__dir__=7\n",
+      "stage": "O54",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "delete-wrapper-readonly",
+      "source": "d=property().__get__\ndel d.__dir__\n",
+      "stage": "O54",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-write-readonly",
+      "source": "d=property().getter\nobject.__setattr__(d,\"__dir__\",7)\n",
+      "stage": "O54",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-delete-readonly",
+      "source": "d=object.__dir__.__get__\nobject.__delattr__(d,\"__dir__\")\n",
+      "stage": "O54",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bound-extra-argument",
+      "source": "d=property.getter\nd.__dir__(7)\n",
+      "stage": "O54",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bound-keyword",
+      "source": "d=property().getter\nd.__dir__(tag=7)\n",
+      "stage": "O54",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unbound-extra-argument",
+      "source": "d=property().__get__\nobject.__dir__(d,d)\n",
+      "stage": "O54",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "python-method-directory-preserved",
+      "source": "class C:\n def f(self): pass\nm=C().f\nm.__func__.custom=[7]\nprint(\"custom\" in dir(m),\"__func__\" in dir(m),\"__module__\" in dir(m))\n",
+      "stage": "O54",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "python-bound-native-callable",
+      "source": "m=classmethod(property.getter).__get__(None,property)\nprint(type(m).__name__,\"__func__\" in dir(m),\"__self__\" in dir(m),len(dir(m)))\n",
+      "stage": "O54",
+      "stdout": "method True True 28\n"
+    },
+    {
+      "id": "native-type-layout",
+      "source": "print(\"mro\" in dir(type))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "primitive-method-layout",
+      "source": "print(\"__self__\" in dir([].append))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "ordinary-builtin-layout",
+      "source": "print(\"__self__\" in dir(print))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-documentation-still-separate",
+      "source": "d=property().getter\nd.__doc__\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "wrapper-object-layout",
+      "source": "print(\"__func__\" in dir(staticmethod(lambda:None)))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    }
+  ]
+}
