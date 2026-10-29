@@ -1,0 +1,507 @@
+{
+  "schema_version": 1,
+  "scope": "Finite O45/O46 live function dictionaries, ordinary marker storage and owned bound-method attribute fallback, including explicit supplied-name identity. Semantic/source/payload observations; no performance, device or package compatibility claim.",
+  "baseline_commit": "d881ad9a890f2fb544e1c3bf85337ece2d4ac266",
+  "measurement_source_revision": "d07c45e0ef072bf83dc82ca96e87a6c1b72b2afd",
+  "working_tree_modified": false,
+  "engine_fingerprint": "6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06",
+  "corpus": {
+    "path": "tests/fixtures/interpreter/function-dictionaries.json",
+    "size_bytes": 24561,
+    "sha256": "97cc8bccd38f8ada7c7b3d92a90d312859cb8328baaf867507d357836385b339",
+    "cases": 83,
+    "implemented_stages": [
+      "O45",
+      "O46"
+    ],
+    "adopted_cases": 72
+  },
+  "source_reports": [
+    {
+      "path": "build/function-dictionaries-classes-drain-node-report.json",
+      "size_bytes": 179093,
+      "sha256": "9499d25606ac04c5f0431411d42a7e5bc8ddf0a82bd17a282795bc076b16d76b",
+      "target": "node",
+      "driver": "drain",
+      "summary": {
+        "pass": 83,
+        "fail": 0
+      },
+      "zero_teardown_records": 83
+    },
+    {
+      "path": "build/function-dictionaries-classes-stepped-node-report.json",
+      "size_bytes": 202913,
+      "sha256": "d089fc9e7d17baaf81b09f6b5e07c235b499587ba319e2b7fd3edfdfd90cd6cf",
+      "target": "node",
+      "driver": "instruction-boundary",
+      "summary": {
+        "pass": 83,
+        "fail": 0
+      },
+      "zero_teardown_records": 83
+    },
+    {
+      "path": "build/function-dictionaries-classes-parked-node-report.json",
+      "size_bytes": 202920,
+      "sha256": "809705bcd009e0d7abf2b5e1b5c74efece4ae6fec481ba9701be01b6fac0a54e",
+      "target": "node",
+      "driver": "parked-instruction-boundary",
+      "summary": {
+        "pass": 83,
+        "fail": 0
+      },
+      "zero_teardown_records": 83
+    },
+    {
+      "path": "build/function-dictionaries-classes-drain-browser-report.json",
+      "size_bytes": 179100,
+      "sha256": "0ccc469df3f0bff6699a22cfaf96e5dcea261d57d7ab15a0bec43b936a8cd3f1",
+      "target": "browser",
+      "driver": "drain",
+      "summary": {
+        "pass": 83,
+        "fail": 0
+      },
+      "zero_teardown_records": 83
+    },
+    {
+      "path": "build/function-dictionaries-classes-stepped-browser-report.json",
+      "size_bytes": 202920,
+      "sha256": "a07fedc1177d36dbae9b5560ea44c2bf89fa08fd9bd2e77bf1e8f13918899631",
+      "target": "browser",
+      "driver": "instruction-boundary",
+      "summary": {
+        "pass": 83,
+        "fail": 0
+      },
+      "zero_teardown_records": 83
+    },
+    {
+      "path": "build/function-dictionaries-classes-parked-browser-report.json",
+      "size_bytes": 202927,
+      "sha256": "0bd5b1cad8fbcb2eb53e0c7d18951c674fb5ec4a5292f6b1154207caaee499fb",
+      "target": "browser",
+      "driver": "parked-instruction-boundary",
+      "summary": {
+        "pass": 83,
+        "fail": 0
+      },
+      "zero_teardown_records": 83
+    }
+  ],
+  "source_observations": 498,
+  "zero_teardown_records": 498,
+  "compatibility_reports": [
+    {
+      "path": "build/function-dictionaries-compatibility-node.json",
+      "size_bytes": 544029,
+      "sha256": "2d0af7243073b86c379ed0f8bdcc931c662b465f58800b8ed5d83770d8ec1cf2",
+      "target": "node",
+      "summary": {
+        "pass": 265,
+        "fail": 0
+      },
+      "observations": {
+        "supported": 219,
+        "deferred": 42,
+        "known-divergence": 0,
+        "host-restricted": 4
+      }
+    },
+    {
+      "path": "build/function-dictionaries-compatibility-browser.json",
+      "size_bytes": 544036,
+      "sha256": "334836bed67b874a6227b21ef57353ae80254e219eb4cf96b3eac870cac0009b",
+      "target": "browser",
+      "summary": {
+        "pass": 265,
+        "fail": 0
+      },
+      "observations": {
+        "supported": 219,
+        "deferred": 42,
+        "known-divergence": 0,
+        "host-restricted": 4
+      }
+    }
+  ],
+  "offline_acceptance": {
+    "path": "build/function-dictionaries-offline-browser.json",
+    "size_bytes": 291049,
+    "sha256": "a2fcce86a5106334d385a0fbdf604828a3d544c2795fc9a1b0b15dc754e86adb",
+    "package_path": "build/function-dictionaries-installed/lib/python3.14/site-packages/pocket_python",
+    "wheel": {
+      "path": "dist/pocket_python-0.2.0-py3-none-any.whl",
+      "size_bytes": 40726,
+      "sha256": "8ad3878d4340a0b0f584edec7f5f3a2a5363445e5c8f6f2c0e63e10bcee3e091"
+    },
+    "program_comparisons": 1699,
+    "acceptance_groups": 98,
+    "stop_restart_cycles": 178,
+    "summary": {
+      "pass": 1797,
+      "fail": 0
+    },
+    "browser": "156.0.8078.4",
+    "script_sha256": "0bc8493568c45eaf7ce442dce79aa15a0da34ee4731ec53f8fb3ff009da03914",
+    "corpus_note": "The broad offline run exercised the earlier unequal-collision diagnostic-print variant on this same runtime. The supplemental offline reload verifies the final seed-independent probe and five explicit-name cases."
+  },
+  "payload": {
+    "directory": "build/function-dictionaries-final-console",
+    "counts": {
+      "engine_bytes": 613015,
+      "bridge_bytes": 31330,
+      "library_bytes": 0,
+      "application_source_bytes": 1181,
+      "generated_module_bytes": 0,
+      "helper_bytes": 0,
+      "source_map_bytes": 0,
+      "notice_bytes": 4127,
+      "data_bytes": 5451,
+      "assembly_module_bytes": 17391,
+      "receipt_bytes": 26604,
+      "complete_payload_bytes": 699099,
+      "gzip_file_transfer_bytes": 164718,
+      "canonical_tar_bytes": 737280,
+      "gzip_tar_bytes": 155093,
+      "gzip_tar_sha256": "ef550182c83a4300ec6ad31ca4fe8632857f1dd35a0d5ebd0719c52f60fafa14"
+    },
+    "files": [
+      {
+        "path": "POCKET-PYTHON.json",
+        "sha256": "ee1f527a0b7fdbd1d47db5f8b5da40dc6f78b18c6b1141b00d43fd62699ae9e4",
+        "size_bytes": 26604,
+        "bucket": "receipt_bytes",
+        "gzip_bytes": 3541
+      },
+      {
+        "path": "app-6041385a4c481ce3cf36521e79f8bae7151be5ca243e7bc66616c4ecf9ff2007.js",
+        "sha256": "6041385a4c481ce3cf36521e79f8bae7151be5ca243e7bc66616c4ecf9ff2007",
+        "size_bytes": 8596,
+        "bucket": "assembly_module_bytes",
+        "gzip_bytes": 3186
+      },
+      {
+        "path": "app-config-d73fd98a2cea56f801bb31edf77031788f645e9cebecf3ee8345872012701d43.json",
+        "sha256": "d73fd98a2cea56f801bb31edf77031788f645e9cebecf3ee8345872012701d43",
+        "size_bytes": 1214,
+        "bucket": "data_bytes",
+        "gzip_bytes": 560
+      },
+      {
+        "path": "application/2541cce867fa0c9a9ec62c3844cd4a098569250c9957919216d34ac7ac123cce/APPLICATION.json",
+        "sha256": "2541cce867fa0c9a9ec62c3844cd4a098569250c9957919216d34ac7ac123cce",
+        "size_bytes": 1431,
+        "bucket": "data_bytes",
+        "gzip_bytes": 711
+      },
+      {
+        "path": "application/2541cce867fa0c9a9ec62c3844cd4a098569250c9957919216d34ac7ac123cce/LICENSES/application.txt",
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+        "size_bytes": 1066,
+        "bucket": "notice_bytes",
+        "gzip_bytes": 646
+      },
+      {
+        "path": "application/2541cce867fa0c9a9ec62c3844cd4a098569250c9957919216d34ac7ac123cce/sources/app.py",
+        "sha256": "5924b6858aed6ca5caeef1d4e88cdd15ba99cbbebc9801c21a136fa1976bdc32",
+        "size_bytes": 1181,
+        "bucket": "application_source_bytes",
+        "gzip_bytes": 484
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/browser-protocol.mjs",
+        "sha256": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76",
+        "size_bytes": 10589,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 3464
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/bytecode.mjs",
+        "sha256": "e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4",
+        "size_bytes": 6836,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 2355
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/class-policy.mjs",
+        "sha256": "c2c938d5c7fcbc3e0cecb57701bef2e44be3ef49531cfbaa72e710ac8028ec3c",
+        "size_bytes": 3020,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 1034
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/class-values.mjs",
+        "sha256": "183b8eab6064b750e2711a86c9fc6df8f6b9c53a0fc15f464c737c2bc757239b",
+        "size_bytes": 48422,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 9374
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/function-bytecode.mjs",
+        "sha256": "6c8c960d90cbe1a5030c22ac1ab93f33749b06e3ea3ae61e237bb3997390ef96",
+        "size_bytes": 22820,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 6033
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/function-objects.mjs",
+        "sha256": "961f2267385695091cf0badc0fc883ddc60cc01ea66ee72f13a9861ac1265f1f",
+        "size_bytes": 5393,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 1683
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/functions.mjs",
+        "sha256": "c74d29ec5794e3c9ad96649546a38b87096076f40411131973aed256202ea38c",
+        "size_bytes": 64506,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 14767
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/interpreter-host.mjs",
+        "sha256": "4afadfd987000afa6221ee73dcd64e9c00a2d13c4324718248d396302a39296d",
+        "size_bytes": 7318,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 2483
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/interpreter-worker.mjs",
+        "sha256": "324cc23100eb40ef04f2909b805d7abc0c8651b4608b3a61a95470ec7e74e19e",
+        "size_bytes": 8855,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 2911
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/library-catalog.mjs",
+        "sha256": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c",
+        "size_bytes": 907,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 504
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/library-selection.mjs",
+        "sha256": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a",
+        "size_bytes": 3661,
+        "bucket": "bridge_bytes",
+        "gzip_bytes": 1469
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/licenses/POCKET-PYTHON.txt",
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85",
+        "size_bytes": 1066,
+        "bucket": "notice_bytes",
+        "gzip_bytes": 646
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/licenses/UNICODE.txt",
+        "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+        "size_bytes": 1995,
+        "bucket": "notice_bytes",
+        "gzip_bytes": 1063
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/memory.mjs",
+        "sha256": "b4b8ebbb6f576e2c01e8e28f4e02b1962ca1c5ffb263216278617c2c6bd8bb35",
+        "size_bytes": 8407,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 2626
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/module-context.mjs",
+        "sha256": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca",
+        "size_bytes": 8319,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 2697
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/module-registry.mjs",
+        "sha256": "43eb1bc646da60a6b5336caef1ea6ea940b6a88db3fe679c550c62b828704c89",
+        "size_bytes": 10280,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 3450
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/module-session.mjs",
+        "sha256": "8474187aa92173689c875d6bf15b31a7eae4dcff62b862b9607ce22e10753df4",
+        "size_bytes": 12852,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 3672
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/numeric.mjs",
+        "sha256": "2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad",
+        "size_bytes": 13954,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 4311
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/operation-runtime.mjs",
+        "sha256": "00f68d4b3f73e3c03a20c1521f5c73c066b5aef79b886162fa022aa0f647a1e4",
+        "size_bytes": 144100,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 25891
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/operations.mjs",
+        "sha256": "3381e09b043f92e13dfa608fac14d9a0152bf2370b68b1cebb29cdf2148275b3",
+        "size_bytes": 30495,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 5117
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/source-compiler.mjs",
+        "sha256": "0dcdcd202303f9a05b49f4e3c3bae75f0c26153b068c081b4021c87ddf9e115b",
+        "size_bytes": 44099,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 10147
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/source-identifiers.mjs",
+        "sha256": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914",
+        "size_bytes": 25949,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 6247
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/source-modules.mjs",
+        "sha256": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef",
+        "size_bytes": 5115,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 1866
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/source-parser.mjs",
+        "sha256": "2ba7ecd41fdae750fa28dfb4fced9440d24ba9b96ed515d12b5151b385eebfdd",
+        "size_bytes": 34109,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 7950
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/source-tokens.mjs",
+        "sha256": "e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54",
+        "size_bytes": 15061,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 4470
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/string-printability.mjs",
+        "sha256": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f",
+        "size_bytes": 13287,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 3903
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/values.mjs",
+        "sha256": "5eebec9511950c41b1c989e94c86bf58ab17d2d1799552816bbfb8adb8b8af34",
+        "size_bytes": 89911,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 18976
+      },
+      {
+        "path": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/vm.mjs",
+        "sha256": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d",
+        "size_bytes": 6080,
+        "bucket": "engine_bytes",
+        "gzip_bytes": 1920
+      },
+      {
+        "path": "icon.svg",
+        "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691",
+        "size_bytes": 214,
+        "bucket": "data_bytes",
+        "gzip_bytes": 183
+      },
+      {
+        "path": "index.html",
+        "sha256": "d19314ceb1b40849825755c0b2cd3c26342a8f3901d0bceb45adeced9369f099",
+        "size_bytes": 2248,
+        "bucket": "data_bytes",
+        "gzip_bytes": 1146
+      },
+      {
+        "path": "manifest.webmanifest",
+        "sha256": "d6aa79bc140254c131653e12814069eb8d6aeb8bba2e879780708600e0d36063",
+        "size_bytes": 344,
+        "bucket": "data_bytes",
+        "gzip_bytes": 212
+      },
+      {
+        "path": "service-worker.js",
+        "sha256": "f80f02dd2ef3742cf82c20809c5433e903fc706da1260373a39731a19420a646",
+        "size_bytes": 8795,
+        "bucket": "assembly_module_bytes",
+        "gzip_bytes": 3020
+      }
+    ],
+    "identical_rebuild": "build/function-dictionaries-rebuilt-console"
+  },
+  "limits": [
+    "Functions without dictionary access keep their prior layout; markers use ordinary dictionary storage under execution-accounting/4. The eight composed observations remain unchanged.",
+    "Explicit supplied strings retain dictionary/callback identity. CPython source-literal interning is not adopted.",
+    "Instance/module/class live mappings, default directories, broader native metadata and dynamic source admission remain separate contracts.",
+    "Native coroutine/await, async protocols and browser host adapters remain open under #34. No dependency, host grant, release, publication or deployment change."
+  ],
+  "offline_identity_acceptance": {
+    "path": "build/function-dictionaries-offline-identity.json",
+    "size_bytes": 1965,
+    "sha256": "2df455717515bce7dde87f744e873097d0b928ae5edfe147b80b8001fe10100a",
+    "schema_version": 1,
+    "suite": "function-dictionary-offline-identity/1",
+    "package_path": "/Users/curtis/Documents/Projects/pocket_python/build/function-dictionaries-installed/lib/python3.14/site-packages/pocket_python/__init__.py",
+    "engine": {
+      "backend": "javascript-vm",
+      "bytecode_version": 5,
+      "entrypoint": "engine/6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06/interpreter-worker.mjs",
+      "fingerprint": "6a0c240aef6e729332f081c2ceab9d9a05644b208355601af77aa295fd7c3a06",
+      "implementation": "pocket-python-source",
+      "language_profile": "classes-source/1",
+      "version": "1"
+    },
+    "offline_reload": true,
+    "browser": "156.0.8078.4",
+    "cases": [
+      {
+        "id": "collision-false-missing",
+        "source_sha256": "4f1c528ee0543f6bc3f893e7132d3cc9bed7e6a8925f8e9968db2588385352db",
+        "stdout": "99 False\n",
+        "status": "pass"
+      },
+      {
+        "id": "explicit-name-identity-ordinary",
+        "source_sha256": "d014533c5945088955c82d03952000d6ab7fe281059f752eaac8e4c8ca8cb322",
+        "stdout": "True\n",
+        "status": "pass"
+      },
+      {
+        "id": "explicit-name-identity-native",
+        "source_sha256": "1fba5c435bc4fc187b78aef338ccf0749d8ae82b448a1d198408cc017505a85e",
+        "stdout": "True\n",
+        "status": "pass"
+      },
+      {
+        "id": "equal-name-retains-first-key",
+        "source_sha256": "cadf90d7b819a1357d97bb677f79ed1862275dc9e238d4ba6646c9d803c8e52a",
+        "stdout": "True False 9\n",
+        "status": "pass"
+      },
+      {
+        "id": "collision-retains-supplied-lookup-key",
+        "source_sha256": "daf7897980e1871d9566e5b1be3733ff4b32b915975b720faa82aae9004e431a",
+        "stdout": "True\n7\n",
+        "status": "pass"
+      },
+      {
+        "id": "method-retains-supplied-lookup-key",
+        "source_sha256": "96ac66912c2f386c90b925e44a6c0c44230226281af90aa4f3df7b0676387418",
+        "stdout": "True\n7\n",
+        "status": "pass"
+      }
+    ],
+    "summary": {
+      "pass": 6,
+      "fail": 0
+    }
+  }
+}

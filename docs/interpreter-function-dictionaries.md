@@ -66,3 +66,20 @@ first stored key. Supplied lookup names also survive dictionary collision and
 ordinary method-fallback callbacks. This does not promise CPython interning
 between source literals or implicit attribute names. Five identity regressions
 extend the matrix to 83 cases.
+
+The final 83-case matrix has 72 adopted comparisons and eleven explicit refusals.
+All six Node/Chromium drivers pass: 498 observations with 498 zero logical
+teardown records. Twenty-three representative probes extend the inventory to
+265 observations per target. The unequal-collision case checks results without
+fixing CPython's seed-dependent repeated-probe count.
+
+The [decorator console](../examples/interpreter_function_dictionaries.py)
+composes mutable function state, replacement aliases, retained methods and lazy
+generators. Installed-wheel offline acceptance passes 1,699 program comparisons,
+98 groups and 178 Stop/Restart cycles. Six supplemental checks after an offline
+reload verify the final unequal-collision fixture and explicit name identities.
+The [payload record](measurements/2026-10-28-function-dictionaries.json) verifies
+38 files and 699,099 bytes, with an identical rebuild. All 611 adjacent unit
+checks and 18 affected Python checks pass; the eight composed execution
+observations remain unchanged. These are finite semantic/source/payload
+observations. Broader reflection and async remain under #123/#34.
