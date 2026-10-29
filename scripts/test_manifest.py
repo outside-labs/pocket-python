@@ -35,7 +35,8 @@ SUITES = {
              'reference', 'browser-conformance', 'browser-integration', 'measurements', 'smoke'),
 }
 
-CORPORA = ('numeric-type-directories', 
+CORPORA = (
+    'numeric-type-directories',
     'classes', 'private-names', 'descriptors', 'special-calls', 'length-truth',
     'formatting', 'indexing', 'iteration', 'equality', 'numeric', 'sequences',
     'function-binding', 'function-dictionaries', 'instance-dictionaries', 'class-namespaces', 'function-directories', 'method-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'ordinary-syntax', 'value-families', 'generators',
@@ -47,7 +48,8 @@ CORE_CORPORA = {'sequences', 'function-binding', 'ordinary-syntax', 'value-famil
                 'generators', 'repetition', 'ordering'}
 PARKED_CORPORA = {'numeric-type-directories', 'instance-directories', 'class-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'method-directories', 'function-directories', 'class-namespaces', 'instance-dictionaries', 'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
                   'execution', 'object-hashing'}
-REFERENCE_CORPORA = {'numeric-type-directories', 
+REFERENCE_CORPORA = {
+    'numeric-type-directories',
     'instance-directories', 'class-directories', 'classes', 'ordering', 'subclass-initialization', 'metaclass-attributes',
     'function-binding', 'function-dictionaries', 'instance-dictionaries', 'class-namespaces', 'function-directories', 'method-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'ordinary-syntax', 'value-families', 'iteration', 'equality',
     'indexing', 'private-names', 'descriptors', 'nested-descriptors',
