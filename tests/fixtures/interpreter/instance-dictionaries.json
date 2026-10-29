@@ -1,0 +1,355 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-instance-dictionaries/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "live-empty-dictionary",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nprint(d is c.__dict__,vars(c) is d,len(d))\n",
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "existing-attribute-order",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nc.first=[]\nc.second=7\nd=c.__dict__\nprint(list(d)[0],list(d)[1],d[\"first\"] is c.first,d[\"second\"])\n",
+      "stdout": "first second True 7\n"
+    },
+    {
+      "id": "dictionary-attribute-alias",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nv=[]\nc.tag=v\nprint(d[\"tag\"] is v)\nd[\"tag\"]=[9]\nprint(c.tag[0])\ndel c.tag\nprint(len(d),hasattr(c,\"tag\"))\n",
+      "stdout": "True\n9\n0 False\n"
+    },
+    {
+      "id": "replacement-detaches-old-alias",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nold=c.__dict__\nc.old=3\nr={\"new\":[]}\nc.__dict__=r\nc.next=7\nprint(c.__dict__ is r,vars(c) is r,old[\"old\"],hasattr(c,\"old\"),c.new is r[\"new\"],r[\"next\"])\n",
+      "stdout": "True True 3 False True 7\n"
+    },
+    {
+      "id": "shared-dictionary",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nother=C()\nd=c.__dict__\nother.__dict__=d\nc.a=5\nother.b=7\nprint(other.a,c.b,other.__dict__ is d)\n",
+      "stdout": "5 7 True\n"
+    },
+    {
+      "id": "cyclic-dictionary",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd={\"self\":c}\nc.__dict__=d\nprint(c.self is c,vars(c)[\"self\"] is c)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "delete-detaches-and-resets",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nold=c.__dict__\nc.a=7\ndel c.__dict__\nprint(old[\"a\"],len(c.__dict__),c.__dict__ is old,hasattr(c,\"a\"))\nc.b=9\nprint(old is c.__dict__,c.b)\n",
+      "stdout": "7 0 False False\nFalse 9\n"
+    },
+    {
+      "id": "delete-before-materialization",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nc.a=7\ndel c.__dict__\nprint(len(c.__dict__),hasattr(c,\"a\"))\ndel c.__dict__\ndel c.__dict__\nprint(len(c.__dict__))\n",
+      "stdout": "0 False\n0\n"
+    },
+    {
+      "id": "invalid-replacement-8",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nc.tag=7\ntry: c.__dict__=None\nexcept TypeError: print(\"invalid\")\nprint(c.__dict__ is d,c.tag)\n",
+      "stdout": "invalid\nTrue 7\n"
+    },
+    {
+      "id": "invalid-replacement-9",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nc.tag=7\ntry: c.__dict__=[]\nexcept TypeError: print(\"invalid\")\nprint(c.__dict__ is d,c.tag)\n",
+      "stdout": "invalid\nTrue 7\n"
+    },
+    {
+      "id": "invalid-replacement-10",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nc.tag=7\ntry: c.__dict__=7\nexcept TypeError: print(\"invalid\")\nprint(c.__dict__ is d,c.tag)\n",
+      "stdout": "invalid\nTrue 7\n"
+    },
+    {
+      "id": "invalid-replacement-11",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nc.tag=7\ntry: c.__dict__=\"text\"\nexcept TypeError: print(\"invalid\")\nprint(c.__dict__ is d,c.tag)\n",
+      "stdout": "invalid\nTrue 7\n"
+    },
+    {
+      "id": "inherited-native-slot",
+      "stage": "O47",
+      "source": "class A: pass\nclass C(A): pass\nc=C()\nd=c.__dict__\nd[\"__dict__\"]=7\nprint(c.__dict__ is d,vars(c) is d,d[\"__dict__\"])\n",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "class-shadow-before-inherited-slot",
+      "stage": "O47",
+      "source": "class A: pass\nclass C(A): __dict__=7\nc=C()\nprint(c.__dict__,vars(c))\nc.__dict__=9\nprint(c.__dict__)\ndel c.__dict__\nprint(c.__dict__)\n",
+      "stdout": "7 7\n9\n7\n"
+    },
+    {
+      "id": "introduced-custom-dictionary-inheritance",
+      "stage": "O47",
+      "source": "class A: __dict__=7\nclass C(A): pass\nc=C()\nprint(vars(c))\nc.__dict__=9\nprint(vars(c))\ndel c.__dict__\nprint(vars(c))\n",
+      "stdout": "7\n9\n7\n"
+    },
+    {
+      "id": "property-dictionary-override",
+      "stage": "O47",
+      "source": "class C:\n @property\n def __dict__(self): return [7]\nc=C()\nprint(vars(c)[0])\ntry: c.__dict__={}\nexcept AttributeError: print(\"readonly\")\n",
+      "stdout": "7\nreadonly\n"
+    },
+    {
+      "id": "custom-dictionary-descriptor",
+      "stage": "O47",
+      "source": "events=[]\nclass D:\n def __get__(self,obj,owner):\n  events.append(\"get\")\n  return [obj]\n def __set__(self,obj,value): events.append(\"set\")\n def __delete__(self,obj): events.append(\"delete\")\nclass C: __dict__=D()\nc=C()\nprint(vars(c)[0] is c)\nc.__dict__={}\ndel c.__dict__\nprint(events[0],events[1],events[2])\n",
+      "stdout": "True\nget set delete\n"
+    },
+    {
+      "id": "native-bypass-custom-read-hook",
+      "stage": "O47",
+      "source": "class C:\n def __getattribute__(self,name):\n  if name==\"__dict__\": return [7]\n  return object.__getattribute__(self,name)\nc=C()\nprint(vars(c)[0])\nd=object.__getattribute__(c,\"__dict__\")\nd[\"tag\"]=9\nprint(c.tag,d is object.__getattribute__(c,\"__dict__\"))\n",
+      "stdout": "7\n9 True\n"
+    },
+    {
+      "id": "native-bypass-custom-mutation-hooks",
+      "stage": "O47",
+      "source": "class C:\n def __setattr__(self,name,value): print(\"custom-set\")\n def __delattr__(self,name): print(\"custom-delete\")\nc=C()\nd={}\nobject.__setattr__(c,\"__dict__\",d)\nobject.__setattr__(c,\"tag\",7)\nprint(c.__dict__ is d,c.tag)\nobject.__delattr__(c,\"__dict__\")\nprint(len(c.__dict__),d[\"tag\"])\n",
+      "stdout": "True 7\n0 7\n"
+    },
+    {
+      "id": "data-descriptor-priority",
+      "stage": "O47",
+      "source": "class C:\n @property\n def tag(self): return 7\nc=C()\nd=c.__dict__\nd[\"tag\"]=9\nprint(c.tag,d[\"tag\"])\ntry: c.tag=11\nexcept AttributeError: print(\"readonly\")\n",
+      "stdout": "7 9\nreadonly\n"
+    },
+    {
+      "id": "nondata-descriptor-shadow",
+      "stage": "O47",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass C: tag=D()\nc=C()\nd=c.__dict__\nprint(c.tag)\nd[\"tag\"]=9\nprint(c.tag)\ndel c.tag\nprint(c.tag)\n",
+      "stdout": "7\n9\n7\n"
+    },
+    {
+      "id": "stored-function-does-not-bind",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\ndef f(): return 7\nc.__dict__[\"tag\"]=f\nprint(c.tag is f,c.tag())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "stored-descriptor-does-not-bind",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\np=property(None)\nc.__dict__[\"tag\"]=p\nprint(c.tag is p)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "special-call-bypasses-dictionary",
+      "stage": "O47",
+      "source": "class C:\n def __call__(self): return 7\nc=C()\nc.__dict__[\"__call__\"]=lambda:9\nprint(c(),c.__call__())\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "missing-uses-getattr",
+      "stage": "O47",
+      "source": "class C:\n def __getattr__(self,name): return \"fallback:\"+name\nc=C()\nd=c.__dict__\nprint(c.absent)\nd[\"tag\"]=7\nprint(c.tag)\n",
+      "stdout": "fallback:absent\n7\n"
+    },
+    {
+      "id": "root-object-has-no-dictionary",
+      "stage": "O47",
+      "source": "o=object()\ntry: o.__dict__\nexcept AttributeError: print(\"missing\")\ntry: vars(o)\nexcept TypeError: print(\"vars\")\n",
+      "stdout": "missing\nvars\n"
+    },
+    {
+      "id": "bounded-name-26",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nv=[]\nsetattr(c,'',v)\nprint(getattr(c,'') is v,d[''] is v)\ndelattr(c,'')\nprint(len(d))\n",
+      "stdout": "True True\n0\n"
+    },
+    {
+      "id": "bounded-name-27",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nv=[]\nsetattr(c,'not an identifier',v)\nprint(getattr(c,'not an identifier') is v,d['not an identifier'] is v)\ndelattr(c,'not an identifier')\nprint(len(d))\n",
+      "stdout": "True True\n0\n"
+    },
+    {
+      "id": "bounded-name-28",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nv=[]\nsetattr(c,'λ😀',v)\nprint(getattr(c,'λ😀') is v,d['λ😀'] is v)\ndelattr(c,'λ😀')\nprint(len(d))\n",
+      "stdout": "True True\n0\n"
+    },
+    {
+      "id": "explicit-insertion-name-identity",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nname=\"ta\"+\"g\"\nvalue=[]\nsetattr(c,name,value)\nprint(list(c.__dict__)[0] is name,c.tag is value)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "equal-replacement-keeps-first-key",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nname=\"ta\"+\"g\"\nd={name:7}\nc.__dict__=d\nother=\"t\"+\"ag\"\nsetattr(c,other,9)\nprint(list(d)[0] is name,d[name])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "nonstring-key-coexists",
+      "stage": "O47",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nd[7]=9\nc.tag=11\nprint(d[7],c.tag,len(d))\n",
+      "stdout": "9 11 2\n"
+    },
+    {
+      "id": "owned-collision-get",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"tag\"\nkey=Key()\nd={key:7}\nc.__dict__=d\nprint(c.tag)\n",
+      "stdout": "equal\n7\n"
+    },
+    {
+      "id": "owned-collision-set",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"tag\"\nkey=Key()\nd={key:7}\nc.__dict__=d\nc.tag=9\nprint(d[key],list(d)[0] is key)\n",
+      "stdout": "equal\n9 True\n"
+    },
+    {
+      "id": "owned-collision-delete",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"tag\"\nkey=Key()\nd={key:7}\nc.__dict__=d\ndel c.tag\nprint(len(d))\n",
+      "stdout": "equal\n0\n"
+    },
+    {
+      "id": "callback-error-KeyError",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"entered\")\n  raise KeyError(\"callback\")\nc.__dict__={Key():7}\nc.tag\n",
+      "stdout": "entered\n",
+      "error_type": "KeyError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "__eq__",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "callback-error-ValueError",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"entered\")\n  raise ValueError(\"callback\")\nc.__dict__={Key():7}\nc.tag\n",
+      "stdout": "entered\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "__eq__",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "callback-error-AttributeError",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"entered\")\n  raise AttributeError(\"callback\")\nc.__dict__={Key():7}\nc.tag\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        },
+        {
+          "function": "__eq__",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "callback-attributeerror-uses-getattr",
+      "stage": "O48",
+      "source": "class C:\n def __getattr__(self,name): return \"fallback\"\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise AttributeError(\"callback\")\nc.__dict__={Key():7}\nprint(c.tag)\n",
+      "stdout": "fallback\n"
+    },
+    {
+      "id": "replacement-during-get",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  c.__dict__={\"fresh\":11}\n  return True\nkey=Key()\nd={key:7}\nc.__dict__=d\nprint(c.tag,c.__dict__[\"fresh\"],d[key])\n",
+      "stdout": "7 11 7\n"
+    },
+    {
+      "id": "replacement-during-set",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  c.__dict__={\"fresh\":11}\n  return True\nkey=Key()\nd={key:7}\nc.__dict__=d\nc.tag=9\nprint(c.__dict__[\"fresh\"],d[key])\n",
+      "stdout": "11 9\n"
+    },
+    {
+      "id": "replacement-during-delete",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  c.__dict__={\"fresh\":11}\n  return True\nkey=Key()\nd={key:7}\nc.__dict__=d\ndel c.tag\nprint(c.__dict__[\"fresh\"],len(d))\n",
+      "stdout": "11 0\n"
+    },
+    {
+      "id": "class-fallback-snapshot",
+      "stage": "O48",
+      "source": "class C: tag=7\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  C.tag=9\n  return False\nc.__dict__={Key():11}\nprint(c.tag,C.tag)\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "nondata-fallback-snapshot",
+      "stage": "O48",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass C: tag=D()\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  C.tag=9\n  return False\nc.__dict__={Key():11}\nprint(c.tag,C.tag)\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "data-descriptor-skips-collision",
+      "stage": "O48",
+      "source": "class C:\n @property\n def tag(self): return 7\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise ValueError(\"should not run\")\nc.__dict__={Key():11}\nprint(c.tag)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "explicit-lookup-name-identity",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nname=\"ta\"+\"g\"\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(other is name)\n  return True\nc.__dict__={Key():7}\nprint(getattr(c,name))\n",
+      "stdout": "True\n7\n"
+    },
+    {
+      "id": "deletion-during-collision",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del c.__dict__\n  return True\nkey=Key()\nd={key:7}\nc.__dict__=d\nprint(c.tag,len(c.__dict__),d[key])\n",
+      "stdout": "7 0 7\n"
+    },
+    {
+      "id": "class-mapping",
+      "stage": "Future",
+      "source": "class C: pass\nC.__dict__\n",
+      "stdout": ""
+    },
+    {
+      "id": "class-mapping-replacement",
+      "stage": "Future",
+      "source": "class C: pass\nC.__dict__={}\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "module-mapping",
+      "stage": "Future",
+      "source": "globals()\n",
+      "stdout": ""
+    },
+    {
+      "id": "super-dictionary",
+      "stage": "Future",
+      "source": "class A: pass\nclass C(A): pass\nc=C()\nsuper(C,c).__dict__\n",
+      "stdout": ""
+    },
+    {
+      "id": "native-getset",
+      "stage": "Future",
+      "source": "class C: pass\nobject.__getattribute__(C,\"__dict__\")\n",
+      "stdout": ""
+    }
+  ]
+}
