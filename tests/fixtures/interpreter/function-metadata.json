@@ -1,0 +1,666 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-function-metadata/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "default-function-names",
+      "stage": "O43",
+      "source": "def read(): return 7\nprint(read.__name__,read.__qualname__,read())\nprint(read.__name__ is read.__name__,read.__qualname__ is read.__qualname__)\n",
+      "stdout": "read read 7\nTrue True\n"
+    },
+    {
+      "id": "nested-and-lambda-names",
+      "stage": "O43",
+      "source": "def make():\n def nested(): return 7\n return nested,lambda: 9\nf,g=make()\nprint(f.__name__,f.__qualname__,g.__name__,g.__qualname__)\n",
+      "stdout": "nested make.<locals>.nested <lambda> make.<locals>.<lambda>\n"
+    },
+    {
+      "id": "generator-names",
+      "stage": "O43",
+      "source": "def values():\n yield 7\ng=values()\nvalues.__name__=\"renamed\"\nprint(values.__name__,next(g))\n",
+      "stdout": "renamed 7\n"
+    },
+    {
+      "id": "__name__-text-0",
+      "stage": "O43",
+      "source": "def f(): return 7\nx='renamed'\nf.__name__=x\nprint(f.__name__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 renamed f\n"
+    },
+    {
+      "id": "__name__-text-1",
+      "stage": "O43",
+      "source": "def f(): return 7\nx=''\nf.__name__=x\nprint(f.__name__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7  f\n"
+    },
+    {
+      "id": "__name__-text-2",
+      "stage": "O43",
+      "source": "def f(): return 7\nx='a.b <locals> !'\nf.__name__=x\nprint(f.__name__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 a.b <locals> ! f\n"
+    },
+    {
+      "id": "__name__-text-3",
+      "stage": "O43",
+      "source": "def f(): return 7\nx='\\x00name'\nf.__name__=x\nprint(f.__name__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 \u0000name f\n"
+    },
+    {
+      "id": "__name__-text-4",
+      "stage": "O43",
+      "source": "def f(): return 7\nx='\u03bb\ud83d\ude00'\nf.__name__=x\nprint(f.__name__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 \u03bb\ud83d\ude00 f\n"
+    },
+    {
+      "id": "__name__-type-0",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__name__=None\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__name__-type-1",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__name__=False\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__name__-type-2",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__name__=7\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__name__-type-3",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__name__=[7]\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__name__-type-4",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__name__={\"a\":7}\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__name__-type-5",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__name__=f\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__name__-delete",
+      "stage": "O43",
+      "source": "def f(): pass\ndel f.__name__\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__name__-failed-write-retains",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__name__=\"kept\"\ntry: f.__name__=None\nexcept TypeError: print(f.__name__)\ntry: del f.__name__\nexcept TypeError: print(f.__name__)\n",
+      "stdout": "kept\nkept\n"
+    },
+    {
+      "id": "__name__-native-access",
+      "stage": "O43",
+      "source": "def f(): pass\nx=\"native\"\nobject.__setattr__(f,\"__name__\",x)\nprint(object.__getattribute__(f,\"__name__\") is x)\ntry: object.__delattr__(f,\"__name__\")\nexcept TypeError: print(f.__name__)\n",
+      "stdout": "True\nnative\n"
+    },
+    {
+      "id": "__name__-no-coercion",
+      "stage": "O43",
+      "source": "class Name:\n def __str__(self):\n  print(\"coerced\")\n  return \"name\"\ndef f(): pass\nf.__name__=Name()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "__qualname__-text-0",
+      "stage": "O43",
+      "source": "def f(): return 7\nx='renamed'\nf.__qualname__=x\nprint(f.__qualname__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 f renamed\n"
+    },
+    {
+      "id": "__qualname__-text-1",
+      "stage": "O43",
+      "source": "def f(): return 7\nx=''\nf.__qualname__=x\nprint(f.__qualname__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 f \n"
+    },
+    {
+      "id": "__qualname__-text-2",
+      "stage": "O43",
+      "source": "def f(): return 7\nx='a.b <locals> !'\nf.__qualname__=x\nprint(f.__qualname__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 f a.b <locals> !\n"
+    },
+    {
+      "id": "__qualname__-text-3",
+      "stage": "O43",
+      "source": "def f(): return 7\nx='\\x00name'\nf.__qualname__=x\nprint(f.__qualname__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 f \u0000name\n"
+    },
+    {
+      "id": "__qualname__-text-4",
+      "stage": "O43",
+      "source": "def f(): return 7\nx='\u03bb\ud83d\ude00'\nf.__qualname__=x\nprint(f.__qualname__ is x,f(),f.__name__,f.__qualname__)\n",
+      "stdout": "True 7 f \u03bb\ud83d\ude00\n"
+    },
+    {
+      "id": "__qualname__-type-0",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__qualname__=None\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__qualname__-type-1",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__qualname__=False\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__qualname__-type-2",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__qualname__=7\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__qualname__-type-3",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__qualname__=[7]\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__qualname__-type-4",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__qualname__={\"a\":7}\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__qualname__-type-5",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__qualname__=f\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__qualname__-delete",
+      "stage": "O43",
+      "source": "def f(): pass\ndel f.__qualname__\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "__qualname__-failed-write-retains",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__qualname__=\"kept\"\ntry: f.__qualname__=None\nexcept TypeError: print(f.__qualname__)\ntry: del f.__qualname__\nexcept TypeError: print(f.__qualname__)\n",
+      "stdout": "kept\nkept\n"
+    },
+    {
+      "id": "__qualname__-native-access",
+      "stage": "O43",
+      "source": "def f(): pass\nx=\"native\"\nobject.__setattr__(f,\"__qualname__\",x)\nprint(object.__getattribute__(f,\"__qualname__\") is x)\ntry: object.__delattr__(f,\"__qualname__\")\nexcept TypeError: print(f.__qualname__)\n",
+      "stdout": "True\nnative\n"
+    },
+    {
+      "id": "__qualname__-no-coercion",
+      "stage": "O43",
+      "source": "class Name:\n def __str__(self):\n  print(\"coerced\")\n  return \"name\"\ndef f(): pass\nf.__qualname__=Name()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "rename-keeps-traceback",
+      "stage": "O43",
+      "source": "def original():\n raise ValueError(\"body\")\noriginal.__name__=\"renamed\"\noriginal.__qualname__=\"elsewhere\"\noriginal()\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        },
+        {
+          "function": "original",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "rename-keeps-defaults-closure",
+      "stage": "O43",
+      "source": "def make(value):\n def original(extra=[3]): return value+extra[0]\n return original\nf=make(7)\nf.__name__=\"other\"\nf.__qualname__=\"new.path\"\nprint(f(),f.__name__,f.__qualname__)\n",
+      "stdout": "10 other new.path\n"
+    },
+    {
+      "id": "module-definition-snapshot",
+      "stage": "O43",
+      "source": "__name__=\"first\"\ndef f(): pass\n__name__=\"second\"\ndef g(): pass\nprint(f.__module__,g.__module__)\ndel __name__\ndef h(): pass\nprint(h.__module__)\n",
+      "stdout": "first second\nNone\n"
+    },
+    {
+      "id": "module-arbitrary-global-snapshot",
+      "stage": "O43",
+      "source": "saved=[7]\n__name__=saved\ndef f(): pass\n__name__=None\nprint(f.__module__ is saved)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "module-mutation-0",
+      "stage": "O43",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=None\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "module-mutation-1",
+      "stage": "O43",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=False\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "module-mutation-2",
+      "stage": "O43",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=0\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "module-mutation-3",
+      "stage": "O43",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=\"\"\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "module-mutation-4",
+      "stage": "O43",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=[7]\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "module-mutation-5",
+      "stage": "O43",
+      "source": "__name__=\"app\"\ndef f(): pass\nx={\"x\":7}\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "module-mutation-6",
+      "stage": "O43",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=f\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "stdout": "True\nTrue\nTrue\n"
+    },
+    {
+      "id": "module-native-access",
+      "stage": "O43",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=[7]\nobject.__setattr__(f,\"__module__\",x)\nprint(object.__getattribute__(f,\"__module__\") is x)\nobject.__delattr__(f,\"__module__\")\nprint(f.__module__)\n",
+      "stdout": "True\nNone\n"
+    },
+    {
+      "id": "module-cycle",
+      "stage": "O43",
+      "source": "def f(): pass\nf.__module__=[f]\nprint(f.__module__[0] is f)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metadata-reflection-builtins",
+      "stage": "O43",
+      "source": "def f(): return 7\nsetattr(f,\"__name__\",\"other\")\nsetattr(f,\"__qualname__\",\"path.other\")\nsetattr(f,\"__module__\",[9])\nprint(getattr(f,\"__name__\"),getattr(f,\"__qualname__\"),getattr(f,\"__module__\")[0],hasattr(f,\"__module__\"))\ndelattr(f,\"__module__\")\nprint(hasattr(f,\"__module__\"),f.__module__)\n",
+      "stdout": "other path.other 9 True\nTrue None\n"
+    },
+    {
+      "id": "method-live-__name__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C:\n def read(self): return 7\nobj=C()\nm=obj.read\nprint(m.__name__)\nx=\"new.value\"\nC.read.__name__=x\nprint(m.__name__ is x,m.__self__ is obj,m.__func__ is C.read,m())\n",
+      "stdout": "read\nTrue True True 7\n"
+    },
+    {
+      "id": "method-read-only-__name__-set",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nm.__name__=7\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-read-only-__name__-delete",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\ndel m.__name__\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-native-read-__name__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C:\n def f(self): pass\nm=C().f\nprint(object.__getattribute__(m,\"__name__\")==getattr(C.f,\"__name__\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "method-custom-lookup-__name__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  print(name)\n  return [7]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__name__[0])\n",
+      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__name__\n7\n"
+    },
+    {
+      "id": "method-custom-fallback-__name__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  raise AttributeError(\"lookup\")\n def __getattr__(self,name):\n  print(name)\n  return [9]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__name__[0])\n",
+      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__name__\n9\n"
+    },
+    {
+      "id": "method-custom-error-__name__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  raise ValueError(\"original\")\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__name__)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        },
+        {
+          "function": "__getattribute__",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "method-live-__qualname__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C:\n def read(self): return 7\nobj=C()\nm=obj.read\nprint(m.__qualname__)\nx=\"new.value\"\nC.read.__qualname__=x\nprint(m.__qualname__ is x,m.__self__ is obj,m.__func__ is C.read,m())\n",
+      "stdout": "C.read\nTrue True True 7\n"
+    },
+    {
+      "id": "method-read-only-__qualname__-set",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nm.__qualname__=7\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-read-only-__qualname__-delete",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\ndel m.__qualname__\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-native-read-__qualname__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C:\n def f(self): pass\nm=C().f\nprint(object.__getattribute__(m,\"__qualname__\")==getattr(C.f,\"__qualname__\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "method-custom-lookup-__qualname__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  print(name)\n  return [7]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__qualname__[0])\n",
+      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__qualname__\n7\n"
+    },
+    {
+      "id": "method-custom-fallback-__qualname__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  raise AttributeError(\"lookup\")\n def __getattr__(self,name):\n  print(name)\n  return [9]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__qualname__[0])\n",
+      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__qualname__\n9\n"
+    },
+    {
+      "id": "method-custom-error-__qualname__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  raise ValueError(\"original\")\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__qualname__)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        },
+        {
+          "function": "__getattribute__",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "method-live-__module__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C:\n def read(self): return 7\nobj=C()\nm=obj.read\nprint(m.__module__)\nx=\"new.value\"\nC.read.__module__=x\nprint(m.__module__ is x,m.__self__ is obj,m.__func__ is C.read,m())\n",
+      "stdout": "app\nTrue True True 7\n"
+    },
+    {
+      "id": "method-read-only-__module__-set",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\nm.__module__=7\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-read-only-__module__-delete",
+      "stage": "O44",
+      "source": "class C:\n def f(self): pass\nm=C().f\ndel m.__module__\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "method-native-read-__module__",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C:\n def f(self): pass\nm=C().f\nprint(object.__getattribute__(m,\"__module__\")==getattr(C.f,\"__module__\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "method-custom-lookup-__module__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  print(name)\n  return [7]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__module__[0])\n",
+      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__module__\n7\n"
+    },
+    {
+      "id": "method-custom-fallback-__module__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  raise AttributeError(\"lookup\")\n def __getattr__(self,name):\n  print(name)\n  return [9]\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__module__[0])\n",
+      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__module__\n9\n"
+    },
+    {
+      "id": "method-custom-error-__module__",
+      "stage": "O44",
+      "source": "class Callable:\n def __getattribute__(self,name):\n  raise ValueError(\"original\")\nm=classmethod(Callable()).__get__(None,object)\nprint(m.__module__)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 4
+        },
+        {
+          "function": "__getattribute__",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "method-module-delete-live",
+      "stage": "O44",
+      "source": "__name__=\"app\"\nclass C:\n def f(self): pass\nm=C().f\ndel C.f.__module__\nprint(m.__module__)\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "method-renamed-property-diagnostic",
+      "stage": "O44",
+      "source": "class C:\n def read(self): return 7\nC.read.__name__=\"renamed\"\np=property(C.read)\nprint(p.__name__)\n",
+      "stdout": "renamed\n"
+    },
+    {
+      "id": "function-dictionary-deferred",
+      "stage": "Future",
+      "source": "def f(): pass\nprint(f.__dict__)\n",
+      "stdout": "{}\n"
+    },
+    {
+      "id": "function-code-deferred",
+      "stage": "Future",
+      "source": "def f(): pass\nprint(f.__code__.co_name)\n",
+      "stdout": "f\n"
+    },
+    {
+      "id": "wrapper-metadata-deferred",
+      "stage": "Future",
+      "source": "def f(): pass\nprint(staticmethod(f).__doc__)\n",
+      "stdout": "None\n"
+    }
+  ]
+}
