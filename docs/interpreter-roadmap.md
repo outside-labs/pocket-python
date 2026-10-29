@@ -420,4 +420,13 @@ callers. Collection preserves cyclic contents, Unicode and iterator positions
 without contained callbacks. Other default layouts, wrapper/super namespaces,
 live module/class namespaces, unread APIs and dynamic source retain their finite
 contracts. Native async/host adapters remain under #34.
+
+## Set and buffer directory checkpoint
+
+[O60](interpreter-buffer-directories.md) extends #123/#33/#117 with native
+set/frozenset/bytes/bytearray/memoryview directories. Charged collection and owned
+sorting preserve exact receiver graphs, cyclic hash entries, storage aliases and
+released-view data boundaries. Wrapper/super and ordinary instance/class/module
+directories, live namespaces, unread APIs and dynamic source retain finite
+follow-ups. Native async/host adapters remain under #34.
 Native async/host adapters remain under #34.
