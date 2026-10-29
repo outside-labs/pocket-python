@@ -136,6 +136,19 @@ const PROPERTY_DIRECTORY_KEYS = Object.freeze([
   "deleter", "__set_name__", "fget", "fset", "fdel", "__doc__", "__name__",
   "__isabstractmethod__", ...OBJECT_DIRECTORY_KEYS
 ]);
+const RANGE_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__bool__", "__len__",
+  "__getitem__", "__contains__", "__reversed__", "__reduce__", "count", "index",
+  "start", "stop", "step", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const SLICE_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "indices", "__reduce__", "start",
+  "stop", "step", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
 const GENERATOR_DIRECTORY_KEYS = Object.freeze([
   "__repr__", "__iter__", "__next__", "__del__", "send", "throw", "close",
   "__sizeof__", "__class_getitem__", "__name__", "__qualname__", "gi_yieldfrom",
@@ -726,7 +739,7 @@ export class ClassRuntime {
   hasFixedDirectory(receiver) {
     return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
       receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind) ||
-      this.numericDirectoryNames(receiver) !== null || this.nativeCallableDirectoryKind(receiver) !== null;
+      this.values.isRange(receiver) || this.values.isSlice(receiver) || this.numericDirectoryNames(receiver) !== null || this.nativeCallableDirectoryKind(receiver) !== null;
   }
   directoryNames(receiver) {
     const numeric = this.numericDirectoryNames(receiver);
@@ -734,6 +747,8 @@ export class ClassRuntime {
     if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
     if (receiver instanceof ClassNamespaceValue) return NAMESPACE_VIEW_DIRECTORY_KEYS;
     if (receiver instanceof PropertyValue) return PROPERTY_DIRECTORY_KEYS;
+    if (this.values.isRange(receiver)) return RANGE_DIRECTORY_KEYS;
+    if (this.values.isSlice(receiver)) return SLICE_DIRECTORY_KEYS;
     if (receiver instanceof GeneratorValue) return GENERATOR_DIRECTORY_KEYS;
     if (receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind))
       return receiver.kind === "callable" ? CALLABLE_ITERATOR_DIRECTORY_KEYS : ITERATOR_DIRECTORY_KEYS;
