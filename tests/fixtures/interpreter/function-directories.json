@@ -3,7 +3,9 @@
   "suite": "interpreter-function-directories/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O50"
+  ],
   "cases": [
     {
       "id": "native-directory",
@@ -245,6 +247,26 @@
       "stage": "Future",
       "source": "def f(): pass\nr=dir(f)\nf.__builtins__\n",
       "stdout": ""
+    },
+    {
+      "id": "merge-truth-callback",
+      "stage": "O50",
+      "source": "events=[]\nclass Truth:\n def __bool__(self):\n  events.append(7)\n  f.__dict__={\"fresh\":9}\n  return True\nclass Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): return Truth()\n def __lt__(self,other): return True\n def __gt__(self,other): return False\ndef f(): pass\nk=Key()\nf.__dict__={k:7,\"tag\":11}\nr=dir(f)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,len(events),\"tag\" in names,\"fresh\" in names)\n",
+      "stdout": "True 2 True False\n"
+    },
+    {
+      "id": "merge-attributeerror",
+      "stage": "O50",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): raise AttributeError(\"original\")\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "merge-keyerror",
+      "stage": "O50",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): raise KeyError(\"original\")\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n",
+      "stdout": "",
+      "error_type": "KeyError"
     }
   ]
 }

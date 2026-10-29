@@ -844,6 +844,15 @@ export class ValueRuntime {
     }
     dict.ownedKeys = true; return null;
   }
+  copyDictionary(dictionary) {
+    if (!(dictionary instanceof DictValue)) this.fail("TypeError", "Dictionary copy requires a dict.");
+    this.memory?.primitive(dictionary); this.charge(dictionary.entries.length + 1);
+    const result = new DictValue();
+    result.entries = dictionary.entries.map(entry => ({...entry}));
+    result.ownedKeys = dictionary.ownedKeys;
+    const layout = valueLayout(result);
+    return this.make(layout.bytes, layout.children, () => result);
+  }
   find(dict, key) {
     const hash = this.hash(key);
     for (let i = 0; i < dict.entries.length; i++) {

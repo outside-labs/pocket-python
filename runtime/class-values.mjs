@@ -11,15 +11,61 @@ const META_SPECIALS = new Set(["__dict__", "__new__", "__init__", "__init_subcla
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
-const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro", "mappingproxy.get"]);
+const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro", "mappingproxy.get", "object.__dir__"]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__"]);
 const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name) || NATIVE_BINDING_WRAPPERS.has(name);
 const FUNCTION_DATA = new Set(["__dict__", "__class__", "__name__", "__qualname__", "__module__", "__doc__"]);
-const FUNCTION_DEFERRED_DATA = new Set(["__code__", "__defaults__", "__kwdefaults__", "__closure__", "__globals__", "__annotations__", "__annotate__", "__type_params__"]);
+const FUNCTION_DEFERRED_DATA = new Set(["__builtins__", "__code__", "__defaults__", "__kwdefaults__", "__closure__", "__globals__", "__annotations__", "__annotate__", "__type_params__"]);
 const FUNCTION_DEFERRED_METHODS = new Set(["__call__", "__getattribute__", "__setattr__", "__delattr__", "__repr__", "__str__", "__hash__", "__eq__", "__ne__", "__reduce__", "__reduce_ex__", "__sizeof__", "__format__", "__dir__", "__init__", "__new__", "__init_subclass__", "__subclasshook__", "__getstate__"]);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
+
+// Native namespace keys in pinned CPython 3.14.7 merge order.
+const FUNCTION_DIRECTORY_KEYS = Object.freeze([
+  "__new__",
+  "__repr__",
+  "__call__",
+  "__get__",
+  "__closure__",
+  "__globals__",
+  "__builtins__",
+  "__code__",
+  "__defaults__",
+  "__kwdefaults__",
+  "__annotations__",
+  "__annotate__",
+  "__dict__",
+  "__doc__",
+  "__module__",
+  "__name__",
+  "__qualname__",
+  "__type_params__",
+  "__new__",
+  "__repr__",
+  "__hash__",
+  "__str__",
+  "__getattribute__",
+  "__setattr__",
+  "__delattr__",
+  "__lt__",
+  "__le__",
+  "__eq__",
+  "__ne__",
+  "__gt__",
+  "__ge__",
+  "__init__",
+  "__reduce_ex__",
+  "__reduce__",
+  "__getstate__",
+  "__subclasshook__",
+  "__init_subclass__",
+  "__format__",
+  "__sizeof__",
+  "__dir__",
+  "__class__",
+  "__doc__"
+]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -199,7 +245,7 @@ export class ClassRuntime {
         catch (error) { base.namespace.delete(name); throw error; }
         return {found: true, value};
       }
-      if (native && base.root && ["__hash__", "__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) {
+      if (native && base.root && ["__dir__", "__hash__", "__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) {
         const value = this.make(BuiltinValue, "object." + name);
         base.namespace.set(name, value);
         try { const layout = valueLayout(base); this.memory?.resize(base, layout.bytes, layout.children); }
@@ -300,6 +346,10 @@ export class ClassRuntime {
       if (name === "__get__") return value(this.make(BoundMethodValue, this.builtin(receiver.kind + ".__get__"), receiver));
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
+    }
+    if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && receiver.callable.name === "object.__dir__" && ["__name__", "__qualname__"].includes(name)) {
+      const type = this.typeOf(receiver.receiver);
+      return value(this.values.string(Array.from((name === "__qualname__" ? (type.qualname ?? type.name) + "." : "") + "__dir__", char => char.codePointAt(0))));
     }
     if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && receiver.callable.name === "mappingproxy.get" && ["__name__", "__qualname__"].includes(name))
       return this.read(receiver.callable, name);
@@ -437,7 +487,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || value.name === "mappingproxy.get" || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["mappingproxy.get", "object.__dir__"].includes(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   nativeDescriptorKind(value) {
     return value instanceof BuiltinValue ? NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" :
@@ -449,7 +499,7 @@ export class ClassRuntime {
     if (receiver === null) return descriptor;
     this.touch(receiver);
     const layout = descriptor.name.slice(0, descriptor.name.indexOf("."));
-    const valid = layout === "type" ? this.isType(receiver) : layout === "property" ? receiver instanceof PropertyValue :
+    const valid = layout === "object" ? true : layout === "type" ? this.isType(receiver) : layout === "property" ? receiver instanceof PropertyValue :
       layout === "function" ? receiver instanceof FunctionValue : layout === "mappingproxy" ? receiver instanceof ClassNamespaceValue : ["staticmethod", "classmethod"].includes(layout) ?
         receiver instanceof MethodWrapperValue && receiver.kind === layout : this.nativeDescriptorKind(receiver) === layout;
     if (!valid)
@@ -544,11 +594,14 @@ export class ClassRuntime {
     if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
+  functionDirectoryNames() { return FUNCTION_DIRECTORY_KEYS; }
   functionDictionary(receiver) {
     if (receiver.attributes === null) this.functionMetadata(receiver, "attributes", this.values.dict([]));
     return receiver.attributes;
   }
   functionMissing(receiver, name, operation = "get") {
+    if (operation === "get" && name === "__dir__")
+      return this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver);
     if (operation === "get" && name === "__get__")
       return this.make(BoundMethodValue, this.builtin("function.__get__"), receiver);
     if (operation === "get" && FUNCTION_DEFERRED_METHODS.has(name))

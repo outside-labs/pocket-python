@@ -60,6 +60,12 @@ export function completion(kind, fields = {}) {
       if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 2)
         throw new TypeError("Invalid abstract-method flag position.");
       break;
+    case "function-dir-merge":
+      record = {kind, receiver: fields.receiver, result: fields.result, position: fields.position, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 42)
+        throw new TypeError("Invalid function directory merge position.");
+      break;
     case "dir-result": case "dir-iter": case "dir-sort": record = {kind, receiver: fields.receiver, depth: fields.depth ?? 0, after}; depthCheck(record.depth); break;
     case "dir-length": case "dir-hint-bound": case "dir-hint-call": case "dir-hint-value":
       record = {kind, receiver: fields.receiver, iterator: fields.iterator, depth: fields.depth, after}; depthCheck(record.depth); break;
@@ -207,6 +213,7 @@ function visit(record) {
     case "abstract-lookup": case "abstract-truth":
     case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":
     case "dir-compare": case "dir-truth": return [record.receiver, ...completionRoots(record.after)];
+    case "function-dir-merge": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "function-entry": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "instance-entry": return [record.receiver, record.key, ...(record.found ? [record.fallback] : []), ...completionRoots(record.after)];
     case "property-documentation": return [record.receiver, ...record.accessors, ...completionRoots(record.after)];
