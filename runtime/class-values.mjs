@@ -325,7 +325,8 @@ export class ClassRuntime {
     this.bounded(bases.length <= CLASS_LIMITS.bases && namespace.size <= CLASS_LIMITS.attributes, "Class base/namespace budget exceeded.");
     bases = bases.length ? [...bases] : [root]; namespace = new Map(namespace);
     this.validateNamespace(bases, namespace.keys());
-    if (namespace.has("__eq__") && !namespace.has("__hash__")) namespace.set("__hash__", null);
+    const automaticHash = namespace.has("__eq__") && !namespace.has("__hash__");
+    if (automaticHash) namespace.set("__hash__", null);
     this.bounded(namespace.size <= CLASS_LIMITS.attributes, "Class namespace budget exceeded.");
     for (const base of bases) {
       this.charge(1);
@@ -364,7 +365,7 @@ export class ClassRuntime {
       parents.push(candidate);
       for (const items of pending) if (items[0] === candidate) items.shift();
     }
-    return this.make(ClassValue, name, qualname, module, bases, parents, namespace, false, metaclass);
+    return this.make(ClassValue, name, qualname, module, bases, parents, namespace, false, metaclass, !dynamic, automaticHash);
   }
   instance(type) {
     if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
@@ -873,6 +874,38 @@ export class ClassRuntime {
     if (kind === "method-wrapper") return NATIVE_WRAPPER_DIRECTORY_KEYS;
     throw new TypeError("Invalid native directory receiver.");
   }
+  ownClassDirectoryNames(type) {
+    this.touch(type); this.charge(1);
+    if (!(type instanceof ClassValue) || type.metaclass !== null || this.isMetaclass(type))
+      this.fail("UnsupportedOperationError", "Further class namespace reflection requires a separate directory contract.", "UNSUPPORTED");
+    if (type.root) return OBJECT_DIRECTORY_KEYS;
+    const names = [], initial = [...type.namespace.keys()].slice(0, type.directoryInitialCount);
+    for (const name of initial) {
+      this.charge(1);
+      if (name === "__qualname__" || name === "__classcell__" || name === "__hash__" && type.automaticHash) continue;
+      names.push(name);
+      if (name === "__module__" && type.sourceDefined) names.push("__firstlineno__");
+    }
+    if (!type.namespace.has("__module__")) names.push("__module__");
+    if (type.sourceDefined) names.push("__static_attributes__");
+    if (type.bases.every(base => base instanceof ClassValue && base.root)) {
+      if (!type.namespace.has("__dict__")) names.push("__dict__");
+      names.push("__weakref__");
+    }
+    if (type.defaultDoc) names.push("__doc__");
+    if (type.automaticHash && initial.includes("__hash__")) names.push("__hash__");
+    for (const name of [...type.namespace.keys()].slice(type.directoryInitialCount)) {
+      this.charge(1);
+      if (name !== "__doc__" || !type.defaultDoc) names.push(name);
+    }
+    return names;
+  }
+  classDirectoryEntry(type, name) {
+    this.touch(type); this.charge(1);
+    if (type.namespace.has(name)) return type.namespace.get(name);
+    if (this.ownClassDirectoryNames(type).includes(name)) return null;
+    this.fail("KeyError", "Class directory namespace changed during merging.");
+  }
   functionDictionary(receiver) {
     if (receiver.attributes === null) this.functionMetadata(receiver, "attributes", this.values.dict([]));
     return receiver.attributes;
@@ -967,9 +1000,14 @@ export class ClassRuntime {
     const present = map.has(name), before = map.get(name);
     if (remove && !present) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
     this.bounded(remove || present || map.size < CLASS_LIMITS.attributes, "Class/instance attribute budget exceeded.");
+    const initialCount = receiver instanceof ClassValue ? receiver.directoryInitialCount : null;
+    if (remove && initialCount !== null && [...map.keys()].indexOf(name) < initialCount) receiver.directoryInitialCount--;
     if (remove) map.delete(name); else map.set(name, value);
     try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
-    catch (error) { if (present) map.set(name, before); else map.delete(name); throw error; }
+    catch (error) {
+      if (initialCount !== null) receiver.directoryInitialCount = initialCount;
+      if (present) map.set(name, before); else map.delete(name); throw error;
+    }
     return null;
   }
   subclass(type, parent, depth = 0) {
