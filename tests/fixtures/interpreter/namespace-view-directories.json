@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-namespace-view-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "native-directory",
+      "source": "class C: tag=[7]\np=C.__dict__\nprint(*dir(p))\n",
+      "stage": "O52",
+      "stdout": "__class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __ior__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __reduce__ __reduce_ex__ __repr__ __reversed__ __ror__ __setattr__ __sizeof__ __str__ __subclasshook__ copy get items keys values\n"
+    },
+    {
+      "id": "native-unsorted-directory",
+      "source": "class C: tag=[7]\np=C.__dict__\nprint(*object.__dir__(p))\n",
+      "stage": "O52",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __or__ __ror__ __ior__ __len__ __getitem__ __contains__ get keys values items copy __class_getitem__ __reversed__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "fresh-lists",
+      "source": "class C: tag=[7]\np=C.__dict__\na=dir(p)\nb=dir(p)\na.append(\"only-copy\")\nprint(a is b,\"only-copy\" in b,len(b))\n",
+      "stage": "O52",
+      "stdout": "False False 38\n"
+    },
+    {
+      "id": "class-keys-not-listed",
+      "source": "class C: tag=[7]\np=C.__dict__\nprint(\"tag\" in dir(p),\"copy\" in dir(p),\"__func__\" in dir(p))\n",
+      "stage": "O52",
+      "stdout": "False True False\n"
+    },
+    {
+      "id": "live-class-mutation",
+      "source": "class C: tag=[7]\np=C.__dict__\na=dir(p)\nC.new=9\nC.tag=11\ndel C.new\nprint(dir(p)==a,p[\"tag\"])\n",
+      "stage": "O52",
+      "stdout": "True 11\n"
+    },
+    {
+      "id": "stored-directory-not-called",
+      "source": "class C:\n __dir__=lambda self:(\"never\",)\np=C.__dict__\nprint(\"__iter__\" in dir(p),\"never\" in dir(p))\n",
+      "stage": "O52",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "bound-native-metadata",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=p.__dir__\nprint(d.__self__ is p,d.__name__,d.__qualname__,type(d).__name__,len(d()))\n",
+      "stage": "O52",
+      "stdout": "True __dir__ mappingproxy.__dir__ builtin_function_or_method 38\n"
+    },
+    {
+      "id": "native-getattribute",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=object.__getattribute__(p,\"__dir__\")\nprint(d.__self__ is p,len(d()))\n",
+      "stage": "O52",
+      "stdout": "True 38\n"
+    },
+    {
+      "id": "unbound-native-binding",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=object.__dir__.__get__(p)\nprint(d.__self__ is p,d.__qualname__,len(d()),object.__dir__.__objclass__ is object)\n",
+      "stage": "O52",
+      "stdout": "True mappingproxy.__dir__ 38 True\n"
+    },
+    {
+      "id": "native-rebinding",
+      "source": "class C: tag=[7]\np=C.__dict__\nclass D: other=9\nq=D.__dict__\nd=object.__dir__.__get__(q)\nprint(d.__self__ is q,d()==p.__dir__(),q[\"other\"])\n",
+      "stage": "O52",
+      "stdout": "True True 9\n"
+    },
+    {
+      "id": "retained-native-caller",
+      "source": "class C: tag=[7]\np=C.__dict__\nd=p.__dir__\ndel p\ndel C\nprint(len(d()),d.__self__[\"tag\"][0])\n",
+      "stage": "O52",
+      "stdout": "38 7\n"
+    },
+    {
+      "id": "cyclic-view-retention",
+      "source": "class C: tag=[7]\np=C.__dict__\nC.saved=p\nd=p.__dir__\ndel p\ndel C\nprint(d.__self__[\"saved\"] is d.__self__,len(d()))\n",
+      "stage": "O52",
+      "stdout": "True 38\n"
+    },
+    {
+      "id": "values-not-read",
+      "source": "class Value:\n def __getattribute__(self,name): raise ValueError(\"never\")\n def __bool__(self): raise ValueError(\"never\")\nclass C: tag=Value()\np=C.__dict__\nprint(len(dir(p)),p[\"tag\"] is C.tag)\n",
+      "stage": "O52",
+      "stdout": "38 True\n"
+    },
+    {
+      "id": "metaclass-hooks-not-read",
+      "source": "class M(type): pass\nclass C(metaclass=M): tag=7\np=C.__dict__\ndef read(cls,name): raise ValueError(\"never\")\nM.__getattribute__=read\nprint(len(dir(p)),p[\"tag\"])\n",
+      "stage": "O52",
+      "stdout": "38 7\n"
+    },
+    {
+      "id": "detached-live-view",
+      "source": "class C: tag=[7]\np=C.__dict__\nq=p\nC.tag=[9]\ndel p\nprint(q[\"tag\"][0],len(dir(q)))\n",
+      "stage": "O52",
+      "stdout": "9 38\n"
+    },
+    {
+      "id": "lazy-directory-observations",
+      "source": "class C: tag=[7]\np=C.__dict__\ndef names():\n yield dir(p)\n yield dir(p)\ng=names()\na=next(g)\nC.new=9\nb=next(g)\nprint(a==b,a is b,p[\"new\"])\n",
+      "stage": "O52",
+      "stdout": "True False 9\n"
+    },
+    {
+      "id": "stored-special-names",
+      "source": "class C:\n copy=7\n __dir__=9\n __class__=11\np=C.__dict__\nprint(len(dir(p)),p[\"copy\"],p[\"__dir__\"],p[\"__class__\"])\n",
+      "stage": "O52",
+      "stdout": "38 7 9 11\n"
+    },
+    {
+      "id": "lookup-still-readonly",
+      "source": "class C: tag=[7]\np=C.__dict__\np.__dir__=lambda:[]\n",
+      "stage": "O52",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "delete-still-readonly",
+      "source": "class C: tag=[7]\np=C.__dict__\ndel p.__dir__\n",
+      "stage": "O52",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "hash-still-unhashable",
+      "source": "class C: tag=[7]\np=C.__dict__\nhash(p)\n",
+      "stage": "O52",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-signature",
+      "source": "class C: tag=[7]\np=C.__dict__\nobject.__dir__(p,7)\n",
+      "stage": "O52",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-keyword",
+      "source": "class C: tag=[7]\np=C.__dict__\nobject.__dir__(self=p)\n",
+      "stage": "O52",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bound-signature",
+      "source": "class C: tag=[7]\np=C.__dict__\np.__dir__(7)\n",
+      "stage": "O52",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bound-keyword",
+      "source": "class C: tag=[7]\np=C.__dict__\np.__dir__(other=7)\n",
+      "stage": "O52",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "builtin-keyword",
+      "source": "class C: tag=[7]\np=C.__dict__\ndir(object=p)\n",
+      "stage": "O52",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "enumeration-remains-deferred",
+      "source": "class C: tag=[7]\np=C.__dict__\nlist(p)\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "length-remains-deferred",
+      "source": "class C: tag=[7]\np=C.__dict__\nlen(p)\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "copy-listing-does-not-adopt",
+      "source": "class C: tag=[7]\np=C.__dict__\np.copy()\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "native-type-dictionary",
+      "source": "type.__dict__\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "ordinary-class-directory",
+      "source": "class C: pass\nprint(\"__dict__\" in dir(C))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-method-directory",
+      "source": "class C: tag=[7]\np=C.__dict__\nprint(\"__self__\" in dir(p.get))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    }
+  ]
+}
