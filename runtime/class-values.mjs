@@ -1,6 +1,6 @@
 import {ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
-import {ValueRuntime, valueLayout} from "./values.mjs";
+import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
@@ -93,6 +93,20 @@ const GENERATOR_DIRECTORY_KEYS = Object.freeze([
   "__sizeof__", "__class_getitem__", "__name__", "__qualname__", "gi_yieldfrom",
   "gi_running", "gi_frame", "gi_suspended", "gi_code", "__doc__",
   ...OBJECT_DIRECTORY_KEYS
+]);
+const ITERATOR_DIRECTORY_KEYS = Object.freeze([
+  "__iter__", "__next__", "__length_hint__", "__reduce__", "__setstate__",
+  "__doc__", ...OBJECT_DIRECTORY_KEYS
+]);
+const HASH_ITERATOR_DIRECTORY_KEYS = Object.freeze([
+  "__iter__", "__next__", "__length_hint__", "__reduce__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const MEMORY_ITERATOR_DIRECTORY_KEYS = Object.freeze([
+  "__iter__", "__next__", "__doc__", ...OBJECT_DIRECTORY_KEYS
+]);
+const CALLABLE_ITERATOR_DIRECTORY_KEYS = Object.freeze([
+  "__iter__", "__next__", "__reduce__", "__doc__", ...OBJECT_DIRECTORY_KEYS
 ]);
 const NATIVE_DESCRIPTOR_DIRECTORY_KEYS = Object.freeze([
   "__repr__", "__call__", "__get__", "__reduce__", "__objclass__", "__name__",
@@ -653,13 +667,23 @@ export class ClassRuntime {
     return null;
   }
   hasFixedDirectory(receiver) {
-    return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue || this.nativeCallableDirectoryKind(receiver) !== null;
+    return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
+      receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind) ||
+      this.nativeCallableDirectoryKind(receiver) !== null;
   }
   directoryNames(receiver) {
     if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
     if (receiver instanceof ClassNamespaceValue) return NAMESPACE_VIEW_DIRECTORY_KEYS;
     if (receiver instanceof PropertyValue) return PROPERTY_DIRECTORY_KEYS;
     if (receiver instanceof GeneratorValue) return GENERATOR_DIRECTORY_KEYS;
+    if (receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind))
+      return receiver.kind === "callable" ? CALLABLE_ITERATOR_DIRECTORY_KEYS : ITERATOR_DIRECTORY_KEYS;
+    if (receiver instanceof IteratorValue) {
+      const kind = this.values.typeName(receiver);
+      if (kind === "memory_iterator") return MEMORY_ITERATOR_DIRECTORY_KEYS;
+      if (kind === "dict_keyiterator" || kind === "set_iterator") return HASH_ITERATOR_DIRECTORY_KEYS;
+      return ITERATOR_DIRECTORY_KEYS;
+    }
     if (this.isPythonMethod(receiver)) return METHOD_DIRECTORY_KEYS;
     const kind = this.nativeCallableDirectoryKind(receiver);
     if (kind === "method_descriptor" || kind === "wrapper_descriptor") return NATIVE_DESCRIPTOR_DIRECTORY_KEYS;
