@@ -26,11 +26,11 @@ for (const item of corpus.cases) test('function directory: ' + item.id, async ()
 test('directory merge continuation retains receiver, private dictionary and outer destinations', () => {
   const receiver = {}, result = {}, outer = {};
   const after = completion('relay', {receiver: outer});
-  const record = completion('function-dir-merge', {receiver, result, position: 42, depth: 3, after});
+  const record = completion('native-dir-merge', {receiver, result, position: 42, depth: 3, after});
   assert.deepEqual(completionRoots(record), [receiver, result, outer]);
   for (const position of [-1, 43, 0.5, undefined])
-    assert.throws(() => completion('function-dir-merge', {receiver, result, position, depth: 0}), TypeError);
-  assert.throws(() => completion('function-dir-merge', {receiver, result, position: 0, depth: 257}), TypeError);
+    assert.throws(() => completion('native-dir-merge', {receiver, result, position, depth: 0}), TypeError);
+  assert.throws(() => completion('native-dir-merge', {receiver, result, position: 0, depth: 257}), TypeError);
   assert.ok(Object.isFrozen(record));
 });
 

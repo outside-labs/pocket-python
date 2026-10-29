@@ -2,7 +2,8 @@
 
 O51 continues #123 and #33 against pinned CPython 3.14.7. The authored
 `method-directories.json` matrix separates reference observations from engine
-adoption. Its implementation stages remain empty until the owned runtime lands.
+adoption. O51 is implemented through owned dictionary lookup, native merging
+and sorting continuations.
 
 `dir(method)` returns a fresh sorted list combining keys from the wrapped
 callable's current dictionary with the pinned method and object namespaces.
