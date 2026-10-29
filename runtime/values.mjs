@@ -355,8 +355,21 @@ export class ValueRuntime {
     if (value instanceof SetValue) return value.frozen ? "frozenset" : "set";
     if (value instanceof BinaryValue) return value.mutable ? "bytearray" : "bytes";
     if (value instanceof MemoryViewValue) return "memoryview";
-    if (value instanceof IteratorValue) return {list: "list_iterator", tuple: "tuple_iterator", str: "str_iterator", dict: "dict_keyiterator",
-      range: "range_iterator", set: "set_iterator", frozenset: "set_iterator", bytes: "bytes_iterator", bytearray: "bytearray_iterator", memoryview: "memory_iterator"}[this.typeName(value.value)];
+    if (value instanceof IteratorValue) {
+      if (value.value instanceof StringValue) {
+        this.charge(value.value.points.length);
+        return value.value.points.every(point => point < 128) ? "str_ascii_iterator" : "str_iterator";
+      }
+      if (value.value instanceof RangeValue) {
+        const {start, stop, step, length} = value.value, minimum = -9223372036854775808n, maximum = 9223372036854775807n;
+        // Canonical native layouts follow the pinned 64-bit C-long oracle.
+        this.charge(1);
+        return [start, stop, step].some(item => item < minimum || item > maximum) || length > maximum ||
+          length > 0n && (step > 0n ? stop > maximum - (step - 1n) : stop < minimum + (-1n - step)) ? "longrange_iterator" : "range_iterator";
+      }
+      return {list: "list_iterator", tuple: "tuple_iterator", dict: "dict_keyiterator",
+        set: "set_iterator", frozenset: "set_iterator", bytes: "bytes_iterator", bytearray: "bytearray_iterator", memoryview: "memory_iterator"}[this.typeName(value.value)];
+    }
     return null;
   }
   checkConstructionHint(value) {
