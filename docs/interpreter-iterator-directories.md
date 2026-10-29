@@ -1,8 +1,9 @@
 # Native iterator directories
 
 O56 continues #123, #33, #116 and #120 against pinned CPython 3.14.7. The
-independently authored `iterator-directories.json` matrix records reference
-behavior before engine adoption.
+independently authored `iterator-directories.json` matrix separates reference
+behavior from engine adoption. O56 uses charged native collection and owned
+sorting.
 
 Existing native list, tuple, ASCII/Unicode text, dictionary-key, short/long
 range, set/frozenset, bytes, bytearray, memoryview, indexed and callable-sentinel

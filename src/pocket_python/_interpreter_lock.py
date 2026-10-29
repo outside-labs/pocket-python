@@ -1,11 +1,11 @@
 """Known source-console assets, canonical LF bytes; refresh with scripts/lock_interpreter.py."""
 
-ENGINE_FINGERPRINT = 'ce073a5f17e0908e5b03093bad457d2d265ad3a1b3f6413f9a592df9c73ac7d1'
+ENGINE_FINGERPRINT = 'd85eb68756bdf670316f847e3fdcac3044c50f184573f5d141137d1b86b2dada'
 ENGINE_FILES = (
     ('browser-protocol.mjs', 10589, '920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76'),
     ('bytecode.mjs', 6836, 'e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4'),
     ('class-policy.mjs', 3020, 'c2c938d5c7fcbc3e0cecb57701bef2e44be3ef49531cfbaa72e710ac8028ec3c'),
-    ('class-values.mjs', 60252, 'f7333d0a4cba81850c0f56881f974ab1e26c3ef4dbbce9403d9ce36679780f3c'),
+    ('class-values.mjs', 61515, 'fbeb5df840c6f4a8770bce92fca0e12960231e13778fbfd41bad60461405f3a8'),
     ('function-bytecode.mjs', 22820, '6c8c960d90cbe1a5030c22ac1ab93f33749b06e3ea3ae61e237bb3997390ef96'),
     ('function-objects.mjs', 5496, 'e4dbe7fc9ca821383e0c22cfcdfe8f5b3f05d3589d520dc553faa8285e4bd968'),
     ('functions.mjs', 64791, '123588cd395455c6f5b301f00dabffd4b795e0bbe5671dbe1664d1dd1eff3de8'),
