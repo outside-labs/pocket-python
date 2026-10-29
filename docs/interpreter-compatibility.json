@@ -760,7 +760,7 @@
     {
       "id": "further-object-protocols",
       "status": "partial",
-      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary list/tuple/text repetition preserves shallow aliases, Unicode code points and owned index fallback after arithmetic candidates. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots.",
+      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary list/tuple/text repetition preserves shallow aliases, Unicode code points and owned index fallback after arithmetic candidates. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags.",
       "gaps": "Builtin instance layouts, further metaclass construction/ordering protocols, live namespace mappings and default directories and dynamic source admission remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -799,7 +799,21 @@
         "documentation-copy-callback-mutates-name",
         "documentation-bound-custom-callable-document",
         "documentation-native-rebound-property-copy",
-        "documentation-native-documentation"
+        "documentation-native-documentation",
+        "property-directories-native-directory",
+        "property-directories-native-unsorted-directory",
+        "property-directories-fresh-lists",
+        "property-directories-bound-native-metadata",
+        "property-directories-native-getattribute",
+        "property-directories-unbound-native-binding",
+        "property-directories-cyclic-property-retention",
+        "property-directories-arbitrary-metadata-not-listed",
+        "property-directories-lazy-name-not-read",
+        "property-directories-abstract-flag-not-read",
+        "property-directories-accessor-copies",
+        "property-directories-automatic-class-names",
+        "property-directories-lazy-directory-observations",
+        "property-directories-native-write-readonly"
       ],
       "evidence": [
         "tests/fixtures/interpreter/object-protocols.json:subclass-priority",
@@ -830,7 +844,21 @@
         "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
         "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
         "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
-        "tests/fixtures/interpreter/documentation.json:native-documentation"
+        "tests/fixtures/interpreter/documentation.json:native-documentation",
+        "tests/fixtures/interpreter/property-directories.json:native-directory",
+        "tests/fixtures/interpreter/property-directories.json:native-unsorted-directory",
+        "tests/fixtures/interpreter/property-directories.json:fresh-lists",
+        "tests/fixtures/interpreter/property-directories.json:bound-native-metadata",
+        "tests/fixtures/interpreter/property-directories.json:native-getattribute",
+        "tests/fixtures/interpreter/property-directories.json:unbound-native-binding",
+        "tests/fixtures/interpreter/property-directories.json:cyclic-property-retention",
+        "tests/fixtures/interpreter/property-directories.json:arbitrary-metadata-not-listed",
+        "tests/fixtures/interpreter/property-directories.json:lazy-name-not-read",
+        "tests/fixtures/interpreter/property-directories.json:abstract-flag-not-read",
+        "tests/fixtures/interpreter/property-directories.json:accessor-copies",
+        "tests/fixtures/interpreter/property-directories.json:automatic-class-names",
+        "tests/fixtures/interpreter/property-directories.json:lazy-directory-observations",
+        "tests/fixtures/interpreter/property-directories.json:native-write-readonly"
       ]
     },
     {
@@ -990,7 +1018,7 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46). Ordinary instance dictionaries are live with exact replacement/deletion aliases and owned collision callbacks (O47/O48). O49 adds fresh read-only keyed class namespace views, live mutations and unbound stored descriptors with metaclass priority. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases.",
+      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46). Ordinary instance dictionaries are live with exact replacement/deletion aliases and owned collision callbacks (O47/O48). O49 adds fresh read-only keyed class namespace views, live mutations and unbound stored descriptors with metaclass priority. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags.",
       "gaps": "Default directories of other layouts, unread code/global/annotation metadata, module/class-body namespaces, class mapping enumeration/native layout entries, integer identity and dynamic source remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1071,7 +1099,21 @@
         "function-directories-metadata-listing-does-not-adopt-reads",
         "function-directories-merge-truth-callback",
         "function-directories-merge-attributeerror",
-        "function-directories-merge-keyerror"
+        "function-directories-merge-keyerror",
+        "property-directories-native-directory",
+        "property-directories-native-unsorted-directory",
+        "property-directories-fresh-lists",
+        "property-directories-bound-native-metadata",
+        "property-directories-native-getattribute",
+        "property-directories-unbound-native-binding",
+        "property-directories-cyclic-property-retention",
+        "property-directories-arbitrary-metadata-not-listed",
+        "property-directories-lazy-name-not-read",
+        "property-directories-abstract-flag-not-read",
+        "property-directories-accessor-copies",
+        "property-directories-automatic-class-names",
+        "property-directories-lazy-directory-observations",
+        "property-directories-native-write-readonly"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:identity-alias",
@@ -1145,7 +1187,21 @@
         "tests/fixtures/interpreter/function-directories.json:metadata-listing-does-not-adopt-reads",
         "tests/fixtures/interpreter/function-directories.json:merge-truth-callback",
         "tests/fixtures/interpreter/function-directories.json:merge-attributeerror",
-        "tests/fixtures/interpreter/function-directories.json:merge-keyerror"
+        "tests/fixtures/interpreter/function-directories.json:merge-keyerror",
+        "tests/fixtures/interpreter/property-directories.json:native-directory",
+        "tests/fixtures/interpreter/property-directories.json:native-unsorted-directory",
+        "tests/fixtures/interpreter/property-directories.json:fresh-lists",
+        "tests/fixtures/interpreter/property-directories.json:bound-native-metadata",
+        "tests/fixtures/interpreter/property-directories.json:native-getattribute",
+        "tests/fixtures/interpreter/property-directories.json:unbound-native-binding",
+        "tests/fixtures/interpreter/property-directories.json:cyclic-property-retention",
+        "tests/fixtures/interpreter/property-directories.json:arbitrary-metadata-not-listed",
+        "tests/fixtures/interpreter/property-directories.json:lazy-name-not-read",
+        "tests/fixtures/interpreter/property-directories.json:abstract-flag-not-read",
+        "tests/fixtures/interpreter/property-directories.json:accessor-copies",
+        "tests/fixtures/interpreter/property-directories.json:automatic-class-names",
+        "tests/fixtures/interpreter/property-directories.json:lazy-directory-observations",
+        "tests/fixtures/interpreter/property-directories.json:native-write-readonly"
       ]
     },
     {
@@ -1707,7 +1763,7 @@
     {
       "id": "dir",
       "status": "partial",
-      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases.",
+      "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags.",
       "gaps": "Default directories of other layouts, unread code/global/annotation metadata, module/class-body namespaces, class mapping enumeration/native layout entries, integer identity and dynamic source remain separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
@@ -1742,7 +1798,21 @@
         "function-directories-metadata-listing-does-not-adopt-reads",
         "function-directories-merge-truth-callback",
         "function-directories-merge-attributeerror",
-        "function-directories-merge-keyerror"
+        "function-directories-merge-keyerror",
+        "property-directories-native-directory",
+        "property-directories-native-unsorted-directory",
+        "property-directories-fresh-lists",
+        "property-directories-bound-native-metadata",
+        "property-directories-native-getattribute",
+        "property-directories-unbound-native-binding",
+        "property-directories-cyclic-property-retention",
+        "property-directories-arbitrary-metadata-not-listed",
+        "property-directories-lazy-name-not-read",
+        "property-directories-abstract-flag-not-read",
+        "property-directories-accessor-copies",
+        "property-directories-automatic-class-names",
+        "property-directories-lazy-directory-observations",
+        "property-directories-native-write-readonly"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:dir-custom-descriptor",
@@ -1769,7 +1839,21 @@
         "tests/fixtures/interpreter/function-directories.json:metadata-listing-does-not-adopt-reads",
         "tests/fixtures/interpreter/function-directories.json:merge-truth-callback",
         "tests/fixtures/interpreter/function-directories.json:merge-attributeerror",
-        "tests/fixtures/interpreter/function-directories.json:merge-keyerror"
+        "tests/fixtures/interpreter/function-directories.json:merge-keyerror",
+        "tests/fixtures/interpreter/property-directories.json:native-directory",
+        "tests/fixtures/interpreter/property-directories.json:native-unsorted-directory",
+        "tests/fixtures/interpreter/property-directories.json:fresh-lists",
+        "tests/fixtures/interpreter/property-directories.json:bound-native-metadata",
+        "tests/fixtures/interpreter/property-directories.json:native-getattribute",
+        "tests/fixtures/interpreter/property-directories.json:unbound-native-binding",
+        "tests/fixtures/interpreter/property-directories.json:cyclic-property-retention",
+        "tests/fixtures/interpreter/property-directories.json:arbitrary-metadata-not-listed",
+        "tests/fixtures/interpreter/property-directories.json:lazy-name-not-read",
+        "tests/fixtures/interpreter/property-directories.json:abstract-flag-not-read",
+        "tests/fixtures/interpreter/property-directories.json:accessor-copies",
+        "tests/fixtures/interpreter/property-directories.json:automatic-class-names",
+        "tests/fixtures/interpreter/property-directories.json:lazy-directory-observations",
+        "tests/fixtures/interpreter/property-directories.json:native-write-readonly"
       ]
     },
     {

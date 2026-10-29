@@ -108,3 +108,7 @@ The [O52 namespace view directory contract](interpreter-namespace-view-directori
 adopts mappingproxy/object names independently of class mapping enumeration.
 Both preserve native directory binding and retained receivers; unread native
 metadata and other default layouts retain separate contracts.
+
+[O53 property directories](interpreter-property-directories.md) collect pinned
+native names independently of lazy names, documents, abstract flags and accessor
+callbacks. Other default layouts and native metadata retain their own contracts.
