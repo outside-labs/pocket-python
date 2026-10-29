@@ -4361,6 +4361,215 @@
         "stdout": "",
         "error_type": "KeyError"
       }
+    },
+    {
+      "id": "method-directories-native-directory",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nprint(*dir(m))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-native-unsorted-directory",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nprint(*object.__dir__(m))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __call__ __getattribute__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __get__ __reduce__ __func__ __self__ __doc__ __str__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __call__ __getattribute__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __get__ __reduce__ __func__ __self__ __doc__ __str__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-dictionary-replacement",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nf=m.__func__\nf.old=7\na=dir(m)\nf.__dict__={\"fresh\":9}\nb=dir(m)\nprint(\"old\" in a,\"old\" in b,\"fresh\" in b,m.__dict__ is f.__dict__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-native-key-identity",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nkey=\"__fu\"+\"nc__\"\nm.__func__.__dict__={key:7}\nr=dir(m)\nprint([n for n in r if n==\"__func__\"][0] is key,len(r))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-directory-native-priority",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__dir__=lambda:[\"custom\"]\nprint(\"__func__\" in m.__dir__(),\"custom\" in m.__dir__(),m.__func__.__dir__()[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True False custom\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True False custom\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-bound-native-metadata",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nd=m.__dir__\nprint(d.__self__ is m,d.__name__,d.__qualname__,type(d).__name__,len(d()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ method.__dir__ builtin_function_or_method 28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ method.__dir__ builtin_function_or_method 28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-dictionary-property",
+      "source": "def read(self):\n print(\"dictionary\")\n return {\"tag\":7}\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\nprint(\"tag\" in dir(m))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "dictionary\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "dictionary\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-dictionary-attributeerror",
+      "source": "def read(self): raise AttributeError(\"missing\")\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\nprint(len(dir(m)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-dictionary-valueerror",
+      "source": "def read(self): raise ValueError(\"original\")\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\ndir(m)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "ValueError"
+      }
+    },
+    {
+      "id": "method-directories-dictionary-fallback",
+      "source": "def read(self): raise AttributeError(\"missing\")\ndef fallback(self,name):\n print(name)\n return {\"fallback\":7}\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\nCallable.__getattr__=fallback\nprint(\"fallback\" in dir(m))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__dict__\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__dict__\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-non-dictionary-ignored",
+      "source": "class Callable: __dict__=property(lambda self:[7])\nc=Callable()\nm=classmethod(c).__get__(None,object)\nprint(len(dir(m)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-native-merge-collisions",
+      "source": "events=[]\nclass Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other):\n  events.append(other)\n  return True\n def __lt__(self,other): return True\n def __gt__(self,other): return False\nclass C:\n def f(self): return 7\nm=C().f\nk=Key()\nm.__func__.__dict__={k:7}\nr=dir(m)\nprint(r[0] is k,len(r),len(events),*events)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 28 2 __new__ __new__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 28 2 __new__ __new__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-merge-replacement-snapshot",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other):\n  m.__func__.__dict__={\"fresh\":9}\n  return True\n def __lt__(self,other): return True\n def __gt__(self,other): return False\nclass C:\n def f(self): return 7\nm=C().f\nk=Key()\nm.__func__.__dict__={k:7,\"tag\":11}\nr=dir(m)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,\"tag\" in names,\"fresh\" in names,\"fresh\" in m.__dict__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True False True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True False True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "method-directories-merge-attributeerror",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): raise AttributeError(\"original\")\nclass C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={Key():7}\ndir(m)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "method-directories-sort-error",
+      "source": "class Key:\n def __lt__(self,other): raise ValueError(\"original\")\n def __gt__(self,other): raise ValueError(\"original\")\nclass C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={Key():7}\ndir(m)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "ValueError"
+      }
+    },
+    {
+      "id": "method-directories-native-method-directory",
+      "source": "class C: pass\nprint(\"__self__\" in dir(C.mro))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
     }
   ]
 }
