@@ -1,0 +1,628 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-iterator-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "list-sorted-directory",
+      "source": "it=iter([7,9])\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "list-raw-directory",
+      "source": "it=iter([7,9])\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "list-native-binding",
+      "source": "it=iter([7,9])\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ list_iterator.__dir__ True\n"
+    },
+    {
+      "id": "list-preserved-state",
+      "source": "it=iter([7,9])\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "7 True 9 28\n"
+    },
+    {
+      "id": "tuple-sorted-directory",
+      "source": "it=iter((7,9))\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "tuple-raw-directory",
+      "source": "it=iter((7,9))\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "tuple-native-binding",
+      "source": "it=iter((7,9))\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ tuple_iterator.__dir__ True\n"
+    },
+    {
+      "id": "tuple-preserved-state",
+      "source": "it=iter((7,9))\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "7 True 9 28\n"
+    },
+    {
+      "id": "ascii-sorted-directory",
+      "source": "it=iter(\"ab\")\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "ascii-raw-directory",
+      "source": "it=iter(\"ab\")\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "ascii-native-binding",
+      "source": "it=iter(\"ab\")\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ str_ascii_iterator.__dir__ True\n"
+    },
+    {
+      "id": "ascii-preserved-state",
+      "source": "it=iter(\"ab\")\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "a True b 28\n"
+    },
+    {
+      "id": "unicode-sorted-directory",
+      "source": "it=iter(\"\u00e9\ud83d\ude00\")\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "unicode-raw-directory",
+      "source": "it=iter(\"\u00e9\ud83d\ude00\")\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "unicode-native-binding",
+      "source": "it=iter(\"\u00e9\ud83d\ude00\")\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ str_iterator.__dir__ True\n"
+    },
+    {
+      "id": "unicode-preserved-state",
+      "source": "it=iter(\"\u00e9\ud83d\ude00\")\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "\u00e9 True \ud83d\ude00 28\n"
+    },
+    {
+      "id": "dict-sorted-directory",
+      "source": "it=iter({\"key\":7})\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "dict-raw-directory",
+      "source": "it=iter({\"key\":7})\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "dict-native-binding",
+      "source": "it=iter({\"key\":7})\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ dict_keyiterator.__dir__ True\n"
+    },
+    {
+      "id": "dict-preserved-state",
+      "source": "it=iter({\"key\":7})\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "key True None 27\n"
+    },
+    {
+      "id": "range-sorted-directory",
+      "source": "it=iter(range(7,9))\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "range-raw-directory",
+      "source": "it=iter(range(7,9))\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "range-native-binding",
+      "source": "it=iter(range(7,9))\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ range_iterator.__dir__ True\n"
+    },
+    {
+      "id": "range-preserved-state",
+      "source": "it=iter(range(7,9))\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "7 True 8 28\n"
+    },
+    {
+      "id": "longrange-sorted-directory",
+      "source": "it=iter(range(10**40,10**40+2))\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "longrange-raw-directory",
+      "source": "it=iter(range(10**40,10**40+2))\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "longrange-native-binding",
+      "source": "it=iter(range(10**40,10**40+2))\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ longrange_iterator.__dir__ True\n"
+    },
+    {
+      "id": "longrange-preserved-state",
+      "source": "it=iter(range(10**40,10**40+2))\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "10000000000000000000000000000000000000000 True 10000000000000000000000000000000000000001 28\n"
+    },
+    {
+      "id": "set-sorted-directory",
+      "source": "it=iter({7})\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "set-raw-directory",
+      "source": "it=iter({7})\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "set-native-binding",
+      "source": "it=iter({7})\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ set_iterator.__dir__ True\n"
+    },
+    {
+      "id": "set-preserved-state",
+      "source": "it=iter({7})\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "7 True None 27\n"
+    },
+    {
+      "id": "frozenset-sorted-directory",
+      "source": "it=iter(frozenset((7,)))\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "frozenset-raw-directory",
+      "source": "it=iter(frozenset((7,)))\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "frozenset-native-binding",
+      "source": "it=iter(frozenset((7,)))\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ set_iterator.__dir__ True\n"
+    },
+    {
+      "id": "frozenset-preserved-state",
+      "source": "it=iter(frozenset((7,)))\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "7 True None 27\n"
+    },
+    {
+      "id": "bytes-sorted-directory",
+      "source": "it=iter(b\"ab\")\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "bytes-raw-directory",
+      "source": "it=iter(b\"ab\")\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytes-native-binding",
+      "source": "it=iter(b\"ab\")\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ bytes_iterator.__dir__ True\n"
+    },
+    {
+      "id": "bytes-preserved-state",
+      "source": "it=iter(b\"ab\")\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "97 True 98 28\n"
+    },
+    {
+      "id": "bytearray-sorted-directory",
+      "source": "it=iter(bytearray(b\"ab\"))\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "bytearray-raw-directory",
+      "source": "it=iter(bytearray(b\"ab\"))\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytearray-native-binding",
+      "source": "it=iter(bytearray(b\"ab\"))\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ bytearray_iterator.__dir__ True\n"
+    },
+    {
+      "id": "bytearray-preserved-state",
+      "source": "it=iter(bytearray(b\"ab\"))\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "97 True 98 28\n"
+    },
+    {
+      "id": "memory-sorted-directory",
+      "source": "it=iter(memoryview(b\"ab\"))\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "memory-raw-directory",
+      "source": "it=iter(memoryview(b\"ab\"))\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "memory-native-binding",
+      "source": "it=iter(memoryview(b\"ab\"))\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ memory_iterator.__dir__ True\n"
+    },
+    {
+      "id": "memory-preserved-state",
+      "source": "it=iter(memoryview(b\"ab\"))\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "97 True 98 26\n"
+    },
+    {
+      "id": "indexed-sorted-directory",
+      "source": "class Indexed:\n def __getitem__(self,i):\n  if i>=2: raise IndexError\n  return i+7\nit=iter(Indexed())\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "indexed-raw-directory",
+      "source": "class Indexed:\n def __getitem__(self,i):\n  if i>=2: raise IndexError\n  return i+7\nit=iter(Indexed())\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "indexed-native-binding",
+      "source": "class Indexed:\n def __getitem__(self,i):\n  if i>=2: raise IndexError\n  return i+7\nit=iter(Indexed())\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ iterator.__dir__ True\n"
+    },
+    {
+      "id": "indexed-preserved-state",
+      "source": "class Indexed:\n def __getitem__(self,i):\n  if i>=2: raise IndexError\n  return i+7\nit=iter(Indexed())\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "7 True 8 28\n"
+    },
+    {
+      "id": "callable-sorted-directory",
+      "source": "values=iter((7,9,0))\ndef produce(): return next(values)\nit=iter(produce,0)\nprint(*dir(it))\n",
+      "stage": "O56",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "callable-raw-directory",
+      "source": "values=iter((7,9,0))\ndef produce(): return next(values)\nit=iter(produce,0)\nprint(*object.__dir__(it))\n",
+      "stage": "O56",
+      "stdout": "__iter__ __next__ __reduce__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "callable-native-binding",
+      "source": "values=iter((7,9,0))\ndef produce(): return next(values)\nit=iter(produce,0)\nd=object.__dir__.__get__(it)\nprint(d.__self__ is it,d.__name__,d.__qualname__,d()==it.__dir__())\n",
+      "stage": "O56",
+      "stdout": "True __dir__ callable_iterator.__dir__ True\n"
+    },
+    {
+      "id": "callable-preserved-state",
+      "source": "values=iter((7,9,0))\ndef produce(): return next(values)\nit=iter(produce,0)\na=dir(it)\nprint(next(it,None),a==dir(it),next(it,None),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "7 True 9 26\n"
+    },
+    {
+      "id": "fresh-lists",
+      "source": "it=iter([7,9])\na=dir(it)\nb=dir(it)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O56",
+      "stdout": "False False 28\n"
+    },
+    {
+      "id": "fresh-raw-lists",
+      "source": "it=iter([7,9])\na=object.__dir__(it)\nb=it.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O56",
+      "stdout": "False False 28\n"
+    },
+    {
+      "id": "native-getattribute",
+      "source": "it=iter([7,9])\nd=object.__getattribute__(it,\"__dir__\")\nprint(d.__self__ is it,len(d()),next(it))\n",
+      "stage": "O56",
+      "stdout": "True 28 7\n"
+    },
+    {
+      "id": "builtin-getattr",
+      "source": "it=iter([7,9])\nd=getattr(it,\"__dir__\")\nprint(hasattr(it,\"__dir__\"),d.__self__ is it,len(d()))\n",
+      "stage": "O56",
+      "stdout": "True True 28\n"
+    },
+    {
+      "id": "retained-caller",
+      "source": "it=iter([7,9])\nd=it.__dir__\ndel it\nprint(len(d()),next(d.__self__))\n",
+      "stage": "O56",
+      "stdout": "28 7\n"
+    },
+    {
+      "id": "nested-native-callers",
+      "source": "it=iter([7,9])\nd=it.__dir__.__dir__\ndel it\nprint(len(d()),next(d.__self__.__self__))\n",
+      "stage": "O56",
+      "stdout": "30 7\n"
+    },
+    {
+      "id": "exhausted-state",
+      "source": "it=iter([7,9])\na=dir(it)\nnext(it)\nnext(it)\nnext(it,None)\nprint(a==dir(it),len(it.__dir__()),next(it,None))\n",
+      "stage": "O56",
+      "stdout": "True 28 None\n"
+    },
+    {
+      "id": "bound-extra-argument",
+      "source": "it=iter([7,9])\nprint(\"before\")\nit.__dir__(7)\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "bound-keyword",
+      "source": "it=iter([7,9])\nprint(\"before\")\nit.__dir__(unexpected=7)\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "native-extra-argument",
+      "source": "it=iter([7,9])\nprint(\"before\")\nobject.__dir__(it,7)\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "native-keyword",
+      "source": "it=iter([7,9])\nprint(\"before\")\nobject.__dir__(it=it)\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "TypeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "direct-write",
+      "source": "it=iter([7,9])\nprint(\"before\")\nit.__dir__=7\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "direct-delete",
+      "source": "it=iter([7,9])\nprint(\"before\")\ndel it.__dir__\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "builtin-write",
+      "source": "it=iter([7,9])\nprint(\"before\")\nsetattr(it,\"__dir__\",7)\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "builtin-delete",
+      "source": "it=iter([7,9])\nprint(\"before\")\ndelattr(it,\"__dir__\")\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "native-write",
+      "source": "it=iter([7,9])\nprint(\"before\")\nobject.__setattr__(it,\"__dir__\",7)\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "native-delete",
+      "source": "it=iter([7,9])\nprint(\"before\")\nobject.__delattr__(it,\"__dir__\")\n",
+      "stage": "O56",
+      "stdout": "before\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "list-mutation",
+      "source": "items=[7,9]\nit=iter(items)\nnext(it)\nitems[1]=11\nitems.append(13)\nprint(len(dir(it)),next(it),next(it))\n",
+      "stage": "O56",
+      "stdout": "28 11 13\n"
+    },
+    {
+      "id": "dictionary-invalidated",
+      "source": "items={\"a\":7}\nit=iter(items)\nitems[\"b\"]=9\nprint(len(dir(it)))\nnext(it)\n",
+      "stage": "O56",
+      "stdout": "27\n",
+      "error_type": "RuntimeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "set-invalidated",
+      "source": "items={7}\nit=iter(items)\nitems.add(9)\nprint(len(dir(it)))\nnext(it)\n",
+      "stage": "O56",
+      "stdout": "27\n",
+      "error_type": "RuntimeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "released-memory",
+      "source": "view=memoryview(b\"ab\")\nit=iter(view)\nview.release()\nprint(len(dir(it)),len(it.__dir__()))\nnext(it)\n",
+      "stage": "O56",
+      "stdout": "26 26\n",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "indexed-hooks-not-read",
+      "source": "class Indexed:\n def __getattribute__(self,name): raise ValueError(\"never\")\n def __getitem__(self,i): return i+7\nit=iter(Indexed())\nprint(len(dir(it)),next(it))\n",
+      "stage": "O56",
+      "stdout": "28 7\n"
+    },
+    {
+      "id": "callable-not-called",
+      "source": "def produce(): raise ValueError(\"never\")\nit=iter(produce,0)\nprint(len(dir(it)),len(it.__dir__()))\n",
+      "stage": "O56",
+      "stdout": "26 26\n"
+    },
+    {
+      "id": "sentinel-not-compared",
+      "source": "class Sentinel:\n def __eq__(self,other): raise ValueError(\"never\")\n def __hash__(self): raise ValueError(\"never\")\nit=iter(lambda: 7,Sentinel())\nprint(len(dir(it)))\n",
+      "stage": "O56",
+      "stdout": "26\n"
+    },
+    {
+      "id": "source-attributes-not-listed",
+      "source": "class Indexed:\n extra=7\n def __getitem__(self,i): return i\nvalue=Indexed()\nvalue.tag=9\nit=iter(value)\nprint(\"extra\" in dir(it),\"tag\" in dir(it),len(dir(it)))\n",
+      "stage": "O56",
+      "stdout": "False False 28\n"
+    },
+    {
+      "id": "callback-dictionary-not-listed",
+      "source": "def produce(): return 7\nproduce.tag=9\nit=iter(produce,0)\nprint(\"tag\" in dir(it),len(dir(it)))\n",
+      "stage": "O56",
+      "stdout": "False 26\n"
+    },
+    {
+      "id": "cyclic-indexed-retention",
+      "source": "class Indexed:\n def __getitem__(self,i): return i+7\nvalue=Indexed()\nit=iter(value)\nvalue.saved=it\nd=it.__dir__\ndel it\ndel value\ndel Indexed\nprint(len(d()),next(d.__self__))\n",
+      "stage": "O56",
+      "stdout": "28 7\n"
+    },
+    {
+      "id": "cyclic-callable-retention",
+      "source": "class Produce:\n def __call__(self): return 7\nvalue=Produce()\nit=iter(value,0)\nvalue.saved=it\nd=it.__dir__\ndel it\ndel value\ndel Produce\nprint(len(d()),next(d.__self__))\n",
+      "stage": "O56",
+      "stdout": "26 7\n"
+    },
+    {
+      "id": "deferred-reduction",
+      "source": "it=iter([7,9])\nprint(it.__reduce__())\n",
+      "stage": "Future",
+      "stdout": "(<built-in function iter>, ([7, 9],), 0)\n"
+    },
+    {
+      "id": "deferred-state",
+      "source": "it=iter([7,9])\nit.__setstate__(1)\nprint(next(it))\n",
+      "stage": "Future",
+      "stdout": "9\n"
+    },
+    {
+      "id": "user-iterator-directory",
+      "source": "class User:\n def __iter__(self): return self\n def __next__(self): return 7\nprint(len(dir(User())))\n",
+      "stage": "Future",
+      "stdout": "31\n"
+    },
+    {
+      "id": "wrapper-directory",
+      "source": "print(len(dir(staticmethod(lambda: 7))))\n",
+      "stage": "Future",
+      "stdout": "36\n"
+    }
+  ]
+}
