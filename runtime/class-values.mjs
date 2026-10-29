@@ -876,6 +876,20 @@ export class ClassRuntime {
       case "method-wrapper": return NATIVE_WRAPPER_DIRECTORY_KEYS;
       case "property": return PROPERTY_DIRECTORY_KEYS;
       case "mappingproxy": return NAMESPACE_VIEW_DIRECTORY_KEYS;
+      case "generator": return GENERATOR_DIRECTORY_KEYS;
+      case "list_iterator":
+      case "tuple_iterator":
+      case "str_iterator":
+      case "str_ascii_iterator":
+      case "range_iterator":
+      case "longrange_iterator":
+      case "bytes_iterator":
+      case "bytearray_iterator":
+      case "iterator": return ITERATOR_DIRECTORY_KEYS;
+      case "dict_keyiterator":
+      case "set_iterator": return HASH_ITERATOR_DIRECTORY_KEYS;
+      case "memory_iterator": return MEMORY_ITERATOR_DIRECTORY_KEYS;
+      case "callable_iterator": return CALLABLE_ITERATOR_DIRECTORY_KEYS;
       default: return null;
     }
   }
