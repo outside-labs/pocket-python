@@ -8415,6 +8415,539 @@
         "code": "UNSUPPORTED",
         "phase": "execute"
       }
+    },
+    {
+      "id": "callable-type-directories-function-sorted",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(*dir(value))\n",
+      "reference": {
+        "stdout": "__annotate__ __annotations__ __builtins__ __call__ __class__ __closure__ __code__ __defaults__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __globals__ __gt__ __hash__ __init__ __init_subclass__ __kwdefaults__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __type_params__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__annotate__ __annotations__ __builtins__ __call__ __class__ __closure__ __code__ __defaults__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __globals__ __gt__ __hash__ __init__ __init_subclass__ __kwdefaults__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __type_params__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-function-raw",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "reference": {
+        "stdout": "__new__ __repr__ __call__ __get__ __closure__ __globals__ __builtins__ __code__ __defaults__ __kwdefaults__ __annotations__ __annotate__ __dict__ __doc__ __module__ __name__ __qualname__ __type_params__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __call__ __get__ __closure__ __globals__ __builtins__ __code__ __defaults__ __kwdefaults__ __annotations__ __annotate__ __dict__ __doc__ __module__ __name__ __qualname__ __type_params__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-function-binding-metadata",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "reference": {
+        "stdout": "True __dir__ function.__dir__ True False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ function.__dir__ True False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-function-advertised-namespace",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "reference": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-sorted",
+      "classification": "supported",
+      "source": "class A:\n def f(self): return 7\nitem=A().f\nvalue=type(item)\nprint(*dir(value))\n",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-raw",
+      "classification": "supported",
+      "source": "class A:\n def f(self): return 7\nitem=A().f\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __call__ __getattribute__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __get__ __reduce__ __func__ __self__ __doc__ __str__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __call__ __getattribute__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __get__ __reduce__ __func__ __self__ __doc__ __str__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-binding-metadata",
+      "classification": "supported",
+      "source": "class A:\n def f(self): return 7\nitem=A().f\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "reference": {
+        "stdout": "True __dir__ method.__dir__ True False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ method.__dir__ True False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-advertised-namespace",
+      "classification": "supported",
+      "source": "class A:\n def f(self): return 7\nitem=A().f\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "reference": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-descriptor-sorted",
+      "classification": "supported",
+      "source": "item=object.__dir__\nvalue=type(item)\nprint(*dir(value))\n",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-descriptor-raw",
+      "classification": "supported",
+      "source": "item=object.__dir__\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "reference": {
+        "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-descriptor-binding-metadata",
+      "classification": "supported",
+      "source": "item=object.__dir__\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "reference": {
+        "stdout": "True __dir__ method_descriptor.__dir__ True False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ method_descriptor.__dir__ True False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-descriptor-advertised-namespace",
+      "classification": "supported",
+      "source": "item=object.__dir__\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "reference": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-wrapper-descriptor-sorted",
+      "classification": "supported",
+      "source": "item=property.__get__\nvalue=type(item)\nprint(*dir(value))\n",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-wrapper-descriptor-raw",
+      "classification": "supported",
+      "source": "item=property.__get__\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "reference": {
+        "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-wrapper-descriptor-binding-metadata",
+      "classification": "supported",
+      "source": "item=property.__get__\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "reference": {
+        "stdout": "True __dir__ wrapper_descriptor.__dir__ True False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ wrapper_descriptor.__dir__ True False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-wrapper-descriptor-advertised-namespace",
+      "classification": "supported",
+      "source": "item=property.__get__\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "reference": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-builtin-method-sorted",
+      "classification": "supported",
+      "source": "item=type.mro.__get__(int)\nvalue=type(item)\nprint(*dir(value))\n",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-builtin-method-raw",
+      "classification": "supported",
+      "source": "item=type.mro.__get__(int)\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "reference": {
+        "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __module__ __doc__ __name__ __qualname__ __self__ __text_signature__ __new__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __module__ __doc__ __name__ __qualname__ __self__ __text_signature__ __new__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-builtin-method-binding-metadata",
+      "classification": "supported",
+      "source": "item=type.mro.__get__(int)\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "reference": {
+        "stdout": "True __dir__ builtin_function_or_method.__dir__ True False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ builtin_function_or_method.__dir__ True False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-builtin-method-advertised-namespace",
+      "classification": "supported",
+      "source": "item=type.mro.__get__(int)\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "reference": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-wrapper-sorted",
+      "classification": "supported",
+      "source": "item=property(lambda self: 7).__get__\nvalue=type(item)\nprint(*dir(value))\n",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-wrapper-raw",
+      "classification": "supported",
+      "source": "item=property(lambda self: 7).__get__\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "reference": {
+        "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __self__ __objclass__ __name__ __qualname__ __doc__ __text_signature__ __new__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __self__ __objclass__ __name__ __qualname__ __doc__ __text_signature__ __new__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-wrapper-binding-metadata",
+      "classification": "supported",
+      "source": "item=property(lambda self: 7).__get__\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "reference": {
+        "stdout": "True __dir__ method-wrapper.__dir__ True False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ method-wrapper.__dir__ True False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-method-wrapper-advertised-namespace",
+      "classification": "supported",
+      "source": "item=property(lambda self: 7).__get__\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "reference": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-property-sorted",
+      "classification": "supported",
+      "source": "item=property(lambda self: 7)\nvalue=type(item)\nprint(*dir(value))\n",
+      "reference": {
+        "stdout": "__class__ __delattr__ __delete__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __isabstractmethod__ __le__ __lt__ __name__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __set__ __set_name__ __setattr__ __sizeof__ __str__ __subclasshook__ deleter fdel fget fset getter setter\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__class__ __delattr__ __delete__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __isabstractmethod__ __le__ __lt__ __name__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __set__ __set_name__ __setattr__ __sizeof__ __str__ __subclasshook__ deleter fdel fget fset getter setter\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-property-raw",
+      "classification": "supported",
+      "source": "item=property(lambda self: 7)\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "reference": {
+        "stdout": "__new__ __get__ __set__ __delete__ __init__ getter setter deleter __set_name__ fget fset fdel __doc__ __name__ __isabstractmethod__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __get__ __set__ __delete__ __init__ getter setter deleter __set_name__ fget fset fdel __doc__ __name__ __isabstractmethod__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-property-binding-metadata",
+      "classification": "supported",
+      "source": "item=property(lambda self: 7)\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "reference": {
+        "stdout": "True __dir__ property.__dir__ True False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ property.__dir__ True False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-property-advertised-namespace",
+      "classification": "supported",
+      "source": "item=property(lambda self: 7)\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "reference": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-mappingproxy-sorted",
+      "classification": "supported",
+      "source": "class A: marker=7\nitem=A.__dict__\nvalue=type(item)\nprint(*dir(value))\n",
+      "reference": {
+        "stdout": "__class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __ior__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __reduce__ __reduce_ex__ __repr__ __reversed__ __ror__ __setattr__ __sizeof__ __str__ __subclasshook__ copy get items keys values\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __ior__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __reduce__ __reduce_ex__ __repr__ __reversed__ __ror__ __setattr__ __sizeof__ __str__ __subclasshook__ copy get items keys values\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-mappingproxy-raw",
+      "classification": "supported",
+      "source": "class A: marker=7\nitem=A.__dict__\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __or__ __ror__ __ior__ __len__ __getitem__ __contains__ get keys values items copy __class_getitem__ __reversed__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __or__ __ror__ __ior__ __len__ __getitem__ __contains__ get keys values items copy __class_getitem__ __reversed__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-mappingproxy-binding-metadata",
+      "classification": "supported",
+      "source": "class A: marker=7\nitem=A.__dict__\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "reference": {
+        "stdout": "True __dir__ mappingproxy.__dir__ True False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ mappingproxy.__dir__ True False False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-mappingproxy-advertised-namespace",
+      "classification": "supported",
+      "source": "class A: marker=7\nitem=A.__dict__\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "reference": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "saved False True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-retained-native-chain",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nd=type.__dir__.__get__(value).__dir__\nprint(len(d()),d.__self__.__self__ is value,d.__self__()==type.__dir__(value))\n",
+      "reference": {
+        "stdout": "30 True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "30 True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-advertised-first-key-identity",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nkey=\"__\"+\"doc__\"\nclass Advertised:\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.__dict__[key]=7\nnames=object.__dir__(obj)\nprint(names[0] is key,names[0],len(names)==len(dir(value)))\n",
+      "reference": {
+        "stdout": "True __doc__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __doc__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "callable-type-directories-wrong-receiver",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(\"before\")\ntype.__dir__(7)\n",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "TypeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "TypeError"
+      }
+    },
+    {
+      "id": "callable-type-directories-bound-extra-arguments",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(\"before\")\ntype.__dir__.__get__(value)(7)\n",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "TypeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "TypeError"
+      }
+    },
+    {
+      "id": "callable-type-directories-immutable-type-set",
+      "classification": "supported",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(\"before\")\nsetattr(value,\"added\",7)\n",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "TypeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "TypeError"
+      }
+    },
+    {
+      "id": "callable-type-directories-native-type-mapping",
+      "classification": "deferred",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(len(value.__dict__))\n",
+      "reference": {
+        "stdout": "18\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "callable-type-directories-object-directory-of-type",
+      "classification": "deferred",
+      "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(len(object.__dir__(value)))\n",
+      "reference": {
+        "stdout": "49\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "callable-type-directories-custom-metaclass-namespace",
+      "classification": "deferred",
+      "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint(len(type.__dir__(A)))\n",
+      "reference": {
+        "stdout": "29\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "callable-type-directories-advertised-collision-error",
+      "classification": "supported",
+      "source": "class Key:\n def __hash__(self): return hash(\"__call__\")\n def __eq__(self,other):\n  raise ValueError(\"collision\")\nkey=Key()\nclass A:\n @property\n def __class__(self): return type(object.__dir__)\na=A()\na.__dict__[key]=7\nprint(\"before\")\nobject.__dir__(a)\n",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "ValueError"
+      }
     }
   ]
 }

@@ -29,3 +29,11 @@ composed resource observations remain required. No dependency, host grant,
 release, publication or deployment is included.
 
 Reference: pinned [native type directory and recursive namespace merging](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+The 79-case matrix and compatibility probes qualify the finite O65 contract.
+The [example](../examples/interpreter_callable_type_directories.py) composes native binding,
+independent namespaces and lazy execution. Installed offline acceptance includes
+native errors, retained caller Stop/Restart and class-to-core profile updates.
+The [payload record](measurements/2026-10-29-callable-type-directories.json)
+verifies the complete example asset closure. These are finite semantic/source/payload
+observations.
