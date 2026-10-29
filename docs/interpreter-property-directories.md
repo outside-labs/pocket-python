@@ -2,7 +2,8 @@
 
 O53 continues #123 and #33 against pinned CPython 3.14.7. The independently
 authored `property-directories.json` matrix separates reference observations
-from engine adoption.
+from engine adoption. O53 is implemented through the existing charged native
+directory merge and owned sorting machinery.
 
 `dir(property_value)` returns a fresh sorted list of the pinned property and
 object namespace names. `object.__dir__(property_value)` and the native bound

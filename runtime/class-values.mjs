@@ -83,6 +83,11 @@ const NAMESPACE_VIEW_DIRECTORY_KEYS = Object.freeze([
   "copy", "__class_getitem__", "__reversed__", "__doc__",
   ...OBJECT_DIRECTORY_KEYS
 ]);
+const PROPERTY_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__get__", "__set__", "__delete__", "__init__", "getter", "setter",
+  "deleter", "__set_name__", "fget", "fset", "fdel", "__doc__", "__name__",
+  "__isabstractmethod__", ...OBJECT_DIRECTORY_KEYS
+]);
 
 export class ClassRuntime {
   constructor({memory = null, charge = () => {}, fail = null, values = null, builtin = null} = {}) {
@@ -342,6 +347,7 @@ export class ClassRuntime {
       this.fail("AttributeError", "Builtin has no adopted attribute '" + name + "'.");
     }
     if (receiver instanceof PropertyValue) {
+      if (name === "__dir__") return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
       if (name === "__class__") return value(this.builtin("property"));
       if (name === "__doc__") {
         if (receiver.documentation === undefined && receiver.fget !== null)
@@ -542,6 +548,7 @@ export class ClassRuntime {
   }
   write(receiver, name, value, remove = false, key = null) {
     this.key(name); this.touch(receiver);
+    if (name === "__dir__" && this.hasFixedDirectory(receiver)) this.fail("AttributeError", "Native directory attributes are read-only.");
     if (receiver instanceof ClassNamespaceValue) this.fail("AttributeError", "Class namespace view attributes are read-only.");
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
@@ -613,9 +620,11 @@ export class ClassRuntime {
     if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
+  hasFixedDirectory(receiver) { return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue; }
   directoryNames(receiver) {
     if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
     if (receiver instanceof ClassNamespaceValue) return NAMESPACE_VIEW_DIRECTORY_KEYS;
+    if (receiver instanceof PropertyValue) return PROPERTY_DIRECTORY_KEYS;
     if (this.isPythonMethod(receiver)) return METHOD_DIRECTORY_KEYS;
     throw new TypeError("Invalid native directory receiver.");
   }
