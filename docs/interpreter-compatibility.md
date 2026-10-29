@@ -28,6 +28,11 @@ root/ordinary instances, optional dictionary/class reads, exact key identities a
 live inherited source/dynamic class namespace merging. Further custom metaclass
 namespace reflection and non-class advertised namespaces retain explicit refusals.
 
+The [O62 class directory contract](interpreter-class-directories.md) adds ordinary
+source/dynamic class directories and native type.__dir__ binding, preserving live
+depth-first base merging and retained class graphs. Further native type layouts
+and custom metaclass namespace reflection remain separate.
+
 The [O21/O22 comprehension contract](interpreter-comprehension-reflection.md) adds optimized enclosing and isolated module/class comprehension snapshots, with nested target masking, captured-cell ordering and restored bindings.
 
 ## Evidence and interpretation
