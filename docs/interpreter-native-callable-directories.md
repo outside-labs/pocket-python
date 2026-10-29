@@ -41,3 +41,21 @@ No dependency, host grant, release, publication or deployment is included.
 References: [pinned descriptor layouts](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c),
 [native methods](https://github.com/python/cpython/blob/v3.14.7/Objects/methodobject.c)
 and [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 48 pinned cases pass six Node/Chromium drain, instruction-boundary and
+parked drivers: 288 observations with 288 zero logical teardowns. Reports verify
+348 runtime/driver hashes. All 57 feature units, 466 adjacent units, the full
+2,715-test Node suite and 17 affected Python checks pass. Eight composed resource
+observations remain unchanged. The final inventory has 393 passing probes per
+target.
+
+The [native callable console](../examples/interpreter_native_callable_directories.py)
+composes actual native layouts, retained cyclic properties/live class views and
+lazy generators. Combined installed-wheel offline acceptance passes 1,932
+programs, 112 groups and 193 Stop/Restart cycles. Its
+[payload record](measurements/2026-10-29-native-callable-directories.json) verifies
+all 38 files at 721,486 bytes. Both new matrices provide 510 source observations
+with 510 zero logical teardowns; adding the affected method/view matrices gives
+984 observations. These are finite semantic/source/payload observations.
+Broader reflection remains under #123/#33; native async/browser adapters remain
+under #34.

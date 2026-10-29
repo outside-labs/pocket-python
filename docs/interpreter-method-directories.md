@@ -10,7 +10,9 @@ callable's current dictionary with the pinned method and object namespaces.
 It lists method names rather than function names: fallback metadata such as
 `__name__` need not appear. Listing a native name does not adopt its API.
 Class methods use the same contract; static methods returning functions retain
-O50. Native builtin methods and other receiver layouts remain separate.
+O50. Adopted native bound callables use the separate
+[O54 contract](interpreter-native-callable-directories.md); other receiver
+layouts retain their own boundaries.
 
 Collection reads `method.__dict__` through ordinary callable fallback. A missing
 dictionary or a non-dictionary result contributes no keys. Only AttributeError

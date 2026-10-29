@@ -53,3 +53,8 @@ under
 The related method corpus also passes all six drivers against this engine.
 Together both matrices provide 474 observations and 474 zero logical teardowns;
 source/corpus hashes retain the exact final directory implementation.
+
+The formerly deferred native `view.get` directory case is adopted by the
+separate [O54 contract](interpreter-native-callable-directories.md). The current
+matrix retains O52 namespace-view behavior alongside that native callable case;
+mapping enumeration and unread native APIs remain separate.
