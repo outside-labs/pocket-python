@@ -1,0 +1,636 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-buffer-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "set-sorted-directory",
+      "source": "value={7}\nprint(*dir(value))\n",
+      "stage": "O60",
+      "stdout": "__and__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __iand__ __init__ __init_subclass__ __ior__ __isub__ __iter__ __ixor__ __le__ __len__ __lt__ __ne__ __new__ __or__ __rand__ __reduce__ __reduce_ex__ __repr__ __ror__ __rsub__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __xor__ add clear copy difference difference_update discard intersection intersection_update isdisjoint issubset issuperset pop remove symmetric_difference symmetric_difference_update union update\n"
+    },
+    {
+      "id": "set-raw-directory",
+      "source": "value={7}\nprint(*object.__dir__(value))\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __isub__ __iand__ __ixor__ __ior__ __len__ __contains__ add clear copy discard difference difference_update intersection intersection_update isdisjoint issubset issuperset pop __reduce__ remove __sizeof__ symmetric_difference symmetric_difference_update union update __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "set-bound-directory",
+      "source": "value={7}\nprint(*value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __isub__ __iand__ __ixor__ __ior__ __len__ __contains__ add clear copy discard difference difference_update intersection intersection_update isdisjoint issubset issuperset pop __reduce__ remove __sizeof__ symmetric_difference symmetric_difference_update union update __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "set-fresh-lists",
+      "source": "value={7}\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 57 True\n"
+    },
+    {
+      "id": "set-fresh-raw-lists",
+      "source": "value={7}\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 57\n"
+    },
+    {
+      "id": "set-native-binding",
+      "source": "value={7}\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "True __dir__ set.__dir__ True\n"
+    },
+    {
+      "id": "set-native-getattribute",
+      "source": "value={7}\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True 57\n"
+    },
+    {
+      "id": "set-builtin-getattr",
+      "source": "value={7}\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True True 57\n"
+    },
+    {
+      "id": "set-retained-caller",
+      "source": "value={7}\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "stage": "O60",
+      "stdout": "57 57\n"
+    },
+    {
+      "id": "set-nested-callers",
+      "source": "value={7}\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O60",
+      "stdout": "30 57\n"
+    },
+    {
+      "id": "set-write",
+      "source": "value={7}\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "set-native-write",
+      "source": "value={7}\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "set-delete",
+      "source": "value={7}\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "set-native-delete",
+      "source": "value={7}\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "set-extra-argument",
+      "source": "value={7}\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-keyword",
+      "source": "value={7}\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "frozenset-sorted-directory",
+      "source": "value=frozenset((7,))\nprint(*dir(value))\n",
+      "stage": "O60",
+      "stdout": "__and__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __rand__ __reduce__ __reduce_ex__ __repr__ __ror__ __rsub__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __xor__ copy difference intersection isdisjoint issubset issuperset symmetric_difference union\n"
+    },
+    {
+      "id": "frozenset-raw-directory",
+      "source": "value=frozenset((7,))\nprint(*object.__dir__(value))\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ copy difference intersection isdisjoint issubset issuperset __reduce__ __sizeof__ symmetric_difference union __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "frozenset-bound-directory",
+      "source": "value=frozenset((7,))\nprint(*value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ copy difference intersection isdisjoint issubset issuperset __reduce__ __sizeof__ symmetric_difference union __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "frozenset-fresh-lists",
+      "source": "value=frozenset((7,))\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 44 True\n"
+    },
+    {
+      "id": "frozenset-fresh-raw-lists",
+      "source": "value=frozenset((7,))\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 44\n"
+    },
+    {
+      "id": "frozenset-native-binding",
+      "source": "value=frozenset((7,))\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "True __dir__ frozenset.__dir__ True\n"
+    },
+    {
+      "id": "frozenset-native-getattribute",
+      "source": "value=frozenset((7,))\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True 44\n"
+    },
+    {
+      "id": "frozenset-builtin-getattr",
+      "source": "value=frozenset((7,))\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True True 44\n"
+    },
+    {
+      "id": "frozenset-retained-caller",
+      "source": "value=frozenset((7,))\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "stage": "O60",
+      "stdout": "44 44\n"
+    },
+    {
+      "id": "frozenset-nested-callers",
+      "source": "value=frozenset((7,))\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O60",
+      "stdout": "30 44\n"
+    },
+    {
+      "id": "frozenset-write",
+      "source": "value=frozenset((7,))\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frozenset-native-write",
+      "source": "value=frozenset((7,))\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frozenset-delete",
+      "source": "value=frozenset((7,))\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frozenset-native-delete",
+      "source": "value=frozenset((7,))\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frozenset-extra-argument",
+      "source": "value=frozenset((7,))\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "frozenset-keyword",
+      "source": "value=frozenset((7,))\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-sorted-directory",
+      "source": "value=b\"abc\"\nprint(*dir(value))\n",
+      "stage": "O60",
+      "stdout": "__add__ __buffer__ __bytes__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition removeprefix removesuffix replace rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n"
+    },
+    {
+      "id": "bytes-raw-directory",
+      "source": "value=b\"abc\"\nprint(*object.__dir__(value))\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ __bytes__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition replace removeprefix removesuffix rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytes-bound-directory",
+      "source": "value=b\"abc\"\nprint(*value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ __bytes__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition replace removeprefix removesuffix rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytes-fresh-lists",
+      "source": "value=b\"abc\"\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 78 True\n"
+    },
+    {
+      "id": "bytes-fresh-raw-lists",
+      "source": "value=b\"abc\"\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 78\n"
+    },
+    {
+      "id": "bytes-native-binding",
+      "source": "value=b\"abc\"\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "True __dir__ bytes.__dir__ True\n"
+    },
+    {
+      "id": "bytes-native-getattribute",
+      "source": "value=b\"abc\"\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True 78\n"
+    },
+    {
+      "id": "bytes-builtin-getattr",
+      "source": "value=b\"abc\"\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True True 78\n"
+    },
+    {
+      "id": "bytes-retained-caller",
+      "source": "value=b\"abc\"\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "stage": "O60",
+      "stdout": "78 78\n"
+    },
+    {
+      "id": "bytes-nested-callers",
+      "source": "value=b\"abc\"\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O60",
+      "stdout": "30 78\n"
+    },
+    {
+      "id": "bytes-write",
+      "source": "value=b\"abc\"\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytes-native-write",
+      "source": "value=b\"abc\"\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytes-delete",
+      "source": "value=b\"abc\"\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytes-native-delete",
+      "source": "value=b\"abc\"\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytes-extra-argument",
+      "source": "value=b\"abc\"\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-keyword",
+      "source": "value=b\"abc\"\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytearray-sorted-directory",
+      "source": "value=bytearray(b\"abc\")\nprint(*dir(value))\n",
+      "stage": "O60",
+      "stdout": "__add__ __alloc__ __buffer__ __class__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __iadd__ __imul__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __release_buffer__ __repr__ __rmod__ __rmul__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove removeprefix removesuffix replace resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n"
+    },
+    {
+      "id": "bytearray-raw-directory",
+      "source": "value=bytearray(b\"abc\")\nprint(*object.__dir__(value))\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __buffer__ __release_buffer__ __mod__ __rmod__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __alloc__ __reduce__ __reduce_ex__ __sizeof__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove replace removeprefix removesuffix resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __hash__ __getattribute__ __setattr__ __delattr__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytearray-bound-directory",
+      "source": "value=bytearray(b\"abc\")\nprint(*value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __buffer__ __release_buffer__ __mod__ __rmod__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __alloc__ __reduce__ __reduce_ex__ __sizeof__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove replace removeprefix removesuffix resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __hash__ __getattribute__ __setattr__ __delattr__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n"
+    },
+    {
+      "id": "bytearray-fresh-lists",
+      "source": "value=bytearray(b\"abc\")\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 91 True\n"
+    },
+    {
+      "id": "bytearray-fresh-raw-lists",
+      "source": "value=bytearray(b\"abc\")\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 91\n"
+    },
+    {
+      "id": "bytearray-native-binding",
+      "source": "value=bytearray(b\"abc\")\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "True __dir__ bytearray.__dir__ True\n"
+    },
+    {
+      "id": "bytearray-native-getattribute",
+      "source": "value=bytearray(b\"abc\")\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True 91\n"
+    },
+    {
+      "id": "bytearray-builtin-getattr",
+      "source": "value=bytearray(b\"abc\")\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True True 91\n"
+    },
+    {
+      "id": "bytearray-retained-caller",
+      "source": "value=bytearray(b\"abc\")\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "stage": "O60",
+      "stdout": "91 91\n"
+    },
+    {
+      "id": "bytearray-nested-callers",
+      "source": "value=bytearray(b\"abc\")\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O60",
+      "stdout": "30 91\n"
+    },
+    {
+      "id": "bytearray-write",
+      "source": "value=bytearray(b\"abc\")\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytearray-native-write",
+      "source": "value=bytearray(b\"abc\")\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytearray-delete",
+      "source": "value=bytearray(b\"abc\")\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytearray-native-delete",
+      "source": "value=bytearray(b\"abc\")\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytearray-extra-argument",
+      "source": "value=bytearray(b\"abc\")\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytearray-keyword",
+      "source": "value=bytearray(b\"abc\")\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "memoryview-sorted-directory",
+      "source": "value=memoryview(b\"abc\")\nprint(*dir(value))\n",
+      "stage": "O60",
+      "stdout": "__buffer__ __class__ __class_getitem__ __delattr__ __delitem__ __dir__ __doc__ __enter__ __eq__ __exit__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __release_buffer__ __repr__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ _from_flags c_contiguous cast contiguous count f_contiguous format hex index itemsize nbytes ndim obj readonly release shape strides suboffsets tobytes tolist toreadonly\n"
+    },
+    {
+      "id": "memoryview-raw-directory",
+      "source": "value=memoryview(b\"abc\")\nprint(*object.__dir__(value))\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __release_buffer__ __len__ __getitem__ __setitem__ __delitem__ release tobytes hex tolist cast toreadonly _from_flags count index __enter__ __exit__ __class_getitem__ obj nbytes readonly itemsize format ndim shape strides suboffsets c_contiguous f_contiguous contiguous __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "memoryview-bound-directory",
+      "source": "value=memoryview(b\"abc\")\nprint(*value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __release_buffer__ __len__ __getitem__ __setitem__ __delitem__ release tobytes hex tolist cast toreadonly _from_flags count index __enter__ __exit__ __class_getitem__ obj nbytes readonly itemsize format ndim shape strides suboffsets c_contiguous f_contiguous contiguous __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "memoryview-fresh-lists",
+      "source": "value=memoryview(b\"abc\")\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 55 True\n"
+    },
+    {
+      "id": "memoryview-fresh-raw-lists",
+      "source": "value=memoryview(b\"abc\")\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O60",
+      "stdout": "False False 55\n"
+    },
+    {
+      "id": "memoryview-native-binding",
+      "source": "value=memoryview(b\"abc\")\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O60",
+      "stdout": "True __dir__ memoryview.__dir__ True\n"
+    },
+    {
+      "id": "memoryview-native-getattribute",
+      "source": "value=memoryview(b\"abc\")\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True 55\n"
+    },
+    {
+      "id": "memoryview-builtin-getattr",
+      "source": "value=memoryview(b\"abc\")\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O60",
+      "stdout": "True True 55\n"
+    },
+    {
+      "id": "memoryview-retained-caller",
+      "source": "value=memoryview(b\"abc\")\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "stage": "O60",
+      "stdout": "55 55\n"
+    },
+    {
+      "id": "memoryview-nested-callers",
+      "source": "value=memoryview(b\"abc\")\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O60",
+      "stdout": "30 55\n"
+    },
+    {
+      "id": "memoryview-write",
+      "source": "value=memoryview(b\"abc\")\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "memoryview-native-write",
+      "source": "value=memoryview(b\"abc\")\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "memoryview-delete",
+      "source": "value=memoryview(b\"abc\")\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "memoryview-native-delete",
+      "source": "value=memoryview(b\"abc\")\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "memoryview-extra-argument",
+      "source": "value=memoryview(b\"abc\")\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "memoryview-keyword",
+      "source": "value=memoryview(b\"abc\")\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "empty-layouts",
+      "source": "print(*(len(dir(value)) for value in (set(),frozenset(),b\"\",bytearray(),memoryview(b\"\"))))\n",
+      "stage": "O60",
+      "stdout": "57 44 78 91 55\n"
+    },
+    {
+      "id": "set-content-hooks-isolated",
+      "source": "class Item:\n def __hash__(self): return 7\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\n def __dir__(self): raise RuntimeError(\"directory\")\nitem=Item()\nvalues=(set((item,)),frozenset((item,)))\ndef forbidden(self): raise RuntimeError(\"rehash\")\nItem.__hash__=forbidden\nprint(*(len(dir(value)) for value in values))\nprint(*(len(value.__dir__()) for value in values))\n",
+      "stage": "O60",
+      "stdout": "57 44\n57 44\n"
+    },
+    {
+      "id": "set-key-cycle-retained",
+      "source": "class Item:\n def __hash__(self): return 7\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\n def __dir__(self): raise RuntimeError(\"directory\")\nitem=Item()\nvalue=set((item,))\nitem.saved=value\nd=value.__dir__\ndel value\ndel item\ndel Item\nprint(len(d()),next(iter(d.__self__)).saved is d.__self__)\n",
+      "stage": "O60",
+      "stdout": "57 True\n"
+    },
+    {
+      "id": "frozen-key-cycle-retained",
+      "source": "class Item:\n def __hash__(self): return 7\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\n def __dir__(self): raise RuntimeError(\"directory\")\nitem=Item()\nvalue=frozenset((item,))\nitem.saved=value\nd=value.__dir__\ndel value\ndel item\ndel Item\nprint(len(d()),next(iter(d.__self__)).saved is d.__self__)\n",
+      "stage": "O60",
+      "stdout": "44 True\n"
+    },
+    {
+      "id": "set-mutation-preserves-directory",
+      "source": "value={7}\na=dir(value)\nvalue.add(9)\nprint(a==dir(value),len(value),len(value.__dir__()))\n",
+      "stage": "O60",
+      "stdout": "True 2 57\n"
+    },
+    {
+      "id": "set-iterator-not-advanced",
+      "source": "value={7}\nit=iter(value)\nprint(len(dir(value)),len(value.__dir__()),next(it))\n",
+      "stage": "O60",
+      "stdout": "57 57 7\n"
+    },
+    {
+      "id": "set-iterator-invalidation-preserved",
+      "source": "value={7}\nit=iter(value)\nvalue.add(9)\ndir(value)\nprint(\"before\")\nnext(it)\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "bytearray-mutated-alias",
+      "source": "value=bytearray(b\"abc\")\nalias=value\na=dir(value)\nvalue[0]=90\nprint(a==dir(alias),alias[0],len(value.__dir__()))\n",
+      "stage": "O60",
+      "stdout": "True 90 91\n"
+    },
+    {
+      "id": "binary-iterator-not-advanced",
+      "source": "value=b\"abc\"\nit=iter(value)\nprint(next(it),len(dir(value)),len(value.__dir__()),next(it))\n",
+      "stage": "O60",
+      "stdout": "97 78 78 98\n"
+    },
+    {
+      "id": "mutable-view-alias",
+      "source": "storage=bytearray(b\"abcd\")\nvalue=memoryview(storage)[::-2]\na=dir(value)\nvalue[0]=90\nprint(a==dir(value),value[0],storage[3],value.strides[0],len(value.__dir__()))\n",
+      "stage": "O60",
+      "stdout": "True 90 90 -2 55\n"
+    },
+    {
+      "id": "readonly-view-layout",
+      "source": "value=memoryview(bytearray(b\"abc\")).toreadonly()\nprint(len(dir(value)),len(value.__dir__()),value.readonly)\n",
+      "stage": "O60",
+      "stdout": "55 55 True\n"
+    },
+    {
+      "id": "released-view-directories",
+      "source": "value=memoryview(b\"abc\")\na=dir(value)\nd=value.__dir__\nvalue.release()\nprint(a==dir(value),len(d()),len(value.__dir__()),d.__self__ is value)\n",
+      "stage": "O60",
+      "stdout": "True 55 55 True\n"
+    },
+    {
+      "id": "released-view-data-still-errors",
+      "source": "value=memoryview(b\"abc\")\nvalue.release()\ndir(value)\nprint(\"before\")\nvalue[0]\n",
+      "stage": "O60",
+      "stdout": "before\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "release-parent-retains-independent-child",
+      "source": "storage=bytearray(b\"abcd\")\nparent=memoryview(storage)\nvalue=parent[::-1]\nd=value.__dir__\nparent.release()\ndel parent\ndel value\ndel storage\nprint(len(d()),d.__self__.tobytes()==b\"dcba\")\n",
+      "stage": "O60",
+      "stdout": "55 True\n"
+    },
+    {
+      "id": "cross-layout-native-rebinding",
+      "source": "a=set()\nb=memoryview(b\"a\")\nd=object.__dir__.__get__(a)\ne=object.__dir__.__get__(b,type(a))\nprint(d.__self__ is a,e.__self__ is b,len(d()),len(e()),d.__qualname__,e.__qualname__)\n",
+      "stage": "O60",
+      "stdout": "True True 57 55 set.__dir__ memoryview.__dir__\n"
+    },
+    {
+      "id": "lazy-generators",
+      "source": "values=(set(),frozenset(),b\"abc\",bytearray(b\"abc\"),memoryview(b\"abc\"))\nprint(*(len(dir(value)) for value in values))\n",
+      "stage": "O60",
+      "stdout": "57 44 78 91 55\n"
+    },
+    {
+      "id": "unread-bytes-reduction",
+      "source": "b\"abc\".__reduce__()\n",
+      "stage": "Future",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unread-view-buffer",
+      "source": "memoryview(b\"abc\").__buffer__\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "other-default-directory",
+      "source": "dir(classmethod(lambda cls:7))\n",
+      "stage": "Future",
+      "stdout": ""
+    }
+  ]
+}
