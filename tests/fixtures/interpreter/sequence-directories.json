@@ -279,7 +279,7 @@
     },
     {
       "id": "other-default-directory",
-      "source": "dir(())\n",
+      "source": "dir(staticmethod(lambda:7))\n",
       "stage": "Future",
       "stdout": ""
     }

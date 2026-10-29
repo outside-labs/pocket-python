@@ -48,6 +48,47 @@ const OBJECT_DIRECTORY_KEYS = Object.freeze([
   "__class__",
   "__doc__"
 ]);
+const STR_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__str__", "__lt__", "__le__",
+  "__eq__", "__ne__", "__gt__", "__ge__", "__iter__", "__mod__",
+  "__rmod__", "__len__", "__getitem__", "__add__", "__mul__", "__rmul__",
+  "__contains__", "encode", "replace", "split", "rsplit", "join",
+  "capitalize", "casefold", "title", "center", "count", "expandtabs",
+  "find", "partition", "index", "ljust", "lower", "lstrip",
+  "rfind", "rindex", "rjust", "rstrip", "rpartition", "splitlines",
+  "strip", "swapcase", "translate", "upper", "startswith", "endswith",
+  "removeprefix", "removesuffix", "isascii", "islower", "isupper", "istitle",
+  "isspace", "isdecimal", "isdigit", "isnumeric", "isalpha", "isalnum",
+  "isidentifier", "isprintable", "zfill", "format", "format_map", "__format__",
+  "maketrans", "__sizeof__", "__getnewargs__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const LIST_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__init__", "__len__",
+  "__getitem__", "__setitem__", "__delitem__", "__add__", "__mul__", "__rmul__",
+  "__contains__", "__iadd__", "__imul__", "__reversed__", "__sizeof__", "clear",
+  "copy", "append", "insert", "extend", "pop", "remove",
+  "index", "count", "reverse", "sort", "__class_getitem__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const TUPLE_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__len__", "__getitem__",
+  "__add__", "__mul__", "__rmul__", "__contains__", "__getnewargs__", "index",
+  "count", "__class_getitem__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const DICT_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__init__", "__or__",
+  "__ror__", "__ior__", "__len__", "__getitem__", "__setitem__", "__delitem__",
+  "__contains__", "__sizeof__", "get", "setdefault", "pop", "popitem",
+  "keys", "items", "values", "update", "fromkeys", "clear",
+  "copy", "__reversed__", "__class_getitem__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const CONTAINER_DIRECTORY_KEYS = Object.freeze({str: STR_DIRECTORY_KEYS, list: LIST_DIRECTORY_KEYS, tuple: TUPLE_DIRECTORY_KEYS, dict: DICT_DIRECTORY_KEYS});
 const NONE_DIRECTORY_KEYS = Object.freeze([
   "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
   "__ne__", "__gt__", "__ge__", "__bool__", "__doc__",
@@ -736,12 +777,17 @@ export class ClassRuntime {
     if (this.values.isComplex(receiver)) return COMPLEX_DIRECTORY_KEYS;
     return null;
   }
+  containerDirectoryNames(receiver) {
+    return CONTAINER_DIRECTORY_KEYS[this.values.containerDirectoryType(receiver)] ?? null;
+  }
   hasFixedDirectory(receiver) {
     return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
       receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind) ||
-      this.values.isRange(receiver) || this.values.isSlice(receiver) || this.numericDirectoryNames(receiver) !== null || this.nativeCallableDirectoryKind(receiver) !== null;
+      this.values.isRange(receiver) || this.values.isSlice(receiver) || this.containerDirectoryNames(receiver) !== null || this.numericDirectoryNames(receiver) !== null || this.nativeCallableDirectoryKind(receiver) !== null;
   }
   directoryNames(receiver) {
+    const container = this.containerDirectoryNames(receiver);
+    if (container !== null) return container;
     const numeric = this.numericDirectoryNames(receiver);
     if (numeric !== null) return numeric;
     if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
