@@ -19,14 +19,14 @@
     },
     {
       "id": "unicode-values",
-      "source": "text=\"A\ud83d\ude00e\u0301\"\nprint(len(text),text[1],text[::-1],\"\ud83d\ude00\" in text)\n",
+      "source": "text=\"A😀é\"\nprint(len(text),text[1],text[::-1],\"😀\" in text)\n",
       "classification": "supported",
       "reference": {
-        "stdout": "4 \ud83d\ude00 \u0301e\ud83d\ude00A True\n",
+        "stdout": "4 😀 ́e😀A True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "4 \ud83d\ude00 \u0301e\ud83d\ude00A True\n",
+        "stdout": "4 😀 ́e😀A True\n",
         "error_type": null
       }
     },
@@ -71,7 +71,7 @@
     },
     {
       "id": "builtin-forms",
-      "source": "print(bool(),bool([]),len(\"\ud83d\ude00\"),next(iter([7])),isinstance(\"x\",str))\n",
+      "source": "print(bool(),bool([]),len(\"😀\"),next(iter([7])),isinstance(\"x\",str))\n",
       "classification": "supported",
       "reference": {
         "stdout": "False False 1 7 True\n",
@@ -994,7 +994,7 @@
     },
     {
       "id": "builtin-float",
-      "source": "a=float(\"\u0661.\u0662\u0665\")\nprint(a==1.25,a is float(a),isinstance(a,float))\n",
+      "source": "a=float(\"١.٢٥\")\nprint(a==1.25,a is float(a),isinstance(a,float))\n",
       "classification": "supported",
       "reference": {
         "stdout": "True True True\n",
@@ -1349,7 +1349,7 @@
     },
     {
       "id": "builtin-ord",
-      "source": "print(ord(\"\u00e9\"))\n",
+      "source": "print(ord(\"é\"))\n",
       "classification": "supported",
       "reference": {
         "stdout": "233\n",
@@ -1820,7 +1820,7 @@
     },
     {
       "id": "sequence-repetition-aliases",
-      "source": "item=[7]\na=[item]*3\nprint(a[0] is a[2],len(2*(1,)),len(\"\ud83d\ude00\"*3))\n",
+      "source": "item=[7]\na=[item]*3\nprint(a[0] is a[2],len(2*(1,)),len(\"😀\"*3))\n",
       "classification": "supported",
       "reference": {
         "stdout": "True 2 3\n",
@@ -3081,14 +3081,14 @@
     },
     {
       "id": "function-metadata-__name__-text-4",
-      "source": "def f(): return 7\nx='\u03bb\ud83d\ude00'\nf.__name__=x\nprint(f.__name__ is x,f(),f.__name__,f.__qualname__)\n",
+      "source": "def f(): return 7\nx='λ😀'\nf.__name__=x\nprint(f.__name__ is x,f(),f.__name__,f.__qualname__)\n",
       "classification": "supported",
       "reference": {
-        "stdout": "True 7 \u03bb\ud83d\ude00 f\n",
+        "stdout": "True 7 λ😀 f\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "True 7 \u03bb\ud83d\ude00 f\n",
+        "stdout": "True 7 λ😀 f\n",
         "error_type": null
       }
     },
@@ -3800,29 +3800,26 @@
     {
       "id": "instance-dictionaries-class-mapping",
       "source": "class C: pass\nC.__dict__\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": ""
       }
     },
     {
       "id": "instance-dictionaries-class-mapping-replacement",
       "source": "class C: pass\nC.__dict__={}\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": "AttributeError"
       },
       "engine": {
         "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "error_type": "AttributeError"
       }
     },
     {

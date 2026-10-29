@@ -3,7 +3,9 @@
   "suite": "interpreter-class-namespaces/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O49"
+  ],
   "cases": [
     {
       "id": "fresh-live-views",
@@ -249,6 +251,30 @@
       "stage": "Future",
       "source": "class C: tag=7\np=C.__dict__.copy()\nprint(p[\"tag\"])\n",
       "stdout": "7\n"
+    },
+    {
+      "id": "native-get-metadata",
+      "stage": "O49",
+      "source": "class C: tag=7\np=C.__dict__\ng=p.get\nprint(g.__name__,g.__qualname__,g.__self__ is p,type(g).__name__,g(\"tag\"))\nprint(type(p).get.__get__(p)(\"tag\"),type(p).get(p,\"tag\"))\n",
+      "stdout": "get mappingproxy.get True builtin_function_or_method 7\n7 7\n"
+    },
+    {
+      "id": "metaclass-write-hook",
+      "stage": "O49",
+      "source": "class M(type):\n def __setattr__(cls,name,value): print(\"set\",name)\n def __delattr__(cls,name): print(\"delete\",name)\nclass C(metaclass=M): tag=7\nC.__dict__={}\ndel C.__dict__\nprint(C.__dict__[\"tag\"])\n",
+      "stdout": "set __dict__\ndelete __dict__\n7\n"
+    },
+    {
+      "id": "native-readonly-mutation",
+      "stage": "O49",
+      "source": "class C: pass\ntry: type.__setattr__(C,\"__dict__\",{})\nexcept AttributeError: print(\"set\")\ntry: type.__delattr__(C,\"__dict__\")\nexcept AttributeError: print(\"delete\")\n",
+      "stdout": "set\ndelete\n"
+    },
+    {
+      "id": "nondata-metaclass-namespace",
+      "stage": "Future",
+      "source": "class M(type): __dict__=7\nclass C(metaclass=M): pass\nprint(type(C.__dict__).__name__)\n",
+      "stdout": "getset_descriptor\n"
     }
   ]
 }

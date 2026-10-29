@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "O33",
-    "O34"
+    "O34",
+    "O49"
   ],
   "cases": [
     {
@@ -529,7 +530,7 @@
     },
     {
       "id": "future-live-class-namespace",
-      "stage": "Future",
+      "stage": "O49",
       "source": "class C: pass\nC.__dict__\n",
       "stdout": ""
     },

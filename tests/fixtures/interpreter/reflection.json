@@ -12,7 +12,8 @@
     "O20",
     "O21",
     "O22",
-    "O47"
+    "O47",
+    "O49"
   ],
   "cases": [
     {
@@ -477,7 +478,7 @@
     },
     {
       "id": "class-dictionary-deferred",
-      "stage": "Future",
+      "stage": "O49",
       "source": "class A: pass\nprint(\"__module__\" in vars(A))\n",
       "stdout": "True\n"
     },
@@ -556,7 +557,7 @@
     },
     {
       "id": "class-namespace-descriptor-deferred",
-      "stage": "Future",
+      "stage": "O49",
       "source": "class A:\n @property\n def __dict__(self): return 7\nprint(\"__dict__\" in vars(A))\n",
       "stdout": "True\n"
     },

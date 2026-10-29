@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
-import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -984,7 +984,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
           const identityWrite = writing && classes.isPythonMethod(receiver) && ["__name__", "__qualname__", "__module__"].includes(name);
-          if (!(receiver instanceof FunctionValue || classes.isPythonMethod(receiver) || receiver instanceof InstanceValue && name === "__dict__" || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
+          if (!(receiver instanceof FunctionValue || classes.isPythonMethod(receiver) || (receiver instanceof InstanceValue || receiver instanceof ClassValue) && name === "__dict__" || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
           state.temporaries.push(key);
@@ -1206,6 +1206,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "contains") {
           state.temporaries.push(...operationRoots(task));
           let {receiver, key} = task;
+          if (receiver instanceof ClassNamespaceValue) {
+            task = valueTask(classes.namespaceEntry(receiver, key).found, site, completion); continue;
+          }
           if (values.isBinary(receiver) && key instanceof InstanceValue) {
             task = unaryTask("index", key, site, continuation("binary-member", {receiver, after: completion}), depth); continue;
           }
@@ -1240,6 +1243,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "item" || task.kind === "slice") {
           state.temporaries.push(...operationRoots(task));
           const {receiver, operation, item} = task;
+          if (receiver instanceof ClassNamespaceValue) {
+            if (operation !== "get") python("TypeError", "Class namespace views do not support item mutation");
+            if (task.kind === "slice") hard("UNSUPPORTED", "UnsupportedOperationError", "Slice namespace keys require their own stage.");
+            const entry = classes.namespaceEntry(receiver, task.key);
+            if (!entry.found) python("KeyError", "Class namespace key not found");
+            task = valueTask(entry.value, site, completion); continue;
+          }
           if (values.isView(receiver)) {
             values.liveView(receiver);
             if (operation === "delete" || operation === "set" && receiver.readonly) python("TypeError", "cannot modify this memoryview");
@@ -1854,13 +1864,20 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length) python("TypeError", "id() requires one positional value");
             task = valueTask(values.objectId(args[0]), site, completion); continue;
           }
+          if (callable.name === "mappingproxy.get") {
+            const [receiver, key, fallback = null] = args;
+            if (!(receiver instanceof ClassNamespaceValue) || args.length < 2 || args.length > 3 || keywords.length)
+              python("TypeError", "get() requires one or two positional arguments");
+            const entry = classes.namespaceEntry(receiver, key);
+            task = valueTask(entry.found ? entry.value : fallback, site, completion); continue;
+          }
           if (["locals", "vars", "dir"].includes(callable.name)) {
             count("builtin:" + callable.name);
             if (keywords.length || args.length > (callable.name === "locals" ? 0 : 1)) python("TypeError", callable.name + "() received invalid arguments");
             if (args.length) {
               const receiver = args[0];
               if (callable.name === "vars") {
-                if (!(receiver instanceof InstanceValue || receiver instanceof FunctionValue || classes.isPythonMethod(receiver))) {
+                if (!(receiver instanceof InstanceValue || receiver instanceof ClassValue && !receiver.root || receiver instanceof FunctionValue || classes.isPythonMethod(receiver))) {
                   if (values.typeName(receiver) !== null || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
                       receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");

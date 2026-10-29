@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "O27",
-    "O28"
+    "O28",
+    "O49"
   ],
   "cases": [
     {
@@ -337,7 +338,7 @@
     },
     {
       "id": "live-class-namespace",
-      "stage": "Future",
+      "stage": "O49",
       "source": "class A: pass\nprint(type(vars(A)) is type(vars(A)))\n",
       "stdout": "True\n"
     },

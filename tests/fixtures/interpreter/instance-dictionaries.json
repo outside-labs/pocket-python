@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O47",
-    "O48"
+    "O48",
+    "O49"
   ],
   "cases": [
     {
@@ -325,13 +326,13 @@
     },
     {
       "id": "class-mapping",
-      "stage": "Future",
+      "stage": "O49",
       "source": "class C: pass\nC.__dict__\n",
       "stdout": ""
     },
     {
       "id": "class-mapping-replacement",
-      "stage": "Future",
+      "stage": "O49",
       "source": "class C: pass\nC.__dict__={}\n",
       "stdout": "",
       "error_type": "AttributeError"
