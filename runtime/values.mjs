@@ -1318,8 +1318,11 @@ export function valueLayout(value) {
   if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length, children: [value.environment, value.pool]};
   if (value instanceof CallArguments) return {bytes: 80 + (value.keywordMap === null ? 0 : 8) + 8 * value.args.length + value.keywords.reduce((sum, key) => sum + 24 + 2 * key.length, 0),
     children: [value.callable, ...value.args, ...value.keywordValues, ...(value.keywordMap === null ? [] : [value.keywordMap])]};
-  if (value instanceof FunctionValue) return {bytes: 80 + 8 * (value.closure.size + (value.defaults?.length ?? 0) + (value.abstractFlag === undefined ? 0 : 1) + (value.documentation === null ? 0 : 1)),
-    children: [value.pool, value.globals, ...value.closure.values(), ...(value.defaults ?? []), ...(value.abstractFlag === undefined ? [] : [value.abstractFlag]), ...(value.documentation === null ? [] : [value.documentation])]};
+  if (value instanceof FunctionValue) {
+    const metadata = [value.identityName, value.identityQualname, value.identityModule].filter(item => item != null);
+    return {bytes: 80 + 8 * (value.closure.size + (value.defaults?.length ?? 0) + (value.abstractFlag === undefined ? 0 : 1) + (value.documentation === null ? 0 : 1) + metadata.length),
+      children: [value.pool, value.globals, ...value.closure.values(), ...(value.defaults ?? []), ...(value.abstractFlag === undefined ? [] : [value.abstractFlag]), ...(value.documentation === null ? [] : [value.documentation]), ...metadata]};
+  }
   if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
     8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1)) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
     children: [...value.bases, ...value.mro.slice(1), ...value.namespace.values(), ...(value.metaclass === null ? [] : [value.metaclass])]};

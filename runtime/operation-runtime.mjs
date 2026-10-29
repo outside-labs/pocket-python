@@ -965,7 +965,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries = operationRoots(task);
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
-          if (!(writing ? allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name)))
+          const identityWrite = writing && receiver instanceof FunctionValue && ["__name__", "__qualname__", "__module__"].includes(name);
+          if (!(writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name)))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
           state.temporaries.push(key);
@@ -1657,7 +1658,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               args[0] instanceof BoundMethodValue || args[0] instanceof PropertyValue || args[0] instanceof MethodWrapperValue) ||
               name === "__doc__" && (args[0] instanceof FunctionValue || args[0] instanceof BoundMethodValue);
             const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
-            if (!(args[0] instanceof InstanceValue) && !markerLayout && !documentLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && args[0] instanceof FunctionValue;
+            if (!(args[0] instanceof InstanceValue) && !markerLayout && !documentLayout && !identityLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
           if (["getattr", "setattr", "delattr", "hasattr"].includes(callable.name)) {

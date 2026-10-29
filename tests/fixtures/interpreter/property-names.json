@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O37",
     "O38",
-    "O39"
+    "O39",
+    "O43"
   ],
   "cases": [
     {
@@ -241,8 +242,8 @@
       ]
     },
     {
-      "id": "function-name-mutation-refusal",
-      "stage": "Future",
+      "id": "function-name-mutation",
+      "stage": "O43",
       "source": "def read(obj): return obj\np=property(read)\nread.__name__=\"changed\"\n",
       "stdout": ""
     },

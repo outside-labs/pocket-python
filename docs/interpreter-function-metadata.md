@@ -37,3 +37,8 @@ host grant, publication or deployment change is included.
 Reference implementations:
 [function attributes](https://github.com/python/cpython/blob/v3.14.7/Objects/funcobject.c)
 and [bound method lookup](https://github.com/python/cpython/blob/v3.14.7/Objects/classobject.c).
+
+O43 is implemented. Its 47 adopted source cases cover exact text identities,
+invalid/deleted names, independent qualification, executable identity, arbitrary
+module snapshots and native reflection. Focused ownership tests exercise real
+allocation failure, foreign arenas, cycles and parked cancellation/close.

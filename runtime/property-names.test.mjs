@@ -96,7 +96,7 @@ test('property names retain source profile and unrelated mutation boundaries', a
     if (result.error?.code === 'PYTHON') assert.equal(result.error.type, 'NameError');
     if (result.closed) closed(result.closed);
   }
-  for (const source of ['def f(): pass\nf.__name__="x"\n', 'class C: pass\nC.__name__="x"\n']) {
+  for (const source of ['def f(): pass\nstaticmethod(f).__name__="x"\n', 'class C: pass\nC.__name__="x"\n']) {
     const result = await run(source); assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
   }
 });
