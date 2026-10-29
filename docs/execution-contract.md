@@ -243,3 +243,12 @@ function field. Functions without dictionary access or custom attributes retain
 their accounting/3 layout. The eight composed cases do not access function
 dictionaries and keep their existing observations. Replacement validates the
 new graph before committing; failed transfers restore the prior dictionary.
+
+O47 adds `execution-accounting/5`: an exposed instance dictionary replaces its
+compact inline attributes with one eight-byte edge and ordinary dictionary/key/
+value storage. Native dictionary access, replacement and explicit supplied
+insertion names materialize that storage; ordinary untouched instances retain
+their prior layouts and costs. Deletion resets compact storage and detaches old
+aliases. Materialization roots all temporary keys, and dictionary attachment
+validates the new graph before committing. Earlier composed observations remain
+recorded and unchanged unless they use a newly adopted operation.

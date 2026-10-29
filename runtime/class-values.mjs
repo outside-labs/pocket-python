@@ -246,6 +246,8 @@ export class ClassRuntime {
       if (["__thisclass__", "__self__", "__self_class__"].includes(name))
         return value(receiver[{__thisclass__: "thisclass", __self__: "self", __self_class__: "selfClass"}[name]]);
       if (receiver.selfClass !== null) {
+        if (name === "__dict__" && this.instanceDictionarySlot(receiver.selfClass, this.mro(receiver.selfClass).indexOf(receiver.thisclass) + 1))
+          this.fail("UnsupportedOperationError", "Super dictionary reflection requires native getset descriptors.", "UNSUPPORTED");
         const item = this.lookup(receiver.selfClass, name, true, this.mro(receiver.selfClass).indexOf(receiver.thisclass) + 1);
         if (item.found) return this.bindAttribute(item.value, receiver.self === receiver.selfClass ? null : receiver.self, receiver.selfClass);
       }
@@ -361,8 +363,10 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
     if (name === "__doc__" && receiver instanceof ClassValue && receiver.root)
       this.fail("UnsupportedOperationError", "Native documentation requires its own metadata contract.", "UNSUPPORTED");
-    if (name === "__dict__" && (receiver instanceof ClassValue || !this.hasSlot(receiver.type, name)))
-      this.fail("UnsupportedOperationError", "Live namespace dictionaries require their own storage contract.", "UNSUPPORTED");
+    if (name === "__dict__" && receiver instanceof ClassValue)
+      this.fail("UnsupportedOperationError", "Class namespace dictionaries require their own storage contract.", "UNSUPPORTED");
+    if (name === "__dict__" && receiver instanceof InstanceValue && this.instanceDictionarySlot(receiver.type))
+      return value(this.instanceDictionary(receiver));
     if (receiver instanceof InstanceValue && name === "__class__") {
       const item = this.lookup(receiver.type, name);
       return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : value(this.classAttribute(receiver));
@@ -387,7 +391,7 @@ export class ClassRuntime {
     if (receiver instanceof InstanceValue && (item.value instanceof PropertyValue ||
         descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)))
       return this.bindAttribute(item.value, receiver, owner);
-    if (receiver instanceof InstanceValue && receiver.attributes.has(name)) return value(receiver.attributes.get(name));
+    if (receiver instanceof InstanceValue) return this.instanceEntry(receiver, name, "get", null, key, item);
     if (!item.found) {
       if (metaItem?.found) return this.bindAttribute(metaItem.value, receiver, metaclass);
       this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
@@ -465,6 +469,10 @@ export class ClassRuntime {
           (nativeWrapper(receiver.callable.name) || NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name)))))
       this.fail("AttributeError", "Native descriptor owner metadata is read-only.");
     if (receiver instanceof SuperValue) this.fail("AttributeError", "super attributes are read-only");
+    if (receiver instanceof InstanceValue && receiver.type.root && name === "__dict__")
+      this.fail("AttributeError", "Object instance has no dictionary.");
+    if (receiver instanceof InstanceValue && name === "__dict__" && this.instanceDictionarySlot(receiver.type))
+      return {kind: "value", value: this.mutate(receiver, name, value, remove)};
     if (receiver instanceof InstanceValue || receiver instanceof ClassValue && receiver.metaclass) {
       const item = this.lookup(receiver instanceof InstanceValue ? receiver.type : receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.value instanceof PropertyValue) {
@@ -478,7 +486,47 @@ export class ClassRuntime {
         return this.boundHook(item.value, hook, remove ? [receiver] : [receiver, value]);
       }
     }
+    if (receiver instanceof InstanceValue && (!(receiver.attributes instanceof Map) || key !== null))
+      return this.instanceEntry(receiver, name, remove ? "delete" : "set", value, key);
     return {kind: "value", value: this.mutate(receiver, name, value, remove)};
+  }
+  instanceDictionarySlot(type, start = 0) {
+    for (const base of this.mro(type).slice(start)) {
+      if (!(base instanceof ClassValue) || base.root) continue;
+      if (base.namespace.has("__dict__")) return false;
+      if (base.bases.every(parent => parent instanceof ClassValue && parent.root)) return true;
+    }
+    return false;
+  }
+  instanceDictionary(receiver) {
+    if (receiver.attributes instanceof Map) {
+      const pairs = [], leave = this.memory?.enter(() => [receiver, ...pairs.flat()]);
+      try {
+        for (const [name, value] of receiver.attributes)
+          pairs.push([this.values.string(Array.from(name, char => char.codePointAt(0))), value]);
+        this.functionMetadata(receiver, "attributes", this.values.dict(pairs));
+      } finally { leave?.(); }
+    }
+    return receiver.attributes;
+  }
+  instanceMissing(receiver, name, fallback = {found: false}) {
+    if (fallback.found) return this.bindAttribute(fallback.value, receiver, receiver.type);
+    this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
+  }
+  instanceEntry(receiver, name, operation = "get", item = null, key = null, fallback = {found: false}) {
+    const value = value => ({kind: "value", value});
+    if (operation !== "get" && !allowsClassSpecial(name, "mutate") && name !== "__dict__")
+      this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
+    if (receiver.attributes instanceof Map && operation === "get")
+      return receiver.attributes.has(name) ? value(receiver.attributes.get(name)) : this.instanceMissing(receiver, name, fallback);
+    const dictionary = this.instanceDictionary(receiver);
+    key ??= this.values.string(Array.from(name, char => char.codePointAt(0)));
+    if (this.values.dictionaryNeedsProtocol(dictionary, key))
+      this.fail("UnsupportedOperationError", "Instance dictionary collisions require owned execution.", "UNSUPPORTED");
+    if (operation === "set") return value(this.values.set(dictionary, key, item));
+    const position = this.values.find(dictionary, key);
+    if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);
+    return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
   functionDictionary(receiver) {
     if (receiver.attributes === null) this.functionMetadata(receiver, "attributes", this.values.dict([]));
@@ -520,6 +568,10 @@ export class ClassRuntime {
       return this.functionMetadata(receiver, "attributes", value);
     }
     if (receiver instanceof FunctionValue && name === "__class__") this.fail("TypeError", "Function type cannot be changed.");
+    if (receiver instanceof InstanceValue && name === "__dict__" && this.instanceDictionarySlot(receiver.type)) {
+      if (!remove && !this.values.isDict(value)) this.fail("TypeError", "Instance __dict__ must be set to a dictionary.");
+      return this.functionMetadata(receiver, "attributes", remove ? new Map() : value);
+    }
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__", "__module__"].includes(name)) {
       if (name !== "__module__" && (remove || !this.values.isString(value)))
         this.fail("TypeError", "Function " + name + " must be set to a string.");
@@ -536,7 +588,7 @@ export class ClassRuntime {
     if (name === "__doc__" && receiver instanceof ClassValue && remove) this.fail("TypeError", "Class documentation cannot be deleted.");
     if (name === "__isabstractmethod__" && (receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue || receiver instanceof BoundMethodValue))
       this.fail("AttributeError", "Computed abstract-method flags are read-only.");
-    if (name === "__name__") {
+    if (name === "__name__" && !(receiver instanceof InstanceValue)) {
       if (!(receiver instanceof PropertyValue))
         this.fail("UnsupportedOperationError", "Name mutation is adopted only for properties.", "UNSUPPORTED");
       const before = receiver.propertyName;
@@ -554,7 +606,15 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
     if (receiver instanceof ClassValue && this.isMetaclass(receiver) && isSpecialName(name) && !META_SPECIALS.has(name))
       this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
-    if (!allowsClassSpecial(name, "mutate")) this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
+    if (!allowsClassSpecial(name, "mutate") && !(receiver instanceof InstanceValue && name === "__dict__"))
+      this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
+    if (receiver instanceof InstanceValue && receiver.type.root && name === "__dict__")
+      this.fail("AttributeError", "Object instance has no dictionary.");
+    if (receiver instanceof InstanceValue && !(receiver.attributes instanceof Map)) {
+      const plan = this.instanceEntry(receiver, name, remove ? "delete" : "set", value);
+      if (plan.kind !== "value") this.fail("UnsupportedOperationError", "Dictionary callbacks require VM execution frames.", "UNSUPPORTED");
+      return plan.value;
+    }
     const map = receiver instanceof ClassValue ? receiver.namespace : receiver.attributes;
     const present = map.has(name), before = map.get(name);
     if (remove && !present) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");

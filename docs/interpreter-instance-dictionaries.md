@@ -44,3 +44,9 @@ release, publication or deployment change is included.
 
 Reference implementations: [generic attribute lookup and mutation](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c)
 and [instance dictionary slots](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+O47 is implemented with lazy promotion from compact instance attributes to an
+owned dictionary. The storage matrix adopts 32 source cases and retains five
+explicit reflection refusals. O48 remains the subsequent owned-callback stage.
+Focused arena checks cover cycles, foreign dictionary/value transfers, real
+allocation failure, transactional rollback and collection after replacement.
