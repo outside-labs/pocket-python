@@ -121,3 +121,10 @@ consulting their dictionaries or hooks.
 [O55 generator directories](interpreter-generator-directories.md) add fresh sorted and raw native lists without starting, resuming or closing the generator. Detached callers retain the suspended frame and values; unread frame/code metadata and other layouts retain separate contracts.
 
 [O56 native iterator directories](interpreter-iterator-directories.md) collect actual native layout names without advancing sources, comparing sentinels or validating mutated containers. Readable metadata and further native methods remain separately adopted; user-defined iterator instances retain their ordinary directory boundary.
+
+[O65 callable type directories](interpreter-callable-type-directories.md) and
+[O66 generator/iterator type directories](interpreter-iterator-type-directories.md)
+add their canonical native type namespaces independently of instance keys and
+stored values. Native type binding, ordinary advertised namespaces, raw order
+and sorted fresh results retain owned callbacks and shared budgets. Listed
+metadata and methods retain their separate read/API contracts.

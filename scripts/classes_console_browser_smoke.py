@@ -63,6 +63,7 @@ from examples.interpreter_class_directories import SOURCE as CLASS_DIRECTORIES_S
 from examples.interpreter_numeric_type_directories import SOURCE as NUMERIC_TYPE_DIRECTORIES_SOURCE
 
 from examples.interpreter_container_type_directories import SOURCE as CONTAINER_TYPE_DIRECTORIES_SOURCE
+from examples.interpreter_iterator_type_directories import SOURCE as ITERATOR_TYPE_DIRECTORIES_SOURCE
 from examples.interpreter_callable_type_directories import SOURCE as CALLABLE_TYPE_DIRECTORIES_SOURCE
 
 
@@ -236,8 +237,9 @@ def smoke(channel=None):
                     class_directories = json.loads((ROOT / 'tests/fixtures/interpreter/class-directories.json').read_bytes())
                     numeric_type_directories = json.loads((ROOT / 'tests/fixtures/interpreter/numeric-type-directories.json').read_bytes())
                     container_type_directories = json.loads((ROOT / 'tests/fixtures/interpreter/container-type-directories.json').read_bytes())
+                    iterator_type_directories = json.loads((ROOT / 'tests/fixtures/interpreter/iterator-type-directories.json').read_bytes())
                     callable_type_directories = json.loads((ROOT / 'tests/fixtures/interpreter/callable-type-directories.json').read_bytes())
-                    for corpus in [callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    for corpus in [iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -879,7 +881,20 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('callable-type-directories-compose-with-native-binding-advertised-namespaces-and-lazy-generators-offline')
                     checks.append('callable-type-directories-preserve-native-errors-and-unread-namespace-boundaries-offline')
+                    iterator_type_directories_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', ITERATOR_TYPE_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(ITERATOR_TYPE_DIRECTORIES_SOURCE, iterator_type_directories_expected)
+                    for case in iterator_type_directories['cases']:
+                        if case['stage'] not in iterator_type_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('iterator-type-directories-compose-with-native-binding-advertised-namespaces-and-lazy-generators-offline')
+                    checks.append('iterator-type-directories-preserve-native-errors-and-unread-namespace-boundaries-offline')
                     busy = [
+                        'd=type.__dir__.__get__(type(iter([])))\nprint("entered")\nwhile True: d()\n',
+                        'd=type.__dir__.__get__(type(iter([]))).__dir__\nprint("entered")\nwhile True: d.__self__()\n',
                         'd=type.__dir__.__get__(type(object.__dir__))\nprint("entered")\nwhile True: d()\n',
                         'd=type.__dir__.__get__(type(object.__dir__)).__dir__\nprint("entered")\nwhile True: d.__self__()\n',
                         'd=type.__dir__.__get__(dict)\nprint("entered")\nwhile True: d()\n',
@@ -1235,6 +1250,8 @@ def smoke(channel=None):
                     checks.append('class-to-core-update-retains-numeric-type-directories-admission')
                     refused('dir(type(object.__dir__))\n', 'NameError:')
                     checks.append('class-to-core-update-retains-callable-type-directories-admission')
+                    refused('dir(type(iter([])))\n', 'NameError:')
+                    checks.append('class-to-core-update-retains-iterator-type-directories-admission')
                     checks.append('class-to-core-update-removes-reflection-builtin-authority')
                     run('a=[7]\nb=a*2\na[0]=9\nprint(len(b),b[0],len("😀"*3),len(2*(1,)))\n', '2 7 3 2\n')
                     checks.append('primitive-repetition-retained-after-core-profile-update')

@@ -353,3 +353,14 @@ for adopted class namespace mappingproxy views, raw native ordering and bound
 receiver metadata. Class contents and metaclass hooks do not contribute names.
 Listing deferred mapping methods does not adopt enumeration, length or copy;
 retained native callers keep detached live class views alive.
+
+[O65](interpreter-callable-type-directories.md) adds callable, descriptor, property
+and mappingproxy type directories. [O66](interpreter-iterator-type-directories.md)
+adds generator and adopted native iterator type directories. Canonical native
+binding, raw namespace order, fresh sorted results and ordinary advertised
+namespaces preserve existing owned merging and sorting. Collection reads no
+callable/accessor metadata and neither resumes generators nor advances iterators.
+The combined 200-case matrix passes six Node/Chromium drivers. Listed names retain
+their separate API boundaries; live mappings, custom metaclass and remaining
+native type namespaces, module/wrapper/super directories and dynamic source remain
+open.
