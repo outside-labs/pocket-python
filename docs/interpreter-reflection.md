@@ -112,3 +112,8 @@ metadata and other default layouts retain separate contracts.
 [O53 property directories](interpreter-property-directories.md) collect pinned
 native names independently of lazy names, documents, abstract flags and accessor
 callbacks. Other default layouts and native metadata retain their own contracts.
+
+[O54 native callable directories](interpreter-native-callable-directories.md)
+distinguish adopted method/wrapper descriptors and their bound native layouts.
+Receiver chains retain exact properties, live views and functions without
+consulting their dictionaries or hooks.

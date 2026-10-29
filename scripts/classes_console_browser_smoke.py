@@ -48,6 +48,7 @@ from examples.interpreter_function_directories import SOURCE as FUNCTION_DIRECTO
 from examples.interpreter_method_directories import SOURCE as METHOD_DIRECTORIES_SOURCE
 from examples.interpreter_namespace_view_directories import SOURCE as NAMESPACE_VIEW_DIRECTORIES_SOURCE
 from examples.interpreter_property_directories import SOURCE as PROPERTY_DIRECTORIES_SOURCE
+from examples.interpreter_native_callable_directories import SOURCE as NATIVE_CALLABLE_DIRECTORIES_SOURCE
 
 
 def smoke(channel=None):
@@ -209,9 +210,11 @@ def smoke(channel=None):
                     method_directories = json.loads((ROOT / 'tests/fixtures/interpreter/method-directories.json').read_bytes())
                     namespace_view_directories = json.loads((ROOT / 'tests/fixtures/interpreter/namespace-view-directories.json').read_bytes())
                     property_directories = json.loads((ROOT / 'tests/fixtures/interpreter/property-directories.json').read_bytes())
-                    for corpus in [property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    native_callable_directories = json.loads((ROOT / 'tests/fixtures/interpreter/native-callable-directories.json').read_bytes())
+                    for corpus in [native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
+                    programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
                     programs.append(PROPERTY_DIRECTORIES_SOURCE)
                     programs.append(NAMESPACE_VIEW_DIRECTORIES_SOURCE)
                     programs.append(METHOD_DIRECTORIES_SOURCE)
@@ -718,7 +721,20 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('property-directories-compose-with-copies-arbitrary-metadata-native-binding-and-lazy-generators-offline')
                     checks.append('property-directory-collection-avoids-lazy-name-abstract-and-accessor-callbacks-offline')
+                    native_callables_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', NATIVE_CALLABLE_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(NATIVE_CALLABLE_DIRECTORIES_SOURCE, native_callables_expected)
+                    for case in native_callable_directories['cases']:
+                        if case['stage'] not in native_callable_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('native-callable-directories-compose-with-descriptors-retained-properties-live-views-and-lazy-generators-offline')
+                    checks.append('native-callable-directories-preserve-actual-layouts-hook-isolation-and-later-builtin-boundaries-offline')
                     busy = [
+                        'def f(self): return 7\np=property(f)\nmethod=p.getter\nf.saved=method\nd=method.__dir__\ndel p\ndel f\ndel method\nprint("entered")\nwhile True: d()\n',
+                        'def f(self): return 7\np=property(f)\nmethod=p.__get__\nf.saved=method\nd=method.__dir__\ndel p\ndel f\ndel method\nprint("entered")\nwhile True: d()\n',
                         'def f(self): return 7\np=property(f)\nf.saved=p\nd=p.__dir__\ndel p\ndel f\nprint("entered")\nwhile True: d()\n',
                         'class C: tag=[7]\np=C.__dict__\nC.saved=p\nd=p.__dir__\ndel p\ndel C\nprint("entered")\nwhile True: d()\n',
                         'class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef read(self,name):\n if name=="__dict__":\n  print("entered")\n  while True: pass\n return object.__getattribute__(self,name)\nCallable.__getattribute__=read\ndir(m)\n',
