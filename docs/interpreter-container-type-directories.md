@@ -39,3 +39,12 @@ the repeated O63 matrices against the extended engine. The 123 feature units
 include a parked native-key collision callback with a retained cyclic instance
 graph. The 530 adjacent directory/rebinding/resource units and 23 affected Python
 checks pass; the eight composed resource observations remain unchanged.
+
+Compatibility probes and installed offline acceptance cover native errors,
+immutable type namespaces, retained caller Stop/Restart and core-profile updates.
+The [container type example](../examples/interpreter_container_type_directories.py)
+composes iterator position, callback isolation, mutable view aliases and released
+views with native type directories. Its
+[payload record](measurements/2026-10-29-container-type-directories.json) verifies
+all 38 files at 744,178 bytes and an identical fresh rebuild. These are finite
+semantic/source/payload observations.
