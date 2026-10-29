@@ -175,7 +175,7 @@
     {
       "id": "function-binding",
       "status": "partial",
-      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures. Global/nonlocal writes and deletion share the defining module and lexical cells. Variadic positional/keyword parameters pack fresh owned values. Positional starred calls consume owned iterables. Keyword call expansion admits owned dictionaries and keys/getitem mappings with ordered duplicate checks. Function source docstrings use pinned indentation cleanup; arbitrary owned __doc__ assignment/deletion and live read-only bound-method reads are adopted.",
+      "scope": "def, recursion, positional-only/ordinary/keyword-only parameters; literal and definition-time computed/mutable defaults and lexical closures. Global/nonlocal writes and deletion share the defining module and lexical cells. Variadic positional/keyword parameters pack fresh owned values. Positional starred calls consume owned iterables. Keyword call expansion admits owned dictionaries and keys/getitem mappings with ordered duplicate checks. Function source docstrings use pinned indentation cleanup; arbitrary owned __doc__ assignment/deletion and live read-only bound-method reads are adopted. Exact mutable Python function names and definition-time module snapshots; live read-only bound-method metadata uses owned callable lookup.",
       "gaps": "Construction-hint forms and annotations remain deferred; signatures and error-message comparisons are scoped by interpreter-function-binding.md.",
       "reference_version": "3.14.7",
       "targets": [
@@ -199,7 +199,21 @@
         "documentation-function-mutation-4",
         "documentation-bound-function-live-document",
         "documentation-class-documents",
-        "documentation-source-document-cleanup-function-2"
+        "documentation-source-document-cleanup-function-2",
+        "function-metadata-default-function-names",
+        "function-metadata-__name__-text-4",
+        "function-metadata-__qualname__-failed-write-retains",
+        "function-metadata-rename-keeps-defaults-closure",
+        "function-metadata-module-definition-snapshot",
+        "function-metadata-module-arbitrary-global-snapshot",
+        "function-metadata-module-mutation-4",
+        "function-metadata-module-native-access",
+        "function-metadata-method-live-__qualname__",
+        "function-metadata-method-custom-lookup-__module__",
+        "function-metadata-method-custom-fallback-__name__",
+        "function-metadata-method-native-read-__name__",
+        "function-metadata-method-name-descriptor",
+        "function-metadata-function-dictionary-deferred"
       ],
       "evidence": [
         "tests/fixtures/interpreter/function-binding.json:computed-once",
@@ -213,7 +227,21 @@
         "tests/fixtures/interpreter/documentation.json:function-mutation-4",
         "tests/fixtures/interpreter/documentation.json:bound-function-live-document",
         "tests/fixtures/interpreter/documentation.json:class-documents",
-        "tests/fixtures/interpreter/documentation.json:source-document-cleanup-function-2"
+        "tests/fixtures/interpreter/documentation.json:source-document-cleanup-function-2",
+        "tests/fixtures/interpreter/function-metadata.json:default-function-names",
+        "tests/fixtures/interpreter/function-metadata.json:__name__-text-4",
+        "tests/fixtures/interpreter/function-metadata.json:__qualname__-failed-write-retains",
+        "tests/fixtures/interpreter/function-metadata.json:rename-keeps-defaults-closure",
+        "tests/fixtures/interpreter/function-metadata.json:module-definition-snapshot",
+        "tests/fixtures/interpreter/function-metadata.json:module-arbitrary-global-snapshot",
+        "tests/fixtures/interpreter/function-metadata.json:module-mutation-4",
+        "tests/fixtures/interpreter/function-metadata.json:module-native-access",
+        "tests/fixtures/interpreter/function-metadata.json:method-live-__qualname__",
+        "tests/fixtures/interpreter/function-metadata.json:method-custom-lookup-__module__",
+        "tests/fixtures/interpreter/function-metadata.json:method-custom-fallback-__name__",
+        "tests/fixtures/interpreter/function-metadata.json:method-native-read-__name__",
+        "tests/fixtures/interpreter/function-metadata.json:method-name-descriptor",
+        "tests/fixtures/interpreter/function-metadata.json:function-dictionary-deferred"
       ]
     },
     {

@@ -40,7 +40,7 @@ Drain, instruction-boundary and parked tests compare the revised contract.
 bytecode-5 functions. Each non-None module/name/qualification field adds an
 eight-byte edge and retains its reachable value; default name strings are
 created lazily. All eight composed cases retain the previous instruction,
-allocation, collection and root/frame counts. Their module edges add 8–24 live
+allocation, collection and root/frame counts. Their module edges add 0–24 live
 bytes and 8–32 peak bytes, with normal traversal work. The preceding counters
 remain in `accounting_2_cases`, and internal entry functions and bytecode 3/4
 keep their prior storage. Failed mutation restores the old edge.

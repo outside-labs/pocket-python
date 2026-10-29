@@ -3065,6 +3065,189 @@
         "stdout": "",
         "error_type": "UnsupportedOperationError"
       }
+    },
+    {
+      "id": "function-metadata-default-function-names",
+      "source": "def read(): return 7\nprint(read.__name__,read.__qualname__,read())\nprint(read.__name__ is read.__name__,read.__qualname__ is read.__qualname__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "read read 7\nTrue True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "read read 7\nTrue True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-__name__-text-4",
+      "source": "def f(): return 7\nx='\u03bb\ud83d\ude00'\nf.__name__=x\nprint(f.__name__ is x,f(),f.__name__,f.__qualname__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 7 \u03bb\ud83d\ude00 f\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 7 \u03bb\ud83d\ude00 f\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-__qualname__-failed-write-retains",
+      "source": "def f(): pass\nf.__qualname__=\"kept\"\ntry: f.__qualname__=None\nexcept TypeError: print(f.__qualname__)\ntry: del f.__qualname__\nexcept TypeError: print(f.__qualname__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "kept\nkept\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "kept\nkept\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-rename-keeps-defaults-closure",
+      "source": "def make(value):\n def original(extra=[3]): return value+extra[0]\n return original\nf=make(7)\nf.__name__=\"other\"\nf.__qualname__=\"new.path\"\nprint(f(),f.__name__,f.__qualname__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "10 other new.path\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "10 other new.path\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-module-definition-snapshot",
+      "source": "__name__=\"first\"\ndef f(): pass\n__name__=\"second\"\ndef g(): pass\nprint(f.__module__,g.__module__)\ndel __name__\ndef h(): pass\nprint(h.__module__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "first second\nNone\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "first second\nNone\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-module-arbitrary-global-snapshot",
+      "source": "saved=[7]\n__name__=saved\ndef f(): pass\n__name__=None\nprint(f.__module__ is saved)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-module-mutation-4",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=[7]\nf.__module__=x\nprint(f.__module__ is x)\ndel f.__module__\nprint(f.__module__ is None)\ndel f.__module__\nprint(f.__module__ is None)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\nTrue\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\nTrue\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-module-native-access",
+      "source": "__name__=\"app\"\ndef f(): pass\nx=[7]\nobject.__setattr__(f,\"__module__\",x)\nprint(object.__getattribute__(f,\"__module__\") is x)\nobject.__delattr__(f,\"__module__\")\nprint(f.__module__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\nNone\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\nNone\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-method-live-__qualname__",
+      "source": "__name__=\"app\"\nclass C:\n def read(self): return 7\nobj=C()\nm=obj.read\nprint(m.__qualname__)\nx=\"new.value\"\nC.read.__qualname__=x\nprint(m.__qualname__ is x,m.__self__ is obj,m.__func__ is C.read,m())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "C.read\nTrue True True 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "C.read\nTrue True True 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-method-custom-lookup-__module__",
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print(name)\n return [7]\nCallable.__getattribute__=lookup\nprint(m.__module__[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__module__\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__module__\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-method-custom-fallback-__name__",
+      "source": "class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n raise AttributeError(\"lookup\")\ndef fallback(self,name):\n print(name)\n return [9]\nCallable.__getattribute__=lookup\nCallable.__getattr__=fallback\nprint(m.__name__[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__name__\n9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__name__\n9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-method-native-read-__name__",
+      "source": "__name__=\"app\"\nclass C:\n def f(self): pass\nm=C().f\nprint(object.__getattribute__(m,\"__name__\")==getattr(C.f,\"__name__\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "function-metadata-method-name-descriptor",
+      "source": "active=False\nclass Callable:\n @property\n def __name__(self):\n  if active:\n   print(\"descriptor\")\n   return [7]\n  return \"initial\"\nm=classmethod(Callable()).__get__(None,object)\nactive=True\nprint(m.__name__[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "descriptor\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "descriptor\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "function-metadata-function-dictionary-deferred",
+      "source": "def f(): pass\nprint(f.__dict__)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "{}\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
     }
   ]
 }
