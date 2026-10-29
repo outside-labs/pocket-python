@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O45"
+    "O45",
+    "O46"
   ],
   "cases": [
     {
@@ -302,7 +303,7 @@
     {
       "id": "method-native-bypass-tag",
       "stage": "O46",
-      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\nf.__objclass__=C\ntry: object.__getattribute__(m,'tag')\nexcept AttributeError: print(\"bypass\")\nprint(getattr(m,'tag') is getattr(f,'tag'))\n",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=[]\nf.__objclass__=C\ntry: object.__getattribute__(m,'tag')\nexcept AttributeError: print(\"bypass\")\nprint(getattr(m,'tag') is getattr(f,'tag'))\n",
       "stdout": "bypass\nTrue\n"
     },
     {
@@ -422,6 +423,86 @@
       "id": "deferred-__type_params__",
       "stage": "Future",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__type_params__')\n",
+      "stdout": ""
+    },
+    {
+      "id": "collision-set-replacement-snapshot",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  f.__dict__={\"tag\":3}\n  return True\nk=Key();old={k:7};f.__dict__=old\nf.tag=9\nprint(f.tag,len(old))\n",
+      "stdout": "3 1\n"
+    },
+    {
+      "id": "collision-delete-replacement-snapshot",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  f.__dict__={\"tag\":3}\n  return True\nk=Key();old={k:7};f.__dict__=old\ndel f.tag\nprint(f.tag,len(old))\n",
+      "stdout": "3 0\n"
+    },
+    {
+      "id": "collision-false-missing",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  return False\nf.__dict__={Key():7}\nprint(getattr(f,\"tag\",99),hasattr(f,\"tag\"))\n",
+      "stdout": "99 False\n"
+    },
+    {
+      "id": "custom-call-does-not-change-execution",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.__call__=None\nprint(f(),f.__call__)\n",
+      "stdout": "7 None\n"
+    },
+    {
+      "id": "function-class-mutation-error",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nsetattr(f,\"__class__\",object)\n",
+      "error_type": "TypeError",
+      "stdout": ""
+    },
+    {
+      "id": "method-custom-data-no-binding",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): pass\nclass Descriptor:\n def __get__(self,obj,owner):\n  print(\"wrong\")\n  return 9\nx=Descriptor();C.read.tag=x\nprint(C().read.tag is x)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-live-marker-native-bypass",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self):\n  \"doc\"\n  pass\nm=C().read\nC.read.__isabstractmethod__=True\ntry: object.__getattribute__(m,\"__isabstractmethod__\")\nexcept AttributeError: print(\"bypass\")\nprint(m.__isabstractmethod__,object.__getattribute__(m,\"__doc__\"))\n",
+      "stdout": "bypass\nTrue doc\n"
+    },
+    {
+      "id": "nested-method-custom-dictionary",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): pass\nm=C().read\nn=classmethod(m).__get__(None,C)\nC.read.tag=[]\nprint(n.tag is C.read.tag,n.__dict__ is C.read.__dict__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "method-callback-attribute-error",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name): raise AttributeError(\"original\")\nCallable.__getattribute__=lookup\nprint(getattr(m,\"tag\",7),hasattr(m,\"tag\"))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "method-class-mutation-error",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): pass\nsetattr(C().read,\"__class__\",object)\n",
+      "error_type": "TypeError",
+      "stdout": ""
+    },
+    {
+      "id": "method-native-get-deferred",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): pass\nC().read.__get__\n",
+      "stdout": ""
+    },
+    {
+      "id": "wrapper-dictionary-deferred",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\nstaticmethod(f).__dict__\n",
+      "stdout": ""
+    },
+    {
+      "id": "dictionary-structural-collision-deferred",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del f.__dict__[self]\n  return True\nf.__dict__={Key():7}\ngetattr(f,\"tag\",99)\n",
       "stdout": ""
     }
   ]

@@ -974,7 +974,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
           const identityWrite = writing && classes.isPythonMethod(receiver) && ["__name__", "__qualname__", "__module__"].includes(name);
-          if (!(receiver instanceof FunctionValue || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
+          if (!(receiver instanceof FunctionValue || classes.isPythonMethod(receiver) || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
           state.temporaries.push(key);
@@ -991,7 +991,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           else if (operation === "get" && classes.hasAttributeHook(receiver, "__getattribute__"))
             plan = classes.special(receiver, "__getattribute__");
           else {
-            plan = writing ? classes.write(receiver, name, task.item, removing) : classes.read(receiver, name);
+            plan = writing ? classes.write(receiver, name, task.item, removing) : classes.read(receiver, name, operation === "native-get");
             task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site,
               plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after: completion, depth}) : completion, depth);
             continue;
@@ -1600,6 +1600,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = dictionaryTask(dictionary, key, site, operation === "set" ? continuation("relay", {receiver, after: completion}) : after,
               depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
           }
+          if (callable.name === "method-attribute") {
+            const [receiver, key] = args;
+            if (!classes.isPythonMethod(receiver) || !values.isString(key) || args.length !== 2 || keywords.length)
+              throw new TypeError("Invalid method attribute lookup.");
+            if (++depth > maxDepth) python("RecursionError", "maximum method attribute lookup depth exceeded");
+            task = attributeTask(receiver.callable, values.text(key), site,
+              continuation("relay", {receiver, after: completion}), depth, "get", key); continue;
+          }
           if (["method-abstract-marker", "method-documentation", "method-name", "method-qualname", "method-module"].includes(callable.name)) {
             const receiver = args[0];
             if (!(receiver instanceof BoundMethodValue) || keywords.length || args.length !== 1) throw new TypeError("Invalid method marker lookup.");
@@ -1676,7 +1684,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               name === "__doc__" && (args[0] instanceof FunctionValue || args[0] instanceof BoundMethodValue);
             const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
             const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && (args[0] instanceof FunctionValue || classes.isPythonMethod(args[0]));
-            if (!(args[0] instanceof InstanceValue || args[0] instanceof FunctionValue) && !markerLayout && !documentLayout && !identityLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            if (!(args[0] instanceof InstanceValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             if (identityLayout && !writing && classes.isPythonMethod(args[0])) python("AttributeError", "Method identity metadata requires ordinary callable fallback.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
@@ -1829,7 +1837,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length) {
               const receiver = args[0];
               if (callable.name === "vars") {
-                if (!(receiver instanceof InstanceValue || receiver instanceof FunctionValue)) {
+                if (!(receiver instanceof InstanceValue || receiver instanceof FunctionValue || classes.isPythonMethod(receiver))) {
                   if (values.typeName(receiver) !== null || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
                       receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");

@@ -107,3 +107,32 @@ test('function dictionaries retain core admission and class namespace boundaries
     const result = await run(source); assert.equal(result.error?.code, 'UNSUPPORTED'); if (result.closed) closed(result.closed);
   }
 });
+
+test('method attribute fallback owns detached callable state and returned values', async () => {
+  await lifecycle('class Callable: pass\nobj=Callable()\nm=classmethod(obj).__get__(None,object)\ndef read(self):\n global m,obj,Callable\n del m\n del obj\n del Callable\n print("entered")\n return [self]\nCallable.tag=property(read)\nresult=m.tag\nprint(type(result[0]).__name__)\n',
+    'entered\nCallable\n', 'entered\n');
+});
+
+test('nested bound methods retain the original function dictionary', async () => {
+  const result = await run('class C:\n def read(self): return 7\nm=C().read\nnested=classmethod(m).__get__(None,C)\nC.read.tag=[]\nprint(nested.tag is C.read.tag,nested.__dict__ is C.read.__dict__)\n');
+  assert.equal(result.stdout, 'True True\n'); assert.equal(result.ok, true); closed(result.closed);
+});
+
+test('method fallback obeys real callback limits and closes every owner', async () => {
+  for (const [body, options, limits, code] of [
+    ['return m.tag', {maxDepth: 12}, undefined, 'PYTHON'],
+    ['while True: pass', {maxSteps: 250}, undefined, 'BUDGET'],
+    ['while True: pass', {maxSteps: 100000, maxWork: 40000}, undefined, 'BUDGET'],
+    ['items=[]\n while True: items.append([7])', {maxSteps: 100000, maxWork: 20000000}, {maxBytes: 30000}, 'OOM'],
+  ]) {
+    const result = await run('class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print("entered")\n ' + body + '\nCallable.__getattribute__=lookup\nm.tag\n', options, limits);
+    assert.equal(result.error?.code, code, JSON.stringify(result.error));
+    if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+    assert.ok(result.stdout.startsWith('entered\n')); closed(result.closed);
+  }
+});
+
+test('native method marker access bypasses callable fallback while documentation keeps its descriptor', async () => {
+  const result = await run('class C:\n def read(self):\n  "doc"\n  pass\nC.read.__isabstractmethod__=True\nm=C().read\ntry: object.__getattribute__(m,"__isabstractmethod__")\nexcept AttributeError: print("bypass")\nprint(m.__isabstractmethod__,object.__getattribute__(m,"__doc__"))\n');
+  assert.equal(result.stdout, 'bypass\nTrue doc\n'); assert.equal(result.ok, true); closed(result.closed);
+});
