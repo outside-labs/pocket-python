@@ -34,3 +34,17 @@ admission, dependencies, host grants, publication and deployment do not change.
 
 References: [pinned property layout](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c)
 and [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 37 pinned cases pass six Node/Chromium drain, instruction-boundary and
+parked drivers: 222 observations with 222 zero logical teardowns. Reports verify
+348 runtime/driver hashes. All 40 feature units, the full 2,715-test Node suite
+and 17 affected Python checks pass; eight composed resource observations remain
+unchanged. The final inventory has 393 passing probes per target.
+
+The [property directory console](../examples/interpreter_property_directories.py)
+composes accessor copies, arbitrary metadata, native binding and lazy generators.
+Combined installed-wheel offline acceptance passes 1,932 programs, 112 groups
+and 193 Stop/Restart cycles. Its [payload record](measurements/2026-10-29-property-directories.json)
+verifies all 38 files at 721,255 bytes against the final directory engine.
+These are finite semantic/source/payload observations. Broader reflection
+remains under #123/#33; native async/browser adapters remain under #34.

@@ -374,3 +374,21 @@ bypass and supplied name identity retain shared execution ownership. Dictionary
 mutation preserves the native KeyError-to-AttributeError conversion; descriptor
 callback errors bypass it. Module/class mappings, default directories, native
 getset reflection and native async/host adapters remain open.
+
+## Property and native callable directory checkpoint
+
+[O53](interpreter-property-directories.md) adds fresh default property directories
+and raw native binding independently of accessor callbacks, lazy names,
+documents and computed flags. [O54](interpreter-native-callable-directories.md)
+adds actual-layout directories for the adopted native descriptor and bound
+callable allowlist. Recursive binding and retained property/view cycles preserve
+owned lifetimes; Python bound methods keep their separate directory behavior.
+
+Both new matrices pass six Node/Chromium drivers, with 510 observations and
+510 zero logical teardowns. The affected method/view matrices bring the directory
+total to 984 observations. Installed-wheel offline acceptance, compatibility
+probes and verified example payloads record the finite scope. Ordinary instance,
+class/module and wrapper/value directories, module/class-body live namespaces,
+class mapping enumeration, broader builtin layouts, unread native metadata and
+dynamic source remain under #123/#33. Native async/host work remains under #34.
+No dependency, host grant, release, publication or deployment is included.

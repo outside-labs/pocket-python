@@ -4934,6 +4934,267 @@
         "stdout": "",
         "error_type": "AttributeError"
       }
+    },
+    {
+      "id": "native-callable-directories-method-descriptor-directory",
+      "source": "d=object.__dir__\nprint(*dir(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-method-descriptor-raw-directory",
+      "source": "d=object.__dir__\nprint(*object.__dir__(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-wrapper-descriptor-directory",
+      "source": "d=property.__get__\nprint(*dir(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-wrapper-descriptor-native-binding",
+      "source": "d=property.__get__\ncall=object.__dir__.__get__(d)\nprint(call.__self__ is d,call.__name__,call.__qualname__,call()==d.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ wrapper_descriptor.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ wrapper_descriptor.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-native-method-directory",
+      "source": "d=property().getter\nprint(*dir(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-native-method-native-getattribute",
+      "source": "d=property().getter\ncall=object.__getattribute__(d,\"__dir__\")\nprint(call.__self__ is d,len(call()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 30\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 30\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-method-wrapper-directory",
+      "source": "d=property().__get__\nprint(*dir(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __name__ __ne__ __new__ __objclass__ __qualname__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__ __text_signature__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-method-wrapper-raw-directory",
+      "source": "d=property().__get__\nprint(*object.__dir__(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __self__ __objclass__ __name__ __qualname__ __doc__ __text_signature__ __new__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __self__ __objclass__ __name__ __qualname__ __doc__ __text_signature__ __new__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-method-layout-differences",
+      "source": "p=property()\na=dir(property.getter)\nb=dir(p.getter)\nc=dir(p.__get__)\nprint(\"__get__\" in a,\"__self__\" in a,\"__module__\" in b,\"__objclass__\" in b,\"__objclass__\" in c,\"__module__\" in c)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True False True False True False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True False True False True False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-native-class-method",
+      "source": "class C: pass\nd=C.__init_subclass__\nprint(type(d).__name__,\"__self__\" in dir(d),\"__get__\" in dir(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "builtin_function_or_method True False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "builtin_function_or_method True False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-binding-handle",
+      "source": "d=object.__dir__.__get__\nprint(type(d).__name__,\"__objclass__\" in dir(d),\"__self__\" in dir(d),\"__module__\" in dir(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method-wrapper True True False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method-wrapper True True False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-recursive-binding-handle",
+      "source": "d=object.__dir__.__get__.__dir__\ne=d.__dir__\nprint(type(d).__name__,type(e).__name__,len(dir(e)),e.__self__ is d)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "builtin_function_or_method builtin_function_or_method 30 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "builtin_function_or_method builtin_function_or_method 30 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-cyclic-native-receiver",
+      "source": "def f(self): return 7\np=property(f)\nmethod=p.getter\nf.saved=method\nd=method.__dir__\ndel p\ndel method\ndel f\nprint(d.__self__.__self__.fget.saved is d.__self__,len(d()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 30\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 30\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-retained-live-namespace-method",
+      "source": "class C: tag=[7]\np=C.__dict__\nmethod=p.get\nC.saved=method\nd=method.__dir__\ndel C\ndel p\ndel method\nprint(d.__self__(\"tag\")[0],d.__self__(\"saved\") is d.__self__,len(d()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 True 30\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 True 30\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-receiver-dictionary-not-listed",
+      "source": "def f(self): return 7\nf.custom=[9]\nd=f.__get__\nprint(\"custom\" in dir(d),\"__self__\" in dir(d),len(dir(d)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True 30\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True 30\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-receiver-hooks-not-called",
+      "source": "class M(type): pass\nclass C(metaclass=M): pass\nd=C.mro\ndef read(cls,name): raise ValueError(\"never\")\nM.__getattribute__=read\nprint(len(dir(d)),len(d.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "30 30\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "30 30\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-accessor-hooks-not-called",
+      "source": "class Getter:\n def __call__(self,owner): return 7\n def __getattribute__(self,name): raise ValueError(\"never\")\np=property(Getter(),None,None,\"explicit\")\nprint(len(dir(p.getter)),len(dir(p.__get__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "30 30\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "30 30\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-native-write-readonly",
+      "source": "d=property().getter\nobject.__setattr__(d,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "native-callable-directories-python-bound-native-callable",
+      "source": "m=classmethod(property.getter).__get__(None,property)\nprint(type(m).__name__,\"__func__\" in dir(m),\"__self__\" in dir(m),len(dir(m)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "method True True 28\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "method True True 28\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "native-callable-directories-native-documentation-still-separate",
+      "source": "d=property().getter\nd.__doc__\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
     }
   ]
 }
