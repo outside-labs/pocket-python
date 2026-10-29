@@ -16,6 +16,9 @@ const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__"]);
 const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name) || NATIVE_BINDING_WRAPPERS.has(name);
+const FUNCTION_DATA = new Set(["__dict__", "__class__", "__name__", "__qualname__", "__module__", "__doc__"]);
+const FUNCTION_DEFERRED_DATA = new Set(["__code__", "__defaults__", "__kwdefaults__", "__closure__", "__globals__", "__annotations__", "__annotate__", "__type_params__"]);
+const FUNCTION_DEFERRED_METHODS = new Set(["__call__", "__getattribute__", "__setattr__", "__delattr__", "__repr__", "__str__", "__hash__", "__eq__", "__ne__", "__reduce__", "__reduce_ex__", "__sizeof__", "__format__", "__dir__", "__init__", "__new__", "__init_subclass__", "__subclasshook__", "__getstate__"]);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
 
 export class ClassRuntime {
@@ -333,16 +336,11 @@ export class ClassRuntime {
     }
     if (receiver instanceof BoundMethodValue && ["__self__", "__func__"].includes(name))
       return value(name === "__self__" ? receiver.receiver : receiver.callable);
-    if (receiver instanceof FunctionValue && name === "__get__")
-      return value(this.make(BoundMethodValue, this.builtin("function.__get__"), receiver));
+    if (receiver instanceof FunctionValue && name === "__class__") return value(this.builtin("function"));
+    if (receiver instanceof FunctionValue && name === "__dict__") return value(this.functionDictionary(receiver));
+    if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name);
     if (receiver instanceof FunctionValue && name === "__doc__") return value(receiver.documentation);
     if (receiver instanceof FunctionValue && name === "__module__") return value(receiver.identityModule ?? null);
-    if (receiver instanceof FunctionValue && name === "__isabstractmethod__") {
-      if (receiver.abstractFlag === undefined) this.fail("AttributeError", "Function has no abstract-method marker.");
-      return value(receiver.abstractFlag);
-    }
-    if (receiver instanceof FunctionValue && name === "__objclass__")
-      this.fail("AttributeError", "Python functions have no default __objclass__ attribute.");
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__"].includes(name)) {
       const field = name === "__name__" ? "identityName" : "identityQualname";
       if (receiver[field] === undefined) {
@@ -450,6 +448,7 @@ export class ClassRuntime {
   }
   write(receiver, name, value, remove = false) {
     this.key(name); this.touch(receiver);
+    if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name, remove ? "delete" : "set", value);
     if (name === "__objclass__" && (this.nativeDescriptorKind(receiver) || receiver instanceof BoundMethodValue &&
         (receiver.pythonMethod || receiver.callable instanceof BuiltinValue &&
           (nativeWrapper(receiver.callable.name) || NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name)))))
@@ -470,6 +469,31 @@ export class ClassRuntime {
     }
     return {kind: "value", value: this.mutate(receiver, name, value, remove)};
   }
+  functionDictionary(receiver) {
+    if (receiver.attributes === null) this.functionMetadata(receiver, "attributes", this.values.dict([]));
+    return receiver.attributes;
+  }
+  functionMissing(receiver, name, operation = "get") {
+    if (operation === "get" && name === "__get__")
+      return this.make(BoundMethodValue, this.builtin("function.__get__"), receiver);
+    if (operation === "get" && FUNCTION_DEFERRED_METHODS.has(name))
+      this.fail("UnsupportedOperationError", "Native function methods require their own contract.", "UNSUPPORTED");
+    this.fail("AttributeError", "Function has no attribute '" + name + "'.");
+  }
+  functionEntry(receiver, name, operation = "get", item = null) {
+    if (FUNCTION_DEFERRED_DATA.has(name))
+      this.fail("UnsupportedOperationError", "Native function metadata requires its own contract.", "UNSUPPORTED");
+    const value = value => ({kind: "value", value});
+    const dictionary = operation === "set" ? this.functionDictionary(receiver) : receiver.attributes;
+    if (dictionary === null) return value(this.functionMissing(receiver, name, operation));
+    const key = this.values.string(Array.from(name, char => char.codePointAt(0)));
+    if (this.values.dictionaryNeedsProtocol(dictionary, key)) return {kind: "call",
+      callable: this.builtin("function-dictionary-" + operation), args: [receiver, dictionary, key, item]};
+    if (operation === "set") return value(this.values.set(dictionary, key, item));
+    const position = this.values.find(dictionary, key);
+    if (position < 0) return value(this.functionMissing(receiver, name, operation));
+    return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
+  }
   functionMetadata(receiver, field, value) {
     const before = receiver[field]; receiver[field] = value;
     try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
@@ -480,6 +504,11 @@ export class ClassRuntime {
     this.key(name); this.touch(receiver);
     if (this.isPythonMethod(receiver) && ["__name__", "__qualname__", "__module__"].includes(name))
       this.fail("AttributeError", "Method identity metadata is read-only.");
+    if (receiver instanceof FunctionValue && name === "__dict__") {
+      if (remove || !this.values.isDict(value)) this.fail("TypeError", "Function __dict__ must be set to a dictionary.");
+      return this.functionMetadata(receiver, "attributes", value);
+    }
+    if (receiver instanceof FunctionValue && name === "__class__") this.fail("TypeError", "Function type cannot be changed.");
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__", "__module__"].includes(name)) {
       if (name !== "__module__" && (remove || !this.values.isString(value)))
         this.fail("TypeError", "Function " + name + " must be set to a string.");
@@ -494,14 +523,6 @@ export class ClassRuntime {
     }
     if (name === "__doc__" && receiver instanceof BoundMethodValue) this.fail("AttributeError", "Method documentation is read-only.");
     if (name === "__doc__" && receiver instanceof ClassValue && remove) this.fail("TypeError", "Class documentation cannot be deleted.");
-    if (name === "__isabstractmethod__" && receiver instanceof FunctionValue) {
-      const before = receiver.abstractFlag;
-      if (remove && before === undefined) this.fail("AttributeError", "Function has no abstract-method marker.");
-      receiver.abstractFlag = remove ? undefined : value;
-      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
-      catch (error) { receiver.abstractFlag = before; throw error; }
-      return null;
-    }
     if (name === "__isabstractmethod__" && (receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue || receiver instanceof BoundMethodValue))
       this.fail("AttributeError", "Computed abstract-method flags are read-only.");
     if (name === "__name__") {

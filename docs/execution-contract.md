@@ -235,3 +235,11 @@ explicit additional collection/work costs. `check_classes.py --parked` compares
 independently compiled source through this owner transfer in Node and Chromium.
 Persistent callback/event entry, native coroutine syntax, scheduling fairness and
 awaited host replies require their own delivery slices.
+
+O45 adds `execution-accounting/4`: a live function dictionary retains one
+eight-byte function edge plus ordinary dictionary/key/value storage. The layout
+is lazy. Abstract markers now live in that dictionary rather than a separate
+function field. Functions without dictionary access or custom attributes retain
+their accounting/3 layout. The eight composed cases do not access function
+dictionaries and keep their existing observations. Replacement validates the
+new graph before committing; failed transfers restore the prior dictionary.

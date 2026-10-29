@@ -20,7 +20,7 @@ export class FunctionValue {
   constructor(pool, index, globals, closure, defaults = null) {
     this.pool = pool; this.index = index; this.globals = globals; this.closure = closure;
     this.defaults = defaults === null ? null : Object.freeze([...defaults]);
-    this.abstractFlag = undefined;
+    this.attributes = null;
     this.documentation = pool?.code.functions[index]?.doc === undefined ? null : pool.code.constants[pool.code.functions[index].doc];
     this.identityName = undefined; this.identityQualname = undefined;
     const ordinary = pool?.code.version === 5 && index !== 0 && pool.code.functions[index]?.kind === "function";

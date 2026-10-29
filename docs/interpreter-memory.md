@@ -133,3 +133,11 @@ frames return and release their cyclic graphs. Source parsing is still INT-08. W
 final browser interruption mechanism for synchronous work that cannot process
 queued messages. Workers isolate responsiveness, not arbitrary same-origin
 code. Published 0.1.0 artifacts remain unchanged.
+
+O45 adds `execution-accounting/4`: a live function dictionary retains one
+eight-byte function edge plus ordinary dictionary/key/value storage. The layout
+is lazy. Abstract markers now live in that dictionary rather than a separate
+function field. Functions without dictionary access or custom attributes retain
+their accounting/3 layout. The eight composed cases do not access function
+dictionaries and keep their existing observations. Replacement validates the
+new graph before committing; failed transfers restore the prior dictionary.
