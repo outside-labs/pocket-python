@@ -22,25 +22,7 @@ const FUNCTION_DEFERRED_METHODS = new Set(["__call__", "__getattribute__", "__se
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
 
 // Native namespace keys in pinned CPython 3.14.7 merge order.
-const FUNCTION_DIRECTORY_KEYS = Object.freeze([
-  "__new__",
-  "__repr__",
-  "__call__",
-  "__get__",
-  "__closure__",
-  "__globals__",
-  "__builtins__",
-  "__code__",
-  "__defaults__",
-  "__kwdefaults__",
-  "__annotations__",
-  "__annotate__",
-  "__dict__",
-  "__doc__",
-  "__module__",
-  "__name__",
-  "__qualname__",
-  "__type_params__",
+const OBJECT_DIRECTORY_KEYS = Object.freeze([
   "__new__",
   "__repr__",
   "__hash__",
@@ -66,11 +48,40 @@ const FUNCTION_DIRECTORY_KEYS = Object.freeze([
   "__class__",
   "__doc__"
 ]);
+const FUNCTION_DIRECTORY_KEYS = Object.freeze([
+  "__new__",
+  "__repr__",
+  "__call__",
+  "__get__",
+  "__closure__",
+  "__globals__",
+  "__builtins__",
+  "__code__",
+  "__defaults__",
+  "__kwdefaults__",
+  "__annotations__",
+  "__annotate__",
+  "__dict__",
+  "__doc__",
+  "__module__",
+  "__name__",
+  "__qualname__",
+  "__type_params__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
 const METHOD_DIRECTORY_KEYS = Object.freeze([
   "__new__", "__repr__", "__hash__", "__call__", "__getattribute__",
   "__lt__", "__le__", "__eq__", "__ne__", "__gt__", "__ge__", "__get__",
   "__reduce__", "__func__", "__self__", "__doc__",
-  ...FUNCTION_DIRECTORY_KEYS.slice(18)
+  ...OBJECT_DIRECTORY_KEYS
+]);
+
+const NAMESPACE_VIEW_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__str__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__or__", "__ror__", "__ior__",
+  "__len__", "__getitem__", "__contains__", "get", "keys", "values", "items",
+  "copy", "__class_getitem__", "__reversed__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
 ]);
 
 export class ClassRuntime {
@@ -421,6 +432,7 @@ export class ClassRuntime {
       return value(receiver[field]);
     }
     if (receiver instanceof ClassNamespaceValue) {
+      if (name === "__dir__") return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
       if (name === "__class__") return value(this.builtin("mappingproxy"));
       if (name === "get") return value(this.make(BoundMethodValue, this.builtin("mappingproxy.get"), receiver));
       if (["copy", "keys", "items", "values", "__iter__", "__len__", "__reversed__", "__eq__", "__ne__", "__or__", "__ror__"].includes(name))
@@ -603,6 +615,7 @@ export class ClassRuntime {
   }
   directoryNames(receiver) {
     if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
+    if (receiver instanceof ClassNamespaceValue) return NAMESPACE_VIEW_DIRECTORY_KEYS;
     if (this.isPythonMethod(receiver)) return METHOD_DIRECTORY_KEYS;
     throw new TypeError("Invalid native directory receiver.");
   }

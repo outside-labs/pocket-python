@@ -2,8 +2,8 @@
 
 O52 continues #123 and #33 against pinned CPython 3.14.7. The independently
 authored `namespace-view-directories.json` matrix distinguishes reference
-observations from engine adoption. Implementation stages remain empty until
-the runtime change lands.
+observations from engine adoption. O52 is implemented through the charged
+native directory merge and owned sorting machinery.
 
 `dir(view)` on an adopted class namespace mappingproxy returns a fresh sorted
 list of the pinned mappingproxy and object namespace names. The view's class

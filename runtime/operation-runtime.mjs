@@ -1742,7 +1742,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               name === "__doc__" && (args[0] instanceof FunctionValue || args[0] instanceof BoundMethodValue);
             const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
             const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && (args[0] instanceof FunctionValue || classes.isPythonMethod(args[0]));
-            if (!(args[0] instanceof InstanceValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            const directoryLayout = args[0] instanceof ClassNamespaceValue && name === "__dir__";
+            if (!(args[0] instanceof InstanceValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             if (identityLayout && !writing && classes.isPythonMethod(args[0])) python("AttributeError", "Method identity metadata requires ordinary callable fallback.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
@@ -1896,6 +1897,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = attributeTask(receiver, "__dict__", site,
                 continuation("method-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
             }
+            if (receiver instanceof ClassNamespaceValue) {
+              const result = values.dict([]); state.temporaries.push(result);
+              task = nativeDirectoryNext({receiver, result, position: 0, depth, after: completion}, site); continue;
+            }
             if (!(receiver instanceof FunctionValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "Default directories for this layout require their own stage.");
             const dictionary = classes.functionDictionary(receiver); state.temporaries.push(dictionary);
             const result = values.copyDictionary(dictionary); state.temporaries.push(result);
@@ -1921,7 +1926,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 }
                 task = attributeTask(receiver, "__dict__", site, continuation("vars-result", {receiver, after: completion}), depth); continue;
               }
-              if (receiver instanceof FunctionValue || classes.isPythonMethod(receiver)) {
+              if (receiver instanceof FunctionValue || receiver instanceof ClassNamespaceValue || classes.isPythonMethod(receiver)) {
                 const after = continuation("dir-sort", {receiver, depth, after: continuation("relay", {receiver, after: completion})});
                 task = callTask(classes.builtin("object.__dir__"), [receiver], [], [], site, after, depth); continue;
               }

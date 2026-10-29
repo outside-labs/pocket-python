@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O50",
-    "O51"
+    "O51",
+    "O52"
   ],
   "cases": [
     {
@@ -233,7 +234,7 @@
     },
     {
       "id": "mappingproxy-directory",
-      "stage": "Future",
+      "stage": "O52",
       "source": "class C: pass\nprint(\"get\" in dir(C.__dict__))\n",
       "stdout": "True\n"
     },
