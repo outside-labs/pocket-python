@@ -6270,6 +6270,294 @@
         "error_type": "UnsupportedOperationError",
         "code": "UNSUPPORTED"
       }
+    },
+    {
+      "id": "container-directories-str-sorted-directory",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__add__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ capitalize casefold center count encode endswith expandtabs find format format_map index isalnum isalpha isascii isdecimal isdigit isidentifier islower isnumeric isprintable isspace istitle isupper join ljust lower lstrip maketrans partition removeprefix removesuffix replace rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__add__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ capitalize casefold center count encode endswith expandtabs find format format_map index isalnum isalpha isascii isdecimal isdigit isidentifier islower isnumeric isprintable isspace istitle isupper join ljust lower lstrip maketrans partition removeprefix removesuffix replace rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-str-raw-directory",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ encode replace split rsplit join capitalize casefold title center count expandtabs find partition index ljust lower lstrip rfind rindex rjust rstrip rpartition splitlines strip swapcase translate upper startswith endswith removeprefix removesuffix isascii islower isupper istitle isspace isdecimal isdigit isnumeric isalpha isalnum isidentifier isprintable zfill format format_map __format__ maketrans __sizeof__ __getnewargs__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ encode replace split rsplit join capitalize casefold title center count expandtabs find partition index ljust lower lstrip rfind rindex rjust rstrip rpartition splitlines strip swapcase translate upper startswith endswith removeprefix removesuffix isascii islower isupper istitle isspace isdecimal isdigit isnumeric isalpha isalnum isidentifier isprintable zfill format format_map __format__ maketrans __sizeof__ __getnewargs__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-str-native-binding",
+      "source": "value=\"a\ud83d\ude00a\"\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ str.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ str.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-str-retained-caller",
+      "source": "value=\"a\ud83d\ude00a\"\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "81 81\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "81 81\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-list-sorted-directory",
+      "source": "value=[7,9]\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__add__ __class__ __class_getitem__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __iadd__ __imul__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __reversed__ __rmul__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ append clear copy count extend index insert pop remove reverse sort\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__add__ __class__ __class_getitem__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __iadd__ __imul__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __reversed__ __rmul__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ append clear copy count extend index insert pop remove reverse sort\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-list-raw-directory",
+      "source": "value=[7,9]\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __reversed__ __sizeof__ clear copy append insert extend pop remove index count reverse sort __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __reversed__ __sizeof__ clear copy append insert extend pop remove index count reverse sort __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-list-native-binding",
+      "source": "value=[7,9]\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ list.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ list.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-list-retained-caller",
+      "source": "value=[7,9]\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "48 48\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "48 48\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-tuple-sorted-directory",
+      "source": "value=(7,9)\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__add__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ count index\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__add__ __class__ __class_getitem__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ count index\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-tuple-raw-directory",
+      "source": "value=(7,9)\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ index count __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ index count __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-tuple-native-binding",
+      "source": "value=(7,9)\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ tuple.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ tuple.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-tuple-retained-caller",
+      "source": "value=(7,9)\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "35 35\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "35 35\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-dict-sorted-directory",
+      "source": "value={\"a\":7,\"b\":9}\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__class__ __class_getitem__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __ior__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __reduce__ __reduce_ex__ __repr__ __reversed__ __ror__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ clear copy fromkeys get items keys pop popitem setdefault update values\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__class__ __class_getitem__ __contains__ __delattr__ __delitem__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __ior__ __iter__ __le__ __len__ __lt__ __ne__ __new__ __or__ __reduce__ __reduce_ex__ __repr__ __reversed__ __ror__ __setattr__ __setitem__ __sizeof__ __str__ __subclasshook__ clear copy fromkeys get items keys pop popitem setdefault update values\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-dict-raw-directory",
+      "source": "value={\"a\":7,\"b\":9}\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __or__ __ror__ __ior__ __len__ __getitem__ __setitem__ __delitem__ __contains__ __sizeof__ get setdefault pop popitem keys items values update fromkeys clear copy __reversed__ __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __or__ __ror__ __ior__ __len__ __getitem__ __setitem__ __delitem__ __contains__ __sizeof__ get setdefault pop popitem keys items values update fromkeys clear copy __reversed__ __class_getitem__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-dict-native-binding",
+      "source": "value={\"a\":7,\"b\":9}\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ dict.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ dict.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-dict-retained-caller",
+      "source": "value={\"a\":7,\"b\":9}\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "46 46\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "46 46\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-list-cycle-retained",
+      "source": "value=[]\nvalue.append(value)\nd=value.__dir__\ndel value\nprint(len(d()),d.__self__[0] is d.__self__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "48 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "48 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-tuple-list-cycle-retained",
+      "source": "items=[]\nvalue=(items,)\nitems.append(value)\nd=value.__dir__\ndel value\ndel items\nprint(len(d()),d.__self__[0][0] is d.__self__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "35 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "35 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-dict-cycle-retained",
+      "source": "value={}\nvalue[\"self\"]=value\nd=value.__dir__\ndel value\nprint(len(d()),d.__self__[\"self\"] is d.__self__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "46 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "46 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-content-hooks-isolated",
+      "source": "class Item:\n def __getattribute__(self,name): raise RuntimeError(\"read\")\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise RuntimeError(\"equal\")\n def __lt__(self,other): raise RuntimeError(\"order\")\n def __bool__(self): raise RuntimeError(\"truth\")\n def __repr__(self): raise RuntimeError(\"repr\")\n def __dir__(self): raise RuntimeError(\"directory\")\nitem=Item()\nvalues=([item],(item,),{item:item})\nprint(*(len(dir(value)) for value in values))\nprint(*(len(value.__dir__()) for value in values))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "48 35 46\n48 35 46\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "48 35 46\n48 35 46\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "container-directories-unread-text-reduction",
+      "source": "\"abc\".__reduce__()\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": "TypeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "container-directories-unread-list-reduction",
+      "source": "[].__reduce__()\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": "TypeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
     }
   ]
 }

@@ -411,4 +411,13 @@ caller lifetimes. Collection leaves ranges uniterated and invokes no arbitrary
 slice-field protocols; detached cyclic field graphs remain owned. Integer identity,
 unread native APIs, wrapper/super namespaces, remaining default layouts, live
 module/class namespaces and dynamic source retain their separate contracts.
+
+## Ordinary container directory checkpoint
+
+[O59](interpreter-container-directories.md) extends #123/#33/#116 with default
+str/list/tuple/dict directories, raw native merge order and retained native
+callers. Collection preserves cyclic contents, Unicode and iterator positions
+without contained callbacks. Other default layouts, wrapper/super namespaces,
+live module/class namespaces, unread APIs and dynamic source retain their finite
+contracts. Native async/host adapters remain under #34.
 Native async/host adapters remain under #34.

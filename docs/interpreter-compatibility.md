@@ -13,6 +13,11 @@ explicit target authority contract. The core profile remains the default; class
 syntax and its additional builtins require classes-source/1. This inventory is
 a continuing program beyond the first application profile.
 
+The [O59 container directory contract](interpreter-container-directories.md)
+adds sorted/default and raw native directories for str/list/tuple/dict, preserving
+contents, cyclic graphs, iterator positions and exact native receiver binding.
+Listed native APIs retain separate read and operation boundaries.
+
 The [O21/O22 comprehension contract](interpreter-comprehension-reflection.md) adds optimized enclosing and isolated module/class comprehension snapshots, with nested target masking, captured-cell ordering and restored bindings.
 
 ## Evidence and interpretation

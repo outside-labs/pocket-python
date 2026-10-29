@@ -34,3 +34,13 @@ References: pinned [text namespaces](https://github.com/python/cpython/blob/v3.1
 [tuple namespaces](https://github.com/python/cpython/blob/v3.14.7/Objects/tupleobject.c),
 [dictionary namespaces](https://github.com/python/cpython/blob/v3.14.7/Objects/dictobject.c)
 and [generic directory collection](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 79 pinned cases pass six Node/Chromium drain, instruction-boundary and parked
+drivers: 474 observations with zero logical teardown. The 93 feature units cover
+native receiver cycles, collection, cancellation, close and real resource limits.
+The inventory passes 497 probes per target. The
+[container console](../examples/interpreter_container_directories.py) composes
+Unicode, mutable iterators, cyclic values and detached native callers. Offline
+acceptance includes its matrix, errors/refusals, Stop/Restart and waiting
+reduced-profile update. The [payload record](measurements/2026-10-29-container-directories.json)
+verifies all 38 example files. These are finite semantic/source/payload observations.
