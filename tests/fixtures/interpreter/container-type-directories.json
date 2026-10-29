@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O62",
-    "O64"
+    "O64",
+    "O66"
   ],
   "cases": [
     {
@@ -705,7 +706,7 @@
     {
       "id": "iterator-type-namespace",
       "source": "print(len(dir(type(iter([])))))\n",
-      "stage": "Future",
+      "stage": "O66",
       "stdout": "28\n"
     }
   ]
