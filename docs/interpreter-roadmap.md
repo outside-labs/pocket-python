@@ -430,3 +430,24 @@ released-view data boundaries. Wrapper/super and ordinary instance/class/module
 directories, live namespaces, unread APIs and dynamic source retain finite
 follow-ups. Native async/host adapters remain under #34.
 Native async/host adapters remain under #34.
+
+## Callable and execution type directory checkpoint
+
+[O65](interpreter-callable-type-directories.md) extends #123/#33 with native type
+directories for functions, Python methods, native descriptors/bound callables,
+properties and mappingproxy views. Per-instance/function keys do not enter type
+namespaces. Native ordering, binding, immutable types and ordinary advertised
+namespaces use charged merging and owned sorting without reading contained values
+or callable/accessor metadata.
+
+[O66](interpreter-iterator-type-directories.md) adds generator and adopted native
+iterator type directories without running bodies, advancing sources, comparing
+sentinels or restoring released buffer authority. Detached native callers and
+advertised cyclic generator/callable graphs retain owned parked lifetimes.
+
+Both matrices pass six Node/Chromium drivers, totaling 1,200 source observations
+with zero logical teardown failures. The existing composed resource observations
+remain unchanged. Custom metaclass and remaining native type namespaces,
+non-class advertised namespaces, module/wrapper/super directories, live mappings,
+unread native APIs and dynamic source retain finite follow-ups under #123/#33.
+Native async/host adapters remain under #34.
