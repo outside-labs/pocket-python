@@ -11,7 +11,8 @@
     "O19",
     "O20",
     "O21",
-    "O22"
+    "O22",
+    "O47"
   ],
   "cases": [
     {
@@ -469,8 +470,8 @@
       "stdout": "True\n"
     },
     {
-      "id": "instance-dictionary-deferred",
-      "stage": "Future",
+      "id": "instance-dictionary-live",
+      "stage": "O47",
       "source": "class A: pass\nprint(len(vars(A())))\n",
       "stdout": "0\n"
     },
