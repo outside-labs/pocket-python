@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O51"
+    "O51",
+    "O52"
   ],
   "cases": [
     {
@@ -291,7 +292,7 @@
     {
       "id": "view-directory",
       "source": "class C: pass\nprint(\"get\" in dir(C.__dict__))\n",
-      "stage": "Future",
+      "stage": "O52",
       "stdout": "True\n"
     },
     {

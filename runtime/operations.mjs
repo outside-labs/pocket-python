@@ -65,7 +65,7 @@ export function completion(kind, fields = {}) {
     case "native-dir-merge":
       record = {kind, receiver: fields.receiver, result: fields.result, position: fields.position, depth: fields.depth, after};
       depthCheck(record.depth);
-      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 42)
+      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 49)
         throw new TypeError("Invalid native directory merge position.");
       break;
     case "dir-result": case "dir-iter": case "dir-sort": record = {kind, receiver: fields.receiver, depth: fields.depth ?? 0, after}; depthCheck(record.depth); break;
