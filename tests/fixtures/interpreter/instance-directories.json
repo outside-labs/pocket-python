@@ -395,7 +395,7 @@
     },
     {
       "id": "collision-delete-current-key",
-      "source": "class Key:\n def __hash__(self): return hash(\"__module__\")\n def __eq__(self,other):\n  del A.later\n  return False\nclass A: later=7\nkey=Key()\nv=A()\nv.__dict__={key:8}\nobject.__dir__(v)\n",
+      "source": "class Key:\n def __hash__(self): return hash(\"__module__\")\n def __eq__(self,other):\n  if hasattr(A,\"later\"): del A.later\n  return False\nclass A: later=7\nkey=Key()\nv=A()\nv.__dict__={key:8}\nobject.__dir__(v)\n",
       "stage": "O61",
       "stdout": "",
       "error_type": "KeyError",

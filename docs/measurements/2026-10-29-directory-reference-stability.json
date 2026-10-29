@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "scope": "Stable directory mutation reference; finite semantic observations only.",
+  "source_revision": "54f732aaa28e5dfc1be21e8e5358007b21755768",
+  "working_tree_modified": true,
+  "hash_seed_regression": {
+    "test": "tests.test_interpreter_contract.InterpreterContractTests.test_directory_mutation_reference_is_independent_of_hash_seed",
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "expected": "KeyError after live current-namespace deletion; callback is idempotent across repeated probes"
+  },
+  "source_reports": [
+    {
+      "path": "build/instance-directories-classes-drain-node-report.json",
+      "sha256": "892f0a33ff8bf3c4d471934fbeb59d3414ea661c7b706135cd0cab21dda9e26b",
+      "corpus_sha256": "fcf9e52cd57f3eab6b8894bf916598846b3ea3c255b3afa876825bd1113ba036",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-stepped-node-report.json",
+      "sha256": "096c953efc8193aa05c508fc86ed33032b42126a1b085abd3a679615882d87f2",
+      "corpus_sha256": "fcf9e52cd57f3eab6b8894bf916598846b3ea3c255b3afa876825bd1113ba036",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-parked-node-report.json",
+      "sha256": "ed85963ac501a201fb38177db4a32e54ac45f55c43ce50d42f997367e1be5cba",
+      "corpus_sha256": "fcf9e52cd57f3eab6b8894bf916598846b3ea3c255b3afa876825bd1113ba036",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-drain-browser-report.json",
+      "sha256": "9266fde355e4bbf0063f1f4ca6295215c4747a66b0cc4e1d59e80bcafe977d92",
+      "corpus_sha256": "fcf9e52cd57f3eab6b8894bf916598846b3ea3c255b3afa876825bd1113ba036",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-stepped-browser-report.json",
+      "sha256": "248151984902111c9ee43e245bf3aa385fc8e71167d99a1857daea3fecb757dc",
+      "corpus_sha256": "fcf9e52cd57f3eab6b8894bf916598846b3ea3c255b3afa876825bd1113ba036",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-parked-browser-report.json",
+      "sha256": "7dddd32c48d6be8d2d7da414d7968f5eab8180a65f28a355b5239b9c45d03da8",
+      "corpus_sha256": "fcf9e52cd57f3eab6b8894bf916598846b3ea3c255b3afa876825bd1113ba036",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/class-directories-classes-drain-node-report.json",
+      "sha256": "8b1171854c8c99bcc4881e0d0bc22ec5350a5b20a443b198831a706f9d86615d",
+      "corpus_sha256": "8b1c313ea8e569b670499cf1a9a44136d285deaeeec3bd2513858f2899e0581f",
+      "summary": {
+        "pass": 74,
+        "fail": 0
+      },
+      "zero_teardown_records": 74
+    },
+    {
+      "path": "build/class-directories-classes-stepped-node-report.json",
+      "sha256": "116891f9d0608f01a55d699f59046ed08f8d695affd72132c02074e58c3ce2bb",
+      "corpus_sha256": "8b1c313ea8e569b670499cf1a9a44136d285deaeeec3bd2513858f2899e0581f",
+      "summary": {
+        "pass": 74,
+        "fail": 0
+      },
+      "zero_teardown_records": 74
+    },
+    {
+      "path": "build/class-directories-classes-parked-node-report.json",
+      "sha256": "74010f49766e0d4e5d6b8c423042b881886dca7c333c50be1b7ab398b2fc877a",
+      "corpus_sha256": "8b1c313ea8e569b670499cf1a9a44136d285deaeeec3bd2513858f2899e0581f",
+      "summary": {
+        "pass": 74,
+        "fail": 0
+      },
+      "zero_teardown_records": 74
+    },
+    {
+      "path": "build/class-directories-classes-drain-browser-report.json",
+      "sha256": "ff0bbbce52e498e0ce9bd055214346690baa7c7e2840ae031c4b833fbab576d1",
+      "corpus_sha256": "8b1c313ea8e569b670499cf1a9a44136d285deaeeec3bd2513858f2899e0581f",
+      "summary": {
+        "pass": 74,
+        "fail": 0
+      },
+      "zero_teardown_records": 74
+    },
+    {
+      "path": "build/class-directories-classes-stepped-browser-report.json",
+      "sha256": "e0c45ffe443aa822c7de7dd24440513e01e3e2f5f2f7953e204363afc0a60dae",
+      "corpus_sha256": "8b1c313ea8e569b670499cf1a9a44136d285deaeeec3bd2513858f2899e0581f",
+      "summary": {
+        "pass": 74,
+        "fail": 0
+      },
+      "zero_teardown_records": 74
+    },
+    {
+      "path": "build/class-directories-classes-parked-browser-report.json",
+      "sha256": "4fe55e4fe1e60c70557b7f5f088ac0e08b66a357720d3b5377fa81a497cf2430",
+      "corpus_sha256": "8b1c313ea8e569b670499cf1a9a44136d285deaeeec3bd2513858f2899e0581f",
+      "summary": {
+        "pass": 74,
+        "fail": 0
+      },
+      "zero_teardown_records": 74
+    }
+  ],
+  "summary": {
+    "pass": 804,
+    "fail": 0,
+    "zero_teardown_records": 804
+  }
+}

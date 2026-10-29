@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -35,3 +36,19 @@ class InterpreterContractTests(unittest.TestCase):
         for case in corpus.get("malformed_source", []):
             with self.subTest(malformed=case["id"]), self.assertRaises(SyntaxError):
                 ast.parse(case["source"])
+
+    def test_directory_mutation_reference_is_independent_of_hash_seed(self):
+        corpus = json.loads(CORPUS.with_name("instance-directories.json").read_text(encoding="utf-8"))
+        case = next(case for case in corpus["cases"] if case["id"] == "collision-delete-current-key")
+        for seed in range(16):
+            with self.subTest(seed=seed):
+                # -I would ignore PYTHONHASHSEED; this trusted synthetic source needs
+                # different real table probe sequences to check callback idempotence.
+                process = subprocess.run(
+                    [sys.executable, "-X", "utf8", "-S", "-c", case["source"]],
+                    env={**os.environ, "PYTHONHASHSEED": str(seed)},
+                    capture_output=True, text=True, encoding="utf-8", timeout=5,
+                )
+                self.assertNotEqual(process.returncode, 0)
+                self.assertEqual(process.stdout, case["stdout"])
+                self.assertTrue(process.stderr.splitlines()[-1].startswith(case["error_type"] + ":"), process.stderr)

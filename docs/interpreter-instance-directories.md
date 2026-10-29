@@ -50,3 +50,13 @@ qualify ordinary instances and user iterators formerly listed as deferred. The
 dictionaries, advertised classes and lazy generators. Its
 [payload record](measurements/2026-10-29-instance-directories.json) verifies all
 38 files at 741,544 bytes. These are finite semantic/source/payload observations.
+
+The collision mutation reference uses an idempotent deletion callback: CPython's
+randomized dictionary table can visit a colliding key repeatedly. Qualification
+checks the resulting live-namespace KeyError across sixteen hash seeds rather
+than assuming a fixed probe count. This corrects reference stability without
+changing engine behavior or its accounting.
+O62 subsequently adopts the class-directory boundary in this corpus; its current
+six-driver matrix therefore has 58 comparisons and two refusals. The combined
+[stability record](measurements/2026-10-29-directory-reference-stability.json)
+retains all 804 instance/class observations with zero logical teardown.
