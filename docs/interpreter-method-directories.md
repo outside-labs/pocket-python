@@ -51,6 +51,7 @@ remain unchanged. The inventory has 345 probes per target.
 The [method directory console](../examples/interpreter_method_directories.py)
 composes retained methods, live callable dictionaries, native binding and lazy
 generators. Its [payload record](measurements/2026-10-29-method-directories.json)
-verifies every file and receipt member. Installed-wheel offline acceptance is
-part of the shared browser integration checks. Broader reflection remains under
+verifies all 38 files at 717,478 bytes. Installed-wheel offline acceptance passes
+1,850 programs, 106 groups and 189 Stop/Restart cycles at the O51 checkpoint.
+Broader reflection remains under
 #123/#33; native async/browser adapters remain under #34.

@@ -101,3 +101,10 @@ layout/source metadata entries retain explicit boundaries.
 The [O50 function directory contract](interpreter-function-directories.md)
 adopts native function/object directory names combined with the live function
 dictionary. Other default directory layouts and unread metadata remain separate.
+
+The [O51 method directory contract](interpreter-method-directories.md) adopts
+native method/object names with owned wrapped-callable dictionary lookup.
+The [O52 namespace view directory contract](interpreter-namespace-view-directories.md)
+adopts mappingproxy/object names independently of class mapping enumeration.
+Both preserve native directory binding and retained receivers; unread native
+metadata and other default layouts retain separate contracts.

@@ -217,7 +217,14 @@ identities, shallow function and generator-expression namespace snapshots,
 and custom dictionary/directory hooks. [Directory copying](docs/interpreter-directory-scopes.md)
 adopts length hints and stable ordering through Python comparison callbacks.
 Run `python -m examples.interpreter_reflection` for a console combining those
-protocols. Live namespace mappings and default directories retain their own
+protocols. Finite default [function](docs/interpreter-function-directories.md),
+[bound method](docs/interpreter-method-directories.md) and
+[class namespace view](docs/interpreter-namespace-view-directories.md)
+directories preserve native names and owned receiver lifetimes. Function and
+method lists include the callable's live dictionary keys.
+Run `python -m examples.interpreter_method_directories` or
+`python -m examples.interpreter_namespace_view_directories` for composed examples.
+Broader live namespace mappings and other default directories retain separate
 contracts.
 
 [Comprehension reflection](docs/interpreter-comprehension-reflection.md) exposes
