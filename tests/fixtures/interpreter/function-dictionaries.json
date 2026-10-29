@@ -1,0 +1,406 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-function-dictionaries/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "live-empty-dictionary",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nprint(d is f.__dict__,vars(f) is d,len(d))\n",
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "attribute-dictionary-alias",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nf.tag=v\nprint(d[\"tag\"] is v,f.tag is v)\nd[\"tag\"]=[9]\nprint(f.tag[0])\ndel f.tag\nprint(len(d),hasattr(f,\"tag\"))\n",
+      "stdout": "True True\n9\n0 False\n"
+    },
+    {
+      "id": "replacement-keeps-old-alias",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nd[\"old\"]=3\nr={\"new\":[]};f.__dict__=r\nprint(f.__dict__ is r,vars(f) is r,d[\"old\"],hasattr(f,\"old\"),f.new is r[\"new\"])\nf.next=7\nprint(r[\"next\"])\n",
+      "stdout": "True True 3 False True\n7\n"
+    },
+    {
+      "id": "replacement-cycle",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nr={\"self\":f};f.__dict__=r\nprint(f.self is f,vars(f)[\"self\"] is f)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "shared-function-dictionary",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\ndef g(): pass\ng.__dict__=d\nf.a=5\nprint(g.a,g.__dict__ is f.__dict__)\ng.b=7\nprint(f.b)\n",
+      "stdout": "5 True\n7\n"
+    },
+    {
+      "id": "custom-name-0",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'',v)\nprint(getattr(f,'') is v,d[''] is v)\ndelattr(f,'')\nprint('' in d)\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "custom-name-1",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'not an identifier',v)\nprint(getattr(f,'not an identifier') is v,d['not an identifier'] is v)\ndelattr(f,'not an identifier')\nprint('not an identifier' in d)\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "custom-name-2",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'λ😀',v)\nprint(getattr(f,'λ😀') is v,d['λ😀'] is v)\ndelattr(f,'λ😀')\nprint('λ😀' in d)\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "custom-name-3",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'__objclass__',v)\nprint(getattr(f,'__objclass__') is v,d['__objclass__'] is v)\ndelattr(f,'__objclass__')\nprint('__objclass__' in d)\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "custom-name-4",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'__isabstractmethod__',v)\nprint(getattr(f,'__isabstractmethod__') is v,d['__isabstractmethod__'] is v)\ndelattr(f,'__isabstractmethod__')\nprint('__isabstractmethod__' in d)\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "custom-name-5",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'__get__',v)\nprint(getattr(f,'__get__') is v,d['__get__'] is v)\ndelattr(f,'__get__')\nprint('__get__' in d)\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "custom-name-6",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'__call__',v)\nprint(getattr(f,'__call__') is v,d['__call__'] is v)\ndelattr(f,'__call__')\nprint('__call__' in d)\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "data-priority-__name__",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nbefore=getattr(f,'__name__')\nd['__name__']=[9]\nprint(getattr(f,'__name__') is before,d['__name__'][0])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "data-priority-__qualname__",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nbefore=getattr(f,'__qualname__')\nd['__qualname__']=[9]\nprint(getattr(f,'__qualname__') is before,d['__qualname__'][0])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "data-priority-__module__",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nbefore=getattr(f,'__module__')\nd['__module__']=[9]\nprint(getattr(f,'__module__') is before,d['__module__'][0])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "data-priority-__doc__",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nbefore=getattr(f,'__doc__')\nd['__doc__']=[9]\nprint(getattr(f,'__doc__') is before,d['__doc__'][0])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "data-priority-__class__",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nbefore=getattr(f,'__class__')\nd['__class__']=[9]\nprint(getattr(f,'__class__') is before,d['__class__'][0])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "data-priority-__dict__",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nbefore=getattr(f,'__dict__')\nd['__dict__']=[9]\nprint(getattr(f,'__dict__') is before,d['__dict__'][0])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "get-shadow-does-not-change-binding",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.__get__=9\nclass C: read=f\nc=C()\nprint(f.__get__,c.read.__func__ is f,c.read.__self__ is c)\n",
+      "stdout": "9 True True\n"
+    },
+    {
+      "id": "custom-value-no-descriptor-binding",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nclass D:\n def __get__(self,obj,owner):\n  print(\"wrong\")\n  return 99\nv=D();f.tag=v\nprint(f.tag is v)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "abstract-markers-share-dictionary",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.__isabstractmethod__=[1]\nprint(d[\"__isabstractmethod__\"] is f.__isabstractmethod__,property(f).__isabstractmethod__)\nd[\"__isabstractmethod__\"]=False\nprint(property(f).__isabstractmethod__)\ndel d[\"__isabstractmethod__\"]\nprint(hasattr(f,\"__isabstractmethod__\"),property(f).__isabstractmethod__)\n",
+      "stdout": "True True\nFalse\nFalse False\n"
+    },
+    {
+      "id": "dict-replacement-removes-marker",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.__isabstractmethod__=True\nf.__dict__={}\nprint(hasattr(f,\"__isabstractmethod__\"),property(f).__isabstractmethod__)\n",
+      "stdout": "False False\n"
+    },
+    {
+      "id": "nonstring-keys",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nd[1]=[3];d[None]=5\nf.tag=7\nprint(d[1][0],d[None],f.tag,len(d))\n",
+      "stdout": "3 5 7 3\n"
+    },
+    {
+      "id": "native-function-access",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nobject.__setattr__(f,\"tag\",v)\nprint(object.__getattribute__(f,\"tag\") is v,object.__getattribute__(f,\"__dict__\") is d)\nobject.__delattr__(f,\"tag\")\nprint(hasattr(f,\"tag\"))\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "missing-get-missing",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'missing')\n",
+      "error_type": "AttributeError",
+      "stdout": ""
+    },
+    {
+      "id": "missing-delete-missing",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\ndelattr(f,'missing')\n",
+      "error_type": "AttributeError",
+      "stdout": ""
+    },
+    {
+      "id": "missing-get-__objclass__",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__objclass__')\n",
+      "error_type": "AttributeError",
+      "stdout": ""
+    },
+    {
+      "id": "missing-delete-__objclass__",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\ndelattr(f,'__objclass__')\n",
+      "error_type": "AttributeError",
+      "stdout": ""
+    },
+    {
+      "id": "invalid-dictionary-0",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.keep=3\ntry: f.__dict__=None\nexcept TypeError: print(f.keep,f.__dict__ is d)\n",
+      "stdout": "3 True\n"
+    },
+    {
+      "id": "invalid-dictionary-1",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.keep=3\ntry: f.__dict__=[]\nexcept TypeError: print(f.keep,f.__dict__ is d)\n",
+      "stdout": "3 True\n"
+    },
+    {
+      "id": "invalid-dictionary-2",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.keep=3\ntry: f.__dict__=7\nexcept TypeError: print(f.keep,f.__dict__ is d)\n",
+      "stdout": "3 True\n"
+    },
+    {
+      "id": "invalid-dictionary-3",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.keep=3\ntry: f.__dict__=\"text\"\nexcept TypeError: print(f.keep,f.__dict__ is d)\n",
+      "stdout": "3 True\n"
+    },
+    {
+      "id": "invalid-dictionary-4",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nf.keep=3\ntry: f.__dict__=f\nexcept TypeError: print(f.keep,f.__dict__ is d)\n",
+      "stdout": "3 True\n"
+    },
+    {
+      "id": "delete-dictionary",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\ndel f.__dict__\n",
+      "error_type": "TypeError",
+      "stdout": ""
+    },
+    {
+      "id": "delete-native-name-keeps-shadow",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nd[\"__name__\"]=9\ntry: del f.__name__\nexcept TypeError: print(f.__name__,d[\"__name__\"])\n",
+      "stdout": "f 9\n"
+    },
+    {
+      "id": "collision-read-write-delete",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"equal\",other)\n  return other==\"tag\"\nk=Key();f.__dict__={k:[7]}\nprint(f.tag[0]);f.tag=[9];print(f.tag[0]);del f.tag;print(len(f.__dict__))\n",
+      "stdout": "equal tag\n7\nequal tag\nequal tag\n9\nequal tag\n0\n"
+    },
+    {
+      "id": "collision-replacement-snapshot",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  f.__dict__={\"tag\":9}\n  return True\nf.__dict__={Key():7}\nprint(f.tag,f.tag)\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "collision-error-is-not-missing",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise KeyError(\"callback\")\nf.__dict__={Key():7}\ngetattr(f,\"tag\",99)\n",
+      "error_type": "KeyError",
+      "stdout": ""
+    },
+    {
+      "id": "collision-attribute-error",
+      "stage": "O45",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise AttributeError(\"callback\")\nf.__dict__={Key():7}\nprint(getattr(f,\"tag\",99),hasattr(f,\"tag\"))\n",
+      "stdout": "99 False\n"
+    },
+    {
+      "id": "method-live-dictionary",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nprint(m.__dict__ is d,vars(m) is d)\nf.tag=[3]\nprint(m.tag is f.tag)\nf.__dict__={\"tag\":[9]}\nprint(m.tag[0],m.__dict__ is f.__dict__,len(d))\n",
+      "stdout": "True True\nTrue\n9 True 1\n"
+    },
+    {
+      "id": "method-dictionary-is-mutable",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nm.__dict__[\"tag\"]=7\nprint(f.tag,m.tag)\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "method-custom-object-is-unbound",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=lambda: 9\nprint(m.tag is f.tag,m.tag())\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "method-readonly-tag",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\ntry: setattr(m,'tag',7)\nexcept AttributeError: print(f.tag)\ntry: delattr(m,'tag')\nexcept AttributeError: print(f.tag)\n",
+      "stdout": "3\n3\n"
+    },
+    {
+      "id": "method-readonly-__dict__",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\ntry: setattr(m,'__dict__',7)\nexcept AttributeError: print(f.tag)\ntry: delattr(m,'__dict__')\nexcept AttributeError: print(f.tag)\n",
+      "stdout": "3\n3\n"
+    },
+    {
+      "id": "method-readonly-__objclass__",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\ntry: setattr(m,'__objclass__',7)\nexcept AttributeError: print(f.tag)\ntry: delattr(m,'__objclass__')\nexcept AttributeError: print(f.tag)\n",
+      "stdout": "3\n3\n"
+    },
+    {
+      "id": "method-readonly-__get__",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\ntry: setattr(m,'__get__',7)\nexcept AttributeError: print(f.tag)\ntry: delattr(m,'__get__')\nexcept AttributeError: print(f.tag)\n",
+      "stdout": "3\n3\n"
+    },
+    {
+      "id": "method-native-bypass-tag",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\nf.__objclass__=C\ntry: object.__getattribute__(m,'tag')\nexcept AttributeError: print(\"bypass\")\nprint(getattr(m,'tag') is getattr(f,'tag'))\n",
+      "stdout": "bypass\nTrue\n"
+    },
+    {
+      "id": "method-native-bypass-__dict__",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\nf.__objclass__=C\ntry: object.__getattribute__(m,'__dict__')\nexcept AttributeError: print(\"bypass\")\nprint(getattr(m,'__dict__') is getattr(f,'__dict__'))\n",
+      "stdout": "bypass\nTrue\n"
+    },
+    {
+      "id": "method-native-bypass-__objclass__",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\nf.__objclass__=C\ntry: object.__getattribute__(m,'__objclass__')\nexcept AttributeError: print(\"bypass\")\nprint(getattr(m,'__objclass__') is getattr(f,'__objclass__'))\n",
+      "stdout": "bypass\nTrue\n"
+    },
+    {
+      "id": "method-native-bypass-__name__",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nf.tag=3\nf.__objclass__=C\ntry: object.__getattribute__(m,'__name__')\nexcept AttributeError: print(\"bypass\")\nprint(getattr(m,'__name__') is getattr(f,'__name__'))\n",
+      "stdout": "bypass\nTrue\n"
+    },
+    {
+      "id": "method-native-fields-priority",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nd[\"__self__\"]=9;d[\"__func__\"]=9;d[\"__class__\"]=9\nprint(m.__func__ is f,m.__self__.__class__ is C,m.__class__ is type(m))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "method-custom-getattribute",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print(\"lookup\",name)\n return [7]\nCallable.__getattribute__=lookup\nprint(m.tag[0],m.__dict__[0])\n",
+      "stdout": "lookup tag\nlookup __dict__\n7 7\n"
+    },
+    {
+      "id": "method-custom-getattr",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef missing(self,name):\n print(\"fallback\",name)\n return 9\nCallable.__getattr__=missing\nprint(m.tag)\n",
+      "stdout": "fallback tag\n9\n"
+    },
+    {
+      "id": "method-descriptor-read",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef read(self):\n print(\"descriptor\")\n return [7]\nCallable.tag=property(read)\nprint(m.tag[0])\n",
+      "stdout": "descriptor\n7\n"
+    },
+    {
+      "id": "method-collision",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"equal\",other)\n  return other==\"tag\"\nk=Key();f.__dict__={k:[7]}\nprint(m.tag[0],m.__dict__ is f.__dict__)\n",
+      "stdout": "equal tag\n7 True\n"
+    },
+    {
+      "id": "method-missing-default",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): return 7\nf=C.read;d=f.__dict__;m=C().read\nprint(getattr(m,\"tag\",99),hasattr(m,\"tag\"))\n",
+      "stdout": "99 False\n"
+    },
+    {
+      "id": "method-custom-error",
+      "stage": "O46",
+      "source": "def f(): return 7\nd=f.__dict__\nclass Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name): raise ValueError(\"original\")\nCallable.__getattribute__=lookup\nm.tag\n",
+      "error_type": "ValueError",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-__code__",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__code__')\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-__defaults__",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__defaults__')\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-__kwdefaults__",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__kwdefaults__')\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-__annotations__",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__annotations__')\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-__annotate__",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__annotate__')\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-__closure__",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__closure__')\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-__globals__",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__globals__')\n",
+      "stdout": ""
+    },
+    {
+      "id": "deferred-__type_params__",
+      "stage": "Future",
+      "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__type_params__')\n",
+      "stdout": ""
+    }
+  ]
+}
