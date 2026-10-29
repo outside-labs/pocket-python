@@ -5195,6 +5195,190 @@
         "code": "UNSUPPORTED",
         "phase": "execute"
       }
+    },
+    {
+      "id": "generator-directories-sorted-directory",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(*dir(g))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__class__ __class_getitem__ __del__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __lt__ __name__ __ne__ __new__ __next__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ close gi_code gi_frame gi_running gi_suspended gi_yieldfrom send throw\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__class__ __class_getitem__ __del__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __lt__ __name__ __ne__ __new__ __next__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ close gi_code gi_frame gi_running gi_suspended gi_yieldfrom send throw\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-raw-directory",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(*object.__dir__(g))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__repr__ __iter__ __next__ __del__ send throw close __sizeof__ __class_getitem__ __name__ __qualname__ gi_yieldfrom gi_running gi_frame gi_suspended gi_code __doc__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__repr__ __iter__ __next__ __del__ send throw close __sizeof__ __class_getitem__ __name__ __qualname__ gi_yieldfrom gi_running gi_frame gi_suspended gi_code __doc__ __new__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-native-binding",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nd=object.__dir__.__get__(g)\nprint(d.__self__ is g,d.__name__,d.__qualname__,d()==g.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ generator.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ generator.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-native-getattribute",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nd=object.__getattribute__(g,\"__dir__\")\nprint(d.__self__ is g,d.__name__,d.__qualname__,len(d()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True __dir__ generator.__dir__ 38\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True __dir__ generator.__dir__ 38\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-retained-caller",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nd=g.__dir__\ndel g\ndel produce\nprint(len(d()),next(d.__self__))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "38 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "38 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-created-does-not-run",
+      "source": "def produce():\n print(\"entered\")\n yield 7\ng=produce()\nprint(len(dir(g)),len(g.__dir__()))\nprint(next(g))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "38 38\nentered\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "38 38\nentered\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-suspended-does-not-resume",
+      "source": "def produce():\n yield 7\n print(\"resumed\")\n yield 9\ng=produce()\nprint(next(g))\na=dir(g)\nprint(len(a),len(g.__dir__()))\nprint(next(g))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7\n38 38\nresumed\n9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7\n38 38\nresumed\n9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-exhausted-state",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\na=dir(g)\nprint(next(g),next(g),next(g,None))\nprint(a==dir(g),next(g,None),len(g.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 9 None\nTrue None 38\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 9 None\nTrue None 38\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-closed-state",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\na=dir(g)\ng.close()\nprint(a==dir(g),next(g,None),len(g.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True None 38\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True None 38\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-running-generator",
+      "source": "def produce():\n print(len(dir(g)),len(g.__dir__()))\n yield 7\ng=produce()\nprint(next(g),next(g,None))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "38 38\n7 None\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "38 38\n7 None\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-retained-cyclic-generator",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nproduce.saved=g\nd=g.__dir__\ndel g\ndel produce\nprint(len(d()),next(d.__self__))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "38 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "38 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "generator-directories-native-write",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(\"before\")\nobject.__setattr__(g,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "generator-directories-unread-frame",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(g.gi_frame is None)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "generator-directories-unread-code",
+      "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(g.gi_code is None)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
     }
   ]
 }

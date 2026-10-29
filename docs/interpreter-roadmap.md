@@ -392,3 +392,7 @@ class/module and wrapper/value directories, module/class-body live namespaces,
 class mapping enumeration, broader builtin layouts, unread native metadata and
 dynamic source remain under #123/#33. Native async/host work remains under #34.
 No dependency, host grant, release, publication or deployment is included.
+
+## Generator directory checkpoint
+
+[O55](interpreter-generator-directories.md) extends #123/#33 with state-independent generator directories, exact native caller binding and owned suspended-frame lifetimes. The composed console covers send, close and lazy iteration offline. Listed metadata retains separate read contracts; broader layouts, live namespaces and dynamic source remain open. Native async/host adapters remain under #34.
