@@ -119,3 +119,5 @@ Receiver chains retain exact properties, live views and functions without
 consulting their dictionaries or hooks.
 
 [O55 generator directories](interpreter-generator-directories.md) add fresh sorted and raw native lists without starting, resuming or closing the generator. Detached callers retain the suspended frame and values; unread frame/code metadata and other layouts retain separate contracts.
+
+[O56 native iterator directories](interpreter-iterator-directories.md) collect actual native layout names without advancing sources, comparing sentinels or validating mutated containers. Readable metadata and further native methods remain separately adopted; user-defined iterator instances retain their ordinary directory boundary.

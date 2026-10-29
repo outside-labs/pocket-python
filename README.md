@@ -304,3 +304,5 @@ replacement aliases and owned collision callbacks. Run
 `python -m examples.interpreter_function_dictionaries` for the decorator console.
 
 The finite [generator directory profile](docs/interpreter-generator-directories.md) adds state-independent names and retained native directory callers. Run `python -m examples.interpreter_generator_directories` for a composed console. Listed generator metadata retains its separate read contract.
+
+The finite [native iterator directory profile](docs/interpreter-iterator-directories.md) covers the adopted container, indexed and callable-sentinel iterator layouts. Directory collection preserves iteration state, source/sentinel ownership and native caller identities. Run `python -m examples.interpreter_iterator_directories` for the composed console.
