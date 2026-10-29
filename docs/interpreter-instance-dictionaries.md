@@ -77,3 +77,7 @@ Stop/Restart cycles. The [payload record](measurements/2026-10-28-instance-dicti
 verifies all 38 files at 706,001 bytes, with an identical fresh rebuild. These are
 finite semantic/source/payload observations. Broader reflection remains under
 #123/#33 and native async/host adapters remain under #34.
+
+The [O49 keyed class namespace contract](interpreter-class-namespaces.md)
+supersedes earlier blanket class-mapping refusals. Enumeration and native
+layout/source metadata entries retain explicit boundaries.

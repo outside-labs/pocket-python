@@ -50,3 +50,16 @@ The matrix includes native get metadata/binding, metaclass write hooks and
 explicit native mutation errors. Earlier class-namespace refusals now use O49;
 module identifiers are compared within each host's explicitly named source
 module rather than equating the oracle harness namespace with the registry.
+
+All 43 pinned source cases pass through six Node/Chromium drain, instruction
+and parked drivers: 258 observations with zero logical teardown. The reports
+verify 348 current runtime/driver hashes. The inventory has 310 passing probes
+per target. Focused view, class/value and neighboring namespace tests pass;
+the eight composed resource observations remain unchanged.
+
+The [class namespace console](../examples/interpreter_class_namespaces.py)
+composes stored descriptors, retained methods, live updates and lazy generators.
+Installed-wheel offline acceptance passes 1,787 programs, 102 groups and 183
+Stop/Restart cycles. The [payload record](measurements/2026-10-29-class-namespaces.json)
+verifies every file and receipt member. Broader reflection remains under #123/#33
+and native async/browser adapters remain under #34.

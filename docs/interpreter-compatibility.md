@@ -300,3 +300,8 @@ their original exceptions; native dictionary mutation converts KeyError to
 AttributeError while data-descriptor callbacks bypass that conversion.
 Module/class mappings, default directories, getset reflection and native
 coroutine/await/browser host adapters remain separate contracts.
+
+[O49](interpreter-class-namespaces.md) adds fresh live read-only keyed class
+namespace views. Lookup, membership and get return stored own values without
+descriptor binding, preserve metaclass priority and retain detached classes.
+Enumeration, native layouts and callback-bearing query keys remain separate.

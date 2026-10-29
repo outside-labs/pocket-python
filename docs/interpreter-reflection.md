@@ -93,3 +93,7 @@ records, IDs, snapshots and custom dictionary/directory hooks. Its
 [payload and evidence record](measurements/2026-10-27-reflection.json) verifies
 all 38 files and receipt members at 638,936 bytes; a fresh assembly is identical.
 This is a finite payload observation, without a performance or package claim.
+
+The [O49 keyed class namespace contract](interpreter-class-namespaces.md)
+supersedes earlier blanket class-mapping refusals. Enumeration and native
+layout/source metadata entries retain explicit boundaries.
