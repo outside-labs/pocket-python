@@ -974,7 +974,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
           const identityWrite = writing && classes.isPythonMethod(receiver) && ["__name__", "__qualname__", "__module__"].includes(name);
-          if (!(receiver instanceof FunctionValue || classes.isPythonMethod(receiver) || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
+          if (!(receiver instanceof FunctionValue || classes.isPythonMethod(receiver) || receiver instanceof InstanceValue && name === "__dict__" || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
           state.temporaries.push(key);

@@ -103,7 +103,7 @@ test('dictionary collision callbacks obey recursion, instruction, work and arena
 test('function dictionaries retain core admission and class namespace boundaries', async () => {
   const core = await runSourceRequest({modules: [unit('def f(): pass\nf.__dict__\n')]});
   assert.equal(core.error?.code, 'UNSUPPORTED'); if (core.closed) closed(core.closed);
-  for (const source of ['class C: pass\nC.__dict__={}\n', 'class C: pass\nC().__dict__\n']) {
+  for (const source of ['class C: pass\nC.__dict__={}\n']) {
     const result = await run(source); assert.equal(result.error?.code, 'UNSUPPORTED'); if (result.closed) closed(result.closed);
   }
 });

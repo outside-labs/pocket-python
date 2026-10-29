@@ -1326,8 +1326,9 @@ export function valueLayout(value) {
   if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
     8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1)) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
     children: [...value.bases, ...value.mro.slice(1), ...value.namespace.values(), ...(value.metaclass === null ? [] : [value.metaclass])]};
-  if (value instanceof InstanceValue) return {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
-    children: [value.type, ...value.attributes.values()]};
+  if (value instanceof InstanceValue) return value.attributes instanceof Map ?
+    {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
+      children: [value.type, ...value.attributes.values()]} : {bytes: 88, children: [value.type, value.attributes]};
   if (value instanceof BoundMethodValue) return {bytes: 64, children: [value.callable, value.receiver]};
   if (value instanceof SuperValue) return {bytes: 72, children: [value.thisclass, value.self, value.selfClass]};
   if (value instanceof PropertyValue) return {bytes: 80 + (value.propertyName === undefined ? 0 : 8) + (value.documentation == null ? 0 : 8),

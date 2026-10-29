@@ -38,23 +38,24 @@ SUITES = {
 CORPORA = (
     'classes', 'private-names', 'descriptors', 'special-calls', 'length-truth',
     'formatting', 'indexing', 'iteration', 'equality', 'numeric', 'sequences',
-    'function-binding', 'function-dictionaries', 'ordinary-syntax', 'value-families', 'generators',
+    'function-binding', 'function-dictionaries', 'instance-dictionaries', 'ordinary-syntax', 'value-families', 'generators',
     'construction', 'attribute-hooks', 'type-checks', 'reflection', 'repetition',
     'subclass-initialization', 'metaclass-attributes', 'nested-descriptors',
     'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection', 'execution', 'object-hashing', 'ordering', 'object-protocols',
 )
 CORE_CORPORA = {'sequences', 'function-binding', 'ordinary-syntax', 'value-families',
                 'generators', 'repetition', 'ordering'}
-PARKED_CORPORA = {'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
+PARKED_CORPORA = {'instance-dictionaries', 'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
                   'execution', 'object-hashing'}
 REFERENCE_CORPORA = {
     'classes', 'ordering', 'subclass-initialization', 'metaclass-attributes',
-    'function-binding', 'function-dictionaries', 'ordinary-syntax', 'value-families', 'iteration', 'equality',
+    'function-binding', 'function-dictionaries', 'instance-dictionaries', 'ordinary-syntax', 'value-families', 'iteration', 'equality',
     'indexing', 'private-names', 'descriptors', 'nested-descriptors',
     'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection', 'special-calls', 'length-truth', 'execution', 'formatting',
     'numeric',
 }
-STAGES = {'numeric': ('N1', 'N2', 'N3', 'N4', 'N5', 'Future'),
+STAGES = {'instance-dictionaries': ('O47', 'Future'),
+          'numeric': ('N1', 'N2', 'N3', 'N4', 'N5', 'Future'),
           'sequences': ('Q1', 'Q2', 'Q3', 'Hints')}
 
 
