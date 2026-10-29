@@ -37,7 +37,7 @@ python runtime/check_compatibility.py --target browser --report build/compatibil
 Each report hashes its inventory, corpus and implementation inputs, records the
 actual source output/diagnostic/phase and checks logical teardown. A passing
 observation means the recorded behavior was reproduced. Only supported positive
-cases earn support credit. The current observations contain 99 supported, 35
+cases earn support credit. The current observations contain 243 supported, 48
 deferred and four host-restricted results, with no recorded known divergence.
 These are representative observations, not a percentage of Python coverage.
 
@@ -162,7 +162,7 @@ issue families; availability alone never certifies an entire type or module.
 | super | partial | Explicit bound/unbound and zero-argument super with lexical class cells, current C3 lookup, descriptors and proxy metadata in classes-source/1. | Builtin instance layouts, custom __class__ hooks and proxy reinitialization remain separate. |
 | tuple | partial | Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Existing tuple identity and shallow elements are preserved. | User length hints, methods, builtin subclassing and broader reflection remain separate stages. |
 | type | partial | Canonical type identities for adopted values and three-argument type construction with tuple bases and a bounded string-key dictionary namespace; finite type.__new__/__init__/__call__, native type checking defaults, checking-callable identities, metaclass selection and owned metaclass attribute hooks/native type defaults. | Custom namespace mappings, callable factories, builtin instance subclasses and further metaclass special slots remain gated. |
-| vars | partial | Zero-argument optimized function and generator-expression snapshots; one positional user instance reads custom __dict__ through owned descriptors and read hooks, returning its result unchanged. | Ordinary instance storage, function/module/class dictionaries or mapping proxies remain separate. |
+| vars | partial | Zero-argument optimized function and generator-expression snapshots; one positional user instance reads __dict__ through owned descriptors and read hooks, returning its result unchanged. Ordinary instance and Python function dictionaries are live, with exact replacement/sharing identities and owned collision callbacks. | Module/class dictionaries and mapping proxies remain separate. |
 | zip | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 | __import__ | deferred | Not installed; resolving this builtin name raises Python NameError. | No implementation/API support credit from the negative availability probe. |
 
@@ -289,5 +289,14 @@ async/browser-adapter work under #34 retain their separate contracts.
 [O45/O46](interpreter-function-dictionaries.md) add live function dictionaries,
 replacement aliases, ordinary marker storage and owned bound-method attribute
 fallback. Their 83-case matrix and 23 representative probes retain explicit
-native-wrapper/structural-collision boundaries. Ordinary instance/module/class
+native-wrapper/structural-collision boundaries. Module/class
 live mappings, default directories and async/browser adapters remain separate.
+
+[O47/O48](interpreter-instance-dictionaries.md) add live ordinary instance
+dictionaries, lazy materialization, exact replacement/sharing and deletion
+aliases. Attribute reads/mutations retain dictionary and class-fallback snapshots,
+explicit supplied names and owned collision callbacks. Read errors preserve
+their original exceptions; native dictionary mutation converts KeyError to
+AttributeError while data-descriptor callbacks bypass that conversion.
+Module/class mappings, default directories, getset reflection and native
+coroutine/await/browser host adapters remain separate contracts.

@@ -360,7 +360,17 @@ deployment is included.
 dictionaries and bound-method custom attribute fallback. Dictionary replacements,
 collision callbacks and decorator state preserve exact identities and owned
 parked lifetimes. The decorator console composes retained methods and generators.
-Instance/module/class live mappings, default directories, broader native metadata
+Module/class live mappings, default directories, broader native metadata
 and dynamic source retain their finite contracts. Native coroutine/await, async
 protocols and host adapters remain under #34. No host grant, dependency, release
 or deployment is included.
+
+## Live instance dictionary checkpoint
+
+[O47/O48](interpreter-instance-dictionaries.md) extend #123/#33 with live ordinary
+instance dictionaries, exact replacement/sharing, deletion aliases and owned
+collision callbacks. Data-descriptor priority, class-fallback snapshots, native
+bypass and supplied name identity retain shared execution ownership. Dictionary
+mutation preserves the native KeyError-to-AttributeError conversion; descriptor
+callback errors bypass it. Module/class mappings, default directories, native
+getset reflection and native async/host adapters remain open.

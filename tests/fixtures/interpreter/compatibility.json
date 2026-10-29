@@ -3549,6 +3549,402 @@
         "stdout": "True\n7\n",
         "error_type": null
       }
+    },
+    {
+      "id": "instance-dictionaries-live-empty-dictionary",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nprint(d is c.__dict__,vars(c) is d,len(d))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 0\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-existing-attribute-order",
+      "source": "class C: pass\nc=C()\nc.first=[]\nc.second=7\nd=c.__dict__\nprint(list(d)[0],list(d)[1],d[\"first\"] is c.first,d[\"second\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "first second True 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "first second True 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-dictionary-attribute-alias",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nv=[]\nc.tag=v\nprint(d[\"tag\"] is v)\nd[\"tag\"]=[9]\nprint(c.tag[0])\ndel c.tag\nprint(len(d),hasattr(c,\"tag\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n9\n0 False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n9\n0 False\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-replacement-detaches-old-alias",
+      "source": "class C: pass\nc=C()\nold=c.__dict__\nc.old=3\nr={\"new\":[]}\nc.__dict__=r\nc.next=7\nprint(c.__dict__ is r,vars(c) is r,old[\"old\"],hasattr(c,\"old\"),c.new is r[\"new\"],r[\"next\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 3 False True 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 3 False True 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-shared-dictionary",
+      "source": "class C: pass\nc=C()\nother=C()\nd=c.__dict__\nother.__dict__=d\nc.a=5\nother.b=7\nprint(other.a,c.b,other.__dict__ is d)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "5 7 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "5 7 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-cyclic-dictionary",
+      "source": "class C: pass\nc=C()\nd={\"self\":c}\nc.__dict__=d\nprint(c.self is c,vars(c)[\"self\"] is c)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-delete-detaches-and-resets",
+      "source": "class C: pass\nc=C()\nold=c.__dict__\nc.a=7\ndel c.__dict__\nprint(old[\"a\"],len(c.__dict__),c.__dict__ is old,hasattr(c,\"a\"))\nc.b=9\nprint(old is c.__dict__,c.b)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 0 False False\nFalse 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 0 False False\nFalse 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-invalid-replacement-8",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nc.tag=7\ntry: c.__dict__=None\nexcept TypeError: print(\"invalid\")\nprint(c.__dict__ is d,c.tag)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "invalid\nTrue 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "invalid\nTrue 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-inherited-native-slot",
+      "source": "class A: pass\nclass C(A): pass\nc=C()\nd=c.__dict__\nd[\"__dict__\"]=7\nprint(c.__dict__ is d,vars(c) is d,d[\"__dict__\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-class-shadow-before-inherited-slot",
+      "source": "class A: pass\nclass C(A): __dict__=7\nc=C()\nprint(c.__dict__,vars(c))\nc.__dict__=9\nprint(c.__dict__)\ndel c.__dict__\nprint(c.__dict__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 7\n9\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 7\n9\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-native-bypass-custom-read-hook",
+      "source": "class C:\n def __getattribute__(self,name):\n  if name==\"__dict__\": return [7]\n  return object.__getattribute__(self,name)\nc=C()\nprint(vars(c)[0])\nd=object.__getattribute__(c,\"__dict__\")\nd[\"tag\"]=9\nprint(c.tag,d is object.__getattribute__(c,\"__dict__\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7\n9 True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7\n9 True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-native-bypass-custom-mutation-hooks",
+      "source": "class C:\n def __setattr__(self,name,value): print(\"custom-set\")\n def __delattr__(self,name): print(\"custom-delete\")\nc=C()\nd={}\nobject.__setattr__(c,\"__dict__\",d)\nobject.__setattr__(c,\"tag\",7)\nprint(c.__dict__ is d,c.tag)\nobject.__delattr__(c,\"__dict__\")\nprint(len(c.__dict__),d[\"tag\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 7\n0 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 7\n0 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-data-descriptor-priority",
+      "source": "class C:\n @property\n def tag(self): return 7\nc=C()\nd=c.__dict__\nd[\"tag\"]=9\nprint(c.tag,d[\"tag\"])\ntry: c.tag=11\nexcept AttributeError: print(\"readonly\")\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 9\nreadonly\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 9\nreadonly\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-nondata-descriptor-shadow",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\nclass C: tag=D()\nc=C()\nd=c.__dict__\nprint(c.tag)\nd[\"tag\"]=9\nprint(c.tag)\ndel c.tag\nprint(c.tag)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7\n9\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7\n9\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-explicit-insertion-name-identity",
+      "source": "class C: pass\nc=C()\nname=\"ta\"+\"g\"\nvalue=[]\nsetattr(c,name,value)\nprint(list(c.__dict__)[0] is name,c.tag is value)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-owned-collision-get",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"tag\"\nkey=Key()\nd={key:7}\nc.__dict__=d\nprint(c.tag)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "equal\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "equal\n7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-replacement-during-set",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  c.__dict__={\"fresh\":11}\n  return True\nkey=Key()\nd={key:7}\nc.__dict__=d\nc.tag=9\nprint(c.__dict__[\"fresh\"],d[key])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "11 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "11 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-class-fallback-snapshot",
+      "source": "class C: tag=7\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  C.tag=9\n  return False\nc.__dict__={Key():11}\nprint(c.tag,C.tag)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-deletion-during-collision",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del c.__dict__\n  return True\nkey=Key()\nd={key:7}\nc.__dict__=d\nprint(c.tag,len(c.__dict__),d[key])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 0 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 0 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-class-mapping",
+      "source": "class C: pass\nC.__dict__\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "instance-dictionaries-class-mapping-replacement",
+      "source": "class C: pass\nC.__dict__={}\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "instance-dictionaries-module-mapping",
+      "source": "globals()\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "instance-dictionaries-super-dictionary",
+      "source": "class A: pass\nclass C(A): pass\nc=C()\nsuper(C,c).__dict__\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "instance-dictionaries-native-getset",
+      "source": "class C: pass\nobject.__getattribute__(C,\"__dict__\")\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "instance-dictionaries-callback-keyerror-is-not-default",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise KeyError(\"callback\")\nc.__dict__={Key():7}\ngetattr(c,\"tag\",99)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "KeyError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "KeyError"
+      }
+    },
+    {
+      "id": "instance-dictionaries-collision-truth-owned",
+      "source": "class C: pass\nc=C()\nclass Truth:\n def __bool__(self):\n  print(\"truth\")\n  c.__dict__={\"fresh\":9}\n  return True\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return Truth()\nc.__dict__={Key():7}\nprint(c.tag,c.fresh)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "truth\n7 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "truth\n7 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-structural-collision-deferred",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del c.__dict__[self]\n  return True\nc.__dict__={Key():7}\nprint(getattr(c,\"tag\",99))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "99\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "instance-dictionaries-custom-super-dictionary-preserved",
+      "source": "class A:\n @property\n def __dict__(self): return [7]\nclass C(A): pass\nc=C()\nprint(super(C,c).__dict__[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-dictionaries-mutation-keyerror-frames-64",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"entered\")\n  raise KeyError(\"callback\")\nc.__dict__={Key():7}\nc.tag=9\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "entered\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "entered\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "instance-dictionaries-descriptor-keyerror-bypasses-dictionary-conversion",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\n def __set__(self,obj,value): raise KeyError(\"descriptor\")\n def __delete__(self,obj): raise KeyError(\"descriptor\")\nclass C: tag=D()\nc=C()\nd=c.__dict__\ntry: c.tag=9\nexcept KeyError: print(\"set\")\ntry: del c.tag\nexcept KeyError: print(\"delete\")\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "set\ndelete\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "set\ndelete\n",
+        "error_type": null
+      }
     }
   ]
 }
