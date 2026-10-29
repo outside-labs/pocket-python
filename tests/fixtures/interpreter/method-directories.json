@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-method-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "native-directory",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nprint(*dir(m))\n",
+      "stage": "O51",
+      "stdout": "__call__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "native-unsorted-directory",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nprint(*object.__dir__(m))\n",
+      "stage": "O51",
+      "stdout": "__new__ __repr__ __hash__ __call__ __getattribute__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __get__ __reduce__ __func__ __self__ __doc__ __str__ __setattr__ __delattr__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "fresh-lists",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.tag=7\na=dir(m)\nb=dir(m)\na.append(\"copy\")\nprint(a is b,\"tag\" in b,\"copy\" in b,list(m.__dict__))\n",
+      "stage": "O51",
+      "stdout": "False True False ['tag']\n"
+    },
+    {
+      "id": "live-function-keys",
+      "source": "class C:\n def f(self): return 7\nm=C().f\na=dir(m)\nm.__func__.tag=7\nb=dir(m)\nm.__func__.tag=9\nprint(\"tag\" in a,\"tag\" in b,len(dir(m))==len(b))\ndel m.__func__.tag\nprint(\"tag\" in dir(m),\"tag\" in b)\n",
+      "stage": "O51",
+      "stdout": "False True True\nFalse True\n"
+    },
+    {
+      "id": "dictionary-replacement",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nf=m.__func__\nf.old=7\na=dir(m)\nf.__dict__={\"fresh\":9}\nb=dir(m)\nprint(\"old\" in a,\"old\" in b,\"fresh\" in b,m.__dict__ is f.__dict__)\n",
+      "stage": "O51",
+      "stdout": "True False True True\n"
+    },
+    {
+      "id": "unicode-order",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={\"😀\":7,\"ω\":9,\"é\":11,\"a\":13}\nprint(*dir(m)[-4:])\n",
+      "stage": "O51",
+      "stdout": "a é ω 😀\n"
+    },
+    {
+      "id": "native-key-identity",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nkey=\"__fu\"+\"nc__\"\nm.__func__.__dict__={key:7}\nr=dir(m)\nprint([n for n in r if n==\"__func__\"][0] is key,len(r))\n",
+      "stage": "O51",
+      "stdout": "True 28\n"
+    },
+    {
+      "id": "custom-key-identity",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nkey=\"ta\"+\"g\"\nm.__func__.__dict__={key:7}\nprint([n for n in dir(m) if n==\"tag\"][0] is key)\n",
+      "stage": "O51",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metadata-fallback-not-listed",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nprint(m.__name__,m.__qualname__,\"__name__\" in dir(m),\"__qualname__\" in dir(m),\"__module__\" in dir(m))\n",
+      "stage": "O51",
+      "stdout": "f C.f False False False\n"
+    },
+    {
+      "id": "directory-native-priority",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__dir__=lambda:[\"custom\"]\nprint(\"__func__\" in m.__dir__(),\"custom\" in m.__dir__(),m.__func__.__dir__()[0])\n",
+      "stage": "O51",
+      "stdout": "True False custom\n"
+    },
+    {
+      "id": "native-bypass",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__dir__=lambda:[\"custom\"]\nprint(\"__func__\" in object.__dir__(m),\"custom\" in object.__dir__(m))\n",
+      "stage": "O51",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "bound-native-metadata",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nd=m.__dir__\nprint(d.__self__ is m,d.__name__,d.__qualname__,type(d).__name__,len(d()))\n",
+      "stage": "O51",
+      "stdout": "True __dir__ method.__dir__ builtin_function_or_method 28\n"
+    },
+    {
+      "id": "native-getattribute-directory",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nd=object.__getattribute__(m,\"__dir__\")\nprint(d.__self__ is m,len(d()))\n",
+      "stage": "O51",
+      "stdout": "True 28\n"
+    },
+    {
+      "id": "native-descriptor-binding",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nd=object.__dir__.__get__(m)\nprint(d.__self__ is m,d.__qualname__,len(d()),object.__dir__.__objclass__ is object)\n",
+      "stage": "O51",
+      "stdout": "True method.__dir__ 28 True\n"
+    },
+    {
+      "id": "retained-native-caller",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nd=m.__dir__\nf=m.__func__\ndel m\ndel C\nf.tag=7\nprint(\"tag\" in d(),d.__self__.__func__ is f)\n",
+      "stage": "O51",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-method-directory",
+      "source": "class C:\n @classmethod\n def f(cls): return 7\nm=C.f\nm.__func__.tag=9\nprint(\"__func__\" in dir(m),\"tag\" in dir(m),m(),m.__self__ is C)\n",
+      "stage": "O51",
+      "stdout": "True True 7 True\n"
+    },
+    {
+      "id": "static-method-function-directory",
+      "source": "class C:\n @staticmethod\n def f(): return 7\nprint(\"__code__\" in dir(C.f),\"__func__\" in dir(C.f))\n",
+      "stage": "O51",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "dictionary-lookup-order",
+      "source": "class Callable: pass\nc=Callable()\nm=classmethod(c).__get__(None,object)\ndef lookup(self,name):\n print(name)\n return object.__getattribute__(self,name)\nCallable.__getattribute__=lookup\nprint(len(dir(m)))\n",
+      "stage": "O51",
+      "stdout": "__dict__\n28\n"
+    },
+    {
+      "id": "dictionary-property",
+      "source": "def read(self):\n print(\"dictionary\")\n return {\"tag\":7}\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\nprint(\"tag\" in dir(m))\n",
+      "stage": "O51",
+      "stdout": "dictionary\nTrue\n"
+    },
+    {
+      "id": "dictionary-attributeerror",
+      "source": "def read(self): raise AttributeError(\"missing\")\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\nprint(len(dir(m)))\n",
+      "stage": "O51",
+      "stdout": "28\n"
+    },
+    {
+      "id": "dictionary-valueerror",
+      "source": "def read(self): raise ValueError(\"original\")\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\ndir(m)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dictionary-keyerror",
+      "source": "def read(self): raise KeyError(\"original\")\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\ndir(m)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "dictionary-fallback",
+      "source": "def read(self): raise AttributeError(\"missing\")\ndef fallback(self,name):\n print(name)\n return {\"fallback\":7}\nclass Callable: __dict__=property(read)\nc=Callable()\nm=classmethod(c).__get__(None,object)\nCallable.__getattr__=fallback\nprint(\"fallback\" in dir(m))\n",
+      "stage": "O51",
+      "stdout": "__dict__\nTrue\n"
+    },
+    {
+      "id": "non-dictionary-ignored",
+      "source": "class Callable: __dict__=property(lambda self:[7])\nc=Callable()\nm=classmethod(c).__get__(None,object)\nprint(len(dir(m)))\n",
+      "stage": "O51",
+      "stdout": "28\n"
+    },
+    {
+      "id": "dictionary-truth-not-called",
+      "source": "class Value:\n def __bool__(self): raise ValueError(\"never\")\nclass Callable: __dict__=property(lambda self:Value())\nc=Callable()\nm=classmethod(c).__get__(None,object)\nprint(len(dir(m)))\n",
+      "stage": "O51",
+      "stdout": "28\n"
+    },
+    {
+      "id": "class-lookup-not-forwarded",
+      "source": "class Callable: pass\nc=Callable()\nm=classmethod(c).__get__(None,object)\ndef lookup(self,name):\n if name==\"__class__\": raise ValueError(\"never\")\n return object.__getattribute__(self,name)\nCallable.__getattribute__=lookup\nprint(len(dir(m)))\n",
+      "stage": "O51",
+      "stdout": "28\n"
+    },
+    {
+      "id": "native-dictionary-bypass",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.tag=7\ntry: object.__getattribute__(m,\"__dict__\")\nexcept AttributeError: print(\"native missing\")\nprint(\"tag\" in object.__dir__(m))\n",
+      "stage": "O51",
+      "stdout": "native missing\nTrue\n"
+    },
+    {
+      "id": "integer-sort-error",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={7:9}\ndir(m)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "raw-arbitrary-key",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={7:9}\nr=object.__dir__(m)\nprint(r[0],len(r))\n",
+      "stage": "O51",
+      "stdout": "7 29\n"
+    },
+    {
+      "id": "raw-copy-no-rehash",
+      "source": "calls=[]\nclass Key:\n def __hash__(self):\n  calls.append(7)\n  return hash(\"__new__\")\n def __eq__(self,other): return False\n def __lt__(self,other): return True\n def __gt__(self,other): return False\nclass C:\n def f(self): return 7\nm=C().f\nk=Key()\nm.__func__.__dict__={k:7}\nr=dir(m)\nprint(len(calls),r[0] is k,len(r))\n",
+      "stage": "O51",
+      "stdout": "1 True 29\n"
+    },
+    {
+      "id": "native-merge-collisions",
+      "source": "events=[]\nclass Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other):\n  events.append(other)\n  return True\n def __lt__(self,other): return True\n def __gt__(self,other): return False\nclass C:\n def f(self): return 7\nm=C().f\nk=Key()\nm.__func__.__dict__={k:7}\nr=dir(m)\nprint(r[0] is k,len(r),len(events),*events)\n",
+      "stage": "O51",
+      "stdout": "True 28 2 __new__ __new__\n"
+    },
+    {
+      "id": "merge-replacement-snapshot",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other):\n  m.__func__.__dict__={\"fresh\":9}\n  return True\n def __lt__(self,other): return True\n def __gt__(self,other): return False\nclass C:\n def f(self): return 7\nm=C().f\nk=Key()\nm.__func__.__dict__={k:7,\"tag\":11}\nr=dir(m)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,\"tag\" in names,\"fresh\" in names,\"fresh\" in m.__dict__)\n",
+      "stage": "O51",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "merge-truth-callback",
+      "source": "events=[]\nclass Truth:\n def __bool__(self):\n  events.append(7)\n  m.__func__.__dict__={\"fresh\":9}\n  return True\nclass Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): return Truth()\n def __lt__(self,other): return True\n def __gt__(self,other): return False\nclass C:\n def f(self): return 7\nm=C().f\nk=Key()\nm.__func__.__dict__={k:7,\"tag\":11}\nr=dir(m)\nprint(r[0] is k,len(events),\"tag\" in [n for n in r if isinstance(n,str)])\n",
+      "stage": "O51",
+      "stdout": "True 2 True\n"
+    },
+    {
+      "id": "merge-valueerror",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): raise ValueError(\"original\")\nclass C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={Key():7}\ndir(m)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "merge-attributeerror",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): raise AttributeError(\"original\")\nclass C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={Key():7}\ndir(m)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "merge-keyerror",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __eq__(self,other): raise KeyError(\"original\")\nclass C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={Key():7}\ndir(m)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "sort-error",
+      "source": "class Key:\n def __lt__(self,other): raise ValueError(\"original\")\n def __gt__(self,other): raise ValueError(\"original\")\nclass C:\n def f(self): return 7\nm=C().f\nm.__func__.__dict__={Key():7}\ndir(m)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "raw-does-not-sort",
+      "source": "class Key:\n def __lt__(self,other): raise ValueError(\"never\")\n def __gt__(self,other): raise ValueError(\"never\")\nclass C:\n def f(self): return 7\nm=C().f\nk=Key()\nm.__func__.__dict__={k:7}\nr=m.__dir__()\nprint(r[0] is k,len(r))\n",
+      "stage": "O51",
+      "stdout": "True 29\n"
+    },
+    {
+      "id": "lazy-observations",
+      "source": "class C:\n def f(self): return 7\nm=C().f\ndef names():\n yield dir(m)\n yield dir(m)\ng=names()\na=next(g)\nm.__func__.tag=7\nb=next(g)\nprint(\"tag\" in a,\"tag\" in b)\n",
+      "stage": "O51",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "builtin-callable-no-dictionary",
+      "source": "m=classmethod(len).__get__(None,object)\nprint(len(dir(m)),\"__func__\" in dir(m))\n",
+      "stage": "O51",
+      "stdout": "28 True\n"
+    },
+    {
+      "id": "native-signature",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nobject.__dir__(m,7)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-keyword",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nobject.__dir__(self=m)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bound-signature",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__dir__(7)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "builtin-signature",
+      "source": "class C:\n def f(self): return 7\nm=C().f\ndir(m,7)\n",
+      "stage": "O51",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-method-directory",
+      "source": "class C: pass\nprint(\"__self__\" in dir(C.mro))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "view-directory",
+      "source": "class C: pass\nprint(\"get\" in dir(C.__dict__))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "ordinary-instance-directory",
+      "source": "class C: pass\nprint(\"__dict__\" in dir(C()))\n",
+      "stage": "Future",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metadata-read-stays-deferred",
+      "source": "class C:\n def f(self): return 7\nm=C().f\nm.__func__.__code__\n",
+      "stage": "Future",
+      "stdout": ""
+    }
+  ]
+}
