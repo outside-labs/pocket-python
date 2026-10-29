@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-class-namespaces/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "fresh-live-views",
+      "stage": "O49",
+      "source": "class C: tag=[]\na=C.__dict__\nb=vars(C)\nprint(a is b,a[\"tag\"] is C.tag,b[\"tag\"] is a[\"tag\"],type(a).__name__)\n",
+      "stdout": "False True True mappingproxy\n"
+    },
+    {
+      "id": "own-namespace",
+      "stage": "O49",
+      "source": "class A: tag=7\nclass C(A): other=9\np=C.__dict__\nprint(\"tag\" in p,\"other\" in p,p.get(\"tag\"),p[\"other\"])\n",
+      "stdout": "False True None 9\n"
+    },
+    {
+      "id": "live-add-replace-delete",
+      "stage": "O49",
+      "source": "class C: tag=7\np=C.__dict__\nC.tag=9\nC.extra=[]\nprint(p[\"tag\"],p[\"extra\"] is C.extra)\ndel C.tag\nprint(\"tag\" in p,p.get(\"tag\",11))\n",
+      "stdout": "9 True\nFalse 11\n"
+    },
+    {
+      "id": "stored-function",
+      "stage": "O49",
+      "source": "class C:\n def f(self): return 7\np=C.__dict__\nprint(p[\"f\"] is C.f,p[\"f\"](C()),p[\"f\"].__name__)\n",
+      "stdout": "True 7 f\n"
+    },
+    {
+      "id": "stored-descriptor",
+      "stage": "O49",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bound\")\n  return 7\nd=D()\nclass C: tag=d\np=C.__dict__\nprint(p[\"tag\"] is d,p.get(\"tag\") is d,\"tag\" in p)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "stored-native-wrappers",
+      "stage": "O49",
+      "source": "class C:\n @staticmethod\n def s(): return 7\n @classmethod\n def c(cls): return cls\n @property\n def p(self): return 9\nd=C.__dict__\nprint(d[\"s\"].__func__ is C.s,d[\"c\"].__func__ is C.c.__func__,d[\"p\"].fget(C()))\n",
+      "stdout": "True True 9\n"
+    },
+    {
+      "id": "class-dictionary-shadow",
+      "stage": "O49",
+      "source": "class C: __dict__=7\np=C.__dict__\nprint(p[\"__dict__\"],C().__dict__)\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "metadata-entries",
+      "stage": "O49",
+      "source": "class C: pass\np=C.__dict__\nprint(p[\"__module__\"]==C.__module__,p[\"__doc__\"],\"__qualname__\" in p,\"__classcell__\" in p)\n",
+      "stdout": "True None False False\n"
+    },
+    {
+      "id": "live-doc",
+      "stage": "O49",
+      "source": "class C: \"old\"\np=C.__dict__\nprint(p[\"__doc__\"])\nv=[]\nC.__doc__=v\nprint(p[\"__doc__\"] is v)\n",
+      "stdout": "old\nTrue\n"
+    },
+    {
+      "id": "unicode-and-arbitrary-text",
+      "stage": "O49",
+      "source": "class C: pass\np=C.__dict__\nsetattr(C,\"λ\",7)\nsetattr(C,\"not an identifier\",9)\nsetattr(C,\"\",11)\nprint(p[\"λ\"],p[\"not an identifier\"],p[\"\"],\"λ\" in p)\n",
+      "stdout": "7 9 11 True\n"
+    },
+    {
+      "id": "long-query",
+      "stage": "O49",
+      "source": "class C: pass\np=C.__dict__\nkey=\"x\"*300\nprint(key in p,p.get(key,7))\n",
+      "stdout": "False 7\n"
+    },
+    {
+      "id": "missing-key",
+      "stage": "O49",
+      "source": "class C: pass\nC.__dict__[\"missing\"]\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "primitive-nontext",
+      "stage": "O49",
+      "source": "class C: tag=7\np=C.__dict__\nprint(7 in p,None in p,() in p,p.get(7,9))\n",
+      "stdout": "False False False 9\n"
+    },
+    {
+      "id": "unhashable-query",
+      "stage": "O49",
+      "source": "class C: pass\nC.__dict__[[]]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unhashable-containment",
+      "stage": "O49",
+      "source": "class C: pass\nprint([] in C.__dict__)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unhashable-get",
+      "stage": "O49",
+      "source": "class C: pass\nC.__dict__.get({})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "item-assignment",
+      "stage": "O49",
+      "source": "class C: tag=7\np=C.__dict__\ntry: p[\"tag\"]=9\nexcept TypeError: print(\"readonly\")\nprint(C.tag)\n",
+      "stdout": "readonly\n7\n"
+    },
+    {
+      "id": "item-deletion",
+      "stage": "O49",
+      "source": "class C: tag=7\np=C.__dict__\ntry: del p[\"tag\"]\nexcept TypeError: print(\"readonly\")\nprint(C.tag)\n",
+      "stdout": "readonly\n7\n"
+    },
+    {
+      "id": "namespace-replacement",
+      "stage": "O49",
+      "source": "class C: pass\nC.__dict__={}\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "namespace-deletion",
+      "stage": "O49",
+      "source": "class C: pass\ndel C.__dict__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "namespace-attribute-readonly",
+      "stage": "O49",
+      "source": "class C: pass\np=C.__dict__\ntry: p.tag=7\nexcept AttributeError: print(\"readonly\")\ntry: del p.tag\nexcept AttributeError: print(\"readonly\")\n",
+      "stdout": "readonly\nreadonly\n"
+    },
+    {
+      "id": "get-bound-lifetime",
+      "stage": "O49",
+      "source": "class C: tag=[7]\ng=C.__dict__.get\ndel C\nprint(g(\"tag\")[0],g(\"missing\",9))\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "retained-view-and-cycle",
+      "stage": "O49",
+      "source": "class C: tag=[7]\np=C.__dict__\nC.saved=p\ndel C\nprint(p[\"saved\"] is p,p[\"tag\"][0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "views-through-lazy-generator",
+      "stage": "O49",
+      "source": "class C: tag=7\np=C.__dict__\ndef values():\n yield p[\"tag\"]\n yield p[\"tag\"]\ng=values()\nprint(next(g))\nC.tag=9\nprint(next(g))\n",
+      "stdout": "7\n9\n"
+    },
+    {
+      "id": "meta-read-hook",
+      "stage": "O49",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__dict__\": return [7]\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M): tag=9\nprint(C.__dict__[0],vars(C)[0],type.__getattribute__(C,\"__dict__\")[\"tag\"])\n",
+      "stdout": "7 7 9\n"
+    },
+    {
+      "id": "meta-dictionary-property",
+      "stage": "O49",
+      "source": "class M(type):\n @property\n def __dict__(cls): return [7]\nclass C(metaclass=M): tag=9\nprint(C.__dict__[0],vars(C)[0],type.__getattribute__(C,\"__dict__\")[0])\n",
+      "stdout": "7 7 7\n"
+    },
+    {
+      "id": "meta-dictionary-property-error",
+      "stage": "O49",
+      "source": "class M(type):\n @property\n def __dict__(cls): raise ValueError(\"lookup\")\nclass C(metaclass=M): pass\nvars(C)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "get-arity",
+      "stage": "O49",
+      "source": "class C: pass\nC.__dict__.get()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "get-keyword",
+      "stage": "O49",
+      "source": "class C: pass\nC.__dict__.get(key=\"tag\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "get-too-many",
+      "stage": "O49",
+      "source": "class C: pass\nC.__dict__.get(\"tag\",7,9)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unhashable-proxy",
+      "stage": "O49",
+      "source": "class C: pass\nhash(C.__dict__)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "truth-and-identity",
+      "stage": "O49",
+      "source": "class C: pass\np=C.__dict__\nprint(bool(p),id(p)==id(p),p is p,p is C.__dict__)\n",
+      "stdout": "True True True False\n"
+    },
+    {
+      "id": "class-enumeration",
+      "stage": "Future",
+      "source": "class C: pass\nlist(C.__dict__)\n",
+      "stdout": ""
+    },
+    {
+      "id": "class-length",
+      "stage": "Future",
+      "source": "class C: pass\nlen(C.__dict__)\n",
+      "stdout": ""
+    },
+    {
+      "id": "native-slot-entry",
+      "stage": "Future",
+      "source": "class C: pass\nC.__dict__[\"__dict__\"]\n",
+      "stdout": ""
+    },
+    {
+      "id": "source-metadata-entry",
+      "stage": "Future",
+      "source": "class C: pass\nprint(C.__dict__[\"__firstlineno__\"])\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "native-type-namespace",
+      "stage": "Future",
+      "source": "int.__dict__\n",
+      "stdout": ""
+    },
+    {
+      "id": "callback-query",
+      "stage": "Future",
+      "source": "class C: tag=7\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return True\nprint(C.__dict__[Key()])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "mapping-copy",
+      "stage": "Future",
+      "source": "class C: tag=7\np=C.__dict__.copy()\nprint(p[\"tag\"])\n",
+      "stdout": "7\n"
+    }
+  ]
+}
