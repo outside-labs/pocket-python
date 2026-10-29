@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-function-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "native-directory",
+      "stage": "O50",
+      "source": "def f(): pass\nprint(*dir(f))\n",
+      "stdout": "__annotate__ __annotations__ __builtins__ __call__ __class__ __closure__ __code__ __defaults__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __globals__ __gt__ __hash__ __init__ __init_subclass__ __kwdefaults__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __type_params__\n"
+    },
+    {
+      "id": "native-unsorted-directory",
+      "stage": "O50",
+      "source": "def f(): pass\nprint(*object.__dir__(f))\n",
+      "stdout": "__new__ __repr__ __call__ __get__ __closure__ __globals__ __builtins__ __code__ __defaults__ __kwdefaults__ __annotations__ __annotate__ __dict__ __doc__ __module__ __name__ __qualname__ __type_params__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "fresh-list-and-unchanged-dictionary",
+      "stage": "O50",
+      "source": "def f(): pass\nf.tag=7\nd=f.__dict__\na=dir(f)\nb=dir(f)\na.append(\"only-copy\")\nprint(a is b,\"tag\" in b,\"only-copy\" in b,list(d)==[\"tag\"],d is f.__dict__)\n",
+      "stdout": "False True False True True\n"
+    },
+    {
+      "id": "live-add-replace-delete",
+      "stage": "O50",
+      "source": "def f(): pass\na=dir(f)\nf.tag=7\nb=dir(f)\nf.tag=9\nprint(\"tag\" in a,\"tag\" in b,len(dir(f))==len(b))\ndel f.tag\nprint(\"tag\" in dir(f),\"tag\" in b)\n",
+      "stdout": "False True True\nFalse True\n"
+    },
+    {
+      "id": "dictionary-replacement",
+      "stage": "O50",
+      "source": "def f(): pass\nf.old=7\na=dir(f)\nf.__dict__={\"fresh\":9}\nb=dir(f)\nprint(\"old\" in a,\"old\" in b,\"fresh\" in b,list(f.__dict__)==[\"fresh\"])\n",
+      "stdout": "True False True True\n"
+    },
+    {
+      "id": "unicode-order",
+      "stage": "O50",
+      "source": "def f(): pass\nf.__dict__={\"😀\":7,\"ω\":9,\"é\":11,\"a\":13}\nprint(*dir(f)[-4:])\n",
+      "stdout": "a é ω 😀\n"
+    },
+    {
+      "id": "native-name-deduplication",
+      "stage": "O50",
+      "source": "def f(): pass\nf.__dict__={\"__name__\":7,\"__doc__\":9,\"__class__\":11}\nr=dir(f)\nprint(len(r),len([n for n in r if n==\"__name__\"]),f.__name__)\n",
+      "stdout": "39 1 f\n"
+    },
+    {
+      "id": "supplied-native-key-identity",
+      "stage": "O50",
+      "source": "def f(): pass\nkey=\"__na\"+\"me__\"\nf.__dict__={key:7}\nr=dir(f)\nprint([n for n in r if n==\"__name__\"][0] is key)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "supplied-custom-key-identity",
+      "stage": "O50",
+      "source": "def f(): pass\nkey=\"ta\"+\"g\"\nf.__dict__={key:7}\nr=dir(f)\nprint([n for n in r if n==\"tag\"][0] is key)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "shadowed-directory-hook",
+      "stage": "O50",
+      "source": "def f(): pass\nf.__dir__=lambda: [\"custom\"]\nprint(f.__dir__()[0],\"__code__\" in dir(f),\"__dir__\" in dir(f))\n",
+      "stdout": "custom True True\n"
+    },
+    {
+      "id": "native-bypass-shadow",
+      "stage": "O50",
+      "source": "def f(): pass\ndef custom():\n print(\"never\")\n return []\nf.__dir__=custom\nr=object.__dir__(f)\nprint(r[0],\"__code__\" in r)\n",
+      "stdout": "__dir__ True\n"
+    },
+    {
+      "id": "default-bound-method",
+      "stage": "O50",
+      "source": "def f(): pass\nm=f.__dir__\nprint(m.__name__,m.__qualname__,m.__self__ is f,type(m).__name__)\nprint(len(m()),\"__code__\" in m())\n",
+      "stdout": "__dir__ function.__dir__ True builtin_function_or_method\n39 True\n"
+    },
+    {
+      "id": "unbound-descriptor-binding",
+      "stage": "O50",
+      "source": "def f(): pass\nm=object.__dir__.__get__(f)\nprint(m.__self__ is f,len(m()),object.__dir__.__objclass__ is object)\n",
+      "stdout": "True 39 True\n"
+    },
+    {
+      "id": "lambda-and-generator-function",
+      "stage": "O50",
+      "source": "f=lambda:7\ndef g(): yield 9\nf.tag=7\ng.other=9\nprint(\"tag\" in dir(f),\"other\" in dir(g),len(dir(f)),len(dir(g)))\n",
+      "stdout": "True True 40 40\n"
+    },
+    {
+      "id": "method-function-directory",
+      "stage": "O50",
+      "source": "class C:\n def read(self): return 7\nf=C().read.__func__\nf.tag=9\nprint(\"tag\" in dir(f),len(dir(f)),f.__name__)\n",
+      "stdout": "True 40 read\n"
+    },
+    {
+      "id": "metadata-does-not-add-custom-keys",
+      "stage": "O50",
+      "source": "def f(): pass\nf.__name__=\"renamed\"\nf.__qualname__=\"scope.name\"\nf.__doc__=[]\nf.__module__=[]\nprint(len(dir(f)),len(f.__dict__),f.__name__)\n",
+      "stdout": "39 0 renamed\n"
+    },
+    {
+      "id": "values-are-not-read",
+      "stage": "O50",
+      "source": "class Value:\n def __getattribute__(self,name): raise ValueError(\"never\")\n def __bool__(self): raise ValueError(\"never\")\ndef f(): pass\nf.tag=Value()\nprint(\"tag\" in dir(f))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "integer-key-sort-error",
+      "stage": "O50",
+      "source": "def f(): pass\nf.__dict__={7:9}\ndir(f)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "raw-arbitrary-key",
+      "stage": "O50",
+      "source": "def f(): pass\nf.__dict__={7:9}\nr=object.__dir__(f)\nprint(r[0],len(r),\"__code__\" in r)\n",
+      "stdout": "7 40 True\n"
+    },
+    {
+      "id": "owned-key-ordering",
+      "stage": "O50",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __lt__(self,other): return True\n def __gt__(self,other): return False\n def __eq__(self,other): return False\ndef f(): pass\nk=Key()\nf.__dict__={k:7}\nr=dir(f)\nprint(r[0] is k,len(r),len(f.__dict__))\n",
+      "stdout": "True 40 1\n"
+    },
+    {
+      "id": "native-merge-collisions",
+      "stage": "O50",
+      "source": "events=[]\nclass Key:\n def __hash__(self): return hash(\"__new__\")\n def __lt__(self,other): return True\n def __gt__(self,other): return False\n def __eq__(self,other):\n  events.append(other)\n  return True\ndef f(): pass\nk=Key()\nf.__dict__={k:7}\nr=dir(f)\nprint(r[0] is k,len(r),len(events),events[0],events[1])\n",
+      "stdout": "True 39 2 __new__ __new__\n"
+    },
+    {
+      "id": "raw-copy-does-not-rehash",
+      "stage": "O50",
+      "source": "calls=[]\nclass Key:\n def __hash__(self):\n  calls.append(7)\n  return hash(\"__new__\")\n def __eq__(self,other): return False\n def __lt__(self,other): return True\n def __gt__(self,other): return False\ndef f(): pass\nk=Key()\nf.__dict__={k:7}\nr=dir(f)\nprint(len(calls),r[0] is k,len(r))\n",
+      "stdout": "1 True 40\n"
+    },
+    {
+      "id": "merge-replacement-snapshot",
+      "stage": "O50",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __lt__(self,other): return True\n def __gt__(self,other): return False\n def __eq__(self,other):\n  f.__dict__={\"fresh\":9}\n  return True\ndef f(): pass\nk=Key()\nf.__dict__={k:7,\"tag\":11}\nr=dir(f)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,\"tag\" in names,\"fresh\" in names,list(f.__dict__)[0])\n",
+      "stdout": "True True False fresh\n"
+    },
+    {
+      "id": "merge-deletion-snapshot",
+      "stage": "O50",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __lt__(self,other): return True\n def __gt__(self,other): return False\n def __eq__(self,other):\n  if \"tag\" in f.__dict__: del f.__dict__[\"tag\"]\n  return True\ndef f(): pass\nk=Key()\nf.__dict__={k:7,\"tag\":11}\nr=dir(f)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,\"tag\" in names,len(f.__dict__))\n",
+      "stdout": "True True 1\n"
+    },
+    {
+      "id": "merge-error",
+      "stage": "O50",
+      "source": "class Key:\n def __hash__(self): return hash(\"__new__\")\n def __lt__(self,other): return True\n def __gt__(self,other): return False\n def __eq__(self,other): raise ValueError(\"merge\")\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "sort-error",
+      "stage": "O50",
+      "source": "class Key:\n def __lt__(self,other): raise ValueError(\"sort\")\n def __gt__(self,other): raise ValueError(\"sort\")\ndef f(): pass\nf.__dict__={Key():7}\ndir(f)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "raw-directory-does-not-sort",
+      "stage": "O50",
+      "source": "class Key:\n def __lt__(self,other): raise ValueError(\"never\")\n def __gt__(self,other): raise ValueError(\"never\")\ndef f(): pass\nk=Key()\nf.__dict__={k:7}\nr=f.__dir__()\nprint(r[0] is k,len(r))\n",
+      "stdout": "True 40\n"
+    },
+    {
+      "id": "sort-mutation-preserves-selected-copy",
+      "stage": "O50",
+      "source": "class Key:\n def __lt__(self,other):\n  f.__dict__={\"fresh\":9}\n  return True\n def __gt__(self,other):\n  f.__dict__={\"fresh\":9}\n  return False\ndef f(): pass\nk=Key()\nf.__dict__={k:7,\"tag\":11}\nr=dir(f)\nnames=[n for n in r if isinstance(n,str)]\nprint(r[0] is k,\"tag\" in names,\"fresh\" in names,\"fresh\" in f.__dict__)\n",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "lazy-directory-observations",
+      "stage": "O50",
+      "source": "def f(): pass\ndef values():\n yield dir(f)\n yield dir(f)\ng=values()\na=next(g)\nf.tag=7\nb=next(g)\nprint(\"tag\" in a,\"tag\" in b)\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "native-signature",
+      "stage": "O50",
+      "source": "def f(): pass\nobject.__dir__(f,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-keyword",
+      "stage": "O50",
+      "source": "def f(): pass\nobject.__dir__(self=f)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "builtin-signature",
+      "stage": "O50",
+      "source": "def f(): pass\ndir(f,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "builtin-keyword",
+      "stage": "O50",
+      "source": "def f(): pass\ndir(object=f)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bound-method-directory",
+      "stage": "Future",
+      "source": "class C:\n def f(self): pass\nprint(\"__func__\" in dir(C().f))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "ordinary-instance-directory",
+      "stage": "Future",
+      "source": "class C: pass\nprint(\"__dict__\" in dir(C()))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-other-layout",
+      "stage": "Future",
+      "source": "print(\"real\" in object.__dir__(7))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "mappingproxy-directory",
+      "stage": "Future",
+      "source": "class C: pass\nprint(\"get\" in dir(C.__dict__))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-directory",
+      "stage": "Future",
+      "source": "def f(): pass\nprint(\"__func__\" in dir(staticmethod(f)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "metadata-listing-does-not-adopt-reads",
+      "stage": "Future",
+      "source": "def f(): pass\nr=dir(f)\nf.__builtins__\n",
+      "stdout": ""
+    }
+  ]
+}
