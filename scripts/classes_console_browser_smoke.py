@@ -47,6 +47,7 @@ from examples.interpreter_class_namespaces import SOURCE as CLASS_NAMESPACES_SOU
 from examples.interpreter_function_directories import SOURCE as FUNCTION_DIRECTORIES_SOURCE
 from examples.interpreter_method_directories import SOURCE as METHOD_DIRECTORIES_SOURCE
 from examples.interpreter_namespace_view_directories import SOURCE as NAMESPACE_VIEW_DIRECTORIES_SOURCE
+from examples.interpreter_property_directories import SOURCE as PROPERTY_DIRECTORIES_SOURCE
 
 
 def smoke(channel=None):
@@ -207,9 +208,11 @@ def smoke(channel=None):
                     function_directories = json.loads((ROOT / 'tests/fixtures/interpreter/function-directories.json').read_bytes())
                     method_directories = json.loads((ROOT / 'tests/fixtures/interpreter/method-directories.json').read_bytes())
                     namespace_view_directories = json.loads((ROOT / 'tests/fixtures/interpreter/namespace-view-directories.json').read_bytes())
-                    for corpus in [namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    property_directories = json.loads((ROOT / 'tests/fixtures/interpreter/property-directories.json').read_bytes())
+                    for corpus in [property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
+                    programs.append(PROPERTY_DIRECTORIES_SOURCE)
                     programs.append(NAMESPACE_VIEW_DIRECTORIES_SOURCE)
                     programs.append(METHOD_DIRECTORIES_SOURCE)
                     programs.append(FUNCTION_DIRECTORIES_SOURCE)
@@ -704,7 +707,19 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('namespace-view-directories-compose-with-keyed-views-retained-methods-and-lazy-generators-offline')
                     checks.append('view-native-directory-binding-preserves-mapping-enumeration-and-other-layout-boundaries-offline')
+                    properties_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', PROPERTY_DIRECTORIES_SOURCE], text=True, encoding='utf-8')
+                    run(PROPERTY_DIRECTORIES_SOURCE, properties_expected)
+                    for case in property_directories['cases']:
+                        if case['stage'] not in property_directories['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('property-directories-compose-with-copies-arbitrary-metadata-native-binding-and-lazy-generators-offline')
+                    checks.append('property-directory-collection-avoids-lazy-name-abstract-and-accessor-callbacks-offline')
                     busy = [
+                        'def f(self): return 7\np=property(f)\nf.saved=p\nd=p.__dir__\ndel p\ndel f\nprint("entered")\nwhile True: d()\n',
                         'class C: tag=[7]\np=C.__dict__\nC.saved=p\nd=p.__dir__\ndel p\ndel C\nprint("entered")\nwhile True: d()\n',
                         'class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef read(self,name):\n if name=="__dict__":\n  print("entered")\n  while True: pass\n return object.__getattribute__(self,name)\nCallable.__getattribute__=read\ndir(m)\n',
                         'class Key:\n def __hash__(self): return hash("__new__")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nclass C:\n def f(self): pass\nm=C().f\nm.__func__.__dict__={Key():7}\ndir(m)\n',
