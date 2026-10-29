@@ -91,6 +91,7 @@ export class ValueRuntime {
   }
   float(value) { return this.make(64, [], () => new FloatValue(bitsOf(value))); }
   complex(real, imag) { return this.make(80, [], () => new ComplexValue(real, imag)); }
+  isFloat(value) { return value instanceof FloatValue; }
   isComplex(value) { return value instanceof ComplexValue; }
   isRange(value) { return value instanceof RangeValue; }
   range(args) {

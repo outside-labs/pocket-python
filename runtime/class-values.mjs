@@ -48,6 +48,54 @@ const OBJECT_DIRECTORY_KEYS = Object.freeze([
   "__class__",
   "__doc__"
 ]);
+const NONE_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__bool__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const NOT_IMPLEMENTED_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__bool__", "__reduce__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const INT_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__add__", "__radd__", "__sub__",
+  "__rsub__", "__mul__", "__rmul__", "__mod__", "__rmod__", "__divmod__",
+  "__rdivmod__", "__pow__", "__rpow__", "__neg__", "__pos__", "__abs__",
+  "__bool__", "__invert__", "__lshift__", "__rlshift__", "__rshift__", "__rrshift__",
+  "__and__", "__rand__", "__xor__", "__rxor__", "__or__", "__ror__",
+  "__int__", "__float__", "__floordiv__", "__rfloordiv__", "__truediv__", "__rtruediv__",
+  "__index__", "conjugate", "bit_length", "bit_count", "to_bytes", "from_bytes",
+  "as_integer_ratio", "__trunc__", "__floor__", "__ceil__", "__round__", "__getnewargs__",
+  "__format__", "__sizeof__", "is_integer", "real", "imag", "numerator",
+  "denominator", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const BOOL_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__invert__", "__and__", "__rand__", "__xor__",
+  "__rxor__", "__or__", "__ror__", "__doc__",
+  ...INT_DIRECTORY_KEYS
+]);
+const FLOAT_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__add__", "__radd__", "__sub__",
+  "__rsub__", "__mul__", "__rmul__", "__mod__", "__rmod__", "__divmod__",
+  "__rdivmod__", "__pow__", "__rpow__", "__neg__", "__pos__", "__abs__",
+  "__bool__", "__int__", "__float__", "__floordiv__", "__rfloordiv__", "__truediv__",
+  "__rtruediv__", "from_number", "conjugate", "__trunc__", "__floor__", "__ceil__",
+  "__round__", "as_integer_ratio", "fromhex", "hex", "is_integer", "__getnewargs__",
+  "__getformat__", "__format__", "real", "imag", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const COMPLEX_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__add__", "__radd__", "__sub__",
+  "__rsub__", "__mul__", "__rmul__", "__pow__", "__rpow__", "__neg__",
+  "__pos__", "__abs__", "__bool__", "__truediv__", "__rtruediv__", "from_number",
+  "conjugate", "__complex__", "__getnewargs__", "__format__", "real", "imag",
+  "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
 const FUNCTION_DIRECTORY_KEYS = Object.freeze([
   "__new__",
   "__repr__",
@@ -666,12 +714,23 @@ export class ClassRuntime {
     }
     return null;
   }
+  numericDirectoryNames(receiver) {
+    if (receiver === null) return NONE_DIRECTORY_KEYS;
+    if (receiver instanceof NotImplementedValue) return NOT_IMPLEMENTED_DIRECTORY_KEYS;
+    if (typeof receiver === "boolean") return BOOL_DIRECTORY_KEYS;
+    if (typeof receiver === "bigint") return INT_DIRECTORY_KEYS;
+    if (this.values.isFloat(receiver)) return FLOAT_DIRECTORY_KEYS;
+    if (this.values.isComplex(receiver)) return COMPLEX_DIRECTORY_KEYS;
+    return null;
+  }
   hasFixedDirectory(receiver) {
     return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
       receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind) ||
-      this.nativeCallableDirectoryKind(receiver) !== null;
+      this.numericDirectoryNames(receiver) !== null || this.nativeCallableDirectoryKind(receiver) !== null;
   }
   directoryNames(receiver) {
+    const numeric = this.numericDirectoryNames(receiver);
+    if (numeric !== null) return numeric;
     if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
     if (receiver instanceof ClassNamespaceValue) return NAMESPACE_VIEW_DIRECTORY_KEYS;
     if (receiver instanceof PropertyValue) return PROPERTY_DIRECTORY_KEYS;
