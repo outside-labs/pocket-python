@@ -19,6 +19,8 @@ assigned object's exact identity and never calls its string, truth, equality or
 hash hooks. Module metadata is a definition-time snapshot, independent of later
 global rebinding; it does not grant import or host authority. Metadata never
 changes a function's executable identity or a persistent callback registration.
+Default names do not promise CPython string interning across distinct fields,
+functions or source literals.
 
 Pending bound-method reads retain the original method and callable through
 descriptor binding, body execution, fallback, collection, parking, cancellation,
@@ -52,3 +54,13 @@ adopted cases include original errors/source frames, AttributeError fallback,
 descriptors, nested bound methods and native bypass behavior. Detached closures
 and the original method remain alive across parked collection; callback tests
 exercise cancellation, close, recursion and real instruction/work/arena limits.
+
+The [metadata console](../examples/interpreter_function_metadata.py) composes
+retained methods, renamed property getters, module snapshots and lazy labels.
+The 86-case source matrix passes six Node/Chromium driver combinations: 516
+observations with zero logical teardown. Fourteen representative probes extend
+the inventory to 242 observations per target. Installed-wheel offline acceptance
+passes 1,636 program comparisons and 95 acceptance groups. The
+[payload record](measurements/2026-10-28-function-metadata.json) verifies 38 files
+and 693,839 bytes, with an identical rebuild. These are finite semantic/source/
+payload observations. Broader reflection and async work remain under #123/#34.

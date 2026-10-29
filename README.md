@@ -256,6 +256,12 @@ documents, native copies, property notification names and lazy generators.
 Native/wrapper documentation, live namespaces and broader layouts retain their
 own contracts.
 
+The finite [function identity metadata profile](docs/interpreter-function-metadata.md)
+adds exact mutable function names, definition-time module snapshots and live
+read-only bound-method metadata. Run `python -m examples.interpreter_function_metadata`
+to combine retained methods, property names, custom metadata lookup and lazy
+generators in the offline console.
+
 The [continuing interpreter roadmap](docs/interpreter-roadmap.md) targets broad
 Python 3.14+ compatibility through finite supported profiles. Execution ownership
 is consolidated; the [coverage inventory](docs/interpreter-compatibility.md)
