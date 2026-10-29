@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "scope": "instance-directories: finite semantic/source/payload observations; no performance, device or package claim.",
+  "baseline_commit": "e537f46bd6c188842008adf752392d5cfe0964f7",
+  "measurement_source_revision": "084290130ffcef44509b51dcbf3b6729277cc7dc",
+  "working_tree_modified": true,
+  "engine_fingerprint": "bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9",
+  "corpus": {
+    "path": "tests/fixtures/interpreter/instance-directories.json",
+    "size_bytes": 22315,
+    "sha256": "cf969fc2f4b68d51a50e75d1c4af992abad18e9f41af43f288624a312add477b",
+    "cases": 60,
+    "implemented_stages": [
+      "O61"
+    ]
+  },
+  "source_reports": [
+    {
+      "path": "build/instance-directories-classes-drain-node-report.json",
+      "size_bytes": 144048,
+      "sha256": "50bf92759ce1ce4e6a454a676d881473adfa7794fe5e522a64873188d6e2feed",
+      "target": "node",
+      "driver": "drain",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-stepped-node-report.json",
+      "size_bytes": 177126,
+      "sha256": "c5ff7fb94591af963a4e0826b273f525b62e8eac613aa96fb6f3e520a25656b3",
+      "target": "node",
+      "driver": "stepped",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-parked-node-report.json",
+      "size_bytes": 177133,
+      "sha256": "5402b2abe03b1bfca0ba6b343c84f75104ce5668f6b7507d750ee8ee842603e8",
+      "target": "node",
+      "driver": "parked",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-drain-browser-report.json",
+      "size_bytes": 144055,
+      "sha256": "3e19889146272703bdee6002b4dfe25cf45dcedaa1d5e64292127b40d97c02b5",
+      "target": "browser",
+      "driver": "drain",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-stepped-browser-report.json",
+      "size_bytes": 177133,
+      "sha256": "c5cc6df82bed94c116f7ffdb69579dd521153e9138c176f308887db4c1c3efb3",
+      "target": "browser",
+      "driver": "stepped",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    },
+    {
+      "path": "build/instance-directories-classes-parked-browser-report.json",
+      "size_bytes": 177140,
+      "sha256": "34b6f7187141fd3175657c8359d1becf6653f3bd91ad236841c9caa647ab7465",
+      "target": "browser",
+      "driver": "parked",
+      "summary": {
+        "pass": 60,
+        "fail": 0
+      },
+      "zero_teardown_records": 60
+    }
+  ],
+  "example_payload": {
+    "path": "build/instance-directories-console",
+    "engine_fingerprint": "bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9",
+    "complete_payload_bytes": 741544,
+    "files": [
+      {
+        "path": "POCKET-PYTHON.json",
+        "size_bytes": 26600,
+        "sha256": "58dfc638a3154fb91e0701d4b6e6ed30bd72934b3fe04969f1f31453ff4e7647"
+      },
+      {
+        "path": "app-config-67b928450f487f3444d341dbd1a60bde1da52fee5c376e0ec3633c1f7a20fb7d.json",
+        "size_bytes": 1213,
+        "sha256": "67b928450f487f3444d341dbd1a60bde1da52fee5c376e0ec3633c1f7a20fb7d"
+      },
+      {
+        "path": "app-eb270582c92d20163d7cc9584191366009d111b764ad6c5fb6ece40d905629b1.js",
+        "size_bytes": 8596,
+        "sha256": "eb270582c92d20163d7cc9584191366009d111b764ad6c5fb6ece40d905629b1"
+      },
+      {
+        "path": "application/6bcc087951e6d304eac9a75f3abc3024a4b475880c5cc78691a0c527a796c235/APPLICATION.json",
+        "size_bytes": 1430,
+        "sha256": "6bcc087951e6d304eac9a75f3abc3024a4b475880c5cc78691a0c527a796c235"
+      },
+      {
+        "path": "application/6bcc087951e6d304eac9a75f3abc3024a4b475880c5cc78691a0c527a796c235/LICENSES/application.txt",
+        "size_bytes": 1066,
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85"
+      },
+      {
+        "path": "application/6bcc087951e6d304eac9a75f3abc3024a4b475880c5cc78691a0c527a796c235/sources/app.py",
+        "size_bytes": 962,
+        "sha256": "3ffa19c5c83e81629522f1a0a1d14643c33d84aa46ebb0c8d5ebfcb980832ca4"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/browser-protocol.mjs",
+        "size_bytes": 10589,
+        "sha256": "920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/bytecode.mjs",
+        "size_bytes": 6836,
+        "sha256": "e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/class-policy.mjs",
+        "size_bytes": 3020,
+        "sha256": "c2c938d5c7fcbc3e0cecb57701bef2e44be3ef49531cfbaa72e710ac8028ec3c"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/class-values.mjs",
+        "size_bytes": 73947,
+        "sha256": "2c3b9cfe4f40c0567a0ee80a962ed9a69e93952ba38045f891cad566a928a9e9"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/function-bytecode.mjs",
+        "size_bytes": 22820,
+        "sha256": "6c8c960d90cbe1a5030c22ac1ab93f33749b06e3ea3ae61e237bb3997390ef96"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/function-objects.mjs",
+        "size_bytes": 5707,
+        "sha256": "435b984ccfab9fbff0eb84fb8272754bfd45ff4c0c45c9db50816cd823d0921b"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/functions.mjs",
+        "size_bytes": 64929,
+        "sha256": "fe01942d5be467abc62c383417655301c07a5d83d607a255451590aea55bc862"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/interpreter-host.mjs",
+        "size_bytes": 7318,
+        "sha256": "4afadfd987000afa6221ee73dcd64e9c00a2d13c4324718248d396302a39296d"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/interpreter-worker.mjs",
+        "size_bytes": 8855,
+        "sha256": "324cc23100eb40ef04f2909b805d7abc0c8651b4608b3a61a95470ec7e74e19e"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/library-catalog.mjs",
+        "size_bytes": 907,
+        "sha256": "0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/library-selection.mjs",
+        "size_bytes": 3661,
+        "sha256": "b1e2c756afef5a45a1a71fb09fa284290c8f999a1dfb854f2f536fe183119a8a"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/licenses/POCKET-PYTHON.txt",
+        "size_bytes": 1066,
+        "sha256": "30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/licenses/UNICODE.txt",
+        "size_bytes": 1995,
+        "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/memory.mjs",
+        "size_bytes": 8407,
+        "sha256": "b4b8ebbb6f576e2c01e8e28f4e02b1962ca1c5ffb263216278617c2c6bd8bb35"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/module-context.mjs",
+        "size_bytes": 8319,
+        "sha256": "f700ecd289f51c6ae98c1c1a448d8eeebb6ea0853bf1f8c71661af549f58adca"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/module-registry.mjs",
+        "size_bytes": 10280,
+        "sha256": "43eb1bc646da60a6b5336caef1ea6ea940b6a88db3fe679c550c62b828704c89"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/module-session.mjs",
+        "size_bytes": 12852,
+        "sha256": "8474187aa92173689c875d6bf15b31a7eae4dcff62b862b9607ce22e10753df4"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/numeric.mjs",
+        "size_bytes": 13954,
+        "sha256": "2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/operation-runtime.mjs",
+        "size_bytes": 153976,
+        "sha256": "20b0223f538a42592fe9f79c42fb3fdeb2f758b4bf4f41385e4c405f2d1ba191"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/operations.mjs",
+        "size_bytes": 32789,
+        "sha256": "0a18f40dd7c8c70d233a776fd013d77704b43c84ea6f11d307950ae5fb19a6b2"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/source-compiler.mjs",
+        "size_bytes": 44099,
+        "sha256": "0dcdcd202303f9a05b49f4e3c3bae75f0c26153b068c081b4021c87ddf9e115b"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/source-identifiers.mjs",
+        "size_bytes": 25949,
+        "sha256": "1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/source-modules.mjs",
+        "size_bytes": 5115,
+        "sha256": "3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/source-parser.mjs",
+        "size_bytes": 34109,
+        "sha256": "2ba7ecd41fdae750fa28dfb4fced9440d24ba9b96ed515d12b5151b385eebfdd"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/source-tokens.mjs",
+        "size_bytes": 15061,
+        "sha256": "e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/string-printability.mjs",
+        "size_bytes": 13287,
+        "sha256": "355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/values.mjs",
+        "size_bytes": 94153,
+        "sha256": "6d20ecb7791ee004b942214c3960dc3a4a86974d37005ece709fe15ab02ee9e1"
+      },
+      {
+        "path": "engine/bfb8d4a0e753aa6fd41c94eea9f875fa1a3b5738aca1105703e5de268c68dfb9/vm.mjs",
+        "size_bytes": 6080,
+        "sha256": "796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d"
+      },
+      {
+        "path": "icon.svg",
+        "size_bytes": 214,
+        "sha256": "860b74abf34f2b7662d477c7b216f54ba6e861ddcf28fd3b005ce787e5cf9691"
+      },
+      {
+        "path": "index.html",
+        "size_bytes": 2246,
+        "sha256": "a8c789973b37db21164300d109ebc4c944239b7b7897e505e2b8c7082a9f9aa1"
+      },
+      {
+        "path": "manifest.webmanifest",
+        "size_bytes": 343,
+        "sha256": "870f720a58000fab4a9e963085bdf622c9ed09e6a29b917c7f9c86fa5bcbc8f5"
+      },
+      {
+        "path": "service-worker.js",
+        "size_bytes": 8794,
+        "sha256": "0c1254d8cc88ee682c9e1a9dbc785015f71b2d8ac2396fc59bfd8f308e1f16f2"
+      }
+    ]
+  },
+  "compatibility_node": {
+    "path": "build/compatibility-node-report.json",
+    "size_bytes": 1168145,
+    "sha256": "d164e6b92744de030da2eacc6d38724906d8e4fd5a7e63bdddf1359cce4df093",
+    "summary": {
+      "pass": 536,
+      "fail": 0
+    }
+  },
+  "compatibility_browser": {
+    "path": "build/compatibility-browser-report.json",
+    "size_bytes": 1168152,
+    "sha256": "88c640de5bec08cfc6f054d16b5f59f7b608825e20503b2c4c365e22dd04def8",
+    "summary": {
+      "pass": 536,
+      "fail": 0
+    }
+  }
+}

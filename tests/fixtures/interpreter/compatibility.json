@@ -5684,15 +5684,14 @@
     {
       "id": "iterator-directories-user-iterator-directory",
       "source": "class User:\n def __iter__(self): return self\n def __next__(self): return 7\nprint(len(dir(User())))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "31\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "UnsupportedOperationError",
-        "code": "UNSUPPORTED"
+        "stdout": "31\n",
+        "error_type": null
       }
     },
     {
@@ -6884,6 +6883,190 @@
         "stdout": "",
         "error_type": "UnsupportedOperationError",
         "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "instance-directories-root-sorted",
+      "source": "value=object()\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-ordinary-raw",
+      "source": "class A: pass\nvalue=A()\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-dynamic-raw",
+      "source": "__name__=\"app\"\nA=type(\"A\",(),{\"z\":7})\nvalue=A()\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "z __module__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "z __module__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-diamond-raw",
+      "source": "class A: a=1\nclass B(A): b=2\nclass C(A): c=3\nclass D(B,C): d=4\nvalue=D()\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__module__ __firstlineno__ d __static_attributes__ __doc__ b a __dict__ __weakref__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ c\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__module__ __firstlineno__ d __static_attributes__ __doc__ b a __dict__ __weakref__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ c\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-own-live-keys",
+      "source": "class A: pass\nv=A()\nv.z=7\nv.a=8\nprint(*object.__dir__(v))\nd=v.__dict__\nv.__dict__={\"replacement\":9}\nprint(\"replacement\" in dir(v),\"z\" in dir(v),d[\"z\"])\ndel v.replacement\nprint(\"replacement\" in dir(v))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "z a __module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nTrue False 7\nFalse\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "z a __module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nTrue False 7\nFalse\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-read-hooks-order",
+      "source": "class A:\n def __getattribute__(self,name):\n  print(name)\n  return object.__getattribute__(self,name)\nv=A()\nv.z=7\nprint(\"z\" in dir(v))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__dict__\n__class__\nTrue\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__dict__\n__class__\nTrue\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-advertised-class",
+      "source": "class B: advertised=7\nclass A:\n @property\n def __class__(self):\n  print(\"class\")\n  return B\nv=A()\nv.own=8\nprint(\"own\" in dir(v),\"advertised\" in dir(v))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "class\nclass\nTrue True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "class\nclass\nTrue True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-dictionary-copy-before-class",
+      "source": "saved={\"original\":7}\nclass B: base=1\nclass A:\n @property\n def __dict__(self): return saved\n @property\n def __class__(self):\n  saved[\"later\"]=9\n  return B\nv=A()\nresult=dir(v)\nprint(\"original\" in result,\"later\" in result,\"later\" in saved)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True False True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True False True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-native-collision-identity",
+      "source": "class Key:\n def __hash__(self): return hash(\"__doc__\")\n def __eq__(self,other):\n  print(\"equal\",other)\n  return other==\"__doc__\"\nkey=Key()\nclass A: pass\nv=A()\nv.__dict__={key:7}\nresult=object.__dir__(v)\nprint(result[0] is key,len(result))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "equal __doc__\nequal __doc__\nTrue 29\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "equal __doc__\nequal __doc__\nTrue 29\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-native-collision-error",
+      "source": "class Key:\n def __hash__(self): return hash(\"__doc__\")\n def __eq__(self,other):\n  print(\"collision\")\n  raise ValueError(\"original\")\nkey=Key()\nclass A: pass\nv=A()\nv.__dict__={key:7}\nobject.__dir__(v)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "collision\n",
+        "error_type": "ValueError"
+      },
+      "engine": {
+        "stdout": "collision\n",
+        "error_type": "ValueError"
+      }
+    },
+    {
+      "id": "instance-directories-retained-cyclic-receiver",
+      "source": "class A: pass\nv=A()\nv.saved=v\nd=v.__dir__\ndel v\ndel A\nprint(\"saved\" in d(),d.__self__.saved is d.__self__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "instance-directories-custom-metaclass-namespace",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"virtual\":7}\nclass A(metaclass=Meta): pass\nprint(\"virtual\" in dir(A()))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "instance-directories-advertised-nonclass",
+      "source": "class A:\n @property\n def __class__(self): return None\nprint(*dir(A()))\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "instance-directories-class-mutation-raw-order",
+      "source": "class A: old=7\nv=A()\nA.new=8\ndel A.old\nA.old=9\nA.__doc__=\"changed\"\nprint(*object.__dir__(v))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ new old __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ new old __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
       }
     }
   ]

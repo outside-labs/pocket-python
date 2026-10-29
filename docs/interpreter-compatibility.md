@@ -23,6 +23,11 @@ set/frozenset/bytes/bytearray/memoryview layouts, preserving hash entries, mutab
 storage, view aliases and directories after release. Released-view data access,
 unread APIs and core-profile directory admission retain explicit boundaries.
 
+The [O61 instance directory contract](interpreter-instance-directories.md) adds
+root/ordinary instances, optional dictionary/class reads, exact key identities and
+live inherited source/dynamic class namespace merging. Further custom metaclass
+namespace reflection and non-class advertised namespaces retain explicit refusals.
+
 The [O21/O22 comprehension contract](interpreter-comprehension-reflection.md) adds optimized enclosing and isolated module/class comprehension snapshots, with nested target masking, captured-cell ordering and restored bindings.
 
 ## Evidence and interpretation
