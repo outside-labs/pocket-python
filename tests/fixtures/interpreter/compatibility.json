@@ -3240,15 +3240,14 @@
       "source": "def f(): pass\nf.__defaults__\n",
       "classification": "deferred",
       "reference": {
-        "stdout": "{}\n",
+        "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
         "code": "UNSUPPORTED",
         "phase": "execute"
-      },
-      "stdout": ""
+      }
     }
   ]
 }
