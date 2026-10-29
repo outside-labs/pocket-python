@@ -88,7 +88,69 @@ const DICT_DIRECTORY_KEYS = Object.freeze([
   "copy", "__reversed__", "__class_getitem__", "__doc__",
   ...OBJECT_DIRECTORY_KEYS
 ]);
-const CONTAINER_DIRECTORY_KEYS = Object.freeze({str: STR_DIRECTORY_KEYS, list: LIST_DIRECTORY_KEYS, tuple: TUPLE_DIRECTORY_KEYS, dict: DICT_DIRECTORY_KEYS});
+const SET_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__init__", "__sub__",
+  "__rsub__", "__and__", "__rand__", "__xor__", "__rxor__", "__or__",
+  "__ror__", "__isub__", "__iand__", "__ixor__", "__ior__", "__len__",
+  "__contains__", "add", "clear", "copy", "discard", "difference",
+  "difference_update", "intersection", "intersection_update", "isdisjoint", "issubset", "issuperset",
+  "pop", "__reduce__", "remove", "__sizeof__", "symmetric_difference", "symmetric_difference_update",
+  "union", "update", "__class_getitem__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const FROZENSET_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__sub__", "__rsub__",
+  "__and__", "__rand__", "__xor__", "__rxor__", "__or__", "__ror__",
+  "__len__", "__contains__", "copy", "difference", "intersection", "isdisjoint",
+  "issubset", "issuperset", "__reduce__", "__sizeof__", "symmetric_difference", "union",
+  "__class_getitem__", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const BYTES_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__str__", "__lt__", "__le__",
+  "__eq__", "__ne__", "__gt__", "__ge__", "__iter__", "__buffer__",
+  "__mod__", "__rmod__", "__len__", "__getitem__", "__add__", "__mul__",
+  "__rmul__", "__contains__", "__getnewargs__", "__bytes__", "capitalize", "center",
+  "count", "decode", "endswith", "expandtabs", "find", "fromhex",
+  "hex", "index", "isalnum", "isalpha", "isascii", "isdigit",
+  "islower", "isspace", "istitle", "isupper", "join", "ljust",
+  "lower", "lstrip", "maketrans", "partition", "replace", "removeprefix",
+  "removesuffix", "rfind", "rindex", "rjust", "rpartition", "rsplit",
+  "rstrip", "split", "splitlines", "startswith", "strip", "swapcase",
+  "title", "translate", "upper", "zfill", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const BYTEARRAY_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__str__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__init__", "__buffer__",
+  "__release_buffer__", "__mod__", "__rmod__", "__len__", "__getitem__", "__setitem__",
+  "__delitem__", "__add__", "__mul__", "__rmul__", "__contains__", "__iadd__",
+  "__imul__", "__alloc__", "__reduce__", "__reduce_ex__", "__sizeof__", "append",
+  "capitalize", "center", "clear", "copy", "count", "decode",
+  "endswith", "expandtabs", "extend", "find", "fromhex", "hex",
+  "index", "insert", "isalnum", "isalpha", "isascii", "isdigit",
+  "islower", "isspace", "istitle", "isupper", "join", "ljust",
+  "lower", "lstrip", "maketrans", "partition", "pop", "remove",
+  "replace", "removeprefix", "removesuffix", "resize", "reverse", "rfind",
+  "rindex", "rjust", "rpartition", "rsplit", "rstrip", "split",
+  "splitlines", "startswith", "strip", "swapcase", "title", "translate",
+  "upper", "zfill", "__doc__", "__hash__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const MEMORYVIEW_DIRECTORY_KEYS = Object.freeze([
+  "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
+  "__ne__", "__gt__", "__ge__", "__iter__", "__buffer__", "__release_buffer__",
+  "__len__", "__getitem__", "__setitem__", "__delitem__", "release", "tobytes",
+  "hex", "tolist", "cast", "toreadonly", "_from_flags", "count",
+  "index", "__enter__", "__exit__", "__class_getitem__", "obj", "nbytes",
+  "readonly", "itemsize", "format", "ndim", "shape", "strides",
+  "suboffsets", "c_contiguous", "f_contiguous", "contiguous", "__doc__",
+  ...OBJECT_DIRECTORY_KEYS
+]);
+const CONTAINER_DIRECTORY_KEYS = Object.freeze({str: STR_DIRECTORY_KEYS, list: LIST_DIRECTORY_KEYS, tuple: TUPLE_DIRECTORY_KEYS, dict: DICT_DIRECTORY_KEYS,
+  set: SET_DIRECTORY_KEYS, frozenset: FROZENSET_DIRECTORY_KEYS, bytes: BYTES_DIRECTORY_KEYS, bytearray: BYTEARRAY_DIRECTORY_KEYS, memoryview: MEMORYVIEW_DIRECTORY_KEYS});
 const NONE_DIRECTORY_KEYS = Object.freeze([
   "__new__", "__repr__", "__hash__", "__lt__", "__le__", "__eq__",
   "__ne__", "__gt__", "__ge__", "__bool__", "__doc__",
