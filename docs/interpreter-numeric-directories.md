@@ -12,7 +12,7 @@ name. Boolean directories merge bool before int. Values, signs, integer size,
 NaNs and infinities do not change the layout. Collection reads no listed
 attributes, performs no numeric conversion and never truth-tests a singleton.
 
-Native callers retain exact receivers and report actual native qualifications.
+Native callers retain receivers and report actual native qualifications.
 Explicit native lookup, descriptor binding, cross-layout rebinding and nested
 callers preserve their existing rules, including the None receiver sentinel in
 `object.__dir__.__get__`. Directory mutation raises AttributeError; extra
@@ -25,7 +25,7 @@ observations remain unchanged.
 
 This is classes-source/1 and bytecode 5. Listing numeric methods, native metadata
 or serialization names adopts none of their unread APIs. Core-source admission,
-other default layouts, wrapper namespaces, dynamic source and native async/host
+unboxed integer identity, other default layouts, wrapper namespaces, dynamic source and native async/host
 work retain their separate contracts. No dependency, host grant, release,
 publication or deployment is included.
 

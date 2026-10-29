@@ -229,7 +229,7 @@
     {
       "id": "native-other-layout",
       "stage": "Future",
-      "source": "print(\"real\" in object.__dir__(7))\n",
+      "source": "print(\"__iter__\" in object.__dir__([]))\n",
       "stdout": "True\n"
     },
     {

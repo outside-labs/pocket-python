@@ -3,7 +3,9 @@
   "suite": "interpreter-numeric-directories/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": [],
+  "implemented_stages": [
+    "O57"
+  ],
   "cases": [
     {
       "id": "none-sorted-directory",
@@ -316,13 +318,13 @@
     },
     {
       "id": "int-native-getattribute",
-      "source": "value=10**50+7\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "source": "value=10**50+7\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__==value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
       "stage": "O57",
       "stdout": "True __dir__ int.__dir__ True\n"
     },
     {
       "id": "int-builtin-getattr",
-      "source": "value=10**50+7\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "source": "value=10**50+7\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__==value,len(d()))\n",
       "stage": "O57",
       "stdout": "True True 74\n"
     },
@@ -375,7 +377,7 @@
     },
     {
       "id": "int-native-binding",
-      "source": "value=10**50+7\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "source": "value=10**50+7\nd=object.__dir__.__get__(value)\nprint(d.__self__==value,d.__qualname__,d()==value.__dir__())\n",
       "stage": "O57",
       "stdout": "True int.__dir__ True\n"
     },
@@ -611,6 +613,12 @@
       "source": "def f(): pass\ndir(staticmethod(f))\n",
       "stage": "Future",
       "stdout": ""
+    },
+    {
+      "id": "unboxed-integer-identity",
+      "source": "value=10**50+7\nd=value.__dir__\nprint(d.__self__ is value)\n",
+      "stage": "Future",
+      "stdout": "True\n"
     }
   ]
 }
