@@ -74,7 +74,7 @@ test("identity/truth, metadata and explicit unsupported boundaries remain separa
     }
     const dictionary = s.runtime.get(a, "__dict__");
     assert.equal(s.runtime.get(a, "__dict__"), dictionary);
-    assert.throws(() => s.runtime.get(A, "__dict__"), {code: "UNSUPPORTED"});
+    assert.equal(s.runtime.values.typeName(s.runtime.get(A, "__dict__")), "mappingproxy");
     assert.throws(() => s.runtime.mutate(A, "__bases__", null), {code: "UNSUPPORTED"});
     assert.throws(() => s.runtime.mutate(s.root, "value", 7n), {name: "TypeError"});
     assert.throws(() => s.make("Special", [], new Map([["__matmul__", method("f")]])), {code: "UNSUPPORTED"});
