@@ -3,7 +3,10 @@
   "suite": "interpreter-instance-dictionaries/1",
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
-  "implemented_stages": ["O47"],
+  "implemented_stages": [
+    "O47",
+    "O48"
+  ],
   "cases": [
     {
       "id": "live-empty-dictionary",
@@ -350,6 +353,134 @@
       "stage": "Future",
       "source": "class C: pass\nobject.__getattribute__(C,\"__dict__\")\n",
       "stdout": ""
+    },
+    {
+      "id": "native-collision-read",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return True\nkey=Key()\nold={key:7}\nc.__dict__=old\nprint(object.__getattribute__(c,\"tag\"))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "native-collision-write",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return True\nkey=Key()\nold={key:7}\nc.__dict__=old\nobject.__setattr__(c,\"tag\",9)\nprint(old[key])\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "native-collision-delete",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return True\nkey=Key()\nold={key:7}\nc.__dict__=old\nobject.__delattr__(c,\"tag\")\nprint(len(old))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "callback-keyerror-is-not-default",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise KeyError(\"callback\")\nc.__dict__={Key():7}\ngetattr(c,\"tag\",99)\n",
+      "stdout": "",
+      "error_type": "KeyError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "__eq__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "callback-keyerror-is-not-hasattr",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise KeyError(\"callback\")\nc.__dict__={Key():7}\nhasattr(c,\"tag\")\n",
+      "stdout": "",
+      "error_type": "KeyError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "__eq__",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "callback-write-error-preserves-entry",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise KeyError(\"callback\")\nkey=Key()\nold={key:7}\nc.__dict__=old\ntry: c.tag=9\nexcept AttributeError: print(\"original\")\nprint(old[key],len(old))\n",
+      "stdout": "original\n7 1\n"
+    },
+    {
+      "id": "callback-delete-error-preserves-entry",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): raise KeyError(\"callback\")\nkey=Key()\nold={key:7}\nc.__dict__=old\ntry: del c.tag\nexcept AttributeError: print(\"original\")\nprint(old[key],len(old))\n",
+      "stdout": "original\n7 1\n"
+    },
+    {
+      "id": "collision-truth-owned",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Truth:\n def __bool__(self):\n  print(\"truth\")\n  c.__dict__={\"fresh\":9}\n  return True\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return Truth()\nc.__dict__={Key():7}\nprint(c.tag,c.fresh)\n",
+      "stdout": "truth\n7 9\n"
+    },
+    {
+      "id": "function-fallback-snapshot",
+      "stage": "O48",
+      "source": "class C:\n def tag(self): return [7]\nc=C()\ndef replacement(self): return [9]\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  C.tag=replacement\n  return False\nc.__dict__={Key():11}\nprint(c.tag()[0],C.tag(c)[0])\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "unequal-collision-missing-default",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return False\nc.__dict__={Key():7}\nprint(getattr(c,\"tag\",99),hasattr(c,\"tag\"))\n",
+      "stdout": "99 False\n"
+    },
+    {
+      "id": "structural-collision-deferred",
+      "stage": "Future",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del c.__dict__[self]\n  return True\nc.__dict__={Key():7}\nprint(getattr(c,\"tag\",99))\n",
+      "stdout": "99\n"
+    },
+    {
+      "id": "custom-super-dictionary-preserved",
+      "stage": "O47",
+      "source": "class A:\n @property\n def __dict__(self): return [7]\nclass C(A): pass\nc=C()\nprint(super(C,c).__dict__[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "mutation-keyerror-frames-64",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"entered\")\n  raise KeyError(\"callback\")\nc.__dict__={Key():7}\nc.tag=9\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        }
+      ],
+      "error_context_type": null
+    },
+    {
+      "id": "mutation-keyerror-frames-65",
+      "stage": "O48",
+      "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  print(\"entered\")\n  raise KeyError(\"callback\")\nc.__dict__={Key():7}\ndel c.tag\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 9
+        }
+      ],
+      "error_context_type": null
+    },
+    {
+      "id": "descriptor-keyerror-bypasses-dictionary-conversion",
+      "stage": "O48",
+      "source": "class D:\n def __get__(self,obj,owner): return 7\n def __set__(self,obj,value): raise KeyError(\"descriptor\")\n def __delete__(self,obj): raise KeyError(\"descriptor\")\nclass C: tag=D()\nc=C()\nd=c.__dict__\ntry: c.tag=9\nexcept KeyError: print(\"set\")\ntry: del c.tag\nexcept KeyError: print(\"delete\")\n",
+      "stdout": "set\ndelete\n"
     }
   ]
 }

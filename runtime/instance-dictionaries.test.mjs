@@ -2,9 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runSourceRequest} from './source-request.mjs';
+import {compileSourceModules} from './source-modules.mjs';
+import {ModuleSession} from './module-session.mjs';
+import {Execution} from './functions.mjs';
 import {ClassRuntime} from './class-values.mjs';
 import {MemoryArena} from './memory.mjs';
 import {ValueRuntime, valueLayout} from './values.mjs';
+import {completion, completionRoots} from './operations.mjs';
 
 const profile = {languageProfile: 'classes-source/1'};
 const unit = source => ({name: 'app', package: false, imports: [], source, notice: 'Synthetic instance dictionary fixture'});
@@ -93,5 +97,68 @@ test('instance dictionaries retain core and broader namespace refusal boundaries
   for (const item of corpus.cases.filter(item => item.stage === 'Future')) {
     const result = await run(item.source);
     assert.equal(result.error?.code, 'UNSUPPORTED', item.id); if (result.closed) closed(result.closed);
+  }
+});
+
+test('instance dictionary continuations own selected class fallbacks and supplied names', () => {
+  const receiver = {}, key = {}, fallback = {}, outer = {};
+  const after = completion('relay', {receiver: outer});
+  assert.deepEqual(completionRoots(completion('instance-entry', {receiver, key, operation: 'get', found: true, fallback, depth: 0, after})),
+    [receiver, key, fallback, outer]);
+  assert.deepEqual(completionRoots(completion('instance-entry', {receiver, key, operation: 'delete', found: false, fallback, depth: 0, after})),
+    [receiver, key, outer]);
+  assert.throws(() => completion('instance-entry', {receiver, key, operation: 'get', fallback}), TypeError);
+});
+
+async function lifecycle(source, expected, phase) {
+  const {registry} = await compileSourceModules([unit(source)], profile);
+  try { for (const mode of ['finish', 'cancel', 'close']) {
+    const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+    session.context.begin({shouldCancel: () => cancel}, text => { output += text; });
+    const execution = Execution.modules(session.context);
+    try {
+      while (execution.state !== 'completed') {
+        execution.advance();
+        if (execution.state === 'paused') execution.park();
+        session.memory.collect([], {cleanup: true});
+        if (!reached && output === phase && execution.state === 'parked') {
+          reached = true;
+          if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+          if (mode === 'close') break;
+        }
+      }
+      assert.ok(reached, phase);
+      if (mode === 'finish') assert.equal(output, expected);
+    } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+    closed(session.stats());
+  } } finally { registry.close(); }
+}
+
+test('detached receiver, original dictionary and stored result survive parked callbacks', async () => {
+  await lifecycle('class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  global c,C,Key\n  del c\n  del C\n  del Key\n  print("entered")\n  return True\nc.__dict__={Key():[7]}\nprint(c.tag[0])\n', 'entered\n7\n', 'entered\n');
+});
+
+test('deleted original nondata descriptor survives parked lookup and binding', async () => {
+  await lifecycle('class D:\n def __get__(self,obj,owner):\n  print("bound")\n  return [7]\nclass C: tag=D()\nc=C()\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  global c,C,Key,D\n  del C.tag\n  del c\n  del C\n  del Key\n  del D\n  print("entered")\n  return False\nc.__dict__={Key():11}\nprint(c.tag[0])\n', 'entered\nbound\n7\n', 'entered\n');
+});
+
+test('original dictionaries remain live across parked replacement writes and deletions', async () => {
+  const source = 'class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  c.__dict__={"fresh":11}\n  print("entered")\n  return True\nkey=Key()\nold={key:7}\nc.__dict__=old\n';
+  await lifecycle(source + 'c.tag=9\nprint(old[key],c.fresh)\n', 'entered\n9 11\n', 'entered\n');
+  await lifecycle(source + 'del c.tag\nprint(len(old),c.fresh)\n', 'entered\n0 11\n', 'entered\n');
+});
+
+test('instance dictionary collisions obey real callback budgets and release every owner', async () => {
+  for (const [body, options, limits, code] of [
+    ['return c.tag', {maxDepth: 12}, undefined, 'PYTHON'],
+    ['while True: pass', {maxSteps: 250}, undefined, 'BUDGET'],
+    ['while True: pass', {maxSteps: 100000, maxWork: 40000}, undefined, 'BUDGET'],
+    ['items=[]\n  while True: items.append([7])', {maxSteps: 100000, maxWork: 20000000}, {maxBytes: 30000}, 'OOM'],
+  ]) {
+    const source = 'class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  print("entered")\n  ' + body + '\nc.__dict__={Key():7}\nc.tag\n';
+    const result = await run(source, options, limits);
+    assert.equal(result.error?.code, code, JSON.stringify(result.error));
+    if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+    assert.ok(result.stdout.startsWith('entered\n')); closed(result.closed);
   }
 });

@@ -521,8 +521,8 @@ export class ClassRuntime {
       return receiver.attributes.has(name) ? value(receiver.attributes.get(name)) : this.instanceMissing(receiver, name, fallback);
     const dictionary = this.instanceDictionary(receiver);
     key ??= this.values.string(Array.from(name, char => char.codePointAt(0)));
-    if (this.values.dictionaryNeedsProtocol(dictionary, key))
-      this.fail("UnsupportedOperationError", "Instance dictionary collisions require owned execution.", "UNSUPPORTED");
+    if (this.values.dictionaryNeedsProtocol(dictionary, key)) return {kind: "call",
+      callable: this.builtin("instance-dictionary-" + operation), args: [receiver, dictionary, key, item, fallback.found, fallback.value ?? null]};
     if (operation === "set") return value(this.values.set(dictionary, key, item));
     const position = this.values.find(dictionary, key);
     if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);

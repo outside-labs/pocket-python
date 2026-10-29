@@ -7,7 +7,7 @@ contract. Reference execution alone does not establish independent execution.
 | Stage | Contract |
 | --- | --- |
 | O47 | Ordinary object-derived instances expose their live attribute dictionary through `__dict__` and `vars`. Existing attributes retain insertion order and value identity. Exact dictionary replacement supports sharing and cycles; deletion detaches old aliases and subsequent access creates an empty dictionary. Non-dictionary replacement raises TypeError. Custom attribute hooks and data descriptors retain priority. |
-| O48 | Dictionary-backed attribute reads, writes and deletions run adopted hash/equality collisions on the owned execution machine. Each operation retains its original dictionary and class fallback while callbacks run. Missing entries use the selected class descriptor/value or AttributeError; callback exceptions preserve their original type and source frames. |
+| O48 | Dictionary-backed attribute reads, writes and deletions run adopted hash/equality collisions on the owned execution machine. Each operation retains its original dictionary and class fallback while callbacks run. Missing reads use the selected class descriptor/value or AttributeError. Read callback errors preserve their original type and source frames; dictionary mutation converts KeyError to AttributeError as the native object setter does. |
 
 The native instance dictionary slot belongs to the ordinary class that first
 introduces the object-derived instance layout. An explicit class `__dict__`
@@ -22,7 +22,9 @@ Dictionary values are returned unchanged, without descriptor binding. Data
 descriptors precede stored values; stored values precede non-data descriptors
 and class attributes. Implicit special protocols keep actual-type lookup.
 Arbitrary adopted dictionary keys retain normal hash/equality semantics and
-mutation checks. A callback's KeyError is not a missing attribute. Explicit
+mutation checks. Reads preserve a callback's KeyError; dictionary writes/deletes
+convert it to AttributeError without retaining its callback frames. Data-descriptor
+mutation errors bypass that conversion. Explicit
 supplied attribute names retain insertion/callback identity; replacing equal
 keys keeps the first stored key. Implicit source names have no interning promise.
 
@@ -46,7 +48,15 @@ Reference implementations: [generic attribute lookup and mutation](https://githu
 and [instance dictionary slots](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
 
 O47 is implemented with lazy promotion from compact instance attributes to an
-owned dictionary. The storage matrix adopts 32 source cases and retains five
-explicit reflection refusals. O48 remains the subsequent owned-callback stage.
+owned dictionary. The original storage matrix adopts 32 source cases and retains
+five explicit reflection refusals.
 Focused arena checks cover cycles, foreign dictionary/value transfers, real
 allocation failure, transactional rollback and collection after replacement.
+
+O48 uses the shared dictionary probe/mutation phases and an exhaustive owned
+continuation for the original receiver, supplied name and selected class fallback.
+Missing probes bind that retained fallback. Read callback failures and non-KeyError
+mutation failures propagate unchanged. The expanded source matrix includes
+explicit refusals, including structural dictionary mutation during comparison.
+Lifecycle checks detach receivers, dictionaries and class descriptors during
+parked callbacks, then finish, cancel or close with zero logical owners remaining.

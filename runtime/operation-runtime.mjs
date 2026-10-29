@@ -419,6 +419,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "dir-length" && value.name === "TypeError") return directoryHint(current, site);
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
+      if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
+        return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
       if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
       if (current.kind === "property-documentation" && value.name === "AttributeError") return propertyResult(current, null, false, site);
       if (current.kind === "abstract-lookup" && value.name === "AttributeError")
@@ -531,6 +533,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "function-entry") {
       const result = value.items[0] ? value.items[1] : classes.functionMissing(completion.receiver, values.text(completion.key), completion.operation);
       return valueTask(result, site, completion.after);
+    }
+    if (completion?.kind === "instance-entry") {
+      if (completion.operation === "set") return valueTask(null, site, completion.after);
+      if (value.items[0]) return valueTask(value.items[1], site, completion.after);
+      const fallback = completion.operation === "get" ? {found: completion.found, value: completion.fallback} : undefined;
+      const plan = classes.instanceMissing(completion.receiver, values.text(completion.key), fallback);
+      return plan.kind === "value" ? valueTask(plan.value, site, completion.after) :
+        callTask(plan.callable, plan.args, [], [], site, completion.after, completion.depth);
     }
     if (completion?.kind === "attribute-result") return valueTask(completion.mode === "hasattr" ? true : value, site, completion.after);
     if (completion?.kind === "delegate-bind") return callTask(value, completion.args, [], [], site, completion.after);
@@ -1599,6 +1609,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const after = continuation("function-entry", {receiver, key, operation, after: completion});
             task = dictionaryTask(dictionary, key, site, operation === "set" ? continuation("relay", {receiver, after: completion}) : after,
               depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
+          }
+          if (callable.name.startsWith("instance-dictionary-")) {
+            const [receiver, dictionary, key, item, found, fallback] = args, operation = callable.name.slice("instance-dictionary-".length);
+            if (!(receiver instanceof InstanceValue) || !values.isDict(dictionary) || !values.isString(key) || typeof found !== "boolean" || args.length !== 6 || keywords.length)
+              throw new TypeError("Invalid instance dictionary operation.");
+            const after = continuation("instance-entry", {receiver, key, operation, found, fallback, depth, after: completion});
+            task = dictionaryTask(dictionary, key, site, after,
+              depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
+          }
+          if (callable.name === "instance-attribute-missing") {
+            if (!(args[0] instanceof InstanceValue) || !values.isString(args[1]) || args.length !== 2 || keywords.length)
+              throw new TypeError("Invalid instance attribute failure.");
+            classes.instanceMissing(args[0], values.text(args[1]));
           }
           if (callable.name === "method-attribute") {
             const [receiver, key] = args;

@@ -46,6 +46,10 @@ export function completion(kind, fields = {}) {
     case "relay": case "subclass-result": case "vars-result": case "property-name": record = {kind, receiver: fields.receiver, after}; break;
     case "function-entry":
       record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation), after}; break;
+    case "instance-entry":
+      if (typeof fields.found !== "boolean") throw new TypeError("Invalid instance dictionary fallback.");
+      record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation),
+        found: fields.found, fallback: fields.fallback, depth: fields.depth, after}; depthCheck(record.depth); break;
     case "property-documentation":
       record = {kind, receiver: fields.receiver, accessors: operands(fields.accessors), after};
       if (record.accessors.length !== 3) throw new TypeError("Invalid property documentation operands.");
@@ -204,6 +208,7 @@ function visit(record) {
     case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":
     case "dir-compare": case "dir-truth": return [record.receiver, ...completionRoots(record.after)];
     case "function-entry": return [record.receiver, record.key, ...completionRoots(record.after)];
+    case "instance-entry": return [record.receiver, record.key, ...(record.found ? [record.fallback] : []), ...completionRoots(record.after)];
     case "property-documentation": return [record.receiver, ...record.accessors, ...completionRoots(record.after)];
     case "dir-length": case "dir-hint-bound": case "dir-hint-call": case "dir-hint-value":
       return [record.receiver, record.iterator, ...completionRoots(record.after)];
