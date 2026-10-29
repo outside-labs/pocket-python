@@ -54,8 +54,7 @@ REFERENCE_CORPORA = {
     'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection', 'special-calls', 'length-truth', 'execution', 'formatting',
     'numeric',
 }
-STAGES = {'instance-dictionaries': ('O47', 'Future'),
-          'numeric': ('N1', 'N2', 'N3', 'N4', 'N5', 'Future'),
+STAGES = {'numeric': ('N1', 'N2', 'N3', 'N4', 'N5', 'Future'),
           'sequences': ('Q1', 'Q2', 'Q3', 'Hints')}
 
 
