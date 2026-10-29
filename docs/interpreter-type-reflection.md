@@ -77,3 +77,5 @@ Stop/Restart cycles, including original callback diagnostics, reload and a
 waiting core-profile update. The [hierarchy example](../examples/interpreter_type_reflection.py)
 and its [payload record](measurements/2026-10-28-type-reflection.json) verify all
 38 files at 675,436 bytes. These are finite semantic/source/payload observations.
+
+Native iterator identity distinguishes compact ASCII (`str_ascii_iterator`) from general Unicode text (`str_iterator`). Range iterator identities follow the pinned 64-bit C-long CPython 3.14.7 oracle: `range_iterator` requires representable start/stop/step/length and the native endpoint-overflow checks; otherwise the canonical identity is `longrange_iterator`. This internal layout choice is independent of the host's C-long width. Exhaustion preserves the original identity. Text identity scans charge the shared work budget and do not consume the iterator.
