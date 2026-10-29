@@ -1,17 +1,17 @@
-import {ClassValue, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue} from "./function-objects.mjs";
+import {ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
-  "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "cell",
+  "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "dict_keyiterator", "range_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
-const META_SPECIALS = new Set(["__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set(["__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
-const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro"]);
+const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro", "mappingproxy.get"]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__"]);
@@ -183,7 +183,7 @@ export class ClassRuntime {
     for (const base of this.mro(type).slice(start)) {
       this.charge(1);
       if (base instanceof BuiltinValue) {
-        if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_PROPERTY_METHODS.has(base.name + "." + name) || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
+        if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_PROPERTY_METHODS.has(base.name + "." + name) || base.name === "mappingproxy" && name === "get" || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
           return {found: true, value: this.builtin(base.name + "." + name)};
         if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
@@ -254,6 +254,8 @@ export class ClassRuntime {
       this.fail("AttributeError", "super has no attribute '" + name + "'.");
     }
     if (receiver instanceof BuiltinValue) {
+      if (name === "__dict__" && this.isType(receiver))
+        this.fail("UnsupportedOperationError", "Native type dictionaries require their own layout contract.", "UNSUPPORTED");
       if (name === "__doc__") this.fail("UnsupportedOperationError", "Native documentation requires its own metadata contract.", "UNSUPPORTED");
       if (name === "__class__") return value(this.typeOf(receiver));
       if (name === "__objclass__" && this.nativeDescriptorKind(receiver))
@@ -299,6 +301,8 @@ export class ClassRuntime {
       if (name === "__func__") return value(receiver.callable);
       this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
     }
+    if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && receiver.callable.name === "mappingproxy.get" && ["__name__", "__qualname__"].includes(name))
+      return this.read(receiver.callable, name);
     if (receiver instanceof BoundMethodValue && name === "__isabstractmethod__") {
       if (native && this.isPythonMethod(receiver)) this.fail("AttributeError", "Method marker requires ordinary callable fallback.");
       return {kind: "call", callable: this.builtin("method-abstract-marker"), args: [receiver]};
@@ -359,12 +363,17 @@ export class ClassRuntime {
       }
       return value(receiver[field]);
     }
+    if (receiver instanceof ClassNamespaceValue) {
+      if (name === "__class__") return value(this.builtin("mappingproxy"));
+      if (name === "get") return value(this.make(BoundMethodValue, this.builtin("mappingproxy.get"), receiver));
+      if (["copy", "keys", "items", "values", "__iter__", "__len__", "__reversed__", "__eq__", "__ne__", "__or__", "__ror__"].includes(name))
+        this.fail("UnsupportedOperationError", "Class namespace enumeration and mapping protocols require their own stage.", "UNSUPPORTED");
+      this.fail("AttributeError", "Class namespace view has no attribute '" + name + "'.");
+    }
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
     if (name === "__doc__" && receiver instanceof ClassValue && receiver.root)
       this.fail("UnsupportedOperationError", "Native documentation requires its own metadata contract.", "UNSUPPORTED");
-    if (name === "__dict__" && receiver instanceof ClassValue)
-      this.fail("UnsupportedOperationError", "Class namespace dictionaries require their own storage contract.", "UNSUPPORTED");
     if (name === "__dict__" && receiver instanceof InstanceValue && this.instanceDictionarySlot(receiver.type))
       return value(this.instanceDictionary(receiver));
     if (receiver instanceof InstanceValue && name === "__class__") {
@@ -379,6 +388,11 @@ export class ClassRuntime {
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
       return this.bindAttribute(metaItem.value, receiver, metaclass);
     if (receiver instanceof ClassValue) {
+      if (name === "__dict__") {
+        if (metaItem?.found) this.fail("UnsupportedOperationError", "Shadowed metaclass namespace slots require native layout reflection.", "UNSUPPORTED");
+        if (receiver.root) this.fail("UnsupportedOperationError", "Native class namespaces require their own layout contract.", "UNSUPPORTED");
+        return value(this.make(ClassNamespaceValue, receiver));
+      }
       if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
       if (["__name__", "__qualname__", "__module__"].includes(name) && !(name === "__name__" && metaItem?.found)) return value(this.values.string(Array.from(
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
@@ -423,7 +437,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || value.name === "mappingproxy.get" || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   nativeDescriptorKind(value) {
     return value instanceof BuiltinValue ? NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" :
@@ -436,7 +450,7 @@ export class ClassRuntime {
     this.touch(receiver);
     const layout = descriptor.name.slice(0, descriptor.name.indexOf("."));
     const valid = layout === "type" ? this.isType(receiver) : layout === "property" ? receiver instanceof PropertyValue :
-      layout === "function" ? receiver instanceof FunctionValue : ["staticmethod", "classmethod"].includes(layout) ?
+      layout === "function" ? receiver instanceof FunctionValue : layout === "mappingproxy" ? receiver instanceof ClassNamespaceValue : ["staticmethod", "classmethod"].includes(layout) ?
         receiver instanceof MethodWrapperValue && receiver.kind === layout : this.nativeDescriptorKind(receiver) === layout;
     if (!valid)
       this.fail("TypeError", "Native descriptor does not apply to this receiver type.");
@@ -459,6 +473,7 @@ export class ClassRuntime {
   }
   write(receiver, name, value, remove = false, key = null) {
     this.key(name); this.touch(receiver);
+    if (receiver instanceof ClassNamespaceValue) this.fail("AttributeError", "Class namespace view attributes are read-only.");
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
       this.fail("AttributeError", "Method attributes are read-only.");
@@ -490,6 +505,7 @@ export class ClassRuntime {
       return this.instanceEntry(receiver, name, remove ? "delete" : "set", value, key);
     return {kind: "value", value: this.mutate(receiver, name, value, remove)};
   }
+  namespaceEntry(receiver, key) { return this.values.classNamespaceEntry(receiver, key); }
   instanceDictionarySlot(type, start = 0) {
     for (const base of this.mro(type).slice(start)) {
       if (!(base instanceof ClassValue) || base.root) continue;
@@ -601,6 +617,7 @@ export class ClassRuntime {
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
+    if (receiver instanceof ClassValue && name === "__dict__") this.fail("AttributeError", "Class namespace views cannot be replaced or deleted.");
     if (receiver instanceof ClassValue && name === "__base__") this.fail("AttributeError", "Primary base metadata is read-only.");
     if (receiver instanceof ClassValue && this.isMetaclass(receiver) && name === "mro")
       this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");

@@ -50,6 +50,9 @@ export class ClassValue {
     this.metaclass = metaclass;
   }
 }
+export class ClassNamespaceValue {
+  constructor(owner) { this.owner = owner; Object.freeze(this); }
+}
 export class InstanceValue {
   constructor(type) { this.type = type; this.attributes = new Map(); }
 }

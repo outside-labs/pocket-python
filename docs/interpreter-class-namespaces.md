@@ -29,7 +29,7 @@ are truthy and have ordinary owned identity.
 
 This finite stage excludes namespace enumeration, length, copy, mapping equality,
 union, native type dictionaries and unmaterialized native layout/source metadata
-entries (`__dict__`, `__weakref__`, `__firstlineno__`, `__static_attributes__`).
+entries and non-data metaclass namespace shadows (`__dict__`, `__weakref__`, `__firstlineno__`, `__static_attributes__`).
 Explicitly stored entries with those names are ordinary values. These operations
 must refuse rather than expose a partial enumeration. Module/class-body live
 locals, builtin layouts, default directories and dynamic source admission retain
@@ -44,3 +44,9 @@ change is included.
 
 References: [read-only mapping views](https://docs.python.org/3.14/library/types.html#types.MappingProxyType)
 and [pinned class namespaces](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+O49 is implemented with an owned view edge and charged exact-key probes.
+The matrix includes native get metadata/binding, metaclass write hooks and
+explicit native mutation errors. Earlier class-namespace refusals now use O49;
+module identifiers are compared within each host's explicitly named source
+module rather than equating the oracle harness namespace with the registry.

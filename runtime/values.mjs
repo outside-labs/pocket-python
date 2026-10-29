@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -348,6 +348,7 @@ export class ValueRuntime {
     if (value instanceof StringValue) return "str";
     if (value instanceof ListValue) return "list";
     if (value instanceof TupleValue) return "tuple";
+    if (value instanceof ClassNamespaceValue) return "mappingproxy";
     if (value instanceof DictValue) return "dict";
     if (value instanceof RangeValue) return "range";
     if (value instanceof SliceValue) return "slice";
@@ -570,13 +571,15 @@ export class ValueRuntime {
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
     if (value instanceof SetValue) return value.storage.entries.length !== 0;
-    if (value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
+    if (value instanceof ClassNamespaceValue || value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
         value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof SuperValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
   }
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue)
+      this.fail("UnsupportedOperationError", "Class namespace equality requires its own mapping contract.", "UNSUPPORTED");
     if (left instanceof MemoryViewValue || right instanceof MemoryViewValue) {
       if (left === right) return true;
       if (left instanceof MemoryViewValue && left.released || right instanceof MemoryViewValue && right.released) return false;
@@ -673,6 +676,7 @@ export class ValueRuntime {
   }
   hash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof ClassNamespaceValue) this.fail("TypeError", "unhashable type: 'mappingproxy'");
     if (value instanceof MemoryViewValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof BinaryValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof SetValue) return 'p:' + this.pythonHash(value, depth);
@@ -736,6 +740,7 @@ export class ValueRuntime {
   combineHash(hash, item) { return BigInt.asUintN(64, (hash ^ BigInt.asUintN(64, item)) * 1099511628211n); }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof ClassNamespaceValue) this.fail("TypeError", "unhashable type: 'mappingproxy'");
     if (value instanceof BoundMethodValue)
       return this.hashResult(this.identityHash(value.callable) ^ this.identityHash(value.receiver));
     if (value instanceof AppendValue || value instanceof ValueMethod)
@@ -847,7 +852,30 @@ export class ValueRuntime {
     }
     return -1;
   }
+  classNamespaceEntry(receiver, key) {
+    this.charge(1); this.memory?.primitive(receiver);
+    const name = this.text(key), owner = receiver.owner;
+    if (name === null) {
+      // Validate primitive hashability without invoking unadopted key callbacks.
+      if (this.needsOwnedHash(key))
+        this.fail("UnsupportedOperationError", "Callback-bearing namespace keys require their own stage.", "UNSUPPORTED");
+      this.hash(key); return {found: false, value: null};
+    }
+    this.charge(name.length + 1);
+    if (name === "__qualname__" || name === "__classcell__") return {found: false, value: null};
+    if (owner.namespace.has(name)) return {found: true, value: owner.namespace.get(name)};
+    if (name === "__doc__") return {found: true, value: null};
+    if (name === "__module__") return {found: true, value: this.string(Array.from(owner.module, char => char.codePointAt(0)))};
+    if (["__dict__", "__weakref__", "__firstlineno__", "__static_attributes__"].includes(name))
+      this.fail("UnsupportedOperationError", "Native namespace entries require their own layout contract.", "UNSUPPORTED");
+    return {found: false, value: null};
+  }
   index(value, index) {
+    if (value instanceof ClassNamespaceValue) {
+      const entry = this.classNamespaceEntry(value, index);
+      if (!entry.found) this.fail("KeyError", "Class namespace key not found");
+      return entry.value;
+    }
     if (value instanceof MemoryViewValue) {
       this.liveView(value); index = integer(index);
       if (typeof index !== "bigint") this.fail("TypeError", "memoryview indices must be integers");
@@ -1013,6 +1041,7 @@ export class ValueRuntime {
     return value instanceof StringValue ? this.string(result) : value instanceof BinaryValue ? this.binaryValue(result, value.mutable) : value instanceof TupleValue ? this.tuple(result) : this.list(result);
   }
   iterator(value) {
+    if (value instanceof ClassNamespaceValue) this.fail("UnsupportedOperationError", "Class namespace enumeration requires its own stage.", "UNSUPPORTED");
     if (value instanceof IteratorValue) return value;
     if (value instanceof RangeValue) { this.charge(1); return this.make(80, [value, 0n], () => new IteratorValue(value)); }
     if (value instanceof MemoryViewValue) this.liveView(value);
@@ -1051,6 +1080,7 @@ export class ValueRuntime {
     return value instanceof StringValue ? this.string([item]) : value instanceof BinaryValue ? this.int(BigInt(item)) : item;
   }
   contains(key, value) {
+    if (value instanceof ClassNamespaceValue) return this.classNamespaceEntry(value, key).found;
     if (value instanceof MemoryViewValue) return this.viewItems(value).some(byte => this.equal(this.int(BigInt(byte)), key));
     if (value instanceof BinaryValue) {
       if (["bigint", "boolean"].includes(typeof key)) { const byte = this.byte(key); this.charge(value.items.length + 1); return value.items.includes(byte); }
@@ -1089,6 +1119,7 @@ export class ValueRuntime {
     if (operation === "truth") return this.truth(value);
     if (operation === "not") return !this.truth(value);
     if (operation === "len") {
+      if (value instanceof ClassNamespaceValue) this.fail("UnsupportedOperationError", "Class namespace length requires its own stage.", "UNSUPPORTED");
       if (value instanceof MemoryViewValue) { this.liveView(value); return this.int(BigInt(value.length)); }
       if (value instanceof RangeValue) {
         if (value.length > 9223372036854775807n) this.fail("OverflowError", "Python int too large to convert to length");
@@ -1326,6 +1357,7 @@ export function valueLayout(value) {
   if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
     8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1)) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
     children: [...value.bases, ...value.mro.slice(1), ...value.namespace.values(), ...(value.metaclass === null ? [] : [value.metaclass])]};
+  if (value instanceof ClassNamespaceValue) return {bytes: 48, children: [value.owner]};
   if (value instanceof InstanceValue) return value.attributes instanceof Map ?
     {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
       children: [value.type, ...value.attributes.values()]} : {bytes: 88, children: [value.type, value.attributes]};

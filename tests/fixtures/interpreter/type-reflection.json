@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O35",
-    "O36"
+    "O36",
+    "O49"
   ],
   "cases": [
     {
@@ -509,9 +510,9 @@
     },
     {
       "id": "live-class-namespace",
-      "stage": "Future",
-      "source": "class C: pass\nprint(C.__dict__[\"__module__\"])\n",
-      "stdout": "builtins\n"
+      "stage": "O49",
+      "source": "class C: pass\nprint(C.__dict__[\"__module__\"]==C.__module__)\n",
+      "stdout": "True\n"
     },
     {
       "id": "mro-hooked-method-qualification",

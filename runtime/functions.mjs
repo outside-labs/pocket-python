@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {GeneratorValue, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -591,7 +591,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           else if (values.isBinary(receiver)) { values.binaryMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (arg === "encode" && values.isString(receiver)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
-          else if (op === "attribute-get" && (receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+          else if (op === "attribute-get" && (receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             if (arg === "__get__" && frame.callable.pool.code.version !== 5 &&
                 (receiver instanceof FunctionValue || classes.nativeDescriptorKind(receiver) !== null))
               hard("UNSUPPORTED", "UnsupportedOperationError", "Explicit descriptor binding requires the class profile.");
