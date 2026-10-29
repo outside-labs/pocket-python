@@ -990,8 +990,8 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46).",
-      "gaps": "Live namespace mappings, default directories, integer identity, dynamic source and broader metaclass/layout reflection remain deferred. Custom metaclass MRO construction and hooked native MRO method qualification remain explicit refusals.",
+      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46). Ordinary instance dictionaries are live with exact replacement/deletion aliases and owned collision callbacks (O47/O48). O49 adds fresh read-only keyed class namespace views, live mutations and unbound stored descriptors with metaclass priority.",
+      "gaps": "Module/class-body live namespaces, class mapping enumeration/native layout entries, default directories, integer identity and dynamic source retain their separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1037,7 +1037,22 @@
         "function-dictionaries-explicit-name-identity-native",
         "function-dictionaries-equal-name-retains-first-key",
         "function-dictionaries-collision-retains-supplied-lookup-key",
-        "function-dictionaries-method-retains-supplied-lookup-key"
+        "function-dictionaries-method-retains-supplied-lookup-key",
+        "class-namespaces-fresh-live-views",
+        "class-namespaces-own-namespace",
+        "class-namespaces-live-add-replace-delete",
+        "class-namespaces-stored-function",
+        "class-namespaces-stored-descriptor",
+        "class-namespaces-stored-native-wrappers",
+        "class-namespaces-metadata-entries",
+        "class-namespaces-namespace-replacement",
+        "class-namespaces-get-bound-lifetime",
+        "class-namespaces-meta-read-hook",
+        "class-namespaces-meta-dictionary-property",
+        "class-namespaces-class-enumeration",
+        "class-namespaces-callback-query",
+        "class-namespaces-native-get-metadata",
+        "class-namespaces-metaclass-write-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:identity-alias",
@@ -1077,7 +1092,22 @@
         "tests/fixtures/interpreter/function-dictionaries.json:explicit-name-identity-native",
         "tests/fixtures/interpreter/function-dictionaries.json:equal-name-retains-first-key",
         "tests/fixtures/interpreter/function-dictionaries.json:collision-retains-supplied-lookup-key",
-        "tests/fixtures/interpreter/function-dictionaries.json:method-retains-supplied-lookup-key"
+        "tests/fixtures/interpreter/function-dictionaries.json:method-retains-supplied-lookup-key",
+        "tests/fixtures/interpreter/class-namespaces.json:fresh-live-views",
+        "tests/fixtures/interpreter/class-namespaces.json:own-namespace",
+        "tests/fixtures/interpreter/class-namespaces.json:live-add-replace-delete",
+        "tests/fixtures/interpreter/class-namespaces.json:stored-function",
+        "tests/fixtures/interpreter/class-namespaces.json:stored-descriptor",
+        "tests/fixtures/interpreter/class-namespaces.json:stored-native-wrappers",
+        "tests/fixtures/interpreter/class-namespaces.json:metadata-entries",
+        "tests/fixtures/interpreter/class-namespaces.json:namespace-replacement",
+        "tests/fixtures/interpreter/class-namespaces.json:get-bound-lifetime",
+        "tests/fixtures/interpreter/class-namespaces.json:meta-read-hook",
+        "tests/fixtures/interpreter/class-namespaces.json:meta-dictionary-property",
+        "tests/fixtures/interpreter/class-namespaces.json:class-enumeration",
+        "tests/fixtures/interpreter/class-namespaces.json:callback-query",
+        "tests/fixtures/interpreter/class-namespaces.json:native-get-metadata",
+        "tests/fixtures/interpreter/class-namespaces.json:metaclass-write-hook"
       ]
     },
     {
@@ -2830,8 +2860,8 @@
     {
       "id": "vars",
       "status": "partial",
-      "scope": "Zero-argument optimized function and generator-expression snapshots; one positional user instance reads custom __dict__ through owned descriptors and read hooks, returning its result unchanged. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary functions and bound methods return the callable's live dictionary; replacement detaches old aliases.",
-      "gaps": "Ordinary instance/module/class dictionaries or mapping proxies remain separate.",
+      "scope": "Zero-argument optimized function and generator-expression snapshots; one positional user instance reads custom __dict__ through owned descriptors and read hooks, returning its result unchanged. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary functions and bound methods return the callable's live dictionary; replacement detaches old aliases. Ordinary instance dictionaries are live with exact replacement/deletion aliases and owned collision callbacks (O47/O48). O49 adds fresh read-only keyed class namespace views, live mutations and unbound stored descriptors with metaclass priority.",
+      "gaps": "Module/class-body live namespaces, class mapping enumeration/native layout entries, default directories, integer identity and dynamic source retain their separate contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2847,13 +2877,43 @@
         "builtin-inline-snapshot",
         "builtin-isolated-snapshot",
         "function-dictionaries-live-empty-dictionary",
-        "function-dictionaries-method-live-dictionary"
+        "function-dictionaries-method-live-dictionary",
+        "class-namespaces-fresh-live-views",
+        "class-namespaces-own-namespace",
+        "class-namespaces-live-add-replace-delete",
+        "class-namespaces-stored-function",
+        "class-namespaces-stored-descriptor",
+        "class-namespaces-stored-native-wrappers",
+        "class-namespaces-metadata-entries",
+        "class-namespaces-namespace-replacement",
+        "class-namespaces-get-bound-lifetime",
+        "class-namespaces-meta-read-hook",
+        "class-namespaces-meta-dictionary-property",
+        "class-namespaces-class-enumeration",
+        "class-namespaces-callback-query",
+        "class-namespaces-native-get-metadata",
+        "class-namespaces-metaclass-write-hook"
       ],
       "evidence": [
         "tests/fixtures/interpreter/reflection.json:vars-custom-property",
         "tests/fixtures/interpreter/reflection.json:genexpr-vars-fresh-shallow",
         "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
-        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private",
+        "tests/fixtures/interpreter/class-namespaces.json:fresh-live-views",
+        "tests/fixtures/interpreter/class-namespaces.json:own-namespace",
+        "tests/fixtures/interpreter/class-namespaces.json:live-add-replace-delete",
+        "tests/fixtures/interpreter/class-namespaces.json:stored-function",
+        "tests/fixtures/interpreter/class-namespaces.json:stored-descriptor",
+        "tests/fixtures/interpreter/class-namespaces.json:stored-native-wrappers",
+        "tests/fixtures/interpreter/class-namespaces.json:metadata-entries",
+        "tests/fixtures/interpreter/class-namespaces.json:namespace-replacement",
+        "tests/fixtures/interpreter/class-namespaces.json:get-bound-lifetime",
+        "tests/fixtures/interpreter/class-namespaces.json:meta-read-hook",
+        "tests/fixtures/interpreter/class-namespaces.json:meta-dictionary-property",
+        "tests/fixtures/interpreter/class-namespaces.json:class-enumeration",
+        "tests/fixtures/interpreter/class-namespaces.json:callback-query",
+        "tests/fixtures/interpreter/class-namespaces.json:native-get-metadata",
+        "tests/fixtures/interpreter/class-namespaces.json:metaclass-write-hook"
       ]
     },
     {

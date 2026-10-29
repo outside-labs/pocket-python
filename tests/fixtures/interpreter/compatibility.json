@@ -3942,6 +3942,191 @@
         "stdout": "set\ndelete\n",
         "error_type": null
       }
+    },
+    {
+      "id": "class-namespaces-fresh-live-views",
+      "source": "class C: tag=[]\na=C.__dict__\nb=vars(C)\nprint(a is b,a[\"tag\"] is C.tag,b[\"tag\"] is a[\"tag\"],type(a).__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True True mappingproxy\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True True mappingproxy\n"
+      }
+    },
+    {
+      "id": "class-namespaces-own-namespace",
+      "source": "class A: tag=7\nclass C(A): other=9\np=C.__dict__\nprint(\"tag\" in p,\"other\" in p,p.get(\"tag\"),p[\"other\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "False True None 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "False True None 9\n"
+      }
+    },
+    {
+      "id": "class-namespaces-live-add-replace-delete",
+      "source": "class C: tag=7\np=C.__dict__\nC.tag=9\nC.extra=[]\nprint(p[\"tag\"],p[\"extra\"] is C.extra)\ndel C.tag\nprint(\"tag\" in p,p.get(\"tag\",11))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "9 True\nFalse 11\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "9 True\nFalse 11\n"
+      }
+    },
+    {
+      "id": "class-namespaces-stored-function",
+      "source": "class C:\n def f(self): return 7\np=C.__dict__\nprint(p[\"f\"] is C.f,p[\"f\"](C()),p[\"f\"].__name__)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 7 f\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 7 f\n"
+      }
+    },
+    {
+      "id": "class-namespaces-stored-descriptor",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bound\")\n  return 7\nd=D()\nclass C: tag=d\np=C.__dict__\nprint(p[\"tag\"] is d,p.get(\"tag\") is d,\"tag\" in p)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True True\n"
+      }
+    },
+    {
+      "id": "class-namespaces-stored-native-wrappers",
+      "source": "class C:\n @staticmethod\n def s(): return 7\n @classmethod\n def c(cls): return cls\n @property\n def p(self): return 9\nd=C.__dict__\nprint(d[\"s\"].__func__ is C.s,d[\"c\"].__func__ is C.c.__func__,d[\"p\"].fget(C()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True True 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True True 9\n"
+      }
+    },
+    {
+      "id": "class-namespaces-metadata-entries",
+      "source": "class C: pass\np=C.__dict__\nprint(p[\"__module__\"]==C.__module__,p[\"__doc__\"],\"__qualname__\" in p,\"__classcell__\" in p)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True None False False\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True None False False\n"
+      }
+    },
+    {
+      "id": "class-namespaces-namespace-replacement",
+      "source": "class C: pass\nC.__dict__={}\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "class-namespaces-get-bound-lifetime",
+      "source": "class C: tag=[7]\ng=C.__dict__.get\ndel C\nprint(g(\"tag\")[0],g(\"missing\",9))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 9\n"
+      }
+    },
+    {
+      "id": "class-namespaces-meta-read-hook",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__dict__\": return [7]\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M): tag=9\nprint(C.__dict__[0],vars(C)[0],type.__getattribute__(C,\"__dict__\")[\"tag\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 7 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 7 9\n"
+      }
+    },
+    {
+      "id": "class-namespaces-meta-dictionary-property",
+      "source": "class M(type):\n @property\n def __dict__(cls): return [7]\nclass C(metaclass=M): tag=9\nprint(C.__dict__[0],vars(C)[0],type.__getattribute__(C,\"__dict__\")[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7 7 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7 7 7\n"
+      }
+    },
+    {
+      "id": "class-namespaces-class-enumeration",
+      "source": "class C: pass\nlist(C.__dict__)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "class-namespaces-callback-query",
+      "source": "class C: tag=7\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return True\nprint(C.__dict__[Key()])\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "code": "UNSUPPORTED",
+        "phase": "execute"
+      }
+    },
+    {
+      "id": "class-namespaces-native-get-metadata",
+      "source": "class C: tag=7\np=C.__dict__\ng=p.get\nprint(g.__name__,g.__qualname__,g.__self__ is p,type(g).__name__,g(\"tag\"))\nprint(type(p).get.__get__(p)(\"tag\"),type(p).get(p,\"tag\"))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "get mappingproxy.get True builtin_function_or_method 7\n7 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "get mappingproxy.get True builtin_function_or_method 7\n7 7\n"
+      }
+    },
+    {
+      "id": "class-namespaces-metaclass-write-hook",
+      "source": "class M(type):\n def __setattr__(cls,name,value): print(\"set\",name)\n def __delattr__(cls,name): print(\"delete\",name)\nclass C(metaclass=M): tag=7\nC.__dict__={}\ndel C.__dict__\nprint(C.__dict__[\"tag\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "set __dict__\ndelete __dict__\n7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "set __dict__\ndelete __dict__\n7\n"
+      }
     }
   ]
 }

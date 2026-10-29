@@ -43,6 +43,7 @@ from examples.interpreter_documentation import SOURCE as DOCUMENTATION_SOURCE
 from examples.interpreter_function_metadata import SOURCE as FUNCTION_METADATA_SOURCE
 from examples.interpreter_function_dictionaries import SOURCE as FUNCTION_DICTIONARIES_SOURCE
 from examples.interpreter_instance_dictionaries import SOURCE as INSTANCE_DICTIONARIES_SOURCE
+from examples.interpreter_class_namespaces import SOURCE as CLASS_NAMESPACES_SOURCE
 
 
 def smoke(channel=None):
@@ -199,9 +200,11 @@ def smoke(channel=None):
                     function_metadata = json.loads((ROOT / 'tests/fixtures/interpreter/function-metadata.json').read_bytes())
                     function_dictionaries = json.loads((ROOT / 'tests/fixtures/interpreter/function-dictionaries.json').read_bytes())
                     instance_dictionaries = json.loads((ROOT / 'tests/fixtures/interpreter/instance-dictionaries.json').read_bytes())
-                    for corpus in [instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    class_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/class-namespaces.json').read_bytes())
+                    for corpus in [class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c)
+                    programs.append(CLASS_NAMESPACES_SOURCE)
                     programs.append(GENERATOR_SOURCE)
                     programs.append(CONSTRUCTION_SOURCE)
                     programs.append(ATTRIBUTE_SOURCE)
@@ -648,7 +651,20 @@ def smoke(channel=None):
                                     assert f"{frame['function']} at sources/app.py:{frame['line']}" in page.locator('#diagnostic').inner_text()
                     checks.append('instance-dictionaries-compose-with-retained-methods-properties-and-lazy-generators-offline')
                     checks.append('instance-dictionary-replacement-deletion-callback-errors-and-reflection-boundaries-offline')
+                    namespaces_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', CLASS_NAMESPACES_SOURCE], text=True, encoding='utf-8')
+                    run(CLASS_NAMESPACES_SOURCE, namespaces_expected)
+                    for case in class_namespaces['cases']:
+                        if case['stage'] not in class_namespaces['implemented_stages']:
+                            refused(case['source'], ['UnsupportedOperationError:', 'UnsupportedSyntaxError:'])
+                            assert page.locator('#result').inner_text() == ''
+                        elif 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('keyed-class-namespaces-compose-with-stored-descriptors-retained-methods-and-lazy-generators-offline')
+                    checks.append('keyed-class-namespace-readonly-errors-and-enumeration-boundaries-offline')
                     busy = [
+                        'class C: tag=[7]\np=C.__dict__\nC.saved=p\ndel C\nprint("entered")\nwhile True: p["tag"]\n',
+                        'class M(type):\n @property\n def __dict__(cls):\n  print("entered")\n  while True: pass\nclass C(metaclass=M): pass\nvars(C)\n',
                         *['class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nc.__dict__={Key():7}\n' + operation + '\n'
                           for operation in ['c.tag', 'c.tag=9', 'del c.tag']],
                         'def f(): pass\nclass Key:\n def __hash__(self): return hash("tag")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nf.__dict__={Key():7}\nf.tag\n',
