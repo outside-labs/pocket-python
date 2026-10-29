@@ -13,7 +13,8 @@
     "O21",
     "O22",
     "O47",
-    "O49"
+    "O49",
+    "O61"
   ],
   "cases": [
     {
@@ -484,7 +485,7 @@
     },
     {
       "id": "default-directory-deferred",
-      "stage": "Future",
+      "stage": "O61",
       "source": "class A: pass\nprint(\"__class__\" in dir(A()))\n",
       "stdout": "True\n"
     },
@@ -551,7 +552,7 @@
     },
     {
       "id": "default-directory-descriptor-deferred",
-      "stage": "Future",
+      "stage": "O61",
       "source": "class A: pass\nprint(\"__class__\" in object.__dir__(A()))\n",
       "stdout": "True\n"
     },

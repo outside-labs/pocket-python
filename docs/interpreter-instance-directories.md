@@ -34,3 +34,11 @@ zero logical teardown. Existing composed resource observations remain unchanged.
 No dependency, host grant, release, publication or deployment is included.
 
 Reference: pinned [generic directory and recursive class merging](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+All 60 pinned cases (57 adopted comparisons and three finite refusals) pass six
+Node/Chromium drain, instruction-boundary and parked drivers. The 69 feature
+units cover live key order, source/dynamic layouts, descriptor/read hooks, key
+collisions, truth callbacks, retained cyclic graphs, real limits and core admission.
+The initial dynamic reference cases now explicitly set the module name so the
+oracle and engine start with the same globals. Adjacent reflection, instance
+dictionary, operation ownership and execution coverage passes.

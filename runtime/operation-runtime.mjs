@@ -262,6 +262,37 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     state.temporaries.push(result);
     return nativeDirectoryNext({...record, result, position: 0}, site);
   };
+  const classDirectoryNext = (record, site) => {
+    state.temporaries.push(record.receiver, record.result, ...record.pending);
+    while (true) {
+      if (record.owner === null || record.position === record.names.length) {
+        if (record.owner !== null) {
+          charge(record.owner.bases.length + 1);
+          record = {...record, pending: [...record.owner.bases, ...record.pending]};
+        }
+        if (!record.pending.length) return valueTask(values.list(record.result.entries.map(entry => entry.key)), site, record.after);
+        if (record.pending.length > 1024) hard("BUDGET", "ExecutionLimitError", "Class directory traversal budget exceeded.");
+        const [owner, ...pending] = record.pending;
+        record = {...record, owner, pending, names: classes.ownClassDirectoryNames(owner), position: 0};
+        state.temporaries.push(owner, ...pending);
+      }
+      const name = record.names[record.position];
+      const item = classes.classDirectoryEntry(record.owner, name);
+      const key = values.string(Array.from(name, char => char.codePointAt(0)));
+      state.temporaries.push(key, item);
+      const next = {...record, position: record.position + 1};
+      if (values.dictionaryNeedsProtocol(record.result, key))
+        return dictionaryTask(record.result, key, site, continuation("class-dir-merge", next), record.depth, "set", item);
+      values.set(record.result, key, item); record = next;
+    }
+  };
+  const objectDirectoryDictionary = (record, dictionary, site) => {
+    state.temporaries.push(record.receiver, dictionary);
+    const result = values.isDict(dictionary) ? values.copyDictionary(dictionary) : values.dict([]);
+    state.temporaries.push(result);
+    return attributeTask(record.receiver, "__class__", site,
+      continuation("object-dir-class", {...record, result}), record.depth);
+  };
   const argumentOwner = receiver => {
     if (!(receiver instanceof CallArguments)) hard("BYTECODE", "BytecodeError", "Call assembly requires its owned argument record.");
   };
@@ -437,6 +468,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     for (let current = completion; current; current = current.after) {
       if (current.kind === "dir-length" && value.name === "TypeError") return directoryHint(current, site);
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
+      if (current.kind === "object-dir-dictionary" && value.name === "AttributeError") return objectDirectoryDictionary(current, null, site);
+      if (current.kind === "object-dir-class" && value.name === "AttributeError")
+        return valueTask(values.list(current.result.entries.map(entry => entry.key)), site, current.after);
       if (current.kind === "method-dir-dictionary" && value.name === "AttributeError") return methodDirectory(current, null, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
@@ -629,6 +663,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       appendArgument(completion.receiver, value);
       return unaryTask("next", completion.iterator, site, continuation("call-star-next", completion));
     }
+    if (completion?.kind === "object-dir-dictionary") return objectDirectoryDictionary(completion, value, site);
+    if (completion?.kind === "object-dir-class")
+      return classDirectoryNext({...completion, owner: null, pending: [value], names: [], position: 0}, site);
+    if (completion?.kind === "class-dir-merge") return classDirectoryNext(completion, site);
     if (completion?.kind === "method-dir-dictionary") return methodDirectory(completion, value, site);
     if (completion?.kind === "native-dir-merge") return nativeDirectoryNext(completion, site);
     if (completion?.kind === "dir-result") {
@@ -1893,6 +1931,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "object.__dir__") {
             if (args.length !== 1 || keywords.length) python("TypeError", "object.__dir__ requires one positional receiver");
             const receiver = args[0];
+            if (receiver instanceof InstanceValue) {
+              task = attributeTask(receiver, "__dict__", site,
+                continuation("object-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
+            }
             if (classes.isPythonMethod(receiver)) {
               task = attributeTask(receiver, "__dict__", site,
                 continuation("method-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
@@ -1931,6 +1973,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 task = callTask(classes.builtin("object.__dir__"), [receiver], [], [], site, after, depth); continue;
               }
               const type = classes.checkingType(receiver);
+              if (receiver instanceof InstanceValue && !classes.hasSlot(type, "__dir__")) {
+                const after = continuation("dir-sort", {receiver, depth, after: continuation("relay", {receiver, after: completion})});
+                task = callTask(classes.builtin("object.__dir__"), [receiver], [], [], site, after, depth); continue;
+              }
               if (type === null || !classes.hasSlot(type, "__dir__"))
                 hard("UNSUPPORTED", "UnsupportedOperationError", "Default directories require their own namespace contract.");
               if (++depth > maxDepth) python("RecursionError", "maximum implicit directory dispatch depth exceeded");

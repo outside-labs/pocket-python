@@ -60,7 +60,17 @@ export function completion(kind, fields = {}) {
       if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 2)
         throw new TypeError("Invalid abstract-method flag position.");
       break;
-    case "method-dir-dictionary":
+    case "object-dir-class":
+      record = {kind, receiver: fields.receiver, result: fields.result, depth: fields.depth, after}; depthCheck(record.depth); break;
+    case "class-dir-merge":
+      record = {kind, receiver: fields.receiver, result: fields.result, owner: fields.owner,
+        pending: operands(fields.pending), names: operands(fields.names), position: fields.position, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (record.pending.length > 1024 || record.names.length > 256 || !record.names.every(name => typeof name === "string") ||
+          !Number.isSafeInteger(record.position) || record.position < 0 || record.position > record.names.length)
+        throw new TypeError("Invalid class directory traversal phase.");
+      break;
+    case "object-dir-dictionary": case "method-dir-dictionary":
       record = {kind, receiver: fields.receiver, depth: fields.depth, after}; depthCheck(record.depth); break;
     case "native-dir-merge":
       record = {kind, receiver: fields.receiver, result: fields.result, position: fields.position, depth: fields.depth, after};
@@ -215,7 +225,9 @@ function visit(record) {
     case "abstract-lookup": case "abstract-truth":
     case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":
     case "dir-compare": case "dir-truth": return [record.receiver, ...completionRoots(record.after)];
-    case "method-dir-dictionary": return [record.receiver, ...completionRoots(record.after)];
+    case "object-dir-class": return [record.receiver, record.result, ...completionRoots(record.after)];
+    case "class-dir-merge": return [record.receiver, record.result, record.owner, ...record.pending, ...completionRoots(record.after)];
+    case "object-dir-dictionary": case "method-dir-dictionary": return [record.receiver, ...completionRoots(record.after)];
     case "native-dir-merge": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "function-entry": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "instance-entry": return [record.receiver, record.key, ...(record.found ? [record.fallback] : []), ...completionRoots(record.after)];

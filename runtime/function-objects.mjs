@@ -43,11 +43,12 @@ export class CallArguments {
   constructor(callable) { this.callable = callable; this.args = []; this.keywords = []; this.keywordValues = []; this.keywordMap = null; }
 }
 export class ClassValue {
-  constructor(name, qualname, module, bases, parents, namespace, root = false, metaclass = null) {
+  constructor(name, qualname, module, bases, parents, namespace, root = false, metaclass = null, sourceDefined = true, automaticHash = false) {
     this.name = name; this.qualname = qualname; this.module = module; this.root = root;
     this.bases = Object.freeze([...bases]); this.mro = Object.freeze([this, ...parents]);
     this.namespace = new Map(namespace);
-    this.metaclass = metaclass;
+    this.metaclass = metaclass; this.sourceDefined = sourceDefined; this.automaticHash = automaticHash;
+    this.directoryInitialCount = namespace.size; this.defaultDoc = !namespace.has("__doc__");
   }
 }
 export class ClassNamespaceValue {
