@@ -1,0 +1,616 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-numeric-directories/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [],
+  "cases": [
+    {
+      "id": "none-sorted-directory",
+      "source": "value=None\nprint(*dir(value))\n",
+      "stage": "O57",
+      "stdout": "__bool__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "none-raw-directory",
+      "source": "value=None\nprint(*object.__dir__(value))\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __bool__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "none-bound-directory",
+      "source": "value=None\nprint(*value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __bool__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "none-fresh-lists",
+      "source": "value=None\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 25 True\n"
+    },
+    {
+      "id": "none-fresh-raw-lists",
+      "source": "value=None\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 25\n"
+    },
+    {
+      "id": "none-native-getattribute",
+      "source": "value=None\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True __dir__ NoneType.__dir__ True\n"
+    },
+    {
+      "id": "none-builtin-getattr",
+      "source": "value=None\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O57",
+      "stdout": "True True 25\n"
+    },
+    {
+      "id": "none-retained-caller",
+      "source": "value=None\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)),type(d).__name__)\n",
+      "stage": "O57",
+      "stdout": "25 25 builtin_function_or_method\n"
+    },
+    {
+      "id": "none-nested-callers",
+      "source": "value=None\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O57",
+      "stdout": "30 25\n"
+    },
+    {
+      "id": "none-write",
+      "source": "value=None\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "none-native-write",
+      "source": "value=None\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "none-delete",
+      "source": "value=None\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "none-extra-argument",
+      "source": "value=None\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "none-keyword",
+      "source": "value=None\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notimplemented-sorted-directory",
+      "source": "value=NotImplemented\nprint(*dir(value))\n",
+      "stage": "O57",
+      "stdout": "__bool__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n"
+    },
+    {
+      "id": "notimplemented-raw-directory",
+      "source": "value=NotImplemented\nprint(*object.__dir__(value))\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __bool__ __reduce__ __doc__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "notimplemented-bound-directory",
+      "source": "value=NotImplemented\nprint(*value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __bool__ __reduce__ __doc__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "notimplemented-fresh-lists",
+      "source": "value=NotImplemented\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 25 True\n"
+    },
+    {
+      "id": "notimplemented-fresh-raw-lists",
+      "source": "value=NotImplemented\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 25\n"
+    },
+    {
+      "id": "notimplemented-native-getattribute",
+      "source": "value=NotImplemented\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True __dir__ NotImplementedType.__dir__ True\n"
+    },
+    {
+      "id": "notimplemented-builtin-getattr",
+      "source": "value=NotImplemented\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O57",
+      "stdout": "True True 25\n"
+    },
+    {
+      "id": "notimplemented-retained-caller",
+      "source": "value=NotImplemented\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)),type(d).__name__)\n",
+      "stage": "O57",
+      "stdout": "25 25 builtin_function_or_method\n"
+    },
+    {
+      "id": "notimplemented-nested-callers",
+      "source": "value=NotImplemented\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O57",
+      "stdout": "30 25\n"
+    },
+    {
+      "id": "notimplemented-write",
+      "source": "value=NotImplemented\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "notimplemented-native-write",
+      "source": "value=NotImplemented\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "notimplemented-delete",
+      "source": "value=NotImplemented\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "notimplemented-extra-argument",
+      "source": "value=NotImplemented\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notimplemented-keyword",
+      "source": "value=NotImplemented\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notimplemented-native-binding",
+      "source": "value=NotImplemented\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True NotImplementedType.__dir__ True\n"
+    },
+    {
+      "id": "bool-sorted-directory",
+      "source": "value=True\nprint(*dir(value))\n",
+      "stage": "O57",
+      "stdout": "__abs__ __add__ __and__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __index__ __init__ __init_subclass__ __int__ __invert__ __le__ __lshift__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __or__ __pos__ __pow__ __radd__ __rand__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rlshift__ __rmod__ __rmul__ __ror__ __round__ __rpow__ __rrshift__ __rshift__ __rsub__ __rtruediv__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ __xor__ as_integer_ratio bit_count bit_length conjugate denominator from_bytes imag is_integer numerator real to_bytes\n"
+    },
+    {
+      "id": "bool-raw-directory",
+      "source": "value=True\nprint(*object.__dir__(value))\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __invert__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __doc__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __lshift__ __rlshift__ __rshift__ __rrshift__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n"
+    },
+    {
+      "id": "bool-bound-directory",
+      "source": "value=True\nprint(*value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __invert__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __doc__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __lshift__ __rlshift__ __rshift__ __rrshift__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n"
+    },
+    {
+      "id": "bool-fresh-lists",
+      "source": "value=True\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 74 True\n"
+    },
+    {
+      "id": "bool-fresh-raw-lists",
+      "source": "value=True\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 74\n"
+    },
+    {
+      "id": "bool-native-getattribute",
+      "source": "value=True\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True __dir__ bool.__dir__ True\n"
+    },
+    {
+      "id": "bool-builtin-getattr",
+      "source": "value=True\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O57",
+      "stdout": "True True 74\n"
+    },
+    {
+      "id": "bool-retained-caller",
+      "source": "value=True\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)),type(d).__name__)\n",
+      "stage": "O57",
+      "stdout": "74 74 builtin_function_or_method\n"
+    },
+    {
+      "id": "bool-nested-callers",
+      "source": "value=True\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O57",
+      "stdout": "30 74\n"
+    },
+    {
+      "id": "bool-write",
+      "source": "value=True\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bool-native-write",
+      "source": "value=True\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bool-delete",
+      "source": "value=True\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bool-extra-argument",
+      "source": "value=True\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bool-keyword",
+      "source": "value=True\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bool-native-binding",
+      "source": "value=True\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True bool.__dir__ True\n"
+    },
+    {
+      "id": "int-sorted-directory",
+      "source": "value=10**50+7\nprint(*dir(value))\n",
+      "stage": "O57",
+      "stdout": "__abs__ __add__ __and__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __index__ __init__ __init_subclass__ __int__ __invert__ __le__ __lshift__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __or__ __pos__ __pow__ __radd__ __rand__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rlshift__ __rmod__ __rmul__ __ror__ __round__ __rpow__ __rrshift__ __rshift__ __rsub__ __rtruediv__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ __xor__ as_integer_ratio bit_count bit_length conjugate denominator from_bytes imag is_integer numerator real to_bytes\n"
+    },
+    {
+      "id": "int-raw-directory",
+      "source": "value=10**50+7\nprint(*object.__dir__(value))\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __invert__ __lshift__ __rlshift__ __rshift__ __rrshift__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n"
+    },
+    {
+      "id": "int-bound-directory",
+      "source": "value=10**50+7\nprint(*value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __invert__ __lshift__ __rlshift__ __rshift__ __rrshift__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n"
+    },
+    {
+      "id": "int-fresh-lists",
+      "source": "value=10**50+7\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 74 True\n"
+    },
+    {
+      "id": "int-fresh-raw-lists",
+      "source": "value=10**50+7\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 74\n"
+    },
+    {
+      "id": "int-native-getattribute",
+      "source": "value=10**50+7\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True __dir__ int.__dir__ True\n"
+    },
+    {
+      "id": "int-builtin-getattr",
+      "source": "value=10**50+7\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O57",
+      "stdout": "True True 74\n"
+    },
+    {
+      "id": "int-retained-caller",
+      "source": "value=10**50+7\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)),type(d).__name__)\n",
+      "stage": "O57",
+      "stdout": "74 74 builtin_function_or_method\n"
+    },
+    {
+      "id": "int-nested-callers",
+      "source": "value=10**50+7\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O57",
+      "stdout": "30 74\n"
+    },
+    {
+      "id": "int-write",
+      "source": "value=10**50+7\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "int-native-write",
+      "source": "value=10**50+7\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "int-delete",
+      "source": "value=10**50+7\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "int-extra-argument",
+      "source": "value=10**50+7\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "int-keyword",
+      "source": "value=10**50+7\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "int-native-binding",
+      "source": "value=10**50+7\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True int.__dir__ True\n"
+    },
+    {
+      "id": "float-sorted-directory",
+      "source": "value=2.5\nprint(*dir(value))\n",
+      "stage": "O57",
+      "stdout": "__abs__ __add__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getformat__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __int__ __le__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __pos__ __pow__ __radd__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rmod__ __rmul__ __round__ __rpow__ __rsub__ __rtruediv__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ as_integer_ratio conjugate from_number fromhex hex imag is_integer real\n"
+    },
+    {
+      "id": "float-raw-directory",
+      "source": "value=2.5\nprint(*object.__dir__(value))\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ from_number conjugate __trunc__ __floor__ __ceil__ __round__ as_integer_ratio fromhex hex is_integer __getnewargs__ __getformat__ __format__ real imag __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "float-bound-directory",
+      "source": "value=2.5\nprint(*value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ from_number conjugate __trunc__ __floor__ __ceil__ __round__ as_integer_ratio fromhex hex is_integer __getnewargs__ __getformat__ __format__ real imag __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "float-fresh-lists",
+      "source": "value=2.5\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 60 True\n"
+    },
+    {
+      "id": "float-fresh-raw-lists",
+      "source": "value=2.5\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 60\n"
+    },
+    {
+      "id": "float-native-getattribute",
+      "source": "value=2.5\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True __dir__ float.__dir__ True\n"
+    },
+    {
+      "id": "float-builtin-getattr",
+      "source": "value=2.5\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O57",
+      "stdout": "True True 60\n"
+    },
+    {
+      "id": "float-retained-caller",
+      "source": "value=2.5\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)),type(d).__name__)\n",
+      "stage": "O57",
+      "stdout": "60 60 builtin_function_or_method\n"
+    },
+    {
+      "id": "float-nested-callers",
+      "source": "value=2.5\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O57",
+      "stdout": "30 60\n"
+    },
+    {
+      "id": "float-write",
+      "source": "value=2.5\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "float-native-write",
+      "source": "value=2.5\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "float-delete",
+      "source": "value=2.5\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "float-extra-argument",
+      "source": "value=2.5\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "float-keyword",
+      "source": "value=2.5\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "float-native-binding",
+      "source": "value=2.5\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True float.__dir__ True\n"
+    },
+    {
+      "id": "complex-sorted-directory",
+      "source": "value=2+3j\nprint(*dir(value))\n",
+      "stage": "O57",
+      "stdout": "__abs__ __add__ __bool__ __class__ __complex__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __mul__ __ne__ __neg__ __new__ __pos__ __pow__ __radd__ __reduce__ __reduce_ex__ __repr__ __rmul__ __rpow__ __rsub__ __rtruediv__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ conjugate from_number imag real\n"
+    },
+    {
+      "id": "complex-raw-directory",
+      "source": "value=2+3j\nprint(*object.__dir__(value))\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __truediv__ __rtruediv__ from_number conjugate __complex__ __getnewargs__ __format__ real imag __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "complex-bound-directory",
+      "source": "value=2+3j\nprint(*value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __truediv__ __rtruediv__ from_number conjugate __complex__ __getnewargs__ __format__ real imag __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "complex-fresh-lists",
+      "source": "value=2+3j\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 44 True\n"
+    },
+    {
+      "id": "complex-fresh-raw-lists",
+      "source": "value=2+3j\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "stage": "O57",
+      "stdout": "False False 44\n"
+    },
+    {
+      "id": "complex-native-getattribute",
+      "source": "value=2+3j\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True __dir__ complex.__dir__ True\n"
+    },
+    {
+      "id": "complex-builtin-getattr",
+      "source": "value=2+3j\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "stage": "O57",
+      "stdout": "True True 44\n"
+    },
+    {
+      "id": "complex-retained-caller",
+      "source": "value=2+3j\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)),type(d).__name__)\n",
+      "stage": "O57",
+      "stdout": "44 44 builtin_function_or_method\n"
+    },
+    {
+      "id": "complex-nested-callers",
+      "source": "value=2+3j\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "stage": "O57",
+      "stdout": "30 44\n"
+    },
+    {
+      "id": "complex-write",
+      "source": "value=2+3j\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "complex-native-write",
+      "source": "value=2+3j\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "complex-delete",
+      "source": "value=2+3j\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "complex-extra-argument",
+      "source": "value=2+3j\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-keyword",
+      "source": "value=2+3j\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "stage": "O57",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "complex-native-binding",
+      "source": "value=2+3j\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "stage": "O57",
+      "stdout": "True complex.__dir__ True\n"
+    },
+    {
+      "id": "native-none-binding",
+      "source": "print(object.__dir__.__get__(None,type(None)) is object.__dir__)\n",
+      "stage": "O57",
+      "stdout": "True\n"
+    },
+    {
+      "id": "rebound-across-layouts",
+      "source": "d=object.__dir__.__get__(7)\ne=d.__self__.__dir__\nb=object.__dir__.__get__(2.5)\nprint(len(d()),len(b()),len(e()),b.__qualname__)\n",
+      "stage": "O57",
+      "stdout": "74 60 74 float.__dir__\n"
+    },
+    {
+      "id": "numeric-state-variants",
+      "source": "for value in (False,True,0,-7,10**50,0.0,-0.0,float(\"inf\"),float(\"nan\"),complex(0,0),complex(2,-3)):\n print(type(value).__name__,len(dir(value)),len(value.__dir__()))\n",
+      "stage": "O57",
+      "stdout": "bool 74 74\nbool 74 74\nint 74 74\nint 74 74\nint 74 74\nfloat 60 60\nfloat 60 60\nfloat 60 60\nfloat 60 60\ncomplex 44 44\ncomplex 44 44\n"
+    },
+    {
+      "id": "lazy-generators",
+      "source": "g=(len(dir(value)) for value in (None,NotImplemented,True,7,2.5,2+3j))\nprint(*g)\n",
+      "stage": "O57",
+      "stdout": "25 25 74 74 60 44\n"
+    },
+    {
+      "id": "unread-dictionary",
+      "source": "value=7\nvalue.__dict__\n",
+      "stage": "Future",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "other-default-directory",
+      "source": "dir([])\n",
+      "stage": "Future",
+      "stdout": ""
+    },
+    {
+      "id": "wrapper-directory",
+      "source": "def f(): pass\ndir(staticmethod(f))\n",
+      "stage": "Future",
+      "stdout": ""
+    }
+  ]
+}
