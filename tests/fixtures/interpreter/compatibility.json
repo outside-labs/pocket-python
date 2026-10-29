@@ -5694,6 +5694,359 @@
         "error_type": "UnsupportedOperationError",
         "code": "UNSUPPORTED"
       }
+    },
+    {
+      "id": "numeric-directories-none-sorted-directory",
+      "source": "value=None\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__bool__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__bool__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-none-raw-directory",
+      "source": "value=None\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __bool__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __bool__ __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-none-native-write",
+      "source": "value=None\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "numeric-directories-notimplemented-sorted-directory",
+      "source": "value=NotImplemented\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__bool__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__bool__ __class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-notimplemented-raw-directory",
+      "source": "value=NotImplemented\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __bool__ __reduce__ __doc__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __bool__ __reduce__ __doc__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-notimplemented-native-write",
+      "source": "value=NotImplemented\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "numeric-directories-notimplemented-native-binding",
+      "source": "value=NotImplemented\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True NotImplementedType.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True NotImplementedType.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-bool-sorted-directory",
+      "source": "value=True\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__abs__ __add__ __and__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __index__ __init__ __init_subclass__ __int__ __invert__ __le__ __lshift__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __or__ __pos__ __pow__ __radd__ __rand__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rlshift__ __rmod__ __rmul__ __ror__ __round__ __rpow__ __rrshift__ __rshift__ __rsub__ __rtruediv__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ __xor__ as_integer_ratio bit_count bit_length conjugate denominator from_bytes imag is_integer numerator real to_bytes\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__abs__ __add__ __and__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __index__ __init__ __init_subclass__ __int__ __invert__ __le__ __lshift__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __or__ __pos__ __pow__ __radd__ __rand__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rlshift__ __rmod__ __rmul__ __ror__ __round__ __rpow__ __rrshift__ __rshift__ __rsub__ __rtruediv__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ __xor__ as_integer_ratio bit_count bit_length conjugate denominator from_bytes imag is_integer numerator real to_bytes\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-bool-raw-directory",
+      "source": "value=True\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __invert__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __doc__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __lshift__ __rlshift__ __rshift__ __rrshift__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __invert__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __doc__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __lshift__ __rlshift__ __rshift__ __rrshift__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-bool-native-write",
+      "source": "value=True\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "numeric-directories-bool-native-binding",
+      "source": "value=True\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True bool.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True bool.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-int-sorted-directory",
+      "source": "value=7\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__abs__ __add__ __and__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __index__ __init__ __init_subclass__ __int__ __invert__ __le__ __lshift__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __or__ __pos__ __pow__ __radd__ __rand__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rlshift__ __rmod__ __rmul__ __ror__ __round__ __rpow__ __rrshift__ __rshift__ __rsub__ __rtruediv__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ __xor__ as_integer_ratio bit_count bit_length conjugate denominator from_bytes imag is_integer numerator real to_bytes\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__abs__ __add__ __and__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __index__ __init__ __init_subclass__ __int__ __invert__ __le__ __lshift__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __or__ __pos__ __pow__ __radd__ __rand__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rlshift__ __rmod__ __rmul__ __ror__ __round__ __rpow__ __rrshift__ __rshift__ __rsub__ __rtruediv__ __rxor__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ __xor__ as_integer_ratio bit_count bit_length conjugate denominator from_bytes imag is_integer numerator real to_bytes\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-int-raw-directory",
+      "source": "value=10**50+7\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __invert__ __lshift__ __rlshift__ __rshift__ __rrshift__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __invert__ __lshift__ __rlshift__ __rshift__ __rrshift__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-int-native-write",
+      "source": "value=10**50+7\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "numeric-directories-int-native-binding",
+      "source": "value=10**50+7\nd=object.__dir__.__get__(value)\nprint(d.__self__==value,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True int.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True int.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-float-sorted-directory",
+      "source": "value=2.5\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__abs__ __add__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getformat__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __int__ __le__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __pos__ __pow__ __radd__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rmod__ __rmul__ __round__ __rpow__ __rsub__ __rtruediv__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ as_integer_ratio conjugate from_number fromhex hex imag is_integer real\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__abs__ __add__ __bool__ __ceil__ __class__ __delattr__ __dir__ __divmod__ __doc__ __eq__ __float__ __floor__ __floordiv__ __format__ __ge__ __getattribute__ __getformat__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __int__ __le__ __lt__ __mod__ __mul__ __ne__ __neg__ __new__ __pos__ __pow__ __radd__ __rdivmod__ __reduce__ __reduce_ex__ __repr__ __rfloordiv__ __rmod__ __rmul__ __round__ __rpow__ __rsub__ __rtruediv__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ __trunc__ as_integer_ratio conjugate from_number fromhex hex imag is_integer real\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-float-raw-directory",
+      "source": "value=2.5\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ from_number conjugate __trunc__ __floor__ __ceil__ __round__ as_integer_ratio fromhex hex is_integer __getnewargs__ __getformat__ __format__ real imag __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ from_number conjugate __trunc__ __floor__ __ceil__ __round__ as_integer_ratio fromhex hex is_integer __getnewargs__ __getformat__ __format__ real imag __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-float-native-write",
+      "source": "value=2.5\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "numeric-directories-float-native-binding",
+      "source": "value=2.5\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True float.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True float.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-complex-sorted-directory",
+      "source": "value=2+3j\nprint(*dir(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__abs__ __add__ __bool__ __class__ __complex__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __mul__ __ne__ __neg__ __new__ __pos__ __pow__ __radd__ __reduce__ __reduce_ex__ __repr__ __rmul__ __rpow__ __rsub__ __rtruediv__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ conjugate from_number imag real\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__abs__ __add__ __bool__ __class__ __complex__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __mul__ __ne__ __neg__ __new__ __pos__ __pow__ __radd__ __reduce__ __reduce_ex__ __repr__ __rmul__ __rpow__ __rsub__ __rtruediv__ __setattr__ __sizeof__ __str__ __sub__ __subclasshook__ __truediv__ conjugate from_number imag real\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-complex-raw-directory",
+      "source": "value=2+3j\nprint(*object.__dir__(value))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __truediv__ __rtruediv__ from_number conjugate __complex__ __getnewargs__ __format__ real imag __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __truediv__ __rtruediv__ from_number conjugate __complex__ __getnewargs__ __format__ real imag __doc__ __str__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __sizeof__ __dir__ __class__\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-complex-native-write",
+      "source": "value=2+3j\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "before\n",
+        "error_type": "AttributeError"
+      }
+    },
+    {
+      "id": "numeric-directories-complex-native-binding",
+      "source": "value=2+3j\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__qualname__,d()==value.__dir__())\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True complex.__dir__ True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True complex.__dir__ True\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-numeric-state-variants",
+      "source": "for value in (float(\"nan\"),complex(2,-3)):\n print(type(value).__name__,len(dir(value)),len(value.__dir__()))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "float 60 60\ncomplex 44 44\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "float 60 60\ncomplex 44 44\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-lazy-generators",
+      "source": "g=(len(dir(value)) for value in (None,NotImplemented,True,7,2.5,2+3j))\nprint(*g)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "25 25 74 74 60 44\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "25 25 74 74 60 44\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "numeric-directories-unread-dictionary",
+      "source": "value=7\nvalue.__dict__\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "",
+        "error_type": "AttributeError"
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
+    },
+    {
+      "id": "numeric-directories-unboxed-integer-identity",
+      "source": "value=10**50+7\nd=value.__dir__\nprint(d.__self__ is value)\n",
+      "classification": "deferred",
+      "reference": {
+        "stdout": "True\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "",
+        "error_type": "UnsupportedOperationError",
+        "code": "UNSUPPORTED"
+      }
     }
   ]
 }
