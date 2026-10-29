@@ -858,6 +858,7 @@ export class ClassRuntime {
   }
   nativeTypeDirectoryNames(type) {
     if (!(type instanceof BuiltinValue)) return null;
+    if (Object.hasOwn(CONTAINER_DIRECTORY_KEYS, type.name)) return CONTAINER_DIRECTORY_KEYS[type.name];
     switch (type.name) {
       case "bool": return BOOL_DIRECTORY_KEYS;
       case "int": return INT_DIRECTORY_KEYS;
@@ -865,6 +866,8 @@ export class ClassRuntime {
       case "complex": return COMPLEX_DIRECTORY_KEYS;
       case "NoneType": return NONE_DIRECTORY_KEYS;
       case "NotImplementedType": return NOT_IMPLEMENTED_DIRECTORY_KEYS;
+      case "range": return RANGE_DIRECTORY_KEYS;
+      case "slice": return SLICE_DIRECTORY_KEYS;
       default: return null;
     }
   }

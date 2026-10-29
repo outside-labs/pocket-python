@@ -32,3 +32,10 @@ existing owned execution rules. Composed resource observations remain unchanged.
 No dependency, host grant, release, publication or deployment is included.
 
 Reference: pinned [native type directories and recursive namespace merging](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+
+The 105-case matrix contains 99 adopted comparisons and six explicit refusals.
+All six Node/Chromium drain, instruction-boundary and parked drivers pass, as do
+the repeated O63 matrices against the extended engine. The 123 feature units
+include a parked native-key collision callback with a retained cyclic instance
+graph. The 530 adjacent directory/rebinding/resource units and 23 affected Python
+checks pass; the eight composed resource observations remain unchanged.
