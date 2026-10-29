@@ -63,6 +63,20 @@ test('registered function identity survives export replacement and queued argume
   } finally { close(); }
 });
 
+test('registered callbacks retain executable identity after metadata mutation', async () => {
+  const {session, close} = await setup('def update(x): return x+1\ndef rename():\n update.__name__="renamed"\n update.__qualname__="path.renamed"\n update.__module__=[update]\n return update.__name__\n');
+  try {
+    session.run();
+    const update = session.register('update'), rename = session.register('rename');
+    const changed = session.enqueue(rename), queued = session.enqueue(update, [integer(7)]);
+    pump(session);
+    assert.deepEqual(await changed.result, {type: 'str', codepoints: Array.from('renamed', char => char.codePointAt(0))});
+    assert.deepEqual(await queued.result, integer(8));
+    const later = session.enqueue(update, [integer(9)]); pump(session);
+    assert.deepEqual(await later.result, integer(10));
+  } finally { close(); }
+});
+
 test('a callback can enqueue from output without Python reentry or premature settlement', async () => {
   const {session, close} = await setup('n=0\ndef update():\n global n\n print(n)\n n+=1\n return n\n');
   try {

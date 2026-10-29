@@ -94,3 +94,30 @@ test('class metadata mutation retains its existing boundary', async () => {
     assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
   }
 });
+
+test('bound metadata retains detached callable closures and results through parked callbacks', async () => {
+  for (const name of ['__name__', '__qualname__', '__module__']) {
+    await lifecycle('def make():\n saved=[[7]]\n class Callable: pass\n obj=Callable()\n m=classmethod(obj).__get__(None,object)\n def lookup(self,name):\n  print("lookup")\n  return saved\n Callable.__getattribute__=lookup\n return m\nm=make()\nprint("held")\nprint(m.' + name + '[0][0])\n',
+      'held\nlookup\n7\n', ['held\n', 'held\nlookup\n']);
+  }
+});
+
+test('method metadata fallback owns the original receiver after all global aliases are deleted', async () => {
+  await lifecycle('class Callable: pass\nobj=Callable()\nm=classmethod(obj).__get__(None,object)\ndef lookup(self,name):\n global m,obj,Callable\n del m\n del obj\n del Callable\n print("lookup")\n return [self]\nCallable.__getattribute__=lookup\nresult=m.__name__\nprint(type(result[0]).__name__)\n',
+    'lookup\nCallable\n', ['lookup\n']);
+});
+
+test('method metadata callbacks obey real recursion, instruction, work and allocation limits', async () => {
+  for (const [body, options, limits, code] of [
+    ['return m.__name__', {maxDepth: 12}, undefined, 'PYTHON'],
+    ['while True: pass', {maxSteps: 250}, undefined, 'BUDGET'],
+    ['while True: pass', {maxSteps: 100000, maxWork: 40000}, undefined, 'BUDGET'],
+    ['items=[]\n while True: items.append([7])', {maxSteps: 100000, maxWork: 20000000}, {maxBytes: 30000}, 'OOM'],
+  ]) {
+    const source = 'class Callable: pass\nm=classmethod(Callable()).__get__(None,object)\ndef lookup(self,name):\n print("entered")\n ' + body + '\nCallable.__getattribute__=lookup\nm.__name__\n';
+    const result = await run(source, options, limits);
+    assert.equal(result.error?.code, code, JSON.stringify(result.error));
+    if (code === 'PYTHON') assert.equal(result.error.type, 'RecursionError');
+    assert.ok(result.stdout.startsWith('entered\n')); closed(result.closed);
+  }
+});
