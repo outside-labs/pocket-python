@@ -11,7 +11,7 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
   "list_iterator", "tuple_iterator", "str_iterator", "str_ascii_iterator", "dict_keyiterator", "range_iterator", "longrange_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 for (const name of Object.keys(NATIVE_NAMESPACES)) if (name !== "object") NATIVE_TYPES.add(name);
 const NAMESPACE_DESCRIPTOR_KINDS = new Set(["method_descriptor", "wrapper_descriptor", "classmethod_descriptor", "getset_descriptor", "member_descriptor"]);
-const META_SPECIALS = new Set(["__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set(["__prepare__", "__classcell__", "__classdictcell__", "__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
@@ -495,7 +495,7 @@ export class ClassRuntime {
       if (base instanceof BuiltinValue) {
         if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_PROPERTY_METHODS.has(base.name + "." + name) || base.name === "mappingproxy" && name === "get" || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
           return {found: true, value: this.builtin(base.name + "." + name)};
-        if (native && base.name === "type" && ["__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro", "__dir__"].includes(name))
+        if (native && base.name === "type" && ["__prepare__", "__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro", "__dir__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
         continue;
       }

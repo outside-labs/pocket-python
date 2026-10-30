@@ -145,6 +145,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (className(frame, key) && !frame.fn.nonlocals?.includes(key) && frame.namespaceEnvironment) {
       const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
       const dictionary = frame.namespaceEnvironment.dictionary;
+      if (!values.isDict(dictionary)) return itemTask(dictionary, name, state.current, after || continuation("name-stored"), 0, bound ? "set" : "delete", value);
       if (!dictionary.ownedKeys) {
         if (bound) values.set(dictionary, name, value);
         else { const index = values.find(dictionary, name); if (index >= 0) values.remove(dictionary, name); }
@@ -177,12 +178,20 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       return result || (after ? {value, after} : {value});
     }
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
+    if (className(frame, name) && !values.isDict(dictionary))
+      return {task: itemTask(dictionary, key, site, continuation("class-mapping-name", {name, receiver: dictionary, after}))};
     if (className(frame, name) && !dictionary.ownedKeys) {
       const index = values.find(dictionary, key);
       if (index >= 0) return after ? {value: dictionary.entries[index].value, after} : {value: dictionary.entries[index].value};
     }
     return {task: dictionaryTask(dictionary, key, site, continuation(className(frame, name) && frame.namespaceEnvironment ? "class-name" : "global-name", {name, receiver: dictionary, after}), 0, "probe")};
   };
+  const classFallback = (name, site, after = null) => {
+    const frame = state.frames.at(-1); let fallback;
+    const value = load(frame, name, false, () => { fallback = builtinLookup(frame, name, site, after); return null; });
+    return fallback?.task || valueTask(fallback ? fallback.value : value, site, after);
+  };
+  const classModule = value => store(state.frames.at(-1), "__module__", value, true, continuation("class-qualname")) || classQualification();
   const classQualification = () => {
     const frame = state.frames.at(-1), value = values.string(Array.from(frame.fn.qualname, char => char.codePointAt(0))); state.temporaries.push(value);
     const writing = store(frame, "__qualname__", value, true, continuation("class-firstline"));
@@ -210,14 +219,21 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const metaclass = !invalidMetaclass && (hasMeta || bases.some(base => base instanceof ClassValue && base.metaclass !== null)) ? classes.selectMetaclass(bases, explicit) : null;
     record = {...record, metaclass, invalidMetaclass};
     const resolved = loadName(state.frames.at(-1), "__name__", site, continuation("class-module", record));
-    return resolved.task || enterClass(record, resolved.value, site);
+    return resolved.task || prepareClass(record, resolved.value, site);
   };
   const enterClass = (record, rawModule, site) => {
     const module = values.text(rawModule) ?? record.callable.pool.module.name;
     enter(record.callable, new Map(), site, continuation("class", {...record, module}));
-    classNamespace(state.frames.at(-1));
-    const writing = store(state.frames.at(-1), "__module__", rawModule, true, continuation("class-qualname"));
-    return writing || classQualification();
+    const frame = state.frames.at(-1);
+    if (record.prepared !== undefined) {
+      const environment = allocate(Environment); state.temporaries.push(environment);
+      mutate(environment, () => { environment.dictionary = record.prepared; return () => { environment.dictionary = null; }; });
+      frame.namespaceEnvironment = environment;
+      const resolved = loadName(frame, "__name__", site, continuation("class-body-module"));
+      return resolved.task || classModule(resolved.value);
+    }
+    classNamespace(frame);
+    return classModule(rawModule);
   };
   const handlerNext = (position, names, site) => {
     const frame = state.frames.at(-1), task = frame.tasks.at(-1), handlers = task.instruction[2];
@@ -369,9 +385,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       generator.bindings.clear(); return value;
     } finally { leave(); }
   };
-  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases} = operationRuntime({state, memory, values, classes,
+  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
-    setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
+    setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
     const generator = frame.generator, completion = frame.completion;
@@ -658,9 +674,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           const pending = classEnd({names: entries.map(([name]) => name), items: entries.map(([,value]) => value), position: 0, signal: signal.kind, value: returned});
           if (pending) dispatch(pending); return;
         }
-        const namespace = bodyDictionary ? new Map(bodyDictionary.entries.map(entry => [values.text(entry.key) ?? entry.key, entry.value])
+        const namespace = bodyDictionary && values.isDict(bodyDictionary) ? new Map(bodyDictionary.entries.map(entry => [values.text(entry.key) ?? entry.key, entry.value])
           .filter(([key]) => !["__classdictcell__", "__classcell__"].includes(key))) :
-          new Map([...frame.namespaceOrder].filter(key => frame.locals.get(key)?.bound && !key.startsWith("@source:"))
+          new Map([...(bodyDictionary ? [] : frame.namespaceOrder)].filter(key => frame.locals.get(key)?.bound && !key.startsWith("@source:"))
             .map(key => [key, frame.locals.get(key).value]));
         const completion = frame.completion;
         state.temporaries.push(...namespace.values(), ...[...namespace.keys()].filter(key => typeof key !== "string"), ...(bodyDictionary ? [bodyDictionary] : []), ...completion.bases, ...(completion.keywordValues ?? []));
@@ -676,8 +692,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             const name = typeof key === "string" ? values.string(Array.from(key, char => char.codePointAt(0))) : key; state.temporaries.push(name);
             values.set(dictionary, name, value);
           }
-          const name = values.string(Array.from(frame.fn.name, char => char.codePointAt(0))); state.temporaries.push(name);
-          const bases = values.tuple(completion.bases); state.temporaries.push(bases);
+          const name = completion.nameValue || values.string(Array.from(frame.fn.name, char => char.codePointAt(0))); state.temporaries.push(name);
+          const bases = completion.basesTuple || values.tuple(completion.bases); state.temporaries.push(bases);
           call(completion.metaclass, [name, bases, dictionary], completion.keywords ?? [], completion.keywordValues ?? [], frame.callsite,
             classCell ? continuation("class-created", {cell: classCell}) : null); return;
         }
@@ -687,7 +703,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           dispatch(namespaceCreateTask({name: frame.fn.name, qualname: frame.fn.name, module: completion.module, dictionary, defaultModule,
             bases: completion.bases, dynamic: false, firstLine: frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1,
             staticAttributes: frame.fn.staticAttributes || [], keywords: completion.keywords ?? [], keywordValues: completion.keywordValues ?? []}, frame.callsite,
-            classCell && routed("__classcell__") ? continuation("class-created", {cell: classCell}) : null)); return;
+            classCell ? continuation("class-created", {cell: classCell}) : null)); return;
         }
         const qualification = namespace.has("__qualname__") ? values.text(namespace.get("__qualname__")) : frame.fn.name;
         if (qualification === null) python("TypeError", "type __qualname__ must be a str");
@@ -695,7 +711,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           {firstLine: (bodyDictionary ? namespace.has("__firstlineno__") : frame.namespaceOrder.has("__firstlineno__")) ? frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1 : null,
             staticAttributes: routed("__static_attributes__") ? null : frame.fn.staticAttributes || [], namespaceEntries: bodyDictionary?.entries || null});
         if (classCell) { state.temporaries.push(type, classCell); if (!routed("__classcell__")) setCell(classCell, type); }
-        dispatch(notifyNext(type, [...namespace], 0, frame.callsite, classCell && routed("__classcell__") ? continuation("class-created", {cell: classCell}) : null, completion.keywords, completion.keywordValues)); return;
+        dispatch(notifyNext(type, [...namespace], 0, frame.callsite, classCell ? continuation("class-created", {cell: classCell}) : null, completion.keywords, completion.keywordValues)); return;
       }
       const completion = frame.completion;
       retainTransfer(state.temporaries, [], completion);
@@ -740,7 +756,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           !arg.startsWith("@source:") && (frame.index === 0 || frame.fn.globals?.includes(arg)) ? frame.callable.globals.dictionary : null;
         if (dictionary !== null) {
           const key = values.string(Array.from(arg, char => char.codePointAt(0))); state.temporaries.push(key);
-          dispatch(dictionaryTask(dictionary, key, summary(frame, cursor), continuation("global-delete", {name: arg, receiver: dictionary}), 0, "remove-probe")); return;
+          dispatch(values.isDict(dictionary) ? dictionaryTask(dictionary, key, summary(frame, cursor), continuation("global-delete", {name: arg, receiver: dictionary}), 0, "remove-probe") :
+            itemTask(dictionary, key, summary(frame, cursor), continuation("class-mapping-delete", {name: arg, receiver: dictionary}), 0, "delete")); return;
         }
         if (frame.fn.kind === "class" && arg === "__firstlineno__" && !frame.namespaceEnvironment && frame.namespaceOrder.has(arg)) {
           frame.namespaceOrder.delete(arg); const cell = targetCell(frame, arg); if (cell?.bound) setCell(cell, null, false); return;

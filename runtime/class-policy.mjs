@@ -13,6 +13,7 @@ export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
     ["__" + prefix + stem + "__", Object.freeze({...ordinarySlot, implicit: true})])),
   ...["__lt__", "__le__", "__gt__", "__ge__", "__dir__", "__length_hint__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ...["__neg__", "__pos__", "__invert__", "__getattribute__", "__getattr__", "__setattr__", "__delattr__", "__instancecheck__", "__subclasscheck__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
+  ["__prepare__", ordinarySlot], ["__classcell__", ordinarySlot], ["__classdictcell__", ordinarySlot],
   ["__mro_entries__", ordinarySlot], ["__orig_bases__", ordinarySlot],
   ["__init__", ordinarySlot], ["__new__", ordinarySlot], ["__init_subclass__", ordinarySlot], ...DESCRIPTOR_HOOKS.map(name => [name, ordinarySlot]),
   ["__module__", Object.freeze({define: true})], ["__qualname__", Object.freeze({define: true})],

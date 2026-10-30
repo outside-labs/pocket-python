@@ -63,13 +63,20 @@ export function completion(kind, fields = {}) {
     case "class-end": record = {kind, names: operands(fields.names), items: operands(fields.items), position: fields.position, signal: fields.signal, value: fields.value}; break;
     case "class-firstline":
     case "class-qualname": record = {kind}; break;
-    case "class-base-lookup": case "class-base-result":
+    case "class-base-missing": case "class-base-lookup": case "class-base-result":
       record = {kind, callable: fields.callable, bases: operands(fields.bases), originalBases: fields.originalBases,
         resolved: operands(fields.resolved), position: fields.position, changed: fields.changed,
         explicit: fields.explicit, hasMeta: fields.hasMeta, keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)}; break;
+    case "class-prepare-lookup": case "class-prepare-result":
+      record = {kind, callable: fields.callable, bases: operands(fields.bases), originalBases: fields.originalBases,
+        metaclass: fields.metaclass, invalidMetaclass: fields.invalidMetaclass, keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues),
+        rawModule: fields.rawModule, nameValue: fields.nameValue, basesTuple: fields.basesTuple}; break;
+    case "class-body-module": record = {kind}; break;
     case "class-module": record = {kind, originalBases: fields.originalBases, callable: fields.callable, bases: operands(fields.bases), metaclass: fields.metaclass, invalidMetaclass: fields.invalidMetaclass, keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)}; break;
     case "handler-type": record = {kind, position: fields.position, names: operands(fields.names), after}; break;
-    case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name":
+    case "class-mapping-dir-call": case "class-mapping-dir-result":
+      record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
+    case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name":
       record = {kind, receiver: fields.receiver, name: fields.name, after}; break;
     case "store-body": record = {kind, body: fields.body, after}; break;
     case "resume-control": record = {kind, signal: fields.signal, value: fields.value, after}; break;
@@ -77,7 +84,7 @@ export function completion(kind, fields = {}) {
       record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, mode: fields.mode, depth: fields.depth, after}; break;
     case "module-native-dir": case "module-dir": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
     case "module-missing": record = {kind, receiver: fields.receiver, name: fields.name, mode: fields.mode, after}; break;
-    case "class": record = {kind, originalBases: fields.originalBases, bases: operands(fields.bases), module: fields.module,
+    case "class": record = {kind, nameValue: fields.nameValue, basesTuple: fields.basesTuple, originalBases: fields.originalBases, bases: operands(fields.bases), module: fields.module,
       ...(fields.keywords?.length ? {keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)} : {}),
       ...(fields.metaclass ? {metaclass: fields.metaclass} : {}), ...(fields.invalidMetaclass ? {invalidMetaclass: true} : {})}; break;
     case "class-created": record = {kind, cell: fields.cell, after}; break;
@@ -292,10 +299,12 @@ function visit(record) {
     case "dict-union": return [record.left, record.right, record.result, ...completionRoots(record.after)];
     case "namespace-build": return operationRoots(record.task);
     case "namespace-lookup": return [record.cache, record.owner, record.dictionary, ...operationRoots(record.task)];
-    case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-native-dir": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
+    case "class-mapping-dir-call": case "class-mapping-dir-result":
+    case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-native-dir": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
     case "class-end": return [...record.items, record.value];
-    case "class-firstline": case "class-qualname": return [];
-    case "class-base-lookup": case "class-base-result": return [record.callable, ...record.bases, record.originalBases, ...record.resolved, ...(record.hasMeta ? [record.explicit] : []), ...record.keywordValues];
+    case "class-body-module": case "class-firstline": case "class-qualname": return [];
+    case "class-prepare-lookup": case "class-prepare-result": return [record.callable, ...record.bases, record.originalBases ?? null, record.metaclass, ...record.keywordValues, record.rawModule, record.nameValue, record.basesTuple];
+    case "class-base-missing": case "class-base-lookup": case "class-base-result": return [record.callable, ...record.bases, record.originalBases, ...record.resolved, ...(record.hasMeta ? [record.explicit] : []), ...record.keywordValues];
     case "class-module": return [record.callable, ...record.bases, ...(record.originalBases ? [record.originalBases] : []), record.metaclass, ...record.keywordValues];
     case "handler-type": return completionRoots(record.after);
     case "store-body": return completionRoots(record.after);
@@ -370,7 +379,7 @@ export function completionRoots(record, frame = false) {
   if (!records.has(record)) throw new TypeError("Unknown operation root owner.");
   const retained = roots.get(record);
   if (!frame) return retained;
-    if (record.kind === "class") return [...(record.originalBases ? [record.originalBases] : []), ...record.bases, ...(record.metaclass ? [record.metaclass] : []), ...(record.keywordValues ?? [])];
+    if (record.kind === "class") return [...(record.nameValue ? [record.nameValue, record.basesTuple] : []),...(record.originalBases ? [record.originalBases] : []), ...record.bases, ...(record.metaclass ? [record.metaclass] : []), ...(record.keywordValues ?? [])];
   if (record.kind === "init") return [record.instance, ...retained];
   return retained;
 }
