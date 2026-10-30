@@ -960,7 +960,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "object-dir-dictionary") return objectDirectoryDictionary(completion, value, site);
     if (completion?.kind === "object-dir-class")
-      return classes.isType(value) && !(value instanceof ClassValue && value.metaclass !== null) ?
+      return classes.isType(value) && !(value instanceof ClassValue && (value.metaclass !== null || classes.lookupMayCallback(value))) ?
         classDirectoryNext({...completion, owner: null, pending: [value], names: [], position: 0}, site) : graphDirectory(completion, value, site);
     if (completion?.kind === "graph-dir-dict") return valueTask(value, site, continuation("graph-dir-ready", completion));
     if (completion?.kind === "graph-dir-ready") {
@@ -2568,7 +2568,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length || !classes.isType(args[0]))
               python("TypeError", "type.__dir__ requires one positional actual type");
             const receiver = args[0], result = values.dict([]); state.temporaries.push(receiver, result);
-            if (receiver instanceof ClassValue && receiver.metaclass !== null) {
+            if (receiver instanceof ClassValue && (receiver.metaclass !== null || classes.lookupMayCallback(receiver))) {
               task = graphDirectory({receiver, result, depth, after: completion}, receiver, site); continue;
             }
             task = classDirectoryNext({receiver, result, pending: [receiver], owner: null, names: [], position: 0, depth, after: completion}, site); continue;
