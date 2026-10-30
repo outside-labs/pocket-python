@@ -8,7 +8,21 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  const resolveClassBases = (record, site) => {
+    if (!record.originalBases && record.bases.every(base => classes.isType(base))) return beginClass(record, site);
+    if (!record.originalBases) {
+      const originalBases = values.tuple(record.bases); state.temporaries.push(originalBases);
+      record = {...record, originalBases, resolved: [], position: 0, changed: false};
+    }
+    while (record.position < record.bases.length) {
+      const base = record.bases[record.position];
+      if (!classes.isType(base)) return attributeTask(base, "__mro_entries__", site, continuation("class-base-lookup", record));
+      record = {...record, resolved: [...record.resolved, base], position: record.position + 1};
+    }
+    if (record.resolved.length > 16) hard("BUDGET", "ExecutionLimitError", "Class base budget exceeded.");
+    return beginClass({...record, bases: record.resolved, originalBases: record.changed ? record.originalBases : null}, site);
+  };
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value instanceof NotImplementedValue) return "NotImplemented";
@@ -607,6 +621,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (["bases-check", "bases-class"].includes(current.kind) && value.name === "AttributeError")
         python("TypeError", "type checking requires a class or an object with tuple __bases__");
       if (current.kind === "bases-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
+      if (current.kind === "class-base-lookup" && value.name === "AttributeError")
+        return resolveClassBases({...current, resolved: [...current.resolved, current.bases[current.position]], position: current.position + 1}, site);
       if (current.kind === "bases-walk" && value.name === "AttributeError") return basesNext(current, site);
       if (current.kind === "method-dir-dictionary" && value.name === "AttributeError") return methodDirectory(current, null, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
@@ -787,6 +803,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
       }
       completion = completion.after;
+    }
+    if (completion?.kind === "class-base-lookup") return callTask(value, [completion.originalBases], [], [], site, continuation("class-base-result", completion));
+    if (completion?.kind === "class-base-result") {
+      if (!values.isSequenceType(value, "tuple")) python("TypeError", "__mro_entries__ must return a tuple");
+      return resolveClassBases({...completion, resolved: [...completion.resolved, ...value.items], position: completion.position + 1, changed: true}, site);
     }
     if (completion?.kind === "wrapper-metadata") {
       const key = values.string(Array.from(wrapperKeys[completion.position], char => char.codePointAt(0))); state.temporaries.push(key, value);
@@ -2122,6 +2143,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (name.length > 256 || basesValue.items.length > 16) hard("BUDGET", "ExecutionLimitError", "Class identity/base budget exceeded.");
             if (name.includes("\0")) python("ValueError", "type name must not contain null characters");
             const bases = basesValue.items, namespace = new Map();
+            if (bases.some(base => !classes.isType(base))) python("TypeError", "type() doesn't support MRO entry resolution; use a class statement");
             for (const entry of namespaceValue.entries) {
               charge(1); const key = values.text(entry.key);
               if (key !== null && key.length > 256) hard("BUDGET", "ExecutionLimitError", "Class attribute name budget exceeded.");
@@ -2787,5 +2809,5 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
-  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack});
+  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases});
 }

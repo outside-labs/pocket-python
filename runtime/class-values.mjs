@@ -1386,7 +1386,7 @@ export class ClassRuntime {
     const instructions = fn.blocks.flatMap(block => block.instructions);
     this.charge(instructions.length + fn.locals.length + fn.free.length + 1);
     const parameters = [...p.posonly, ...p.positional, ...p.kwonly, ...(p.vararg ? [p.vararg] : []), ...(p.kwarg ? [p.kwarg] : [])];
-    const captured = new Set(instructions.filter(([op]) => ["function", "function-defaults", "class", "class-meta", "class-keywords"].includes(op)).flatMap(([,index]) => code.pool.code.functions[index].free).filter(name => fn.locals.includes(name)));
+    const captured = new Set(instructions.filter(([op]) => ["function", "function-defaults", "class", "class-meta", "class-keywords", "class-expanded"].includes(op)).flatMap(([,index]) => code.pool.code.functions[index].free).filter(name => fn.locals.includes(name)));
     const locals = fn.kind === "function" ? [...parameters, ...(fn.namespace ?? fn.locals).filter(name => !parameters.includes(name) && !captured.has(name) && !name.startsWith("@source:"))] : [];
     let result;
     if (["co_name", "co_qualname", "co_filename"].includes(name)) result = text(name === "co_name" ? fn.name : name === "co_qualname" ? fn.qualname : fn.blocks.find(block => block.source)?.source.filename ?? "<source>");
@@ -1406,7 +1406,7 @@ export class ClassRuntime {
         for (const [op,index] of instructions) {
           let item;
           if (op === "const") item = code.pool.code.constants[index];
-          else if (["function", "function-defaults", "class", "class-meta", "class-keywords"].includes(op)) item = this.codeObject(code.pool, index);
+          else if (["function", "function-defaults", "class", "class-meta", "class-keywords", "class-expanded"].includes(op)) item = this.codeObject(code.pool, index);
           else continue;
           roots.push(item); if (!items.includes(item)) items.push(item);
         }

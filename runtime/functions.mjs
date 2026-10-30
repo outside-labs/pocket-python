@@ -203,6 +203,15 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
     settle({kind: record.signal, value: record.value}); return null;
   };
+  const beginClass = (record, site) => {
+    const {bases, explicit, hasMeta} = record;
+    classes.validateNamespace(bases, record.callable.pool.code.functions[record.callable.index].locals);
+    const invalidMetaclass = hasMeta && !classes.isType(explicit) && !classes.callable(explicit);
+    const metaclass = !invalidMetaclass && (hasMeta || bases.some(base => base instanceof ClassValue && base.metaclass !== null)) ? classes.selectMetaclass(bases, explicit) : null;
+    record = {...record, metaclass, invalidMetaclass};
+    const resolved = loadName(state.frames.at(-1), "__name__", site, continuation("class-module", record));
+    return resolved.task || enterClass(record, resolved.value, site);
+  };
   const enterClass = (record, rawModule, site) => {
     const module = values.text(rawModule) ?? record.callable.pool.module.name;
     enter(record.callable, new Map(), site, continuation("class", {...record, module}));
@@ -360,9 +369,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       generator.bindings.clear(); return value;
     } finally { leave(); }
   };
-  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack} = operationRuntime({state, memory, values, classes,
+  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
-    setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
+    setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
     const generator = frame.generator, completion = frame.completion;
@@ -645,6 +654,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             const cell = allocate(Cell); state.temporaries.push(cell); setCell(cell, bodyDictionary); entries.push(["__classdictcell__", cell]);
           }
           const cell = frame.locals.get("@source:class"); if (cell) entries.push(["__classcell__", cell]);
+          if (frame.completion.originalBases) entries.push(["__orig_bases__", frame.completion.originalBases]);
           const pending = classEnd({names: entries.map(([name]) => name), items: entries.map(([,value]) => value), position: 0, signal: signal.kind, value: returned});
           if (pending) dispatch(pending); return;
         }
@@ -742,7 +752,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         }
         store(frame, arg, null, false);
       }
-      else if (op === "function" || op === "function-defaults" || op === "class" || op === "class-meta" || op === "class-keywords") {
+      else if (op === "function" || op === "function-defaults" || op === "class" || op === "class-meta" || op === "class-keywords" || op === "class-expanded") {
         const owner = frame.pool;
         const closure = new Map(owner.code.functions[arg].free.map(key => [key,
           frame.fn.kind === "class" ? key === "__class__" && frame.locals.has("@source:class") ? frame.locals.get("@source:class") : frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
@@ -751,7 +761,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const builtinEntry = inlined ? null : environmentCell(frame.callable.globals, "__builtins__");
         const captured = inlined ? frame.callable.builtins : builtinEntry?.bound ? builtinEntry.value instanceof ModuleValue ? builtinEntry.value.environment : builtinEntry.value : undefined;
         const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure, defaults, captured);
-        if (op !== "class" && op !== "class-meta" && op !== "class-keywords") {
+        if (op !== "class" && op !== "class-meta" && op !== "class-keywords" && op !== "class-expanded") {
           const dictionary = frame.callable.globals.dictionary;
           if (dictionary?.ownedKeys && !inlined) {
             state.temporaries.push(callable);
@@ -760,19 +770,16 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           } else stack.push(callable);
         }
         else {
-          const keywordValues = op === "class-keywords" ? stack.splice(stack.length - fourth.length) : [];
-          const keywords = op === "class-keywords" ? [...fourth] : [];
+          const expanded = op === "class-expanded" ? stack.pop() : null;
+          const assembled = expanded ? finishArguments(expanded) : null;
+          const keywordValues = expanded ? [...assembled[1]] : op === "class-keywords" ? stack.splice(stack.length - fourth.length) : [];
+          const keywords = expanded ? [...assembled[0]] : op === "class-keywords" ? [...fourth] : [];
           const metaIndex = keywords.indexOf("metaclass"), hasMeta = op === "class-meta" || metaIndex !== -1;
           const explicit = op === "class-meta" ? stack.pop() : metaIndex === -1 ? undefined : keywordValues.splice(metaIndex, 1)[0];
           if (metaIndex !== -1) keywords.splice(metaIndex, 1);
-          const bases = stack.splice(stack.length - extra);
-          state.temporaries.push(callable);
-          classes.validateNamespace(bases, owner.code.functions[arg].locals);
-          const invalidMetaclass = hasMeta && !classes.isType(explicit) && !classes.callable(explicit);
-          const metaclass = !invalidMetaclass && (hasMeta || bases.some(base => base instanceof ClassValue && base.metaclass !== null)) ? classes.selectMetaclass(bases, explicit) : null;
-          const record = {callable, bases, metaclass, invalidMetaclass, keywords, keywordValues};
-          const resolved = loadName(frame, "__name__", summary(frame, cursor), continuation("class-module", record));
-          const pending = resolved.task || enterClass(record, resolved.value, summary(frame, cursor));
+          const bases = expanded ? expanded.args : stack.splice(stack.length - extra);
+          state.temporaries.push(callable, ...bases, ...(hasMeta ? [explicit] : []), ...keywordValues);
+          const pending = resolveClassBases({callable, bases, explicit, hasMeta, keywords, keywordValues}, summary(frame, cursor));
           if (pending) dispatch(pending);
         }
       } else if (op === "yield") yieldGenerator(stack.pop());

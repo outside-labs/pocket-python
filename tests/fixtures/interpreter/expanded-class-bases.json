@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-expanded-class-bases/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O79"
+  ],
+  "cases": [
+    {
+      "id": "expanded-bases",
+      "stage": "O79",
+      "source": "class A: pass\nclass B: pass\nclass C(*(A,),*(B,)): pass\nprint(C.__bases__==(A,B),C.__mro__==(C,A,B,object))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "expanded-meta",
+      "stage": "O79",
+      "source": "class M(type): pass\nclass A(*(),metaclass=M): pass\nprint(type(A) is M)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "expanded-keywords",
+      "stage": "O79",
+      "source": "class A:\n def __init_subclass__(cls,*,x,y): print(x[0],y)\nvalue=[7]\nclass B(*(A,),**{\"x\":value},y=9): pass\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "mapping-keywords",
+      "stage": "O79",
+      "source": "class Map:\n def keys(self):\n  print(\"keys\")\n  return [\"metaclass\"]\n def __getitem__(self,key):\n  print(key)\n  return type\nclass A(**Map()): pass\nprint(type(A) is type)\n",
+      "stdout": "keys\nmetaclass\nTrue\n"
+    },
+    {
+      "id": "single-evaluation",
+      "stage": "O79",
+      "source": "def f(name,value):\n print(name)\n return value\nclass A: pass\nclass C(f(\"base\",A),metaclass=f(\"meta\",type),*f(\"star\",())):\n print(\"body\")\n",
+      "stdout": "base\nstar\nmeta\nbody\n"
+    },
+    {
+      "id": "replacement-original-identity",
+      "stage": "O79",
+      "source": "saved=[]\nclass A: pass\nclass B:\n def __mro_entries__(self,bases):\n  saved.append(bases)\n  return (A,)\nb=B()\nclass C(b): pass\nprint(C.__bases__==(A,),C.__orig_bases__ is saved[0],C.__orig_bases__[0] is b)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "replacement-shared-original",
+      "stage": "O79",
+      "source": "saved=[]\nclass A: pass\nclass B: pass\nclass Proxy:\n def __init__(self,base): self.base=base\n def __mro_entries__(self,bases):\n  saved.append(bases)\n  return (self.base,)\nclass C(Proxy(A),Proxy(B)): pass\nprint(saved[0] is saved[1],C.__bases__==(A,B))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "replacement-empty",
+      "stage": "O79",
+      "source": "class Proxy:\n def __mro_entries__(self,bases): return ()\np=Proxy()\nclass C(p): pass\nprint(C.__bases__==(object,),C.__orig_bases__==(p,))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "replacement-lookup-effects",
+      "stage": "O79",
+      "source": "class A: pass\nclass Proxy:\n def __getattribute__(self,name):\n  print(name)\n  return lambda bases: (A,)\nclass C(Proxy()): print(\"body\")\nprint(C.__bases__==(A,))\n",
+      "stdout": "__mro_entries__\nbody\nTrue\n"
+    },
+    {
+      "id": "replacement-descriptor",
+      "stage": "O79",
+      "source": "class A: pass\nclass D:\n def __get__(self,obj,owner):\n  print(obj is p,owner is Proxy)\n  return lambda bases: (A,)\nclass Proxy: __mro_entries__=D()\np=Proxy()\nclass C(p): pass\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "replacement-not-recursive",
+      "stage": "O79",
+      "source": "class Proxy:\n def __mro_entries__(self,bases):\n  print(\"resolved\")\n  return (self,)\nclass C(Proxy()): print(\"body\")\n",
+      "stdout": "resolved\nbody\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "replacement-invalid-result",
+      "stage": "O79",
+      "source": "class Proxy:\n def __mro_entries__(self,bases):\n  print(\"resolved\")\n  return []\nclass C(Proxy()): print(\"never\")\n",
+      "stdout": "resolved\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "replacement-body-error",
+      "stage": "O79",
+      "source": "class Proxy:\n def __mro_entries__(self,bases):\n  print(\"resolved\")\n  raise ValueError(\"original\")\nclass C(Proxy()): print(\"never\")\n",
+      "stdout": "resolved\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "replacement-noncallable",
+      "stage": "O79",
+      "source": "class Proxy: __mro_entries__=None\nclass C(Proxy()): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "replacement-before-metaclass-conflict",
+      "stage": "O79",
+      "source": "class M(type): pass\nclass N(type): pass\nclass A(metaclass=M): pass\nclass B(metaclass=N): pass\nclass Proxy:\n def __mro_entries__(self,bases):\n  print(\"resolved\")\n  return (B,)\nclass C(A,Proxy()): print(\"never\")\n",
+      "stdout": "resolved\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "replacement-duplicate",
+      "stage": "O79",
+      "source": "class A: pass\nclass Proxy:\n def __mro_entries__(self,bases): return (A,)\nclass C(A,Proxy()): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "replacement-original-overwrites-body",
+      "stage": "O79",
+      "source": "class Proxy:\n def __mro_entries__(self,bases): return ()\np=Proxy()\nclass C(p):\n ns=locals()\n __orig_bases__=7\nprint(C.__orig_bases__==(p,),C.ns[\"__orig_bases__\"] is C.__orig_bases__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "regular-bases-no-original",
+      "stage": "O79",
+      "source": "class A(*()): pass\nprint(\"__orig_bases__\" in A.__dict__)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "dynamic-type-no-resolution",
+      "stage": "O79",
+      "source": "class Proxy:\n def __mro_entries__(self,bases):\n  print(\"never\")\n  return ()\ntype(\"C\",(Proxy(),),{})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dynamic-meta-no-resolution",
+      "stage": "O79",
+      "source": "class M(type): pass\nclass Proxy:\n def __mro_entries__(self,bases):\n  print(\"never\")\n  return ()\nM(\"C\",(Proxy(),),{})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "duplicate-keyword-before-resolution",
+      "stage": "O79",
+      "source": "class Proxy:\n def __mro_entries__(self,bases): print(\"never\"); return ()\nclass C(Proxy(),metaclass=type,**{\"metaclass\":type}): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "duplicate-across-mappings",
+      "stage": "O79",
+      "source": "def f(name):\n print(name)\n return {\"metaclass\":type}\nclass C(**f(\"one\"),**f(\"two\")): print(\"never\")\n",
+      "stdout": "one\ntwo\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-keyword-key",
+      "stage": "O79",
+      "source": "class C(**{7:type}): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-keyword-mapping",
+      "stage": "O79",
+      "source": "class C(**[]): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-starred-bases",
+      "stage": "O79",
+      "source": "class C(*7): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    }
+  ]
+}

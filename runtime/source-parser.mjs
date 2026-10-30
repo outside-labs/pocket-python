@@ -318,8 +318,12 @@ class Parser {
     if (this.at("[")) this.unsupported("Generic classes are not adopted.");
     if (this.eat("(")) {
       while (!this.at(")")) {
-        if (this.at("*") || this.at("**")) this.unsupported("Expanded class bases and keywords require a separate stage.");
-        if (this.kind("name") && this.peek(1).value === "=") {
+        if (this.eat("**")) {
+          keywords.push({name: null, value: this.expression()});
+        } else if (this.eat("*")) {
+          if (keywords.some(item => item.name === null)) this.fail("Iterable expansion follows keyword mapping expansion.");
+          const value = this.expression(); bases.push(this.node("StarredArgument", value, {value}, value));
+        } else if (this.kind("name") && this.peek(1).value === "=") {
           const keyword = this.name(); this.expect("=");
           if (keywords.some(item => item.name === keyword.value)) this.fail("Duplicate class keyword.");
           if (keywords.length >= 128) this.fail("Class keyword budget exceeded.", this.peek(), "COMPILE_BUDGET");
@@ -338,7 +342,7 @@ class Parser {
     let body;
     try { body = this.suite(); } finally { [this.functionDepth, this.loopDepth] = before; }
     return this.node("Class", start, {name, bases, body,
-      ...(keywords.some(item => item.name !== "metaclass") ? {keywords} : metaclass ? {metaclass} : {}),
+      ...((keywords.some(item => item.name !== "metaclass") || bases.some(item => item.kind === "StarredArgument")) ? {keywords} : metaclass ? {metaclass} : {}),
       ...(decorators.length ? {decorators} : {})}, body.at(-1));
   }
   branch(keyword = "if") {

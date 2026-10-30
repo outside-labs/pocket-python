@@ -138,6 +138,10 @@ export function verifyFunctions(program) {
               ![...p.defaults, ...Object.values(p.kwdefaults)].length ||
               [...p.defaults, ...Object.values(p.kwdefaults)].some(value => value !== null)) fail("Runtime defaults do not match the target signature.");
         }
+        else if (classes && op === "class-expanded") {
+          length = 2;
+          if (!integer(arg, program.functions.length - 1) || arg === 0 || program.functions[arg]?.kind !== "class") fail("Invalid expanded class body.");
+        }
         else if (classes && ["class", "class-meta", "class-keywords"].includes(op)) {
           length = op === "class-keywords" ? 4 : 3;
           if (!integer(arg, program.functions.length - 1) || arg === 0 || program.functions[arg]?.kind !== "class" || !integer(extra, 16)) fail("Invalid class body or base count.");
@@ -187,7 +191,7 @@ export function verifyFunctions(program) {
       const heights = new Map([[0, 0]]), pending = [0];
       for (let cursor = 0; cursor < pending.length; cursor++) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
-        const needs = op === "dict-insert" ? 3 : ["list-push", "list-extend", "dict-merge", "set-insert", "set-extend"].includes(op) ? 2 : ["unpack", "list-to-tuple"].includes(op) ? 1 : op === "assertion-error" ? Number(arg) : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? 2 : ["call-start", "call-expanded"].includes(op) ? 1 : ["function-defaults", "class-keywords"].includes(op) ? extra + instructions[at][3].length : ["class", "class-meta"].includes(op) ? extra + Number(op === "class-meta") : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
+        const needs = op === "dict-insert" ? 3 : ["list-push", "list-extend", "dict-merge", "set-insert", "set-extend"].includes(op) ? 2 : ["unpack", "list-to-tuple"].includes(op) ? 1 : op === "assertion-error" ? Number(arg) : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? 2 : ["call-start", "call-expanded", "class-expanded"].includes(op) ? 1 : ["function-defaults", "class-keywords"].includes(op) ? extra + instructions[at][3].length : ["class", "class-meta"].includes(op) ? extra + Number(op === "class-meta") : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
           UNARY.has(op) || ["yield", "yield-from", "attribute-get", "attribute-delete", "module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
@@ -254,7 +258,7 @@ export function verifyFunctions(program) {
   for (const fn of functions) for (const block of fn.blocks) for (const [op, target] of block.instructions) {
     if (op === "function" && [...functions[target].params.defaults, ...Object.values(functions[target].params.kwdefaults)].some(value => value === null))
       fail("A runtime-default function requires definition values.");
-    if (["function", "function-defaults", "class", "class-meta", "class-keywords"].includes(op) && functions[target].free.some(key =>
+    if (["function", "function-defaults", "class", "class-meta", "class-keywords", "class-expanded"].includes(op) && functions[target].free.some(key =>
       !(fn.kind === "class" && key === "__class__" && fn.locals.includes("@source:class")) &&
       (fn.kind === "class" || !fn.locals.includes(key)) && !fn.free.includes(key))) fail("Function/class capture has no lexical cell.");
   }

@@ -273,6 +273,8 @@ def smoke(channel=None):
                     for corpus in [native_directory_closure, wrapper_super_directories, advertised_directories, integer_identity, generator_frames, code_cells, function_state, wrapper_metadata, class_mapping_proxies, native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c and not c.get('modules'))
+                    expanded_bases = json.loads((ROOT / 'tests/fixtures/interpreter/expanded-class-bases.json').read_bytes())
+                    programs.extend(c['source'] for c in expanded_bases['cases'] if 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
                     programs.append(PROPERTY_DIRECTORIES_SOURCE)
                     programs.append(NAMESPACE_VIEW_DIRECTORIES_SOURCE)
