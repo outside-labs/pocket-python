@@ -397,3 +397,10 @@ by a native subclass adds eight bytes for its original source-object edge;
 subviews/read-only copies retain it, and release removes it. Live-export queries
 collect the existing arena records, charge their bounded traversal and retain
 no additional objects. The existing composed observations remain unchanged.
+
+O87 retains revision 14's optional payload edge for native descriptor, wrapper,
+module and super source subtypes. Wrapper and module instance dictionaries alias
+their native namespace; payload records retain their existing allocation rules.
+New constructor/documentation/copy continuations trace their named receivers
+and use existing rollback and unwind paths. Ordinary source allocation and the
+eight existing composed observations remain unchanged.

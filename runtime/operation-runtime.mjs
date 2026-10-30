@@ -657,6 +657,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         failure.frameUpdateFailure = true; mutate(failure, () => { failure.context = current.inplace ? value : current.context; return () => { failure.context = null; }; });
         throw new Raised(failure);
       }
+      if (current.kind === "native-doc-result" && current.ignoreAttribute && value.name === "AttributeError") return valueTask(null, site, current.after);
       if (current.kind === "wrapper-metadata" && value.name === "AttributeError") return wrapperNext({...current, position: current.position + 1}, site);
       if (current.kind === "property-documentation" && value.name === "AttributeError") return propertyResult(current, null, false, site);
       if (current.kind === "abstract-lookup" && value.name === "AttributeError")
@@ -945,7 +946,29 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       mutate(receiver, () => { const items = receiver.items; receiver.items = [...value.items]; return () => { receiver.items = items; }; });
       return valueTask(null, site, completion.after);
     }
-    if (completion?.kind === "native-new") return valueTask(completion.type instanceof ClassValue ? classes.instance(completion.type, value) : value, site, completion.after);
+    if (completion?.kind === "native-doc-result") return valueTask(null, site, completion.after);
+    if (completion?.kind === "native-reinit") {
+      const original = completion.receiver;
+      classes.functionMetadata(original, "nativePayload", value);
+      if (value instanceof PropertyValue) {
+        const document = value.documentation; state.temporaries.push(document);
+        classes.functionMetadata(value, "documentation", null);
+        return attributeTask(original, "__doc__", site, continuation("native-doc-result", {receiver: original, ignoreAttribute: !value.getterDoc, after: completion.after}), 0, "set", null, null, document);
+      }
+      return valueTask(null, site, completion.after);
+    }
+    if (completion?.kind === "native-property-copy") {
+      if (value instanceof InstanceValue && value.nativePayload instanceof PropertyValue && completion.receiver.nativePayload.propertyName !== undefined)
+        classes.mutate(value.nativePayload, "__name__", completion.receiver.nativePayload.propertyName);
+      return valueTask(value, site, completion.after);
+    }
+    if (completion?.kind === "native-new") {
+      if (!(completion.type instanceof ClassValue)) return valueTask(value, site, completion.after);
+      const instance = classes.instance(completion.type, value); state.temporaries.push(instance);
+      if (value instanceof ModuleValue) classes.functionMetadata(instance, "attributes", values.environmentDictionary(value.environment));
+      if (value instanceof MethodWrapperValue) classes.functionMetadata(value, "attributes", classes.instanceDictionary(instance));
+      return valueTask(instance, site, completion.after);
+    }
     if (completion?.kind === "new-result") {
       state.temporaries.push(value, ...completionRoots(completion));
       if (!classes.subclass(classes.typeOf(value), completion.type)) return valueTask(value, site, completion.after);
@@ -1334,7 +1357,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const initializePlan = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
     const type = instance instanceof InstanceValue ? instance.type : classes.typeOf(instance);
-    let initializer = classes.lookup(type, "__init__", instance instanceof ClassValue || instance.nativePayload !== undefined && ["list", "dict", "set", "bytearray"].includes(type.storage.family));
+    let initializer = classes.lookup(type, "__init__", instance instanceof ClassValue || instance.nativePayload !== undefined && ["list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"].includes(type.storage.family));
     if (instance instanceof ClassValue && classes.isMetaclass(type) && !classes.hasSlot(type, "__init__") && initializer.value instanceof BuiltinValue && initializer.value.name === "object.__init__")
       initializer = {found: true, value: classes.builtin("type.__init__")};
     if (!initializer.found) {
@@ -2177,6 +2200,69 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           const nativeOwner = callable.nativeOwner instanceof BuiltinValue ? callable.nativeOwner.name : callable.name.split(".")[0];
           const nativeName = callable.nativeKey ?? callable.name.slice(callable.name.indexOf(".") + 1);
+          if (["property", "staticmethod", "classmethod", "module", "super"].includes(nativeOwner) && callable.name.includes(".")) {
+            const original = args[0], raw = classes.payload(original), rest = args.slice(1);
+            if (nativeName === "__new__") {
+              if (!classes.isType(original) || !classes.subclass(original, classes.builtin(nativeOwner))) python("TypeError", "Native __new__ requires a matching subtype");
+              const payload = nativeOwner === "property" ? allocate(PropertyValue) : ["staticmethod", "classmethod"].includes(nativeOwner) ?
+                allocate(MethodWrapperValue, nativeOwner, null) : nativeOwner === "module" ? allocate(ModuleValue, "", false, allocate(Environment)) : allocate(SuperValue, null, null, null);
+              state.temporaries.push(payload);
+              task = valueTask(payload, site, continuation("native-new", {type: original, after: completion})); continue;
+            }
+            if (original instanceof InstanceValue && original.nativePayload !== undefined) {
+              const finish = continuation("relay", {receiver: original, after: completion});
+              if (nativeName === "__init__") {
+                if (nativeOwner === "property") {
+                  const parts = classes.propertyArguments(rest, keywords, keywordValues);
+                  const payload = allocate(PropertyValue, ...parts.slice(0, 3), undefined, parts[3]); state.temporaries.push(payload);
+                  classes.functionMetadata(original, "nativePayload", payload);
+                  task = propertyTask(parts, null, site, continuation("native-reinit", {receiver: original, after: completion}), depth); continue;
+                }
+                if (["staticmethod", "classmethod"].includes(nativeOwner)) {
+                  if (rest.length !== 1 || keywords.length) python("TypeError", nativeOwner + " requires one callable");
+                  const payload = allocate(MethodWrapperValue, nativeOwner, rest[0]); state.temporaries.push(payload);
+                  classes.functionMetadata(payload, "attributes", classes.instanceDictionary(original));
+                  classes.functionMetadata(original, "nativePayload", payload);
+                  task = wrapperNext({receiver: payload, position: 0, depth, after: continuation("item-result", {receiver: original, after: completion})}, site); continue;
+                }
+                if (nativeOwner === "module") {
+                  const bound = bindNamed(["name", "doc"], rest, keywords, keywordValues), name = values.text(bound.get("name"));
+                  if (name === null) python("TypeError", "module name must be a string");
+                  const dictionary = classes.instanceDictionary(original);
+                  const pairs = [["__name__", bound.get("name")], ["__doc__", bound.get("doc") ?? null], ["__package__", null], ["__loader__", null], ["__spec__", null]];
+                  for (const [key, item] of pairs) { const label = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(label); values.set(dictionary, label, item); }
+                  task = valueTask(null, site, finish); continue;
+                }
+                task = callTask(classes.builtin("super"), rest, keywords, keywordValues, site, continuation("native-reinit", {receiver: original, after: completion}), depth); continue;
+              }
+              if (nativeOwner === "property" && nativeName === "__get__" && rest[0] === null) {
+                if (keywords.length || rest.length < 1 || rest.length > 2) python("TypeError", "property.__get__ received invalid arguments");
+                task = valueTask(original, site, finish); continue;
+              }
+              if (nativeOwner === "property" && ["getter", "setter", "deleter"].includes(nativeName)) {
+                if (keywords.length || rest.length !== 1) python("TypeError", "property copy takes one argument");
+                task = callTask(original.type, classes.propertyCopyArguments(raw, nativeName, rest[0]), [], [], site, continuation("native-property-copy", {receiver: original, after: completion}), depth); continue;
+              }
+              if (nativeOwner === "staticmethod" && nativeName === "__call__") {
+                task = callTask(raw.callable, rest, keywords, keywordValues, site, finish, depth); continue;
+              }
+              if (nativeOwner === "super" && nativeName === "__get__") {
+                if (keywords.length || rest.length < 1 || rest.length > 2) python("TypeError", "super.__get__ received invalid arguments");
+                task = raw.self !== null || rest[0] === null ? valueTask(original, site, finish) : callTask(original.type, [raw.thisclass, rest[0]], [], [], site, finish, depth); continue;
+              }
+              if (["__get__", "__set__", "__delete__", "__set_name__"].includes(nativeName)) {
+                task = callTask(callable, [raw, ...rest], keywords, keywordValues, site, finish, depth); continue;
+              }
+              if (["__getattribute__", "__setattr__", "__delattr__"].includes(nativeName)) {
+                const writing = nativeName !== "__getattribute__", remove = nativeName === "__delattr__";
+                if (keywords.length || rest.length !== (writing && !remove ? 2 : 1)) python("TypeError", "Invalid native attribute arguments");
+                const name = values.text(rest[0]); if (name === null) python("TypeError", "Attribute name must be a string");
+                task = !writing && name === "__class__" ? valueTask(original.type, site, finish) : attributeTask(raw, name, site, finish, depth, writing ? remove ? "delete" : "set" : "get", null, null, rest[1]); continue;
+              }
+              if (nativeOwner === "module" && nativeName === "__dir__") { task = callTask(classes.builtin("module.__dir__"), [raw], keywords, keywordValues, site, finish, depth); continue; }
+            }
+          }
+          if (callable.name === "native-module-get") { task = attributeTask(args[0].nativePayload, values.text(args[1]), site, continuation("relay", {receiver: args[0], after: completion}), depth); continue; }
           if (NATIVE_SUBCLASS_BASES.includes(nativeOwner) && callable.name.includes(".") && (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined)) {
             if (nativeName === "__new__") {
               if (!args.length || !classes.isType(args[0]) || !classes.subclass(args[0], classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
@@ -2862,6 +2948,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length > (callable.name === "locals" ? 0 : 1)) python("TypeError", callable.name + "() received invalid arguments");
             if (args.length) {
               const receiver = args[0];
+              if (callable.name === "dir" && receiver?.nativePayload instanceof ModuleValue && !classes.hasSlot(receiver.type, "__dir__")) {
+                task = callTask(classes.builtin("module.__dir__"), [receiver], [], [], site, continuation("dir-sort", {receiver, depth, after: completion}), depth); continue;
+              }
               if (callable.name === "dir" && receiver instanceof ModuleValue) {
                 task = attributeTask(receiver, "__dir__", site, continuation("module-dir", {receiver, depth, after: completion}), depth); continue;
               }

@@ -279,6 +279,8 @@ def smoke(channel=None):
                     programs.extend(c['source'] for c in prepared_namespaces['cases'] if 'error_type' not in c)
                     factories = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-factories.json').read_bytes())
                     programs.extend(c['source'] for c in factories['cases'] if 'error_type' not in c)
+                    native_object_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/native-object-subclasses.json').read_bytes())
+                    programs.extend(c['source'] for c in native_object_subclasses['cases'] if 'error_type' not in c and not c.get('modules'))
                     mutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/mutable-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in mutable_subclasses['cases'] if 'error_type' not in c)
                     immutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/immutable-subclasses.json').read_bytes())

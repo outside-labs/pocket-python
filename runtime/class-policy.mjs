@@ -15,6 +15,7 @@ export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
   ...["__neg__", "__pos__", "__invert__", "__getattribute__", "__getattr__", "__setattr__", "__delattr__", "__instancecheck__", "__subclasscheck__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ["__prepare__", ordinarySlot], ["__classcell__", ordinarySlot], ["__classdictcell__", ordinarySlot],
   ["__slots__", ordinarySlot],
+  ...["__func__", "__wrapped__", "__self__", "__self_class__", "__thisclass__", "__package__", "__loader__", "__spec__"].map(name => [name, ordinarySlot]),
   ["__mro_entries__", ordinarySlot], ["__orig_bases__", ordinarySlot],
   ["__init__", ordinarySlot], ["__new__", ordinarySlot], ["__init_subclass__", ordinarySlot], ...DESCRIPTOR_HOOKS.map(name => [name, ordinarySlot]),
   ["__module__", Object.freeze({define: true})], ["__qualname__", Object.freeze({define: true})],

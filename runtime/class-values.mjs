@@ -5,7 +5,7 @@ import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS} from "./class-po
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
-export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray"]);
+export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"]);
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "code", "frame", "FrameLocalsProxy", "cell",
@@ -381,8 +381,8 @@ export class ClassRuntime {
     }
     const inherited = bases.find(base => base.storage?.solid === best)?.storage;
     const count = inherited?.count ?? 0;
-    const dict = bases.some(base => base.storage?.dict ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && base.name === "type"));
-    const weak = bases.some(base => base.storage?.weak ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && ["type", "frozenset", "set"].includes(base.name)));
+    const dict = bases.some(base => base.storage?.dict ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && ["type", "module", "staticmethod", "classmethod"].includes(base.name)));
+    const weak = bases.some(base => base.storage?.weak ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && ["type", "frozenset", "set", "module"].includes(base.name)));
     const family = best instanceof BuiltinValue ? best.name : best?.storage?.family ?? "object";
     const variable = ["int", "bytes", "tuple"].includes(family);
     const ownNames = []; let ownDict = slotNames === null && !dict, ownWeak = slotNames === null && !weak && !variable;
@@ -638,6 +638,10 @@ export class ClassRuntime {
     if (!hook.found) return null;
     if (hook.value instanceof MethodWrapperValue) return {kind: "call",
       callable: hook.value.kind === "classmethod" ? this.make(BoundMethodValue, hook.value.callable, this.checkingType(receiver), !NATIVE_CLASS_METHODS.has(hook.value.callable?.name)) : hook.value.callable, args};
+    if (hook.value instanceof BuiltinValue && this.nativeDescriptorKind(hook.value)) {
+      const plan = this.bindAttribute(hook.value, receiver, this.checkingType(receiver));
+      return plan.kind === "value" ? {kind: "call", callable: plan.value, args} : {kind: "bind-call", callable: plan.callable, args: plan.args, invokeArgs: args};
+    }
     if (hook.value instanceof FunctionValue) return {kind: "call", callable: hook.value, args: [receiver, ...args]};
     if (hook.value instanceof PropertyValue || this.descriptor(hook.value)?.get.found) {
       const plan = this.bindAttribute(hook.value, receiver, this.checkingType(receiver));
@@ -954,7 +958,7 @@ export class ClassRuntime {
     if (receiver instanceof InstanceValue && (item.value instanceof PropertyValue ||
         descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)))
       return this.bindAttribute(item.value, receiver, owner);
-    if (receiver instanceof InstanceValue) return this.instanceEntry(receiver, name, "get", null, key, item);
+    if (receiver instanceof InstanceValue) return this.instanceEntry(receiver, name, "get", null, key, {...item, skipNative: native});
     if (!item.found) {
       if (metaItem?.found) return this.bindAttribute(metaItem.value, receiver, metaclass);
       this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
@@ -969,11 +973,11 @@ export class ClassRuntime {
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_BINDING_WRAPPERS.has(value.name) &&
         this.nativeDescriptorKind(receiver) !== value.name.slice(0, value.name.indexOf(".")))
       this.fail("TypeError", "Native descriptor binding requires a matching descriptor receiver.");
-    if (receiver !== null && value instanceof BuiltinValue && NATIVE_PROPERTY_METHODS.has(value.name) && !(receiver instanceof PropertyValue))
+    if (receiver !== null && value instanceof BuiltinValue && NATIVE_PROPERTY_METHODS.has(value.name) && !(this.payload(receiver) instanceof PropertyValue))
       this.fail("TypeError", "Native property copy requires a property receiver.");
     if (receiver !== null && value instanceof BuiltinValue && NATIVE_DESCRIPTOR_WRAPPERS.has(value.name)) {
       const kind = value.name.slice(0, value.name.indexOf("."));
-      if (kind === "function" ? !(receiver instanceof FunctionValue) : kind === "property" ? !(receiver instanceof PropertyValue) : !(receiver instanceof MethodWrapperValue) || receiver.kind !== kind)
+      if (kind === "function" ? !(receiver instanceof FunctionValue) : kind === "property" ? !(this.payload(receiver) instanceof PropertyValue) : !(this.payload(receiver) instanceof MethodWrapperValue) || this.payload(receiver).kind !== kind)
         this.fail("TypeError", "Native descriptor requires a matching receiver.");
     }
     if (value instanceof SuperValue && value.self === null && receiver !== null) {
@@ -1232,6 +1236,8 @@ export class ClassRuntime {
   namespaceGetset(descriptor, receiver, operation = "get", item = null) {
     this.namespaceDescriptorValid(descriptor, receiver);
     const owner = descriptor.nativeOwner, name = descriptor.nativeKey;
+    if (receiver instanceof InstanceValue && receiver.nativePayload !== undefined && owner instanceof BuiltinValue && ["property", "staticmethod", "classmethod", "module", "super"].includes(owner.name))
+      return this.namespaceGetset(descriptor, receiver.nativePayload, operation, item);
     if (descriptor.slotIndex !== undefined) {
       const slots = receiver.slotValues;
       if (!(slots instanceof Map)) this.fail("TypeError", "Descriptor does not apply to this receiver layout");
@@ -1340,6 +1346,8 @@ export class ClassRuntime {
   }
   instanceMissing(receiver, name, fallback = {found: false}) {
     if (fallback.found) return this.bindAttribute(fallback.value, receiver, receiver.type);
+    if (!fallback.skipNative && receiver.nativePayload instanceof SuperValue) return this.read(receiver.nativePayload, name);
+    if (!fallback.skipNative && receiver.nativePayload instanceof ModuleValue) return {kind: "call", callable: this.builtin("native-module-get"), args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
   }
   instanceEntry(receiver, name, operation = "get", item = null, key = null, fallback = {found: false}) {
