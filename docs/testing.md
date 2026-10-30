@@ -51,8 +51,10 @@ repeat the full local suite when passing CI already covers the same code.
 
 PR coverage retains every Node test, both interpreter drivers, core/class
 profiles, parked execution where adopted, browser conformance, offline console
-and Stop/Restart acceptance, and packaging on Linux/macOS/Windows. Standalone
-CPython reference runs duplicate references already exercised by differential
+and Stop/Restart acceptance, and packaging on Linux/macOS/Windows. Browser
+conformance uses six cost-balanced shards to fit the expanded native layout
+inventory within the existing job timeout. Standalone CPython reference runs
+duplicate references already exercised by differential
 checks, so they and repeated measurements run only in exhaustive validation.
 Nightly validation runs at 10:23 UTC; manual dispatch, release tags and the
 publication workflow also run the exhaustive inventory. Publication waits for

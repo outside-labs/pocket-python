@@ -960,7 +960,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "object-dir-dictionary") return objectDirectoryDictionary(completion, value, site);
     if (completion?.kind === "object-dir-class")
-      return classes.isType(value) && !(value instanceof ClassValue && value.metaclass !== null) ?
+      return classes.isType(value) && !(value instanceof ClassValue && (value.metaclass !== null || classes.lookupMayCallback(value))) ?
         classDirectoryNext({...completion, owner: null, pending: [value], names: [], position: 0}, site) : graphDirectory(completion, value, site);
     if (completion?.kind === "graph-dir-dict") return valueTask(value, site, continuation("graph-dir-ready", completion));
     if (completion?.kind === "graph-dir-ready") {
@@ -970,7 +970,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         const keys = values.list(source.entries.map(entry => entry.key)); state.temporaries.push(keys);
         return graphDirectoryCopy({...completion, source, keys, position: 0}, site);
       }
-      if (source === null || values.typeName(source) !== null) python("AttributeError", "advertised class dictionary has no keys method");
+      if (source === null || values.typeName(source) !== null && !(source instanceof FrameLocalsValue)) python("AttributeError", "advertised class dictionary has no keys method");
       return attributeTask(source, "keys", site, continuation("graph-dir-keys", {...completion, source}), completion.depth);
     }
     if (completion?.kind === "graph-dir-keys") return callTask(value, [], [], [], site, continuation("graph-dir-call", completion), completion.depth);
@@ -980,7 +980,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return dictionaryTask(completion.result, completion.key, site, continuation("graph-dir-store", completion), completion.depth, "set", value);
     if (completion?.kind === "graph-dir-store") return graphDirectoryCopy({...completion, position: completion.position + 1}, site);
     if (completion?.kind === "graph-dir-bases") {
-      if (values.isDict(value) || value instanceof ClassNamespaceValue) python("TypeError", "advertised bases must be a sequence");
+      if (values.isDict(value) || value instanceof ClassNamespaceValue || value instanceof FrameLocalsValue) python("TypeError", "advertised bases must be a sequence");
       return unaryTask("len", value, site, continuation("graph-dir-length", {...completion, source: value}), completion.depth);
     }
     if (completion?.kind === "graph-dir-length") {
@@ -2568,7 +2568,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length || !classes.isType(args[0]))
               python("TypeError", "type.__dir__ requires one positional actual type");
             const receiver = args[0], result = values.dict([]); state.temporaries.push(receiver, result);
-            if (receiver instanceof ClassValue && receiver.metaclass !== null) {
+            if (receiver instanceof ClassValue && (receiver.metaclass !== null || classes.lookupMayCallback(receiver))) {
               task = graphDirectory({receiver, result, depth, after: completion}, receiver, site); continue;
             }
             task = classDirectoryNext({receiver, result, pending: [receiver], owner: null, names: [], position: 0, depth, after: completion}, site); continue;

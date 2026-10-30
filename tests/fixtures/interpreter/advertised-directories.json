@@ -323,6 +323,57 @@
       "source": "class Mapping:\n def keys(self): return [\"x\"]\n def __getitem__(self,key): raise AttributeError(\"item\")\nclass Meta(type):\n @property\n def __dict__(cls): return Mapping()\nclass A(metaclass=Meta): pass\ntype.__dir__(A)\n",
       "stdout": "",
       "error_type": "AttributeError"
+    },
+    {
+      "id": "source-key-hash-read-and-merge",
+      "stage": "O76",
+      "source": "events=[]\nclass Key:\n def __hash__(self):\n  events.append(7)\n  return 7\nkey=Key()\nC=type(\"C\",(),{key:7})\nevents=[]\nr=type.__dir__(C)\nprint(r[0] is key,len(events))\n",
+      "stdout": "True 2\n"
+    },
+    {
+      "id": "instance-class-key-hash-read-and-merge",
+      "stage": "O76",
+      "source": "events=[]\nclass Key:\n def __hash__(self):\n  events.append(7)\n  return 7\nkey=Key()\nC=type(\"C\",(),{key:7})\nevents=[]\nr=object.__dir__(C())\nprint(r[0] is key,len(events))\n",
+      "stdout": "True 2\n"
+    },
+    {
+      "id": "inherited-key-hash-read-and-merge",
+      "stage": "O76",
+      "source": "events=[]\nclass Key:\n def __hash__(self):\n  events.append(7)\n  return 7\nkey=Key()\nC=type(\"C\",(),{key:7})\nevents=[]\nclass D(C): pass\nevents=[]\nr=type.__dir__(D)\nprint(key in r,len(events))\n",
+      "stdout": "True 2\n"
+    },
+    {
+      "id": "source-key-hash-attributeerror",
+      "stage": "O76",
+      "source": "active=False\nclass Key:\n def __hash__(self):\n  if active:\n   print(\"hash\")\n   raise AttributeError(\"hash\")\n  return 7\nkey=Key()\nC=type(\"C\",(),{key:7})\nactive=True\ntype.__dir__(C)\n",
+      "stdout": "hash\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "source-key-hash-valueerror",
+      "stage": "O76",
+      "source": "active=False\nclass Key:\n def __hash__(self):\n  if active:\n   print(\"hash\")\n   raise ValueError(\"hash\")\n  return 7\nkey=Key()\nC=type(\"C\",(),{key:7})\nactive=True\ntype.__dir__(C)\n",
+      "stdout": "hash\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "mapping-only-frame-locals-bases",
+      "stage": "O76",
+      "source": "def g(): yield 7\ngen=g()\nproxy=gen.gi_frame.f_locals\nclass Meta(type):\n @property\n def __dict__(cls): return {}\n @property\n def __bases__(cls): return proxy\nclass A(metaclass=Meta): pass\ntype.__dir__(A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "empty-frame-locals-namespace",
+      "stage": "O76",
+      "source": "def g():\n x=7\n yield x\ngen=g()\nproxy=gen.gi_frame.f_locals\nclass Meta(type):\n @property\n def __dict__(cls): return proxy\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "\n"
+    },
+    {
+      "id": "live-frame-locals-namespace",
+      "stage": "O76",
+      "source": "def g():\n x=7\n yield x\ngen=g()\nnext(gen)\nproxy=gen.gi_frame.f_locals\nclass Meta(type):\n @property\n def __dict__(cls): return proxy\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "x\n"
     }
   ]
 }

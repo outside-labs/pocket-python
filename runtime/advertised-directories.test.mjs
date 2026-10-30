@@ -59,3 +59,6 @@ for (const [options, limits, expected] of [
  const result = await run('class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint("entered")\nwhile True: names=dir(A)\n', options, limits);
  assert.equal(result.error?.code, expected, JSON.stringify(result.error)); assert.equal(result.stdout, 'entered\n'); closed(result.closed);
 });
+test('source namespace key lookup retains owned hash callbacks across parking and teardown', async () => {
+ await lifecycle('active=False\nclass Key:\n def __hash__(self):\n  if active: print("entered")\n  return 7\nkey=Key()\nC=type("C",(),{key:7})\nactive=True\nr=type.__dir__(C)\nprint(r[0] is key)\n','entered\nentered\nTrue\n');
+});
