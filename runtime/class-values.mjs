@@ -746,12 +746,8 @@ export class ClassRuntime {
     }
     let item = this.lookup(owner, name);
     if (!item.found && receiver instanceof InstanceValue && name === "__weakref__") {
-      for (const base of this.mro(receiver.type)) {
-        if (!(base instanceof ClassValue) || base.root) continue;
-        if (!base.namespaceDictionary && base.bases.every(parent => parent instanceof ClassValue && parent.root)) this.namespaceDictionary(base);
-        const entry = base.namespaceDictionary?.entries.find(entry => this.values.text(entry.key) === name);
-        if (entry) { item = {found: true, value: entry.value}; break; }
-      }
+      this.materializeInstanceStorage(receiver.type);
+      item = this.lookup(owner, name);
     }
     const descriptor = item.found ? this.descriptor(item.value) : null;
     if (name === "__dir__" && !item.found && !metaItem?.found)
@@ -853,6 +849,7 @@ export class ClassRuntime {
       this.fail("AttributeError", "Object instance has no dictionary.");
     if (receiver instanceof InstanceValue && name === "__dict__" && this.instanceDictionarySlot(receiver.type))
       return {kind: "value", value: this.mutate(receiver, name, value, remove, key)};
+    if (receiver instanceof InstanceValue && name === "__weakref__") this.materializeInstanceStorage(receiver.type);
     if (receiver instanceof InstanceValue || receiver instanceof ClassValue && receiver.metaclass) {
       const item = this.lookup(receiver instanceof InstanceValue ? receiver.type : receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.value instanceof PropertyValue) {
@@ -1065,12 +1062,16 @@ export class ClassRuntime {
     try { const layout = valueLayout(owner); this.memory?.resize(owner, layout.bytes, layout.children); }
     catch (error) { owner.namespaceEntries = before; throw error; }
   }
+  materializeInstanceStorage(type) {
+    for (const base of this.mro(type)) if (base instanceof ClassValue && !base.root && !base.namespaceDictionary &&
+        base.bases.every(parent => parent instanceof ClassValue && parent.root)) this.namespaceDictionary(base);
+  }
   instanceDictionarySlot(type, start = 0) {
     for (const base of this.mro(type).slice(start)) {
       if (!(base instanceof ClassValue) || base.root) continue;
       const own = this.ownNamespaceEntry(base, "__dict__", -1);
-      if (own.found) return own.value?.nativeKind === "getset_descriptor";
-      if (base.bases.every(parent => parent instanceof ClassValue && parent.root)) return true;
+      if (own.found) return own.value?.nativeKind === "getset_descriptor" && own.value.nativeOwner === base && own.value.nativeKey === "__dict__";
+      if (!base.namespaceDictionary && base.bases.every(parent => parent instanceof ClassValue && parent.root)) return true;
     }
     return false;
   }

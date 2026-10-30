@@ -746,6 +746,33 @@
       "stage": "O69",
       "source": "__name__=\"app\"\nclass M(type):pass\nclass C(metaclass=M):\n def f(self):self.tag=7\np=C.__dict__\nprint(p[\"__firstlineno__\"],*p[\"__static_attributes__\"],p[\"f\"] is C.f)\n",
       "stdout": "3 tag True\n"
+    },
+    {
+      "id": "source-weakref-instance-readonly",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\na=C()\na.__weakref__=7\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "source-weakref-ordinary-shadow",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:__weakref__=7\na=C()\na.__weakref__=9\nprint(a.__weakref__,C.__weakref__)\n",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "source-dictionary-foreign-descriptor",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:__dict__=int.real\nprint(C().__dict__)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "source-dictionary-key-error",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"__dict__\")\n def __eq__(self,other):\n  if active:raise ValueError(\"key\")\n  return other==\"__dict__\"\nC=type(\"C\",(),{K():7})\nactive=True\nprint(C().__dict__)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
     }
   ]
 }
