@@ -4084,15 +4084,14 @@
     {
       "id": "class-namespaces-callback-query",
       "source": "class C: tag=7\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return True\nprint(C.__dict__[Key()])\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "7\n",
+        "error_type": null
       }
     },
     {
