@@ -545,7 +545,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         continue;
       }
       if (frame.completion?.kind === "class") {
-        const bodyDictionary = frame.namespaceEnvironment?.dictionary;
+        const bodyDictionary = frame.namespaceEnvironment?.dictionary || (frame.completion.metaclass instanceof ClassValue ? classNamespace(frame) : null);
         const routed = name => frame.fn.globals?.includes(name) || frame.fn.nonlocals?.includes(name);
         if (!frame.namespaceFinished && (bodyDictionary || routed("__static_attributes__") || routed("__classcell__"))) {
           frame.namespaceFinished = true;

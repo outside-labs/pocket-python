@@ -740,6 +740,12 @@
       "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):\n  if active:raise ValueError(\"key\")\n  return other==\"tag\"\nC=type(\"C\",(),{K():7})\nactive=True\nC.tag=9\n",
       "stdout": "",
       "error_type": "ValueError"
+    },
+    {
+      "id": "source-metaclass-metadata",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass M(type):pass\nclass C(metaclass=M):\n def f(self):self.tag=7\np=C.__dict__\nprint(p[\"__firstlineno__\"],*p[\"__static_attributes__\"],p[\"f\"] is C.f)\n",
+      "stdout": "3 tag True\n"
     }
   ]
 }
