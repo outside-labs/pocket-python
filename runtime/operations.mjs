@@ -73,6 +73,11 @@ export function completion(kind, fields = {}) {
       if (typeof fields.found !== "boolean") throw new TypeError("Invalid instance dictionary fallback.");
       record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation),
         found: fields.found, fallback: fields.fallback, depth: fields.depth, after}; depthCheck(record.depth); break;
+    case "wrapper-metadata":
+      record = {kind, receiver: fields.receiver, position: fields.position, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 3) throw new TypeError("Invalid wrapper metadata position.");
+      break;
     case "property-documentation":
       record = {kind, receiver: fields.receiver, accessors: operands(fields.accessors), after};
       if (record.accessors.length !== 3) throw new TypeError("Invalid property documentation operands.");
@@ -269,6 +274,7 @@ function visit(record) {
     case "native-dir-merge": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "function-entry": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "instance-entry": return [record.receiver, record.key, ...(record.found ? [record.fallback] : []), ...completionRoots(record.after)];
+    case "wrapper-metadata": return [record.receiver, ...completionRoots(record.after)];
     case "property-documentation": return [record.receiver, ...record.accessors, ...completionRoots(record.after)];
     case "dir-length": case "dir-hint-bound": case "dir-hint-call": case "dir-hint-value":
       return [record.receiver, record.iterator, ...completionRoots(record.after)];

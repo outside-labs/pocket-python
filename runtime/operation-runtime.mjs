@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
-import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -464,18 +464,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     return valueTask(false, site, record.after);
   };
+  const wrapperKeys = ["__module__", "__name__", "__qualname__", "__doc__"];
+  const wrapperNext = (record, site) => record.position === wrapperKeys.length ? valueTask(record.receiver, site, record.after) :
+    attributeTask(record.receiver.callable, wrapperKeys[record.position], site, continuation("wrapper-metadata", record), record.depth);
   const propertyResult = (record, documentation, getterDoc, site) => valueTask(
     allocate(PropertyValue, ...record.accessors, record.receiver?.propertyName, documentation, getterDoc), site, record.after);
   const propertyTask = (parts, receiver, site, after, depth) => {
     const accessors = parts.slice(0, 3), document = parts[3], getter = accessors[0];
     const record = {receiver, accessors, after};
-    // Pure metadata keeps the established construction path and accounting.
-    // Opaque native metadata is never exposed as a qualified Python value.
-    if (receiver?.getterDoc === null) {
-      if (getter instanceof FunctionValue || getter instanceof ClassValue && !getter.root || getter instanceof InstanceValue)
-        hard("UNSUPPORTED", "UnsupportedOperationError", "Copying unqualified native documentation to a Python getter requires a separate stage.");
-      return propertyResult(record, undefined, null, site);
-    }
     if (document !== null) return propertyResult(record, document, false, site);
     if (getter === null) return propertyResult(record, null, false, site);
     if (getter instanceof FunctionValue) return propertyResult(record, getter.documentation, getter.documentation !== null, site);
@@ -484,8 +480,6 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     while (callable instanceof BoundMethodValue) { charge(1); callable = callable.callable; }
     if (getter instanceof BoundMethodValue && callable instanceof FunctionValue)
       return propertyResult(record, callable.documentation, callable.documentation !== null, site);
-    if (!(callable instanceof InstanceValue || callable instanceof ClassValue && !callable.root))
-      return propertyResult(record, undefined, null, site);
     if (++depth > maxDepth) python("RecursionError", "maximum property documentation lookup depth exceeded");
     return attributeTask(getter, "__doc__", site, continuation("property-documentation", record), depth);
   };
@@ -509,6 +503,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
       if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
+      if (current.kind === "wrapper-metadata" && value.name === "AttributeError") return wrapperNext({...current, position: current.position + 1}, site);
       if (current.kind === "property-documentation" && value.name === "AttributeError") return propertyResult(current, null, false, site);
       if (current.kind === "abstract-lookup" && value.name === "AttributeError")
         return abstractNext({...current, position: current.position + 1}, site);
@@ -658,6 +653,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
       }
       completion = completion.after;
+    }
+    if (completion?.kind === "wrapper-metadata") {
+      const key = values.string(Array.from(wrapperKeys[completion.position], char => char.codePointAt(0))); state.temporaries.push(key, value);
+      values.set(classes.functionDictionary(completion.receiver), key, value);
+      return wrapperNext({...completion, position: completion.position + 1}, site);
     }
     if (completion?.kind === "property-documentation") return propertyResult(completion, value, value !== null, site);
     if (completion?.kind === "advertised-instance")
@@ -1985,7 +1985,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (callable.name.startsWith("function-dictionary-")) {
             const [receiver, dictionary, key, item] = args, operation = callable.name.slice("function-dictionary-".length);
-            if (!(receiver instanceof FunctionValue) || !values.isDict(dictionary) || !values.isString(key) || args.length !== 4 || keywords.length)
+            if (!(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue) || !values.isDict(dictionary) || !values.isString(key) || args.length !== 4 || keywords.length)
               throw new TypeError("Invalid function dictionary operation.");
             const after = continuation("function-entry", {receiver, key, operation, after: completion});
             task = dictionaryTask(dictionary, key, site, operation === "set" ? continuation("relay", {receiver, after: completion}) : after,
@@ -2089,7 +2089,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
             const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && (args[0] instanceof FunctionValue || classes.isPythonMethod(args[0]));
             const directoryLayout = classes.hasFixedDirectory(args[0]) && name === "__dir__";
-            if (!(args[0] instanceof InstanceValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            if (!(args[0] instanceof InstanceValue || args[0] instanceof MethodWrapperValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             if (identityLayout && !writing && classes.isPythonMethod(args[0])) python("AttributeError", "Method identity metadata requires ordinary callable fallback.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
@@ -2327,7 +2327,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 task = attributeTask(receiver, "__dir__", site, continuation("module-dir", {receiver, depth, after: completion}), depth); continue;
               }
               if (callable.name === "vars") {
-                if (!(receiver instanceof ModuleValue || receiver instanceof InstanceValue || classes.isType(receiver) || receiver instanceof FunctionValue || classes.isPythonMethod(receiver))) {
+                if (!(receiver instanceof ModuleValue || receiver instanceof InstanceValue || classes.isType(receiver) || receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || classes.isPythonMethod(receiver))) {
                   if (values.typeName(receiver) !== null || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
                       receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");
@@ -2424,7 +2424,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           else if (["staticmethod", "classmethod"].includes(callable.name)) {
             if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
-            value = allocate(MethodWrapperValue, callable.name, args[0]);
+            if (++depth > maxDepth) python("RecursionError", "maximum wrapper metadata lookup depth exceeded");
+            const receiver = allocate(MethodWrapperValue, callable.name, args[0]); state.temporaries.push(receiver);
+            task = wrapperNext({receiver, position: 0, depth, after: completion}, site); continue;
           } else {
             if (callable.nativeKind) hard("UNSUPPORTED", "UnsupportedOperationError", "Native invocation " + callable.name + " is owned by " + classes.nativeInvocationOwner(callable) + ".");
             value = builtin(callable, [...args, ...keywordValues], keywords);

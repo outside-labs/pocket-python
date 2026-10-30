@@ -97,7 +97,7 @@ export class PropertyValue {
   }
 }
 export class MethodWrapperValue {
-  constructor(kind, callable) { this.kind = kind; this.callable = callable; Object.freeze(this); }
+  constructor(kind, callable) { this.kind = kind; this.callable = callable; this.attributes = null; }
 }
 export class PropertyAccessorValue extends BuiltinValue {
   constructor(name, property) { super(name); this.property = property; Object.freeze(this); }

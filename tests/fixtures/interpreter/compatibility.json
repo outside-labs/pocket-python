@@ -3046,14 +3046,14 @@
     {
       "id": "documentation-native-documentation",
       "source": "print(property(len).__doc__ is not None)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "UnsupportedOperationError"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -5171,15 +5171,14 @@
     {
       "id": "native-callable-directories-native-documentation-still-separate",
       "source": "d=property().getter\nd.__doc__\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "error_type": null
       }
     },
     {

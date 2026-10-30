@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O43",
-    "O44"
+    "O44",
+    "O71"
   ],
   "cases": [
     {
@@ -661,7 +662,7 @@
     },
     {
       "id": "wrapper-metadata-deferred",
-      "stage": "Future",
+      "stage": "O71",
       "source": "def f(): pass\nprint(staticmethod(f).__doc__)\n",
       "stdout": "None\n"
     },

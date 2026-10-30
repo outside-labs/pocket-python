@@ -7,7 +7,8 @@
     "O47",
     "O48",
     "O49",
-    "O67"
+    "O67",
+    "O71"
   ],
   "cases": [
     {
@@ -346,7 +347,7 @@
     },
     {
       "id": "super-dictionary",
-      "stage": "Future",
+      "stage": "O71",
       "source": "class A: pass\nclass C(A): pass\nc=C()\nsuper(C,c).__dict__\n",
       "stdout": ""
     },
