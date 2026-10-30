@@ -183,6 +183,32 @@
       "stage": "O82",
       "source": "class M(type):\n def mro(cls): return [cls]\nclass C(metaclass=M): print(\"body\")\n",
       "stdout": "body\n"
+    },
+    {
+      "id": "native-layout-missing-type-mro",
+      "stage": "O82",
+      "source": "class N(type):\n def mro(cls): return [cls,object]\nclass M(type,metaclass=N): pass\nprint(issubclass(M,type),M.__base__ is type)\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "False True\nbody\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-layout-explicit-mro-validation",
+      "stage": "O82",
+      "source": "class N(type):\n def mro(cls): return [cls,object]\nclass M(type,metaclass=N):\n def mro(cls): return type.mro(cls)\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-layout-hidden-type-descriptors",
+      "stage": "O82",
+      "source": "class N(type):\n def mro(cls): return [cls,object]\nclass M(type,metaclass=N):\n def mro(cls): return [cls,object]\nclass C(metaclass=M): print(\"body\")\nprint(type(C) is M,isinstance(C,type),issubclass(M,type))\nfor name in (\"__name__\",\"__bases__\",\"__mro__\",\"__qualname__\"):\n try: getattr(C,name)\n except AttributeError: print(name)\nprint(C.__module__==__name__,type(C.__dict__).__name__)\n",
+      "stdout": "body\nTrue False False\n__name__\n__bases__\n__mro__\n__qualname__\nTrue getset_descriptor\n"
+    },
+    {
+      "id": "native-layout-reordered-type-base",
+      "stage": "O82",
+      "source": "class N(type):\n def mro(cls): return [cls,object,type]\nclass M(type,metaclass=N): pass\nclass C(metaclass=M): print(\"body\")\nprint(type(C) is M,C.__mro__==(C,object))\n",
+      "stdout": "body\nTrue True\n"
     }
   ]
 }
