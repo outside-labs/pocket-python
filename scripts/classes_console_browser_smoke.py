@@ -275,6 +275,8 @@ def smoke(channel=None):
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c and not c.get('modules'))
                     expanded_bases = json.loads((ROOT / 'tests/fixtures/interpreter/expanded-class-bases.json').read_bytes())
                     programs.extend(c['source'] for c in expanded_bases['cases'] if 'error_type' not in c and not c.get('modules'))
+                    prepared_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/prepared-class-namespaces.json').read_bytes())
+                    programs.extend(c['source'] for c in prepared_namespaces['cases'] if 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
                     programs.append(PROPERTY_DIRECTORIES_SOURCE)
                     programs.append(NAMESPACE_VIEW_DIRECTORIES_SOURCE)
@@ -508,7 +510,7 @@ def smoke(channel=None):
                     assert '__new__ at sources/app.py:2' in page.locator('#diagnostic').inner_text()
                     refused('class M(type):\n def __new__(meta,name,bases,ns):\n  del ns["__classcell__"]\n  return type.__new__(meta,name,bases,ns)\nclass A(metaclass=M):\n def f(self): return __class__\n', 'RuntimeError:')
                     refused('class A:\n def f(self): return super().missing\nA().f()\n', 'AttributeError:')
-                    refused('class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\n', 'UnsupportedSyntaxError:')
+                    run('class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\nclass C(metaclass=M): pass\nprint(C.__name__)\n', 'C\n')
                     checks.append('constructor-super-metaclass-errors-and-future-hooks-retain-offline-diagnostics')
                     identity = 'class A: pass\nclass B:\n @property\n def __class__(self):\n  print("hook")\n  return A\nb=B()\n'
                     for expression in ['b.__class__', 'getattr(b,"__class__")', 'isinstance(b,A)', 'super(A,b)']:

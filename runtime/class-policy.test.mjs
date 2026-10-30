@@ -28,7 +28,7 @@ test('shared policy is immutable and keeps metadata distinct from ordinary slot 
 
 test('source and direct class records reject unadopted protocols through the same policy', () => {
   const runtime = new ClassRuntime(), root = runtime.root();
-  for (const name of ['__matmul__', '__format__', '__prepare__']) {
+  for (const name of ['__matmul__', '__format__']) {
     assert.equal(allowsClassSpecial(name, 'define'), false);
     assert.throws(() => compileSource('print("never")\nclass A:\n '+name+'=None\n', profile), {code: 'UNSUPPORTED'});
     assert.throws(() => runtime.create('A', 'A', 'app', [], new Map([[name, null]]), root), {code: 'UNSUPPORTED'});

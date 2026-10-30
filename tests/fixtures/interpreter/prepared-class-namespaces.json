@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-prepared-class-namespaces/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O80"
+  ],
+  "cases": [
+    {
+      "id": "prepared-dictionary",
+      "stage": "O80",
+      "source": "saved=[]\nclass M(type):\n @classmethod\n def __prepare__(meta,name,bases):\n  ns={\"initial\":7}\n  saved.append(ns)\n  return ns\nclass C(metaclass=M):\n value=initial\n ns=locals()\nprint(C.value,C.ns is saved[0],\"initial\" in C.__dict__)\n",
+      "stdout": "7 True True\n"
+    },
+    {
+      "id": "prepared-mapping-locals",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nclass C(metaclass=Meta):\n ns=locals()\n x=7\nprint(C.x,C.ns is saved[0],C.ns.data[\"x\"])\n",
+      "stdout": "7 True 7\n"
+    },
+    {
+      "id": "prepared-mapping-read-write-delete",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nclass C(metaclass=Meta):\n value=7\n print(value)\n del value\n try: print(value)\n except NameError: print(\"missing\")\n value=9\nprint(C.value)\n",
+      "stdout": "7\nmissing\n9\n"
+    },
+    {
+      "id": "prepared-mapping-private",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nclass C(metaclass=Meta):\n __x=7\n def read(self): return self.__x\nprint(C().read(),\"_C__x\" in C.__dict__)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "prepared-mapping-global",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nx=7\nclass C(metaclass=Meta):\n global x\n x=9\n value=x\nprint(x,C.value,\"x\" in C.__dict__)\n",
+      "stdout": "9 9 False\n"
+    },
+    {
+      "id": "prepared-mapping-free-cell",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\ndef outer():\n value=7\n class C(metaclass=Meta):\n  result=value\n return C\nprint(outer().result)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "prepared-mapping-nonlocal",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\ndef outer():\n value=7\n class C(metaclass=Meta):\n  nonlocal value\n  value=9\n  result=value\n return C,value\nprint(outer()[0].result,outer()[1])\n",
+      "stdout": "9 9\n"
+    },
+    {
+      "id": "prepared-mapping-name-override",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases):\n  ns=Map()\n  ns[\"__name__\"]=\"virtual\"\n  return ns\n def __new__(meta,name,bases,ns): return type.__new__(meta,name,bases,{**ns})\nclass C(metaclass=Meta): pass\nprint(C.__module__)\n",
+      "stdout": "virtual\n"
+    },
+    {
+      "id": "prepared-mapping-lookup-order",
+      "stage": "O80",
+      "source": "class Map:\n def __getitem__(self,key):\n  print(\"get\",key)\n  raise KeyError(key)\n def __setitem__(self,key,value): print(\"set\",key)\nclass M(type):\n @classmethod\n def __prepare__(meta,name,bases): return Map()\n def __new__(meta,name,bases,ns): return 7\nclass C(metaclass=M): x=9\nprint(C)\n",
+      "stdout": "get __name__\nset __module__\nset __qualname__\nset __firstlineno__\nset x\nset __static_attributes__\n7\n"
+    },
+    {
+      "id": "prepared-mapping-dir",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nclass C(metaclass=Meta):\n x=7\n print(\"x\" in dir(),locals() is vars())\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "prepared-mapping-comprehension",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nx=9\nclass C(metaclass=Meta):\n x=[7]\n values=[value for value in x]\n global_values=[x for value in x]\nprint(C.values==[7],C.global_values==[9])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "prepared-mapping-classcell",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nclass C(metaclass=Meta):\n def f(self): return __class__\nprint(C().f() is C,saved[0].data[\"__classcell__\"].cell_contents is C)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "prepared-descriptor-and-subclass",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nclass D:\n def __set_name__(self,owner,name): print(\"name\",name)\nclass A:\n def __init_subclass__(cls,*,tag): print(\"subclass\",tag)\nclass C(A,metaclass=Meta,tag=7): x=D()\n",
+      "stdout": "name x\nsubclass 7\n"
+    },
+    {
+      "id": "prepared-decorators",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\ndef decorate(value):\n print(value.x)\n return [value]\n@decorate\nclass C(metaclass=Meta): x=7\nprint(C[0].x)\n",
+      "stdout": "7\n7\n"
+    },
+    {
+      "id": "prepared-inherited",
+      "stage": "O80",
+      "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases):\n  print(name,meta.__name__)\n  return {}\nclass N(M): pass\nclass C(metaclass=N): pass\n",
+      "stdout": "C N\n"
+    },
+    {
+      "id": "prepare-static-function",
+      "stage": "O80",
+      "source": "class M(type):\n def __prepare__(name,bases):\n  print(name,len(bases))\n  return {}\nclass C(metaclass=M): pass\n",
+      "stdout": "C 0\n"
+    },
+    {
+      "id": "prepare-keywords-identity",
+      "stage": "O80",
+      "source": "value=[7]\nclass M(type):\n @classmethod\n def __prepare__(meta,name,bases,*,tag):\n  print(tag is value)\n  return {}\n def __new__(meta,name,bases,ns,*,tag):\n  print(tag is value)\n  return type.__new__(meta,name,bases,ns)\n def __init__(cls,name,bases,ns,*,tag): pass\nclass C(metaclass=M,**{\"tag\":value}): pass\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "prepare-invalid",
+      "stage": "O80",
+      "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases):\n  print(\"prepare\")\n  return []\nclass C(metaclass=M): print(\"never\")\n",
+      "stdout": "prepare\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "prepare-noncallable",
+      "stage": "O80",
+      "source": "class M(type): __prepare__=None\nclass C(metaclass=M): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "prepare-body-attribute-error",
+      "stage": "O80",
+      "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): raise AttributeError(\"original\")\nclass C(metaclass=M): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "mapping-write-error",
+      "stage": "O80",
+      "source": "class Map:\n def __getitem__(self,key): raise KeyError(key)\n def __setitem__(self,key,value):\n  print(key)\n  raise ValueError(\"original\")\nclass M(type):\n @classmethod\n def __prepare__(meta,name,bases): return Map()\nclass C(metaclass=M): print(\"never\")\n",
+      "stdout": "__module__\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "mapping-read-error",
+      "stage": "O80",
+      "source": "class Map:\n def __getitem__(self,key):\n  print(key)\n  raise ValueError(\"original\")\n def __setitem__(self,key,value): pass\nclass M(type):\n @classmethod\n def __prepare__(meta,name,bases): return Map()\nclass C(metaclass=M): pass\n",
+      "stdout": "__name__\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "mapping-delete-error",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\nclass C(metaclass=Meta): del missing\n",
+      "stdout": "",
+      "error_type": "NameError"
+    },
+    {
+      "id": "native-rejects-custom-mapping",
+      "stage": "O80",
+      "source": "class Map:\n def __getitem__(self,key): print(\"never\"); raise KeyError(key)\n def __setitem__(self,key,value): pass\nclass M(type):\n @classmethod\n def __prepare__(meta,name,bases): return Map()\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "never\nnever\nbody\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classcell-dropped",
+      "stage": "O80",
+      "source": "class M(type):\n def __new__(meta,name,bases,ns):\n  del ns[\"__classcell__\"]\n  return type.__new__(meta,name,bases,ns)\nclass C(metaclass=M):\n def f(self): return __class__\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "classcell-invalid",
+      "stage": "O80",
+      "source": "class M(type):\n def __new__(meta,name,bases,ns):\n  ns[\"__classcell__\"]=7\n  return type.__new__(meta,name,bases,ns)\nclass C(metaclass=M):\n def f(self): return __class__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "retained-mapping-on-failure",
+      "stage": "O80",
+      "source": "saved=[]\nclass Map:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value): self.data[key]=value\n def __delitem__(self,key): del self.data[key]\n def keys(self): return list(self.data)\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases,**kw): return Map()\n def __new__(meta,name,bases,ns,**kw):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,{**ns},**kw)\ntry:\n class C(metaclass=Meta):\n  escaped=locals()\n  raise ValueError(\"body\")\nexcept ValueError: print(\"failed\")\n",
+      "stdout": "failed\n"
+    },
+    {
+      "id": "native-prepare",
+      "stage": "O80",
+      "source": "a=type.__prepare__(\"C\",())\nb=type.__prepare__(1,2,3,tag=7)\nprint(type(a) is dict,type(b) is dict,a is b)\n",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "direct-type-does-not-prepare",
+      "stage": "O80",
+      "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): print(\"never\"); return {}\nC=M(\"C\",(),{})\nprint(C.__name__)\n",
+      "stdout": "C\n"
+    }
+  ]
+}

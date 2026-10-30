@@ -8,7 +8,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const resolveClassBases = (record, site) => {
     if (!record.originalBases && record.bases.every(base => classes.isType(base))) return beginClass(record, site);
     if (!record.originalBases) {
@@ -24,6 +24,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (record.resolved.length > 16) hard("BUDGET", "ExecutionLimitError", "Class base budget exceeded.");
     return beginClass({...record, bases: record.resolved, originalBases: record.changed ? record.originalBases : null}, site);
+  };
+  const prepareClass = (record, rawModule, site) => {
+    const meta = record.metaclass;
+    if (!(meta instanceof ClassValue) || !classes.hasSlot(meta, "__prepare__") && !["__getattribute__", "__getattr__"].some(name => classes.hasAttributeHook(meta, name)))
+      return enterClass(record, rawModule, site);
+    const nameValue = values.string(Array.from(record.callable.pool.code.functions[record.callable.index].name, char => char.codePointAt(0)));
+    state.temporaries.push(nameValue);
+    const basesTuple = values.tuple(record.bases); state.temporaries.push(basesTuple);
+    return attributeTask(meta, "__prepare__", site, continuation("class-prepare-lookup", {...record, rawModule, nameValue, basesTuple}));
+  };
+  const preparedClass = (record, prepared, site) => {
+    const type = classes.checkingType(prepared);
+    if (!values.isDict(prepared) && !(type && classes.hasSlot(type, "__getitem__"))) python("TypeError", "__prepare__() must return a mapping");
+    state.temporaries.push(prepared);
+    return enterClass({...record, prepared}, record.rawModule, site);
   };
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
@@ -623,8 +638,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (["bases-check", "bases-class"].includes(current.kind) && value.name === "AttributeError")
         python("TypeError", "type checking requires a class or an object with tuple __bases__");
       if (current.kind === "bases-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
+      if (current.kind === "class-prepare-lookup" && value.name === "AttributeError") return valueTask(values.dict([]), site, continuation("class-prepare-result", current));
+      if (current.kind === "class-mapping-name" && value.name === "KeyError") return valueTask(null, site, continuation("class-mapping-fallback", current));
+      if (current.kind === "class-mapping-delete" && value.name === "KeyError") return unaryTask("class-delete-missing", current.receiver, site, current.after);
       if (current.kind === "class-base-lookup" && value.name === "AttributeError")
-        return resolveClassBases({...current, resolved: [...current.resolved, current.bases[current.position]], position: current.position + 1}, site);
+        return valueTask(null, site, continuation("class-base-missing", current));
       if (current.kind === "bases-walk" && value.name === "AttributeError") return basesNext(current, site);
       if (current.kind === "method-dir-dictionary" && value.name === "AttributeError") return methodDirectory(current, null, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
@@ -677,6 +695,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
+    while (["init", "relay", "subclass-result", "vars-result", "property-name", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
+      count("deliver:" + completion.kind);
+      if (completion.kind === "init") {
+        if (value !== null) python("TypeError", "__init__() should return None");
+        value = completion.instance;
+      } else if (completion.kind === "subclass-result") value = completion.receiver;
+      else if (completion.kind === "item-result") value = null;
+      else if (completion.kind === "index-result") {
+        if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "__index__ returned a non-integer value");
+        if (typeof value === "boolean") value = values.int(BigInt(value));
+      } else if (completion.kind === "format-result") {
+        if (!values.isString(value)) python("TypeError", completion.slot + " returned a non-string value");
+      } else if (completion.kind === "protocol-result") {
+        if (completion.slot === "__bool__") {
+          if (typeof value !== "boolean") python("TypeError", "__bool__() should return bool");
+        } else {
+          if (value instanceof InstanceValue) return unaryTask("index", value, site, completion, completion.depth);
+          value = lengthResult(value);
+        }
+        if (completion.operation !== "len") {
+          if (completion.slot === "__len__") value = value !== 0n;
+          if (completion.operation === "not") value = !value;
+        }
+      }
+      completion = completion.after;
+    }
     if (completion?.kind === "proxy-get") return valueTask(value.items[0] ? value.items[1] : completion.fallback, site, completion.after);
     if (completion?.kind === "view-item") {
       const [found, item] = values.comparisonSequence(value);
@@ -694,7 +738,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         let protocolNames = task.protocolNames || [];
         if (found && values.needsOwnedHash(key)) {
           const metaclass = task.bases.some(base => base instanceof BuiltinValue && base.name === "type" || classes.isMetaclass(base));
-          if (name === "__slots__" || metaclass && ["mro", "__prepare__"].includes(name))
+          if (name === "__slots__" || metaclass && name === "mro")
             hard("UNSUPPORTED", "UnsupportedOperationError", "Custom slots, MRO and prepared mappings retain their construction stages.");
           protocolNames = [...protocolNames, name];
           const position = task.dictionary.entries.findIndex(entry => entry.key === key), entry = task.dictionary.entries[position];
@@ -742,7 +786,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return valueTask(value.items[1], site, completion.after);
     }
     if (completion?.kind === "name-stored") return null;
-    if (completion?.kind === "class-module") return enterClass(completion, value, site);
+    if (completion?.kind === "class-module") return prepareClass(completion, value, site);
     if (completion?.kind === "class-qualname") return classQualification();
     if (completion?.kind === "class-firstline") return classFirstline();
     if (completion?.kind === "class-end") return classEnd({...completion});
@@ -780,32 +824,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "module-dir") return callTask(value, [], [], [], site, continuation("dir-result", completion), completion.depth);
     if (completion?.kind === "module-native-dir") return moduleDirectory(completion, value.items[0], value.items[1], site);
     if (completion?.kind === "module-missing") return valueTask(value, site, completion.after);
-    while (["init", "relay", "subclass-result", "vars-result", "property-name", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
-      count("deliver:" + completion.kind);
-      if (completion.kind === "init") {
-        if (value !== null) python("TypeError", "__init__() should return None");
-        value = completion.instance;
-      } else if (completion.kind === "subclass-result") value = completion.receiver;
-      else if (completion.kind === "item-result") value = null;
-      else if (completion.kind === "index-result") {
-        if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "__index__ returned a non-integer value");
-        if (typeof value === "boolean") value = values.int(BigInt(value));
-      } else if (completion.kind === "format-result") {
-        if (!values.isString(value)) python("TypeError", completion.slot + " returned a non-string value");
-      } else if (completion.kind === "protocol-result") {
-        if (completion.slot === "__bool__") {
-          if (typeof value !== "boolean") python("TypeError", "__bool__() should return bool");
-        } else {
-          if (value instanceof InstanceValue) return unaryTask("index", value, site, completion, completion.depth);
-          value = lengthResult(value);
-        }
-        if (completion.operation !== "len") {
-          if (completion.slot === "__len__") value = value !== 0n;
-          if (completion.operation === "not") value = !value;
-        }
-      }
-      completion = completion.after;
-    }
+    if (completion?.kind === "class-prepare-lookup") return callTask(value, [completion.nameValue, completion.basesTuple], completion.keywords, completion.keywordValues, site, continuation("class-prepare-result", completion));
+    if (completion?.kind === "class-prepare-result") return preparedClass(completion, value, site);
+    if (completion?.kind === "class-body-module") return classModule(value);
+    if (completion?.kind === "class-mapping-fallback") return classFallback(completion.name, site, completion.after);
+    if (completion?.kind === "class-mapping-name") return valueTask(value, site, completion.after);
+    if (completion?.kind === "class-mapping-delete") return valueTask(null, site, completion.after);
+    if (completion?.kind === "class-mapping-dir-call") return callTask(value, [], [], [], site, continuation("class-mapping-dir-result", completion));
+    if (completion?.kind === "class-mapping-dir-result") return consumeTask("list", value, site, continuation("dir-sort", completion));
+    if (completion?.kind === "class-base-missing") return resolveClassBases({...completion, resolved: [...completion.resolved, completion.bases[completion.position]], position: completion.position + 1}, site);
     if (completion?.kind === "class-base-lookup") return callTask(value, [completion.originalBases], [], [], site, continuation("class-base-result", completion));
     if (completion?.kind === "class-base-result") {
       if (!values.isSequenceType(value, "tuple")) python("TypeError", "__mro_entries__ must return a tuple");
@@ -1553,6 +1580,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "unary" && task.operation === "unpack-short") {
           state.temporaries = operationRoots(task); python("ValueError", "Not enough values to unpack");
         }
+        if (task.kind === "unary" && task.operation === "class-delete-missing") python("NameError", "name is not defined in class namespace");
         if (task.kind === "unary" && ["call-keyword-duplicate", "call-mapping-required"].includes(task.operation)) {
           state.temporaries = operationRoots(task);
           python("TypeError", task.operation === "call-keyword-duplicate" ? "Call received multiple values for a keyword argument" : "Argument after ** must be a mapping");
@@ -2191,6 +2219,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
             hard("UNSUPPORTED", "UnsupportedOperationError", "Construction of reflected implementation types requires a separate stage.");
           }
+          if (callable.name === "type.__prepare__") { task = valueTask(values.dict([]), site, completion); continue; }
           if (callable.name === "type.mro") {
             if (keywords.length || args.length !== 1 || !classes.isType(args[0]))
               python("TypeError", "type.mro requires one positional actual type");
@@ -2714,6 +2743,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const frame = state.frames.at(-1);
             if (frame.index === 0 || frame.fn.kind === "class") {
               const dictionary = frame.fn.kind === "class" ? classNamespace(frame) : values.environmentDictionary(frame.callable.globals);
+              if (callable.name === "dir" && !values.isDict(dictionary)) {
+                task = attributeTask(dictionary, "keys", site, continuation("class-mapping-dir-call", {receiver: dictionary, depth, after: completion})); continue;
+              }
               task = callable.name === "dir" ? valueTask(values.list(dictionary.entries.map(entry => entry.key)), site, continuation("dir-sort", {receiver: dictionary, depth, after: completion})) :
                 valueTask(dictionary, site, completion); continue;
             }
@@ -2811,5 +2843,5 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
-  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases});
+  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass});
 }

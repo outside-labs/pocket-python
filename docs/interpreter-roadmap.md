@@ -475,3 +475,6 @@ matrix with an 85-type audit and canonical namespace keys under accounting revis
 [O79](interpreter-expanded-class-bases.md) adopts expanded class headers, owned base
 resolution and original-base retention. Prepared mappings and further metaclass
 construction remain O80–O83.
+
+[O80](interpreter-prepared-class-namespaces.md) adopts prepared dictionaries and
+custom mapping class bodies with owned namespace callbacks and class cells.
