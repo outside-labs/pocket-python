@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O27",
     "O28",
-    "O49"
+    "O49",
+    "O80"
   ],
   "cases": [
     {
@@ -344,7 +345,7 @@
     },
     {
       "id": "custom-prepared-namespace",
-      "stage": "Future",
+      "stage": "O80",
       "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\nclass A(metaclass=M): pass\nprint(A.__name__)\n",
       "stdout": "A\n"
     }
