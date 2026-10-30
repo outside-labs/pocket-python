@@ -355,6 +355,13 @@
       "source": "active=False\nclass Key:\n def __hash__(self):\n  if active:\n   print(\"hash\")\n   raise ValueError(\"hash\")\n  return 7\nkey=Key()\nC=type(\"C\",(),{key:7})\nactive=True\ntype.__dir__(C)\n",
       "stdout": "hash\n",
       "error_type": "ValueError"
+    },
+    {
+      "id": "mapping-only-frame-locals-bases",
+      "stage": "O76",
+      "source": "def g(): yield 7\ngen=g()\nproxy=gen.gi_frame.f_locals\nclass Meta(type):\n @property\n def __dict__(cls): return {}\n @property\n def __bases__(cls): return proxy\nclass A(metaclass=Meta): pass\ntype.__dir__(A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
     }
   ]
 }

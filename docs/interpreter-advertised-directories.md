@@ -43,3 +43,6 @@ owned mapping traversal. Each key is read from its source namespace before it is
 merged; hash/equality errors during that read propagate independently of optional
 namespace attribute lookup. Inherited namespaces and object.__dir__ retain this
 ordering through parking, cancellation and close.
+
+Advertised bases reject mapping-only native layouts, including frame-local
+proxies, before any child access, even when the mapping is empty.

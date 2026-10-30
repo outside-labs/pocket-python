@@ -980,7 +980,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return dictionaryTask(completion.result, completion.key, site, continuation("graph-dir-store", completion), completion.depth, "set", value);
     if (completion?.kind === "graph-dir-store") return graphDirectoryCopy({...completion, position: completion.position + 1}, site);
     if (completion?.kind === "graph-dir-bases") {
-      if (values.isDict(value) || value instanceof ClassNamespaceValue) python("TypeError", "advertised bases must be a sequence");
+      if (values.isDict(value) || value instanceof ClassNamespaceValue || value instanceof FrameLocalsValue) python("TypeError", "advertised bases must be a sequence");
       return unaryTask("len", value, site, continuation("graph-dir-length", {...completion, source: value}), completion.depth);
     }
     if (completion?.kind === "graph-dir-length") {
