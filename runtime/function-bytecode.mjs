@@ -46,10 +46,14 @@ export function verifyFunctions(program) {
   const functions = Array.from(program.functions, (fn, functionIndex) => {
     const scopeFields = modern ? ["globals", "nonlocals"].filter(key => Object.hasOwn(fn, key)) : [];
     const namespaceFields = classes ? ["namespace", "namespaceCells"].filter(key => Object.hasOwn(fn, key)) : [];
+    const classFields = classes ? ["staticAttributes", "firstLine"].filter(key => Object.hasOwn(fn, key)) : [];
     const docFields = classes && Object.hasOwn(fn, "doc") ? ["doc"] : [];
-    fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : []), ...scopeFields, ...namespaceFields, ...docFields]);
+    fields(fn, ["name", "qualname", "params", "locals", "free", "body", "blocks", ...(classes ? ["kind"] : []), ...scopeFields, ...namespaceFields, ...docFields, ...classFields]);
     const kind = classes ? fn.kind : functionIndex === 0 ? "module" : "function";
     if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
+    const staticAttributes = Object.hasOwn(fn, "staticAttributes") ? names(fn.staticAttributes, validName) : null;
+    if (Object.hasOwn(fn, "firstLine") && (kind !== "class" || !integer(fn.firstLine, 1000000) || fn.firstLine < 1)) fail("Invalid class definition line.");
+    if (staticAttributes && kind !== "class") fail("Static attribute metadata requires a class body.");
     if (docFields.length && (kind !== "function" || !integer(fn.doc, constants.length - 1) || !new ValueRuntime().isString(constants[fn.doc])))
       fail("Function documentation requires a string constant in bytecode 5.");
     if (!(fn.name === "<module>" && functionIndex === 0) && !(modern && ["<lambda>", "<listcomp>", "<dictcomp>", "<setcomp>", "<genexpr>"].includes(fn.name) && kind === "function") && !validName(fn.name)) fail("Invalid function name.");
@@ -75,7 +79,7 @@ export function verifyFunctions(program) {
     const writable = key => locals.includes(key) || globals.includes(key) || nonlocals.includes(key);
     if (new Set(allParams).size !== allParams.length || allParams.length > FUNCTION_LIMITS.names ||
         allParams.some(key => !locals.includes(key)) || (kind !== "class" && free.some(key => locals.includes(key)))) fail("Parameter, local and free names conflict.");
-    if (kind === "class" && (allParams.length || !["__module__", "__qualname__"].every(key => locals.includes(key)))) fail("Class bodies require metadata locals and no parameters.");
+    if (kind === "class" && (allParams.length || !["__module__", "__qualname__"].every(key => locals.includes(key) || globals.includes(key) || nonlocals.includes(key)))) fail("Class bodies require metadata locals and no parameters.");
     if (!Array.isArray(fn.params.defaults) || fn.params.defaults.length > params.posonly.length + params.positional.length ||
         !Array.from(fn.params.defaults).every(index => (modern && index === null || integer(index, constants.length - 1))) || !record(fn.params.kwdefaults) ||
         Object.keys(fn.params.kwdefaults).some(key => !params.kwonly.includes(key) || !(modern && fn.params.kwdefaults[key] === null || integer(fn.params.kwdefaults[key], constants.length - 1)))) fail("Defaults must refer to immutable constants and declared parameters.");
@@ -236,7 +240,7 @@ export function verifyFunctions(program) {
     };
     control(fn.body, false);
     if (reached.size !== blocks.length) fail("Function contains an unreferenced block.");
-    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {}), ...Object.fromEntries(scopeFields.map(key => [key, key === "globals" ? globals : nonlocals])), ...(namespace ? {namespace} : {}), ...(namespaceCells ? {namespaceCells} : {}), ...(docFields.length ? {doc: fn.doc} : {})});
+    return Object.freeze({name: fn.name, qualname: fn.qualname, params: Object.freeze(params), locals, free, body: fn.body, blocks: Object.freeze(blocks), ...(classes ? {kind} : {}), ...Object.fromEntries(scopeFields.map(key => [key, key === "globals" ? globals : nonlocals])), ...(namespace ? {namespace} : {}), ...(namespaceCells ? {namespaceCells} : {}), ...(docFields.length ? {doc: fn.doc} : {}), ...(staticAttributes ? {staticAttributes} : {}), ...(Object.hasOwn(fn, "firstLine") ? {firstLine: fn.firstLine} : {})});
   });
   for (const fn of functions) if (fn.namespace) {
     const group = new Set([fn]);

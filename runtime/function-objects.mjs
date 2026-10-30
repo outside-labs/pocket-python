@@ -56,6 +56,7 @@ export class ClassValue {
     this.bases = Object.freeze([...bases]); this.mro = Object.freeze([this, ...parents]);
     this.namespace = new Map(namespace);
     this.metaclass = metaclass; this.sourceDefined = sourceDefined; this.automaticHash = automaticHash;
+    this.firstLine = 1; this.staticAttributes = [];
     this.directoryInitialCount = namespace.size; this.defaultDoc = !namespace.has("__doc__");
   }
 }

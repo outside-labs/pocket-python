@@ -34,8 +34,12 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
+    case "class-end": record = {kind, names: operands(fields.names), items: operands(fields.items), position: fields.position, signal: fields.signal, value: fields.value}; break;
+    case "class-firstline":
+    case "class-qualname": record = {kind}; break;
+    case "class-module": record = {kind, callable: fields.callable, bases: operands(fields.bases), metaclass: fields.metaclass, invalidMetaclass: fields.invalidMetaclass, keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)}; break;
     case "handler-type": record = {kind, position: fields.position, names: operands(fields.names), after}; break;
-    case "module-delete": case "global-name": case "global-delete":
+    case "class-name": case "module-delete": case "global-name": case "global-delete":
       record = {kind, receiver: fields.receiver, name: fields.name, after}; break;
     case "store-body": record = {kind, body: fields.body, after}; break;
     case "resume-control": record = {kind, signal: fields.signal, value: fields.value, after}; break;
@@ -227,7 +231,10 @@ export function completion(kind, fields = {}) {
 }
 function visit(record) {
   switch (record.kind) {
-    case "module-delete": case "global-name": case "global-delete": case "module-missing": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
+    case "class-name": case "module-delete": case "global-name": case "global-delete": case "module-missing": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
+    case "class-end": return [...record.items, record.value];
+    case "class-firstline": case "class-qualname": return [];
+    case "class-module": return [record.callable, ...record.bases, record.metaclass, ...record.keywordValues];
     case "handler-type": return completionRoots(record.after);
     case "store-body": return completionRoots(record.after);
     case "resume-control": return [record.value, ...completionRoots(record.after)];

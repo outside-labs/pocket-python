@@ -917,7 +917,9 @@ export class ValueRuntime {
       // Validate primitive hashability without invoking unadopted key callbacks.
       if (this.needsOwnedHash(key))
         this.fail("UnsupportedOperationError", "Callback-bearing namespace keys require their own stage.", "UNSUPPORTED");
-      this.hash(key); return {found: false, value: null};
+      this.hash(key);
+      for (const [stored, value] of owner.namespace) if (typeof stored !== "string" && this.equal(stored, key)) return {found: true, value};
+      return {found: false, value: null};
     }
     this.charge(name.length + 1);
     if (name === "__qualname__" || name === "__classcell__") return {found: false, value: null};
@@ -1421,8 +1423,8 @@ export function valueLayout(value) {
       children: [value.pool, value.globals, ...value.closure.values(), ...(value.defaults ?? []), ...(value.attributes === null ? [] : [value.attributes]), ...(value.documentation === null ? [] : [value.documentation]), ...metadata]};
   }
   if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
-    8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1)) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
-    children: [...value.bases, ...value.mro.slice(1), ...value.namespace.values(), ...(value.metaclass === null ? [] : [value.metaclass])]};
+    8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
+    children: [...value.bases, ...value.mro.slice(1), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.metaclass === null ? [] : [value.metaclass])]};
   if (value instanceof ClassNamespaceValue) return {bytes: 48, children: [value.owner]};
   if (value instanceof InstanceValue) return value.attributes instanceof Map ?
     {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),

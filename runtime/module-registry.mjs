@@ -152,6 +152,8 @@ export async function verifyRegistry(manifest, suppliedAssets) {
         ...(fn.namespace ? {namespace: fn.namespace} : {}),
         ...(fn.namespaceCells ? {namespaceCells: fn.namespaceCells} : {}),
         ...(Object.hasOwn(fn, "doc") ? {doc: fn.doc} : {}),
+        ...(fn.staticAttributes ? {staticAttributes: fn.staticAttributes} : {}),
+        ...(Object.hasOwn(fn, "firstLine") ? {firstLine: fn.firstLine} : {}),
         ...Object.fromEntries(["globals", "nonlocals"].filter(key => Object.hasOwn(fn, key)).map(key => [key, fn[key]])),
         blocks: fn.blocks.map(block => ({kind: block.kind, instructions: block.instructions, source: block.source}))}))});
     if (value.record.source) {

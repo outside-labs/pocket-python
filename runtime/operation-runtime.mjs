@@ -8,7 +8,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value instanceof NotImplementedValue) return "NotImplemented";
@@ -545,10 +545,23 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const deliverValue = (value, completion, site) => {
     if (completion?.kind === "name-stored") return null;
+    if (completion?.kind === "class-module") return enterClass(completion, value, site);
+    if (completion?.kind === "class-qualname") return classQualification();
+    if (completion?.kind === "class-firstline") return classFirstline();
+    if (completion?.kind === "class-end") return classEnd({...completion});
     if (completion?.kind === "handler-type") return handlerType(completion, value, site);
     if (completion?.kind === "module-delete") {
       if (!value.items[0]) python("AttributeError", "module has no attribute " + completion.name);
       return valueTask(null, site, completion.after);
+    }
+    if (completion?.kind === "class-name") {
+      if (value.items[0]) return valueTask(value.items[1], site, completion.after);
+      const frame = state.frames.at(-1);
+      if (frame.closure.has(completion.name) && !frame.fn.locals.includes(completion.name) && !frame.fn.globals?.includes(completion.name)) return valueTask(load(frame, completion.name), site, completion.after);
+      const dictionary = frame.callable.globals.dictionary;
+      if (dictionary === null) return valueTask(load(frame, completion.name, true), site, completion.after);
+      const key = values.string(Array.from(completion.name, char => char.codePointAt(0))); state.temporaries.push(key);
+      return dictionaryTask(dictionary, key, site, continuation("global-name", {receiver: dictionary, name: completion.name, after: completion.after}), 0, "probe");
     }
     if (["global-name", "global-delete"].includes(completion?.kind)) {
       const [found, item] = value.items;
@@ -556,7 +569,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (!found) python("NameError", "name '" + completion.name + "' is not defined");
         return null;
       }
-      return valueTask(found ? item : load(state.frames.at(-1), completion.name), site, completion.after);
+      return valueTask(found ? item : load(state.frames.at(-1), completion.name, true), site, completion.after);
     }
     if (completion?.kind === "store-body") { block(state.frames.at(-1), completion.body); return null; }
     if (completion?.kind === "resume-control") { settle({kind: completion.signal, value: completion.value}); return null; }
@@ -1683,15 +1696,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const bases = basesValue.items, namespace = new Map();
             for (const entry of namespaceValue.entries) {
               charge(1); const key = values.text(entry.key);
-              if (key === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Non-string class namespace keys require a separate construction stage.");
               if (key.length > 256) hard("BUDGET", "ExecutionLimitError", "Class attribute name budget exceeded.");
-              classes.key(key); namespace.set(key, entry.value);
+              if (key !== null) classes.key(key); namespace.set(key ?? entry.key, entry.value);
             }
             const frame = state.frames.at(-1), currentModule = values.text(environmentCell(frame.callable.globals, "__name__")?.value) || "builtins";
-            const module = namespace.has("__module__") ? values.text(namespace.get("__module__")) : currentModule;
+            const module = namespace.has("__module__") ? values.text(namespace.get("__module__")) ?? currentModule : currentModule;
             const qualname = namespace.has("__qualname__") ? values.text(namespace.get("__qualname__")) : name;
             if (module === null || qualname === null) python("TypeError", "Class metadata requires strings");
-            const cell = namespace.get("__classcell__"); namespace.delete("__classcell__");
+            const cell = namespace.get("__classcell__"); namespace.delete("__classcell__"); namespace.delete("__classdictcell__");
             if (cell !== undefined && !(cell instanceof Cell)) python("TypeError", "__classcell__ must be a cell");
             const selected = classes.selectMetaclass(bases, metaclass);
             if (selected !== metaclass && selected instanceof ClassValue && classes.hasSlot(selected, "__new__")) {
@@ -2099,8 +2111,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               continue;
             }
             const frame = state.frames.at(-1);
-            if (frame.callable.index === 0) {
-              const dictionary = values.environmentDictionary(frame.callable.globals);
+            if (frame.callable.index === 0 || frame.fn.kind === "class") {
+              const dictionary = frame.fn.kind === "class" ? classNamespace(frame) : values.environmentDictionary(frame.callable.globals);
               task = callable.name === "dir" ? valueTask(values.list(dictionary.entries.map(entry => entry.key)), site, continuation("dir-sort", {receiver: dictionary, depth, after: completion})) :
                 valueTask(dictionary, site, completion); continue;
             }
