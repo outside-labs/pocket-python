@@ -7,7 +7,7 @@ import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -586,11 +586,19 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           call(completion.metaclass, [name, bases, dictionary], completion.keywords ?? [], completion.keywordValues ?? [], frame.callsite,
             classCell ? continuation("class-created", {cell: classCell}) : null); return;
         }
+        if (bodyDictionary) {
+          const dictionary = values.copyDictionary(bodyDictionary); state.temporaries.push(dictionary);
+          const defaultModule = values.string(Array.from(completion.module, char => char.codePointAt(0))); state.temporaries.push(defaultModule);
+          dispatch(namespaceCreateTask({name: frame.fn.name, qualname: frame.fn.name, module: completion.module, dictionary, defaultModule,
+            bases: completion.bases, dynamic: false, firstLine: frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1,
+            staticAttributes: frame.fn.staticAttributes || [], keywords: completion.keywords ?? [], keywordValues: completion.keywordValues ?? []}, frame.callsite,
+            classCell && routed("__classcell__") ? continuation("class-created", {cell: classCell}) : null)); return;
+        }
         const qualification = namespace.has("__qualname__") ? values.text(namespace.get("__qualname__")) : frame.fn.name;
         if (qualification === null) python("TypeError", "type __qualname__ must be a str");
         const type = classes.create(frame.fn.name, qualification, completion.module, completion.bases, namespace, objectType(),
           {firstLine: (bodyDictionary ? namespace.has("__firstlineno__") : frame.namespaceOrder.has("__firstlineno__")) ? frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1 : null,
-            staticAttributes: routed("__static_attributes__") ? null : frame.fn.staticAttributes || []});
+            staticAttributes: routed("__static_attributes__") ? null : frame.fn.staticAttributes || [], namespaceEntries: bodyDictionary?.entries || null});
         if (classCell) { state.temporaries.push(type, classCell); if (!routed("__classcell__")) setCell(classCell, type); }
         dispatch(notifyNext(type, [...namespace], 0, frame.callsite, classCell && routed("__classcell__") ? continuation("class-created", {cell: classCell}) : null, completion.keywords, completion.keywordValues)); return;
       }
@@ -618,7 +626,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   const step = () => {
     if (moduleContext) moduleContext.tick(hard);
     else if (++state.steps > maxSteps) hard("BUDGET", "ExecutionLimitError", "Instruction budget exceeded.");
-    charge(1); state.temporaries = []; memory.collect();
+    charge(1); state.temporaries = []; classes.lookupCache = null; memory.collect();
     const frame = state.frames.at(-1), cursor = frame.tasks.at(-1), stack = cursor.stack;
     state.current = {...summary(frame, cursor), instruction: cursor.pc};
     const [op, arg, extra, fourth, fifth] = cursor.block.instructions[cursor.pc++];
@@ -697,7 +705,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
         if (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
-        if (receiver instanceof ModuleValue || classes.hasAttributeHook(receiver, op === "attribute-set" ? "__setattr__" : "__delattr__")) {
+        if (receiver instanceof ModuleValue || classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, op === "attribute-set" ? "__setattr__" : "__delattr__")) {
           dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "attribute-set" ? "set" : "delete", null, null, value)); return;
         }
         const plan = classes.write(receiver, arg, value, op === "attribute-delete");
@@ -728,7 +736,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};
             } else dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "import-from" ? "import" : "get"));
           } else if (op === "attribute-get" &&
-              (classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && arg === "__class__" && classes.hasSlot(receiver.type, "__class__")))
+              (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && arg === "__class__" && classes.hasSlot(receiver.type, "__class__")))
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
           else if (["attribute-get", "module-get"].includes(op) && arg === "__dir__" && classes.hasFixedDirectory(receiver)) {
@@ -834,14 +842,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         if ([receiver, start, stop, step].some(value => value instanceof InstanceValue))
           dispatch(sliceTask(receiver, [start, stop, step], summary(frame, cursor)));
         else stack.push(values.slice(receiver, start, stop, step));
-      } else if (op === "getitem" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
+      } else if (op === "getitem" && (stack.at(-2) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
           frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor)));
       }
       else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else if (op === "contains" && (frame.callable.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
-          (stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
+          (stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
            values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));

@@ -7,7 +7,7 @@ const itemOperation = value => {
   return value;
 };
 const dictionaryOperation = value => {
-  if (!["get", "set", "delete", "discard", "contains", "probe", "remove-probe"].includes(value)) throw new TypeError("Invalid dictionary operation.");
+  if (!["get", "set", "set-default", "delete", "discard", "contains", "probe", "probe-entry", "remove-probe", "pop-probe"].includes(value)) throw new TypeError("Invalid dictionary operation.");
   return value;
 };
 const operands = values => {
@@ -34,6 +34,8 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
+    case "namespace-build": record = {kind, task: fields.task, field: fields.field}; break;
+    case "namespace-lookup": record = {kind, cache: fields.cache, task: fields.task, owner: fields.owner, name: fields.name, dictionary: fields.dictionary, phase: fields.phase}; break;
     case "class-end": record = {kind, names: operands(fields.names), items: operands(fields.items), position: fields.position, signal: fields.signal, value: fields.value}; break;
     case "class-firstline":
     case "class-qualname": record = {kind}; break;
@@ -79,7 +81,7 @@ export function completion(kind, fields = {}) {
       record = {kind, receiver: fields.receiver, result: fields.result, owner: fields.owner,
         pending: operands(fields.pending), names: operands(fields.names), position: fields.position, depth: fields.depth, after};
       depthCheck(record.depth);
-      if (record.pending.length > 1024 || record.names.length > 256 || !record.names.every(name => typeof name === "string") ||
+      if (record.pending.length > 1024 || record.names.length > 256 || record.names.some(name => name === undefined) ||
           !Number.isSafeInteger(record.position) || record.position < 0 || record.position > record.names.length)
         throw new TypeError("Invalid class directory traversal phase.");
       break;
@@ -231,6 +233,8 @@ export function completion(kind, fields = {}) {
 }
 function visit(record) {
   switch (record.kind) {
+    case "namespace-build": return operationRoots(record.task);
+    case "namespace-lookup": return [record.cache, record.owner, record.dictionary, ...operationRoots(record.task)];
     case "class-name": case "module-delete": case "global-name": case "global-delete": case "module-missing": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
     case "class-end": return [...record.items, record.value];
     case "class-firstline": case "class-qualname": return [];
@@ -248,7 +252,7 @@ function visit(record) {
     case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":
     case "dir-compare": case "dir-truth": return [record.receiver, ...completionRoots(record.after)];
     case "object-dir-class": return [record.receiver, record.result, ...completionRoots(record.after)];
-    case "class-dir-merge": return [record.receiver, record.result, record.owner, ...record.pending, ...completionRoots(record.after)];
+    case "class-dir-merge": return [record.receiver, record.result, record.owner, ...record.pending, ...record.names.filter(name => typeof name !== "string"), ...completionRoots(record.after)];
     case "object-dir-dictionary": case "method-dir-dictionary": return [record.receiver, ...completionRoots(record.after)];
     case "native-dir-merge": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "function-entry": return [record.receiver, record.key, ...completionRoots(record.after)];
@@ -259,7 +263,7 @@ function visit(record) {
     case "sequence-hash": return [record.receiver, record.hash, ...completionRoots(record.after)];
     case "numeric-result": case "numeric-index": return [...record.args, ...completionRoots(record.after)];
     case "dict-hash": case "dict-key": case "dict-truth": return [record.receiver, record.key, record.hash, record.candidate,
-      ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
+      ...(["set", "set-default"].includes(record.operation) ? [record.item] : []), ...completionRoots(record.after)];
     case "dict-build": return [record.receiver, ...record.parts, ...completionRoots(record.after)];
     case "dict-pair": case "dict-value": case "dict-value-truth": return [record.left, record.right, record.value, ...completionRoots(record.after)];
     case "delegate-iter": case "delegate-next": case "delegate-return": case "delegate-close":
@@ -289,7 +293,7 @@ function visit(record) {
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
-    case "notify": return [record.type, ...record.entries.map(entry => entry[1]), ...record.keywordValues, ...completionRoots(record.after)];
+    case "notify": return [record.type, ...record.entries.flatMap(entry => typeof entry[0] === "string" ? [entry[1]] : entry), ...record.keywordValues, ...completionRoots(record.after)];
     default: throw new TypeError("Unknown operation root owner.");
   }
 }
@@ -390,8 +394,18 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
     throw new TypeError("Invalid dictionary build phase.");
   return Object.freeze({kind: "dict-build", receiver, parts: operands(parts), position, site, completion: after, depth});
 }
+export function namespaceCreateTask(fields, site, after = null, depth = 0) {
+  depthCheck(depth); completionRoots(after);
+  return Object.freeze({kind: "namespace-create", ...fields, phase: fields.phase ?? 0, site, completion: after, depth});
+}
 export function operationRoots(task) {
+  return [...(task.lookupCache ? [task.lookupCache] : []), ...taskRoots(task)];
+}
+function taskRoots(task) {
   switch (task.kind) {
+    case "namespace-create": return [task.dictionary, ...task.bases, task.defaultModule, task.moduleObject, task.cell, task.dictcell, task.type,
+      ...(task.metaclass ? [task.metaclass] : []), ...task.keywordValues, ...completionRoots(task.completion)].filter(value => value !== undefined);
+    case "notify": return [task.type, ...task.entries.flatMap(entry => typeof entry[0] === "string" ? [entry[1]] : entry), ...task.keywordValues, ...completionRoots(task.completion)];
     case "instance": case "subclass": return [task.receiver, task.type, ...completionRoots(task.completion)];
     case "attribute": return [task.receiver, task.key, task.hook, ...(["set", "native-set"].includes(task.operation) ? [task.item] : []), ...completionRoots(task.completion)];
     case "construct": case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
@@ -401,7 +415,7 @@ export function operationRoots(task) {
     case "item": return [task.receiver, task.key, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "contains": return [task.receiver, task.key, ...completionRoots(task.completion)];
     case "compare": return [task.left, task.right, ...completionRoots(task.completion)];
-    case "dict": return [task.receiver, task.key, task.hash, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
+    case "dict": return [task.receiver, task.key, task.hash, ...(["set", "set-default"].includes(task.operation) ? [task.item] : []), ...completionRoots(task.completion)];
     case "dict-build": return [task.receiver, ...task.parts, ...completionRoots(task.completion)];
     case "slice": return [task.receiver, ...task.parts, ...(task.operation === "set" ? [task.item] : []), ...completionRoots(task.completion)];
     case "unary": case "value": return [task.value, ...completionRoots(task.completion)];

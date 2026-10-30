@@ -1,7 +1,7 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
-import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
+import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -305,8 +305,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       const name = record.names[record.position];
       const item = classes.classDirectoryEntry(record.owner, name);
-      const key = values.string(Array.from(name, char => char.codePointAt(0)));
-      state.temporaries.push(key, item);
+      const key = typeof name === "string" ? values.string(Array.from(name, char => char.codePointAt(0))) : name;
+      state.temporaries.push(key, item, ...record.names.filter(name => typeof name !== "string"));
       const next = {...record, position: record.position + 1};
       if (values.dictionaryNeedsProtocol(record.result, key))
         return dictionaryTask(record.result, key, site, continuation("class-dir-merge", next), record.depth, "set", item);
@@ -493,6 +493,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "namespace-lookup" && current.phase < 0)
+        return valueTask(values.tuple([false, null]), site, current);
       if (current.kind === "module-missing" && value.name === "AttributeError" && current.mode === "import") return moduleMissing(current, site);
       if (current.kind === "dir-length" && value.name === "TypeError") return directoryHint(current, site);
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
@@ -544,6 +546,31 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
+    if (completion?.kind === "namespace-build") {
+      let task = completion.task;
+      const field = completion.field;
+      if (["qualname", "cell", "dictcell", "module"].includes(field)) {
+        const [found, item] = values.comparisonSequence(value);
+        if (field === "qualname" && found) {
+          const name = values.text(item); if (name === null) python("TypeError", "type __qualname__ must be a str");
+          task = {...task, qualname: name};
+        } else if (["cell", "dictcell"].includes(field) && found) {
+          if (!(item instanceof Cell)) python("TypeError", field === "cell" ? "__classcell__ must be a cell" : "__classdictcell__ must be a cell");
+          task = {...task, [field]: item};
+        } else if (field === "module") {
+          task = {...task, moduleFound: found, moduleObject: found ? item : task.defaultModule};
+        }
+      }
+      return namespaceCreateTask({...task, phase: task.phase + 1}, site, task.completion, task.depth);
+    }
+    if (completion?.kind === "namespace-lookup") {
+      const [found, key] = values.comparisonSequence(value);
+      const cache = completion.cache, entry = {owner: completion.owner, name: completion.name, dictionary: completion.dictionary,
+        version: completion.dictionary.version, phase: completion.phase, found, key};
+      if (cache.entries.length >= 1024) hard("BUDGET", "ExecutionLimitError", "Attribute lookup phase budget exceeded");
+      mutate(cache, () => { cache.entries.push(entry); return () => cache.entries.pop(); });
+      return Object.freeze({...completion.task, lookupCache: cache});
+    }
     if (completion?.kind === "name-stored") return null;
     if (completion?.kind === "class-module") return enterClass(completion, value, site);
     if (completion?.kind === "class-qualname") return classQualification();
@@ -932,14 +959,18 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     charge(1);
     return unaryTask("hash", parts[position], site, continuation("sequence-hash", {receiver, position, hash, depth, after}), depth + 1);
   };
-  const notifyNext = (type, entries, index, site, after = null, keywords = [], keywordValues = []) => {
-    state.temporaries.push(type, ...entries.map(entry => entry[1]), ...keywordValues);
+  const notifyNext = (type, entries, index, site, after = null, keywords = [], keywordValues = []) => Object.freeze({
+    kind: "notify", type, entries, index, site, completion: after, keywords, keywordValues, depth: 0});
+  const notifyPlan = (type, entries, index, site, after = null, keywords = [], keywordValues = []) => {
+    state.temporaries.push(type, ...entries.flatMap(entry => typeof entry[0] === "string" ? [entry[1]] : entry), ...keywordValues);
     while (index < entries.length) {
       charge(1);
       count("notify-entry");
       const [name, value] = entries[index++];
       // Keep the name rooted while planning a bound callback can allocate.
-      const nameValue = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(nameValue);
+      const stored = typeof name === "string" ? type.namespaceEntries?.find(entry => values.text(entry.key) === name)?.key : name;
+      const nameValue = stored ?? values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(nameValue);
+      if (typeof name === "string" && (value instanceof InstanceValue || value instanceof PropertyValue)) classes.rememberNamespaceKey(type, name, nameValue);
       const plan = classes.notification(value, type, nameValue);
       if (!plan) continue;
       return callTask(plan.callable, plan.args, [], [], site,
@@ -1049,10 +1080,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const {receiver, key, item, hash, operation, completion: destination} = record, after = record.after ?? destination ?? null;
     const found = position >= 0;
     if (operation === "contains") return valueTask(found, site, after);
-    if (operation === "remove-probe") {
+    if (["remove-probe", "pop-probe"].includes(operation)) {
+      const value = found && operation === "pop-probe" ? receiver.entries[position].value : null;
+      state.temporaries.push(value);
       if (found) values.commitDictionary(receiver, key, null, hash, position, true);
-      return valueTask(values.tuple([found, null]), site, after);
+      return valueTask(values.tuple([found, value]), site, after);
     }
+    if (operation === "probe-entry") return valueTask(values.tuple([found, found ? receiver.entries[position].key : null]), site, after);
+    if (operation === "set-default") return valueTask(found ? receiver.entries[position].value : (values.commitDictionary(receiver, key, item, hash, position), item), site, after);
     if (operation === "probe") return valueTask(values.tuple([found, found ? receiver.entries[position].value : null]), site, after);
     if (operation === "set") return valueTask(values.commitDictionary(receiver, key, item, hash, position), site, after);
     if (operation === "discard" && !found) return valueTask(null, site, after);
@@ -1075,9 +1110,50 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const dispatch = task => {
     while (task) {
+      classes.lookupCache = task.lookupCache || null;
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "namespace-create") {
+          state.temporaries = operationRoots(task);
+          const {phase, dictionary} = task;
+          const probe = (name, field, operation = "pop-probe", item = null) => {
+            const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key, item);
+            return dictionaryTask(dictionary, key, site, continuation("namespace-build", {task, field}), depth, operation, item);
+          };
+          if (phase === 0) { task = probe("__qualname__", "qualname"); continue; }
+          if (phase === 1) { task = probe("__module__", "module", "probe"); continue; }
+          if (phase === 2) { task = task.moduleFound ? namespaceCreateTask({...task, phase: 3}, site, completion, depth) : probe("__module__", "stored", "set-default", task.moduleObject); continue; }
+          if (phase === 3) { task = probe("__classcell__", "cell"); continue; }
+          if (phase === 4) { task = probe("__classdictcell__", "dictcell"); continue; }
+          if (phase === 5) {
+            const namespace = new Map(dictionary.entries.map(entry => [values.text(entry.key) ?? entry.key, entry.value]));
+            const type = classes.create(task.name, task.qualname ?? task.name, values.text(task.moduleObject) ?? task.module, task.bases, namespace, classes.builtin("object"),
+              {dynamic: task.dynamic, metaclass: task.metaclass ?? null, firstLine: task.firstLine ?? null,
+                staticAttributes: task.staticAttributes ?? null, namespaceEntries: dictionary.entries});
+            state.temporaries.push(type);
+            // Wrap source __new__/__init_subclass__ once, preserving their stored keys.
+            for (const entry of dictionary.entries) {
+              const key = values.text(entry.key); if (["__new__", "__init_subclass__"].includes(key) && type.namespace.has(key)) entry.value = type.namespace.get(key);
+            }
+            classes.installNamespaceDictionary(type, dictionary);
+            task = namespaceCreateTask({...task, type, phase: 6}, site, completion, depth); continue;
+          }
+          if (phase === 6 || phase === 7) {
+            const name = phase === 6 ? "__dict__" : "__weakref__";
+            const ownStorage = task.type.bases.every(base => base instanceof ClassValue && base.root);
+            task = ownStorage ? probe(name, "stored", "set-default", classes.namespaceDescriptor(task.type, name, "getset_descriptor")) :
+              namespaceCreateTask({...task, phase: phase + 1}, site, completion, depth); continue;
+          }
+          if (phase === 8) { task = probe("__doc__", "stored", "set-default", null); continue; }
+          if (phase === 9 && task.type.automaticHash) { task = probe("__hash__", "stored", "set-default", null); continue; }
+          if (task.cell) setCell(task.cell, task.type);
+          if (task.dictcell) setCell(task.dictcell, dictionary);
+          task = notifyNext(task.type, dictionary.entries.map(entry => [entry.key, entry.value]), 0, site, completion, keywords, keywordValues); continue;
+        }
+        if (task.kind === "notify") {
+          task = notifyPlan(task.type, task.entries, task.index, site, completion, keywords, keywordValues); continue;
+        }
         if (task.kind === "unary" && task.operation === "super-invalid") {
           state.temporaries = operationRoots(task);
           python("TypeError", "super receiver must be an instance or subtype of its first argument");
@@ -1370,7 +1446,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries.push(...operationRoots(task));
           let {receiver, key} = task;
           if (receiver instanceof ClassNamespaceValue) {
-            task = valueTask(classes.namespaceEntry(receiver, key).found, site, completion); continue;
+            task = dictionaryTask(classes.namespaceDictionary(receiver.owner), key, site, continuation("relay", {receiver, after: completion}), depth, "contains"); continue;
           }
           if (values.isBinary(receiver) && key instanceof InstanceValue) {
             task = unaryTask("index", key, site, continuation("binary-member", {receiver, after: completion}), depth); continue;
@@ -1409,9 +1485,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (receiver instanceof ClassNamespaceValue) {
             if (operation !== "get") python("TypeError", "Class namespace views do not support item mutation");
             if (task.kind === "slice") hard("UNSUPPORTED", "UnsupportedOperationError", "Slice namespace keys require their own stage.");
-            const entry = classes.namespaceEntry(receiver, task.key);
-            if (!entry.found) python("KeyError", "Class namespace key not found");
-            task = valueTask(entry.value, site, completion); continue;
+            task = dictionaryTask(classes.namespaceDictionary(receiver.owner), task.key, site, continuation("relay", {receiver, after: completion}), depth); continue;
           }
           if (values.isView(receiver)) {
             values.liveView(receiver);
@@ -1638,6 +1712,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (["getset_descriptor", "member_descriptor"].includes(callable.nativeKind)) python("TypeError", "Storage descriptor objects are not callable");
+          if (["method_descriptor", "wrapper_descriptor", "classmethod_descriptor"].includes(callable.nativeKind)) {
+            if (!args.length) python("TypeError", "Unbound native descriptor requires a receiver");
+            classes.namespaceDescriptorValid(callable, args[0], callable.nativeKind === "classmethod_descriptor");
+          }
           if (callable.name === "module.__dir__") {
             const receiver = callable.receiver;
             if (!(receiver instanceof ModuleValue) || args.length || keywords.length) python("TypeError", "module.__dir__ takes no arguments");
@@ -1703,7 +1782,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const module = namespace.has("__module__") ? values.text(namespace.get("__module__")) ?? currentModule : currentModule;
             const qualname = namespace.has("__qualname__") ? values.text(namespace.get("__qualname__")) : name;
             if (module === null || qualname === null) python("TypeError", "Class metadata requires strings");
-            const cell = namespace.get("__classcell__"); namespace.delete("__classcell__"); namespace.delete("__classdictcell__");
+            const cell = namespace.get("__classcell__"), dictcell = namespace.get("__classdictcell__"); namespace.delete("__classcell__"); namespace.delete("__classdictcell__");
+            if (dictcell !== undefined && !(dictcell instanceof Cell)) python("TypeError", "__classdictcell__ must be a cell");
             if (cell !== undefined && !(cell instanceof Cell)) python("TypeError", "__classcell__ must be a cell");
             const selected = classes.selectMetaclass(bases, metaclass);
             if (selected !== metaclass && selected instanceof ClassValue && classes.hasSlot(selected, "__new__")) {
@@ -1715,14 +1795,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               continue;
             }
             metaclass = selected;
+            if (namespaceValue.entries.some(entry => values.needsOwnedHash(entry.key))) {
+              const dictionary = values.copyDictionary(namespaceValue); state.temporaries.push(dictionary);
+              const defaultModule = environmentCell(frame.callable.globals, "__name__")?.value ?? values.string(Array.from("builtins", char => char.codePointAt(0)));
+              state.temporaries.push(defaultModule);
+              task = namespaceCreateTask({name, qualname: name, module: currentModule, dictionary, defaultModule, bases,
+                dynamic: true, metaclass: metaclass instanceof ClassValue ? metaclass : null, keywords, keywordValues}, site, completion, depth); continue;
+            }
             const type = classes.create(name, qualname, module, bases, namespace, classes.builtin("object"),
-              {dynamic: true, metaclass: metaclass instanceof ClassValue ? metaclass : null});
+              {dynamic: true, metaclass: metaclass instanceof ClassValue ? metaclass : null, namespaceEntries: namespaceValue.entries});
             state.temporaries.push(type);
             if (cell) setCell(cell, type);
+            if (dictcell) setCell(dictcell, classes.namespaceDictionary(type));
             task = notifyNext(type, [...namespace], 0, site, completion, keywords, keywordValues); continue;
           }
           if (classes.isType(callable) && !["type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
-            if (["method_descriptor", "wrapper_descriptor"].includes(callable.name)) python("TypeError", "cannot create '" + callable.name + "' instances");
+            if (["method_descriptor", "wrapper_descriptor", "getset_descriptor", "member_descriptor", "classmethod_descriptor"].includes(callable.name)) python("TypeError", "cannot create '" + callable.name + "' instances");
             if (["NoneType", "NotImplementedType"].includes(callable.name)) {
               if (args.length || keywords.length) python("TypeError", callable.name + " takes no arguments");
               task = valueTask(callable.name === "NoneType" ? null : moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, completion); continue;
@@ -1767,9 +1855,25 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               python("TypeError", "object.__init__ received extra arguments");
             task = valueTask(null, site, completion); continue;
           }
-          if (["method_descriptor.__get__", "wrapper_descriptor.__get__"].includes(callable.name)) {
+          if (["getset_descriptor.__set__", "getset_descriptor.__delete__", "member_descriptor.__set__", "member_descriptor.__delete__"].includes(callable.name)) {
+            const setting = callable.name.endsWith(".__set__"), descriptor = args[0];
+            if (keywords.length || args.length !== (setting ? 3 : 2) || !(descriptor instanceof BuiltinValue) || descriptor.nativeKind !== callable.name.split(".")[0]) python("TypeError", "Invalid native storage descriptor operation");
+            const plan = classes.namespaceGetset(descriptor, args[1], setting ? "set" : "delete", args[2] ?? null);
+            task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth); continue;
+          }
+          if (callable.name === "namespace-getset") {
+            if (keywords.length || args.length !== 2) python("TypeError", "Invalid native storage getter");
+            const plan = classes.namespaceGetset(args[0], args[1]);
+            task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth); continue;
+          }
+          if (["method_descriptor.__get__", "wrapper_descriptor.__get__", "getset_descriptor.__get__", "member_descriptor.__get__", "classmethod_descriptor.__get__"].includes(callable.name)) {
             if (keywords.length || args.length < 2 || args.length > 3) python("TypeError", "Native descriptor binding received invalid arguments");
             if (args[1] === null && (args[2] ?? null) === null) python("TypeError", "__get__(None, None) is invalid");
+            if (args[0]?.nativeKind) {
+              if (args[0].nativeKind !== callable.name.split(".")[0]) python("TypeError", "Descriptor binding requires the matching descriptor layout");
+              const plan = classes.bindNamespaceDescriptor(args[0], args[1], args[2] ?? null);
+              task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth); continue;
+            }
             task = valueTask(classes.bindNativeDescriptor(callable.name.slice(0, callable.name.indexOf(".")), args[0], args[1]), site, completion); continue;
           }
           if (callable.name === "function.__get__") {
@@ -1906,11 +2010,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (receiver instanceof ModuleValue) {
               task = attributeTask(receiver, attribute, site, target, depth, writing ? name === "setattr" ? "set" : "delete" : "get", args[1], null, args[2] ?? null); continue;
             }
-            if (writing && classes.hasAttributeHook(receiver, name === "setattr" ? "__setattr__" : "__delattr__")) {
+            if (writing && (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, name === "setattr" ? "__setattr__" : "__delattr__"))) {
               task = attributeTask(receiver, attribute, site, completion, depth, name === "setattr" ? "set" : "delete", args[1], null, args[2] ?? null); continue;
             }
             if (!writing &&
-                (classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && attribute === "__class__" && classes.hasSlot(receiver.type, "__class__"))) {
+                (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && attribute === "__class__" && classes.hasSlot(receiver.type, "__class__"))) {
               task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue;
             }
             let plan;
@@ -2081,7 +2185,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 task = attributeTask(receiver, "__dir__", site, continuation("module-dir", {receiver, depth, after: completion}), depth); continue;
               }
               if (callable.name === "vars") {
-                if (!(receiver instanceof ModuleValue || receiver instanceof InstanceValue || receiver instanceof ClassValue && !receiver.root || receiver instanceof FunctionValue || classes.isPythonMethod(receiver))) {
+                if (!(receiver instanceof ModuleValue || receiver instanceof InstanceValue || classes.isType(receiver) || receiver instanceof FunctionValue || classes.isPythonMethod(receiver))) {
                   if (values.typeName(receiver) !== null || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
                       receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");
@@ -2179,11 +2283,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           else if (["staticmethod", "classmethod"].includes(callable.name)) {
             if (args.length !== 1 || keywords.length) python("TypeError", callable.name + " requires one positional value.");
             value = allocate(MethodWrapperValue, callable.name, args[0]);
-          } else value = builtin(callable, [...args, ...keywordValues], keywords);
+          } else {
+            if (callable.nativeKind) hard("UNSUPPORTED", "UnsupportedOperationError", "Native invocation " + callable.name + " is owned by " + classes.nativeInvocationOwner(callable) + ".");
+            value = builtin(callable, [...args, ...keywordValues], keywords);
+          }
           task = deliver(value, completion, site); continue;
         }
         python("TypeError", "Value is not callable in this profile");
       } catch (error) {
+        if (error instanceof NamespaceLookupRequest) {
+          state.temporaries.push(...operationRoots(task), error.owner, error.dictionary);
+          const cache = task.lookupCache || allocate(NamespaceLookupCache); state.temporaries.push(cache);
+          const key = values.string(Array.from(error.name, char => char.codePointAt(0))); state.temporaries.push(key);
+          task = dictionaryTask(error.dictionary, key, site,
+            continuation("namespace-lookup", {cache, task, owner: error.owner, name: error.name, dictionary: error.dictionary, phase: error.phase}), depth, "probe-entry");
+          continue;
+        }
         const recovery = error instanceof Raised && recover(error.value, completion, site);
         if (!recovery) throw error;
         task = recovery;

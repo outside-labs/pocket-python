@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O49"
+    "O49",
+    "O69"
   ],
   "cases": [
     {
@@ -64,7 +65,7 @@
     {
       "id": "unicode-and-arbitrary-text",
       "stage": "O49",
-      "source": "class C: pass\np=C.__dict__\nsetattr(C,\"λ\",7)\nsetattr(C,\"not an identifier\",9)\nsetattr(C,\"\",11)\nprint(p[\"λ\"],p[\"not an identifier\"],p[\"\"],\"λ\" in p)\n",
+      "source": "class C: pass\np=C.__dict__\nsetattr(C,\"\u03bb\",7)\nsetattr(C,\"not an identifier\",9)\nsetattr(C,\"\",11)\nprint(p[\"\u03bb\"],p[\"not an identifier\"],p[\"\"],\"\u03bb\" in p)\n",
       "stdout": "7 9 11 True\n"
     },
     {
@@ -224,25 +225,25 @@
     },
     {
       "id": "native-slot-entry",
-      "stage": "Future",
+      "stage": "O69",
       "source": "class C: pass\nC.__dict__[\"__dict__\"]\n",
       "stdout": ""
     },
     {
       "id": "source-metadata-entry",
-      "stage": "Future",
+      "stage": "O69",
       "source": "class C: pass\nprint(C.__dict__[\"__firstlineno__\"])\n",
       "stdout": "1\n"
     },
     {
       "id": "native-type-namespace",
-      "stage": "Future",
+      "stage": "O69",
       "source": "int.__dict__\n",
       "stdout": ""
     },
     {
       "id": "callback-query",
-      "stage": "Future",
+      "stage": "O69",
       "source": "class C: tag=7\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other): return True\nprint(C.__dict__[Key()])\n",
       "stdout": "7\n"
     },
@@ -272,7 +273,7 @@
     },
     {
       "id": "nondata-metaclass-namespace",
-      "stage": "Future",
+      "stage": "O69",
       "source": "class M(type): __dict__=7\nclass C(metaclass=M): pass\nprint(type(C.__dict__).__name__)\n",
       "stdout": "getset_descriptor\n"
     }

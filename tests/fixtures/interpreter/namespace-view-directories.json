@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O52",
     "O54",
-    "O62"
+    "O62",
+    "O69"
   ],
   "cases": [
     {
@@ -188,7 +189,7 @@
     {
       "id": "native-type-dictionary",
       "source": "type.__dict__\n",
-      "stage": "Future",
+      "stage": "O69",
       "stdout": ""
     },
     {
