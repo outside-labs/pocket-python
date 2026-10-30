@@ -183,15 +183,24 @@ export class ValueRuntime {
   isBinary(value) { return value instanceof BinaryValue; }
   isView(value) { return value instanceof MemoryViewValue; }
   liveView(value) { if (value.released) this.fail("ValueError", "operation forbidden on released memoryview object"); }
+  checkBufferResize(owner) {
+    if (this.memory?.liveValues(MemoryViewValue).some(view => !view.released && view.owner === owner)) this.fail("BufferError", "Existing exports of data: object cannot be re-sized");
+  }
   view(owner, readonly = null) {
+    if (owner instanceof InstanceValue && owner.nativePayload instanceof BinaryValue) {
+      const payload = owner.nativePayload;
+      return this.viewValue(payload, 0n, 1n, payload.items.length, readonly ?? !payload.mutable, owner);
+    }
     if (owner instanceof MemoryViewValue) {
-      this.liveView(owner); return this.viewValue(owner.owner, owner.offset, owner.stride, owner.length, readonly ?? owner.readonly);
+      this.liveView(owner); return this.viewValue(owner.owner, owner.offset, owner.stride, owner.length, readonly ?? owner.readonly, owner.sourceObject);
     }
     if (!(owner instanceof BinaryValue)) this.fail("TypeError", "memoryview requires an adopted bytes-like object");
     return this.viewValue(owner, 0n, 1n, owner.items.length, readonly ?? !owner.mutable);
   }
-  viewValue(owner, offset, stride, length, readonly) {
-    this.charge(1); return this.make(112, [owner], () => new MemoryViewValue(owner, offset, stride, length, readonly));
+  viewValue(owner, offset, stride, length, readonly, sourceObject = null) {
+    this.charge(1); return this.make(112 + (sourceObject ? 8 : 0), [owner, ...(sourceObject ? [sourceObject] : [])], () => {
+      const view = new MemoryViewValue(owner, offset, stride, length, readonly); if (sourceObject) view.sourceObject = sourceObject; return view;
+    });
   }
   viewItems(value) {
     this.liveView(value); const items = [];
@@ -206,7 +215,7 @@ export class ValueRuntime {
   }
   viewAttribute(value, name) {
     this.liveView(value); this.charge(1);
-    if (name === "obj") return value.owner;
+    if (name === "obj") return value.sourceObject ?? value.owner;
     if (name === "readonly") return value.readonly;
     if (name === "format") return this.string([66]);
     if (["itemsize", "ndim"].includes(name)) return 1n;
@@ -219,7 +228,7 @@ export class ValueRuntime {
   }
   releaseView(value) {
     if (value.released) return null;
-    this.charge(1); this.resize(value, 112, []); value.owner = null; value.released = true; return null;
+    this.charge(1); this.resize(value, 112, []); value.owner = null; if (value.sourceObject) value.sourceObject = null; value.released = true; return null;
   }
   binaryValue(items, mutable = false) {
     this.limit(items.length <= VALUE_LIMITS.text, "Binary length budget exceeded."); this.charge(items.length + 1);
@@ -1160,7 +1169,7 @@ export class ValueRuntime {
       if (stride < -9223372036854775808n || stride > 9223372036854775807n)
         this.fail("UnsupportedOperationError", "Nested buffer strides outside the signed-size range require a later value stage.", "UNSUPPORTED");
       const distance = positive ? stop - start : start - stop, magnitude = positive ? step : -step;
-      return this.viewValue(value.owner, value.offset + value.stride * start, stride, Number(distance <= 0n ? 0n : (distance - 1n) / magnitude + 1n), value.readonly);
+      return this.viewValue(value.owner, value.offset + value.stride * start, stride, Number(distance <= 0n ? 0n : (distance - 1n) / magnitude + 1n), value.readonly, value.sourceObject);
     }
     if (value instanceof RangeValue) {
       this.charge((value.step.toString().length + 1) * (start.toString().length + stop.toString().length + step.toString().length));
@@ -1518,7 +1527,7 @@ export function valueLayout(value) {
   if (value instanceof RangeValue) return {bytes: 112, children: [value.start, value.stop, value.step, value.length]};
   if (value instanceof StringValue) return {bytes: 64 + 4 * value.points.length, children: []};
   if (value instanceof BinaryValue) return {bytes: 64 + value.items.length, children: []};
-  if (value instanceof MemoryViewValue) return {bytes: 112, children: value.released ? [] : [value.owner]};
+  if (value instanceof MemoryViewValue) return {bytes: 112 + (value.sourceObject ? 8 : 0), children: value.released ? [] : [value.owner, ...(value.sourceObject ? [value.sourceObject] : [])]};
   if (value instanceof TupleValue || value instanceof ListValue) return {bytes: 64 + 8 * value.items.length, children: value.items};
   if (value instanceof DictValue) return {bytes: 96 + (value.namespace ? 16 : 0) + value.entries.reduce((bytes, entry) => bytes + (value.namespace ? 56 : 48) + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};

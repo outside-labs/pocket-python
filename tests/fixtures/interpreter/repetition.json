@@ -6,7 +6,8 @@
   "implemented_stages": [
     "R1",
     "R2",
-    "R3"
+    "R3",
+    "O86"
   ],
   "cases": [
     {
@@ -1102,7 +1103,7 @@
     },
     {
       "id": "builtin-subclass-deferred",
-      "stage": "Future",
+      "stage": "O86",
       "source": "class Items(list): pass\nprint(len(Items([1])*2))\n",
       "stdout": "2\n"
     },

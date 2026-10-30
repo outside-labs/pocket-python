@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-mutable-subclasses/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O86"
+  ],
+  "cases": [
+    {
+      "id": "list-state",
+      "stage": "O86",
+      "source": "class C(list): pass\na=C((7,9))\na.x=9\nprint(type(a) is C,isinstance(a,list),a.x,len(a),\"__class__\" in dir(a),C.__base__ is list)\n",
+      "stdout": "True True 9 2 True True\n"
+    },
+    {
+      "id": "list-native-new",
+      "stage": "O86",
+      "source": "class C(list): pass\na=list.__new__(C,7,extra=9)\nprint(type(a) is C,len(a))\n",
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "list-members",
+      "stage": "O86",
+      "source": "class C(list): __slots__=(\"x\",)\na=C((7,9))\na.x=9\nprint(a.x,hasattr(a,\"__dict__\"),len(a))\n",
+      "stdout": "9 False 2\n"
+    },
+    {
+      "id": "list-custom-init",
+      "stage": "O86",
+      "source": "class C(list):\n def __init__(self,source): print(len(self)); self.x=source\na=C(7)\nprint(len(a),a.x)\n",
+      "stdout": "0\n0 7\n"
+    },
+    {
+      "id": "list-unhashable",
+      "stage": "O86",
+      "source": "class C(list): pass\nhash(C())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dict-state",
+      "stage": "O86",
+      "source": "class C(dict): pass\na=C()\na.x=9\nprint(type(a) is C,isinstance(a,dict),a.x,len(a),\"__class__\" in dir(a),C.__base__ is dict)\n",
+      "stdout": "True True 9 0 True True\n"
+    },
+    {
+      "id": "dict-native-new",
+      "stage": "O86",
+      "source": "class C(dict): pass\na=dict.__new__(C,7,extra=9)\nprint(type(a) is C,len(a))\n",
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "dict-members",
+      "stage": "O86",
+      "source": "class C(dict): __slots__=(\"x\",)\na=C()\na.x=9\nprint(a.x,hasattr(a,\"__dict__\"),len(a))\n",
+      "stdout": "9 False 0\n"
+    },
+    {
+      "id": "dict-custom-init",
+      "stage": "O86",
+      "source": "class C(dict):\n def __init__(self,source): print(len(self)); self.x=source\na=C(7)\nprint(len(a),a.x)\n",
+      "stdout": "0\n0 7\n"
+    },
+    {
+      "id": "dict-unhashable",
+      "stage": "O86",
+      "source": "class C(dict): pass\nhash(C())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "set-state",
+      "stage": "O86",
+      "source": "class C(set): pass\na=C((7,9))\na.x=9\nprint(type(a) is C,isinstance(a,set),a.x,len(a),\"__class__\" in dir(a),C.__base__ is set)\n",
+      "stdout": "True True 9 2 True True\n"
+    },
+    {
+      "id": "set-native-new",
+      "stage": "O86",
+      "source": "class C(set): pass\na=set.__new__(C,7,extra=9)\nprint(type(a) is C,len(a))\n",
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "set-members",
+      "stage": "O86",
+      "source": "class C(set): __slots__=(\"x\",)\na=C((7,9))\na.x=9\nprint(a.x,hasattr(a,\"__dict__\"),len(a))\n",
+      "stdout": "9 False 2\n"
+    },
+    {
+      "id": "set-custom-init",
+      "stage": "O86",
+      "source": "class C(set):\n def __init__(self,source): print(len(self)); self.x=source\na=C(7)\nprint(len(a),a.x)\n",
+      "stdout": "0\n0 7\n"
+    },
+    {
+      "id": "set-unhashable",
+      "stage": "O86",
+      "source": "class C(set): pass\nhash(C())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytearray-state",
+      "stage": "O86",
+      "source": "class C(bytearray): pass\na=C(b\"ab\")\na.x=9\nprint(type(a) is C,isinstance(a,bytearray),a.x,len(a),\"__class__\" in dir(a),C.__base__ is bytearray)\n",
+      "stdout": "True True 9 2 True True\n"
+    },
+    {
+      "id": "bytearray-native-new",
+      "stage": "O86",
+      "source": "class C(bytearray): pass\na=bytearray.__new__(C,7,extra=9)\nprint(type(a) is C,len(a))\n",
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "bytearray-members",
+      "stage": "O86",
+      "source": "class C(bytearray): __slots__=(\"x\",)\na=C(b\"ab\")\na.x=9\nprint(a.x,hasattr(a,\"__dict__\"),len(a))\n",
+      "stdout": "9 False 2\n"
+    },
+    {
+      "id": "bytearray-custom-init",
+      "stage": "O86",
+      "source": "class C(bytearray):\n def __init__(self,source): print(len(self)); self.x=source\na=C(7)\nprint(len(a),a.x)\n",
+      "stdout": "0\n0 7\n"
+    },
+    {
+      "id": "bytearray-unhashable",
+      "stage": "O86",
+      "source": "class C(bytearray): pass\nhash(C())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-aliases",
+      "stage": "O86",
+      "source": "class L(list): pass\na=L((7,9))\nb=a\na.append(11)\na[0]=13\ndel a[1]\nprint(a is b,len(b),b[0],b[1],type(a[:]) is list,type(a+[17]) is list)\n",
+      "stdout": "True 2 13 11 True True\n"
+    },
+    {
+      "id": "list-inplace",
+      "stage": "O86",
+      "source": "class L(list): pass\na=L((7,9))\nb=a\na+=[11]\na*=2\nprint(a is b,len(b),b[3],type(a) is L)\n",
+      "stdout": "True 6 7 True\n"
+    },
+    {
+      "id": "list-custom-iteration",
+      "stage": "O86",
+      "source": "class L(list):\n def __iter__(self): print(\"iter\"); return iter((11,13))\n def __getitem__(self,key): return 17\n def __len__(self): return 19\na=L((7,9))\nprint(next(iter(a)),a[0],len(a),list.__getitem__(a,0),list.__len__(a))\n",
+      "stdout": "iter\n11 17 19 7 2\n"
+    },
+    {
+      "id": "list-native-bypass",
+      "stage": "O86",
+      "source": "class L(list):\n def append(self,value): print(\"override\"); return 7\n def __setitem__(self,key,value): print(\"set\"); return None\na=L((7,))\nprint(a.append(9))\nlist.append(a,11)\na[0]=13\nlist.__setitem__(a,0,17)\nprint(a[0],len(a))\n",
+      "stdout": "override\n7\nset\n17 2\n"
+    },
+    {
+      "id": "list-reinit",
+      "stage": "O86",
+      "source": "class L(list): pass\na=L((7,9))\nb=a\nprint(list.__init__(a,(11,)),a is b,len(b),b[0])\n",
+      "stdout": "None True 1 11\n"
+    },
+    {
+      "id": "list-init-callback",
+      "stage": "O86",
+      "source": "class L(list): pass\na=L((7,9))\ndef items():\n print(\"before\",len(a))\n yield 11\n print(\"after\",len(a),a[0])\n yield 13\nlist.__init__(a,items())\nprint(len(a),a[1])\n",
+      "stdout": "before 0\nafter 1 11\n2 13\n"
+    },
+    {
+      "id": "list-init-failure",
+      "stage": "O86",
+      "source": "class L(list): pass\na=L((7,9))\ndef items():\n yield 11\n raise ValueError(\"failed\")\ntry: list.__init__(a,items())\nexcept ValueError: print(len(a),a[0])\n",
+      "stdout": "1 11\n"
+    },
+    {
+      "id": "list-mutation-iteration",
+      "stage": "O86",
+      "source": "class L(list): pass\na=L((7,9))\nit=iter(a)\nprint(next(it))\na.append(11)\nprint(next(it),next(it))\n",
+      "stdout": "7\n9 11\n"
+    },
+    {
+      "id": "list-identity-elements",
+      "stage": "O86",
+      "source": "class L(list): pass\nclass X: pass\nx=X()\na=L((x,))\nprint(a[0] is x,list(a)[0] is x,(a*2)[1] is x)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "dict-items",
+      "stage": "O86",
+      "source": "class D(dict): pass\nd=D()\nd[7]=9\nd[11]=13\nb=d\nprint(d[7],len(d),7 in d,next(iter(d)),d=={7:9,11:13})\ndel d[7]\nprint(len(b),7 in b,d is b)\n",
+      "stdout": "9 2 True 7 True\n1 False True\n"
+    },
+    {
+      "id": "dict-init-preserves",
+      "stage": "O86",
+      "source": "class D(dict): pass\nd=D()\nd[7]=9\nprint(dict.__init__(d),d[7],len(d))\n",
+      "stdout": "None 9 1\n"
+    },
+    {
+      "id": "dict-override",
+      "stage": "O86",
+      "source": "class D(dict):\n def __getitem__(self,key): print(\"get\"); return 11\n def __setitem__(self,key,value): print(\"set\")\nd=D()\nd[7]=9\ndict.__setitem__(d,7,13)\nprint(d[7],dict.__getitem__(d,7),dict.__contains__(d,7))\n",
+      "stdout": "set\nget\n11 13 True\n"
+    },
+    {
+      "id": "dict-key-callback",
+      "stage": "O86",
+      "source": "class D(dict): pass\nclass K:\n def __hash__(self): print(\"hash\"); return 7\n def __eq__(self,other): print(\"eq\"); return True\nd=D()\nk=K()\nd[k]=9\nprint(d[K()],len(d))\n",
+      "stdout": "hash\nhash\neq\n9 1\n"
+    },
+    {
+      "id": "dict-size-change",
+      "stage": "O86",
+      "source": "class D(dict): pass\nd=D()\nd[7]=9\nit=iter(d)\nd[11]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "set-items",
+      "stage": "O86",
+      "source": "class S(set): pass\ns=S((7,9))\nb=s\ns.add(11)\ns.discard(7)\nprint(11 in b,7 in b,len(b),type(s|{13}) is set,s is b)\n",
+      "stdout": "True False 2 True True\n"
+    },
+    {
+      "id": "set-inplace",
+      "stage": "O86",
+      "source": "class S(set): pass\ns=S((7,9))\nb=s\ns|={11}\ns&={7,11}\nprint(s is b,len(b),7 in b,11 in b,type(s) is S)\n",
+      "stdout": "True 2 True True True\n"
+    },
+    {
+      "id": "set-init",
+      "stage": "O86",
+      "source": "class S(set): pass\ns=S((7,9))\nset.__init__(s,(11,13))\nprint(len(s),7 in s,11 in s)\n",
+      "stdout": "2 False True\n"
+    },
+    {
+      "id": "set-init-callback",
+      "stage": "O86",
+      "source": "class S(set): pass\ns=S((7,9))\ndef items():\n print(\"before\",len(s))\n yield 11\n print(\"after\",len(s),11 in s)\n raise ValueError(\"failed\")\ntry: set.__init__(s,items())\nexcept ValueError: print(len(s),11 in s)\n",
+      "stdout": "before 0\nafter 1 True\n1 True\n"
+    },
+    {
+      "id": "set-override",
+      "stage": "O86",
+      "source": "class S(set):\n def add(self,key): print(\"add\")\n def __contains__(self,key): return False\ns=S((7,))\ns.add(9)\nset.add(s,11)\nprint(7 in s,set.__contains__(s,7),set.__contains__(s,11),len(s))\n",
+      "stdout": "add\nFalse True True 2\n"
+    },
+    {
+      "id": "set-size-change",
+      "stage": "O86",
+      "source": "class S(set): pass\ns=S((7,9))\nit=iter(s)\ns.add(11)\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "bytearray-aliases",
+      "stage": "O86",
+      "source": "class B(bytearray): pass\nb=B(b\"ab\")\nc=b\nb[0]=90\nprint(c is b,c[0],len(c),type(b[:]) is bytearray,type(b+b\"c\") is bytearray)\n",
+      "stdout": "True 90 2 True True\n"
+    },
+    {
+      "id": "bytearray-index-override",
+      "stage": "O86",
+      "source": "class B(bytearray):\n def __getitem__(self,key): return 7\n def __setitem__(self,key,value): print(\"set\")\nb=B(b\"ab\")\nb[0]=90\nbytearray.__setitem__(b,0,89)\nprint(b[0],bytearray.__getitem__(b,0))\n",
+      "stdout": "set\n7 89\n"
+    },
+    {
+      "id": "bytearray-views",
+      "stage": "O86",
+      "source": "class B(bytearray): pass\nb=B(b\"abcd\")\nv=memoryview(b)\nw=v[::2].toreadonly()\nprint(v.obj is b,w.obj is b,w.tobytes()==b\"ac\")\nv[0]=90\nprint(b[0],w[0])\nv.release()\nw.release()\n",
+      "stdout": "True True True\n90 90\n"
+    },
+    {
+      "id": "bytearray-reinit",
+      "stage": "O86",
+      "source": "class B(bytearray): pass\nb=B(b\"ab\")\nc=b\nprint(bytearray.__init__(b,b\"xyz\"),b is c,len(c),c[0])\n",
+      "stdout": "None True 3 120\n"
+    },
+    {
+      "id": "bytearray-export-reject",
+      "stage": "O86",
+      "source": "class B(bytearray): pass\nb=B(b\"ab\")\nv=memoryview(b)\ntry: bytearray.__init__(b,b\"ab\")\nexcept BufferError: print(b[0],len(b),v.obj is b)\nv.release()\nbytearray.__init__(b,b\"xyz\")\nprint(len(b),b[0])\n",
+      "stdout": "97 2 True\n3 120\n"
+    },
+    {
+      "id": "bytearray-encoding",
+      "stage": "O86",
+      "source": "class B(bytearray): pass\nb=B(\"abc\",\"utf-8\")\nprint(len(b),b[0],type(b.decode()) is str,b.decode()==\"abc\")\n",
+      "stdout": "3 97 True True\n"
+    },
+    {
+      "id": "bytearray-length",
+      "stage": "O86",
+      "source": "class B(bytearray): pass\nb=B(3)\nprint(len(b),b[0],b[2])\n",
+      "stdout": "3 0 0\n"
+    },
+    {
+      "id": "mixed-state",
+      "stage": "O86",
+      "source": "class Base: __slots__=(\"x\",)\nclass L(list): __slots__=(\"x\",\"__dict__\")\na=L((7,))\na.x=9\na.label=\"ok\"\nprint(a[0],a.x,a.__dict__[\"label\"],L.x.__get__(a))\n",
+      "stdout": "7 9 ok 9\n"
+    },
+    {
+      "id": "layout-conflict",
+      "stage": "O86",
+      "source": "class L(list): pass\nclass D(dict): pass\nclass C(L,D): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "list-index-callback",
+      "stage": "O86",
+      "source": "class L(list): pass\nclass Count:\n def __index__(self): print(\"index\"); return 2\na=L((7,))\nb=a\nc=a*Count()\na*=Count()\nprint(type(c) is list,len(c),a is b,len(a))\n",
+      "stdout": "index\nindex\nTrue 2 True 2\n"
+    },
+    {
+      "id": "buffer-error-directory",
+      "stage": "O86",
+      "source": "e=BufferError()\nprint(type(e) is BufferError,issubclass(BufferError,Exception),\"args\" in dir(e),\"__new__\" in dir(BufferError))\n",
+      "stdout": "True True True True\n"
+    }
+  ]
+}

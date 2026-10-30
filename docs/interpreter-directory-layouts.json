@@ -24,6 +24,11 @@
       "instance_case": "instance-BaseException"
     },
     {
+      "type": "BufferError",
+      "type_case": "type-BufferError",
+      "instance_case": "instance-BufferError"
+    },
+    {
       "type": "Exception",
       "type_case": "type-Exception",
       "instance_case": "instance-Exception"

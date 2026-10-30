@@ -934,6 +934,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return next(completion.receiver, completion.type.items[completion.position], site,
         continuation(completion.kind, {...completion, position: completion.position + 1}), completion.depth, completion.nesting + 1);
     }
+    if (completion?.kind === "native-repeat") {
+      const payload = completion.receiver.nativePayload;
+      const result = completion.inplace ? values.inplace("multiply", payload, value) : values.binary("multiply", payload, value);
+      return valueTask(result === payload && completion.inplace ? completion.receiver : result, site, completion.after);
+    }
+    if (completion?.kind === "native-bytes-init") {
+      const receiver = completion.receiver.nativePayload;
+      values.checkBufferResize(receiver);
+      mutate(receiver, () => { const items = receiver.items; receiver.items = [...value.items]; return () => { receiver.items = items; }; });
+      return valueTask(null, site, completion.after);
+    }
     if (completion?.kind === "native-new") return valueTask(completion.type instanceof ClassValue ? classes.instance(completion.type, value) : value, site, completion.after);
     if (completion?.kind === "new-result") {
       state.temporaries.push(value, ...completionRoots(completion));
@@ -1323,7 +1334,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const initializePlan = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
     const type = instance instanceof InstanceValue ? instance.type : classes.typeOf(instance);
-    let initializer = classes.lookup(type, "__init__", instance instanceof ClassValue);
+    let initializer = classes.lookup(type, "__init__", instance instanceof ClassValue || instance.nativePayload !== undefined && ["list", "dict", "set", "bytearray"].includes(type.storage.family));
     if (instance instanceof ClassValue && classes.isMetaclass(type) && !classes.hasSlot(type, "__init__") && initializer.value instanceof BuiltinValue && initializer.value.name === "object.__init__")
       initializer = {found: true, value: classes.builtin("type.__init__")};
     if (!initializer.found) {
@@ -2169,11 +2180,44 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (NATIVE_SUBCLASS_BASES.includes(nativeOwner) && callable.name.includes(".") && (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined)) {
             if (nativeName === "__new__") {
               if (!args.length || !classes.isType(args[0]) || !classes.subclass(args[0], classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
-              task = callTask(classes.builtin(nativeOwner), args.slice(1), keywords, keywordValues, site,
+              task = callTask(classes.builtin(nativeOwner), ["list", "dict", "set", "bytearray"].includes(nativeOwner) ? [] : args.slice(1), ["list", "dict", "set", "bytearray"].includes(nativeOwner) ? [] : keywords, ["list", "dict", "set", "bytearray"].includes(nativeOwner) ? [] : keywordValues, site,
                 continuation("native-new", {type: args[0], after: completion}), depth); continue;
             }
             const original = args[0], receiver = classes.payload(original), rest = args.slice(1), operands = rest.map(item => classes.payload(item));
             const finish = continuation("relay", {receiver: original, after: completion});
+            if (nativeName === "__init__" && ["list", "dict", "set", "bytearray"].includes(nativeOwner)) {
+              if (nativeOwner === "dict") {
+                if (rest.length || keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Populated dictionary constructors remain #116");
+                task = valueTask(null, site, finish); continue;
+              }
+              if (nativeOwner === "bytearray" && rest.length && (rest.length > 1 || keywords.length || typeof classes.payload(rest[0]) === "bigint" || values.isBinary(classes.payload(rest[0])))) {
+                task = callTask(classes.builtin("bytearray"), rest, keywords, keywordValues, site,
+                  continuation("native-bytes-init", {receiver: original, after: completion}), depth); continue;
+              }
+              if (keywords.length || rest.length > 1) python("TypeError", nativeOwner + ".__init__ takes at most one iterable");
+              if (nativeOwner === "set") values.clearSet(receiver);
+              else {
+                if (nativeOwner === "bytearray") values.checkBufferResize(receiver);
+                mutate(receiver, () => { const items = receiver.items; receiver.items = []; return () => { receiver.items = items; }; });
+              }
+              task = rest.length ? consumeTask(nativeOwner === "set" ? "set-update" : nativeOwner, rest[0], site,
+                continuation("item-result", {receiver: original, after: completion}), depth, receiver) : valueTask(null, site, finish); continue;
+            }
+            if (["__setitem__", "__delitem__"].includes(nativeName)) {
+              if (keywords.length || rest.length !== (nativeName === "__setitem__" ? 2 : 1)) python("TypeError", nativeName + " received invalid arguments");
+              task = itemTask(receiver, rest[0], site, finish, depth, nativeName === "__setitem__" ? "set" : "delete", rest[1] ?? null); continue;
+            }
+            if (["__iadd__", "__imul__", "__isub__", "__iand__", "__ior__", "__ixor__"].includes(nativeName)) {
+              if (keywords.length || rest.length !== 1) python("TypeError", nativeName + " takes one argument");
+              const op = {__iadd__: "add", __imul__: "multiply", __isub__: "subtract", __iand__: "bit-and", __ior__: "bit-or", __ixor__: "bit-xor"}[nativeName];
+              if (op === "multiply" && userProtocol(operands[0])) { task = unaryTask("index", operands[0], site, continuation("native-repeat", {receiver: original, inplace: true, after: completion}), depth); continue; }
+              const result = values.inplace(op, receiver, operands[0]);
+              task = valueTask(result === receiver ? original : result, site, finish); continue;
+            }
+            if (nativeName === "append" && nativeOwner === "list") {
+              if (keywords.length || rest.length !== 1) python("TypeError", "append takes one argument");
+              task = valueTask(values.append(receiver, rest[0]), site, finish); continue;
+            }
             const notImplemented = () => valueTask(moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, finish);
             const unary = {__len__: "len", __bool__: "truth", __iter__: "iter", __hash__: "hash", __neg__: "negative", __pos__: "positive", __invert__: "invert", __index__: "index", __repr__: "repr", __str__: "str"}[nativeName];
             if (unary) {
@@ -2211,6 +2255,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
             if (arithmetic) {
               if (keywords.length || rest.length < 1 || rest.length > (arithmetic === "power" ? 2 : 1)) python("TypeError", nativeName + " received invalid arguments");
+              if (arithmetic === "multiply" && !["int", "float", "complex"].includes(nativeOwner) && userProtocol(operands[0])) { task = unaryTask("index", operands[0], site, continuation("native-repeat", {receiver: original, inplace: false, after: completion}), depth); continue; }
               const otherType = values.typeName(operands[0]);
               if (["int", "float", "complex"].includes(nativeOwner) && !(nativeOwner === "int" ? ["int", "bool"] : nativeOwner === "float" ? ["int", "bool", "float"] : ["int", "bool", "float", "complex"]).includes(otherType)) { task = notImplemented(); continue; }
               const inputs = reflected ? [operands[0], receiver, ...operands.slice(1)] : [receiver, ...operands];
