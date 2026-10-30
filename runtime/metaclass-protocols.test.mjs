@@ -70,6 +70,7 @@ test('metaclass callbacks share recursion, instruction and allocation limits', a
 test('metaclass slot inventory is frozen and preserves named protocol boundaries', async () => {
   const {METACLASS_PROTOCOLS} = await import('./class-policy.mjs');
   const {compileSource} = await import('./source-compiler.mjs');
+  assert.throws(() => compileSource('value.__class__=None\n'), {code: 'UNSUPPORTED'});
   assert.ok(Object.isFrozen(METACLASS_PROTOCOLS));
   assert.equal(new Set(METACLASS_PROTOCOLS).size, METACLASS_PROTOCOLS.length);
   for (const slot of ['__class_getitem__','__matmul__','__format__','__enter__','__await__']) {
