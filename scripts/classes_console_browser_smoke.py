@@ -138,7 +138,7 @@ def smoke(channel=None):
                     assert 'iteration and containment' in page.locator('#language').inner_text()
                     assert 'equality and hashing' in page.locator('#language').inner_text()
                     assert 'sets, bytes, bytearrays and memoryviews' in page.locator('#language').inner_text()
-                    assert 'construction, super and finite metaclasses' in page.locator('#language').inner_text()
+                    assert 'prepared mapping namespaces, callable metaclass factories, custom MRO and actual-metaclass special protocols' in page.locator('#language').inner_text()
                     assert 'instance attribute hooks and advertised class identities' in page.locator('#language').inner_text()
                     assert 'custom instance/subclass checks' in page.locator('#language').inner_text()
                     assert 'list/tuple/slice comparisons' in page.locator('#language').inner_text()
