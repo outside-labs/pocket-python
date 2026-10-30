@@ -7,7 +7,8 @@
     "O39",
     "O40",
     "O71",
-    "O73"
+    "O73",
+    "O87"
   ],
   "cases": [
     {
@@ -876,13 +877,13 @@
     },
     {
       "id": "property-subclass-layout",
-      "stage": "Future",
+      "stage": "O87",
       "source": "class P(property): pass\nprint(P().__isabstractmethod__)\n",
       "stdout": "False\n"
     },
     {
       "id": "wrapper-subclass-layout",
-      "stage": "Future",
+      "stage": "O87",
       "source": "class S(staticmethod): pass\nprint(S(None).__isabstractmethod__)\n",
       "stdout": "False\n"
     }

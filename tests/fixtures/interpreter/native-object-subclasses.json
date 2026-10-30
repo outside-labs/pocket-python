@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-native-object-subclasses/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O87"
+  ],
+  "cases": [
+    {
+      "id": "property-binding",
+      "stage": "O87",
+      "source": "class P(property): pass\nclass A:\n @P\n def x(self): return 7\na=A()\nprint(a.x,type(A.x) is P,A.x.fget(a),A.x.__name__,A.x.__get__(None,A) is A.x)\n",
+      "stdout": "7 True 7 x True\n"
+    },
+    {
+      "id": "property-state",
+      "stage": "O87",
+      "source": "class P(property): __slots__=(\"tag\",\"__dict__\")\np=P(lambda self:7)\np.tag=9\np.note=\"ok\"\nprint(p.tag,p.__dict__[\"note\"],type(p) is P,p.__doc__)\n",
+      "stdout": "9 ok True None\n"
+    },
+    {
+      "id": "property-doc",
+      "stage": "O87",
+      "source": "class P(property): pass\ndef f(self):\n \"getter doc\"\n return 7\np=P(f)\nprint(p.__doc__,p.__dict__[\"__doc__\"],p.fget is f)\np.__doc__=\"changed\"\nprint(p.__doc__)\n",
+      "stdout": "getter doc getter doc True\nchanged\n"
+    },
+    {
+      "id": "property-explicit-doc",
+      "stage": "O87",
+      "source": "class P(property): pass\np=P(lambda self:7,doc=\"explicit\")\nprint(p.__doc__)\n",
+      "stdout": "explicit\n"
+    },
+    {
+      "id": "property-copy",
+      "stage": "O87",
+      "source": "class P(property): pass\nclass A:\n @P\n def x(self): return self.value\n @x.setter\n def x(self,value): self.value=value\na=A()\na.x=7\np=A.x\nq=p.getter(lambda self:9)\nprint(a.x,type(p) is P,type(q) is P,q.__get__(a,A),q.__name__)\n",
+      "stdout": "7 True True 9 x\n"
+    },
+    {
+      "id": "property-copy-init",
+      "stage": "O87",
+      "source": "class P(property):\n def __init__(self,*args):\n  print(\"init\",len(args))\n  property.__init__(self,*args)\np=P(lambda self:7)\nq=p.setter(lambda self,x:None)\nprint(type(q) is P,q.fget is p.fget)\n",
+      "stdout": "init 1\ninit 4\nTrue True\n"
+    },
+    {
+      "id": "property-get-override",
+      "stage": "O87",
+      "source": "class P(property):\n def __get__(self,obj,owner=None): print(\"get\"); return 9\nclass A: x=P(lambda self:7)\na=A()\nprint(a.x,property.__get__(A.__dict__[\"x\"],a,A))\n",
+      "stdout": "get\n9 7\n"
+    },
+    {
+      "id": "property-notification",
+      "stage": "O87",
+      "source": "class P(property):\n def __set_name__(self,owner,name):\n  print(\"name\",name)\n  property.__set_name__(self,owner,name)\nclass A: x=P(lambda self:7)\nprint(A.x.__name__)\n",
+      "stdout": "name x\nx\n"
+    },
+    {
+      "id": "property-reinit",
+      "stage": "O87",
+      "source": "class P(property): pass\np=P(lambda self:7)\nprint(property.__init__(p,lambda self:9),p.__get__(object(),object))\n",
+      "stdout": "None 9\n"
+    },
+    {
+      "id": "property-new-empty",
+      "stage": "O87",
+      "source": "class P(property):\n def __init__(self,f): print(self.fget is None)\np=P(lambda self:7)\nprint(p.fget is None)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "property-copy-none",
+      "stage": "O87",
+      "source": "class P(property): pass\np=P(lambda self:7)\nq=p.getter(None)\nprint(type(q) is P,q.fget is p.fget)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "staticmethod-state",
+      "stage": "O87",
+      "source": "class W(staticmethod): pass\ndef f(value):\n \"document\"\n return value\nw=W(f)\nw.tag=[7]\nprint(type(w) is W,w.__func__ is f,w.__wrapped__ is f,w.__name__,w.__doc__,w.tag[0],w.__dict__[\"__name__\"])\n",
+      "stdout": "True True True f document 7 f\n"
+    },
+    {
+      "id": "staticmethod-empty-slots",
+      "stage": "O87",
+      "source": "class W(staticmethod): __slots__=()\nw=W(lambda x:x)\nw.tag=7\nprint(w.tag,hasattr(w,\"__dict__\"))\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "staticmethod-members",
+      "stage": "O87",
+      "source": "class W(staticmethod): __slots__=(\"tag\",)\nw=W(lambda x:x)\nw.tag=7\nprint(w.tag,hasattr(w,\"__dict__\"))\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "staticmethod-reinit",
+      "stage": "O87",
+      "source": "class W(staticmethod): pass\ndef f(x): return x\ndef g(x): return x+1\nw=W(f)\nprint(staticmethod.__init__(w,g),w.__func__ is g,w.__name__)\n",
+      "stdout": "None True g\n"
+    },
+    {
+      "id": "staticmethod-new-empty",
+      "stage": "O87",
+      "source": "class W(staticmethod):\n def __init__(self,f): print(hasattr(self,\"__func__\"))\nw=W(lambda x:x)\nprint(w.__func__ is None)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "classmethod-state",
+      "stage": "O87",
+      "source": "class W(classmethod): pass\ndef f(value):\n \"document\"\n return value\nw=W(f)\nw.tag=[7]\nprint(type(w) is W,w.__func__ is f,w.__wrapped__ is f,w.__name__,w.__doc__,w.tag[0],w.__dict__[\"__name__\"])\n",
+      "stdout": "True True True f document 7 f\n"
+    },
+    {
+      "id": "classmethod-empty-slots",
+      "stage": "O87",
+      "source": "class W(classmethod): __slots__=()\nw=W(lambda x:x)\nw.tag=7\nprint(w.tag,hasattr(w,\"__dict__\"))\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "classmethod-members",
+      "stage": "O87",
+      "source": "class W(classmethod): __slots__=(\"tag\",)\nw=W(lambda x:x)\nw.tag=7\nprint(w.tag,hasattr(w,\"__dict__\"))\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "classmethod-reinit",
+      "stage": "O87",
+      "source": "class W(classmethod): pass\ndef f(x): return x\ndef g(x): return x+1\nw=W(f)\nprint(classmethod.__init__(w,g),w.__func__ is g,w.__name__)\n",
+      "stdout": "None True g\n"
+    },
+    {
+      "id": "classmethod-new-empty",
+      "stage": "O87",
+      "source": "class W(classmethod):\n def __init__(self,f): print(hasattr(self,\"__func__\"))\nw=W(lambda x:x)\nprint(w.__func__ is None)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "static-binding",
+      "stage": "O87",
+      "source": "class S(staticmethod): pass\nclass A:\n @S\n def f(x): return x+1\nprint(A.f(7),A().f(9),A.__dict__[\"f\"](11))\n",
+      "stdout": "8 10 12\n"
+    },
+    {
+      "id": "class-binding",
+      "stage": "O87",
+      "source": "class C(classmethod): pass\nclass A:\n @C\n def f(cls): return cls\nclass B(A): pass\nprint(A.f() is A,A().f() is A,B.f() is B,type(A.f).__name__)\n",
+      "stdout": "True True True method\n"
+    },
+    {
+      "id": "wrapper-hook",
+      "stage": "O87",
+      "source": "class S(staticmethod):\n def __get__(self,obj,owner=None): print(\"get\"); return lambda x:x+2\nclass A: f=S(lambda x:x)\nprint(A.f(7))\n",
+      "stdout": "get\n9\n"
+    },
+    {
+      "id": "static-call-override",
+      "stage": "O87",
+      "source": "class S(staticmethod):\n def __call__(self,x): print(\"call\"); return x+1\ns=S(lambda x:x+2)\nprint(s(7),staticmethod.__call__(s,7))\n",
+      "stdout": "call\n8 9\n"
+    },
+    {
+      "id": "wrapper-descriptor-precedence",
+      "stage": "O87",
+      "source": "class S(staticmethod): pass\ns=S(lambda:7)\ns.__dict__[\"__wrapped__\"]=9\nprint(callable(s.__wrapped__))\ns.__wrapped__=7\n",
+      "stdout": "True\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "super-binding",
+      "stage": "O87",
+      "source": "class S(super): pass\nclass A:\n def f(self): return 7\nclass B(A): pass\nb=B()\ns=S(B,b)\ns.tag=[9]\nprint(type(s) is S,s.f(),s.__thisclass__ is B,s.__self__ is b,s.__self_class__ is B,s.tag[0])\n",
+      "stdout": "True 7 True True True 9\n"
+    },
+    {
+      "id": "super-unbound",
+      "stage": "O87",
+      "source": "class S(super):\n def __init__(self,*args): print(\"init\",len(args)); super.__init__(self,*args)\nclass A:\n def f(self): return 7\nclass B(A): pass\nB.link=S(B)\nb=B()\ns=b.link\nprint(type(s) is S,s.f(),B.link.__self__ is None)\n",
+      "stdout": "init 1\ninit 2\nTrue 7 True\n"
+    },
+    {
+      "id": "super-native-get",
+      "stage": "O87",
+      "source": "class S(super): pass\nclass A:\n def f(self): return 7\nclass B(A): pass\nb=B()\ns=S(B)\nt=s.__get__(b,B)\nprint(type(t) is S,t.f(),t.__get__(b,B) is t)\n",
+      "stdout": "True 7 True\n"
+    },
+    {
+      "id": "super-members",
+      "stage": "O87",
+      "source": "class S(super): __slots__=(\"tag\",)\nclass A: pass\ns=S(A)\ns.tag=7\nprint(s.tag,hasattr(s,\"__dict__\"))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "super-new-empty",
+      "stage": "O87",
+      "source": "class S(super):\n def __init__(self): print(self.__thisclass__ is None,self.__self__ is None,self.__self_class__ is None)\ns=S()\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "super-reinit",
+      "stage": "O87",
+      "source": "class S(super): pass\nclass A:\n def f(self): return 7\nclass B(A): pass\ns=S(A)\nprint(super.__init__(s,B,B()),s.f())\n",
+      "stdout": "None 7\n"
+    },
+    {
+      "id": "super-read-hook",
+      "stage": "O87",
+      "source": "class S(super):\n def __getattribute__(self,name):\n  print(name)\n  return object.__getattribute__(self,name)\nclass A:\n def f(self): return 7\nclass B(A): pass\nprint(S(B,B()).f())\n",
+      "stdout": "f\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "property-directory",
+      "stage": "O87",
+      "source": "class C(property): pass\na=C(lambda self:7)\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),\"__dict__\" in dir(a))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "staticmethod-directory",
+      "stage": "O87",
+      "source": "class C(staticmethod): pass\na=C(lambda x:x)\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),\"__dict__\" in dir(a))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "classmethod-directory",
+      "stage": "O87",
+      "source": "class C(classmethod): pass\na=C(lambda x:x)\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),\"__dict__\" in dir(a))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "super-directory",
+      "stage": "O87",
+      "source": "class C(super): pass\na=C(object)\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),\"__dict__\" in dir(a))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "module-state",
+      "stage": "O87",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nm=M(\"named\",\"document\")\nm.x=[7]\nprint(type(m) is M,m.__name__,m.__doc__,m.x[0],m.__dict__[\"x\"] is m.x,vars(m) is m.__dict__,m.__package__ is None)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "True named document 7 True True True\n"
+    },
+    {
+      "id": "module-slots",
+      "stage": "O87",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): __slots__=(\"tag\",)\nm=M(\"named\")\nm.tag=7\nm.x=9\nprint(m.tag,m.__dict__[\"x\"],\"tag\" in dir(m),\"__name__\" in dir(m))\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "7 9 False True\n"
+    },
+    {
+      "id": "module-hook",
+      "stage": "O87",
+      "source": "import helper\nModule=type(helper)\nclass M(Module):\n def __getattribute__(self,name):\n  if name==\"special\": return 7\n  return object.__getattribute__(self,name)\nm=M(\"named\")\nm.__getattr__=lambda name:9\nprint(m.special,m.missing,m.__name__)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "module-custom-dir",
+      "stage": "O87",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nm=M(\"named\")\nm.__dir__=lambda:[\"custom\"]\nprint(dir(m)==[\"custom\"])\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "module-reinit",
+      "stage": "O87",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nm=M(\"first\")\nm.x=7\nprint(Module.__init__(m,\"second\",\"doc\"),m.__name__,m.__doc__,m.x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "None second doc 7\n"
+    },
+    {
+      "id": "module-custom-init",
+      "stage": "O87",
+      "source": "import helper\nModule=type(helper)\nclass M(Module):\n def __init__(self,name): self.tag=name\nm=M(\"named\")\nprint(m.tag,hasattr(m,\"__name__\"))\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "named False\n"
+    },
+    {
+      "id": "module-new-empty",
+      "stage": "O87",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nm=Module.__new__(M)\nprint(type(m) is M,len(m.__dict__),hasattr(m,\"__name__\"))\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "True 0 False\n"
+    },
+    {
+      "id": "module-weak-slot-reject",
+      "stage": "O87",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): __slots__=(\"__weakref__\",)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "property-init-callback-state",
+      "stage": "O87",
+      "source": "class P(property): pass\nclass G:\n def __getattribute__(self,name):\n  if name==\"__doc__\": print(p.fget is self); return \"document\"\n  return object.__getattribute__(self,name)\n def __call__(self,obj): return 7\np=property.__new__(P)\ng=G()\nproperty.__init__(p,g)\nprint(p.__doc__)\n",
+      "stdout": "True\ndocument\n"
+    },
+    {
+      "id": "property-init-failure-state",
+      "stage": "O87",
+      "source": "class P(property): pass\nclass G:\n def __getattribute__(self,name):\n  if name==\"__doc__\": raise ValueError(\"failed\")\n  return object.__getattribute__(self,name)\np=property.__new__(P)\ng=G()\ntry: property.__init__(p,g)\nexcept ValueError: print(p.fget is g)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "property-empty-slots-document",
+      "stage": "O87",
+      "source": "class P(property): __slots__=()\np=P(lambda self:7)\n",
+      "stdout": ""
+    },
+    {
+      "id": "super-slots-write",
+      "stage": "O87",
+      "source": "class A: foo=9\nclass B(A): pass\nclass S(super): __slots__=()\ns=S(B,B())\ntry: s.foo=7\nexcept AttributeError: print(\"blocked\")\nprint(s.foo)\n",
+      "stdout": "blocked\n9\n"
+    },
+    {
+      "id": "module-missing-delete",
+      "stage": "O87",
+      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\ndef missing(n):\n print(\"lookup\")\n return 7\nm.__dict__[\"__getattr__\"]=missing\ntry: del m.unknown\nexcept AttributeError: print(\"blocked\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "blocked\n"
+    },
+    {
+      "id": "super-native-priority",
+      "stage": "O87",
+      "source": "class A: foo=9\nclass B(A): pass\nclass S(super): pass\ns=S(B,B())\ns.foo=7\nprint(s.foo,object.__getattribute__(s,\"__dict__\")[\"foo\"])\n",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "module-owned-missing",
+      "stage": "O87",
+      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  print(\"eq\")\n  return False\nm.__dict__[K()]=7\ndef missing(n):\n print(\"missing\")\n return 9\nm.__dict__[\"__getattr__\"]=missing\nprint(m.x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "eq\nmissing\n9\n"
+    },
+    {
+      "id": "super-owned-target-key",
+      "stage": "O87",
+      "source": "class K:\n def __hash__(self): return hash(\"foo\")\n def __eq__(self,n):\n  print(\"eq\")\n  return n==\"foo\"\nA=type(\"A\",(),{K():9})\nclass B(A): pass\nclass S(super): pass\ns=S(B,B())\nprint(s.foo)\n",
+      "stdout": "eq\n9\n"
+    },
+    {
+      "id": "module-owned-native-bypass",
+      "stage": "O87",
+      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  print(\"eq\")\n  return False\nm.__dict__[K()]=7\ndef missing(n):\n print(\"missing\")\n return 9\nm.__dict__[\"__getattr__\"]=missing\ntry: object.__getattribute__(m,\"x\")\nexcept AttributeError: print(\"blocked\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "eq\nblocked\n"
+    }
+  ]
+}
