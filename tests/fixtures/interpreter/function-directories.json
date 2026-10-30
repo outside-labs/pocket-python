@@ -8,7 +8,8 @@
     "O51",
     "O52",
     "O61",
-    "O72"
+    "O72",
+    "O77"
   ],
   "cases": [
     {
@@ -230,7 +231,7 @@
     },
     {
       "id": "native-other-layout",
-      "stage": "Future",
+      "stage": "O77",
       "source": "print(\"__func__\" in object.__dir__(staticmethod(lambda:7)))\n",
       "stdout": "True\n"
     },
@@ -242,7 +243,7 @@
     },
     {
       "id": "wrapper-directory",
-      "stage": "Future",
+      "stage": "O77",
       "source": "def f(): pass\nprint(\"__func__\" in dir(staticmethod(f)))\n",
       "stdout": "True\n"
     },

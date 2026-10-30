@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O55",
     "O62",
-    "O74"
+    "O74",
+    "O77"
   ],
   "cases": [
     {
@@ -324,7 +325,7 @@
     {
       "id": "wrapper-directory-boundary",
       "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(len(dir(staticmethod(produce))))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": "36\n"
     },
     {

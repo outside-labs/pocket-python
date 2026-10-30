@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O54",
-    "O71"
+    "O71",
+    "O77"
   ],
   "cases": [
     {
@@ -300,7 +301,7 @@
     {
       "id": "wrapper-object-layout",
       "source": "print(\"__func__\" in dir(staticmethod(lambda:None)))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": "True\n"
     }
   ]

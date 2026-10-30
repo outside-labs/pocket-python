@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O57",
-    "O75"
+    "O75",
+    "O77"
   ],
   "cases": [
     {
@@ -606,13 +607,13 @@
     {
       "id": "other-default-directory",
       "source": "dir(staticmethod(lambda:7))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": ""
     },
     {
       "id": "wrapper-directory",
       "source": "def f(): pass\ndir(staticmethod(f))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": ""
     },
     {

@@ -464,3 +464,6 @@ Native async/host adapters remain under #34.
 
 [O76](interpreter-advertised-directories.md) completes type/metaclass and advertised
 namespace directories, hooked native qualification and abstract base checking.
+
+[O77](interpreter-wrapper-super-directories.md) completes native wrapper and super
+instance/type directories with live dictionaries and retained native callers.

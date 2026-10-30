@@ -576,8 +576,10 @@ export class ClassRuntime {
         const item = this.lookup(receiver.selfClass, name, true, this.mro(receiver.selfClass).indexOf(receiver.thisclass) + 1);
         if (item.found) return this.bindAttribute(item.value, receiver.self === receiver.selfClass ? null : receiver.self, receiver.selfClass);
       }
+      if (name === "__dir__") return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
       this.fail("AttributeError", "super has no attribute '" + name + "'.");
     }
+    if (name === "__dir__" && receiver instanceof MethodWrapperValue) return this.functionEntry(receiver, name, "get", null, key);
     if (name === "__dir__" && this.hasFixedDirectory(receiver))
       return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
     if (receiver instanceof BuiltinValue) {
@@ -933,7 +935,7 @@ export class ClassRuntime {
     if (receiver instanceof CodeValue) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Code metadata is read-only");
     if (receiver instanceof BuiltinValue && !this.isType(receiver)) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Native callable/descriptor attributes are read-only");
     this.key(name); this.touch(receiver);
-    if (name === "__dir__" && this.hasFixedDirectory(receiver)) this.fail("AttributeError", "Native directory attributes are read-only.");
+    if (name === "__dir__" && this.hasFixedDirectory(receiver) && !(receiver instanceof MethodWrapperValue)) this.fail("AttributeError", "Native directory attributes are read-only.");
     if (["__name__", "__qualname__", "__self__", "__objclass__"].includes(name) &&
         (receiver instanceof BuiltinValue && receiver.name === "type.__dir__" ||
          receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && receiver.callable.name === "type.__dir__"))
@@ -1253,12 +1255,14 @@ export class ClassRuntime {
     return CONTAINER_DIRECTORY_KEYS[this.values.containerDirectoryType(receiver)] ?? null;
   }
   hasFixedDirectory(receiver) {
-    return receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
+    return receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
       receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind) ||
       this.values.isRange(receiver) || this.values.isSlice(receiver) || this.containerDirectoryNames(receiver) !== null || this.numericDirectoryNames(receiver) !== null || this.nativeCallableDirectoryKind(receiver) !== null;
   }
   nativeTypeDirectoryNames(type) {
     if (!(type instanceof BuiltinValue)) return null;
+    if (["staticmethod", "classmethod", "super"].includes(type.name))
+      return this.mro(type).flatMap(base => NATIVE_NAMESPACES[base.root ? "object" : base.name].map(entry => entry[0]));
     if (type.name === "type") return [...NATIVE_NAMESPACES.type.map(entry => entry[0]), ...OBJECT_DIRECTORY_KEYS];
     if (Object.hasOwn(CONTAINER_DIRECTORY_KEYS, type.name)) return CONTAINER_DIRECTORY_KEYS[type.name];
     switch (type.name) {
@@ -1296,6 +1300,7 @@ export class ClassRuntime {
     }
   }
   directoryNames(receiver) {
+    if (receiver instanceof MethodWrapperValue || receiver instanceof SuperValue) return this.nativeTypeDirectoryNames(this.typeOf(receiver));
     const container = this.containerDirectoryNames(receiver);
     if (container !== null) return container;
     const numeric = this.numericDirectoryNames(receiver);
@@ -1495,9 +1500,9 @@ export class ClassRuntime {
     return receiver.attributes;
   }
   functionMissing(receiver, name, operation = "get") {
-    if (receiver instanceof MethodWrapperValue) this.fail("AttributeError", "Wrapper has no attribute '" + name + "'.");
     if (operation === "get" && name === "__dir__")
       return this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver);
+    if (receiver instanceof MethodWrapperValue) this.fail("AttributeError", "Wrapper has no attribute '" + name + "'.");
     if (operation === "get" && name === "__get__")
       return this.make(BoundMethodValue, this.builtin("function.__get__"), receiver);
     if (operation === "get" && FUNCTION_DEFERRED_METHODS.has(name))

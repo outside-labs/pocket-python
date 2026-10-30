@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O56",
-    "O61"
+    "O61",
+    "O77"
   ],
   "cases": [
     {
@@ -624,7 +625,7 @@
     {
       "id": "wrapper-directory",
       "source": "print(len(dir(staticmethod(lambda: 7))))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": "36\n"
     }
   ]
