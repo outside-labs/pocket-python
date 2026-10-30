@@ -20,6 +20,8 @@ Listed native APIs retain separate read and operation boundaries.
 
 The [O67 live namespace contract](interpreter-module-namespaces.md) adopts shared module/global dictionaries, live writes/deletes and owned module hooks. The [O68 class body contract](interpreter-class-body-namespaces.md) adds live body dictionaries, lexical/global scope ordering, metadata/cell propagation and comprehension walrus binding. Prepared mappings remain O80.
 
+The [O69 native namespace contract](interpreter-native-namespaces.md) materializes complete own dictionaries for source classes and every adopted native layout, with stable descriptors, native storage fields, exact namespace keys and explicit owners for deferred APIs.
+
 The [O60 set/buffer directory contract](interpreter-buffer-directories.md) adds
 set/frozenset/bytes/bytearray/memoryview layouts, preserving hash entries, mutable
 storage, view aliases and directories after release. Released-view data access,

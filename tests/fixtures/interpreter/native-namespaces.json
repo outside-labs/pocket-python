@@ -1,0 +1,778 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-native-namespaces/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O69"
+  ],
+  "cases": [
+    {
+      "id": "own-type",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type\np=value.__dict__\nkeys=('__new__', '__repr__', '__call__', '__getattribute__', '__setattr__', '__delattr__', '__init__', '__or__', '__ror__', 'mro', '__subclasses__', '__prepare__', '__instancecheck__', '__subclasscheck__', '__dir__', '__sizeof__', '__basicsize__', '__itemsize__', '__flags__', '__weakrefoffset__', '__base__', '__dictoffset__', '__name__', '__qualname__', '__bases__', '__mro__', '__module__', '__abstractmethods__', '__dict__', '__doc__', '__text_signature__', '__annotations__', '__annotate__', '__type_params__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor method_descriptor member_descriptor member_descriptor member_descriptor member_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-bool",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=bool\np=value.__dict__\nkeys=('__new__', '__repr__', '__invert__', '__and__', '__rand__', '__xor__', '__rxor__', '__or__', '__ror__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-int",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=int\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__add__', '__radd__', '__sub__', '__rsub__', '__mul__', '__rmul__', '__mod__', '__rmod__', '__divmod__', '__rdivmod__', '__pow__', '__rpow__', '__neg__', '__pos__', '__abs__', '__bool__', '__invert__', '__lshift__', '__rlshift__', '__rshift__', '__rrshift__', '__and__', '__rand__', '__xor__', '__rxor__', '__or__', '__ror__', '__int__', '__float__', '__floordiv__', '__rfloordiv__', '__truediv__', '__rtruediv__', '__index__', 'conjugate', 'bit_length', 'bit_count', 'to_bytes', 'from_bytes', 'as_integer_ratio', '__trunc__', '__floor__', '__ceil__', '__round__', '__getnewargs__', '__format__', '__sizeof__', 'is_integer', 'real', 'imag', 'numerator', 'denominator', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-float",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=float\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__add__', '__radd__', '__sub__', '__rsub__', '__mul__', '__rmul__', '__mod__', '__rmod__', '__divmod__', '__rdivmod__', '__pow__', '__rpow__', '__neg__', '__pos__', '__abs__', '__bool__', '__int__', '__float__', '__floordiv__', '__rfloordiv__', '__truediv__', '__rtruediv__', 'from_number', 'conjugate', '__trunc__', '__floor__', '__ceil__', '__round__', 'as_integer_ratio', 'fromhex', 'hex', 'is_integer', '__getnewargs__', '__getformat__', '__format__', 'real', 'imag', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor getset_descriptor getset_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-complex",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=complex\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__add__', '__radd__', '__sub__', '__rsub__', '__mul__', '__rmul__', '__pow__', '__rpow__', '__neg__', '__pos__', '__abs__', '__bool__', '__truediv__', '__rtruediv__', 'from_number', 'conjugate', '__complex__', '__getnewargs__', '__format__', 'real', 'imag', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor method_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-str",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=str\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__str__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__mod__', '__rmod__', '__len__', '__getitem__', '__add__', '__mul__', '__rmul__', '__contains__', 'encode', 'replace', 'split', 'rsplit', 'join', 'capitalize', 'casefold', 'title', 'center', 'count', 'expandtabs', 'find', 'partition', 'index', 'ljust', 'lower', 'lstrip', 'rfind', 'rindex', 'rjust', 'rstrip', 'rpartition', 'splitlines', 'strip', 'swapcase', 'translate', 'upper', 'startswith', 'endswith', 'removeprefix', 'removesuffix', 'isascii', 'islower', 'isupper', 'istitle', 'isspace', 'isdecimal', 'isdigit', 'isnumeric', 'isalpha', 'isalnum', 'isidentifier', 'isprintable', 'zfill', 'format', 'format_map', '__format__', 'maketrans', '__sizeof__', '__getnewargs__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor staticmethod method_descriptor method_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-list",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=list\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__init__', '__len__', '__getitem__', '__setitem__', '__delitem__', '__add__', '__mul__', '__rmul__', '__contains__', '__iadd__', '__imul__', '__reversed__', '__sizeof__', 'clear', 'copy', 'append', 'insert', 'extend', 'pop', 'remove', 'index', 'count', 'reverse', 'sort', '__class_getitem__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor NoneType wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-tuple",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=tuple\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__len__', '__getitem__', '__add__', '__mul__', '__rmul__', '__contains__', '__getnewargs__', 'index', 'count', '__class_getitem__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-dict",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=dict\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__init__', '__or__', '__ror__', '__ior__', '__len__', '__getitem__', '__setitem__', '__delitem__', '__contains__', '__sizeof__', 'get', 'setdefault', 'pop', 'popitem', 'keys', 'items', 'values', 'update', 'fromkeys', 'clear', 'copy', '__reversed__', '__class_getitem__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor NoneType wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-range",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=range\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__bool__', '__len__', '__getitem__', '__contains__', '__reversed__', '__reduce__', 'count', 'index', 'start', 'stop', 'step', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor member_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-slice",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=slice\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', 'indices', '__reduce__', 'start', 'stop', 'step', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor member_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-set",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=set\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__init__', '__sub__', '__rsub__', '__and__', '__rand__', '__xor__', '__rxor__', '__or__', '__ror__', '__isub__', '__iand__', '__ixor__', '__ior__', '__len__', '__contains__', 'add', 'clear', 'copy', 'discard', 'difference', 'difference_update', 'intersection', 'intersection_update', 'isdisjoint', 'issubset', 'issuperset', 'pop', '__reduce__', 'remove', '__sizeof__', 'symmetric_difference', 'symmetric_difference_update', 'union', 'update', '__class_getitem__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor NoneType wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-frozenset",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=frozenset\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__sub__', '__rsub__', '__and__', '__rand__', '__xor__', '__rxor__', '__or__', '__ror__', '__len__', '__contains__', 'copy', 'difference', 'intersection', 'isdisjoint', 'issubset', 'issuperset', '__reduce__', '__sizeof__', 'symmetric_difference', 'union', '__class_getitem__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-bytes",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=bytes\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__str__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__buffer__', '__mod__', '__rmod__', '__len__', '__getitem__', '__add__', '__mul__', '__rmul__', '__contains__', '__getnewargs__', '__bytes__', 'capitalize', 'center', 'count', 'decode', 'endswith', 'expandtabs', 'find', 'fromhex', 'hex', 'index', 'isalnum', 'isalpha', 'isascii', 'isdigit', 'islower', 'isspace', 'istitle', 'isupper', 'join', 'ljust', 'lower', 'lstrip', 'maketrans', 'partition', 'replace', 'removeprefix', 'removesuffix', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit', 'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase', 'title', 'translate', 'upper', 'zfill', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor staticmethod method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-bytearray",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=bytearray\np=value.__dict__\nkeys=('__new__', '__repr__', '__str__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__init__', '__buffer__', '__release_buffer__', '__mod__', '__rmod__', '__len__', '__getitem__', '__setitem__', '__delitem__', '__add__', '__mul__', '__rmul__', '__contains__', '__iadd__', '__imul__', '__alloc__', '__reduce__', '__reduce_ex__', '__sizeof__', 'append', 'capitalize', 'center', 'clear', 'copy', 'count', 'decode', 'endswith', 'expandtabs', 'extend', 'find', 'fromhex', 'hex', 'index', 'insert', 'isalnum', 'isalpha', 'isascii', 'isdigit', 'islower', 'isspace', 'istitle', 'isupper', 'join', 'ljust', 'lower', 'lstrip', 'maketrans', 'partition', 'pop', 'remove', 'replace', 'removeprefix', 'removesuffix', 'resize', 'reverse', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit', 'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase', 'title', 'translate', 'upper', 'zfill', '__doc__', '__hash__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor staticmethod method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor str NoneType\nTrue\n"
+    },
+    {
+      "id": "own-memoryview",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=memoryview\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__buffer__', '__release_buffer__', '__len__', '__getitem__', '__setitem__', '__delitem__', 'release', 'tobytes', 'hex', 'tolist', 'cast', 'toreadonly', '_from_flags', 'count', 'index', '__enter__', '__exit__', '__class_getitem__', 'obj', 'nbytes', 'readonly', 'itemsize', 'format', 'ndim', 'shape', 'strides', 'suboffsets', 'c_contiguous', 'f_contiguous', 'contiguous', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-super",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=super\np=value.__dict__\nkeys=('__new__', '__repr__', '__getattribute__', '__get__', '__init__', '__thisclass__', '__self__', '__self_class__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor member_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-property",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=property\np=value.__dict__\nkeys=('__new__', '__get__', '__set__', '__delete__', '__init__', 'getter', 'setter', 'deleter', '__set_name__', 'fget', 'fset', 'fdel', '__doc__', '__name__', '__isabstractmethod__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor member_descriptor member_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-staticmethod",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=staticmethod\np=value.__dict__\nkeys=('__new__', '__repr__', '__call__', '__get__', '__init__', '__class_getitem__', '__func__', '__wrapped__', '__isabstractmethod__', '__dict__', '__annotations__', '__annotate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor classmethod_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-classmethod",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=classmethod\np=value.__dict__\nkeys=('__new__', '__repr__', '__get__', '__init__', '__class_getitem__', '__func__', '__wrapped__', '__isabstractmethod__', '__dict__', '__annotations__', '__annotate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor classmethod_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-BaseException",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=BaseException\np=value.__dict__\nkeys=('__new__', '__repr__', '__str__', '__init__', '__reduce__', '__setstate__', 'with_traceback', 'add_note', '__suppress_context__', '__dict__', 'args', '__traceback__', '__context__', '__cause__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-GeneratorExit",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=GeneratorExit\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-Exception",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=Exception\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-AssertionError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=AssertionError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-ArithmeticError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ArithmeticError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-ZeroDivisionError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ZeroDivisionError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-OverflowError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=OverflowError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-LookupError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=LookupError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-IndexError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=IndexError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-KeyError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=KeyError\np=value.__dict__\nkeys=('__str__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-ValueError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ValueError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-TypeError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=TypeError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-UnicodeError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnicodeError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-UnicodeEncodeError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnicodeEncodeError\np=value.__dict__\nkeys=('__new__', '__str__', '__init__', 'encoding', 'object', 'start', 'end', 'reason', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor member_descriptor member_descriptor member_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-UnicodeDecodeError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnicodeDecodeError\np=value.__dict__\nkeys=('__new__', '__str__', '__init__', 'encoding', 'object', 'start', 'end', 'reason', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor member_descriptor member_descriptor member_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-UnicodeTranslateError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnicodeTranslateError\np=value.__dict__\nkeys=('__new__', '__str__', '__init__', 'encoding', 'object', 'start', 'end', 'reason', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor member_descriptor member_descriptor member_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-NameError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=NameError\np=value.__dict__\nkeys=('__init__', 'name', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-UnboundLocalError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnboundLocalError\np=value.__dict__\nkeys=('__doc__',)\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "str\nTrue\n"
+    },
+    {
+      "id": "own-RuntimeError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=RuntimeError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-RecursionError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=RecursionError\np=value.__dict__\nkeys=('__new__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method str\nTrue\n"
+    },
+    {
+      "id": "own-StopIteration",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=StopIteration\np=value.__dict__\nkeys=('__init__', 'value', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-AttributeError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=AttributeError\np=value.__dict__\nkeys=('__init__', '__getstate__', '__reduce__', 'name', 'obj', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor method_descriptor method_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-ImportError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ImportError\np=value.__dict__\nkeys=('__str__', '__init__', '__reduce__', 'msg', 'name', 'path', 'name_from', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor member_descriptor member_descriptor member_descriptor member_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-ModuleNotFoundError",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ModuleNotFoundError\np=value.__dict__\nkeys=('__doc__',)\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "str\nTrue\n"
+    },
+    {
+      "id": "own-object",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=object\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__str__', '__getattribute__', '__setattr__', '__delattr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__init__', '__reduce_ex__', '__reduce__', '__getstate__', '__subclasshook__', '__init_subclass__', '__format__', '__sizeof__', '__dir__', '__class__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor classmethod_descriptor method_descriptor method_descriptor method_descriptor getset_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-mappingproxy",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(C.__dict__)\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__str__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__iter__', '__or__', '__ror__', '__ior__', '__len__', '__getitem__', '__contains__', 'get', 'keys', 'values', 'items', 'copy', '__class_getitem__', '__reversed__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor method_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-function",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(f)\np=value.__dict__\nkeys=('__new__', '__repr__', '__call__', '__get__', '__closure__', '__globals__', '__builtins__', '__code__', '__defaults__', '__kwdefaults__', '__annotations__', '__annotate__', '__dict__', '__doc__', '__module__', '__name__', '__qualname__', '__type_params__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor member_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-method",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(C().method)\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__call__', '__getattribute__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__get__', '__reduce__', '__func__', '__self__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor member_descriptor member_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-method-wrapper",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(C.__dict__[\"__dict__\"].__get__)\np=value.__dict__\nkeys=('__repr__', '__hash__', '__call__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__reduce__', '__self__', '__objclass__', '__name__', '__qualname__', '__doc__', '__text_signature__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-method_descriptor",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(type.__dir__)\np=value.__dict__\nkeys=('__repr__', '__call__', '__get__', '__reduce__', '__objclass__', '__name__', '__doc__', '__qualname__', '__text_signature__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-wrapper_descriptor",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(property.__get__)\np=value.__dict__\nkeys=('__repr__', '__call__', '__get__', '__reduce__', '__objclass__', '__name__', '__doc__', '__qualname__', '__text_signature__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-builtin_function_or_method",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(len)\np=value.__dict__\nkeys=('__repr__', '__hash__', '__call__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__reduce__', '__module__', '__doc__', '__name__', '__qualname__', '__self__', '__text_signature__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-generator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\ndef f(): yield 7\nvalue=type(f())\np=value.__dict__\nkeys=('__repr__', '__iter__', '__next__', '__del__', 'send', 'throw', 'close', '__sizeof__', '__class_getitem__', '__name__', '__qualname__', 'gi_yieldfrom', 'gi_running', 'gi_frame', 'gi_suspended', 'gi_code', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor method_descriptor classmethod_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor getset_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-module",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nimport helper\nvalue=type(helper)\np=value.__dict__\nkeys=('__new__', '__repr__', '__getattribute__', '__init__', '__dir__', '__dict__', '__annotations__', '__annotate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor member_descriptor getset_descriptor getset_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-cell",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n def f(self): return __class__\nvalue=type(C.ns[\"__classcell__\"])\np=value.__dict__\nkeys=('__new__', '__repr__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', 'cell_contents', '__doc__', '__hash__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor getset_descriptor str NoneType\nTrue\n"
+    },
+    {
+      "id": "own-NoneType",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(None)\np=value.__dict__\nkeys=('__new__', '__repr__', '__hash__', '__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__bool__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-NotImplementedType",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(NotImplemented)\np=value.__dict__\nkeys=('__new__', '__repr__', '__bool__', '__reduce__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "builtin_function_or_method wrapper_descriptor wrapper_descriptor method_descriptor str\nTrue\n"
+    },
+    {
+      "id": "own-getset_descriptor",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(type.__dict__[\"__dict__\"])\np=value.__dict__\nkeys=('__repr__', '__get__', '__set__', '__delete__', '__objclass__', '__name__', '__doc__', '__qualname__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-member_descriptor",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(type.__dict__[\"__basicsize__\"])\np=value.__dict__\nkeys=('__repr__', '__get__', '__set__', '__delete__', '__reduce__', '__objclass__', '__name__', '__doc__', '__qualname__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor wrapper_descriptor wrapper_descriptor method_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-classmethod_descriptor",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(object.__dict__[\"__init_subclass__\"])\np=value.__dict__\nkeys=('__repr__', '__call__', '__get__', '__objclass__', '__name__', '__doc__', '__qualname__', '__text_signature__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor wrapper_descriptor member_descriptor member_descriptor getset_descriptor getset_descriptor getset_descriptor\nTrue\n"
+    },
+    {
+      "id": "own-list_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter([]))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-tuple_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(()))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-str_ascii_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(\"abc\"))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-str_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(\"\ud83d\ude00\"))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-dict_keyiterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter({}))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-range_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(range(3)))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-longrange_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(range(10**40,10**40+3)))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-set_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(set()))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-bytes_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(b\"a\"))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-bytearray_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(bytearray(b\"a\")))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-memory_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nvalue=type(iter(memoryview(b\"a\")))\np=value.__dict__\nkeys=('__iter__', '__next__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass Indexed:\n def __getitem__(self,key): return key\nvalue=type(iter(Indexed()))\np=value.__dict__\nkeys=('__iter__', '__next__', '__length_hint__', '__reduce__', '__setstate__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor method_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "own-callable_iterator",
+      "stage": "O69",
+      "source": "__name__=\"app\"\ndef f(): return 7\nvalue=type(iter(f,9))\np=value.__dict__\nkeys=('__iter__', '__next__', '__reduce__', '__doc__')\nprint(*[type(p[key]).__name__ for key in keys])\nprint(all(p[key] is value.__dict__[key] for key in keys))\n",
+      "stdout": "wrapper_descriptor wrapper_descriptor method_descriptor NoneType\nTrue\n"
+    },
+    {
+      "id": "source-native-fields",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:\n def f(self): self.value=7\np=C.__dict__\nprint(type(p[\"__dict__\"]).__name__,type(p[\"__weakref__\"]).__name__,p[\"__firstlineno__\"],*p[\"__static_attributes__\"])\nprint(p[\"__dict__\"] is C.__dict__[\"__dict__\"],p[\"__static_attributes__\"] is C.__static_attributes__)\n",
+      "stdout": "getset_descriptor getset_descriptor 2 value\nTrue True\n"
+    },
+    {
+      "id": "source-dictionary-getset",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C: pass\na=C()\na.value=7\nd=C.__dict__[\"__dict__\"]\nprint(d.__get__(a) is a.__dict__,d.__get__(None,C) is d,d.__objclass__ is C,d.__name__,d.__qualname__)\n",
+      "stdout": "True True True __dict__ C.__dict__\n"
+    },
+    {
+      "id": "source-dictionary-getset-set-delete",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C: pass\na=C()\nd=C.__dict__[\"__dict__\"]\nvalue={\"tag\":7}\nd.__set__(a,value)\nprint(a.__dict__ is value,a.tag)\nd.__delete__(a)\nprint(\"tag\" in a.__dict__)\n",
+      "stdout": "True 7\nFalse\n"
+    },
+    {
+      "id": "source-weakref-getset",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C: pass\na=C()\nd=C.__dict__[\"__weakref__\"]\nprint(a.__weakref__ is None,d.__get__(a) is None,d.__get__(None,C) is d)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "source-weakref-readonly",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C: pass\nd=C.__dict__[\"__weakref__\"]\nd.__set__(C(),7)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "source-dictionary-wrong-receiver",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\nclass D:pass\nC.__dict__[\"__dict__\"].__get__(D())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "source-dictionary-wrong-storage",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\nC.__dict__[\"__dict__\"].__set__(C(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "getset-not-callable",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\nd=C.__dict__[\"__dict__\"]\nprint(callable(d),callable(d.__get__))\nd(C())\n",
+      "stdout": "False True\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-method-binding",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nd=int.__dict__[\"__add__\"]\nb=d.__get__(7)\nprint(type(d).__name__,type(b).__name__,b.__self__==7,d.__get__(None,int) is d,d.__objclass__ is int)\n",
+      "stdout": "wrapper_descriptor method-wrapper True True True\n"
+    },
+    {
+      "id": "native-method-wrong-receiver",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nint.__dict__[\"__add__\"].__get__([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-method-owner-ignored",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nd=int.__dict__[\"__add__\"]\nprint(d.__get__(None,7) is d)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-data-fields",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nprint(int.__dict__[\"real\"].__get__(7),type(int.__dict__[\"real\"].__get__(True)).__name__)\nprint(slice.__dict__[\"start\"].__get__(slice(7,9)))\nprint(range.__dict__[\"stop\"].__get__(range(7)))\n",
+      "stdout": "7 int\n7\n7\n"
+    },
+    {
+      "id": "native-descriptor-metadata-readonly",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nd=int.__dict__[\"__add__\"]\nd.__name__=\"other\"\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-type-dict-qualified",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\nd=type.__dict__[\"__dict__\"]\nprint(d.__objclass__ is type,type(d.__get__(C)).__name__,type(d.__get__(int)).__name__)\n",
+      "stdout": "True mappingproxy mappingproxy\n"
+    },
+    {
+      "id": "native-type-dict-readonly",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\ntype.__dict__[\"__dict__\"].__set__(C,{})\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-type-dict-wrong-receiver",
+      "stage": "O69",
+      "source": "__name__=\"app\"\ntype.__dict__[\"__dict__\"].__get__(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-nondata-metaclass-shadow",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass M(type): __dict__=7\nclass C(metaclass=M): pass\nprint(type(vars(C)).__name__,vars(C) is C.__dict__)\nprint(type(type.__dict__[\"__dict__\"].__get__(C)).__name__)\n",
+      "stdout": "getset_descriptor True\nmappingproxy\n"
+    },
+    {
+      "id": "native-data-metaclass-shadow",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass M(type):\n @property\n def __dict__(cls): return [7]\nclass C(metaclass=M):pass\nprint(vars(C)[0],type(type.__dict__[\"__dict__\"].__get__(C)).__name__)\n",
+      "stdout": "7 mappingproxy\n"
+    },
+    {
+      "id": "class-materialization-mutation",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C: value=7\np=C.__dict__\nC.value=9\nC.other=11\nprint(p[\"value\"],p[\"other\"])\ndel C.value\nprint(\"value\" in p,p[\"__dict__\"] is C.__dict__[\"__dict__\"])\n",
+      "stdout": "9 11\nFalse True\n"
+    },
+    {
+      "id": "inherited-native-storage",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass Base:pass\nclass Child(Base):pass\nd=Base.__dict__[\"__dict__\"]\na=Child()\na.value=7\nprint(d.__get__(a)[\"value\"],\"__dict__\" in Child.__dict__,\"__weakref__\" in Child.__dict__)\n",
+      "stdout": "7 False False\n"
+    },
+    {
+      "id": "native-classmethod-binding",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nd=object.__dict__[\"__init_subclass__\"]\nclass C:pass\nf=d.__get__(None,C)\nprint(type(d).__name__,type(f).__name__,f.__self__ is C)\nprint(f() is None)\n",
+      "stdout": "classmethod_descriptor builtin_function_or_method True\nTrue\n"
+    },
+    {
+      "id": "native-getset-constructor-error",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\ntype(C.__dict__[\"__dict__\"])()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "source-dynamic-namespace-primitives",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nkey=(7,9)\nC=type(\"C\",(),{key:[17]})\nprint(C.__dict__[key][0])\n",
+      "stdout": "17\n"
+    },
+    {
+      "id": "type-documentation-storage",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nprint(int.__doc__ is int.__dict__[\"__doc__\"],object.__doc__ is object.__dict__[\"__doc__\"])\n",
+      "stdout": "False False\n"
+    },
+    {
+      "id": "owned-class-attribute-key",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\nkey=Key(\"tag\")\noriginal={key:[7]}\nC=type(\"C\",(),original)\nactive=True\nprint(C.tag[0],C().tag[0])\nC.tag=[9]\nprint(C.tag[0],original[key][0])\ndel C.tag\nprint(hasattr(C,\"tag\"))\n",
+      "stdout": "compare tag tag\ncompare tag tag\n7 7\ncompare tag tag\ncompare tag tag\ncompare tag tag\n9 7\ncompare tag tag\ncompare tag tag\nFalse\n"
+    },
+    {
+      "id": "owned-class-attribute-inherited-key",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\nkey=Key(\"tag\")\nBase=type(\"Base\",(),{key:[7]})\nclass Child(Base):pass\nactive=True\nprint(Child.tag[0],Child().tag[0])\nChild.tag=[9]\nprint(Child.tag[0],Base.tag[0])\n",
+      "stdout": "compare tag tag\ncompare tag tag\n7 7\ncompare tag tag\n9 7\n"
+    },
+    {
+      "id": "owned-special-key",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\ndef length(self):return 7\nC=type(\"C\",(),{Key(\"__len__\"):length})\nactive=True\nprint(len(C()),C.__len__(C()))\n",
+      "stdout": "compare __len__ __len__\ncompare __len__ __len__\n7 7\n"
+    },
+    {
+      "id": "owned-set-name-key-identity",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\nkey=Key(\"tag\")\nclass D:\n def __set_name__(self,owner,name): print(name is key,owner.__name__)\nC=type(\"C\",(),{key:D()})\n",
+      "stdout": "True C\n"
+    },
+    {
+      "id": "owned-exposed-body-key",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\nkey=Key(\"tag\")\nclass C:\n ns=locals()\n ns[key]=[7]\nactive=True\nprint(C.tag[0],C().tag[0],C.ns[key][0])\nC.tag=[9]\nprint(C.tag[0],C.ns[key][0])\n",
+      "stdout": "compare tag tag\ncompare tag tag\n7 7 7\ncompare tag tag\ncompare tag tag\ncompare tag tag\n9 7\n"
+    },
+    {
+      "id": "owned-reserved-opaque-qualname",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\nC=type(\"C\",(),{Key(\"__qualname__\"):\"Other\"})\nprint(C.__qualname__,\"__qualname__\" in C.__dict__)\n",
+      "stdout": "Other False\n"
+    },
+    {
+      "id": "owned-reserved-opaque-module",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\nC=type(\"C\",(),{Key(\"__module__\"):[7]})\nprint(C.__module__[0],C.__dict__[\"__module__\"][0])\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "owned-reserved-opaque-dict",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\nkey=Key(\"__dict__\")\nC=type(\"C\",(),{key:7})\nprint(C().__dict__,C.__dict__[\"__dict__\"])\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "owned-reserved-opaque-weakref",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass Key:\n def __init__(self,name): self.name=name\n def __hash__(self): return hash(self.name)\n def __eq__(self,other):\n  if active: print(\"compare\",self.name,other)\n  return self.name==other\nC=type(\"C\",(),{Key(\"__weakref__\"):7})\nprint(C().__weakref__,C.__dict__[\"__weakref__\"])\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "owned-qualified-type-metadata",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass M(type):\n @property\n def __module__(self):return \"shadow\"\n @property\n def __qualname__(self):return \"shadow\"\nclass C(metaclass=M):pass\nprint(type.__dict__[\"__module__\"].__get__(C),type.__dict__[\"__qualname__\"].__get__(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "owned-qualified-type-doc-write",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass M(type):\n @property\n def __doc__(self):return 7\nclass C(metaclass=M):pass\nd=type.__dict__[\"__doc__\"]\nd.__set__(C,[9])\nprint(C.__doc__,d.__get__(C)[0],C.__dict__[\"__doc__\"][0])\n",
+      "stdout": "7 9 9\n"
+    },
+    {
+      "id": "owned-dynamic-bad-classdictcell",
+      "stage": "O69",
+      "source": "__name__=\"app\"\ntype(\"C\",(),{\"__classdictcell__\":7})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "source-field-mutations",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\nC.__firstlineno__=7\nC.__static_attributes__=[9]\nC.__weakref__=11\np=C.__dict__\nprint(p[\"__firstlineno__\"],p[\"__static_attributes__\"][0],C().__weakref__)\ndel C.__firstlineno__\ndel C.__static_attributes__\ndel C.__weakref__\nprint(\"__firstlineno__\" in p,\"__static_attributes__\" in p,\"__weakref__\" in p)\n",
+      "stdout": "7 9 11\nFalse False False\n"
+    },
+    {
+      "id": "nondata-metaclass-shadow-mutation",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass M(type):__dict__=7\nclass C(metaclass=M):pass\nC.__dict__=9\nprint(C.__dict__,type.__dict__[\"__dict__\"].__get__(C)[\"__dict__\"])\ndel C.__dict__\nprint(C.__dict__)\n",
+      "stdout": "9 9\n7\n"
+    },
+    {
+      "id": "notification-stored-key-identity",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass D:\n def __set_name__(self,owner,name):self.name=name\nclass C:\n unusual_name=D()\np=C.__dict__\nprint(p[p[\"unusual_name\"].name] is p[\"unusual_name\"])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "attribute-key-error",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):\n  if active:raise ValueError(\"key\")\n  return other==\"tag\"\nC=type(\"C\",(),{K():7})\nactive=True\nprint(C.tag)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "attribute-key-mutates",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):\n  global active\n  if active:\n   active=False\n   C.extra=[9]\n  return other==\"tag\"\nC=type(\"C\",(),{K():[7]})\nactive=True\nprint(C.tag[0],C.extra[0])\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "native-readonly-data",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nint.__dict__[\"real\"].__set__(7,9)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-readonly-member",
+      "stage": "O69",
+      "source": "__name__=\"app\"\ntype.__dict__[\"__basicsize__\"].__delete__(int)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "class-documentation-binding",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass D:\n def __get__(self,obj,owner):return owner.__name__\nclass C:__doc__=D()\nprint(C.__doc__,type.__dict__[\"__doc__\"].__get__(C))\n",
+      "stdout": "C C\n"
+    },
+    {
+      "id": "attribute-key-write-error",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):\n  if active:raise ValueError(\"key\")\n  return other==\"tag\"\nC=type(\"C\",(),{K():7})\nactive=True\nC.tag=9\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "source-metaclass-metadata",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass M(type):pass\nclass C(metaclass=M):\n def f(self):self.tag=7\np=C.__dict__\nprint(p[\"__firstlineno__\"],*p[\"__static_attributes__\"],p[\"f\"] is C.f)\n",
+      "stdout": "3 tag True\n"
+    },
+    {
+      "id": "source-weakref-instance-readonly",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:pass\na=C()\na.__weakref__=7\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "source-weakref-ordinary-shadow",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:__weakref__=7\na=C()\na.__weakref__=9\nprint(a.__weakref__,C.__weakref__)\n",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "source-dictionary-foreign-descriptor",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass C:__dict__=int.real\nprint(C().__dict__)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "source-dictionary-key-error",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"__dict__\")\n def __eq__(self,other):\n  if active:raise ValueError(\"key\")\n  return other==\"__dict__\"\nC=type(\"C\",(),{K():7})\nactive=True\nprint(C().__dict__)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    }
+  ]
+}

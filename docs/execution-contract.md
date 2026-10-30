@@ -262,3 +262,13 @@ current expected counters in `tests/fixtures/interpreter/execution-resources.jso
 accounting/3 counters remain under `accounting_3_cases`. Exposed class body storage
 uses namespace-storage/1. The [class body contract](interpreter-class-body-namespaces.md)
 records the semantic reason for these changes.
+
+
+## Native namespace accounting revision 5
+
+Descriptor notification names now retain canonical class namespace keys and
+recorded hashes, so a later materialized dictionary exposes those same objects.
+`execution-accounting/5` charges these records and their traced keys. The eight
+composed observations retain the accounting/4 values in `accounting_4_cases`;
+only affected notification cases change. Complete native dictionaries, native
+owner edges and suspended lookup caches use ordinary charged VM storage.

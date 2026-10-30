@@ -89,7 +89,7 @@ test('read hooks preserve source frames and share recursion, work and real alloc
 });
 
 test('deferred special reflection refuses before instance hook effects', async () => {
-  const result = await run('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__weakref__")\n');
+  const result = await run('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__slots__")\n');
   assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
 });
 

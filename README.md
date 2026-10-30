@@ -321,3 +321,5 @@ The finite [native iterator directory profile](docs/interpreter-iterator-directo
 The finite [numeric and singleton directory profile](docs/interpreter-numeric-directories.md) covers None, NotImplemented, bool, int, float and complex values. Run `python -m examples.interpreter_numeric_directories` for a composed console. Native method names and integer identity retain their existing separate boundaries.
 
 The finite [range and slice directory profile](docs/interpreter-sequence-directories.md) preserves large-range iteration state and arbitrary cyclic slice fields without invoking their protocols. Run `python -m examples.interpreter_sequence_directories` for the composed console. Listed native methods retain their separate API contracts.
+
+The [O69 native namespace contract](docs/interpreter-native-namespaces.md) materializes complete own dictionaries for source classes and every adopted native layout, with stable descriptors, native storage fields, exact namespace keys and explicit owners for deferred APIs.

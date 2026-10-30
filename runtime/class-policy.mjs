@@ -8,7 +8,7 @@ export const ORDERING_SLOTS = Object.freeze({less: Object.freeze(["__lt__", "__g
 const contexts = new Set(["define", "attribute", "mutate", "implicit"]);
 const ordinarySlot = Object.freeze({define: true, attribute: true, mutate: true, implicit: false});
 export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
-  ...["__firstlineno__", "__static_attributes__", "__call__", "__len__", "__bool__", "__repr__", "__str__", "__index__", "__bytes__", "__getitem__", "__setitem__", "__delitem__", "__iter__", "__next__", "__contains__", "__eq__", "__ne__", "__hash__", "__int__", "__float__", "__complex__", "__abs__", "__round__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
+  ...["__weakref__", "__firstlineno__", "__static_attributes__", "__call__", "__len__", "__bool__", "__repr__", "__str__", "__index__", "__bytes__", "__getitem__", "__setitem__", "__delitem__", "__iter__", "__next__", "__contains__", "__eq__", "__ne__", "__hash__", "__int__", "__float__", "__complex__", "__abs__", "__round__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),
   ...Object.values(ARITHMETIC_SLOTS).flatMap(stem => ["", "r", ...(stem === "divmod" ? [] : ["i"])].map(prefix =>
     ["__" + prefix + stem + "__", Object.freeze({...ordinarySlot, implicit: true})])),
   ...["__lt__", "__le__", "__gt__", "__ge__", "__dir__", "__length_hint__"].map(name => [name, Object.freeze({...ordinarySlot, implicit: true})]),

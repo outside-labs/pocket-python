@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -913,6 +913,10 @@ export class ValueRuntime {
   classNamespaceEntry(receiver, key) {
     this.charge(1); this.memory?.primitive(receiver);
     const name = this.text(key), owner = receiver.owner;
+    if (owner.namespaceDictionary) {
+      const dictionary = owner.namespaceDictionary, position = this.find(dictionary, key);
+      return {found: position >= 0, value: position >= 0 ? dictionary.entries[position].value : null};
+    }
     if (name === null) {
       // Validate primitive hashability without invoking unadopted key callbacks.
       if (this.needsOwnedHash(key))
@@ -1423,8 +1427,10 @@ export function valueLayout(value) {
       children: [value.pool, value.globals, ...value.closure.values(), ...(value.defaults ?? []), ...(value.attributes === null ? [] : [value.attributes]), ...(value.documentation === null ? [] : [value.documentation]), ...metadata]};
   }
   if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
-    8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
-    children: [...value.bases, ...value.mro.slice(1), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.metaclass === null ? [] : [value.metaclass])]};
+    8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1) + (value.namespaceDictionary ? 1 : 0)) + (value.namespaceEntries === null ? 0 : 8 + value.namespaceEntries.reduce((sum, entry) => sum + 40 + 2 * entry.hash.length, 0)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
+    children: [...value.bases, ...value.mro.slice(1), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.namespaceEntries || []).map(entry => entry.key), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.metaclass === null ? [] : [value.metaclass])]};
+  if (value instanceof NamespaceLookupCache) return {bytes: 64 + value.entries.reduce((sum, entry) => sum + 48 + 2 * entry.name.length, 0),
+    children: value.entries.flatMap(entry => [entry.owner, entry.dictionary, entry.key])};
   if (value instanceof ClassNamespaceValue) return {bytes: 48, children: [value.owner]};
   if (value instanceof InstanceValue) return value.attributes instanceof Map ?
     {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
@@ -1437,7 +1443,8 @@ export function valueLayout(value) {
   if (value instanceof PropertyAccessorValue) return {bytes: 64, children: [value.property]};
   if (value instanceof AppendValue) return {bytes: 64, children: [value.receiver]};
   if (value instanceof ValueMethod) return {bytes: 64 + 2 * value.name.length, children: [value.receiver]};
-  if (value instanceof BuiltinValue) return {bytes: 48 + 2 * value.name.length, children: []};
+  if (value instanceof BuiltinValue) return {bytes: 48 + 2 * value.name.length + (value.nativeOwner ? 8 : 0) + (value.namespaceDictionary ? 8 : 0),
+    children: [...(value.nativeOwner ? [value.nativeOwner] : []), ...(value.namespaceDictionary ? [value.namespaceDictionary] : [])]};
   if (value instanceof ExceptionValue) return {bytes: 96 + 2 * (value.name.length + value.message.length) +
     value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),
     children: [...value.args, ...(value.context ? [value.context] : [])]};

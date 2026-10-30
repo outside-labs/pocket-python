@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O25",
     "O26",
-    "O49"
+    "O49",
+    "O69"
   ],
   "cases": [
     {
@@ -403,7 +404,7 @@
     },
     {
       "id": "future-special-read",
-      "stage": "Future",
+      "stage": "O69",
       "source": "class M(type):\n def __getattribute__(cls,name): print(\"never\")\nclass A(metaclass=M): pass\nprint(A.__weakref__ is not None)\n",
       "stdout": "never\nFalse\n"
     },

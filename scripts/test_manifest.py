@@ -36,6 +36,7 @@ SUITES = {
 }
 
 CORPORA = (
+    'native-namespaces',
     'class-body-namespaces',
     'module-namespaces',
     'iterator-type-directories',
@@ -51,9 +52,10 @@ CORPORA = (
 )
 CORE_CORPORA = {'sequences', 'function-binding', 'ordinary-syntax', 'value-families',
                 'generators', 'repetition', 'ordering'}
-PARKED_CORPORA = {'class-body-namespaces', 'module-namespaces', 'iterator-type-directories', 'callable-type-directories', 'container-type-directories', 'numeric-type-directories', 'instance-directories', 'class-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'method-directories', 'function-directories', 'class-namespaces', 'instance-dictionaries', 'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
+PARKED_CORPORA = {'native-namespaces', 'class-body-namespaces', 'module-namespaces', 'iterator-type-directories', 'callable-type-directories', 'container-type-directories', 'numeric-type-directories', 'instance-directories', 'class-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'method-directories', 'function-directories', 'class-namespaces', 'instance-dictionaries', 'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
                   'execution', 'object-hashing'}
 REFERENCE_CORPORA = {
+    'native-namespaces',
     'class-body-namespaces',
     'module-namespaces',
     'iterator-type-directories',
@@ -91,6 +93,7 @@ def checks():
     for path in sorted((ROOT / 'runtime').glob('*.test.mjs')):
         add('node-unit-' + path.name.removesuffix('.test.mjs'), 'node-unit',
             'node', '--test', path.relative_to(ROOT).as_posix())
+    add('generate-native-namespaces', 'node-conformance', 'python', 'scripts/generate_native_namespaces.py')
     for name in ('identifiers', 'printability'):
         add('generate-' + name, 'node-conformance', 'python',
             f'runtime/generate_{name}.py', '--check')

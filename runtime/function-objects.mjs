@@ -56,12 +56,19 @@ export class ClassValue {
     this.bases = Object.freeze([...bases]); this.mro = Object.freeze([this, ...parents]);
     this.namespace = new Map(namespace);
     this.metaclass = metaclass; this.sourceDefined = sourceDefined; this.automaticHash = automaticHash;
-    this.firstLine = 1; this.staticAttributes = [];
+    this.firstLine = 1; this.staticAttributes = []; this.namespaceEntries = null;
     this.directoryInitialCount = namespace.size; this.defaultDoc = !namespace.has("__doc__");
   }
 }
 export class ClassNamespaceValue {
   constructor(owner) { this.owner = owner; Object.freeze(this); }
+}
+// A suspended attribute plan retains the results of owned key comparisons.
+// Results are local to that plan; a callback that changes a dictionary forces
+// a fresh probe before the plan resumes.
+export class NamespaceLookupCache { constructor() { this.entries = []; } }
+export class NamespaceLookupRequest {
+  constructor(owner, name, dictionary, phase = 0) { this.owner = owner; this.name = name; this.dictionary = dictionary; this.phase = phase; }
 }
 export class InstanceValue {
   constructor(type) { this.type = type; this.attributes = new Map(); }

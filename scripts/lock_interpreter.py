@@ -10,11 +10,11 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 NAMES = sorted(['browser-protocol.mjs', 'bytecode.mjs', 'class-policy.mjs', 'class-values.mjs', 'function-bytecode.mjs',
     'function-objects.mjs', 'functions.mjs', 'interpreter-host.mjs', 'interpreter-worker.mjs',
-    'memory.mjs', 'numeric.mjs', 'operation-runtime.mjs', 'operations.mjs', 'module-context.mjs', 'module-registry.mjs', 'module-session.mjs',
+    'native-namespaces.mjs', 'memory.mjs', 'numeric.mjs', 'operation-runtime.mjs', 'operations.mjs', 'module-context.mjs', 'module-registry.mjs', 'module-session.mjs',
     'source-compiler.mjs', 'source-identifiers.mjs', 'source-modules.mjs',
     'source-parser.mjs', 'source-tokens.mjs', 'string-printability.mjs', 'values.mjs', 'vm.mjs',
     'library-selection.mjs', 'library-catalog.mjs',
-    'licenses/POCKET-PYTHON.txt', 'licenses/UNICODE.txt'])
+    'licenses/CPYTHON.txt', 'licenses/POCKET-PYTHON.txt', 'licenses/UNICODE.txt'])
 
 
 def generate():

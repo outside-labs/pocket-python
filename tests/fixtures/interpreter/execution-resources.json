@@ -1,35 +1,35 @@
 {
   "schema_version": 1,
   "baseline": "execution-accounting/4 (O68)",
-  "contract": "execution-accounting/4: source class __module__ retains the defining namespace value identity; class static-attribute names are verified code metadata and charged scalar name storage. Live body environments/dictionaries/continuations are charged under namespace-storage/1. Prior accounting/3 counters remain in accounting_3_cases.",
+  "contract": "execution-accounting/5: source descriptor notification names retain canonical namespace key records, including their stored hashes and traced keys. Prior accounting/4 counters remain in accounting_4_cases; the source identity/static-attribute changes remain documented there.",
   "cases": {
     "nested-binding-truth-finally": {
       "steps": 81,
-      "work": 33488,
+      "work": 34336,
       "state": "open",
-      "bytes": 22967,
-      "peakBytes": 24859,
-      "objects": 41,
+      "bytes": 23199,
+      "peakBytes": 25091,
+      "objects": 42,
       "roots": 1,
       "frames": 0,
       "external": 1,
       "allocations": 86,
-      "reclaimed": 45,
-      "collections": 254
+      "reclaimed": 44,
+      "collections": 256
     },
     "import-during-pending-return": {
       "steps": 57,
-      "work": 19139,
+      "work": 19467,
       "state": "open",
-      "bytes": 18007,
-      "peakBytes": 20007,
+      "bytes": 18075,
+      "peakBytes": 20075,
       "objects": 43,
       "roots": 1,
       "frames": 0,
       "external": 1,
       "allocations": 68,
       "reclaimed": 25,
-      "collections": 190
+      "collections": 191
     },
     "import-failure-retry-in-truth-finally": {
       "steps": 94,
@@ -47,59 +47,59 @@
     },
     "import-inherits-active-exception": {
       "steps": 40,
-      "work": 12057,
+      "work": 12311,
       "state": "open",
-      "bytes": 13439,
-      "peakBytes": 16671,
+      "bytes": 13507,
+      "peakBytes": 16739,
       "objects": 33,
       "roots": 1,
       "frames": 0,
       "external": 1,
       "allocations": 58,
       "reclaimed": 25,
-      "collections": 151
+      "collections": 152
     },
     "notification-snapshot-and-init": {
       "steps": 69,
-      "work": 21964,
+      "work": 22633,
       "state": "open",
-      "bytes": 15512,
-      "peakBytes": 17092,
-      "objects": 28,
+      "bytes": 15776,
+      "peakBytes": 17356,
+      "objects": 30,
       "roots": 1,
       "frames": 0,
       "external": 1,
       "allocations": 64,
-      "reclaimed": 36,
-      "collections": 213
+      "reclaimed": 34,
+      "collections": 215
     },
     "nested-import-source-error": {
       "steps": 37,
-      "work": 15436,
+      "work": 15717,
       "state": "open",
       "bytes": 5483,
-      "peakBytes": 21065,
+      "peakBytes": 21133,
       "objects": 9,
       "roots": 1,
       "frames": 0,
       "external": 1,
       "allocations": 67,
       "reclaimed": 58,
-      "collections": 169
+      "collections": 170
     },
     "binding-error-with-outer-operands": {
       "steps": 39,
-      "work": 12697,
+      "work": 12943,
       "state": "open",
       "bytes": 4180,
-      "peakBytes": 14616,
+      "peakBytes": 14780,
       "objects": 9,
       "roots": 1,
       "frames": 0,
       "external": 1,
       "allocations": 53,
       "reclaimed": 44,
-      "collections": 140
+      "collections": 141
     },
     "truth-failure-replaces-pending-return": {
       "steps": 29,
@@ -459,5 +459,119 @@
       "collections": 113
     }
   },
-  "previous_baseline": "56b99ff08b469eae38d023d8bee9b9f8bbd9877a"
+  "previous_baseline": "56b99ff08b469eae38d023d8bee9b9f8bbd9877a",
+  "accounting_4_cases": {
+    "nested-binding-truth-finally": {
+      "steps": 81,
+      "work": 33488,
+      "state": "open",
+      "bytes": 22967,
+      "peakBytes": 24859,
+      "objects": 41,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 86,
+      "reclaimed": 45,
+      "collections": 254
+    },
+    "import-during-pending-return": {
+      "steps": 57,
+      "work": 19139,
+      "state": "open",
+      "bytes": 18007,
+      "peakBytes": 20007,
+      "objects": 43,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 68,
+      "reclaimed": 25,
+      "collections": 190
+    },
+    "import-failure-retry-in-truth-finally": {
+      "steps": 94,
+      "work": 36248,
+      "state": "open",
+      "bytes": 17482,
+      "peakBytes": 22398,
+      "objects": 47,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 100,
+      "reclaimed": 53,
+      "collections": 283
+    },
+    "import-inherits-active-exception": {
+      "steps": 40,
+      "work": 12057,
+      "state": "open",
+      "bytes": 13439,
+      "peakBytes": 16671,
+      "objects": 33,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 58,
+      "reclaimed": 25,
+      "collections": 151
+    },
+    "notification-snapshot-and-init": {
+      "steps": 69,
+      "work": 21964,
+      "state": "open",
+      "bytes": 15512,
+      "peakBytes": 17092,
+      "objects": 28,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 64,
+      "reclaimed": 36,
+      "collections": 213
+    },
+    "nested-import-source-error": {
+      "steps": 37,
+      "work": 15436,
+      "state": "open",
+      "bytes": 5483,
+      "peakBytes": 21065,
+      "objects": 9,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 67,
+      "reclaimed": 58,
+      "collections": 169
+    },
+    "binding-error-with-outer-operands": {
+      "steps": 39,
+      "work": 12697,
+      "state": "open",
+      "bytes": 4180,
+      "peakBytes": 14616,
+      "objects": 9,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 53,
+      "reclaimed": 44,
+      "collections": 140
+    },
+    "truth-failure-replaces-pending-return": {
+      "steps": 29,
+      "work": 7776,
+      "state": "open",
+      "bytes": 11439,
+      "peakBytes": 12701,
+      "objects": 29,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 43,
+      "reclaimed": 14,
+      "collections": 112
+    }
+  }
 }
