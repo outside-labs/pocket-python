@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-wrapper-metadata/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O71"
+  ],
+  "cases": [
+    {
+      "id": "staticmethod-copied-metadata",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\nprint(w.__name__,w.__qualname__,w.__doc__,w.__module__==f.__module__)\nprint(w.__wrapped__ is f,w.__func__ is f,vars(w) is w.__dict__)\nf.__name__=\"new\"\nf.__doc__=\"other\"\nprint(w.__name__,w.__doc__)\n",
+      "stdout": "f f document True\nTrue True True\nf document\n"
+    },
+    {
+      "id": "staticmethod-dictionary-updates",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\nd=w.__dict__\nw.__name__=[7]\nprint(w.__name__ is d[\"__name__\"])\nd[\"extra\"]=[9]\nprint(w.extra[0])\nd[5]=w\nprint(d[5] is w)\ndel w.__name__\nprint(hasattr(w,\"__name__\"))\nw.__dict__={\"new\":d}\nprint(w.new is d,w.__wrapped__ is f)\n",
+      "stdout": "True\n9\nTrue\nFalse\nTrue True\n"
+    },
+    {
+      "id": "staticmethod-__func__-write",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\nw.__func__=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "staticmethod-__func__-delete",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\ndel w.__func__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "staticmethod-__wrapped__-write",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\nw.__wrapped__=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "staticmethod-__wrapped__-delete",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\ndel w.__wrapped__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "staticmethod-__isabstractmethod__-write",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\nw.__isabstractmethod__=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "staticmethod-__isabstractmethod__-delete",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\ndel w.__isabstractmethod__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "staticmethod-invalid-dictionary-8",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\nw.__dict__=None\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-invalid-dictionary-9",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\nw.__dict__=[]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-delete-dictionary",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\ndel w.__dict__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-optional-order",
+      "stage": "O71",
+      "source": "class C:\n def __getattribute__(self,name):\n  print(name)\n  if name==\"__name__\": raise AttributeError(\"absent\")\n  return [name]\nw=staticmethod(C())\nprint(w.__module__[0],hasattr(w,\"__name__\"),w.__doc__[0])\n",
+      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__module__ False __doc__\n"
+    },
+    {
+      "id": "staticmethod-lookup-failure",
+      "stage": "O71",
+      "source": "class C:\n def __getattribute__(self,name):\n  print(name)\n  if name==\"__qualname__\": raise ValueError(\"stop\")\n  return name\nstaticmethod(C())\n",
+      "stdout": "__module__\n__name__\n__qualname__\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "staticmethod-primitive",
+      "stage": "O71",
+      "source": "w=staticmethod(7)\nprint(w.__doc__==int.__doc__,hasattr(w,\"__name__\"),w.__wrapped__==7)\n",
+      "stdout": "True False True\n"
+    },
+    {
+      "id": "staticmethod-dict-callback-key",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=staticmethod(f)\nclass K:\n def __hash__(self): return hash(\"extra\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"extra\"\nk=K()\nw.__dict__[k]=[8]\nprint(w.extra[0])\nw.extra=[9]\nprint(w.__dict__[k][0])\ndel w.extra\nprint(k in w.__dict__)\n",
+      "stdout": "equal\n8\nequal\n9\nequal\nFalse\n"
+    },
+    {
+      "id": "classmethod-copied-metadata",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\nprint(w.__name__,w.__qualname__,w.__doc__,w.__module__==f.__module__)\nprint(w.__wrapped__ is f,w.__func__ is f,vars(w) is w.__dict__)\nf.__name__=\"new\"\nf.__doc__=\"other\"\nprint(w.__name__,w.__doc__)\n",
+      "stdout": "f f document True\nTrue True True\nf document\n"
+    },
+    {
+      "id": "classmethod-dictionary-updates",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\nd=w.__dict__\nw.__name__=[7]\nprint(w.__name__ is d[\"__name__\"])\nd[\"extra\"]=[9]\nprint(w.extra[0])\nd[5]=w\nprint(d[5] is w)\ndel w.__name__\nprint(hasattr(w,\"__name__\"))\nw.__dict__={\"new\":d}\nprint(w.new is d,w.__wrapped__ is f)\n",
+      "stdout": "True\n9\nTrue\nFalse\nTrue True\n"
+    },
+    {
+      "id": "classmethod-__func__-write",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\nw.__func__=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "classmethod-__func__-delete",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\ndel w.__func__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "classmethod-__wrapped__-write",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\nw.__wrapped__=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "classmethod-__wrapped__-delete",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\ndel w.__wrapped__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "classmethod-__isabstractmethod__-write",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\nw.__isabstractmethod__=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "classmethod-__isabstractmethod__-delete",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\ndel w.__isabstractmethod__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "classmethod-invalid-dictionary-23",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\nw.__dict__=None\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-invalid-dictionary-24",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\nw.__dict__=[]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-delete-dictionary",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\ndel w.__dict__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-optional-order",
+      "stage": "O71",
+      "source": "class C:\n def __getattribute__(self,name):\n  print(name)\n  if name==\"__name__\": raise AttributeError(\"absent\")\n  return [name]\nw=classmethod(C())\nprint(w.__module__[0],hasattr(w,\"__name__\"),w.__doc__[0])\n",
+      "stdout": "__module__\n__name__\n__qualname__\n__doc__\n__module__ False __doc__\n"
+    },
+    {
+      "id": "classmethod-lookup-failure",
+      "stage": "O71",
+      "source": "class C:\n def __getattribute__(self,name):\n  print(name)\n  if name==\"__qualname__\": raise ValueError(\"stop\")\n  return name\nclassmethod(C())\n",
+      "stdout": "__module__\n__name__\n__qualname__\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "classmethod-primitive",
+      "stage": "O71",
+      "source": "w=classmethod(7)\nprint(w.__doc__==int.__doc__,hasattr(w,\"__name__\"),w.__wrapped__==7)\n",
+      "stdout": "True False True\n"
+    },
+    {
+      "id": "classmethod-dict-callback-key",
+      "stage": "O71",
+      "source": "def f(x=7):\n \"document\"\n return x\nw=classmethod(f)\nclass K:\n def __hash__(self): return hash(\"extra\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"extra\"\nk=K()\nw.__dict__[k]=[8]\nprint(w.extra[0])\nw.extra=[9]\nprint(w.__dict__[k][0])\ndel w.extra\nprint(k in w.__dict__)\n",
+      "stdout": "equal\n8\nequal\n9\nequal\nFalse\n"
+    },
+    {
+      "id": "implicit-wrapper-metadata",
+      "stage": "O71",
+      "source": "class C:\n def __new__(cls): return object.__new__(cls)\n def __init_subclass__(cls): pass\nprint(C.__dict__[\"__new__\"].__name__,C.__dict__[\"__init_subclass__\"].__qualname__)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "native-document-31",
+      "stage": "O71",
+      "source": "x=len\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-32",
+      "stage": "O71",
+      "source": "x=list.append\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-33",
+      "stage": "O71",
+      "source": "x=object.__getattribute__\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-34",
+      "stage": "O71",
+      "source": "x=type.__dict__[\"__name__\"]\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-35",
+      "stage": "O71",
+      "source": "x=super.__dict__[\"__thisclass__\"]\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-36",
+      "stage": "O71",
+      "source": "x=int.real\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-37",
+      "stage": "O71",
+      "source": "x=property.getter\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-38",
+      "stage": "O71",
+      "source": "x=object.__init_subclass__\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-39",
+      "stage": "O71",
+      "source": "x=[].append\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-document-40",
+      "stage": "O71",
+      "source": "x=list.__len__.__get__([])\np=property(x)\nprint(p.__doc__==x.__doc__)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "property-copy-native-origin",
+      "stage": "O71",
+      "source": "p=property(len)\np.__doc__=\"changed\"\nq=p.getter(list.append)\nprint(q.__doc__==list.append.__doc__)\np=property(len,doc=\"explicit\")\nq=p.getter(list.append)\nprint(q.__doc__)\n",
+      "stdout": "True\nexplicit\n"
+    },
+    {
+      "id": "super-dictionary",
+      "stage": "O71",
+      "source": "class A: pass\nclass B(A): pass\nb=B()\nb.x=7\ns=super(B,b)\nprint(s.__dict__ is b.__dict__,s.__dict__[\"x\"])\nprint(super(B,B).__dict__ is A.__dict__[\"__dict__\"])\nprint(super.__dict__[\"__self__\"].__get__(s) is b)\n",
+      "stdout": "True 7\nTrue\nTrue\n"
+    }
+  ]
+}

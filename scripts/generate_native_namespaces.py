@@ -61,15 +61,20 @@ def generate():
         raise RuntimeError('Native namespace metadata requires CPython 3.14.7.')
     descriptors = {'wrapper_descriptor', 'method_descriptor', 'classmethod_descriptor',
                    'getset_descriptor', 'member_descriptor', 'builtin_function_or_method', 'staticmethod'}
-    records, copies = {}, []
+    records, copies, documents = {}, [], {}
     for name, cls in sorted(inventory().items()):
         entries = []
         for key, value in vars(cls).items():
             kind = type(value).__name__
+            if kind in descriptors:
+                documents[name + '.' + key] = value.__doc__
             entries.append([key, kind] if kind in descriptors else [key, 'value', literal(value)])
         records[name] = entries
         if isinstance(cls.__doc__, str) and cls.__doc__ is not vars(cls).get('__doc__'):
             copies.append(name)
+    for name, value in vars(builtins).items():
+        if isinstance(value, types.BuiltinFunctionType):
+            documents[name] = value.__doc__
     text = '// Own namespace entries observed with the pinned CPython 3.14.7 oracle.\n'
     text += '// Type documentation is distributed under licenses/CPYTHON.txt.\n'
     text += 'export const NATIVE_NAMESPACES = Object.freeze({\n'
@@ -78,6 +83,7 @@ def generate():
         text += ''.join('    ' + json.dumps(entry, ensure_ascii=False, separators=(',', ':')) + ',\n' for entry in entries)
         text += '  ],\n'
     text += '});\nexport const NATIVE_DOC_COPIES = Object.freeze(' + json.dumps(copies) + ');\n'
+    text += 'export const NATIVE_CALLABLE_DOCS = Object.freeze(' + json.dumps(documents, ensure_ascii=False, indent=2) + ');\n'
     return text
 
 

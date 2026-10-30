@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O54"
+    "O54",
+    "O71"
   ],
   "cases": [
     {
@@ -293,7 +294,7 @@
     {
       "id": "native-documentation-still-separate",
       "source": "d=property().getter\nd.__doc__\n",
-      "stage": "Future",
+      "stage": "O71",
       "stdout": ""
     },
     {

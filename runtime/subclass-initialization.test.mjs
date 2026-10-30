@@ -19,7 +19,7 @@ const corpus = JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/su
 
 for (const item of corpus.cases.filter(item => corpus.implemented_stages.includes(item.stage))) {
   test('subclass initialization: ' + item.id, async () => {
-    const result = await run(item.source);
+    const result = await run(item.source, {maxWork: 20000000});
     assert.equal(result.stdout, item.stdout ?? '');
     if (item.error_type) assert.equal(result.error?.type, item.error_type);
     else assert.equal(result.error, undefined, JSON.stringify(result.error));

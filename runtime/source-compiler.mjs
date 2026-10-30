@@ -352,7 +352,7 @@ class Compiler {
       };
       const pushNone = site => emit(site, "const", this.constant(NONE, site));
       const attribute = (value, write = false) => {
-        if (write && !allowsClassSpecial(value.name, "mutate") && !["__qualname__", "__module__", "__dict__"].includes(value.name))
+        if (write && !allowsClassSpecial(value.name, "mutate") && !["__qualname__", "__module__", "__dict__", "__func__", "__wrapped__"].includes(value.name))
           this.fail("Special attribute mutation is outside C1.", value);
         return value.name;
       };

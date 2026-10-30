@@ -300,3 +300,12 @@ Descriptor values can themselves introduce owned key lookups; inspecting each
 such graph edge charges one work unit. Three composed work observations change
 in `execution-accounting/7`, with instruction counts and memory observations
 unchanged. Revision 6 observations remain in `accounting_6_cases`.
+
+## Wrapper metadata accounting revision 8
+
+O71 retains wrapper dictionaries as an optional eight-byte edge plus the existing
+owned dictionary/key/value records. Optional metadata reads and native documents
+use ordinary charged attribute and value operations. All previous composed
+observations remain in `accounting_7_cases`; only notification-snapshot-and-init
+changes, by three work units (51,785 to 51,788), from normal native read-only
+metadata validation. Instruction and storage observations remain unchanged.

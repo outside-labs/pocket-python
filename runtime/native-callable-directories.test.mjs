@@ -69,7 +69,7 @@ for (const expression of ['object.__dir__', 'property.__get__', 'property().gett
   });
 
 test('native directory access does not widen other native metadata', async () => {
-  for (const source of ['d=property.getter\nobject.__getattribute__(d,"__dict__")\n', 'd=property().getter\nd.__doc__\n']) {
+  for (const source of ['d=property.getter\nobject.__getattribute__(d,"__dict__")\n']) {
     const result = await run(source);
     assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
   }

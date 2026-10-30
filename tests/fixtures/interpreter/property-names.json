@@ -7,7 +7,8 @@
     "O37",
     "O38",
     "O39",
-    "O43"
+    "O43",
+    "O71"
   ],
   "cases": [
     {
@@ -230,7 +231,7 @@
     },
     {
       "id": "native-name-mutation-refusal",
-      "stage": "Future",
+      "stage": "O71",
       "source": "print(\"before\")\nproperty.getter.__name__=\"changed\"\n",
       "stdout": "before\n",
       "error_type": "AttributeError",
@@ -249,7 +250,7 @@
     },
     {
       "id": "property-documentation-refusal",
-      "stage": "Future",
+      "stage": "O71",
       "source": "print(property(len).__doc__ is not None)\n",
       "stdout": "True\n"
     },

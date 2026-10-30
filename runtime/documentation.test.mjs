@@ -147,9 +147,9 @@ test('document callbacks obey shared instruction, recursion, work and arena budg
   }
 });
 
-test('opaque native documentation refuses before newly deferred getter callbacks', async () => {
+test('native documentation copies execute owned getter callbacks', async () => {
   const result = await run(corpus.cases.find(item => item.id === 'unqualified-copy-before-callback').source);
-  assert.equal(result.error?.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
+  assert.equal(result.ok, true, JSON.stringify(result.error)); assert.equal(result.stdout, 'lookup\ndoc\n'); closed(result.closed);
   const core = await runSourceRequest({modules: [unit('def f(): pass\nprint(f.__doc__)\n')]});
   assert.equal(core.error?.code, 'UNSUPPORTED'); assert.equal(core.stdout, '');
 });

@@ -1,5 +1,5 @@
-import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES} from "./native-namespaces.mjs";
-import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue} from "./function-objects.mjs";
+import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS} from "./native-namespaces.mjs";
+import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
@@ -558,13 +558,15 @@ export class ClassRuntime {
   read(receiver, name, native = false, key = null) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
+    if (this.values.typeName(receiver) !== null) {
+      if (name === "__doc__") return value(this.nativeDocumentation(this.typeOf(receiver)));
+      if (["__module__", "__name__", "__qualname__"].includes(name)) this.fail("AttributeError", "Value has no callable metadata");
+    }
     if (receiver instanceof SuperValue) {
       if (name === "__class__") return value(this.builtin("super"));
       if (["__thisclass__", "__self__", "__self_class__"].includes(name))
         return value(receiver[{__thisclass__: "thisclass", __self__: "self", __self_class__: "selfClass"}[name]]);
       if (receiver.selfClass !== null) {
-        if (name === "__dict__" && this.instanceDictionarySlot(receiver.selfClass, this.mro(receiver.selfClass).indexOf(receiver.thisclass) + 1))
-          this.fail("UnsupportedOperationError", "Super dictionary reflection requires native getset descriptors.", "UNSUPPORTED");
         const item = this.lookup(receiver.selfClass, name, true, this.mro(receiver.selfClass).indexOf(receiver.thisclass) + 1);
         if (item.found) return this.bindAttribute(item.value, receiver.self === receiver.selfClass ? null : receiver.self, receiver.selfClass);
       }
@@ -573,8 +575,9 @@ export class ClassRuntime {
     if (name === "__dir__" && this.hasFixedDirectory(receiver))
       return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
     if (receiver instanceof BuiltinValue) {
+      if (name === "__module__" && !this.isType(receiver) && !this.nativeDescriptorKind(receiver)) return value(receiver instanceof AppendValue || receiver instanceof ValueMethod ? null : this.values.string(Array.from("builtins", char => char.codePointAt(0))));
       if (receiver.nativeKind) {
-        if (name === "__doc__") this.fail("UnsupportedOperationError", "Native callable and descriptor documentation is O71.", "UNSUPPORTED");
+        if (name === "__doc__") return value(this.callableDocumentation(receiver));
         if (name === "__class__") return value(this.builtin(receiver.nativeKind));
         if (name === "__objclass__" && NAMESPACE_DESCRIPTOR_KINDS.has(receiver.nativeKind)) return value(receiver.nativeOwner);
         if (name === "__self__" && receiver.nativeKind === "builtin_function_or_method") return value(receiver.nativeOwner ?? null);
@@ -587,7 +590,7 @@ export class ClassRuntime {
       if (this.isType(receiver) && name === "__dict__") { this.namespaceDictionary(receiver); return value(this.make(ClassNamespaceValue, receiver)); }
       if (name === "__dict__" && this.isType(receiver))
         this.fail("UnsupportedOperationError", "Native type dictionaries require their own layout contract.", "UNSUPPORTED");
-      if (name === "__doc__") { if (this.isType(receiver)) return value(this.nativeDocumentation(receiver)); this.fail("UnsupportedOperationError", "Native callable documentation is O71.", "UNSUPPORTED"); }
+      if (name === "__doc__") { if (this.isType(receiver)) return value(this.nativeDocumentation(receiver)); return value(this.callableDocumentation(receiver)); }
       if (name === "__class__") return value(this.typeOf(receiver));
       if (name === "__objclass__" && this.nativeDescriptorKind(receiver))
         return value(this.builtin(receiver.name.slice(0, receiver.name.indexOf("."))));
@@ -615,6 +618,7 @@ export class ClassRuntime {
       this.fail("AttributeError", "Builtin has no adopted attribute '" + name + "'.");
     }
     if (receiver instanceof PropertyValue) {
+      if (["__module__", "__qualname__"].includes(name)) this.fail("AttributeError", "Property has no callable metadata");
       if (name === "__dir__") return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
       if (name === "__class__") return value(this.builtin("property"));
       if (name === "__doc__") {
@@ -635,8 +639,9 @@ export class ClassRuntime {
       if (name === "__class__") return value(this.builtin(receiver.kind));
       if (name === "__isabstractmethod__") return {kind: "call", callable: this.builtin("descriptor-abstract"), args: [receiver]};
       if (name === "__get__") return value(this.make(BoundMethodValue, this.builtin(receiver.kind + ".__get__"), receiver));
-      if (name === "__func__") return value(receiver.callable);
-      this.fail("UnsupportedOperationError", "Method wrapper reflection is outside the adopted profile.", "UNSUPPORTED");
+      if (["__func__", "__wrapped__"].includes(name)) return value(receiver.callable);
+      if (name === "__dict__") return value(this.functionDictionary(receiver));
+      return this.functionEntry(receiver, name, "get", null, key);
     }
     if (receiver instanceof BoundMethodValue && !this.isPythonMethod(receiver) && name === "__func__") this.fail("AttributeError", "Native methods have no __func__ attribute");
     if (receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && receiver.callable.name === "object.__dir__" && ["__name__", "__qualname__"].includes(name)) {
@@ -848,7 +853,7 @@ export class ClassRuntime {
     return result.value;
   }
   write(receiver, name, value, remove = false, key = null) {
-    if (receiver instanceof BuiltinValue && receiver.nativeKind) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Native callable/descriptor attributes are read-only");
+    if (receiver instanceof BuiltinValue && !this.isType(receiver)) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Native callable/descriptor attributes are read-only");
     this.key(name); this.touch(receiver);
     if (name === "__dir__" && this.hasFixedDirectory(receiver)) this.fail("AttributeError", "Native directory attributes are read-only.");
     if (["__name__", "__qualname__", "__self__", "__objclass__"].includes(name) &&
@@ -860,6 +865,15 @@ export class ClassRuntime {
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
       this.fail("AttributeError", "Method attributes are read-only.");
+    }
+    if (receiver instanceof MethodWrapperValue) {
+      if (["__func__", "__wrapped__", "__isabstractmethod__"].includes(name)) this.fail("AttributeError", "Wrapper storage is read-only");
+      if (name === "__class__") this.fail("TypeError", "Wrapper type cannot be changed");
+      if (name === "__dict__") {
+        if (remove || !this.values.isDict(value)) this.fail("TypeError", "Wrapper __dict__ must be set to a dictionary");
+        return {kind: "value", value: this.functionMetadata(receiver, "attributes", value)};
+      }
+      return this.functionEntry(receiver, name, remove ? "delete" : "set", value, key);
     }
     if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name, remove ? "delete" : "set", value, key);
     if (name === "__objclass__" && (this.nativeDescriptorKind(receiver) || receiver instanceof BoundMethodValue &&
@@ -909,6 +923,12 @@ export class ClassRuntime {
     if (name.startsWith("gi_") || name.startsWith("f_")) return "O74";
     if (["__annotations__", "__annotate__", "__type_params__"].includes(name)) return "#125";
     return null;
+  }
+  callableDocumentation(receiver) {
+    const name = receiver instanceof AppendValue || receiver instanceof ValueMethod ? this.typeOf(receiver.receiver).name + "." + receiver.name : receiver.name;
+    const text = receiver.nativeOwner instanceof ClassValue && !receiver.nativeOwner.root && ["__dict__", "__weakref__"].includes(receiver.nativeKey) ?
+      receiver.nativeKey === "__dict__" ? "dictionary for instance variables" : "list of weak references to the object" : NATIVE_CALLABLE_DOCS[name] ?? null;
+    return text === null ? null : this.values.string(Array.from(text, char => char.codePointAt(0)));
   }
   nativeDocumentation(owner) {
     const value = this.namespaceDictionary(owner).entries.find(entry => this.values.text(entry.key) === "__doc__")?.value ?? null;
@@ -1050,7 +1070,7 @@ export class ClassRuntime {
         if (operation !== "get") this.fail("AttributeError", "Type __dict__ is read-only");
         this.namespaceDictionary(receiver); return {kind: "value", value: this.make(ClassNamespaceValue, receiver)};
       }
-      if (receiver instanceof FunctionValue) return operation === "get" ? {kind: "value", value: this.functionDictionary(receiver)} : this.write(receiver, name, item, operation === "delete");
+      if (receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue) return operation === "get" ? {kind: "value", value: this.functionDictionary(receiver)} : this.write(receiver, name, item, operation === "delete");
       if (receiver instanceof ModuleValue) {
         if (operation !== "get") this.fail("AttributeError", "Module __dict__ is read-only");
         return {kind: "value", value: this.values.environmentDictionary(receiver.environment)};
@@ -1264,6 +1284,7 @@ export class ClassRuntime {
     return receiver.attributes;
   }
   functionMissing(receiver, name, operation = "get") {
+    if (receiver instanceof MethodWrapperValue) this.fail("AttributeError", "Wrapper has no attribute '" + name + "'.");
     if (operation === "get" && name === "__dir__")
       return this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver);
     if (operation === "get" && name === "__get__")
@@ -1273,7 +1294,7 @@ export class ClassRuntime {
     this.fail("AttributeError", "Function has no attribute '" + name + "'.");
   }
   functionEntry(receiver, name, operation = "get", item = null, key = null) {
-    if (FUNCTION_DEFERRED_DATA.has(name))
+    if (FUNCTION_DEFERRED_DATA.has(name) && (receiver instanceof FunctionValue || ["__annotations__", "__annotate__", "__type_params__"].includes(name)))
       this.fail("UnsupportedOperationError", "Native function metadata requires its own contract.", "UNSUPPORTED");
     const value = value => ({kind: "value", value});
     const dictionary = operation === "set" ? this.functionDictionary(receiver) : receiver.attributes;
