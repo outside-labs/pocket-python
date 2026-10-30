@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {GeneratorValue, Cell, Environment, environmentCell, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, Cell, Environment, environmentCell, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -109,7 +109,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
         (frame.callable.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
-        (frame.callable.pool.code.version === 5 && ["id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash"].includes(key))) {
+        (frame.callable.pool.code.version === 5 && ["id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -753,7 +753,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           else if (values.isBinary(receiver)) { values.binaryMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (arg === "encode" && values.isString(receiver)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
-          else if (op === "attribute-get" && (receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+          else if (op === "attribute-get" && (receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             if (arg === "__get__" && frame.callable.pool.code.version !== 5 &&
                 (receiver instanceof FunctionValue || classes.nativeDescriptorKind(receiver) !== null))
               hard("UNSUPPORTED", "UnsupportedOperationError", "Explicit descriptor binding requires the class profile.");
@@ -849,7 +849,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else if (op === "contains" && (frame.callable.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
-          (stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
+          (stack.at(-1) instanceof DictionaryViewValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
            values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));
@@ -860,7 +860,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const right = stack.pop(); dispatch(compareTask(op, stack.pop(), right, summary(frame, cursor)));
       }
       else if (Object.hasOwn(ARITHMETIC_SLOTS, op.startsWith("inplace-") ? op.slice(8) : op) &&
-          (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
+          (stack.at(-2) instanceof ClassNamespaceValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
         const right = stack.pop(), left = stack.pop(); dispatch(arithmeticTask(op, [left, right], summary(frame, cursor)));
       }
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }

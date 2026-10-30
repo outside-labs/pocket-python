@@ -1,5 +1,5 @@
 import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES} from "./native-namespaces.mjs";
-import {ClassValue, ClassNamespaceValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue} from "./function-objects.mjs";
+import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
@@ -691,10 +691,15 @@ export class ClassRuntime {
     if (receiver instanceof ClassNamespaceValue) {
       if (name === "__dir__") return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
       if (name === "__class__") return value(this.builtin("mappingproxy"));
-      if (name === "get") return value(this.make(BoundMethodValue, this.builtin("mappingproxy.get"), receiver));
-      if (["copy", "keys", "items", "values", "__iter__", "__len__", "__reversed__", "__eq__", "__ne__", "__or__", "__ror__"].includes(name))
-        this.fail("UnsupportedOperationError", "Class namespace enumeration and mapping protocols require their own stage.", "UNSUPPORTED");
+      const entry = this.nativeEntry(this.builtin("mappingproxy"), name);
+      if (entry.found) return this.bindAttribute(entry.value, receiver, this.builtin("mappingproxy"));
       this.fail("AttributeError", "Class namespace view has no attribute '" + name + "'.");
+    }
+    if (receiver instanceof DictionaryViewValue) {
+      if (name === "__class__") return value(this.typeOf(receiver));
+      const entry = this.nativeEntry(this.typeOf(receiver), name);
+      if (entry.found) return this.bindAttribute(entry.value, receiver, this.typeOf(receiver));
+      this.fail("AttributeError", "Dictionary view has no attribute " + name);
     }
     if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
@@ -834,7 +839,7 @@ export class ClassRuntime {
          receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && receiver.callable.name === "type.__dir__"))
       this.fail("AttributeError", "Native directory method metadata is read-only.");
 
-    if (receiver instanceof ClassNamespaceValue) this.fail("AttributeError", "Class namespace view attributes are read-only.");
+    if (receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue) this.fail("AttributeError", "Dictionary view attributes are read-only.");
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
       this.fail("AttributeError", "Method attributes are read-only.");
@@ -1009,6 +1014,10 @@ export class ClassRuntime {
     if (receiver instanceof BuiltinValue && this.isType(receiver) && ["__name__", "__qualname__", "__module__", "__mro__", "__base__", "__bases__"].includes(name)) {
       if (operation !== "get") this.fail("TypeError", "Cannot mutate native type metadata");
       return this.read(receiver, name, true);
+    }
+    if (receiver instanceof DictionaryViewValue && name === "mapping") {
+      if (operation !== "get") this.fail("AttributeError", "Dictionary view mapping is read-only");
+      return {kind: "value", value: this.make(ClassNamespaceValue, receiver.dictionary)};
     }
     const fieldOwner = this.nativeFieldOwner(name);
     if (fieldOwner) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");

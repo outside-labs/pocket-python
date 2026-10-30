@@ -1421,16 +1421,14 @@
     {
       "id": "builtin-reversed",
       "source": "print(callable(reversed))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
@@ -4070,15 +4068,14 @@
     {
       "id": "class-namespaces-class-enumeration",
       "source": "class C: pass\nlist(C.__dict__)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "error_type": null
       }
     },
     {
@@ -4719,15 +4716,14 @@
     {
       "id": "namespace-view-directories-copy-listing-does-not-adopt",
       "source": "class C: tag=[7]\np=C.__dict__\np.copy()\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "error_type": null
       }
     },
     {
@@ -7675,15 +7671,14 @@
     {
       "id": "numeric-type-directories-native-type-mapping",
       "source": "print(len(bool.__dict__))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "10\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "10\n",
+        "error_type": null
       }
     },
     {
@@ -8367,15 +8362,14 @@
     {
       "id": "container-type-directories-native-type-mapping",
       "source": "print(len(str.__dict__))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "70\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "70\n",
+        "error_type": null
       }
     },
     {
@@ -8889,15 +8883,15 @@
     },
     {
       "id": "callable-type-directories-native-type-mapping",
-      "classification": "deferred",
+      "classification": "supported",
       "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(len(value.__dict__))\n",
       "reference": {
         "stdout": "18\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED"
+        "stdout": "18\n",
+        "error_type": null
       }
     },
     {
@@ -9734,15 +9728,15 @@
     },
     {
       "id": "iterator-type-directories-native-type-mapping",
-      "classification": "deferred",
+      "classification": "supported",
       "source": "def g():\n print(\"body\")\n yield 7\nitem=g()\nvalue=type(item)\nprint(len(value.__dict__))\n",
       "reference": {
         "stdout": "17\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED"
+        "stdout": "17\n",
+        "error_type": null
       }
     },
     {

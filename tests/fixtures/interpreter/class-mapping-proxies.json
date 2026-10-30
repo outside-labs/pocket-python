@@ -1,0 +1,1152 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-class-mapping-proxies/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O70"
+  ],
+  "cases": [
+    {
+      "id": "ordered-own-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint(*p)\nprint(*reversed(p))\nprint(len(p),bool(p))\n",
+      "stdout": "__module__ __firstlineno__ tag __static_attributes__ __dict__ __weakref__ __doc__\n__doc__ __weakref__ __dict__ __static_attributes__ tag __firstlineno__ __module__\n7 True\n"
+    },
+    {
+      "id": "view-types",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nfor v in [p.keys(),p.values(),p.items()]:\n print(type(v).__name__,type(iter(v)).__name__,type(reversed(v)).__name__,len(v),type(v.mapping).__name__)\n",
+      "stdout": "dict_keys dict_keyiterator dict_reversekeyiterator 7 mappingproxy\ndict_values dict_valueiterator dict_reversevalueiterator 7 mappingproxy\ndict_items dict_itemiterator dict_reverseitemiterator 7 mappingproxy\n"
+    },
+    {
+      "id": "live-views",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nk=p.keys()\nv=p.values()\ni=p.items()\nC.extra=9\nC.tag=[11]\nprint(\"extra\" in k,9 in v,(\"extra\",9) in i,(\"tag\",p[\"tag\"]) in i)\ndel C.extra\nprint(\"extra\" in k,9 in v,(\"extra\",9) in i)\n",
+      "stdout": "True True True True\nFalse False False\n"
+    },
+    {
+      "id": "copy-snapshot",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nd=p.copy()\nC.tag=[9]\nprint(d[\"tag\"][0],p[\"tag\"][0],d[\"__dict__\"] is p[\"__dict__\"],p==d,p!=d)\n",
+      "stdout": "7 9 True False True\n"
+    },
+    {
+      "id": "proxy-equality",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint(p==p,p==p.copy(),p==7,7==p,p!=p.copy())\n",
+      "stdout": "True True False False False\n"
+    },
+    {
+      "id": "proxy-union",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nd=p|{\"tag\":9,\"extra\":11}\nprint(type(d).__name__,d[\"tag\"],d[\"extra\"],d[\"__dict__\"] is p[\"__dict__\"])\nd={\"tag\":9,\"extra\":11}|p\nprint(d[\"tag\"][0],d[\"extra\"],d[\"__dict__\"] is p[\"__dict__\"])\n",
+      "stdout": "dict 9 11 True\n7 11 True\n"
+    },
+    {
+      "id": "proxy-constructor",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"tag\":7}\np=P(d)\nprint(len(p),bool(p),*p)\nd[\"tag\"]=9\nprint(p[\"tag\"],P(p)[\"tag\"])\n",
+      "stdout": "1 True tag\n9 9\n"
+    },
+    {
+      "id": "callback-get",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):print(\"equal\",other);return other==\"tag\"\nprint(p.get(K())[0],p.get(\"missing\",19))\n",
+      "stdout": "equal tag\n7 19\n"
+    },
+    {
+      "id": "detached-native-methods",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nP=type(p)\nfor method in [p.keys,P.keys.__get__(p),P.__dict__[\"keys\"].__get__(p)]: print(*method())\nprint(P.__len__(p),*P.__reversed__(p),P.__getitem__(p,\"tag\")[0],P.__contains__(p,\"tag\"))\n",
+      "stdout": "__module__ __firstlineno__ tag __static_attributes__ __dict__ __weakref__ __doc__\n__module__ __firstlineno__ tag __static_attributes__ __dict__ __weakref__ __doc__\n__module__ __firstlineno__ tag __static_attributes__ __dict__ __weakref__ __doc__\n7 __doc__ __weakref__ __dict__ __static_attributes__ tag __firstlineno__ __module__ 7 True\n"
+    },
+    {
+      "id": "callback-equality-identity",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass R:\n def __eq__(self,other):print(\"eq\",type(other).__name__);return NotImplemented\n def __ne__(self,other):print(\"ne\",type(other).__name__);return NotImplemented\nprint(p==R(),R()==p,p!=R(),R()!=p)\n",
+      "stdout": "eq dict\neq mappingproxy\neq dict\nne dict\nne mappingproxy\nne dict\nFalse False True True\n"
+    },
+    {
+      "id": "callback-union-identity",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass R:\n def __or__(self,other):print(\"or\",type(other).__name__);return NotImplemented\n def __ror__(self,other):print(\"ror\",type(other).__name__);return 19\nprint(p|R())\ntry:R()|p\nexcept TypeError:print(\"TypeError\")\n",
+      "stdout": "ror dict\n19\nor mappingproxy\nor dict\nTypeError\n"
+    },
+    {
+      "id": "size-invalidation",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nit=iter(p)\nprint(next(it))\nC.extra=9\nprint(next(it))\n",
+      "stdout": "__module__\n",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "replace-during-values",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nit=iter(p.values())\nC.tag=[11]\nprint(any(value==C.tag for value in it))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "proxy-native-eq",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint(p.__eq__(p.copy()),p.__eq__(7),p.__ne__(p.copy()))\n",
+      "stdout": "True False False\n"
+    },
+    {
+      "id": "proxy-inplace-refusal",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np|={\"extra\":9}\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-write-refusal",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np[\"extra\"]=9\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "view-readonly",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np.keys().mapping=7\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "view-membership-invalid",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint([\"tag\",p[\"tag\"]] in p.items(),(\"tag\",) in p.items(),7 in p.items())\n",
+      "stdout": "False False False\n"
+    },
+    {
+      "id": "enumerate-type",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __call__ __getattribute__ __setattr__ __delattr__ __init__ __or__ __ror__ mro __subclasses__ __prepare__ __instancecheck__ __subclasscheck__ __dir__ __sizeof__ __basicsize__ __itemsize__ __flags__ __weakrefoffset__ __base__ __dictoffset__ __name__ __qualname__ __bases__ __mro__ __module__ __abstractmethods__ __dict__ __doc__ __text_signature__ __annotations__ __annotate__ __type_params__\n34 34 34 34\nTrue\n"
+    },
+    {
+      "id": "enumerate-bool",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=bool\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __invert__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __doc__\n10 10 10 10\nTrue\n"
+    },
+    {
+      "id": "enumerate-int",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=int\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __invert__ __lshift__ __rlshift__ __rshift__ __rrshift__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ __index__ conjugate bit_length bit_count to_bytes from_bytes as_integer_ratio __trunc__ __floor__ __ceil__ __round__ __getnewargs__ __format__ __sizeof__ is_integer real imag numerator denominator __doc__\n62 62 62 62\nTrue\n"
+    },
+    {
+      "id": "enumerate-float",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=float\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __mod__ __rmod__ __divmod__ __rdivmod__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __int__ __float__ __floordiv__ __rfloordiv__ __truediv__ __rtruediv__ from_number conjugate __trunc__ __floor__ __ceil__ __round__ as_integer_ratio fromhex hex is_integer __getnewargs__ __getformat__ __format__ real imag __doc__\n47 47 47 47\nTrue\n"
+    },
+    {
+      "id": "enumerate-complex",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=complex\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __add__ __radd__ __sub__ __rsub__ __mul__ __rmul__ __pow__ __rpow__ __neg__ __pos__ __abs__ __bool__ __truediv__ __rtruediv__ from_number conjugate __complex__ __getnewargs__ __format__ real imag __doc__\n31 31 31 31\nTrue\n"
+    },
+    {
+      "id": "enumerate-str",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=str\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ encode replace split rsplit join capitalize casefold title center count expandtabs find partition index ljust lower lstrip rfind rindex rjust rstrip rpartition splitlines strip swapcase translate upper startswith endswith removeprefix removesuffix isascii islower isupper istitle isspace isdecimal isdigit isnumeric isalpha isalnum isidentifier isprintable zfill format format_map __format__ maketrans __sizeof__ __getnewargs__ __doc__\n70 70 70 70\nTrue\n"
+    },
+    {
+      "id": "enumerate-list",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=list\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __reversed__ __sizeof__ clear copy append insert extend pop remove index count reverse sort __class_getitem__ __doc__\n36 36 36 36\nTrue\n"
+    },
+    {
+      "id": "enumerate-tuple",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=tuple\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ index count __class_getitem__ __doc__\n21 21 21 21\nTrue\n"
+    },
+    {
+      "id": "enumerate-dict",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=dict\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __or__ __ror__ __ior__ __len__ __getitem__ __setitem__ __delitem__ __contains__ __sizeof__ get setdefault pop popitem keys items values update fromkeys clear copy __reversed__ __class_getitem__ __doc__\n34 34 34 34\nTrue\n"
+    },
+    {
+      "id": "enumerate-range",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=range\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __bool__ __len__ __getitem__ __contains__ __reversed__ __reduce__ count index start stop step __doc__\n22 22 22 22\nTrue\n"
+    },
+    {
+      "id": "enumerate-slice",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=slice\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ indices __reduce__ start stop step __doc__\n15 15 15 15\nTrue\n"
+    },
+    {
+      "id": "enumerate-set",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=set\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __isub__ __iand__ __ixor__ __ior__ __len__ __contains__ add clear copy discard difference difference_update intersection intersection_update isdisjoint issubset issuperset pop __reduce__ remove __sizeof__ symmetric_difference symmetric_difference_update union update __class_getitem__ __doc__\n46 46 46 46\nTrue\n"
+    },
+    {
+      "id": "enumerate-frozenset",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=frozenset\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ copy difference intersection isdisjoint issubset issuperset __reduce__ __sizeof__ symmetric_difference union __class_getitem__ __doc__\n32 32 32 32\nTrue\n"
+    },
+    {
+      "id": "enumerate-bytes",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=bytes\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ __getnewargs__ __bytes__ capitalize center count decode endswith expandtabs find fromhex hex index isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition replace removeprefix removesuffix rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__\n65 65 65 65\nTrue\n"
+    },
+    {
+      "id": "enumerate-bytearray",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=bytearray\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __init__ __buffer__ __release_buffer__ __mod__ __rmod__ __len__ __getitem__ __setitem__ __delitem__ __add__ __mul__ __rmul__ __contains__ __iadd__ __imul__ __alloc__ __reduce__ __reduce_ex__ __sizeof__ append capitalize center clear copy count decode endswith expandtabs extend find fromhex hex index insert isalnum isalpha isascii isdigit islower isspace istitle isupper join ljust lower lstrip maketrans partition pop remove replace removeprefix removesuffix resize reverse rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill __doc__ __hash__\n82 82 82 82\nTrue\n"
+    },
+    {
+      "id": "enumerate-memoryview",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=memoryview\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __buffer__ __release_buffer__ __len__ __getitem__ __setitem__ __delitem__ release tobytes hex tolist cast toreadonly _from_flags count index __enter__ __exit__ __class_getitem__ obj nbytes readonly itemsize format ndim shape strides suboffsets c_contiguous f_contiguous contiguous __doc__\n41 41 41 41\nTrue\n"
+    },
+    {
+      "id": "enumerate-super",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=super\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__\n9 9 9 9\nTrue\n"
+    },
+    {
+      "id": "enumerate-property",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=property\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __get__ __set__ __delete__ __init__ getter setter deleter __set_name__ fget fset fdel __doc__ __name__ __isabstractmethod__\n15 15 15 15\nTrue\n"
+    },
+    {
+      "id": "enumerate-staticmethod",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=staticmethod\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __call__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __doc__\n13 13 13 13\nTrue\n"
+    },
+    {
+      "id": "enumerate-classmethod",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=classmethod\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __doc__\n12 12 12 12\nTrue\n"
+    },
+    {
+      "id": "enumerate-BaseException",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=BaseException\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __str__ __init__ __reduce__ __setstate__ with_traceback add_note __suppress_context__ __dict__ args __traceback__ __context__ __cause__ __doc__\n15 15 15 15\nTrue\n"
+    },
+    {
+      "id": "enumerate-GeneratorExit",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=GeneratorExit\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-Exception",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=Exception\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-AssertionError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=AssertionError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-ArithmeticError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ArithmeticError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-ZeroDivisionError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ZeroDivisionError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-OverflowError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=OverflowError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-LookupError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=LookupError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-IndexError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=IndexError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-KeyError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=KeyError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__str__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-ValueError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ValueError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-TypeError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=TypeError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-UnicodeError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnicodeError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-UnicodeEncodeError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnicodeEncodeError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __str__ __init__ encoding object start end reason __doc__\n9 9 9 9\nTrue\n"
+    },
+    {
+      "id": "enumerate-UnicodeDecodeError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnicodeDecodeError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __str__ __init__ encoding object start end reason __doc__\n9 9 9 9\nTrue\n"
+    },
+    {
+      "id": "enumerate-UnicodeTranslateError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnicodeTranslateError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __str__ __init__ encoding object start end reason __doc__\n9 9 9 9\nTrue\n"
+    },
+    {
+      "id": "enumerate-NameError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=NameError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__init__ name __doc__\n3 3 3 3\nTrue\n"
+    },
+    {
+      "id": "enumerate-UnboundLocalError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=UnboundLocalError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__doc__\n1 1 1 1\nTrue\n"
+    },
+    {
+      "id": "enumerate-RuntimeError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=RuntimeError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-RecursionError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=RecursionError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __doc__\n2 2 2 2\nTrue\n"
+    },
+    {
+      "id": "enumerate-StopIteration",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=StopIteration\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__init__ value __doc__\n3 3 3 3\nTrue\n"
+    },
+    {
+      "id": "enumerate-AttributeError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=AttributeError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__init__ __getstate__ __reduce__ name obj __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-ImportError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ImportError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__str__ __init__ __reduce__ msg name path name_from __doc__\n8 8 8 8\nTrue\n"
+    },
+    {
+      "id": "enumerate-ModuleNotFoundError",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=ModuleNotFoundError\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__doc__\n1 1 1 1\nTrue\n"
+    },
+    {
+      "id": "enumerate-object",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=object\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ __doc__\n24 24 24 24\nTrue\n"
+    },
+    {
+      "id": "enumerate-mappingproxy",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(C.__dict__)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __or__ __ror__ __ior__ __len__ __getitem__ __contains__ get keys values items copy __class_getitem__ __reversed__ __doc__\n25 25 25 25\nTrue\n"
+    },
+    {
+      "id": "enumerate-function",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(f)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __call__ __get__ __closure__ __globals__ __builtins__ __code__ __defaults__ __kwdefaults__ __annotations__ __annotate__ __dict__ __doc__ __module__ __name__ __qualname__ __type_params__\n18 18 18 18\nTrue\n"
+    },
+    {
+      "id": "enumerate-method",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(C().method)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __call__ __getattribute__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __get__ __reduce__ __func__ __self__ __doc__\n16 16 16 16\nTrue\n"
+    },
+    {
+      "id": "enumerate-method-wrapper",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(C.__dict__[\"__dict__\"].__get__)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __self__ __objclass__ __name__ __qualname__ __doc__ __text_signature__\n16 16 16 16\nTrue\n"
+    },
+    {
+      "id": "enumerate-method_descriptor",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(type.__dir__)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__\n9 9 9 9\nTrue\n"
+    },
+    {
+      "id": "enumerate-wrapper_descriptor",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(property.__get__)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__repr__ __call__ __get__ __reduce__ __objclass__ __name__ __doc__ __qualname__ __text_signature__\n9 9 9 9\nTrue\n"
+    },
+    {
+      "id": "enumerate-builtin_function_or_method",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n def method(self): pass\ndef f(): pass\nvalue=type(len)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__repr__ __hash__ __call__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce__ __module__ __doc__ __name__ __qualname__ __self__ __text_signature__\n16 16 16 16\nTrue\n"
+    },
+    {
+      "id": "enumerate-generator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\ndef f(): yield 7\nvalue=type(f())\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__repr__ __iter__ __next__ __del__ send throw close __sizeof__ __class_getitem__ __name__ __qualname__ gi_yieldfrom gi_running gi_frame gi_suspended gi_code __doc__\n17 17 17 17\nTrue\n"
+    },
+    {
+      "id": "enumerate-module",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nimport helper\nvalue=type(helper)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "__new__ __repr__ __getattribute__ __init__ __dir__ __dict__ __annotations__ __annotate__ __doc__\n9 9 9 9\nTrue\n"
+    },
+    {
+      "id": "enumerate-cell",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n def f(self): return __class__\nvalue=type(C.ns[\"__classcell__\"])\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ cell_contents __doc__ __hash__\n11 11 11 11\nTrue\n"
+    },
+    {
+      "id": "enumerate-NoneType",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(None)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __hash__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __bool__ __doc__\n11 11 11 11\nTrue\n"
+    },
+    {
+      "id": "enumerate-NotImplementedType",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(NotImplemented)\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__new__ __repr__ __bool__ __reduce__ __doc__\n5 5 5 5\nTrue\n"
+    },
+    {
+      "id": "enumerate-getset_descriptor",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(type.__dict__[\"__dict__\"])\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__repr__ __get__ __set__ __delete__ __objclass__ __name__ __doc__ __qualname__\n8 8 8 8\nTrue\n"
+    },
+    {
+      "id": "enumerate-member_descriptor",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(type.__dict__[\"__basicsize__\"])\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__repr__ __get__ __set__ __delete__ __reduce__ __objclass__ __name__ __doc__ __qualname__\n9 9 9 9\nTrue\n"
+    },
+    {
+      "id": "enumerate-classmethod_descriptor",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(object.__dict__[\"__init_subclass__\"])\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__repr__ __call__ __get__ __objclass__ __name__ __doc__ __qualname__ __text_signature__\n8 8 8 8\nTrue\n"
+    },
+    {
+      "id": "enumerate-list_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter([]))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-tuple_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(()))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-str_ascii_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(\"abc\"))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-str_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(\"\ud83d\ude00\"))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-dict_keyiterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter({}))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__\n5 5 5 5\nTrue\n"
+    },
+    {
+      "id": "enumerate-range_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(range(3)))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-longrange_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(range(10**40,10**40+3)))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-set_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(set()))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__\n5 5 5 5\nTrue\n"
+    },
+    {
+      "id": "enumerate-bytes_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(b\"a\"))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-bytearray_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(bytearray(b\"a\")))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-memory_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nvalue=type(iter(memoryview(b\"a\")))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __doc__\n3 3 3 3\nTrue\n"
+    },
+    {
+      "id": "enumerate-iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass Indexed:\n def __getitem__(self,key): return key\nvalue=type(iter(Indexed()))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__\n6 6 6 6\nTrue\n"
+    },
+    {
+      "id": "enumerate-callable_iterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\ndef f(): return 7\nvalue=type(iter(f,9))\np=value.__dict__\nprint(*p)\nprint(len(p),len(p.keys()),len(p.values()),len(p.items()))\nprint(all(p[key] is value for key,value in p.items()))\n",
+      "stdout": "__iter__ __next__ __reduce__ __doc__\n4 4 4 4\nTrue\n"
+    },
+    {
+      "id": "enumerate-dict_keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nt=type(p.keys())\nq=t.__dict__\nprint(*q)\nprint(len(q),all(q[key] is value for key,value in q.items()))\n",
+      "stdout": "__repr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ isdisjoint __reversed__ mapping __doc__ __hash__\n23 True\n"
+    },
+    {
+      "id": "enumerate-dict_values",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nt=type(p.values())\nq=t.__dict__\nprint(*q)\nprint(len(q),all(q[key] is value for key,value in q.items()))\n",
+      "stdout": "__repr__ __iter__ __len__ __reversed__ mapping __doc__\n6 True\n"
+    },
+    {
+      "id": "enumerate-dict_items",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nt=type(p.items())\nq=t.__dict__\nprint(*q)\nprint(len(q),all(q[key] is value for key,value in q.items()))\n",
+      "stdout": "__repr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __sub__ __rsub__ __and__ __rand__ __xor__ __rxor__ __or__ __ror__ __len__ __contains__ isdisjoint __reversed__ mapping __doc__ __hash__\n23 True\n"
+    },
+    {
+      "id": "enumerate-dict_valueiterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nt=type(iter(p.values()))\nq=t.__dict__\nprint(*q)\nprint(len(q),all(q[key] is value for key,value in q.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__\n5 True\n"
+    },
+    {
+      "id": "enumerate-dict_itemiterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nt=type(iter(p.items()))\nq=t.__dict__\nprint(*q)\nprint(len(q),all(q[key] is value for key,value in q.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__\n5 True\n"
+    },
+    {
+      "id": "enumerate-dict_reversekeyiterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nt=type(reversed(p))\nq=t.__dict__\nprint(*q)\nprint(len(q),all(q[key] is value for key,value in q.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__\n5 True\n"
+    },
+    {
+      "id": "enumerate-dict_reversevalueiterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nt=type(reversed(p.values()))\nq=t.__dict__\nprint(*q)\nprint(len(q),all(q[key] is value for key,value in q.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__\n5 True\n"
+    },
+    {
+      "id": "enumerate-dict_reverseitemiterator",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nt=type(reversed(p.items()))\nq=t.__dict__\nprint(*q)\nprint(len(q),all(q[key] is value for key,value in q.items()))\n",
+      "stdout": "__iter__ __next__ __length_hint__ __reduce__ __doc__\n5 True\n"
+    },
+    {
+      "id": "empty-proxy-truth",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=type(C.__dict__)({})\nprint(len(p),bool(p),bool(p.keys()),bool(p.values()),bool(p.items()),*p,*reversed(p))\n",
+      "stdout": "0 False False False False\n"
+    },
+    {
+      "id": "callback-hash-errors",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass K:\n def __hash__(self):raise ValueError(\"key\")\np.get(K())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "callback-equality-errors",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):raise ValueError(\"key\")\np.get(K())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "unhashable-get",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np.get([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unhashable-contains",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint([] in p)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unhashable-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint([] in p.keys())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unhashable-items",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint(([],7) in p.items())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unhashable-values",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint([7] in p.values())\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "item-key-and-value-callbacks",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass K:\n def __hash__(self):print(\"hash\");return hash(\"tag\")\n def __eq__(self,other):print(\"key\",other);return other==\"tag\"\nclass V:\n def __eq__(self,other):print(\"value\",type(other).__name__);return True\nprint((K(),V()) in p.items())\n",
+      "stdout": "hash\nkey tag\nvalue list\nTrue\n"
+    },
+    {
+      "id": "values-comparison-truth",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass Truth:\n def __bool__(self):print(\"truth\");return True\nclass V:\n def __eq__(self,other):print(\"compare\",type(other).__name__);return Truth()\nprint(V() in p.values())\n",
+      "stdout": "compare str\ntruth\nTrue\n"
+    },
+    {
+      "id": "get-collision-mutates",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nactive=True\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):\n  global active\n  if active:\n   active=False\n   C.extra=[9]\n  return other==\"tag\"\nprint(p.get(K())[0],p[\"extra\"][0])\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "stored-key-copy-no-rehash",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):\n  if active:raise ValueError(\"rehash\")\n  return hash(\"tag\")\n def __eq__(self,other):return other==\"tag\"\nkey=K()\nC=type(\"C\",(),{key:[7]})\np=C.__dict__\nactive=True\nd=p.copy()\nprint(next(k for k in d if type(k) is K) is key)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "union-key-identities",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):\n  if active:raise ValueError(\"rehash\")\n  return hash(\"tag\")\n def __eq__(self,other):return type(other) is K or other==\"tag\"\nkey=K()\nC=type(\"C\",(),{key:[7]})\np=C.__dict__\nactive=True\nd=p|{\"tag\":[9]}\nprint(next(k for k in d if type(k) is K) is key,d[\"tag\"][0])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "union-reflected-slot-success",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass R:\n def __or__(self,other):print(type(other).__name__);return 19\nprint(R()|p)\n",
+      "stdout": "mappingproxy\n19\n"
+    },
+    {
+      "id": "proxy-union-invalid",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np|[]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-reflected-union-invalid",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\n[]|p\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-delete-refusal",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\ndel p[\"tag\"]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-attribute-readonly",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np.tag=9\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "proxy-no-update",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np.update({})\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "proxy-constructor-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\ntype(C.__dict__)([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-constructor-signature",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\ntype(C.__dict__)(mapping={})\n",
+      "stdout": ""
+    },
+    {
+      "id": "proxy-native-get-signature",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np.get(key=\"tag\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-native-view-signature",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np.keys(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-native-wrong-receiver",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\ntype(p).keys({})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-native-ior",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np.__ior__({})\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-native-hash",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\np.__hash__()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-native-or",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nr=p.__or__({\"extra\":9})\ns=p.__ror__({\"extra\":11})\nprint(r[\"extra\"],s[\"extra\"])\n",
+      "stdout": "9 11\n"
+    },
+    {
+      "id": "proxy-raw-reversed",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint(*p.__reversed__())\n",
+      "stdout": "__doc__ __weakref__ __dict__ __static_attributes__ tag __firstlineno__ __module__\n"
+    },
+    {
+      "id": "views-qualified-mapping",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nv=p.keys()\nd=type(v).__dict__[\"mapping\"]\nprint(type(d).__name__,type(d.__get__(v)).__name__,d.__get__(v)[\"tag\"] is C.tag)\n",
+      "stdout": "getset_descriptor mappingproxy True\n"
+    },
+    {
+      "id": "view-native-operations",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nfor v in [p.keys(),p.values(),p.items()]:\n t=type(v)\n print(t.__len__(v),type(t.__iter__(v)).__name__,type(t.__reversed__(v)).__name__)\nprint(type(p.keys()).__contains__(p.keys(),\"tag\"),type(p.items()).__contains__(p.items(),(\"tag\",C.tag)))\n",
+      "stdout": "7 dict_keyiterator dict_reversekeyiterator\n7 dict_valueiterator dict_reversevalueiterator\n7 dict_itemiterator dict_reverseitemiterator\nTrue True\n"
+    },
+    {
+      "id": "view-values-identity",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nv=p.values()\nprint(v==v,v==p.values())\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "view-readonly-mapping-getset",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nv=p.keys()\ntype(v).__dict__[\"mapping\"].__set__(v,{})\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "view-wrong-mapping-receiver",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nv=p.keys()\ntype(v).__dict__[\"mapping\"].__get__(p.values())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "view-mapping-live",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nv=p.items()\nq=v.mapping\nprint(q is v.mapping,q[\"tag\"] is p[\"tag\"])\nC.extra=9\nprint(q[\"extra\"],(\"extra\",9) in v)\n",
+      "stdout": "False True\n9 True\n"
+    },
+    {
+      "id": "notification-key-identities",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass D:\n def __set_name__(self,owner,name):self.name=name\nclass C:\n unusual_name=D()\np=C.__dict__\nprint(next(key for key in p if key==\"unusual_name\") is p[\"unusual_name\"].name)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-source-fields-order",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nprint(*p)\nprint(*[type(value).__name__ for value in p.values()])\nC.extra=9\ndel C.tag\nC.tag=[11]\nprint(*p)\n",
+      "stdout": "__module__ __firstlineno__ tag __static_attributes__ __dict__ __weakref__ __doc__\nstr int list tuple getset_descriptor getset_descriptor NoneType\n__module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__ extra tag\n"
+    },
+    {
+      "id": "metaclass-shadow-qualified-iteration",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass M(type):\n @property\n def __dict__(self):return {\"shadow\":7}\nclass C(metaclass=M):pass\np=type.__dict__[\"__dict__\"].__get__(C)\nprint(*vars(C),*p)\n",
+      "stdout": "shadow __module__ __firstlineno__ __static_attributes__ __dict__ __weakref__ __doc__\n"
+    },
+    {
+      "id": "equality-custom-result-identity",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nresult=[19]\nclass R:\n def __eq__(self,other):return result\nprint((p==R()) is result,p.__eq__(R()) is result)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "equality-value-callback-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass V:\n def __eq__(self,other):raise ValueError(\"value\")\nq=p.copy()\nq[\"tag\"]=V()\nprint(p==q)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "equality-value-mutation",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C: tag=[7]\np=C.__dict__\nclass V:\n def __eq__(self,other):\n  C.extra=19\n  return True\nq=p.copy()\nq[\"tag\"]=V()\nprint(p==q,p[\"extra\"])\n",
+      "stdout": "False 19\n"
+    },
+    {
+      "id": "forward-proxy-size-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p)\nnext(it)\nd[\"d\"]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "forward-proxy-replace",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p)\nd[\"b\"]=19\nprint(*it)\n",
+      "stdout": "a b c\n"
+    },
+    {
+      "id": "forward-proxy-changed-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p)\nnext(it)\ndel d[\"a\"]\nd[\"d\"]=13\ntry:\n values=list(it)\n print(len(values))\nexcept RuntimeError:print(\"RuntimeError\")\n",
+      "stdout": "RuntimeError\n"
+    },
+    {
+      "id": "forward-proxy-exhausted",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p)\nlist(it)\nd[\"d\"]=13\nprint(next(it,19))\n",
+      "stdout": "19\n"
+    },
+    {
+      "id": "reverse-proxy-size-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p)\nnext(it)\nd[\"d\"]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "reverse-proxy-replace",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p)\nd[\"b\"]=19\nprint(*it)\n",
+      "stdout": "c b a\n"
+    },
+    {
+      "id": "reverse-proxy-changed-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p)\nnext(it)\ndel d[\"a\"]\nd[\"d\"]=13\ntry:\n values=list(it)\n print(len(values))\nexcept RuntimeError:print(\"RuntimeError\")\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "reverse-proxy-exhausted",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p)\nlist(it)\nd[\"d\"]=13\nprint(next(it,19))\n",
+      "stdout": "19\n"
+    },
+    {
+      "id": "forward-keys-size-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.keys())\nnext(it)\nd[\"d\"]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "forward-keys-replace",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.keys())\nd[\"b\"]=19\nprint(*it)\n",
+      "stdout": "a b c\n"
+    },
+    {
+      "id": "forward-keys-changed-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.keys())\nnext(it)\ndel d[\"a\"]\nd[\"d\"]=13\ntry:\n values=list(it)\n print(len(values))\nexcept RuntimeError:print(\"RuntimeError\")\n",
+      "stdout": "RuntimeError\n"
+    },
+    {
+      "id": "forward-keys-exhausted",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.keys())\nlist(it)\nd[\"d\"]=13\nprint(next(it,19))\n",
+      "stdout": "19\n"
+    },
+    {
+      "id": "reverse-keys-size-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.keys())\nnext(it)\nd[\"d\"]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "reverse-keys-replace",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.keys())\nd[\"b\"]=19\nprint(*it)\n",
+      "stdout": "c b a\n"
+    },
+    {
+      "id": "reverse-keys-changed-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.keys())\nnext(it)\ndel d[\"a\"]\nd[\"d\"]=13\ntry:\n values=list(it)\n print(len(values))\nexcept RuntimeError:print(\"RuntimeError\")\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "reverse-keys-exhausted",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.keys())\nlist(it)\nd[\"d\"]=13\nprint(next(it,19))\n",
+      "stdout": "19\n"
+    },
+    {
+      "id": "forward-values-size-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.values())\nnext(it)\nd[\"d\"]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "forward-values-replace",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.values())\nd[\"b\"]=19\nprint(*it)\n",
+      "stdout": "7 19 11\n"
+    },
+    {
+      "id": "forward-values-changed-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.values())\nnext(it)\ndel d[\"a\"]\nd[\"d\"]=13\ntry:\n values=list(it)\n print(len(values))\nexcept RuntimeError:print(\"RuntimeError\")\n",
+      "stdout": "RuntimeError\n"
+    },
+    {
+      "id": "forward-values-exhausted",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.values())\nlist(it)\nd[\"d\"]=13\nprint(next(it,19))\n",
+      "stdout": "19\n"
+    },
+    {
+      "id": "reverse-values-size-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.values())\nnext(it)\nd[\"d\"]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "reverse-values-replace",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.values())\nd[\"b\"]=19\nprint(*it)\n",
+      "stdout": "11 19 7\n"
+    },
+    {
+      "id": "reverse-values-changed-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.values())\nnext(it)\ndel d[\"a\"]\nd[\"d\"]=13\ntry:\n values=list(it)\n print(len(values))\nexcept RuntimeError:print(\"RuntimeError\")\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "reverse-values-exhausted",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.values())\nlist(it)\nd[\"d\"]=13\nprint(next(it,19))\n",
+      "stdout": "19\n"
+    },
+    {
+      "id": "forward-items-size-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.items())\nnext(it)\nd[\"d\"]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "forward-items-replace",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.items())\nd[\"b\"]=19\nprint(*[key for key,value in it])\n",
+      "stdout": "a b c\n"
+    },
+    {
+      "id": "forward-items-changed-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.items())\nnext(it)\ndel d[\"a\"]\nd[\"d\"]=13\ntry:\n values=list(it)\n print(len(values))\nexcept RuntimeError:print(\"RuntimeError\")\n",
+      "stdout": "RuntimeError\n"
+    },
+    {
+      "id": "forward-items-exhausted",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=iter(p.items())\nlist(it)\nd[\"d\"]=13\nprint(next(it,19))\n",
+      "stdout": "19\n"
+    },
+    {
+      "id": "reverse-items-size-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.items())\nnext(it)\nd[\"d\"]=13\nnext(it)\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "reverse-items-replace",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.items())\nd[\"b\"]=19\nprint(*[key for key,value in it])\n",
+      "stdout": "c b a\n"
+    },
+    {
+      "id": "reverse-items-changed-keys",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.items())\nnext(it)\ndel d[\"a\"]\nd[\"d\"]=13\ntry:\n values=list(it)\n print(len(values))\nexcept RuntimeError:print(\"RuntimeError\")\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "reverse-items-exhausted",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"a\":7,\"b\":9,\"c\":11}\np=P(d)\nit=reversed(p.items())\nlist(it)\nd[\"d\"]=13\nprint(next(it,19))\n",
+      "stdout": "19\n"
+    },
+    {
+      "id": "view-constructor-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\ntype(C.__dict__.keys())()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "iterator-constructor-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\ntype(reversed(C.__dict__.items()))()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "union-key-callback-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):\n  if active:raise ValueError(\"key\")\n  return other==\"tag\"\nkey=K()\nC=type(\"C\",(),{key:[7]})\np=C.__dict__\nactive=True\np|{\"tag\":9}\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "union-source-structural-error",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"tag\")\n def __eq__(self,other):\n  if active:C.extra=9\n  return other==\"tag\"\nclass C:tag=7\np=C.__dict__\nkey=K()\nd={key:9}\nactive=True\nd|p\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "union-originals-preserved",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:tag=[7]\np=C.__dict__\nd={\"tag\":[9],\"extra\":[11]}\nr=p|d\nr[\"tag\"][0]=19\nprint(C.tag[0],d[\"tag\"][0],r[\"tag\"][0],\"extra\" in p)\n",
+      "stdout": "7 19 19 False\n"
+    },
+    {
+      "id": "mapping-keyword-constructor-live",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nP=type(C.__dict__)\nd={\"tag\":7}\np=P(mapping=d)\nd[\"extra\"]=9\nprint(p[\"tag\"],p[\"extra\"])\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "proxy-nested-equality-and-union",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:tag=7\np=C.__dict__\nq=type(p)(p)\nprint(q==p,q.__eq__(p),q[\"tag\"],(q|p)[\"tag\"],(p|q)[\"tag\"])\n",
+      "stdout": "True True 7 7 7\n"
+    },
+    {
+      "id": "keys-view-unhashable",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nhash(C.__dict__.keys())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "items-view-unhashable",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nhash(C.__dict__.items())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "values-view-hash",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\nv=C.__dict__.values()\nprint(hash(v)==hash(v))\nd={v:7}\nprint(d[v])\n",
+      "stdout": "True\n7\n"
+    },
+    {
+      "id": "exhausted-iterator-types",
+      "stage": "O70",
+      "source": "__name__=\"app\"\nclass C:pass\np=C.__dict__\nfor source in [p,p.keys(),p.values(),p.items()]:\n for reverse in [False,True]:\n  it=reversed(source) if reverse else iter(source)\n  name=type(it).__name__\n  list(it)\n  print(type(it).__name__==name,next(it,19))\n",
+      "stdout": "True 19\nTrue 19\nTrue 19\nTrue 19\nTrue 19\nTrue 19\nTrue 19\nTrue 19\n"
+    }
+  ]
+}

@@ -242,7 +242,8 @@ def smoke(channel=None):
                     module_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/module-namespaces.json').read_bytes())
                     class_body_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/class-body-namespaces.json').read_bytes())
                     native_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/native-namespaces.json').read_bytes())
-                    for corpus in [native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    class_mapping_proxies = json.loads((ROOT / 'tests/fixtures/interpreter/class-mapping-proxies.json').read_bytes())
+                    for corpus in [class_mapping_proxies, native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c and not c.get('modules'))
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -272,6 +273,14 @@ def smoke(channel=None):
                                                            text=True, encoding='utf-8', timeout=5)
                         run(program, expected)
                         cases.append({'source_sha256': hashlib.sha256(program.encode()).hexdigest(), 'stdout': expected, 'status': 'pass'})
+                    for corpus in [native_namespaces, class_mapping_proxies]:
+                        for case in corpus['cases']:
+                            if 'error_type' in case:
+                                try:
+                                    refused(case['source'], case['error_type'] + ':')
+                                except Exception as error:
+                                    raise AssertionError('Native namespace error case: ' + case['id']) from error
+                    checks.append('native-namespace-and-live-proxy-errors-after-offline-reload')
                     refused('class A:\n def fail(self): return 1//0\nA().fail()\n', 'ZeroDivisionError:')
                     assert 'sources/app.py:2' in page.locator('#status').inner_text()
                     assert 'fail at sources/app.py:2' in page.locator('#diagnostic').inner_text()

@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -43,11 +43,12 @@ class RangeValue {
   }
 }
 export class IteratorValue {
-  constructor(value) {
-    this.value = value; this.index = value instanceof RangeValue ? 0n : 0;
+  constructor(value, dictionaryKind = null, reverse = false) {
+    this.value = value; this.index = value instanceof RangeValue ? 0n : reverse ? value.entries.length - 1 : 0;
+    if (dictionaryKind !== null) { this.dictionaryKind = dictionaryKind; this.reverse = reverse; }
     if (value instanceof DictValue || value instanceof SetValue) {
       const storage = value instanceof SetValue ? value.storage : value;
-      if (storage.namespace) { this.remaining = storage.entries.length; this.serial = 0; }
+      if (storage.namespace) { this.remaining = storage.entries.length; this.serial = reverse ? storage.namespace.serial - 1 : 0; }
       this.size = storage.entries.length; this.version = storage.version;
     }
   }
@@ -361,6 +362,7 @@ export class ValueRuntime {
     if (value instanceof ListValue) return "list";
     if (value instanceof TupleValue) return "tuple";
     if (value instanceof ClassNamespaceValue) return "mappingproxy";
+    if (value instanceof DictionaryViewValue) return ['dict_keys', 'dict_values', 'dict_items'][value.kind];
     if (value instanceof DictValue) return "dict";
     if (value instanceof RangeValue) return "range";
     if (value instanceof SliceValue) return "slice";
@@ -368,6 +370,7 @@ export class ValueRuntime {
     if (value instanceof BinaryValue) return value.mutable ? "bytearray" : "bytes";
     if (value instanceof MemoryViewValue) return "memoryview";
     if (value instanceof IteratorValue) {
+      if (value.dictionaryKind !== undefined) return 'dict_' + (value.reverse ? 'reverse' : '') + ['key', 'value', 'item'][value.dictionaryKind] + 'iterator';
       if (value.value instanceof StringValue) {
         this.charge(value.value.points.length);
         return value.value.points.every(point => point < 128) ? "str_ascii_iterator" : "str_iterator";
@@ -379,6 +382,7 @@ export class ValueRuntime {
         return [start, stop, step].some(item => item < minimum || item > maximum) || length > maximum ||
           length > 0n && (step > 0n ? stop > maximum - (step - 1n) : stop < minimum + (-1n - step)) ? "longrange_iterator" : "range_iterator";
       }
+      if (value.value instanceof DictValue) return 'dict_' + (value.reverse ? 'reverse' : '') + ['key', 'value', 'item'][value.dictionaryKind ?? 0] + 'iterator';
       return {list: "list_iterator", tuple: "tuple_iterator", dict: "dict_keyiterator",
         set: "set_iterator", frozenset: "set_iterator", bytes: "bytes_iterator", bytearray: "bytearray_iterator", memoryview: "memory_iterator"}[this.typeName(value.value)];
     }
@@ -453,7 +457,7 @@ export class ValueRuntime {
     const pending = [value], seen = new Set();
     while (pending.length) {
       const item = pending.pop();
-      if (item instanceof InstanceValue || item instanceof SliceValue) return true;
+      if (item instanceof InstanceValue || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
       if (item instanceof SetValue) { pending.push(...item.storage.entries.map(entry => entry.key)); continue; }
       if (item instanceof DictValue && item.ownedKeys) return true;
       if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;
@@ -596,7 +600,9 @@ export class ValueRuntime {
     if (sequence(value)) return elements(value).length !== 0;
     if (value instanceof DictValue) return value.entries.length !== 0;
     if (value instanceof SetValue) return value.storage.entries.length !== 0;
-    if (value instanceof ClassNamespaceValue || value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
+    if (value instanceof ClassNamespaceValue) return this.classNamespaceDictionary(value).entries.length !== 0;
+    if (value instanceof DictionaryViewValue) return value.dictionary.entries.length !== 0;
+    if (value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
         value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof SuperValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
@@ -604,7 +610,13 @@ export class ValueRuntime {
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
     if (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue)
-      this.fail("UnsupportedOperationError", "Class namespace equality requires its own mapping contract.", "UNSUPPORTED");
+      return this.equal(left instanceof ClassNamespaceValue ? this.classNamespaceDictionary(left) : left,
+        right instanceof ClassNamespaceValue ? this.classNamespaceDictionary(right) : right, depth + 1);
+    if (left instanceof DictionaryViewValue || right instanceof DictionaryViewValue) {
+      if (left instanceof DictionaryViewValue && left.kind !== 1 || right instanceof DictionaryViewValue && right.kind !== 1)
+        this.fail("UnsupportedOperationError", "Dictionary view set comparison is owned by #116/#117.", "UNSUPPORTED");
+      return left === right;
+    }
     if (left instanceof MemoryViewValue || right instanceof MemoryViewValue) {
       if (left === right) return true;
       if (left instanceof MemoryViewValue && left.released || right instanceof MemoryViewValue && right.released) return false;
@@ -702,6 +714,7 @@ export class ValueRuntime {
   hash(value, depth = 0) {
     this.depth(depth); this.charge(1);
     if (value instanceof ClassNamespaceValue) this.fail("TypeError", "unhashable type: 'mappingproxy'");
+    if (value instanceof DictionaryViewValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof MemoryViewValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof BinaryValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof SetValue) return 'p:' + this.pythonHash(value, depth);
@@ -766,6 +779,7 @@ export class ValueRuntime {
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
     if (value instanceof ClassNamespaceValue) this.fail("TypeError", "unhashable type: 'mappingproxy'");
+    if (value instanceof DictionaryViewValue && value.kind !== 1) this.fail("TypeError", "unhashable dictionary view");
     if (value instanceof BoundMethodValue)
       return this.hashResult(this.identityHash(value.callable) ^ this.identityHash(value.receiver));
     if (value instanceof AppendValue || value instanceof ValueMethod)
@@ -840,7 +854,7 @@ export class ValueRuntime {
       const item = pending.pop();
       if (item instanceof SliceValue || item instanceof GeneratorValue || item instanceof InstanceValue || item instanceof ClassValue || item instanceof FunctionValue || item instanceof BuiltinValue ||
           item instanceof BoundMethodValue || item instanceof SuperValue || item instanceof PropertyValue || item instanceof MethodWrapperValue ||
-          item instanceof NotImplementedValue || item instanceof ModuleValue || item instanceof ProtocolIteratorValue || item instanceof IteratorValue ||
+          item instanceof DictionaryViewValue || item instanceof NotImplementedValue || item instanceof ModuleValue || item instanceof ProtocolIteratorValue || item instanceof IteratorValue ||
           item instanceof ExceptionValue || item instanceof FloatValue && Number.isNaN(item.value) ||
           item instanceof ComplexValue && (Number.isNaN(item.real) || Number.isNaN(item.imag))) return true;
       if (item instanceof TupleValue && !seen.has(item)) { seen.add(item); this.charge(1); pending.push(...item.items); }
@@ -875,6 +889,7 @@ export class ValueRuntime {
     const result = new DictValue();
     result.entries = dictionary.entries.map(entry => ({...entry}));
     result.ownedKeys = dictionary.ownedKeys;
+    if (dictionary.namespace) { result.namespace = {serial: result.entries.length}; result.entries.forEach((entry, serial) => { entry.serial = serial; }); }
     const layout = valueLayout(result);
     return this.make(layout.bytes, layout.children, () => result);
   }
@@ -913,8 +928,8 @@ export class ValueRuntime {
   classNamespaceEntry(receiver, key) {
     this.charge(1); this.memory?.primitive(receiver);
     const name = this.text(key), owner = receiver.owner;
-    if (owner.namespaceDictionary) {
-      const dictionary = owner.namespaceDictionary, position = this.find(dictionary, key);
+    if (owner instanceof ClassNamespaceValue || owner instanceof DictValue || owner.namespaceDictionary) {
+      const dictionary = this.classNamespaceDictionary(receiver), position = this.find(dictionary, key);
       return {found: position >= 0, value: position >= 0 ? dictionary.entries[position].value : null};
     }
     if (name === null) {
@@ -1104,8 +1119,28 @@ export class ValueRuntime {
     for (let index = start; positive ? index < stop : index > stop; index += step) { this.charge(1); result.push(items[Number(index)]); }
     return value instanceof StringValue ? this.string(result) : value instanceof BinaryValue ? this.binaryValue(result, value.mutable) : value instanceof TupleValue ? this.tuple(result) : this.list(result);
   }
+  classNamespaceDictionary(proxy) {
+    let owner = proxy.owner;
+    while (owner instanceof ClassNamespaceValue) { this.charge(1); owner = owner.owner; }
+    const dictionary = owner instanceof DictValue ? owner : owner.namespaceDictionary;
+    if (!(dictionary instanceof DictValue)) throw new TypeError("A materialized namespace dictionary is required.");
+    this.memory?.primitive(dictionary); return dictionary;
+  }
+  enableNamespace(dictionary) {
+    if (dictionary.namespace) return dictionary;
+    const bytes = valueLayout(dictionary).bytes + 16 + 8 * dictionary.entries.length;
+    this.resize(dictionary, bytes, dictionary.entries.flatMap(entry => [entry.key, entry.value]));
+    dictionary.namespace = {serial: dictionary.entries.length};
+    dictionary.entries.forEach((entry, serial) => { entry.serial = serial; }); return dictionary;
+  }
+  dictionaryIterator(dictionary, kind = 0, reverse = false) {
+    this.enableNamespace(dictionary); this.charge(1);
+    return this.make(96, [dictionary], () => new IteratorValue(dictionary, kind, reverse));
+  }
+  dictionaryView(dictionary, kind) { return this.make(56, [dictionary], () => new DictionaryViewValue(dictionary, kind)); }
   iterator(value) {
-    if (value instanceof ClassNamespaceValue) this.fail("UnsupportedOperationError", "Class namespace enumeration requires its own stage.", "UNSUPPORTED");
+    if (value instanceof ClassNamespaceValue) return this.dictionaryIterator(this.classNamespaceDictionary(value));
+    if (value instanceof DictionaryViewValue) return this.dictionaryIterator(value.dictionary, value.kind);
     if (value instanceof IteratorValue) return value;
     if (value instanceof RangeValue) { this.charge(1); return this.make(80, [value, 0n], () => new IteratorValue(value)); }
     if (value instanceof MemoryViewValue) this.liveView(value);
@@ -1113,6 +1148,10 @@ export class ValueRuntime {
     this.charge(1); return this.make(value.namespace ? 80 : 64, [value], () => new IteratorValue(value));
   }
   isIterator(value) { this.charge(1); return value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue; }
+  finishDictionaryIterator(iterator, name = "StopIteration", message = "") {
+    if (iterator.dictionaryKind !== undefined) { this.resize(iterator, 96, []); iterator.value = null; }
+    iterator.exhausted = true; this.fail(name, message);
+  }
   next(iterator) {
     if (!(iterator instanceof IteratorValue)) this.fail("TypeError", "next requires an iterator.");
     const value = iterator.value; this.charge(1);
@@ -1135,10 +1174,11 @@ export class ValueRuntime {
         iterator.invalidated = true; this.fail("RuntimeError", label + " changed size during iteration");
       }
       if (storage.namespace) {
-        const entry = storage.entries.find(entry => entry.serial >= iterator.serial);
-        if (!entry) { iterator.exhausted = true; this.fail("StopIteration", ""); }
-        if (iterator.remaining === 0) { iterator.exhausted = true; this.fail("RuntimeError", "dictionary keys changed during iteration"); }
-        iterator.serial = entry.serial + 1; iterator.remaining--; return entry.key;
+        const entry = iterator.reverse ? storage.entries.findLast(entry => entry.serial <= iterator.serial) : storage.entries.find(entry => entry.serial >= iterator.serial);
+        if (!entry) return this.finishDictionaryIterator(iterator);
+        if (!iterator.reverse && iterator.remaining === 0) return this.finishDictionaryIterator(iterator, "RuntimeError", "dictionary keys changed during iteration");
+        const item = iterator.dictionaryKind === 1 ? entry.value : iterator.dictionaryKind === 2 ? this.tuple([entry.key, entry.value]) : entry.key;
+        iterator.serial = entry.serial + (iterator.reverse ? -1 : 1); iterator.remaining--; return item;
       }
       if (iterator.version !== storage.version) this.fail("UnsupportedOperationError", "Equal-size key mutation during iteration is deferred.", "UNSUPPORTED");
       if (iterator.index >= storage.entries.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
@@ -1189,7 +1229,8 @@ export class ValueRuntime {
     if (operation === "truth") return this.truth(value);
     if (operation === "not") return !this.truth(value);
     if (operation === "len") {
-      if (value instanceof ClassNamespaceValue) this.fail("UnsupportedOperationError", "Class namespace length requires its own stage.", "UNSUPPORTED");
+      if (value instanceof ClassNamespaceValue) return this.int(BigInt(this.classNamespaceDictionary(value).entries.length));
+      if (value instanceof DictionaryViewValue) return this.int(BigInt(value.dictionary.entries.length));
       if (value instanceof MemoryViewValue) { this.liveView(value); return this.int(BigInt(value.length)); }
       if (value instanceof RangeValue) {
         if (value.length > 9223372036854775807n) this.fail("OverflowError", "Python int too large to convert to length");
@@ -1408,6 +1449,8 @@ export function valueLayout(value) {
   if (value instanceof DictValue) return {bytes: 96 + (value.namespace ? 16 : 0) + value.entries.reduce((bytes, entry) => bytes + (value.namespace ? 56 : 48) + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
   if (value instanceof SetValue) return {bytes: 64, children: [value.storage]};
+  if (value instanceof DictionaryViewValue) return {bytes: 56, children: [value.dictionary]};
+  if (value instanceof IteratorValue && value.dictionaryKind !== undefined) return {bytes: 96, children: value.value === null ? [] : [value.value]};
   if (value instanceof IteratorValue) return value.value?.namespace ? {bytes: 80, children: [value.value]} : value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
   if (value instanceof GeneratorValue) return {bytes: 128 + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};
   if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};

@@ -7,7 +7,8 @@
     "O52",
     "O54",
     "O62",
-    "O69"
+    "O69",
+    "O70"
   ],
   "cases": [
     {
@@ -171,19 +172,19 @@
     {
       "id": "enumeration-remains-deferred",
       "source": "class C: tag=[7]\np=C.__dict__\nlist(p)\n",
-      "stage": "Future",
+      "stage": "O70",
       "stdout": ""
     },
     {
       "id": "length-remains-deferred",
       "source": "class C: tag=[7]\np=C.__dict__\nlen(p)\n",
-      "stage": "Future",
+      "stage": "O70",
       "stdout": ""
     },
     {
       "id": "copy-listing-does-not-adopt",
       "source": "class C: tag=[7]\np=C.__dict__\np.copy()\n",
-      "stage": "Future",
+      "stage": "O70",
       "stdout": ""
     },
     {

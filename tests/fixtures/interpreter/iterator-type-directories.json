@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "O62",
-    "O66"
+    "O66",
+    "O70"
   ],
   "cases": [
     {
@@ -178,43 +179,43 @@
     },
     {
       "id": "unicode-sorted",
-      "source": "item=iter(\"a😀\")\nvalue=type(item)\nprint(*dir(value))\n",
+      "source": "item=iter(\"a\ud83d\ude00\")\nvalue=type(item)\nprint(*dir(value))\n",
       "stage": "O66",
       "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
     },
     {
       "id": "unicode-raw",
-      "source": "item=iter(\"a😀\")\nvalue=type(item)\nprint(*type.__dir__(value))\n",
+      "source": "item=iter(\"a\ud83d\ude00\")\nvalue=type(item)\nprint(*type.__dir__(value))\n",
       "stage": "O66",
       "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
     },
     {
       "id": "unicode-bound",
-      "source": "item=iter(\"a😀\")\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(*d())\n",
+      "source": "item=iter(\"a\ud83d\ude00\")\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(*d())\n",
       "stage": "O66",
       "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
     },
     {
       "id": "unicode-fresh",
-      "source": "item=iter(\"a😀\")\nvalue=type(item)\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
+      "source": "item=iter(\"a\ud83d\ude00\")\nvalue=type(item)\na=dir(value)\nb=type.__dir__(value)\nc=type.__dir__(value)\na[0]=\"changed\"\nb[0]=\"raw-change\"\nprint(a is b,b is c,\"changed\" in c,\"raw-change\" in c,len(c)==len(set(c)))\n",
       "stage": "O66",
       "stdout": "False False False False True\n"
     },
     {
       "id": "unicode-binding-metadata",
-      "source": "item=iter(\"a😀\")\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
+      "source": "item=iter(\"a\ud83d\ude00\")\nvalue=type(item)\nd=type.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d.__class__ is type(type.mro.__get__(value)),hasattr(d,\"__func__\"),hasattr(d,\"__objclass__\"))\n",
       "stage": "O62",
       "stdout": "True __dir__ str_iterator.__dir__ True False False\n"
     },
     {
       "id": "unicode-instance-agreement",
-      "source": "item=iter(\"a😀\")\nvalue=type(item)\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "source": "item=iter(\"a\ud83d\ude00\")\nvalue=type(item)\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
       "stage": "O66",
       "stdout": "True True\n"
     },
     {
       "id": "unicode-advertised-namespace",
-      "source": "item=iter(\"a😀\")\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
+      "source": "item=iter(\"a\ud83d\ude00\")\nvalue=type(item)\nclass Advertised:\n own=7\n @property\n def __class__(self): return value\nobj=Advertised()\nobj.saved=9\nnames=object.__dir__(obj)\nprint(names[0],\"own\" in names,\"saved\" in names,len(names)==len(dir(value))+1)\n",
       "stage": "O66",
       "stdout": "saved False True True\n"
     },
@@ -727,7 +728,7 @@
     {
       "id": "native-type-mapping",
       "source": "def g():\n print(\"body\")\n yield 7\nitem=g()\nvalue=type(item)\nprint(len(value.__dict__))\n",
-      "stage": "Future",
+      "stage": "O70",
       "stdout": "17\n"
     },
     {

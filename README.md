@@ -323,3 +323,5 @@ The finite [numeric and singleton directory profile](docs/interpreter-numeric-di
 The finite [range and slice directory profile](docs/interpreter-sequence-directories.md) preserves large-range iteration state and arbitrary cyclic slice fields without invoking their protocols. Run `python -m examples.interpreter_sequence_directories` for the composed console. Listed native methods retain their separate API contracts.
 
 The [O69 native namespace contract](docs/interpreter-native-namespaces.md) materializes complete own dictionaries for source classes and every adopted native layout, with stable descriptors, native storage fields, exact namespace keys and explicit owners for deferred APIs.
+
+The [O70 live mapping proxy contract](docs/interpreter-class-mapping-proxies.md) completes namespace iteration, live views, owned callback lookups, copying, equality and unions across source and native class dictionaries.

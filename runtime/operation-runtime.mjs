@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
-import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -546,6 +546,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
+    if (completion?.kind === "proxy-get") return valueTask(value.items[0] ? value.items[1] : completion.fallback, site, completion.after);
+    if (completion?.kind === "view-item") {
+      const [found, item] = values.comparisonSequence(value);
+      if (!found) return valueTask(false, site, completion.after);
+      const needle = completion.key.items[1];
+      return item === needle ? valueTask(true, site, completion.after) :
+        compareTask("equal", item, needle, site, continuation("contains-result", completion), completion.depth);
+    }
+    if (completion?.kind === "dict-union") return unionNext(completion, site);
     if (completion?.kind === "namespace-build") {
       let task = completion.task;
       const field = completion.field;
@@ -1096,17 +1105,29 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       values.commitDictionary(receiver, key, null, hash, position, true), site, after);
   };
   const checkDictionaryComparison = record => {
-    if (record.left.version !== record.version || record.right.version !== record.otherVersion)
+    if (!(record.left.namespace && record.right.namespace) && (record.left.version !== record.version || record.right.version !== record.otherVersion))
       hard("UNSUPPORTED", "UnsupportedOperationError", "Structural mutation during dictionary equality requires its restart stage.");
   };
   const dictionaryNext = (record, site, position = 0) => {
     const {left, right, operation, after, depth, version, otherVersion} = record;
     checkDictionaryComparison(record);
-    if (position >= left.entries.length) return valueTask(operation === "equal", site, after);
+    if (left.namespace && record.serial !== undefined && record.serial !== null) position = left.entries.findIndex(entry => entry.serial > record.serial);
+    if (position < 0 || position >= left.entries.length) return valueTask(operation === "equal", site, after);
     const entry = left.entries[position];
     return dictionaryTask(right, entry.key, site,
-      continuation("dict-pair", {left, right, value: entry.value, operation, after, depth, version, otherVersion, position}), depth,
+      continuation("dict-pair", {left, right, value: entry.value, operation, after, depth, version, otherVersion, position,
+        serial: left.namespace ? entry.serial : null}), depth,
       "probe", null, values.dictionaryEntryHash(entry));
+  };
+  const proxyRelay = (left, right, after) => continuation("relay", {receiver: left, after: continuation("relay", {receiver: right, after})});
+  const unionNext = (record, site) => {
+    const {left, right, result, size, depth, after} = record;
+    state.temporaries.push(left, right, result);
+    if (right.entries.length !== size) python("RuntimeError", "dict mutated during update");
+    const entry = right.entries.find(entry => entry.serial > record.serial);
+    if (!entry) return valueTask(result, site, after);
+    return dictionaryTask(result, entry.key, site, continuation("dict-union", {...record, serial: entry.serial}), depth,
+      "set", entry.value, values.dictionaryEntryHash(entry));
   };
   const dispatch = task => {
     while (task) {
@@ -1263,6 +1284,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "arithmetic") {
           state.temporaries = operationRoots(task);
           const [left, right, modulus = null] = args, inplace = task.operation.startsWith("inplace-"), operation = inplace ? task.operation.slice(8) : task.operation;
+          if (operation === "bit-or" && (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue)) {
+            if (inplace && left instanceof ClassNamespaceValue) python("TypeError", "mappingproxy does not support in-place union");
+            if (left instanceof ClassNamespaceValue || !(left instanceof InstanceValue) || task.position > 0) {
+              const a = left instanceof ClassNamespaceValue ? values.classNamespaceDictionary(left) : left;
+              const b = right instanceof ClassNamespaceValue ? values.classNamespaceDictionary(right) : right;
+              task = arithmeticTask("bit-or", [a, b], site, proxyRelay(left, right, completion), depth); continue;
+            }
+          }
           if (modulus instanceof InstanceValue) hard("UNSUPPORTED", "UnsupportedOperationError", "User modulus dispatch requires a separate power stage.");
           const stem = ARITHMETIC_SLOTS[operation], ordinary = "__" + stem + "__", reflected = "__r" + stem + "__";
           const rightFirst = task.order ?? (left instanceof InstanceValue && right instanceof InstanceValue && left.type !== right.type &&
@@ -1297,6 +1326,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (count >= 0 && classes.lookup(args[count].type, "__index__").found) {
               task = unaryTask("index", args[count], site, continuation("arithmetic-index", {operation: task.nativeInplace ? "inplace-" + operation : operation, args, position: count, order: rightFirst, nativeInplace: task.nativeInplace, depth, after: completion}), depth); continue;
             }
+          }
+          if (operation === "bit-or" && values.isDict(left) && values.isDict(right)) {
+            values.enableNamespace(left); values.enableNamespace(right);
+            const result = values.copyDictionary(left); state.temporaries.push(result);
+            task = unionNext({left, right, result, size: right.entries.length, serial: -1, after: completion, depth}, site); continue;
           }
           python("TypeError", "unsupported operands for " + operation);
         }
@@ -1397,6 +1431,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           let {left, right} = task;
           const {operation, position} = task;
           const ordering = Object.hasOwn(ORDERING_SLOTS, operation);
+          if (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue) {
+            if (left instanceof ClassNamespaceValue || !(left instanceof InstanceValue) || position > 0) {
+              const a = left instanceof ClassNamespaceValue ? values.classNamespaceDictionary(left) : left;
+              const b = right instanceof ClassNamespaceValue ? values.classNamespaceDictionary(right) : right;
+              if (values.isDict(a)) values.enableNamespace(a);
+              if (values.isDict(b)) values.enableNamespace(b);
+              task = compareTask(operation, a, b, site, proxyRelay(left, right, completion), depth); continue;
+            }
+          }
           if (!ordering && values.isSet(left) && values.isSet(right)) { left = left.storage; right = right.storage; }
           if (!(left instanceof InstanceValue || right instanceof InstanceValue)) {
             if (values.sameSequenceKind(left, right)) {
@@ -1445,8 +1488,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "contains") {
           state.temporaries.push(...operationRoots(task));
           let {receiver, key} = task;
+          if (receiver instanceof DictionaryViewValue) {
+            if (receiver.kind === 0) { task = dictionaryTask(receiver.dictionary, key, site, continuation("relay", {receiver, after: completion}), depth, "contains"); continue; }
+            if (receiver.kind === 2) {
+              if (!values.isSequenceType(key, "tuple") || key.items.length !== 2) { task = valueTask(false, site, completion); continue; }
+              task = dictionaryTask(receiver.dictionary, key.items[0], site, continuation("view-item", {receiver, key, depth, after: completion}), depth, "probe"); continue;
+            }
+            task = unaryTask("iter", receiver, site, continuation("search-iter", {receiver, key, after: completion, depth}), depth); continue;
+          }
           if (receiver instanceof ClassNamespaceValue) {
-            task = dictionaryTask(classes.namespaceDictionary(receiver.owner), key, site, continuation("relay", {receiver, after: completion}), depth, "contains"); continue;
+            task = dictionaryTask(values.classNamespaceDictionary(receiver), key, site, continuation("relay", {receiver, after: completion}), depth, "contains"); continue;
           }
           if (values.isBinary(receiver) && key instanceof InstanceValue) {
             task = unaryTask("index", key, site, continuation("binary-member", {receiver, after: completion}), depth); continue;
@@ -1485,7 +1536,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (receiver instanceof ClassNamespaceValue) {
             if (operation !== "get") python("TypeError", "Class namespace views do not support item mutation");
             if (task.kind === "slice") hard("UNSUPPORTED", "UnsupportedOperationError", "Slice namespace keys require their own stage.");
-            task = dictionaryTask(classes.namespaceDictionary(receiver.owner), task.key, site, continuation("relay", {receiver, after: completion}), depth); continue;
+            task = dictionaryTask(values.classNamespaceDictionary(receiver), task.key, site, continuation("relay", {receiver, after: completion}), depth); continue;
           }
           if (values.isView(receiver)) {
             values.liveView(receiver);
@@ -1809,7 +1860,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (dictcell) setCell(dictcell, classes.namespaceDictionary(type));
             task = notifyNext(type, [...namespace], 0, site, completion, keywords, keywordValues); continue;
           }
-          if (classes.isType(callable) && !["type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
+          if (classes.isType(callable) && !["mappingproxy", "type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
+            if (/^dict_(keys|values|items|(?:reverse)?(?:key|value|item)iterator)$/.test(callable.name)) python("TypeError", "cannot create dictionary view or iterator instances");
             if (["method_descriptor", "wrapper_descriptor", "getset_descriptor", "member_descriptor", "classmethod_descriptor"].includes(callable.name)) python("TypeError", "cannot create '" + callable.name + "' instances");
             if (["NoneType", "NotImplementedType"].includes(callable.name)) {
               if (args.length || keywords.length) python("TypeError", callable.name + " takes no arguments");
@@ -2169,12 +2221,58 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const result = values.copyDictionary(dictionary); state.temporaries.push(result);
             task = nativeDirectoryNext({receiver, result, position: 0, depth, after: completion}, site); continue;
           }
+          if (["mappingproxy", "mappingproxy.__new__"].includes(callable.name)) {
+            let operands = callable.name.endsWith(".__new__") ? args.slice(1) : args;
+            if (!operands.length && keywords.length === 1 && keywords[0] === "mapping") operands = keywordValues;
+            else if (keywords.length) python("TypeError", "mappingproxy received invalid arguments");
+            if (operands.length !== 1 || callable.name.endsWith(".__new__") && args[0] !== classes.builtin("mappingproxy")) python("TypeError", "mappingproxy requires one mapping");
+            if (!(values.isDict(operands[0]) || operands[0] instanceof ClassNamespaceValue)) {
+              if (operands[0] instanceof InstanceValue) hard("UNSUPPORTED", "UnsupportedOperationError", "User mapping proxy construction is owned by O80/#116.");
+              python("TypeError", "mappingproxy requires a mapping");
+            }
+            if (values.isDict(operands[0])) values.enableNamespace(operands[0]);
+            task = valueTask(allocate(ClassNamespaceValue, operands[0]), site, completion); continue;
+          }
+          if (callable.name.startsWith("mappingproxy.") || /^dict_(keys|values|items)\./.test(callable.name)) {
+            const [receiver, other] = args, name = callable.name.slice(callable.name.indexOf(".") + 1);
+            const proxy = receiver instanceof ClassNamespaceValue, view = receiver instanceof DictionaryViewValue;
+            if (!(proxy || view)) python("TypeError", "Native mapping operation requires a matching receiver");
+            const dictionary = proxy ? values.classNamespaceDictionary(receiver) : receiver.dictionary;
+            if (["get", "__contains__", "__getitem__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__or__", "__ror__", "__ior__"].includes(name)) {
+              if (name !== "get" && (args.length !== 2 || keywords.length)) python("TypeError", "Native mapping operation requires one argument");
+              if (name === "__contains__") { task = containsTask(receiver, other, site, completion, depth); continue; }
+              if (name === "__getitem__") { task = itemTask(receiver, other, site, completion, depth); continue; }
+              if (name === "__ior__") python("TypeError", "mappingproxy does not support in-place union");
+              const comparisons = {__eq__: "equal", __ne__: "not-equal", __lt__: "less", __le__: "less-equal", __gt__: "greater", __ge__: "greater-equal"};
+              if (proxy && comparisons[name]) {
+                if (values.isDict(other)) values.enableNamespace(other);
+                task = compareTask(comparisons[name], dictionary, other instanceof ClassNamespaceValue ? values.classNamespaceDictionary(other) : other, site, proxyRelay(receiver, other, completion), depth); continue;
+              }
+              if (proxy && ["__or__", "__ror__"].includes(name)) {
+                task = arithmeticTask("bit-or", name === "__or__" ? [dictionary, other] : [other, dictionary], site, proxyRelay(receiver, other, completion), depth); continue;
+              }
+            } else if (["keys", "values", "items", "copy", "__len__", "__iter__", "__reversed__", "__hash__"].includes(name)) {
+              if (args.length !== 1 || keywords.length) python("TypeError", "Native mapping operation takes no arguments");
+              if (name === "__hash__") python("TypeError", "unhashable type: 'dict'");
+              const value = name === "copy" ? values.copyDictionary(dictionary) : name === "__len__" ? values.int(BigInt(dictionary.entries.length)) :
+                ["keys", "values", "items"].includes(name) ? values.dictionaryView(dictionary, ["keys", "values", "items"].indexOf(name)) :
+                values.dictionaryIterator(dictionary, proxy ? 0 : receiver.kind, name === "__reversed__");
+              task = valueTask(value, site, completion); continue;
+            }
+            if (name !== "get") hard("UNSUPPORTED", "UnsupportedOperationError", "Native dictionary view API " + callable.name + " is owned by #116/#117.");
+          }
+          if (callable.name === "reversed") {
+            if (args.length !== 1 || keywords.length) python("TypeError", "reversed requires one positional argument");
+            const receiver = args[0];
+            const dictionary = receiver instanceof ClassNamespaceValue ? values.classNamespaceDictionary(receiver) : receiver instanceof DictionaryViewValue ? receiver.dictionary : values.isDict(receiver) ? receiver : null;
+            if (dictionary === null) hard("UNSUPPORTED", "UnsupportedOperationError", "General reversed protocols are owned by #116.");
+            task = valueTask(values.dictionaryIterator(dictionary, receiver instanceof DictionaryViewValue ? receiver.kind : 0, true), site, completion); continue;
+          }
           if (callable.name === "mappingproxy.get") {
             const [receiver, key, fallback = null] = args;
             if (!(receiver instanceof ClassNamespaceValue) || args.length < 2 || args.length > 3 || keywords.length)
               python("TypeError", "get() requires one or two positional arguments");
-            const entry = classes.namespaceEntry(receiver, key);
-            task = valueTask(entry.found ? entry.value : fallback, site, completion); continue;
+            task = dictionaryTask(values.classNamespaceDictionary(receiver), key, site, continuation("proxy-get", {receiver, fallback, after: completion}), depth, "probe"); continue;
           }
           if (["locals", "vars", "dir"].includes(callable.name)) {
             count("builtin:" + callable.name);

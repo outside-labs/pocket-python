@@ -34,6 +34,14 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
+    case "view-item": record = {kind, receiver: fields.receiver, key: fields.key, depth: fields.depth, after}; depthCheck(record.depth); break;
+    case "proxy-get": record = {kind, receiver: fields.receiver, fallback: fields.fallback, after}; break;
+    case "dict-union":
+      record = {kind, left: fields.left, right: fields.right, result: fields.result, serial: fields.serial, size: fields.size, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (!Number.isSafeInteger(record.serial) || record.serial < -1 || !Number.isSafeInteger(record.size) || record.size < 0 || record.size > 1024)
+        throw new TypeError("Invalid dictionary union phase.");
+      break;
     case "namespace-build": record = {kind, task: fields.task, field: fields.field}; break;
     case "namespace-lookup": record = {kind, cache: fields.cache, task: fields.task, owner: fields.owner, name: fields.name, dictionary: fields.dictionary, phase: fields.phase}; break;
     case "class-end": record = {kind, names: operands(fields.names), items: operands(fields.items), position: fields.position, signal: fields.signal, value: fields.value}; break;
@@ -134,10 +142,11 @@ export function completion(kind, fields = {}) {
       break;
     case "dict-pair": case "dict-value": case "dict-value-truth":
       record = {kind, left: fields.left, right: fields.right, value: fields.value, operation: fields.operation, position: fields.position, depth: fields.depth,
-        version: fields.version, otherVersion: fields.otherVersion, after};
+        version: fields.version, otherVersion: fields.otherVersion, serial: fields.serial ?? null, after};
       depthCheck(record.depth); comparisonCheck(record.operation, record.position);
       if (!Number.isSafeInteger(record.version) || record.version < 0 || !Number.isSafeInteger(record.otherVersion) || record.otherVersion < 0)
         throw new TypeError("Invalid dictionary comparison versions.");
+      if (record.serial !== null && (!Number.isSafeInteger(record.serial) || record.serial < 0)) throw new TypeError("Invalid dictionary comparison position.");
       break;
     case "delegate-iter": case "delegate-next": case "delegate-return": case "delegate-close":
     case "iter-result": case "indexed-result": case "callable-result": record = {kind, receiver: fields.receiver, after}; break;
@@ -233,6 +242,9 @@ export function completion(kind, fields = {}) {
 }
 function visit(record) {
   switch (record.kind) {
+    case "view-item": return [record.receiver, record.key, ...completionRoots(record.after)];
+    case "proxy-get": return [record.receiver, record.fallback, ...completionRoots(record.after)];
+    case "dict-union": return [record.left, record.right, record.result, ...completionRoots(record.after)];
     case "namespace-build": return operationRoots(record.task);
     case "namespace-lookup": return [record.cache, record.owner, record.dictionary, ...operationRoots(record.task)];
     case "class-name": case "module-delete": case "global-name": case "global-delete": case "module-missing": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
