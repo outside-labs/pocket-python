@@ -324,3 +324,12 @@ not change collection counters, imports, work observations or ownership. A limit
 failure is released through the execution's normal failure path, so a host may
 collect or close every successfully paused owner. This also covers result stack
 slots created after the last allocating operation in an instruction.
+
+## Source code and cell accounting revision 10
+
+O73 records verified definition lines, optional code caches and metadata, closure
+tuples and retained executable snapshots. Code caches add eight bytes plus eight
+per entry; a code record uses 56 bytes plus 24 per cached field. Generator
+records add 24 bytes for retained executable pool/index and closure snapshots. The eight
+composed instruction/work observations are unchanged; source line metadata
+changes verified pool storage. Prior observations remain in `accounting_9_cases`.

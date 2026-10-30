@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -612,7 +612,7 @@ export class ValueRuntime {
     if (value instanceof DictionaryViewValue) return value.dictionary.entries.length !== 0;
     if (value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
-        value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof SuperValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue) return true;
+        value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof SuperValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue || value instanceof Cell || value instanceof CodeValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
   }
   equal(left, right, depth = 0) {
@@ -1511,7 +1511,7 @@ export function valueLayout(value) {
   if (value instanceof DictionaryViewValue) return {bytes: 56, children: [value.dictionary]};
   if (value instanceof IteratorValue && value.dictionaryKind !== undefined) return {bytes: 96, children: value.value === null ? [] : [value.value]};
   if (value instanceof IteratorValue) return value.value?.namespace ? {bytes: 80, children: [value.value]} : value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
-  if (value instanceof GeneratorValue) return {bytes: 128 + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};
+  if (value instanceof GeneratorValue) return {bytes: 152 + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};
   if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};
   if (value instanceof NotImplementedValue) return {bytes: 48, children: []};
   if (value instanceof SliceValue) return {bytes: 88, children: [value.start, value.stop, value.step]};
@@ -1519,12 +1519,13 @@ export function valueLayout(value) {
   if (value instanceof Environment) return value.dictionary === null ?
     {bytes: 64 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [...value.cells.values()]} :
     {bytes: 72 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [value.dictionary, ...value.cells.values()]};
-  if (value instanceof CodePool) return {bytes: value.bytes, children: [...value.code.constants, ...(value.module ? [value.module] : [])]};
+  if (value instanceof CodePool) return {bytes: value.bytes + (value.codeObjects === null ? 0 : 8 + 8 * value.codeObjects.size), children: [...value.code.constants, ...(value.module ? [value.module] : []), ...(value.codeObjects?.values() ?? [])]};
+  if (value instanceof CodeValue) return {bytes: 56 + 24 * value.metadata.size, children: [value.pool, ...value.metadata.values()]};
   if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length, children: [value.environment, value.pool]};
   if (value instanceof CallArguments) return {bytes: 80 + (value.keywordMap === null ? 0 : 8) + 8 * value.args.length + value.keywords.reduce((sum, key) => sum + 24 + 2 * key.length, 0),
     children: [value.callable, ...value.args, ...value.keywordValues, ...(value.keywordMap === null ? [] : [value.keywordMap])]};
   if (value instanceof FunctionValue) {
-    const metadata = [value.identityName, value.identityQualname, value.identityModule, value.builtins].filter(item => item != null);
+    const metadata = [value.identityName, value.identityQualname, value.identityModule, value.builtins, value.closureTuple].filter(item => item != null);
     const defaults = [...(Array.isArray(value.positionalDefaults) ? value.positionalDefaults : [value.positionalDefaults]),
       ...(value.keywordDefaults instanceof Map ? value.keywordDefaults.values() : [value.keywordDefaults])].filter(item => item != null);
     return {bytes: 80 + 8 * (value.closure.size + defaults.length + (value.attributes === null ? 0 : 1) + (value.documentation === null ? 0 : 1) + metadata.length),

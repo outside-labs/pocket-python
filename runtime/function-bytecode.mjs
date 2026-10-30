@@ -14,6 +14,8 @@ const UNARY = new Set(["truth", "not", "len", "negative", "positive", "invert", 
 const NUMERIC = new Set(["power", "bit-and", "bit-or", "bit-xor", "left-shift", "right-shift", "invert"]);
 const CONSTRUCT = new Set(["build-list", "build-tuple", "build-dict", "build-set"]);
 const fail = message => { throw new BytecodeError(message); };
+const verifiedCode = new WeakSet();
+export const isVerifiedFunctionCode = code => verifiedCode.has(code);
 const record = value => value !== null && typeof value === "object" && !Array.isArray(value);
 const integer = (value, high) => Number.isSafeInteger(value) && value >= 0 && value <= high;
 const name = value => typeof value === "string" && /^[A-Za-z_][A-Za-z_0-9]{0,63}$/.test(value);
@@ -52,7 +54,7 @@ export function verifyFunctions(program) {
     const kind = classes ? fn.kind : functionIndex === 0 ? "module" : "function";
     if (!["module", "function", "class"].includes(kind) || (functionIndex === 0) !== (kind === "module")) fail("Invalid function/class body kind.");
     const staticAttributes = Object.hasOwn(fn, "staticAttributes") ? names(fn.staticAttributes, validName) : null;
-    if (Object.hasOwn(fn, "firstLine") && (kind !== "class" || !integer(fn.firstLine, 1000000) || fn.firstLine < 1)) fail("Invalid class definition line.");
+    if (Object.hasOwn(fn, "firstLine") && (!["class", "function"].includes(kind) || !integer(fn.firstLine, 1000000) || fn.firstLine < 1)) fail("Invalid definition line.");
     if (staticAttributes && kind !== "class") fail("Static attribute metadata requires a class body.");
     if (docFields.length && (kind !== "function" || !integer(fn.doc, constants.length - 1) || !new ValueRuntime().isString(constants[fn.doc])))
       fail("Function documentation requires a string constant in bytecode 5.");
@@ -257,5 +259,6 @@ export function verifyFunctions(program) {
       (fn.kind === "class" || !fn.locals.includes(key)) && !fn.free.includes(key))) fail("Function/class capture has no lexical cell.");
   }
   const code = Object.freeze({format: program.format, version: program.version, constants, functions: Object.freeze(functions)});
+  verifiedCode.add(code);
   return Object.freeze({code, bytes: 64 + 2 * JSON.stringify({constants: program.constants, functions}).length});
 }

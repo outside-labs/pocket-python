@@ -7,7 +7,8 @@
     "O45",
     "O46",
     "O71",
-    "O72"
+    "O72",
+    "O73"
   ],
   "cases": [
     {
@@ -381,7 +382,7 @@
     },
     {
       "id": "deferred-__code__",
-      "stage": "Future",
+      "stage": "O73",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__code__')\n",
       "stdout": ""
     },
@@ -411,7 +412,7 @@
     },
     {
       "id": "deferred-__closure__",
-      "stage": "Future",
+      "stage": "O73",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__closure__')\n",
       "stdout": ""
     },

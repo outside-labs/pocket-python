@@ -131,5 +131,5 @@ test('abstract flags preserve core admission and unrelated function metadata bou
   assert.equal(result.error?.code, 'UNSUPPORTED');
   if (result.closed) closed(result.closed);
   const other = await run('def f(): pass\nf.__code__\n');
-  assert.equal(other.error?.code, 'UNSUPPORTED'); closed(other.closed);
+  assert.equal(other.ok, true); closed(other.closed);
 });

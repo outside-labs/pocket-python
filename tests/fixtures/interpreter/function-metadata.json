@@ -7,7 +7,8 @@
     "O43",
     "O44",
     "O71",
-    "O72"
+    "O72",
+    "O73"
   ],
   "cases": [
     {
@@ -657,7 +658,7 @@
     },
     {
       "id": "function-code-deferred",
-      "stage": "Future",
+      "stage": "O73",
       "source": "def f(): pass\nprint(f.__code__.co_name)\n",
       "stdout": "f\n"
     },

@@ -337,6 +337,7 @@ class Compiler {
     const staticAttributes = isClass ? this.staticAttributes(node) : [];
     if (staticAttributes.length) fn.staticAttributes = staticAttributes;
     if (isClass && node.decorators?.length) fn.firstLine = node.decorators[0].span[0];
+    if (this.classes && !isModule && !isClass) fn.firstLine = node.decorators?.[0]?.span[0] ?? node.span[0];
     if (node.kind === "Function" && document) fn.doc = this.constant(documentation, document);
     this.program.functions[scope.index] = fn;
     const makeBlock = (nodes, expression = false) => {
@@ -352,7 +353,7 @@ class Compiler {
       };
       const pushNone = site => emit(site, "const", this.constant(NONE, site));
       const attribute = (value, write = false) => {
-        if (write && !allowsClassSpecial(value.name, "mutate") && !["__qualname__", "__module__", "__dict__", "__func__", "__wrapped__", "__defaults__", "__kwdefaults__", "__globals__", "__builtins__"].includes(value.name))
+        if (write && !allowsClassSpecial(value.name, "mutate") && !["__qualname__", "__module__", "__dict__", "__func__", "__wrapped__", "__defaults__", "__kwdefaults__", "__globals__", "__builtins__", "__code__", "__closure__"].includes(value.name))
           this.fail("Special attribute mutation is outside C1.", value);
         return value.name;
       };

@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O39",
     "O40",
-    "O71"
+    "O71",
+    "O73"
   ],
   "cases": [
     {
@@ -863,7 +864,7 @@
     },
     {
       "id": "function-code-metadata",
-      "stage": "Future",
+      "stage": "O73",
       "source": "def f(): pass\nf.__code__\n",
       "stdout": ""
     },
