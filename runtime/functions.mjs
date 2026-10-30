@@ -1120,7 +1120,10 @@ export class Execution {
       for (let count = 0; count < instructions && !this.#machine.done(); count++) this.#machine.step();
       if (this.#machine.done()) {
         this.#result = this.#machine.result(); this.#release(); this.#state = "completed";
-      } else this.#state = "paused";
+      } else {
+        this.#machine.memory.collect([], {cleanup: true, validateOnly: true});
+        this.#state = "paused";
+      }
       return this.snapshot();
     } catch (error) {
       this.#error = error;
