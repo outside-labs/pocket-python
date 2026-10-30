@@ -970,7 +970,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         const keys = values.list(source.entries.map(entry => entry.key)); state.temporaries.push(keys);
         return graphDirectoryCopy({...completion, source, keys, position: 0}, site);
       }
-      if (source === null || values.typeName(source) !== null) python("AttributeError", "advertised class dictionary has no keys method");
+      if (source === null || values.typeName(source) !== null && !(source instanceof FrameLocalsValue)) python("AttributeError", "advertised class dictionary has no keys method");
       return attributeTask(source, "keys", site, continuation("graph-dir-keys", {...completion, source}), completion.depth);
     }
     if (completion?.kind === "graph-dir-keys") return callTask(value, [], [], [], site, continuation("graph-dir-call", completion), completion.depth);

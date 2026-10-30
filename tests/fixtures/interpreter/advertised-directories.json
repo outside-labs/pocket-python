@@ -362,6 +362,18 @@
       "source": "def g(): yield 7\ngen=g()\nproxy=gen.gi_frame.f_locals\nclass Meta(type):\n @property\n def __dict__(cls): return {}\n @property\n def __bases__(cls): return proxy\nclass A(metaclass=Meta): pass\ntype.__dir__(A)\n",
       "stdout": "",
       "error_type": "TypeError"
+    },
+    {
+      "id": "empty-frame-locals-namespace",
+      "stage": "O76",
+      "source": "def g():\n x=7\n yield x\ngen=g()\nproxy=gen.gi_frame.f_locals\nclass Meta(type):\n @property\n def __dict__(cls): return proxy\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "\n"
+    },
+    {
+      "id": "live-frame-locals-namespace",
+      "stage": "O76",
+      "source": "def g():\n x=7\n yield x\ngen=g()\nnext(gen)\nproxy=gen.gi_frame.f_locals\nclass Meta(type):\n @property\n def __dict__(cls): return proxy\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "x\n"
     }
   ]
 }

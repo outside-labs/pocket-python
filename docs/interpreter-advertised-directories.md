@@ -46,3 +46,6 @@ ordering through parking, cancellation and close.
 
 Advertised bases reject mapping-only native layouts, including frame-local
 proxies, before any child access, even when the mapping is empty.
+Frame-local proxies remain valid advertised namespace mappings: keys and live
+values use the existing owned proxy operations. Their mapping-only layout makes
+them invalid as base sequences.
