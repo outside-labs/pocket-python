@@ -490,3 +490,7 @@ are O83; storage and base reassignment remain O84–O88.
 protocol dispatch, including reflected priority, owned descriptors, hashing and
 live mutation. O79–O83 complete the advanced construction workstream; storage
 and builtin subclasses remain O84–O88.
+
+[O84](interpreter-slots.md) adopts slots, inherited member storage, native
+member descriptors and optional instance dictionary/weak-reference layouts.
+Builtin payload subclasses and compatible type/base reassignment remain O85–O88.

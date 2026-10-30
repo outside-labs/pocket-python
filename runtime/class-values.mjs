@@ -11,7 +11,7 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
   "list_iterator", "tuple_iterator", "str_iterator", "str_ascii_iterator", "dict_keyiterator", "range_iterator", "longrange_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 for (const name of Object.keys(NATIVE_NAMESPACES)) if (name !== "object") NATIVE_TYPES.add(name);
 const NAMESPACE_DESCRIPTOR_KINDS = new Set(["method_descriptor", "wrapper_descriptor", "classmethod_descriptor", "getset_descriptor", "member_descriptor"]);
-const META_SPECIALS = new Set([...METACLASS_PROTOCOLS, "__mro_entries__", "__orig_bases__", "__prepare__", "__classcell__", "__classdictcell__", "__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set([...METACLASS_PROTOCOLS, "__slots__", "__mro_entries__", "__orig_bases__", "__prepare__", "__classcell__", "__classdictcell__", "__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
@@ -318,7 +318,7 @@ export class ClassRuntime {
         this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
     }
   }
-  create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null, firstLine = 1, staticAttributes = [], namespaceEntries = null, protocolNames = null} = {}) {
+  create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null, firstLine = 1, staticAttributes = [], namespaceEntries = null, protocolNames = null, slotNames = null} = {}) {
     this.key(name);
     if (!dynamic && !isPythonIdentifier(name)) throw new TypeError("Invalid class name.");
     this.bounded(typeof qualname === "string" && qualname.length <= 256 && typeof module === "string" && module.length <= 192,
@@ -358,12 +358,63 @@ export class ClassRuntime {
     const customMro = metaclass instanceof ClassValue && (this.hasSlot(metaclass, "mro") || !this.hasTypeNamespace({metaclass}));
     const parents = customMro ? [] : this.mergeMro(bases);
     const type = new ClassValue(name, qualname, module, bases, parents, namespace, false, metaclass, !dynamic, automaticHash);
+    type.storage = this.storageLayout(name, bases, namespace, slotNames);
     type.mroPending = customMro; type.customMro = customMro;
     type.protocolNames = protocolNames?.length ? [...protocolNames] : null;
     type.firstLine = firstLine; type.staticAttributes = staticAttributes === null ? null : [...staticAttributes];
     type.namespaceEntries = namespaceEntries === null ? null : namespaceEntries.filter(entry => !["__qualname__", "__classcell__", "__classdictcell__"].includes(this.values.text(entry.key))).map(entry => ({key: entry.key, hash: entry.hash}));
     const layout = valueLayout(type);
     return this.memory ? this.memory.allocate(layout.bytes, layout.children, () => type) : type;
+  }
+  storageLayout(name, bases, namespace, slotNames) {
+    let best = null;
+    for (const base of bases) {
+      const solid = base.storage?.solid ?? (this.isMetaclass(base) || base instanceof BuiltinValue ? base : null);
+      if (solid === null) continue;
+      if (best === null || this.subclass(solid, best)) best = solid;
+      else if (!this.subclass(best, solid)) this.fail("TypeError", "multiple bases have instance lay-out conflict");
+    }
+    const inherited = bases.find(base => base.storage?.solid === best)?.storage;
+    const count = inherited?.count ?? 0;
+    const dict = bases.some(base => base.storage?.dict ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && base.name === "type"));
+    const weak = bases.some(base => base.storage?.weak ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && base.name === "type"));
+    const ownNames = []; let ownDict = slotNames === null && !dict, ownWeak = slotNames === null && !weak;
+    if (slotNames !== null) for (const item of slotNames) {
+      this.charge(1); const label = this.values.text(item);
+      if (label === null) this.fail("TypeError", "__slots__ items must be strings");
+      if (!isPythonIdentifier(label)) this.fail("TypeError", "__slots__ must be identifiers");
+      if (label === "__dict__" || label === "__weakref__") {
+        const dictionary = label === "__dict__";
+        if (dictionary ? dict || ownDict : weak || ownWeak) this.fail("TypeError", label + " slot disallowed: we already got one");
+        if (dictionary) ownDict = true; else ownWeak = true;
+        continue;
+      }
+      const prefix = name.replace(/^_+/, ""), key = label.startsWith("__") && !label.endsWith("__") && prefix ? "_" + prefix + label : label;
+      if (namespace.has(key)) this.fail("ValueError", "'" + key + "' in __slots__ conflicts with class variable");
+      this.key(key); ownNames.push(key);
+    }
+    if (ownNames.length && bases.some(base => base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base))) this.fail("TypeError", "nonempty __slots__ not supported for subtype of type");
+    ownNames.sort();
+    this.bounded(count + ownNames.length <= CLASS_LIMITS.attributes, "Instance slot budget exceeded");
+    return {count: count + ownNames.length, ownNames, dict: dict || ownDict, weak: weak || ownWeak,
+      ownDict, ownWeak, solid: best, baseSolid: best, explicit: slotNames !== null};
+  }
+  installStorage(type) {
+    if (!type.storage?.ownNames.length) return;
+    const roots = [type], leave = this.memory?.enter(() => roots, {charge: this.charge});
+    try {
+      const storage = type.storage;
+      const first = storage.count - storage.ownNames.length;
+      for (let i = 0; i < storage.ownNames.length; i++) {
+        const name = storage.ownNames[i], descriptor = this.namespaceDescriptor(type, name, "member_descriptor"); roots.push(descriptor);
+        descriptor.slotIndex = first + i;
+        const key = this.values.string(Array.from(name, char => char.codePointAt(0))); roots.push(key);
+        this.values.set(type.namespaceDictionary, key, descriptor);
+        type.namespace.set(name, descriptor);
+      }
+      if (storage.ownNames.length) storage.solid = type;
+      const layout = valueLayout(type); this.memory?.resize(type, layout.bytes, layout.children);
+    } finally { leave?.(); }
   }
   mergeMro(bases) {
     if (bases.some(base => base.mroPending)) this.fail("TypeError", "Cannot extend an incomplete type");
@@ -404,7 +455,10 @@ export class ClassRuntime {
       this.charge(1);
       if (!this.isType(item)) this.fail("TypeError", "mro() returned a non-class");
       const family = this.layoutFamily(item);
-      if (family !== "object" && family !== layout) this.fail("TypeError", "mro() returned base with unsuitable layout");
+      const solid = item.storage?.solid;
+      if (family !== "object" && family !== layout || item !== type && solid instanceof ClassValue && solid.storage?.ownNames.length &&
+          type.storage?.solid !== solid && !this.subclass(type.storage.solid, solid))
+        this.fail("TypeError", "mro() returned base with unsuitable layout");
     }
   }
   instance(type) {
@@ -437,6 +491,7 @@ export class ClassRuntime {
       this.charge(1);
       if (base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base)) return base;
     }
+    if (type.storage?.baseSolid) return type.bases.find(base => base === type.storage.baseSolid || base.storage?.solid === type.storage.baseSolid) ?? type.bases[0];
     return type.bases[0];
   }
   typeOf(value) {
@@ -1163,6 +1218,17 @@ export class ClassRuntime {
   namespaceGetset(descriptor, receiver, operation = "get", item = null) {
     this.namespaceDescriptorValid(descriptor, receiver);
     const owner = descriptor.nativeOwner, name = descriptor.nativeKey;
+    if (descriptor.slotIndex !== undefined) {
+      const slots = receiver.slotValues;
+      if (!(slots instanceof Map)) this.fail("TypeError", "Descriptor does not apply to this receiver layout");
+      const index = descriptor.slotIndex, present = slots.has(index), before = slots.get(index);
+      if (operation !== "set" && !present) this.fail("AttributeError", "'" + this.typeOf(receiver).name + "' object has no attribute '" + name + "'");
+      if (operation === "get") return {kind: "value", value: before};
+      if (operation === "set") slots.set(index, item); else slots.delete(index);
+      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+      catch (error) { if (present) slots.set(index, before); else slots.delete(index); throw error; }
+      return {kind: "value", value: null};
+    }
     if (owner instanceof BuiltinValue && owner.name === "type" && name === "__doc__") {
       if (operation !== "get") { if (receiver instanceof BuiltinValue || receiver.root) this.fail("TypeError", "Cannot mutate native documentation"); return {kind: "value", value: this.mutate(receiver, name, item, operation === "delete")}; }
       if (receiver instanceof BuiltinValue || receiver.root) return {kind: "value", value: this.nativeDocumentation(receiver)};
@@ -1242,7 +1308,7 @@ export class ClassRuntime {
       if (!(base instanceof ClassValue) || base.root) continue;
       const own = this.ownNamespaceEntry(base, "__dict__", -1);
       if (own.found) return own.value?.nativeKind === "getset_descriptor" && own.value.nativeOwner === base && own.value.nativeKey === "__dict__";
-      if (!base.namespaceDictionary && base.bases.every(parent => parent instanceof ClassValue && parent.root)) return true;
+      if (!base.namespaceDictionary && (base.storage ? base.storage.ownDict : base.bases.every(parent => parent instanceof ClassValue && parent.root))) return true;
     }
     return false;
   }
@@ -1267,6 +1333,7 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver.attributes instanceof Map && operation === "get")
       return receiver.attributes.has(name) ? value(receiver.attributes.get(name)) : this.instanceMissing(receiver, name, fallback);
+    if (receiver.type.storage && !receiver.type.storage.dict) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);
     const dictionary = this.instanceDictionary(receiver);
     key ??= this.values.string(Array.from(name, char => char.codePointAt(0)));
     if (this.values.dictionaryNeedsProtocol(dictionary, key)) return {kind: "call",
@@ -1344,10 +1411,8 @@ export class ClassRuntime {
     }
     if (!type.namespace.has("__module__")) names.push("__module__");
     if (type.sourceDefined && type.staticAttributes !== null && !type.namespace.has("__static_attributes__")) names.push("__static_attributes__");
-    if (type.bases.every(base => base instanceof ClassValue && base.root)) {
-      if (!type.namespace.has("__dict__")) names.push("__dict__");
-      names.push("__weakref__");
-    }
+    if (type.storage?.ownDict && !type.namespace.has("__dict__")) names.push("__dict__");
+    if (type.storage?.ownWeak) names.push("__weakref__");
     if (type.defaultDoc) names.push("__doc__");
     if (type.automaticHash && initial.includes("__hash__")) names.push("__hash__");
     for (const name of [...type.namespace.keys()].slice(type.directoryInitialCount)) {
@@ -1597,6 +1662,7 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver instanceof InstanceValue && receiver.type.root && name === "__dict__")
       this.fail("AttributeError", "Object instance has no dictionary.");
+    if (receiver instanceof InstanceValue && receiver.type.storage && !receiver.type.storage.dict) this.instanceMissing(receiver, name);
     if (receiver instanceof InstanceValue && !(receiver.attributes instanceof Map)) {
       const plan = this.instanceEntry(receiver, name, remove ? "delete" : "set", value);
       if (plan.kind !== "value") this.fail("UnsupportedOperationError", "Dictionary callbacks require VM execution frames.", "UNSUPPORTED");

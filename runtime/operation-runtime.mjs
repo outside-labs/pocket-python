@@ -735,13 +735,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "namespace-build") {
       let task = completion.task;
       const field = completion.field;
+      if (field === "slots") {
+        const [found, item] = values.comparisonSequence(value);
+        if (!found) return namespaceCreateTask({...task, slotsDone: true}, site, task.completion, task.depth);
+        if (values.isString(item)) return namespaceCreateTask({...task, slotsDone: true, slotNames: [item]}, site, task.completion, task.depth);
+        return unaryTask("iter", item, site, continuation("namespace-build", {task, field: "slot-iterator"}), task.depth);
+      }
+      if (field === "slot-iterator") {
+        const result = values.list([]); state.temporaries.push(result);
+        return consumeNext("list", value, result, site, continuation("namespace-build", {task, field: "slot-items"}), task.depth);
+      }
+      if (field === "slot-items") return namespaceCreateTask({...task, slotsDone: true, slotNames: value.items}, site, task.completion, task.depth);
       if (field === "protocol") {
         const [found, key] = values.comparisonSequence(value), name = CLASS_PROTOCOL_NAMES[task.protocolIndex];
         let protocolNames = task.protocolNames || [];
         if (found && values.needsOwnedHash(key)) {
           const metaclass = task.bases.some(base => base instanceof BuiltinValue && base.name === "type" || classes.isMetaclass(base));
-          if (name === "__slots__")
-            hard("UNSUPPORTED", "UnsupportedOperationError", "Custom slots, MRO and prepared mappings retain their construction stages.");
           protocolNames = [...protocolNames, name];
           const position = task.dictionary.entries.findIndex(entry => entry.key === key), entry = task.dictionary.entries[position];
           if (["__new__", "__init_subclass__", "__class_getitem__"].includes(name) && entry.value instanceof FunctionValue) {
@@ -1481,20 +1490,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = dictionaryTask(dictionary, key, site, continuation("namespace-build", {task: {...task, protocolIndex}, field: "protocol"}), depth, "probe-entry"); continue;
             }
             const namespace = new Map(dictionary.entries.map(entry => [values.text(entry.key) ?? entry.key, entry.value]));
+            if (!task.slotsDone && (namespace.has("__slots__") || task.protocolNames?.includes("__slots__"))) { task = probe("__slots__", "slots", "probe"); continue; }
             const type = classes.create(task.name, task.qualname ?? task.name, values.text(task.moduleObject) ?? task.module, task.bases, namespace, classes.builtin("object"),
               {dynamic: task.dynamic, metaclass: task.metaclass ?? null, firstLine: task.firstLine ?? null,
-                staticAttributes: task.staticAttributes ?? null, namespaceEntries: dictionary.entries, protocolNames: task.protocolNames});
+                staticAttributes: task.staticAttributes ?? null, namespaceEntries: dictionary.entries, protocolNames: task.protocolNames, slotNames: task.slotNames ?? null});
             state.temporaries.push(type);
             // Wrap source __new__/__init_subclass__ once, preserving their stored keys.
             for (const entry of dictionary.entries) {
               const key = values.text(entry.key); if (["__new__", "__init_subclass__"].includes(key) && type.namespace.has(key)) entry.value = type.namespace.get(key);
             }
             classes.installNamespaceDictionary(type, dictionary);
+            classes.installStorage(type);
             task = namespaceCreateTask({...task, type, phase: 6}, site, completion, depth); continue;
           }
           if (phase === 6 || phase === 7) {
             const name = phase === 6 ? "__dict__" : "__weakref__";
-            const ownStorage = task.type.bases.every(base => base instanceof ClassValue && base.root);
+            const ownStorage = phase === 6 ? task.type.storage.ownDict : task.type.storage.ownWeak;
             task = ownStorage ? probe(name, "stored", "set-default", classes.namespaceDescriptor(task.type, name, "getset_descriptor")) :
               namespaceCreateTask({...task, phase: phase + 1}, site, completion, depth); continue;
           }
@@ -2234,7 +2245,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               continue;
             }
             metaclass = selected;
-            if (namespaceValue.entries.some(entry => values.needsOwnedHash(entry.key))) {
+            if (namespace.has("__slots__") || namespaceValue.entries.some(entry => values.needsOwnedHash(entry.key))) {
               const dictionary = values.copyDictionary(namespaceValue); state.temporaries.push(dictionary);
               const defaultModule = environmentCell(frame.callable.globals, "__name__")?.value ?? values.string(Array.from("builtins", char => char.codePointAt(0)));
               state.temporaries.push(defaultModule);

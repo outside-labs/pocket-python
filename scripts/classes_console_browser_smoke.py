@@ -279,6 +279,8 @@ def smoke(channel=None):
                     programs.extend(c['source'] for c in prepared_namespaces['cases'] if 'error_type' not in c)
                     factories = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-factories.json').read_bytes())
                     programs.extend(c['source'] for c in factories['cases'] if 'error_type' not in c)
+                    slots = json.loads((ROOT / 'tests/fixtures/interpreter/slots.json').read_bytes())
+                    programs.extend(c['source'] for c in slots['cases'] if 'error_type' not in c)
                     custom_mro = json.loads((ROOT / 'tests/fixtures/interpreter/custom-mro.json').read_bytes())
                     programs.extend(c['source'] for c in custom_mro['cases'] if 'error_type' not in c)
                     meta_protocols = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-protocols.json').read_bytes())
@@ -531,7 +533,7 @@ def smoke(channel=None):
                         ('__delattr__', 'self,name', 'del A().x')]:
                         refused('class A:\n def '+slot+'('+signature+'):\n  raise ValueError("hook")\n'+invocation+'\n', 'ValueError:')
                         assert slot+' at sources/app.py:3' in page.locator('#diagnostic').inner_text()
-                    refused('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__slots__")\n', 'UnsupportedOperationError:')
+                    refused('class A:\n def __getattribute__(self,name): print("never")\ngetattr(A(),"__class_getitem__")\n', 'UnsupportedOperationError:')
                     assert page.locator('#result').inner_text() == ''
                     run('class M(type):\n print("body")\n def __getattribute__(cls,name): return 7\nclass A(metaclass=M): pass\nprint(A.x)\n', 'body\n7\n')
                     assert page.locator('#result').inner_text() == 'body\n7\n'
