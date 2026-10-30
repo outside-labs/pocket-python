@@ -34,6 +34,15 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
+    case "handler-type": record = {kind, position: fields.position, names: operands(fields.names), after}; break;
+    case "module-delete": case "global-name": case "global-delete":
+      record = {kind, receiver: fields.receiver, name: fields.name, after}; break;
+    case "store-body": record = {kind, body: fields.body, after}; break;
+    case "resume-control": record = {kind, signal: fields.signal, value: fields.value, after}; break;
+    case "module-entry": case "module-hook":
+      record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, mode: fields.mode, depth: fields.depth, after}; break;
+    case "module-dir": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
+    case "module-missing": record = {kind, receiver: fields.receiver, name: fields.name, mode: fields.mode, after}; break;
     case "class": record = {kind, bases: operands(fields.bases), module: fields.module,
       ...(fields.keywords?.length ? {keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)} : {}),
       ...(fields.metaclass ? {metaclass: fields.metaclass} : {}), ...(fields.invalidMetaclass ? {invalidMetaclass: true} : {})}; break;
@@ -207,6 +216,7 @@ export function completion(kind, fields = {}) {
     case "condition":
       if (!["if", "while", "jump"].includes(fields.control)) throw new TypeError("Invalid condition destination.");
       record = {kind, control: fields.control, body: fields.body, otherwise: fields.otherwise, target: fields.target}; break;
+    case "name-stored": record = {kind}; break;
     case "discard": record = {kind}; break;
     default: throw new TypeError("Unknown operation completion: " + kind);
   }
@@ -217,7 +227,12 @@ export function completion(kind, fields = {}) {
 }
 function visit(record) {
   switch (record.kind) {
-    case "class": case "condition": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
+    case "module-delete": case "global-name": case "global-delete": case "module-missing": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
+    case "handler-type": return completionRoots(record.after);
+    case "store-body": return completionRoots(record.after);
+    case "resume-control": return [record.value, ...completionRoots(record.after)];
+    case "module-entry": case "module-hook": return [record.receiver, record.key, ...completionRoots(record.after)];
+    case "class": case "condition": case "name-stored": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];
@@ -333,7 +348,7 @@ export function itemTask(receiver, key, site, after = null, depth = 0, operation
 }
 export function attributeTask(receiver, name, site, after = null, depth = 0, operation = "get", key = null, hook = null, item = null) {
   depthCheck(depth); completionRoots(after);
-  if (typeof name !== "string" || name.length > 256 || !["get", "native-get", "fallback", "set", "delete", "native-set", "native-delete"].includes(operation))
+  if (typeof name !== "string" || name.length > 256 || !["import", "get", "native-get", "fallback", "set", "delete", "native-set", "native-delete"].includes(operation))
     throw new TypeError("Invalid attribute operation.");
   return Object.freeze({kind: "attribute", receiver, name, key, hook, item, operation, site, completion: after, depth});
 }

@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
-import {GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -8,7 +8,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value instanceof NotImplementedValue) return "NotImplemented";
@@ -59,6 +59,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       .map(name => [name === iteratorName ? ".0" : name, cells.get(name)]).filter(([name, cell]) => {
       charge(name.length + 1); return cell?.bound && !name.startsWith("@source:");
     });
+  };
+  const moduleMissing = (record, site) => {
+    if (record.mode === "import") {
+      const frame = state.frames.at(-1);
+      const result = moduleContext.planAttribute(record.receiver, record.name, true, frame.callable.pool.module.name);
+      if (result.kind === "load") { state.pendingImport = {plan: result.plan, inheritedException: frame.activeException}; return null; }
+      return valueTask(result.value, site, record.after);
+    }
+    python("AttributeError", "module has no attribute " + record.name);
+  };
+  const moduleHook = (record, site, found, hook) => {
+    if (found) return callTask(hook, [record.key], [], [], site,
+      continuation("module-missing", record), record.depth);
+    if (record.name === "__dir__") return valueTask(allocate(ValueMethod, record.receiver, "module.__dir__"), site, record.after);
+    return moduleMissing(record, site);
+  };
+  const moduleEntry = (record, site, found, value) => {
+    if (found) return valueTask(value, site, record.after);
+    if (record.name === "__dir__") return valueTask(allocate(ValueMethod, record.receiver, "module.__dir__"), site, record.after);
+    const environment = record.receiver.environment;
+    if (environment.dictionary !== null) {
+      const key = values.string(Array.from("__getattr__", char => char.codePointAt(0))); state.temporaries.push(key);
+      return dictionaryTask(environment.dictionary, key, site, continuation("module-hook", record), record.depth, "probe");
+    }
+    const hook = environmentCell(environment, "__getattr__");
+    return moduleHook(record, site, !!hook?.bound, hook?.value);
   };
   const namespaceSnapshot = bindings => {
     const result = values.dict([]); state.temporaries.push(result);
@@ -467,6 +493,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "module-missing" && value.name === "AttributeError" && current.mode === "import") return moduleMissing(current, site);
       if (current.kind === "dir-length" && value.name === "TypeError") return directoryHint(current, site);
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
       if (current.kind === "object-dir-dictionary" && value.name === "AttributeError") return objectDirectoryDictionary(current, null, site);
@@ -517,6 +544,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
+    if (completion?.kind === "name-stored") return null;
+    if (completion?.kind === "handler-type") return handlerType(completion, value, site);
+    if (completion?.kind === "module-delete") {
+      if (!value.items[0]) python("AttributeError", "module has no attribute " + completion.name);
+      return valueTask(null, site, completion.after);
+    }
+    if (["global-name", "global-delete"].includes(completion?.kind)) {
+      const [found, item] = value.items;
+      if (completion.kind === "global-delete") {
+        if (!found) python("NameError", "name '" + completion.name + "' is not defined");
+        return null;
+      }
+      return valueTask(found ? item : load(state.frames.at(-1), completion.name), site, completion.after);
+    }
+    if (completion?.kind === "store-body") { block(state.frames.at(-1), completion.body); return null; }
+    if (completion?.kind === "resume-control") { settle({kind: completion.signal, value: completion.value}); return null; }
+    if (completion?.kind === "module-entry") return moduleEntry(completion, site, value.items[0], value.items[1]);
+    if (completion?.kind === "module-hook") return moduleHook(completion, site, value.items[0], value.items[1]);
+    if (completion?.kind === "module-dir") return callTask(value, [], [], [], site, continuation("dir-result", completion), completion.depth);
+    if (completion?.kind === "module-missing") return valueTask(value, site, completion.after);
     while (["init", "relay", "subclass-result", "vars-result", "property-name", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
@@ -758,6 +805,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       completion.depth, completion.operation, completion.item, value);
     if (completion?.kind === "dict-key") return unaryTask("truth", value, site, continuation("dict-truth", completion), completion.depth);
     if (completion?.kind === "dict-truth") {
+      if (completion.receiver.namespace && (completion.receiver.version !== completion.version ||
+          completion.receiver.entries[completion.position]?.key !== completion.candidate))
+        return dictionaryTask(completion.receiver, completion.key, site, completion.after, completion.depth,
+          completion.operation, completion.item, completion.hash);
       checkDictionaryCandidate(completion);
       return value ? finishDictionary(completion, site, completion.position) :
         dictionaryTask(completion.receiver, completion.key, site, completion.after, completion.depth,
@@ -830,7 +881,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         return unaryTask("next", value, task.site, continuation("for-next"));
       }
       if (completion.kind === "for-exhausted") { frame.tasks.pop(); block(frame, task.otherwise); }
-      else { store(frame, task.target, value); block(frame, task.body); }
+      else {
+        const writing = store(frame, task.target, value, true, continuation("store-body", {body: task.body}));
+        if (writing) return writing;
+        block(frame, task.body);
+      }
       return null;
     }
     if (completion?.kind === "index-key") return itemTask(completion.receiver, value, site, completion.after, completion.depth, completion.operation, completion.item);
@@ -1044,6 +1099,37 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           continue;
         }
         if (task.kind === "attribute") {
+          if (task.receiver instanceof ModuleValue) {
+            state.temporaries = operationRoots(task);
+            const {receiver, name, operation} = task, environment = receiver.environment;
+            const writing = ["set", "delete", "native-set", "native-delete"].includes(operation);
+            if (name === "__dict__") {
+              if (writing) python("AttributeError", "readonly attribute");
+              task = valueTask(values.environmentDictionary(environment), site, completion); continue;
+            }
+            if (name === "__class__") {
+              if (writing) python("TypeError", "module class assignment requires compatible layouts");
+              task = valueTask(classes.classAttribute(receiver), site, completion); continue;
+            }
+            const key = task.key || values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
+            if (writing) {
+              if (environment.dictionary !== null) {
+                task = dictionaryTask(environment.dictionary, key, site, operation.includes("delete") ?
+                  continuation("module-delete", {receiver, name, after: completion}) : completion, depth,
+                  operation.includes("delete") ? "remove-probe" : "set", task.item); continue;
+              }
+              if (operation.includes("delete")) {
+                const cell = environment.cells.get(name);
+                if (!cell?.bound) python("AttributeError", "module has no attribute " + name);
+                setCell(cell, null, false); environment.order.delete(name);
+              } else moduleContext.binding(environment, name, task.item);
+              task = valueTask(null, site, completion); continue;
+            }
+            const record = {receiver, key, name, mode: operation === "import" ? "import" : "get", depth, after: completion};
+            if (environment.dictionary !== null) { task = dictionaryTask(environment.dictionary, key, site, continuation("module-entry", record), depth, "probe"); continue; }
+            const cell = environment.cells.get(name);
+            task = moduleEntry(record, site, !!cell?.bound, cell?.value); continue;
+          }
           state.temporaries = operationRoots(task);
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
@@ -1539,6 +1625,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "module.__dir__") {
+            const receiver = callable.receiver;
+            if (!(receiver instanceof ModuleValue) || args.length || keywords.length) python("TypeError", "module.__dir__ takes no arguments");
+            const environment = receiver.environment;
+            const names = environment.dictionary !== null ? environment.dictionary.entries.map(entry => entry.key) :
+              [...environment.order].filter(name => environment.cells.get(name)?.bound).map(name => values.string(Array.from(name, char => char.codePointAt(0))));
+            state.temporaries.push(...names);
+            task = valueTask(values.list(names), site, completion); continue;
+          }
           if (callable.name === "object.__init_subclass__") {
             if (args.length !== 1 || keywords.length || !classes.isType(args[0])) python("TypeError", "__init_subclass__ takes no arguments");
             task = valueTask(null, site, completion); continue;
@@ -1592,7 +1687,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (key.length > 256) hard("BUDGET", "ExecutionLimitError", "Class attribute name budget exceeded.");
               classes.key(key); namespace.set(key, entry.value);
             }
-            const frame = state.frames.at(-1), currentModule = values.text(frame.callable.globals.cells.get("__name__")?.value) || "builtins";
+            const frame = state.frames.at(-1), currentModule = values.text(environmentCell(frame.callable.globals, "__name__")?.value) || "builtins";
             const module = namespace.has("__module__") ? values.text(namespace.get("__module__")) : currentModule;
             const qualname = namespace.has("__qualname__") ? values.text(namespace.get("__qualname__")) : name;
             if (module === null || qualname === null) python("TypeError", "Class metadata requires strings");
@@ -1796,6 +1891,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = args[0], optional = name === "hasattr" || name === "getattr" && args.length === 3;
             const target = writing ? continuation("attribute-write", {receiver, after: completion}) : optional ?
               continuation("attribute-result", {receiver, default: args[2] ?? null, mode: name, after: completion}) : completion;
+            if (receiver instanceof ModuleValue) {
+              task = attributeTask(receiver, attribute, site, target, depth, writing ? name === "setattr" ? "set" : "delete" : "get", args[1], null, args[2] ?? null); continue;
+            }
             if (writing && classes.hasAttributeHook(receiver, name === "setattr" ? "__setattr__" : "__delattr__")) {
               task = attributeTask(receiver, attribute, site, completion, depth, name === "setattr" ? "set" : "delete", args[1], null, args[2] ?? null); continue;
             }
@@ -1967,8 +2065,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length > (callable.name === "locals" ? 0 : 1)) python("TypeError", callable.name + "() received invalid arguments");
             if (args.length) {
               const receiver = args[0];
+              if (callable.name === "dir" && receiver instanceof ModuleValue) {
+                task = attributeTask(receiver, "__dir__", site, continuation("module-dir", {receiver, depth, after: completion}), depth); continue;
+              }
               if (callable.name === "vars") {
-                if (!(receiver instanceof InstanceValue || receiver instanceof ClassValue && !receiver.root || receiver instanceof FunctionValue || classes.isPythonMethod(receiver))) {
+                if (!(receiver instanceof ModuleValue || receiver instanceof InstanceValue || receiver instanceof ClassValue && !receiver.root || receiver instanceof FunctionValue || classes.isPythonMethod(receiver))) {
                   if (values.typeName(receiver) !== null || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
                       receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");
@@ -1997,6 +2098,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: target, depth}), depth);
               continue;
             }
+            const frame = state.frames.at(-1);
+            if (frame.callable.index === 0) {
+              const dictionary = values.environmentDictionary(frame.callable.globals);
+              task = callable.name === "dir" ? valueTask(values.list(dictionary.entries.map(entry => entry.key)), site, continuation("dir-sort", {receiver: dictionary, depth, after: completion})) :
+                valueTask(dictionary, site, completion); continue;
+            }
             const bindings = optimizedBindings();
             if (callable.name === "dir") {
               const names = [];
@@ -2007,8 +2114,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             } else task = valueTask(namespaceSnapshot(bindings), site, completion);
             continue;
           }
-          if (callable.name === "globals")
-            hard("UNSUPPORTED", "UnsupportedOperationError", "This namespace reflection form requires its adopted namespace contract.");
+          if (callable.name === "globals") {
+            if (args.length || keywords.length) python("TypeError", "globals() takes no arguments");
+            task = valueTask(values.environmentDictionary(state.frames.at(-1).callable.globals), site, completion); continue;
+          }
           if (["hash", "object.__hash__"].includes(callable.name)) {
             count("builtin:" + callable.name);
             if (args.length !== 1 || keywords.length) python("TypeError", "hash requires one positional value");

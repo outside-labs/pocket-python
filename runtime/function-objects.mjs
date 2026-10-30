@@ -5,7 +5,15 @@ export class Cell {
   constructor() { this.bound = false; this.value = null; }
 }
 export class Environment {
-  constructor() { this.cells = new Map(); }
+  constructor() { this.cells = new Map(); this.order = new Set(); this.dictionary = null; }
+}
+// Host export/metadata reads use exact string entries. Source name resolution
+// uses the owned dictionary operation, including callback-bearing collisions.
+export function environmentCell(environment, name) {
+  if (!environment?.dictionary) return environment?.cells.get(name);
+  const entry = environment.dictionary.entries.find(entry => entry.key?.points &&
+    String.fromCodePoint(...entry.key.points) === name);
+  return entry ? {bound: true, value: entry.value} : undefined;
 }
 export class CodePool {
   constructor(code, bytes, module = null) { this.code = code; this.bytes = bytes; this.module = module; }
@@ -24,7 +32,7 @@ export class FunctionValue {
     this.documentation = pool?.code.functions[index]?.doc === undefined ? null : pool.code.constants[pool.code.functions[index].doc];
     this.identityName = undefined; this.identityQualname = undefined;
     const ordinary = pool?.code.version === 5 && index !== 0 && pool.code.functions[index]?.kind === "function";
-    const module = ordinary ? globals?.cells.get("__name__") : null;
+    const module = ordinary ? environmentCell(globals, "__name__") : null;
     this.identityModule = ordinary ? module?.bound ? module.value : null : undefined;
   }
 }

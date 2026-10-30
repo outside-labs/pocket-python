@@ -14,7 +14,8 @@
     "O22",
     "O47",
     "O49",
-    "O61"
+    "O61",
+    "O67"
   ],
   "cases": [
     {
@@ -337,8 +338,8 @@
     {
       "id": "dir-custom-unicode",
       "stage": "O17",
-      "source": "class A:\n def __dir__(self): return [\"𐀀\",\"\",\"a\",\"\"]\nfor name in dir(A()): print(name)\n",
-      "stdout": "\na\n\n𐀀\n"
+      "source": "class A:\n def __dir__(self): return [\"\ud800\udc00\",\"\ue000\",\"a\",\"\"]\nfor name in dir(A()): print(name)\n",
+      "stdout": "\na\n\ue000\n\ud800\udc00\n"
     },
     {
       "id": "dir-custom-descriptor",
@@ -431,21 +432,21 @@
     },
     {
       "id": "module-locals-live-deferred",
-      "stage": "Future",
+      "stage": "O67",
       "source": "print(locals() is locals())\n",
       "stdout": "True\n"
     },
     {
       "id": "module-vars-live-deferred",
-      "stage": "Future",
+      "stage": "O67",
       "source": "print(vars() is vars())\n",
       "stdout": "True\n"
     },
     {
       "id": "module-dir-deferred",
-      "stage": "Future",
-      "source": "print(\"__name__\" in dir())\n",
-      "stdout": "False\n"
+      "stage": "O67",
+      "source": "__name__=\"app\"\nprint(\"__name__\" in dir())\n",
+      "stdout": "True\n"
     },
     {
       "id": "class-locals-live-deferred",
@@ -455,7 +456,7 @@
     },
     {
       "id": "globals-live-deferred",
-      "stage": "Future",
+      "stage": "O67",
       "source": "print(globals() is globals())\n",
       "stdout": "True\n"
     },
@@ -565,8 +566,8 @@
     {
       "id": "locals-unicode-free-order",
       "stage": "O16",
-      "source": "def outer():\n 﨎=1\n 𐐀=2\n def f():\n  print(﨎,𐐀)\n  for name in locals(): print(name)\n f()\nouter()\n",
-      "stdout": "1 2\n﨎\n𐐀\n"
+      "source": "def outer():\n \ufa0e=1\n \ud801\udc00=2\n def f():\n  print(\ufa0e,\ud801\udc00)\n  for name in locals(): print(name)\n f()\nouter()\n",
+      "stdout": "1 2\n\ufa0e\n\ud801\udc00\n"
     },
     {
       "id": "comprehension-enclosing-locals",
@@ -1202,7 +1203,7 @@
     {
       "id": "comprehension-function-unicode",
       "stage": "O21",
-      "source": "def f(π):\n r=[locals() for 变量 in [1]]\n print(list(r[0])==[\"π\",\"变量\"],r[0][\"变量\"])\nf(9)\n",
+      "source": "def f(\u03c0):\n r=[locals() for \u53d8\u91cf in [1]]\n print(list(r[0])==[\"\u03c0\",\"\u53d8\u91cf\"],r[0][\"\u53d8\u91cf\"])\nf(9)\n",
       "stdout": "True 1\n"
     },
     {
@@ -1351,7 +1352,7 @@
     },
     {
       "id": "comprehension-module-first-iterable-live-refusal",
-      "stage": "Future",
+      "stage": "O67",
       "source": "r=[locals() for x in [locals()]]\n",
       "stdout": ""
     },

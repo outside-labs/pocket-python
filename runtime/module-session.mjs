@@ -2,7 +2,7 @@ import {ModuleContext} from "./module-context.mjs";
 import {Execution} from "./functions.mjs";
 import {MemoryArena, ResourceError} from "./memory.mjs";
 import {encodeValue, ValueRuntime} from "./values.mjs";
-import {FunctionValue} from "./function-objects.mjs";
+import {FunctionValue, environmentCell} from "./function-objects.mjs";
 
 export const MODULE_EVENT_PROFILE = "module-events/1";
 
@@ -118,7 +118,7 @@ export class ModuleSession {
     this.context.active();
     if (this.context.activeRun) throw new TypeError("Callbacks require a completed module activation.");
     if (typeof name !== "string" || !name.length || name.length > 256) throw new TypeError("Invalid callback export name.");
-    const module = this.context.module(this.context.registry.entry), cell = module?.environment.cells.get(name), callable = cell?.value;
+    const module = this.context.module(this.context.registry.entry), cell = environmentCell(module?.environment, name), callable = cell?.value;
     if (module?.status !== "ready" || !cell?.bound || !(callable instanceof FunctionValue) || callable.pool.code.functions[callable.index].kind === "class" ||
         callable.pool.code.functions[callable.index].blocks.some(block => block.instructions.some(([op]) => ["yield", "yield-from"].includes(op))))
       throw new TypeError("Callback export must be an ordinary ready Python function.");
@@ -203,7 +203,7 @@ export class ModuleSession {
   get callbacks() { return this.#callbacks.size; }
   read(name) {
     this.context.active();
-    const module = this.context.module(this.context.registry.entry), cell = module?.environment.cells.get(name);
+    const module = this.context.module(this.context.registry.entry), cell = environmentCell(module?.environment, name);
     if (!cell?.bound) throw new ReferenceError("Entry export is not bound: " + name);
     return encodeValue(cell.value);
   }

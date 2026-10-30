@@ -209,9 +209,8 @@ test('recursive snapshot graphs share real memory and work budgets', async () =>
   }
 });
 
-test('live namespace forms refuse explicitly, including a comprehension initial iterable', async () => {
-  for (const source of ['locals()\n', 'vars()\n', 'dir()\n', 'globals()\n', 'class A:\n locals()\n',
-    '[locals() for x in [locals()]]\n']) {
+test('class body namespaces retain their separate admission boundary', async () => {
+  for (const source of ['class A:\n locals()\n']) {
     const result = await run(source); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
   }
 });

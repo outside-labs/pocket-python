@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O47",
     "O48",
-    "O49"
+    "O49",
+    "O67"
   ],
   "cases": [
     {
@@ -180,7 +181,7 @@
     {
       "id": "bounded-name-28",
       "stage": "O47",
-      "source": "class C: pass\nc=C()\nd=c.__dict__\nv=[]\nsetattr(c,'λ😀',v)\nprint(getattr(c,'λ😀') is v,d['λ😀'] is v)\ndelattr(c,'λ😀')\nprint(len(d))\n",
+      "source": "class C: pass\nc=C()\nd=c.__dict__\nv=[]\nsetattr(c,'\u03bb\ud83d\ude00',v)\nprint(getattr(c,'\u03bb\ud83d\ude00') is v,d['\u03bb\ud83d\ude00'] is v)\ndelattr(c,'\u03bb\ud83d\ude00')\nprint(len(d))\n",
       "stdout": "True True\n0\n"
     },
     {
@@ -339,7 +340,7 @@
     },
     {
       "id": "module-mapping",
-      "stage": "Future",
+      "stage": "O67",
       "source": "globals()\n",
       "stdout": ""
     },
