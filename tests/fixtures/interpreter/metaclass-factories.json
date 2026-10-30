@@ -151,6 +151,25 @@
       "stage": "O81",
       "source": "def factory(name,bases,ns): return [ns[\"x\"]]\ndef decorate(value):\n print(value[0])\n return value\n@decorate\nclass C(metaclass=factory): x=7\nprint(C[0])\n",
       "stdout": "7\n7\n"
+    },
+    {
+      "id": "implicit-base-type-factory",
+      "stage": "O81",
+      "source": "class Factory:\n def __init__(self,*args):\n  if args:\n   print(args[0],args[2][\"x\"])\n   self.value=args[2][\"x\"]\nbase=Factory()\nclass C(base): x=7\nprint(type(C) is Factory,C.value)\n",
+      "stdout": "C 7\nTrue 7\n"
+    },
+    {
+      "id": "implicit-base-type-preparation",
+      "stage": "O81",
+      "source": "class Factory:\n def __new__(cls,*args):\n  if args: return args[2][\"x\"]\n  return object.__new__(cls)\n @classmethod\n def __prepare__(cls,name,bases):\n  print(name,bases[0] is base)\n  return {\"x\":7}\nbase=Factory()\nclass C(base): print(x)\nprint(C)\n",
+      "stdout": "C True\n7\n7\n"
+    },
+    {
+      "id": "implicit-base-type-conflict",
+      "stage": "O81",
+      "source": "class Factory: pass\nclass A: pass\nclass C(Factory(),A): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
     }
   ]
 }
