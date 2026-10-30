@@ -2539,14 +2539,14 @@
     {
       "id": "type-reflection-custom-metaclass-mro-definition",
       "source": "class M(type):\n print(\"body\")\n def mro(cls): return type.mro(cls)\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "body\nC\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "UnsupportedOperationError"
+        "stdout": "body\nC\n",
+        "error_type": null
       }
     },
     {

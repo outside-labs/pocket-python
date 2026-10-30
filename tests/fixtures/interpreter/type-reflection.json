@@ -7,7 +7,8 @@
     "O35",
     "O36",
     "O49",
-    "O76"
+    "O76",
+    "O82"
   ],
   "cases": [
     {
@@ -493,19 +494,19 @@
     },
     {
       "id": "custom-metaclass-mro-definition",
-      "stage": "Future",
+      "stage": "O82",
       "source": "class M(type):\n print(\"body\")\n def mro(cls): return type.mro(cls)\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
       "stdout": "body\nC\n"
     },
     {
       "id": "custom-metaclass-mro-dynamic",
-      "stage": "Future",
+      "stage": "O82",
       "source": "M=type(\"M\",(type,),{\"mro\":lambda cls:type.mro(cls)})\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
       "stdout": "C\n"
     },
     {
       "id": "custom-metaclass-mro-mutation",
-      "stage": "Future",
+      "stage": "O82",
       "source": "class M(type): pass\nM.mro=lambda cls:type.mro(cls)\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
       "stdout": "C\n"
     },

@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-custom-mro/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O82"
+  ],
+  "cases": [
+    {
+      "id": "mro-default-callback",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls):\n  print(cls.__name__,cls.__mro__ is None)\n  return type.mro(cls)\nclass C(metaclass=M): pass\nprint(C.__mro__==(C,object))\n",
+      "stdout": "C True\nTrue\n"
+    },
+    {
+      "id": "mro-reordered",
+      "stage": "O82",
+      "source": "class A: x=7\nclass B: x=9\nclass M(type):\n def mro(cls): return [cls,B,A,object]\nclass C(A,B,metaclass=M): pass\nprint(C.x,C.__base__ is A,C.__bases__==(A,B),C.__mro__==(C,B,A,object),type.mro(C)==[C,A,B,object])\n",
+      "stdout": "9 True True True True\n"
+    },
+    {
+      "id": "mro-super",
+      "stage": "O82",
+      "source": "class A:\n def f(self): return 7\nclass B:\n def f(self): return 9\nclass M(type):\n def mro(cls): return [cls,B,A,object]\nclass C(A,B,metaclass=M):\n def f(self): return super().f()\nprint(C().f(),super(B,C()).f())\n",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "mro-unrelated-type",
+      "stage": "O82",
+      "source": "class Other: value=7\nclass M(type):\n def mro(cls): return [cls,Other,object]\nclass C(metaclass=M): pass\nprint(C.value,issubclass(C,Other),isinstance(C(),Other))\n",
+      "stdout": "7 True True\n"
+    },
+    {
+      "id": "mro-inherited",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): print(cls.__name__); return type.mro(cls)\nclass N(M): pass\nclass C(metaclass=N): pass\nprint(C.__mro__==(C,object))\n",
+      "stdout": "C\nTrue\n"
+    },
+    {
+      "id": "mro-dynamic-meta",
+      "stage": "O82",
+      "source": "M=type(\"M\",(type,),{\"mro\":lambda cls:(cls,object)})\nC=M(\"C\",(),{})\nprint(C.__mro__==(C,object))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "mro-dynamic-selects-meta",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): print(cls.__name__); return type.mro(cls)\nclass A(metaclass=M): pass\nC=type(\"C\",(A,),{})\nprint(type(C) is M,C.__mro__==(C,A,object))\n",
+      "stdout": "A\nC\nTrue True\n"
+    },
+    {
+      "id": "mro-late-mutation",
+      "stage": "O82",
+      "source": "class M(type): pass\nclass A(metaclass=M): pass\nM.mro=lambda cls:(cls,object,object)\nclass B(metaclass=M): pass\nprint(len(A.__mro__),len(B.__mro__))\ndel M.mro\nclass C(metaclass=M): pass\nprint(len(C.__mro__))\n",
+      "stdout": "2 3\n2\n"
+    },
+    {
+      "id": "mro-class-shadow-bypass",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): print(\"mro\"); return type.mro(cls)\nclass C(metaclass=M): mro=7\nprint(C.mro,C.__mro__==(C,object))\n",
+      "stdout": "mro\n7 True\n"
+    },
+    {
+      "id": "mro-descriptor",
+      "stage": "O82",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(obj.__name__,owner.__name__)\n  return lambda:(obj,object)\nclass M(type): mro=D()\nclass C(metaclass=M): pass\nprint(C.__mro__==(C,object))\n",
+      "stdout": "C M\nTrue\n"
+    },
+    {
+      "id": "mro-generator",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls):\n  yield cls\n  yield object\nclass C(metaclass=M): pass\nprint(C.__mro__==(C,object))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "mro-custom-iterable",
+      "stage": "O82",
+      "source": "class Items:\n def __init__(self,cls): self.cls=cls\n def __iter__(self): print(\"iter\"); return iter((self.cls,object))\n def __len__(self): print(\"len\"); return 2\nclass M(type):\n def mro(cls): return Items(cls)\nclass C(metaclass=M): pass\nprint(C.__mro__==(C,object))\n",
+      "stdout": "iter\nTrue\n"
+    },
+    {
+      "id": "mro-duplicates",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return (cls,object,object)\nclass C(metaclass=M): pass\nprint(C.__mro__==(C,object,object))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "mro-c3-bypass",
+      "stage": "O82",
+      "source": "class A: pass\nclass B: pass\nclass X(A,B): pass\nclass Y(B,A): pass\nclass M(type):\n def mro(cls): return [cls,object]\nclass C(X,Y,metaclass=M): pass\nprint(C.__mro__==(C,object),C.__bases__==(X,Y))\ntry: type.mro(C)\nexcept TypeError: print(\"native conflict\")\n",
+      "stdout": "True True\nnative conflict\n"
+    },
+    {
+      "id": "mro-native-bound",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return [cls,object,object]\nclass C(metaclass=M): pass\nf=type.mro.__get__(C)\nprint(f()==[C,object],f.__self__ is C,f.__qualname__)\n",
+      "stdout": "True True C.mro\n"
+    },
+    {
+      "id": "mro-empty",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return []\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-non-type",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return [cls,7,object]\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-native-layout",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return [cls,int,object]\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-type-layout",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return [cls,type,object]\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-non-iterable",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return 7\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-body-error",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): print(\"mro\"); raise ValueError(\"original\")\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\nmro\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "mro-iterator-error",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls):\n  yield cls\n  print(\"iterator\")\n  raise ValueError(\"original\")\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\niterator\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "mro-failure-atomic",
+      "stage": "O82",
+      "source": "saved=[]\nclass D:\n def __set_name__(self,owner,name): print(\"never\")\nclass M(type):\n def mro(cls): saved.append(cls); return []\nC=7\ntry:\n class C(metaclass=M): field=D()\nexcept TypeError: print(C,saved[0].__mro__ is None)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "mro-notification-order",
+      "stage": "O82",
+      "source": "class D:\n def __set_name__(self,owner,name): print(\"name\",owner.__mro__[1].__name__)\nclass A:\n def __init_subclass__(cls): print(\"subclass\")\nclass M(type):\n def mro(cls): print(\"mro\"); return type.mro(cls)\n def __init__(cls,*args): print(\"init\")\nclass C(A,metaclass=M):\n print(\"body\")\n x=D()\n",
+      "stdout": "body\nmro\nname A\nsubclass\ninit\n"
+    },
+    {
+      "id": "mro-reentrant-type",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls):\n  if cls.__name__==\"C\":\n   D=M(\"D\",(),{})\n   print(D.__name__)\n  return type.mro(cls)\nclass C(metaclass=M): pass\nprint(C.__name__)\n",
+      "stdout": "D\nC\n"
+    },
+    {
+      "id": "mro-incomplete-base",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls):\n  type(\"Nested\",(cls,),{})\n  return type.mro(cls)\nclass C(metaclass=M): pass\n",
+      "stdout": "",
+      "error_type": "RecursionError"
+    },
+    {
+      "id": "mro-missing-self",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return [object]\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "mro-missing-object",
+      "stage": "O82",
+      "source": "class M(type):\n def mro(cls): return [cls]\nclass C(metaclass=M): print(\"body\")\n",
+      "stdout": "body\n"
+    }
+  ]
+}

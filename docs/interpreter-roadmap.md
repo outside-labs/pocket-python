@@ -481,3 +481,7 @@ custom mapping class bodies with owned namespace callbacks and class cells.
 
 [O81](interpreter-metaclass-factories.md) adopts callable metaclass factories,
 optional preparation, exact argument identities and arbitrary decorated results.
+
+[O82](interpreter-custom-mro.md) adopts owned custom MRO construction, atomic
+hierarchy installation and native C3 recomputation. Remaining metaclass slots
+are O83; storage and base reassignment remain O84–O88.
