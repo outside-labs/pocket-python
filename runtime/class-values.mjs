@@ -355,7 +355,7 @@ export class ClassRuntime {
       if (namespace.has(key) && this.values.text(namespace.get(key)) !== expected)
         this.fail("UnsupportedOperationError", "Class metadata overrides are outside C1.", "UNSUPPORTED");
     namespace.delete("__qualname__");
-    const customMro = metaclass instanceof ClassValue && this.hasSlot(metaclass, "mro");
+    const customMro = metaclass instanceof ClassValue && (this.hasSlot(metaclass, "mro") || !this.hasTypeNamespace({metaclass}));
     const parents = customMro ? [] : this.mergeMro(bases);
     const type = new ClassValue(name, qualname, module, bases, parents, namespace, false, metaclass, !dynamic, automaticHash);
     type.mroPending = customMro; type.customMro = customMro;
@@ -418,7 +418,8 @@ export class ClassRuntime {
   }
   isType(value) { return value instanceof ClassValue || value?.constructor === BuiltinValue && NATIVE_TYPES.has(value.name); }
   isPythonMethod(value) { return value instanceof BoundMethodValue && (value.pythonMethod || !(value.callable instanceof BuiltinValue)); }
-  isMetaclass(value) { return value instanceof ClassValue && value.mro.some(base => base instanceof BuiltinValue && base.name === "type"); }
+  isMetaclass(value) { return value instanceof ClassValue && value.typeLayout; }
+  hasTypeNamespace(value) { return !value.metaclass || value.metaclass.mro.some(base => base instanceof BuiltinValue && base.name === "type"); }
   mro(type) {
     if (type instanceof ClassValue) return type.mro;
     if (!this.isType(type)) this.fail("TypeError", "An adopted type is required");
@@ -838,6 +839,14 @@ export class ClassRuntime {
     const metaDescriptor = metaItem?.found ? this.descriptor(metaItem.value) : null;
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
       return this.bindAttribute(metaItem.value, receiver, metaclass);
+    if (receiver instanceof ClassValue && !this.hasTypeNamespace(receiver) &&
+        ["__dict__", "__name__", "__qualname__", "__module__", "__mro__", "__bases__", "__base__"].includes(name)) {
+      this.namespaceDictionary(receiver);
+      const item = this.lookup(receiver, name);
+      if (item.found) return this.bindAttribute(item.value, null, receiver);
+      if (metaItem?.found) return this.bindAttribute(metaItem.value, receiver, metaclass);
+      this.fail("AttributeError", "Class has no attribute '" + name + "'.");
+    }
     if (receiver instanceof ClassValue) {
       if (name === "__dict__") {
         if (metaItem?.found) {

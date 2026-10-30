@@ -1271,7 +1271,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const finishType = (type, entries, site, after, keywords, keywordValues, cell = null, dictcell = null) => {
     const record = {type, entries, cell, dictcell, keywords, keywordValues, after};
     if (!type.mroPending) return finalizeType(record, site);
-    const item = classes.lookup(type.metaclass, "mro"), plan = classes.bindAttribute(item.value, type, type.metaclass);
+    const item = classes.lookup(type.metaclass, "mro");
+    if (!item.found) python("AttributeError", "mro");
+    const plan = classes.bindAttribute(item.value, type, type.metaclass);
     const target = continuation("mro-result", record);
     return plan.kind === "value" ? callTask(plan.value, [], [], [], site, target) :
       callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: target, depth: 0}));
@@ -1310,7 +1312,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const initializePlan = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
     const type = instance instanceof InstanceValue ? instance.type : classes.typeOf(instance);
-    const initializer = classes.lookup(type, "__init__", instance instanceof ClassValue);
+    let initializer = classes.lookup(type, "__init__", instance instanceof ClassValue);
+    if (instance instanceof ClassValue && classes.isMetaclass(type) && !classes.hasSlot(type, "__init__") && initializer.value instanceof BuiltinValue && initializer.value.name === "object.__init__")
+      initializer = {found: true, value: classes.builtin("type.__init__")};
     if (!initializer.found) {
       if (!customNew && (args.length || keywords.length)) python("TypeError", instance.type.name + "() takes no arguments");
       return valueTask(instance, site, after);
@@ -2111,7 +2115,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (classes.hasSlot(callable, "__new__") || classes.isMetaclass(callable)) {
             if (++depth > maxDepth) python("RecursionError", "maximum constructor dispatch depth exceeded");
-            const item = classes.lookup(callable, "__new__"), plan = classes.bindAttribute(item.value, null, callable);
+            let item = classes.lookup(callable, "__new__");
+            if (classes.isMetaclass(callable) && !classes.hasSlot(callable, "__new__") && item.value instanceof BuiltinValue && item.value.name === "object.__new__")
+              item = {found: true, value: classes.builtin("type.__new__")};
+            const plan = classes.bindAttribute(item.value, null, callable);
             const target = continuation("new-result", {type: callable, args, keywords, keywordValues, after: completion, depth});
             const positional = [callable, ...args];
             task = plan.kind === "value" ? callTask(plan.value, positional, keywords, keywordValues, site, target, depth) :
@@ -2250,7 +2257,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (callable.name === "type.__prepare__") { task = valueTask(values.dict([]), site, completion); continue; }
           if (callable.name === "type.mro") {
-            if (keywords.length || args.length !== 1 || !classes.isType(args[0]))
+            if (keywords.length || args.length !== 1 || !classes.isType(args[0]) || !classes.hasTypeNamespace(args[0]))
               python("TypeError", "type.mro requires one positional actual type");
             task = valueTask(values.list(classes.defaultMro(args[0])), site, completion); continue;
           }

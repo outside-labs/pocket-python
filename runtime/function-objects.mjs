@@ -75,6 +75,7 @@ export class ClassValue {
   constructor(name, qualname, module, bases, parents, namespace, root = false, metaclass = null, sourceDefined = true, automaticHash = false) {
     this.name = name; this.qualname = qualname; this.module = module; this.root = root;
     this.bases = Object.freeze([...bases]); this.mro = Object.freeze([this, ...parents]);
+    this.typeLayout = bases.some(base => base instanceof BuiltinValue && base.name === "type" || base instanceof ClassValue && base.typeLayout);
     this.namespace = new Map(namespace);
     this.metaclass = metaclass; this.sourceDefined = sourceDefined; this.automaticHash = automaticHash;
     this.firstLine = 1; this.staticAttributes = []; this.namespaceEntries = null;
