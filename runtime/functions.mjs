@@ -217,6 +217,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     classes.validateNamespace(bases, record.callable.pool.code.functions[record.callable.index].locals);
     const invalidMetaclass = hasMeta && !classes.isType(explicit) && !classes.callable(explicit);
     const metaclass = hasMeta ? classes.selectMetaclass(bases, explicit) :
+      bases.length && !classes.isType(bases[0]) ? classes.selectMetaclass(bases, classes.typeOf(bases[0])) :
       bases.some(base => base instanceof ClassValue && base.metaclass !== null) ? classes.selectMetaclass(bases) : null;
     record = {...record, metaclass, invalidMetaclass};
     const resolved = loadName(state.frames.at(-1), "__name__", site, continuation("class-module", record));
