@@ -52,3 +52,9 @@ test('active code snapshots and shared cells survive parked collection, cancella
  finally{execution.close();session.context.finish();session.close();}closed(session.stats());
  }}finally{registry.close();}
 });
+
+
+test('code filenames retain the independently registered source path', async () => {
+ const result=await runSourceRequest({modules:[unit('def f(): return 7\nprint(f.__code__.co_filename)\n')],compileOptions:profile});
+ assert.equal(result.stdout,'sources/app.py\n');assert.equal(result.ok,true);closed(result.closed);
+});

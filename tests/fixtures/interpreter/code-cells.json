@@ -16,8 +16,8 @@
     {
       "id": "code-signature",
       "stage": "O73",
-      "source": "def f(a,/,b=7,*rest,c=9,**kw):\n local=11\n return a\nc=f.__code__\nprint(c.co_name,c.co_qualname,c.co_argcount,c.co_posonlyargcount,c.co_kwonlyargcount,c.co_nlocals)\nprint(*c.co_varnames)\nprint(c.co_filename,c.co_firstlineno,len(c.co_freevars),len(c.co_cellvars))\nprint(c.co_varnames is c.co_varnames,c.co_consts is c.co_consts,11 in c.co_consts)\n",
-      "stdout": "f f 2 1 1 6\na b c rest kw local\nsources/app.py 1 0 0\nTrue True True\n"
+      "source": "def f(a,/,b=7,*rest,c=9,**kw):\n local=11\n return a\nc=f.__code__\nprint(c.co_name,c.co_qualname,c.co_argcount,c.co_posonlyargcount,c.co_kwonlyargcount,c.co_nlocals)\nprint(*c.co_varnames)\nprint(type(c.co_filename).__name__,c.co_firstlineno,len(c.co_freevars),len(c.co_cellvars))\nprint(c.co_varnames is c.co_varnames,c.co_consts is c.co_consts,11 in c.co_consts)\n",
+      "stdout": "f f 2 1 1 6\na b c rest kw local\nstr 1 0 0\nTrue True True\n"
     },
     {
       "id": "code-doc-constants",
