@@ -5,6 +5,7 @@ import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS} from "./class-po
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
+export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset"]);
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "code", "frame", "FrameLocalsProxy", "cell",
@@ -335,8 +336,12 @@ export class ClassRuntime {
     for (const base of bases) {
       this.charge(1);
       if (base instanceof BuiltinValue && base.name === "type") { this.touch(base); continue; }
-      if (base instanceof BuiltinValue && NATIVE_TYPES.has(base.name))
-        this.fail("UnsupportedOperationError", "Builtin subclassing is outside classes-source/1.", "UNSUPPORTED");
+      if (base instanceof BuiltinValue && NATIVE_SUBCLASS_BASES.includes(base.name)) { this.touch(base); continue; }
+      if (base instanceof BuiltinValue && NATIVE_TYPES.has(base.name)) {
+        if (Object.hasOwn(EXCEPTIONS, base.name) || ["list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"].includes(base.name))
+          this.fail("UnsupportedOperationError", "This native subclass layout retains its owning stage", "UNSUPPORTED");
+        this.fail("TypeError", "type '" + base.name + "' is not an acceptable base type");
+      }
       if (!(base instanceof ClassValue)) this.fail("TypeError", "Class bases must be adopted class values.");
       this.touch(base);
     }
@@ -377,8 +382,10 @@ export class ClassRuntime {
     const inherited = bases.find(base => base.storage?.solid === best)?.storage;
     const count = inherited?.count ?? 0;
     const dict = bases.some(base => base.storage?.dict ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && base.name === "type"));
-    const weak = bases.some(base => base.storage?.weak ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && base.name === "type"));
-    const ownNames = []; let ownDict = slotNames === null && !dict, ownWeak = slotNames === null && !weak;
+    const weak = bases.some(base => base.storage?.weak ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && ["type", "frozenset", "set"].includes(base.name)));
+    const family = best instanceof BuiltinValue ? best.name : best?.storage?.family ?? "object";
+    const variable = ["int", "bytes", "tuple"].includes(family);
+    const ownNames = []; let ownDict = slotNames === null && !dict, ownWeak = slotNames === null && !weak && !variable;
     if (slotNames !== null) for (const item of slotNames) {
       this.charge(1); const label = this.values.text(item);
       if (label === null) this.fail("TypeError", "__slots__ items must be strings");
@@ -393,11 +400,12 @@ export class ClassRuntime {
       if (namespace.has(key)) this.fail("ValueError", "'" + key + "' in __slots__ conflicts with class variable");
       this.key(key); ownNames.push(key);
     }
+    if (variable && (ownNames.length || ownWeak)) this.fail("TypeError", "nonempty __slots__ not supported for variable-size native layout");
     if (ownNames.length && bases.some(base => base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base))) this.fail("TypeError", "nonempty __slots__ not supported for subtype of type");
     ownNames.sort();
     this.bounded(count + ownNames.length <= CLASS_LIMITS.attributes, "Instance slot budget exceeded");
     return {count: count + ownNames.length, ownNames, dict: dict || ownDict, weak: weak || ownWeak,
-      ownDict, ownWeak, solid: best, baseSolid: best, explicit: slotNames !== null};
+      ownDict, ownWeak, solid: best, baseSolid: best, family, explicit: slotNames !== null};
   }
   installStorage(type) {
     if (!type.storage?.ownNames.length) return;
@@ -438,6 +446,7 @@ export class ClassRuntime {
   }
   defaultMro(type) { return type instanceof ClassValue ? [type, ...this.mergeMro(type.bases)] : this.mro(type); }
   layoutFamily(type) {
+    if (type instanceof ClassValue && type.storage) return type.storage.family;
     const pending = [type], seen = new Set();
     while (pending.length) {
       this.charge(1); const item = pending.pop();
@@ -461,9 +470,10 @@ export class ClassRuntime {
         this.fail("TypeError", "mro() returned base with unsuitable layout");
     }
   }
-  instance(type) {
+  payload(value) { return value instanceof InstanceValue && value.nativePayload !== undefined ? value.nativePayload : value; }
+  instance(type, nativePayload = undefined) {
     if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
-    this.touch(type); return this.make(InstanceValue, type);
+    this.touch(type); return this.make(InstanceValue, type, nativePayload);
   }
   hasSlot(type, name) {
     // The bounded MRO is also the native slot-presence index. Default calls keep
@@ -581,6 +591,9 @@ export class ClassRuntime {
           return {found: true, value: this.builtin(base.name + "." + name)};
         if (native && base.name === "type" && ["__prepare__", "__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro", "__dir__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
+        if (native && NATIVE_SUBCLASS_BASES.includes(base.name)) {
+          const item = this.nativeEntry(base, name); if (item.found) return item;
+        }
         continue;
       }
       if (!native && base.root && ["__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) continue;
@@ -1003,7 +1016,8 @@ export class ClassRuntime {
     const type = this.checkingType(receiver);
     if (type === null) throw new TypeError("Implicit user protocols require a class or instance.");
     const present = this.hasSlot(type, name), callbacks = this.lookupMayCallback(receiver);
-    if (!present && ["__eq__", "__ne__", "__repr__", "__str__"].includes(name)) return null;
+    if (!present && receiver.nativePayload !== undefined && name === "__str__" && !NATIVE_NAMESPACES[this.layoutFamily(type)]?.some(entry => entry[0] === name)) return this.special(receiver, "__repr__");
+    if (!present && receiver.nativePayload === undefined && ["__eq__", "__ne__", "__repr__", "__str__"].includes(name)) return null;
     const start = !present && callbacks ? this.mro(type).findIndex(base => base instanceof BuiltinValue || base.root) : 0;
     const item = this.lookup(type, name, true, Math.max(start, 0));
     if (!item.found && present && callbacks) this.fail("AttributeError", "Type slot '" + name + "' is missing.");
@@ -1282,6 +1296,7 @@ export class ClassRuntime {
       return {kind: "value", value: this.typeOf(receiver)};
     }
     if (operation !== "get") this.fail("AttributeError", "Native storage is read-only");
+    receiver = this.payload(receiver);
     if (owner instanceof BuiltinValue && ["int", "float"].includes(owner.name) && ["real", "imag", "numerator", "denominator"].includes(name))
       return {kind: "value", value: ["real", "numerator"].includes(name) ? typeof receiver === "boolean" ? this.values.int(BigInt(receiver)) : receiver : owner.name === "float" ? this.values.float(0) : name === "denominator" ? 1n : 0n};
     if (this.values.isComplex(receiver) && ["real", "imag"].includes(name)) return {kind: "value", value: this.values.complexAttribute(receiver, name)};

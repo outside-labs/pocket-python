@@ -1,3 +1,4 @@
+import {NATIVE_SUBCLASS_BASES} from "./class-values.mjs";
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
 import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
@@ -933,6 +934,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return next(completion.receiver, completion.type.items[completion.position], site,
         continuation(completion.kind, {...completion, position: completion.position + 1}), completion.depth, completion.nesting + 1);
     }
+    if (completion?.kind === "native-new") return valueTask(completion.type instanceof ClassValue ? classes.instance(completion.type, value) : value, site, completion.after);
     if (completion?.kind === "new-result") {
       state.temporaries.push(value, ...completionRoots(completion));
       if (!classes.subclass(classes.typeOf(value), completion.type)) return valueTask(value, site, completion.after);
@@ -1693,6 +1695,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const result = values.copyDictionary(left); state.temporaries.push(result);
             task = unionNext({left, right, result, size: right.entries.length, serial: -1, after: completion, depth}, site); continue;
           }
+          if (classes.payload(left) !== left || classes.payload(right) !== right) {
+            task = valueTask(values.binary(operation, classes.payload(left), classes.payload(right)), site, proxyRelay(left, right, completion)); continue;
+          }
           python("TypeError", "unsupported operands for " + operation);
         }
         if (task.kind === "consume") {
@@ -1700,7 +1705,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const {name, receiver} = task, building = ["list", "tuple"].includes(name);
           const hintOwner = receiver instanceof ProtocolIteratorValue && receiver.kind === "indexed" ? receiver.source : receiver;
           if ((building || name === "bytes") && userProtocol(hintOwner) &&
-              ["__len__", "__length_hint__"].some(slot => classes.lookup(classes.checkingType(hintOwner), slot).found))
+              ["__len__", "__length_hint__"].some(slot => (hintOwner.nativePayload === undefined ? classes.lookup(classes.checkingType(hintOwner), slot).found : classes.hasSlot(classes.checkingType(hintOwner), slot))))
             hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
           const result = task.result ?? (building ? values.list([]) : ["bytes", "bytearray"].includes(name) ? values.binaryValue([], true) :
             ["set", "frozenset"].includes(name) ? values.newSet(name === "frozenset") : null);
@@ -1956,6 +1961,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
 
           const {operation, value, optionalLength} = task;
+          if (operation === "index" && typeof value?.nativePayload === "bigint") { task = valueTask(value.nativePayload, site, continuation("relay", {receiver: value, after: completion})); continue; }
           state.temporaries.push(...operationRoots(task));
           if (operation === "vars-missing") python("TypeError", "vars() argument must have a __dict__ attribute");
           if (operation === "property-name-missing") python("AttributeError", "'property' object has no attribute '__name__'");
@@ -2124,7 +2130,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args, keywords, keywordValues, after: target, depth}), depth);
             continue;
           }
-          if (classes.hasSlot(callable, "__new__") || classes.isMetaclass(callable)) {
+          if (classes.hasSlot(callable, "__new__") || classes.isMetaclass(callable) || NATIVE_SUBCLASS_BASES.includes(classes.layoutFamily(callable))) {
             if (++depth > maxDepth) python("RecursionError", "maximum constructor dispatch depth exceeded");
             let item = classes.lookup(callable, "__new__");
             if (classes.isMetaclass(callable) && !classes.hasSlot(callable, "__new__") && item.value instanceof BuiltinValue && item.value.name === "object.__new__")
@@ -2157,6 +2163,63 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (["method_descriptor", "wrapper_descriptor", "classmethod_descriptor"].includes(callable.nativeKind)) {
             if (!args.length) python("TypeError", "Unbound native descriptor requires a receiver");
             classes.namespaceDescriptorValid(callable, args[0], callable.nativeKind === "classmethod_descriptor");
+          }
+          const nativeOwner = callable.nativeOwner instanceof BuiltinValue ? callable.nativeOwner.name : callable.name.split(".")[0];
+          const nativeName = callable.nativeKey ?? callable.name.slice(callable.name.indexOf(".") + 1);
+          if (NATIVE_SUBCLASS_BASES.includes(nativeOwner) && callable.name.includes(".") && (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined)) {
+            if (nativeName === "__new__") {
+              if (!args.length || !classes.isType(args[0]) || !classes.subclass(args[0], classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
+              task = callTask(classes.builtin(nativeOwner), args.slice(1), keywords, keywordValues, site,
+                continuation("native-new", {type: args[0], after: completion}), depth); continue;
+            }
+            const original = args[0], receiver = classes.payload(original), rest = args.slice(1), operands = rest.map(item => classes.payload(item));
+            const finish = continuation("relay", {receiver: original, after: completion});
+            const notImplemented = () => valueTask(moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, finish);
+            const unary = {__len__: "len", __bool__: "truth", __iter__: "iter", __hash__: "hash", __neg__: "negative", __pos__: "positive", __invert__: "invert", __index__: "index", __repr__: "repr", __str__: "str"}[nativeName];
+            if (unary) {
+              if (keywords.length || rest.length) python("TypeError", nativeName + " takes no arguments");
+              task = unaryTask(unary, receiver, site, finish, depth); continue;
+            }
+            const numeric = {__int__: "int", __float__: "float", __complex__: "complex", __abs__: "abs", __round__: "round"}[nativeName];
+            if (numeric) {
+              if (keywords.length || rest.length > (numeric === "round" ? 1 : 0)) python("TypeError", nativeName + " received invalid arguments");
+              task = callTask(classes.builtin(numeric), [receiver, ...rest], [], [], site, finish, depth); continue;
+            }
+            if (nativeName === "__bytes__") {
+              if (keywords.length || rest.length) python("TypeError", "__bytes__ takes no arguments");
+              task = valueTask(receiver, site, finish); continue;
+            }
+            if (nativeName === "__getitem__") {
+              if (keywords.length || rest.length !== 1) python("TypeError", "__getitem__ takes one argument");
+              task = itemTask(receiver, rest[0], site, finish, depth); continue;
+            }
+            if (nativeName === "__contains__") {
+              if (keywords.length || rest.length !== 1) python("TypeError", "__contains__ takes one argument");
+              task = containsTask(receiver, rest[0], site, finish, depth); continue;
+            }
+            const comparison = {__eq__: "equal", __ne__: "not-equal", __lt__: "less", __le__: "less-equal", __gt__: "greater", __ge__: "greater-equal"}[nativeName];
+            if (comparison) {
+              if (keywords.length || rest.length !== 1) python("TypeError", nativeName + " takes one argument");
+              const leftType = values.typeName(receiver), rightType = values.typeName(operands[0]);
+              const numericTypes = ["bool", "int", "float", "complex"];
+              if (!(numericTypes.includes(leftType) && numericTypes.includes(rightType) || leftType === rightType || ["set", "frozenset"].includes(leftType) && ["set", "frozenset"].includes(rightType))) { task = notImplemented(); continue; }
+              task = compareTask(comparison, receiver, operands[0], site, finish, depth); continue;
+            }
+            let arithmetic = null, reflected = false;
+            for (const [operation, stem] of Object.entries(ARITHMETIC_SLOTS)) {
+              if (nativeName === "__" + stem + "__" || nativeName === "__r" + stem + "__") { arithmetic = operation; reflected = nativeName === "__r" + stem + "__"; break; }
+            }
+            if (arithmetic) {
+              if (keywords.length || rest.length < 1 || rest.length > (arithmetic === "power" ? 2 : 1)) python("TypeError", nativeName + " received invalid arguments");
+              const otherType = values.typeName(operands[0]);
+              if (["int", "float", "complex"].includes(nativeOwner) && !(nativeOwner === "int" ? ["int", "bool"] : nativeOwner === "float" ? ["int", "bool", "float"] : ["int", "bool", "float", "complex"]).includes(otherType)) { task = notImplemented(); continue; }
+              const inputs = reflected ? [operands[0], receiver, ...operands.slice(1)] : [receiver, ...operands];
+              task = arithmetic === "divmod" || arithmetic === "power" && inputs.length === 3 ? numericTask(arithmetic === "power" ? "pow" : "divmod", inputs, site, finish, depth) : valueTask(values.binary(arithmetic, inputs[0], inputs[1]), site, finish); continue;
+            }
+            if (!nativeName.startsWith("__") && (values.isSet(receiver) || values.isString(receiver) && nativeName === "encode" || values.isBinary(receiver) && nativeName === "decode")) {
+              if (values.isSet(receiver)) values.setMethod(receiver, nativeName);
+              task = callTask(allocate(ValueMethod, receiver, nativeName), rest, keywords, keywordValues, site, finish, depth); continue;
+            }
           }
           if (callable.name === "module.__dir__") {
             const bound = callable instanceof ValueMethod, receiver = bound ? callable.receiver : args[0];
@@ -2292,7 +2355,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "object.__new__") {
             if (!args.length || !(args[0] instanceof ClassValue)) python("TypeError", "object.__new__ requires a type");
             const type = args[0];
-            if (classes.isMetaclass(type)) python("TypeError", "object.__new__ cannot allocate a type layout");
+            if (classes.layoutFamily(type) !== "object") python("TypeError", "object.__new__ cannot allocate a native layout");
             if ((args.length > 1 || keywords.length) && (classes.hasSlot(type, "__new__") || !classes.hasSlot(type, "__init__")))
               python("TypeError", "object.__new__ received extra arguments");
             task = valueTask(classes.instance(type), site, completion); continue;
