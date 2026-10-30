@@ -7,7 +7,8 @@
     "O50",
     "O51",
     "O52",
-    "O61"
+    "O61",
+    "O72"
   ],
   "cases": [
     {
@@ -43,8 +44,8 @@
     {
       "id": "unicode-order",
       "stage": "O50",
-      "source": "def f(): pass\nf.__dict__={\"😀\":7,\"ω\":9,\"é\":11,\"a\":13}\nprint(*dir(f)[-4:])\n",
-      "stdout": "a é ω 😀\n"
+      "source": "def f(): pass\nf.__dict__={\"\ud83d\ude00\":7,\"\u03c9\":9,\"\u00e9\":11,\"a\":13}\nprint(*dir(f)[-4:])\n",
+      "stdout": "a \u00e9 \u03c9 \ud83d\ude00\n"
     },
     {
       "id": "native-name-deduplication",
@@ -247,7 +248,7 @@
     },
     {
       "id": "metadata-listing-does-not-adopt-reads",
-      "stage": "Future",
+      "stage": "O72",
       "source": "def f(): pass\nr=dir(f)\nf.__builtins__\n",
       "stdout": ""
     },

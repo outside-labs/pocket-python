@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
-import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -8,7 +8,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value instanceof NotImplementedValue) return "NotImplemented";
@@ -464,6 +464,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     return valueTask(false, site, record.after);
   };
+  const functionEnter = (record, site) => {
+    const bindings = new Map(record.keys.map((key, i) => [key, record.items[i]]));
+    const fn = record.receiver.pool.code.functions[record.receiver.index], missing = fn.params.kwonly.filter(name => !bindings.has(name));
+    if (missing.length) {
+      const quoted = missing.map(name => "'" + name + "'"), names = quoted.length === 1 ? quoted[0] : quoted.length === 2 ? quoted.join(" and ") : quoted.slice(0, -1).join(", ") + ", and " + quoted.at(-1);
+      python("TypeError", fn.qualname + "() missing " + missing.length + " required keyword-only argument" + (missing.length === 1 ? "" : "s") + ": " + names);
+    }
+    if (fn.blocks.some(block => block.instructions.some(([op]) => ["yield", "yield-from"].includes(op))))
+      return valueTask(allocate(GeneratorValue, record.receiver, bindings), site, record.after);
+    enter(record.receiver, bindings, site, record.after); return null;
+  };
+  const functionDefaultsNext = (record, site) => {
+    if (record.position === record.names.length) return functionEnter(record, site);
+    const key = values.string(Array.from(record.names[record.position], char => char.codePointAt(0))); state.temporaries.push(key);
+    return dictionaryTask(record.dictionary, key, site, continuation("function-defaults", record), 0, "probe");
+  };
   const wrapperKeys = ["__module__", "__name__", "__qualname__", "__doc__"];
   const wrapperNext = (record, site) => record.position === wrapperKeys.length ? valueTask(record.receiver, site, record.after) :
     attributeTask(record.receiver.callable, wrapperKeys[record.position], site, continuation("wrapper-metadata", record), record.depth);
@@ -595,6 +611,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       mutate(cache, () => { cache.entries.push(entry); return () => cache.entries.pop(); });
       return Object.freeze({...completion.task, lookupCache: cache});
     }
+    if (completion?.kind === "function-capture") {
+      if (value.items[0]) classes.functionMetadata(completion.receiver, "builtins", value.items[1] instanceof ModuleValue ? value.items[1].environment : value.items[1]);
+      return valueTask(completion.receiver, site, completion.after);
+    }
+    if (completion?.kind === "function-defaults") {
+      const keys = [...completion.keys], items = [...completion.items];
+      if (value.items[0]) { keys.push(completion.names[completion.position]); items.push(value.items[1]); }
+      return functionDefaultsNext({...completion, keys, items, position: completion.position + 1}, site);
+    }
+    if (completion?.kind === "builtin-name") {
+      if (!value.items[0]) python("NameError", "name '" + completion.name + "' is not defined");
+      return valueTask(value.items[1], site, completion.after);
+    }
     if (completion?.kind === "name-stored") return null;
     if (completion?.kind === "class-module") return enterClass(completion, value, site);
     if (completion?.kind === "class-qualname") return classQualification();
@@ -610,7 +639,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const frame = state.frames.at(-1);
       if (frame.closure.has(completion.name) && !frame.fn.locals.includes(completion.name) && !frame.fn.globals?.includes(completion.name)) return valueTask(load(frame, completion.name), site, completion.after);
       const dictionary = frame.callable.globals.dictionary;
-      if (dictionary === null) return valueTask(load(frame, completion.name, true), site, completion.after);
+      if (dictionary === null) {
+        const result = loadName(frame, completion.name, site, completion.after, true);
+        return result.task ?? valueTask(result.value, site, completion.after);
+      }
       const key = values.string(Array.from(completion.name, char => char.codePointAt(0))); state.temporaries.push(key);
       return dictionaryTask(dictionary, key, site, continuation("global-name", {receiver: dictionary, name: completion.name, after: completion.after}), 0, "probe");
     }
@@ -620,7 +652,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (!found) python("NameError", "name '" + completion.name + "' is not defined");
         return null;
       }
-      return valueTask(found ? item : load(state.frames.at(-1), completion.name, true), site, completion.after);
+      if (found) return valueTask(item, site, completion.after);
+      const result = builtinLookup(state.frames.at(-1), completion.name, site, completion.after);
+      return result.task ?? valueTask(result.value, site, completion.after);
     }
     if (completion?.kind === "store-body") { block(state.frames.at(-1), completion.body); return null; }
     if (completion?.kind === "resume-control") { settle({kind: completion.signal, value: completion.value}); return null; }
@@ -1801,6 +1835,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof FunctionValue) {
           const bindings = bind(callable, args, keywords, keywordValues);
+          if (bindings.pendingDefaults) {
+            task = functionDefaultsNext({receiver: callable, dictionary: callable.keywordDefaults, names: bindings.pendingDefaults,
+              keys: [...bindings.keys()], items: [...bindings.values()], position: 0, after: completion}, site);
+            if (task === null) return;
+            continue;
+          }
           if (callable.pool.code.functions[callable.index].blocks.some(block => block.instructions.some(([op]) => ["yield", "yield-from"].includes(op)))) {
             task = deliver(allocate(GeneratorValue, callable, bindings), completion, site); continue;
           }
@@ -1971,6 +2011,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth); continue;
             }
             task = valueTask(classes.bindNativeDescriptor(callable.name.slice(0, callable.name.indexOf(".")), args[0], args[1]), site, completion); continue;
+          }
+          if (callable.name === "function-builtins") {
+            const namespace = args[0].builtins === undefined ? moduleContext.sourceBuiltins() : args[0].builtins;
+            if (namespace instanceof Environment) {
+              if (namespace === moduleContext.defaultBuiltins && namespace.dictionary === null) {
+                for (const name of SOURCE_BUILTINS) {
+                  charge(1);
+                  const item = name === "object" ? moduleContext.builtin(name, () => classes.root()) :
+                    name === "NotImplemented" ? moduleContext.builtin(name, () => allocate(NotImplementedValue)) : classes.builtin(name);
+                  state.temporaries.push(item); moduleContext.binding(namespace, name, item);
+                }
+              }
+              task = valueTask(values.environmentDictionary(namespace), site, completion);
+            } else task = valueTask(namespace, site, completion);
+            continue;
           }
           if (callable.name === "function.__get__") {
             if (!(args[0] instanceof FunctionValue)) python("TypeError", "Native function binding requires a Python function receiver");

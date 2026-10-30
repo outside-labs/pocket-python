@@ -309,3 +309,11 @@ use ordinary charged attribute and value operations. All previous composed
 observations remain in `accounting_7_cases`; only notification-snapshot-and-init
 changes, by three work units (51,785 to 51,788), from normal native read-only
 metadata validation. Instruction and storage observations remain unchanged.
+
+## Function state accounting revision 9
+
+O72 keeps compact default values and the shared source builtin namespace lazy.
+Exposed defaults replace compact edges with an owned tuple/dictionary; captured
+namespace dictionaries and callback-binding continuations trace their actual
+values. All eight composed observations retain revision 8 costs; those previous
+observations remain in `accounting_8_cases`.

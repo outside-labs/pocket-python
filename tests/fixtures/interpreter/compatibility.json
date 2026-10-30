@@ -3228,15 +3228,14 @@
     {
       "id": "function-metadata-function-defaults-deferred",
       "source": "def f(): pass\nf.__defaults__\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "error_type": null
       }
     },
     {
@@ -4299,15 +4298,14 @@
     {
       "id": "function-directories-metadata-listing-does-not-adopt-reads",
       "source": "def f(): pass\nr=dir(f)\nf.__builtins__\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "error_type": null
       }
     },
     {

@@ -25,9 +25,13 @@ export class ModuleValue {
   }
 }
 export class FunctionValue {
-  constructor(pool, index, globals, closure, defaults = null) {
+  constructor(pool, index, globals, closure, defaults = null, builtins = undefined) {
     this.pool = pool; this.index = index; this.globals = globals; this.closure = closure;
-    this.defaults = defaults === null ? null : Object.freeze([...defaults]);
+    const params = pool?.code.functions[index]?.params;
+    this.positionalDefaults = defaults === null ? (params?.defaults ?? []).map(index => pool.code.constants[index]) : defaults.slice(0, params.defaults.length);
+    this.keywordDefaults = new Map(Object.entries(params?.kwdefaults ?? {}).map(([name, index], position) =>
+      [name, defaults === null ? pool.code.constants[index] : defaults[params.defaults.length + position]]));
+    this.builtins = builtins;
     this.attributes = null;
     this.documentation = pool?.code.functions[index]?.doc === undefined ? null : pool.code.constants[pool.code.functions[index].doc];
     this.identityName = undefined; this.identityQualname = undefined;
@@ -134,3 +138,6 @@ export function matchesException(name, expected) {
   for (let current = name; current; current = EXCEPTIONS[current]) if (expected === current) return true;
   return false;
 }
+
+// The source-visible builtin namespace contains only adopted capabilities.
+export const SOURCE_BUILTINS = Object.freeze(["print", "str", "repr", "len", "isinstance", "bool", "iter", "next", "memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed", "object", "NotImplemented", ...Object.keys(EXCEPTIONS)]);

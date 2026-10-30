@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-function-state/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O72"
+  ],
+  "cases": [
+    {
+      "id": "defaults-alias",
+      "stage": "O72",
+      "source": "def f(a=[7],/,b=[8],*,c=[9]): return a,b,c\nd=f.__defaults__\nk=f.__kwdefaults__\nprint(d is f.__defaults__,k is f.__kwdefaults__)\na,b,c=f()\nprint(a is d[0],b is d[1],c is k[\"c\"])\nd[0].append(10)\nprint(*f()[0])\n",
+      "stdout": "True True\nTrue True True\n7 10\n"
+    },
+    {
+      "id": "defaults-replace",
+      "stage": "O72",
+      "source": "def f(a,b=2,*,c=3): return a,b,c\nd=([7],[8])\nf.__defaults__=d\nk={\"c\":[9]}\nf.__kwdefaults__=k\nprint(f.__defaults__ is d,f.__kwdefaults__ is k)\na,b,c=f()\nprint(a is d[0],b is d[1],c is k[\"c\"])\nk[\"c\"]=[10]\nprint(f()[2][0])\nf.__defaults__=(1,2,3,4)\nprint(*f(c=9))\n",
+      "stdout": "True True\nTrue True True\n10\n3 4 9\n"
+    },
+    {
+      "id": "none-defaults",
+      "stage": "O72",
+      "source": "def f(): pass\nprint(f.__defaults__,f.__kwdefaults__)\nf.__defaults__=()\nf.__kwdefaults__={}\nprint(f.__defaults__==(),f.__kwdefaults__=={})\ndel f.__defaults__\ndel f.__kwdefaults__\nprint(f.__defaults__,f.__kwdefaults__)\n",
+      "stdout": "None None\nTrue True\nNone None\n"
+    },
+    {
+      "id": "__defaults__-invalid-3",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\nf.__defaults__=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__defaults__-invalid-4",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\nf.__defaults__=[]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__defaults__-invalid-5",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\nf.__defaults__=\"x\"\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__defaults__-missing-None",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\nf.__defaults__=None\nf()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__defaults__-missing-delete",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\ndel f.__defaults__\nf()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__kwdefaults__-invalid-8",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\nf.__kwdefaults__=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__kwdefaults__-invalid-9",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\nf.__kwdefaults__=[]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__kwdefaults__-invalid-10",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\nf.__kwdefaults__=\"x\"\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__kwdefaults__-missing-None",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\nf.__kwdefaults__=None\nf()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__kwdefaults__-missing-delete",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=8): pass\ndel f.__kwdefaults__\nf()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bound-and-closures",
+      "stage": "O72",
+      "source": "def make():\n saved=[7]\n def read(self,x=[8],*,y=[9]): return saved,x,y\n return read\nclass C: read=make()\nm=C().read\nm.__func__.__defaults__=([10],)\nm.__func__.__kwdefaults__[\"y\"]=[11]\na,b,c=m()\nprint(a[0],b[0],c[0],m.__defaults__ is m.__func__.__defaults__)\n",
+      "stdout": "7 10 11 True\n"
+    },
+    {
+      "id": "keyword-default-key-callback",
+      "stage": "O72",
+      "source": "def f(*,x): return x\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"x\"\nk=K()\nd={k:[7]}\nf.__kwdefaults__=d\nprint(f()[0])\nd[k]=[9]\nprint(f()[0])\n",
+      "stdout": "equal\n7\nequal\n9\n"
+    },
+    {
+      "id": "keyword-default-errors-after-positional",
+      "stage": "O72",
+      "source": "def f(a,*,x): return a,x\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,other):\n  print(\"callback\")\n  raise ValueError(\"stop\")\nf.__kwdefaults__={K():7}\ntry: f()\nexcept TypeError: print(\"positional\")\nf(1)\n",
+      "stdout": "positional\ncallback\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "global-live-alias",
+      "stage": "O72",
+      "source": "value=[7]\ndef f(): return value\nprint(f.__globals__ is globals())\nf.__globals__[\"value\"]=[9]\nprint(f()[0])\ndel f.__globals__[\"value\"]\ntry: f()\nexcept NameError: print(\"missing\")\n",
+      "stdout": "True\n9\nmissing\n"
+    },
+    {
+      "id": "builtins-live",
+      "stage": "O72",
+      "source": "def f(x): return len(x)\nd=f.__builtins__\nprint(d is f.__builtins__,d[\"len\"] is len)\noriginal=d[\"len\"]\nd[\"len\"]=lambda x: 17\nprint(f([]))\nd[\"len\"]=original\nprint(f([7]))\n",
+      "stdout": "True True\n17\n1\n"
+    },
+    {
+      "id": "builtins-capture",
+      "stage": "O72",
+      "source": "__builtins__={\"len\":lambda value: 17}\ndef f(value): return len(value)\nd=f.__builtins__\n__builtins__={\"len\":lambda value: 19}\ndef g(value): return len(value)\nprint(f([]),g([]),f.__builtins__ is d,g.__builtins__ is __builtins__)\nd[\"len\"]=lambda value: 23\nprint(f([]))\n",
+      "stdout": "17 19 True True\n23\n"
+    },
+    {
+      "id": "builtins-missing",
+      "stage": "O72",
+      "source": "__builtins__={}\ndef f(): return len([])\nf()\n",
+      "stdout": "",
+      "error_type": "NameError"
+    },
+    {
+      "id": "builtins-invalid",
+      "stage": "O72",
+      "source": "__builtins__=None\ndef f(): return len([])\nprint(f.__builtins__ is None)\nf()\n",
+      "stdout": "True\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "builtins-callback",
+      "stage": "O72",
+      "source": "class K:\n def __hash__(self): return hash(\"len\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"len\"\nd={K():lambda value: 27}\n__builtins__=d\ndef f(): return len([])\nprint(f(),f.__builtins__ is d)\n",
+      "stdout": "equal\n27 True\n"
+    },
+    {
+      "id": "__globals__-readonly-22",
+      "stage": "O72",
+      "source": "def f(): pass\nf.__globals__={}\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__globals__-readonly-23",
+      "stage": "O72",
+      "source": "def f(): pass\ndel f.__globals__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__builtins__-readonly-24",
+      "stage": "O72",
+      "source": "def f(): pass\nf.__builtins__={}\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "__builtins__-readonly-25",
+      "stage": "O72",
+      "source": "def f(): pass\ndel f.__builtins__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "qualified-getset",
+      "stage": "O72",
+      "source": "def f(x=7,*,y=9): return x+y\nt=type(f)\nprint(t.__dict__[\"__defaults__\"].__get__(f) is f.__defaults__)\nt.__dict__[\"__defaults__\"].__set__(f,(11,))\nprint(f())\nt.__dict__[\"__kwdefaults__\"].__delete__(f)\nprint(f(y=5))\n",
+      "stdout": "True\n20\n16\n"
+    }
+  ]
+}

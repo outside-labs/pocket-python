@@ -20,7 +20,7 @@ const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set_
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__", "getset_descriptor.__get__", "member_descriptor.__get__", "classmethod_descriptor.__get__", "getset_descriptor.__set__", "getset_descriptor.__delete__", "member_descriptor.__set__", "member_descriptor.__delete__"]);
 const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name) || NATIVE_BINDING_WRAPPERS.has(name) ||
   NATIVE_NAMESPACES[name.slice(0, name.indexOf("."))]?.some(([key, kind]) => key === name.slice(name.indexOf(".") + 1) && kind === "wrapper_descriptor");
-const FUNCTION_DATA = new Set(["__dict__", "__class__", "__name__", "__qualname__", "__module__", "__doc__"]);
+const FUNCTION_DATA = new Set(["__dict__", "__class__", "__name__", "__qualname__", "__module__", "__doc__", "__defaults__", "__kwdefaults__", "__globals__", "__builtins__"]);
 const FUNCTION_DEFERRED_DATA = new Set(["__builtins__", "__code__", "__defaults__", "__kwdefaults__", "__closure__", "__globals__", "__annotations__", "__annotate__", "__type_params__"]);
 const FUNCTION_DEFERRED_METHODS = new Set(["__call__", "__getattribute__", "__setattr__", "__delattr__", "__repr__", "__str__", "__hash__", "__eq__", "__ne__", "__reduce__", "__reduce_ex__", "__sizeof__", "__format__", "__dir__", "__init__", "__new__", "__init_subclass__", "__subclasshook__", "__getstate__"]);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
@@ -698,6 +698,9 @@ export class ClassRuntime {
         args: [receiver, key ?? this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     }
     if (receiver instanceof FunctionValue && name === "__class__") return value(this.builtin("function"));
+    if (receiver instanceof FunctionValue && name === "__globals__") return value(this.values.environmentDictionary(receiver.globals));
+    if (receiver instanceof FunctionValue && name === "__builtins__") return {kind: "call", callable: this.builtin("function-builtins"), args: [receiver]};
+    if (receiver instanceof FunctionValue && ["__defaults__", "__kwdefaults__"].includes(name)) return value(this.functionDefaults(receiver, name));
     if (receiver instanceof FunctionValue && name === "__dict__") return value(this.functionDictionary(receiver));
     if (receiver instanceof FunctionValue && !FUNCTION_DATA.has(name)) return this.functionEntry(receiver, name, "get", null, key);
     if (receiver instanceof FunctionValue && name === "__doc__") return value(receiver.documentation);
@@ -1057,7 +1060,7 @@ export class ClassRuntime {
       return {kind: "value", value: this.make(ClassNamespaceValue, receiver.dictionary)};
     }
     const fieldOwner = this.nativeFieldOwner(name);
-    if (fieldOwner) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
+    if (fieldOwner && !(receiver instanceof FunctionValue && fieldOwner === "O72")) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
     if (operation !== "get" && (receiver instanceof PropertyValue && ["fget", "fset", "fdel"].includes(name) ||
         receiver instanceof MethodWrapperValue && ["__func__", "__wrapped__"].includes(name))) this.fail("AttributeError", "Native storage is read-only");
     if (name === "__dict__") {
@@ -1279,6 +1282,24 @@ export class ClassRuntime {
     if (this.ownClassDirectoryNames(type).includes(name)) return null;
     this.fail("KeyError", "Class directory namespace changed during merging.");
   }
+  functionDefaults(receiver, name) {
+    if (name === "__defaults__" && Array.isArray(receiver.positionalDefaults)) {
+      const items = receiver.positionalDefaults;
+      this.functionMetadata(receiver, "positionalDefaults", items.length ? this.values.tuple(items) : null);
+    }
+    if (name === "__kwdefaults__" && receiver.keywordDefaults instanceof Map) {
+      const items = [...receiver.keywordDefaults], roots = [receiver], leave = this.memory?.enter(() => roots, {charge: this.charge});
+      try {
+        const dictionary = items.length ? this.values.dict([]) : null; roots.push(dictionary);
+        for (const [name, item] of items) {
+          const key = this.values.string(Array.from(name, char => char.codePointAt(0))); roots.push(key);
+          this.values.set(dictionary, key, item);
+        }
+        this.functionMetadata(receiver, "keywordDefaults", dictionary);
+      } finally { leave?.(); }
+    }
+    return receiver[name === "__defaults__" ? "positionalDefaults" : "keywordDefaults"];
+  }
   functionDictionary(receiver) {
     if (receiver.attributes === null) this.functionMetadata(receiver, "attributes", this.values.dict([]));
     return receiver.attributes;
@@ -1321,6 +1342,12 @@ export class ClassRuntime {
       const item = this.lookup(receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.found && !(item.value instanceof PropertyValue) && !(descriptor && (descriptor.set.found || descriptor.delete.found)))
         return this.mutate(receiver, name, value, remove, key, true);
+    }
+    if (receiver instanceof FunctionValue && ["__globals__", "__builtins__"].includes(name)) this.fail("AttributeError", "Function defining namespaces are read-only");
+    if (receiver instanceof FunctionValue && ["__defaults__", "__kwdefaults__"].includes(name)) {
+      if (!remove && value !== null && !(name === "__defaults__" ? this.values.isSequenceType(value, "tuple") : this.values.isDict(value)))
+        this.fail("TypeError", name + " must be set to " + (name === "__defaults__" ? "a tuple" : "a dict") + " or None");
+      return this.functionMetadata(receiver, name === "__defaults__" ? "positionalDefaults" : "keywordDefaults", remove ? null : value);
     }
     if (receiver instanceof FunctionValue && name === "__dict__") {
       if (remove || !this.values.isDict(value)) this.fail("TypeError", "Function __dict__ must be set to a dictionary.");

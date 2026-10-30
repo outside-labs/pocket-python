@@ -453,3 +453,5 @@ unread native APIs and dynamic source retain finite follow-ups under #123/#33.
 Native async/host adapters remain under #34.
 
 [O71](interpreter-wrapper-metadata.md) adopts copied wrapper metadata, live wrapper dictionaries, qualified native documents, property accessor-copy origins and super dictionary/getset reflection.
+
+[O72](interpreter-function-state.md) adopts live function defaults, defining globals and captured builtins, including owned binding callbacks and persistent callback updates.
