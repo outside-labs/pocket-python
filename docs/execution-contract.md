@@ -333,3 +333,13 @@ per entry; a code record uses 56 bytes plus 24 per cached field. Generator
 records add 24 bytes for retained executable pool/index and closure snapshots. The eight
 composed instruction/work observations are unchanged; source line metadata
 changes verified pool storage. Prior observations remain in `accounting_9_cases`.
+
+## Frame reflection accounting revision 11
+
+O74 charges frame records at 128 bytes plus eight per local/free/optional mapping
+edge, proxies at 48 bytes and name caches at eight bytes plus 32/two-per-character
+entries. Generator names/frames add optional eight-byte edges. Inlined scope
+changes invalidate obsolete cell maps without retaining private activation stacks.
+Class code now stores its original definition line. All eight composed work and
+instruction observations remain unchanged; earlier storage observations remain
+in `accounting_10_cases`.

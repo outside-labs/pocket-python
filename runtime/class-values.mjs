@@ -1,13 +1,13 @@
 import {isVerifiedFunctionCode} from "./function-bytecode.mjs";
 import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS} from "./native-namespaces.mjs";
-import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
+import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
-  "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "code", "cell",
+  "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "code", "frame", "FrameLocalsProxy", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "str_ascii_iterator", "dict_keyiterator", "range_iterator", "longrange_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 for (const name of Object.keys(NATIVE_NAMESPACES)) if (name !== "object") NATIVE_TYPES.add(name);
 const NAMESPACE_DESCRIPTOR_KINDS = new Set(["method_descriptor", "wrapper_descriptor", "classmethod_descriptor", "getset_descriptor", "member_descriptor"]);
@@ -421,6 +421,7 @@ export class ClassRuntime {
       else if (value instanceof BuiltinValue) name = value.nativeKind || (NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" : nativeWrapper(value.name) ? "wrapper_descriptor" : "builtin_function_or_method");
       else if (value instanceof FunctionValue) name = "function";
       else if (value instanceof CodeValue) name = "code";
+      else if (value instanceof FrameValue) name = "frame";
       else if (value instanceof BoundMethodValue) name = !value.pythonMethod && value.callable instanceof BuiltinValue ?
         NATIVE_METHOD_DESCRIPTORS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
       else if (value instanceof PropertyValue) name = "property";
@@ -577,6 +578,7 @@ export class ClassRuntime {
     if (name === "__dir__" && this.hasFixedDirectory(receiver))
       return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
     if (receiver instanceof BuiltinValue) {
+      if (name === "__qualname__" && (receiver instanceof AppendValue || receiver instanceof ValueMethod)) return value(this.values.string(Array.from(this.typeOf(receiver.receiver).name + "." + receiver.name, char => char.codePointAt(0))));
       if (name === "__module__" && !this.isType(receiver) && !this.nativeDescriptorKind(receiver)) return value(receiver instanceof AppendValue || receiver instanceof ValueMethod ? null : this.values.string(Array.from("builtins", char => char.codePointAt(0))));
       if (receiver.nativeKind) {
         if (name === "__doc__") return value(this.callableDocumentation(receiver));
@@ -700,6 +702,41 @@ export class ClassRuntime {
         args: [receiver, key ?? this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     }
     if (receiver instanceof FunctionValue && name === "__class__") return value(this.builtin("function"));
+    if (receiver instanceof GeneratorValue) {
+      if (name === "__class__") return value(this.builtin("generator"));
+      if (name === "__doc__") return value(this.nativeDocumentation(this.builtin("generator")));
+      if (["__name__", "__qualname__"].includes(name)) {
+        const field = name === "__name__" ? "identityName" : "identityQualname";
+        if (receiver[field] === undefined) this.functionMetadata(receiver, field, this.values.string(Array.from(receiver.pool.code.functions[receiver.index][name === "__name__" ? "name" : "qualname"], char => char.codePointAt(0))));
+        return value(receiver[field]);
+      }
+      if (name === "gi_code") return value(this.codeObject(receiver.pool, receiver.index));
+      if (name === "gi_frame") return {kind: "call", callable: this.builtin("generator-frame"), args: [receiver]};
+      if (name === "gi_running") return value(receiver.status === "running");
+      if (name === "gi_suspended") return value(receiver.status === "suspended");
+      if (name === "gi_yieldfrom") return value(receiver.frame?.tasks.find(task => task.type === "delegate")?.iterator ?? null);
+      if (["send", "throw", "close", "__iter__", "__next__"].includes(name)) return value(this.make(ValueMethod, receiver, name));
+      if (name !== "__dir__") this.fail("AttributeError", "Generator has no attribute " + name);
+    }
+    if (receiver instanceof FrameValue) {
+      if (name === "__class__") return value(this.builtin("frame"));
+      if (name === "__doc__") return value(this.nativeDocumentation(this.builtin("frame")));
+      if (name === "f_code") return value(this.codeObject(receiver.pool, receiver.index));
+      if (name === "f_back") return value(receiver.back);
+      if (name === "f_globals") return value(this.values.environmentDictionary(receiver.callable.globals));
+      if (name === "f_builtins") return {kind: "call", callable: this.builtin("function-builtins"), args: [receiver.callable]};
+      if (name === "f_locals") return {kind: "call", callable: this.builtin("frame-locals"), args: [receiver]};
+      if (name === "f_lineno") return value(this.values.int(BigInt((receiver.raw.inlineFrames?.at(-1)?.currentSite ?? receiver.raw.currentSite)?.span[0] ?? receiver.pool.code.functions[receiver.index].firstLine ?? 1)));
+      if (name === "f_trace") return value(null);
+      if (!NATIVE_NAMESPACES.frame.some(entry => entry[0] === name)) this.fail("AttributeError", "Frame has no attribute " + name);
+      this.fail("UnsupportedOperationError", "Frame field " + name + " is outside the finite source-frame interface; tracing, jumping and bytecode positions are separate", "UNSUPPORTED");
+    }
+    if (receiver instanceof FrameLocalsValue) {
+      if (name === "__class__") return value(this.builtin("FrameLocalsProxy"));
+      const entry = this.nativeEntry(this.builtin("FrameLocalsProxy"), name);
+      if (entry.found) return this.bindAttribute(entry.value, receiver, this.builtin("FrameLocalsProxy"));
+      this.fail("AttributeError", "Frame locals proxy has no attribute " + name);
+    }
     if (receiver instanceof Cell) {
       if (name === "__class__") return value(this.builtin("cell"));
       if (name === "cell_contents") {
@@ -877,6 +914,12 @@ export class ClassRuntime {
     return result.value;
   }
   write(receiver, name, value, remove = false, key = null) {
+    if (receiver instanceof GeneratorValue && ["__name__", "__qualname__"].includes(name)) {
+      if (remove || !this.values.isString(value)) this.fail("TypeError", name + " must be a string");
+      return {kind: "value", value: this.functionMetadata(receiver, name === "__name__" ? "identityName" : "identityQualname", value)};
+    }
+    if (receiver instanceof GeneratorValue || receiver instanceof FrameValue || receiver instanceof FrameLocalsValue)
+      this.fail(receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UnsupportedOperationError" : "AttributeError", "Frame/generator metadata is read-only; tracing and jumping are separate", receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UNSUPPORTED" : "PYTHON");
     if (receiver instanceof Cell) {
       if (name !== "cell_contents") this.fail("AttributeError", "Cell attributes are read-only");
       const before = [receiver.bound, receiver.value]; receiver.bound = !remove; receiver.value = remove ? null : value;
@@ -1089,7 +1132,7 @@ export class ClassRuntime {
       return {kind: "value", value: this.make(ClassNamespaceValue, receiver.dictionary)};
     }
     const fieldOwner = this.nativeFieldOwner(name);
-    if (fieldOwner && !(receiver instanceof FunctionValue && ["O72", "O73"].includes(fieldOwner) || receiver instanceof Cell && fieldOwner === "O73")) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
+    if (fieldOwner && !(receiver instanceof FunctionValue && ["O72", "O73"].includes(fieldOwner) || receiver instanceof Cell && fieldOwner === "O73" || (receiver instanceof FrameValue || receiver instanceof GeneratorValue) && fieldOwner === "O74")) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
     if (operation !== "get" && (receiver instanceof PropertyValue && ["fget", "fset", "fdel"].includes(name) ||
         receiver instanceof MethodWrapperValue && ["__func__", "__wrapped__"].includes(name))) this.fail("AttributeError", "Native storage is read-only");
     if (name === "__dict__") {
@@ -1117,7 +1160,7 @@ export class ClassRuntime {
       if (name === "__module__") { this.namespaceDictionary(receiver); const entry = this.ownNamespaceEntry(receiver, name); if (!entry.found) this.fail("AttributeError", "Class has no module"); return {kind: "value", value: entry.value}; }
       return {kind: "value", value: name === "__bases__" ? this.values.tuple(receiver.bases) : name === "__mro__" ? this.values.tuple(receiver.mro) : name === "__base__" ? this.primaryBase(receiver) : this.values.string(Array.from(receiver[name === "__name__" ? "name" : "qualname"], char => char.codePointAt(0)))};
     }
-    if (receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof SuperValue || receiver instanceof BoundMethodValue || receiver instanceof MethodWrapperValue)
+    if (receiver instanceof FrameValue || receiver instanceof GeneratorValue || receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof SuperValue || receiver instanceof BoundMethodValue || receiver instanceof MethodWrapperValue)
       return operation === "get" ? this.read(receiver, name, true) : this.write(receiver, name, item, operation === "delete");
     if (owner instanceof ClassValue && owner.root && name === "__class__") {
       if (operation !== "get") { if (!this.isType(item)) this.fail("TypeError", "__class__ must be set to a class"); this.fail("UnsupportedOperationError", "Compatible class reassignment is O88.", "UNSUPPORTED"); }
@@ -1310,6 +1353,45 @@ export class ClassRuntime {
     if (type.namespace.has(name)) return type.namespace.get(name);
     if (this.ownClassDirectoryNames(type).includes(name)) return null;
     this.fail("KeyError", "Class directory namespace changed during merging.");
+  }
+  frameKeys(frame) {
+    this.touch(frame);
+    const version = frame.raw.inlineVersion ?? 0;
+    if (frame.keys !== null && frame.keyVersion === version) return frame.keys;
+    const overlays = [...(frame.raw.inlineFrames ?? [])];
+    const optimized = frame.raw.fn.kind === "function", base = optimized ? frame.raw : overlays.shift();
+    const fn = base?.fn ?? frame.raw.fn;
+    const cells = base ? new Map([...base.locals, ...base.closure]) : new Map(), targets = new Set();
+    for (const overlay of overlays) for (const name of overlay.fn.namespace ?? overlay.fn.locals) {
+      if (name.startsWith("@source:")) continue;
+      const cell = overlay.locals.get(name); if (cell) targets.add(cell);
+      cells.set(name, cell ?? overlay.closure.get(name) ?? cells.get(name));
+    }
+    const cellNames = base ? [...(fn.namespaceCells ?? []), ...base.closure.keys()] : [];
+    const names = base ? [...new Set([...(fn.namespace ?? fn.locals).filter(name => !cellNames.includes(name) || targets.has(cells.get(name))), ...cellNames])] : [];
+    const iterator = fn.name === "<genexpr>" ? fn.params.posonly[0] : null;
+    const roots = [frame], leave = this.memory?.enter(() => roots, {charge: this.charge});
+    try {
+      const dictionary = this.values.dict([]); roots.push(dictionary);
+      for (const name of names) {
+        this.charge(name.length + 1);
+        if (name.startsWith("@source:") && name !== iterator) continue;
+        const cell = cells.get(name); if (!cell) continue;
+        const visible = name === iterator ? ".0" : name;
+        let key = frame.nameKeys?.get(visible);
+        if (!key) {
+          key = this.values.string(Array.from(visible, char => char.codePointAt(0))); roots.push(key);
+          const cache = new Map(frame.nameKeys); cache.set(visible, key); this.functionMetadata(frame, "nameKeys", cache);
+        }
+        this.values.set(dictionary, key, cell);
+      }
+      this.functionMetadata(frame, "keys", dictionary); frame.keyVersion = version; return dictionary;
+    } finally { leave?.(); }
+  }
+  frameExtras(frame) {
+    this.touch(frame);
+    if (frame.extras === null) this.functionMetadata(frame, "extras", this.values.dict([]));
+    return frame.extras;
   }
   codeObject(pool, index) {
     if (!isVerifiedFunctionCode(pool.code) || !Number.isSafeInteger(index) || index < 0 || index >= pool.code.functions.length) this.fail("TypeError", "Code objects require independently verified code");

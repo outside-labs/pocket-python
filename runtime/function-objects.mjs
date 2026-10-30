@@ -48,14 +48,25 @@ export class GeneratorValue {
   constructor(callable, bindings) {
     this.callable = callable; this.bindings = bindings; this.frame = null;
     this.pool = callable.pool; this.index = callable.index; this.closure = callable.closure;
+    this.reflector = null; this.identityName = callable.identityName; this.identityQualname = callable.identityQualname;
     this.status = "created";
   }
 }
 export function generatorRoots(value) {
   const frame = value.frame;
-  return [value.callable, ...(value.pool === value.callable?.pool ? [] : [value.pool]),
+  return [value.callable, value.reflector, ...[value.identityName, value.identityQualname].filter(item => item != null), ...(value.pool === value.callable?.pool ? [] : [value.pool]),
     ...(value.closure && value.closure !== value.callable?.closure ? value.closure.values() : []), ...value.bindings.values(), ...(frame ?
     [...frame.locals.values(), frame.activeException, ...frame.tasks.flatMap(controlRoots)] : [])];
+}
+export class FrameValue {
+  constructor(raw, back = null) {
+    this.raw = raw; this.pool = raw.pool; this.index = raw.index; this.callable = raw.callable;
+    this.locals = raw.locals; this.closure = raw.closure; this.back = back;
+    this.keys = null; this.extras = null; this.nameKeys = null; this.keyVersion = -1;
+  }
+}
+export class FrameLocalsValue {
+  constructor(frame) { this.frame = frame; Object.freeze(this); }
 }
 export class CallArguments {
   constructor(callable) { this.callable = callable; this.args = []; this.keywords = []; this.keywordValues = []; this.keywordMap = null; }
@@ -136,7 +147,7 @@ export const EXCEPTIONS = Object.freeze({
   ZeroDivisionError: "ArithmeticError", OverflowError: "ArithmeticError", LookupError: "Exception", IndexError: "LookupError",
   KeyError: "LookupError", ValueError: "Exception", TypeError: "Exception", UnicodeError: "ValueError",
   UnicodeEncodeError: "UnicodeError", UnicodeDecodeError: "UnicodeError", UnicodeTranslateError: "UnicodeError",
-  NameError: "Exception", UnboundLocalError: "NameError", RuntimeError: "Exception",
+  NameError: "Exception", UnboundLocalError: "NameError", RuntimeError: "Exception", SystemError: "Exception",
   RecursionError: "RuntimeError", StopIteration: "Exception", AttributeError: "Exception",
   ImportError: "Exception", ModuleNotFoundError: "ImportError"
 });

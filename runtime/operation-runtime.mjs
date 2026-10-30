@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
-import {ModuleValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -8,7 +8,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const count = tag => { state.transitions[tag] = (state.transitions[tag] || 0) + 1; };
   const display = value => {
     if (value instanceof NotImplementedValue) return "NotImplemented";
@@ -464,6 +464,49 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     return valueTask(false, site, record.after);
   };
+  const frameLookup = (receiver, key, operation, item, fallback, hasFallback, site, after) => {
+    const dictionary = classes.frameKeys(receiver.frame);
+    return dictionaryTask(dictionary, key, site, continuation("frame-lookup", {receiver, key, item, fallback, hasFallback, operation, phase: 0, after}), 0, "probe");
+  };
+  const frameLookupResult = (record, found, item, site) => {
+    const {receiver, key, operation, after, phase} = record, frame = receiver.frame;
+    const cell = phase === 0 && found ? item : record.cell;
+    if (phase === 0 && found && ["delete", "pop"].includes(operation)) python("ValueError", "cannot remove local variables from FrameLocalsProxy");
+    if (operation === "set") {
+      if (cell) { setCell(cell, record.item); return valueTask(null, site, after); }
+      return dictionaryTask(classes.frameExtras(frame), key, site, continuation("frame-write", {receiver, after}), 0, "set", record.item);
+    }
+    if (phase === 0) {
+      if (found && cell.bound) { found = true; item = cell.value; }
+      else if (frame.extras !== null) return dictionaryTask(frame.extras, key, site, continuation("frame-lookup", {...record, cell, phase: 1}), 0, ["delete", "pop"].includes(operation) ? "pop-probe" : "probe");
+      else { found = false; item = null; }
+    }
+    if (operation === "contains") return valueTask(found, site, after);
+    if (found) return valueTask(operation === "delete" ? null : item, site, after);
+    if (operation === "setdefault") {
+      if (cell) { setCell(cell, record.item); return valueTask(record.item, site, after); }
+      return dictionaryTask(classes.frameExtras(frame), key, site, continuation("frame-write", {receiver, after}), 0, "set-default", record.item);
+    }
+    if (operation === "get" || operation === "pop" && record.hasFallback) return valueTask(record.fallback, site, after);
+    python("KeyError", "Frame local key not found");
+  };
+  const frameEntries = receiver => [
+    ...classes.frameKeys(receiver.frame).entries.filter(entry => entry.value.bound).map(entry => [entry.key, entry.value.value]),
+    ...(receiver.frame.extras?.entries ?? []).map(entry => [entry.key, entry.value])];
+  const frameSnapshotNext = (record, site) => record.position === record.keys.items.length ? valueTask(record.result, site, record.after) :
+    frameLookup(record.receiver, record.keys.items[record.position], "read", null, null, false, site, continuation("frame-copy-value", record));
+  const frameSnapshot = (receiver, site, after) => {
+    const keys = values.list(frameEntries(receiver).map(([key]) => key)); state.temporaries.push(receiver, keys);
+    const result = values.dict([]); state.temporaries.push(result);
+    return frameSnapshotNext({receiver, result, keys, position: 0, after}, site);
+  };
+  const frameUpdateNext = (record, site) => record.position === record.keys.items.length ? valueTask(record.self ? record.receiver : null, site, record.after) :
+    itemTask(record.source, record.keys.items[record.position], site, continuation("frame-update-get", record), 0, "get");
+  const frameUpdate = (record, site) => {
+    if (!(values.isDict(record.source) || record.source instanceof FrameLocalsValue)) python("TypeError", "update() argument must be dict or another FrameLocalsProxy");
+    const keys = values.list(record.source instanceof FrameLocalsValue ? frameEntries(record.source).map(([key]) => key) : record.source.entries.map(entry => entry.key)); state.temporaries.push(keys);
+    return frameUpdateNext({...record, keys, position: 0, after: continuation("frame-update-boundary", {receiver: record.receiver, inplace: record.self, context: state.frames.at(-1)?.activeException ?? null, after: record.after})}, site);
+  };
   const functionEnter = (record, site) => {
     const bindings = new Map(record.keys.map((key, i) => [key, record.items[i]]));
     const fn = record.receiver.pool.code.functions[record.receiver.index], missing = fn.params.kwonly.filter(name => !bindings.has(name));
@@ -519,6 +562,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
       if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
+      if (current.kind === "frame-update-boundary" && !value.frameUpdateFailure) {
+        const failure = allocate(ExceptionValue, current.inplace ? "SystemError" : "TypeError", [], current.inplace ? "Native frame locals in-place union returned a result with an exception set" : "update() argument must be dict or another FrameLocalsProxy"); state.temporaries.push(failure);
+        failure.frameUpdateFailure = true; mutate(failure, () => { failure.context = current.inplace ? value : current.context; return () => { failure.context = null; }; });
+        throw new Raised(failure);
+      }
       if (current.kind === "wrapper-metadata" && value.name === "AttributeError") return wrapperNext({...current, position: current.position + 1}, site);
       if (current.kind === "property-documentation" && value.name === "AttributeError") return propertyResult(current, null, false, site);
       if (current.kind === "abstract-lookup" && value.name === "AttributeError")
@@ -692,6 +740,30 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const key = values.string(Array.from(wrapperKeys[completion.position], char => char.codePointAt(0))); state.temporaries.push(key, value);
       values.set(classes.functionDictionary(completion.receiver), key, value);
       return wrapperNext({...completion, position: completion.position + 1}, site);
+    }
+    if (["frame-write", "frame-update-boundary"].includes(completion?.kind)) return valueTask(value, site, completion.after);
+    if (completion?.kind === "frame-update-get") return frameLookup(completion.receiver, completion.keys.items[completion.position], "set", value, null, false, site, continuation("frame-update-map", completion));
+    if (completion?.kind === "frame-update-map") return frameUpdateNext({...completion, position: completion.position + 1}, site);
+    if (completion?.kind === "frame-copy-value") return dictionaryTask(completion.result, completion.keys.items[completion.position], site, continuation("frame-snapshot", {...completion, position: completion.position + 1}), 0, "set", value);
+    if (completion?.kind === "frame-lookup") return frameLookupResult(completion, value.items[0], value.items[1], site);
+    if (completion?.kind === "frame-snapshot") return frameSnapshotNext(completion, site);
+    if (completion?.kind === "frame-result") {
+      const {action, task, after} = completion;
+      if (action === "keys") return valueTask(values.list(value.entries.map(entry => entry.key)), site, after);
+      if (action === "values") return valueTask(values.list(value.entries.map(entry => entry.value)), site, after);
+      if (action === "items") {
+        const items = value.entries.map(entry => { const item = values.tuple([entry.key, entry.value]); state.temporaries.push(item); return item; });
+        return valueTask(values.list(items), site, after);
+      }
+      if (action === "local-dir") return valueTask(values.list(value.entries.map(entry => entry.key)), site, continuation("dir-sort", {receiver: value, depth: 0, after}));
+      if (action === "task") {
+        if (task.kind === "compare") return compareTask(task.operation, task.left instanceof FrameLocalsValue ? value : task.left, task.left instanceof FrameLocalsValue ? task.right : value, site, task.completion, task.depth);
+        if (task.kind === "call") return callTask(task.callable, task.args.map(arg => arg === completion.receiver ? value : arg), task.keywords, task.keywordValues, site, task.completion, task.depth);
+        if (task.kind === "arithmetic") return arithmeticTask(task.operation, task.args.map((arg, index) => index === task.args.findIndex(item => item instanceof FrameLocalsValue) ? value : arg), site, task.completion, task.depth);
+        return unaryTask(task.operation, value, site, task.completion, task.depth);
+      }
+      if (action === "reverse") return valueTask(values.list(value.entries.map(entry => entry.key).reverse()), site, after);
+      throw new TypeError("Invalid frame snapshot destination");
     }
     if (completion?.kind === "property-documentation") return propertyResult(completion, value, value !== null, site);
     if (completion?.kind === "advertised-instance")
@@ -1322,7 +1394,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
           const identityWrite = writing && classes.isPythonMethod(receiver) && ["__name__", "__qualname__", "__module__"].includes(name);
-          if (!(receiver instanceof FunctionValue || classes.isPythonMethod(receiver) || (receiver instanceof InstanceValue || receiver instanceof ClassValue) && name === "__dict__" || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
+          if (!(receiver instanceof FrameValue || receiver instanceof FrameLocalsValue || receiver instanceof GeneratorValue || receiver instanceof FunctionValue || classes.isPythonMethod(receiver) || (receiver instanceof InstanceValue || receiver instanceof ClassValue) && name === "__dict__" || (writing ? identityWrite || allowsClassSpecial(name, "mutate") : allowsClassSpecial(name, "attribute") || ["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__mro__"].includes(name))))
             hard("UNSUPPORTED", "UnsupportedOperationError", "This special attribute is outside classes-source/1.");
           const key = task.key ?? values.string(Array.from(name, char => char.codePointAt(0)));
           state.temporaries.push(key);
@@ -1362,6 +1434,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "arithmetic") {
           state.temporaries = operationRoots(task);
           const [left, right, modulus = null] = args, inplace = task.operation.startsWith("inplace-"), operation = inplace ? task.operation.slice(8) : task.operation;
+          if (operation === "bit-or" && (left instanceof FrameLocalsValue || right instanceof FrameLocalsValue)) {
+            if (inplace && left instanceof FrameLocalsValue) {
+              if (values.isDict(right) || right instanceof FrameLocalsValue) { task = frameUpdate({receiver: left, source: right, self: true, after: completion}, site); continue; }
+              task = arithmeticTask("bit-or", args, site, completion, depth, 0, null, true); continue;
+            }
+            if (left instanceof FrameLocalsValue && (values.isDict(right) || right instanceof FrameLocalsValue) || right instanceof FrameLocalsValue && values.isDict(left)) {
+              const receiver = left instanceof FrameLocalsValue ? left : right;
+              task = frameSnapshot(receiver, site, continuation("frame-result", {action: "task", task, receiver})); continue;
+            }
+          }
+
           if (operation === "bit-or" && (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue)) {
             if (inplace && left instanceof ClassNamespaceValue) python("TypeError", "mappingproxy does not support in-place union");
             if (left instanceof ClassNamespaceValue || !(left instanceof InstanceValue) || task.position > 0) {
@@ -1508,6 +1591,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries.push(...operationRoots(task));
           let {left, right} = task;
           const {operation, position} = task;
+          if (left instanceof FrameLocalsValue && right instanceof FrameLocalsValue && ["equal", "not-equal"].includes(operation)) {
+            task = valueTask(operation === "equal" ? left.frame === right.frame : left.frame !== right.frame, site, completion); continue;
+          }
+          if (left instanceof FrameLocalsValue && values.isDict(right) || right instanceof FrameLocalsValue && values.isDict(left)) {
+            const receiver = left instanceof FrameLocalsValue ? left : right;
+            task = frameSnapshot(receiver, site, continuation("frame-result", {action: "task", task, receiver})); continue;
+          }
           const ordering = Object.hasOwn(ORDERING_SLOTS, operation);
           if (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue) {
             if (left instanceof ClassNamespaceValue || !(left instanceof InstanceValue) || position > 0) {
@@ -1564,6 +1654,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           continue;
         }
         if (task.kind === "contains") {
+          if (task.receiver instanceof FrameLocalsValue) { task = frameLookup(task.receiver, task.key, "contains", null, null, false, site, completion); continue; }
+
           state.temporaries.push(...operationRoots(task));
           let {receiver, key} = task;
           if (receiver instanceof DictionaryViewValue) {
@@ -1611,6 +1703,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "item" || task.kind === "slice") {
           state.temporaries.push(...operationRoots(task));
           const {receiver, operation, item} = task;
+          if (receiver instanceof FrameLocalsValue) {
+            const key = task.kind === "slice" ? values.sliceKey(...task.parts) : task.key; state.temporaries.push(key);
+            task = frameLookup(receiver, key, operation === "get" ? "read" : operation, item, null, false, site, completion); continue;
+          }
           if (receiver instanceof ClassNamespaceValue) {
             if (operation !== "get") python("TypeError", "Class namespace views do not support item mutation");
             if (task.kind === "slice") hard("UNSUPPORTED", "UnsupportedOperationError", "Slice namespace keys require their own stage.");
@@ -1652,6 +1748,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (task.kind === "value") { task = deliver(task.value, completion, site); continue; }
         if (task.kind === "unary") {
+          if (task.value instanceof FrameLocalsValue && ["len", "truth", "not", "iter"].includes(task.operation)) {
+            const entries = frameEntries(task.value); state.temporaries.push(...entries.flat());
+            if (task.operation === "iter") { const keys = values.list(entries.map(([key]) => key)); state.temporaries.push(keys); task = valueTask(values.iterator(keys), site, completion); }
+            else task = valueTask(task.operation === "len" ? values.int(BigInt(entries.length)) : task.operation === "not" ? entries.length === 0 : entries.length !== 0, site, completion);
+            continue;
+          }
+
           const {operation, value, optionalLength} = task;
           state.temporaries.push(...operationRoots(task));
           if (operation === "vars-missing") python("TypeError", "vars() argument must have a __dict__ attribute");
@@ -1883,6 +1986,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = subclassTask(args[1], args[0], site, completion, depth, 0, true); continue;
           }
           if (callable.name === "dict") {
+            if (args[0] instanceof FrameLocalsValue) {
+              if (args.length !== 1 || keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Expanded dict construction remains #116");
+              task = frameSnapshot(args[0], site, completion); continue;
+            }
+
             if (args.length || keywords.length) hard("UNSUPPORTED", "UnsupportedOperationError", "Populated dictionary constructors require their separate sequence stage.");
             task = valueTask(values.dict([]), site, completion); continue;
           }
@@ -1944,7 +2052,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (dictcell) setCell(dictcell, classes.namespaceDictionary(type));
             task = notifyNext(type, [...namespace], 0, site, completion, keywords, keywordValues); continue;
           }
-          if (classes.isType(callable) && !["cell", "code", "mappingproxy", "type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
+          if (classes.isType(callable) && !["FrameLocalsProxy", "cell", "code", "mappingproxy", "type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
             if (/^dict_(keys|values|items|(?:reverse)?(?:key|value|item)iterator)$/.test(callable.name)) python("TypeError", "cannot create dictionary view or iterator instances");
             if (["method_descriptor", "wrapper_descriptor", "getset_descriptor", "member_descriptor", "classmethod_descriptor"].includes(callable.name)) python("TypeError", "cannot create '" + callable.name + "' instances");
             if (["NoneType", "NotImplementedType"].includes(callable.name)) {
@@ -2011,6 +2119,55 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth); continue;
             }
             task = valueTask(classes.bindNativeDescriptor(callable.name.slice(0, callable.name.indexOf(".")), args[0], args[1]), site, completion); continue;
+          }
+          if (callable.name === "reversed" && args[0] instanceof FrameLocalsValue) {
+            if (keywords.length || args.length !== 1) python("TypeError", "reversed() takes one positional argument");
+            task = valueTask(values.list(frameEntries(args[0]).map(([key]) => key).reverse()), site, completion); continue;
+          }
+          if (callable.name === "FrameLocalsProxy" && !callable.nativeKind) {
+            if (args.length !== 1 || keywords.length || !(args[0] instanceof FrameValue)) python("TypeError", "FrameLocalsProxy requires one frame argument");
+            task = valueTask(allocate(FrameLocalsValue, args[0]), site, completion); continue;
+          }
+          if (callable.name === "generator-frame") { task = valueTask(generatorFrame(args[0]), site, completion); continue; }
+          if (callable.name === "frame-locals") {
+            const frame = args[0];
+            task = valueTask(frame.raw.inlineFrames?.length ? allocate(FrameLocalsValue, frame) : frame.raw.fn.kind === "module" ? values.environmentDictionary(frame.callable.globals) : frame.raw.fn.kind === "class" ? classNamespace(frame.raw) : allocate(FrameLocalsValue, frame), site, completion); continue;
+          }
+          if (callable.name.startsWith("FrameLocalsProxy.")) {
+            const receiver = args[0], name = callable.name.slice("FrameLocalsProxy.".length);
+            if (!(receiver instanceof FrameLocalsValue)) python("TypeError", "Frame locals operation requires its actual native receiver");
+            if (["__or__", "__ror__", "__ior__"].includes(name)) {
+              if (keywords.length || args.length !== 2) python("TypeError", name + " takes one positional argument");
+              if (!(values.isDict(args[1]) || args[1] instanceof FrameLocalsValue)) { task = valueTask(moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, completion); continue; }
+              if (name === "__ior__") task = frameUpdate({receiver, source: args[1], keywords: [], keywordValues: [], self: true, after: completion}, site);
+              else task = arithmeticTask("bit-or", name === "__ror__" ? [args[1], receiver] : [receiver, args[1]], site, completion, depth);
+              continue;
+            }
+            if (name === "update") {
+              if (args.length !== 2 || keywords.length) python("TypeError", "update takes one positional argument");
+              task = frameUpdate({receiver, source: args[1], keywords: [], keywordValues: [], self: false, after: completion}, site); continue;
+            }
+            if (["copy", "keys", "values", "items", "__iter__", "__reversed__", "__len__"].includes(name)) {
+              if (args.length !== 1 || keywords.length) python("TypeError", name + " takes no arguments");
+              if (name === "copy") { task = frameSnapshot(receiver, site, completion); continue; }
+              const entries = frameEntries(receiver); state.temporaries.push(...entries.flat());
+              if (name === "__len__") task = valueTask(values.int(BigInt(entries.length)), site, completion);
+              else if (name === "values") task = valueTask(values.list(entries.map(([,value]) => value)), site, completion);
+              else if (name === "items") {
+                const items = entries.map(pair => { const item = values.tuple(pair); state.temporaries.push(item); return item; }); task = valueTask(values.list(items), site, completion);
+              } else {
+                const keys = values.list(entries.map(([key]) => key)); state.temporaries.push(keys);
+                task = valueTask(name === "__iter__" ? values.iterator(keys) : name === "__reversed__" ? values.list([...keys.items].reverse()) : keys, site, completion);
+              }
+              continue;
+            }
+            if (["get", "pop", "setdefault", "__getitem__", "__setitem__", "__delitem__", "__contains__"].includes(name)) {
+              const max = ["get", "pop", "setdefault", "__setitem__"].includes(name) ? 3 : 2;
+              if (keywords.length || args.length < (name === "__setitem__" ? 3 : 2) || args.length > max) python("TypeError", name + " received invalid arguments");
+              const operation = {__getitem__: "read", __setitem__: "set", __delitem__: "delete", __contains__: "contains"}[name] ?? name;
+              task = frameLookup(receiver, args[1], operation, args[2] ?? null, args[2] ?? null, args.length === 3, site, completion); continue;
+            }
+            hard("UNSUPPORTED", "UnsupportedOperationError", "Frame locals native invocation " + name + " retains its finite namespace operation contract");
           }
           if (callable.name === "code" && !callable.nativeKind) hard("UNSUPPORTED", "UnsupportedOperationError", "Code creation requires independent verified source; CPython bytecode and raw code layouts are outside this interface");
           if (callable.name === "cell" && !callable.nativeKind) {
@@ -2151,7 +2308,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
             const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && (args[0] instanceof FunctionValue || classes.isPythonMethod(args[0]));
             const directoryLayout = classes.hasFixedDirectory(args[0]) && name === "__dir__";
-            if (!(args[0] instanceof Cell || args[0] instanceof CodeValue || args[0] instanceof InstanceValue || args[0] instanceof MethodWrapperValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            if (!(args[0] instanceof FrameValue || args[0] instanceof FrameLocalsValue || args[0] instanceof GeneratorValue || args[0] instanceof Cell || args[0] instanceof CodeValue || args[0] instanceof InstanceValue || args[0] instanceof MethodWrapperValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             if (identityLayout && !writing && classes.isPythonMethod(args[0])) python("AttributeError", "Method identity metadata requires ordinary callable fallback.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
@@ -2270,7 +2427,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             count("builtin:" + callable.name);
             if (args.length > 1 || keywords.length) python("TypeError", callable.name + "() accepts at most one positional argument");
             const source = args[0];
-            if (args.length && (source instanceof GeneratorValue || source instanceof InstanceValue || source instanceof ProtocolIteratorValue)) {
+            if (args.length && (source instanceof FrameLocalsValue || source instanceof GeneratorValue || source instanceof InstanceValue || source instanceof ProtocolIteratorValue)) {
               task = consumeTask(callable.name, source, site, completion, depth); continue;
             }
             if (callable.name === "tuple" && values.isSequenceType(source, "tuple")) { task = valueTask(source, site, completion); continue; }
@@ -2390,7 +2547,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               }
               if (callable.name === "vars") {
                 if (!(receiver instanceof ModuleValue || receiver instanceof InstanceValue || classes.isType(receiver) || receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || classes.isPythonMethod(receiver))) {
-                  if (values.typeName(receiver) !== null || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
+                  if (values.typeName(receiver) !== null || receiver instanceof FrameValue || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
                       receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");
                 }
@@ -2423,6 +2580,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               const dictionary = frame.fn.kind === "class" ? classNamespace(frame) : values.environmentDictionary(frame.callable.globals);
               task = callable.name === "dir" ? valueTask(values.list(dictionary.entries.map(entry => entry.key)), site, continuation("dir-sort", {receiver: dictionary, depth, after: completion})) :
                 valueTask(dictionary, site, completion); continue;
+            }
+            const activeFrame = visibleFrame(state.frames.at(-1));
+            if (activeFrame.reflector?.extras !== null && activeFrame.reflector?.extras !== undefined) {
+              const proxy = allocate(FrameLocalsValue, activeFrame.reflector); state.temporaries.push(proxy);
+              task = frameSnapshot(proxy, site, callable.name === "dir" ? continuation("frame-result", {action: "local-dir", receiver: proxy, after: completion}) : completion); continue;
             }
             const bindings = optimizedBindings();
             if (callable.name === "dir") {

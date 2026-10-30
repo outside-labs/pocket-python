@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-generator-frames/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O74"
+  ],
+  "cases": [
+    {
+      "id": "created-does-not-resume",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\nframe=g.gi_frame\nprint(g.gi_frame is frame,g.gi_code is f.__code__,g.gi_running,g.gi_suspended,g.gi_yieldfrom is None)\nprint(frame.f_code is g.gi_code,frame.f_back is None,frame.f_globals is globals(),frame.f_lineno==f.__code__.co_firstlineno)\nprint(frame.f_locals[\"x\"])\n",
+      "stdout": "True True False False True\nTrue True True True\n7\n"
+    },
+    {
+      "id": "suspended-and-closed",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\nframe=g.gi_frame\nprint(next(g),g.gi_suspended,g.gi_running,frame.f_lineno)\nprint(next(g),g.gi_suspended,g.gi_running,frame.f_lineno)\ntry: next(g)\nexcept StopIteration: print(\"done\")\nprint(g.gi_frame is None,g.gi_suspended,g.gi_running,g.gi_code is f.__code__,frame.f_code is g.gi_code)\nprint(frame.f_locals[\"x\"])\n",
+      "stdout": "body\n7 True False 3\n8 True False 4\ndone\nTrue False False True True\n7\n"
+    },
+    {
+      "id": "created-close-retained-frame",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\nframe=g.gi_frame\ng.close()\nprint(g.gi_frame is None,g.gi_suspended,g.gi_running,frame.f_locals[\"x\"],frame.f_back is None)\n",
+      "stdout": "True False False 7 True\n"
+    },
+    {
+      "id": "running-and-back",
+      "stage": "O74",
+      "source": "def f():\n frame=g.gi_frame\n print(g.gi_running,g.gi_suspended,frame.f_back.f_code.co_name)\n print(frame is g.gi_frame)\n yield 7\ng=f()\ndef advance():\n held=[9]\n return next(g)\nprint(advance())\nprint(g.gi_frame.f_back is None)\n",
+      "stdout": "True False advance\nTrue\n7\nTrue\n"
+    },
+    {
+      "id": "retained-caller-chain",
+      "stage": "O74",
+      "source": "saved=None\ndef f():\n global saved\n saved=g.gi_frame.f_back\n yield 7\ng=f()\ndef caller(x): return next(g)\nprint(caller([9]))\nprint(saved.f_code.co_name,saved.f_locals[\"x\"][0],saved.f_back.f_code.co_name)\nprint(saved.f_globals is globals(),saved.f_builtins is f.__builtins__)\n",
+      "stdout": "7\ncaller 9 <module>\nTrue True\n"
+    },
+    {
+      "id": "module-frame-live-namespace",
+      "stage": "O74",
+      "source": "saved=None\ndef f():\n global saved\n saved=g.gi_frame.f_back\n yield 7\ng=f()\nnext(g)\nprint(saved.f_locals is globals())\nsaved.f_locals[\"new\"]=[9]\nprint(new[0])\n",
+      "stdout": "True\n9\n"
+    },
+    {
+      "id": "created-local-write-through",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np[\"x\"]=11\nprint(next(g),next(g))\n",
+      "stdout": "body\n11 12\n"
+    },
+    {
+      "id": "suspended-local-write-through",
+      "stage": "O74",
+      "source": "def f(x):\n y=9\n yield x\n yield x+y\ng=f(7)\nprint(next(g))\np=g.gi_frame.f_locals\np[\"x\"]=11\np[\"y\"]=13\nprint(next(g))\n",
+      "stdout": "7\n24\n"
+    },
+    {
+      "id": "closure-cell-write-through",
+      "stage": "O74",
+      "source": "def make():\n saved=[7]\n def read(): return saved\n def generate():\n  yield saved\n  yield saved\n return read,generate\nread,generate=make()\ng=generate()\np=g.gi_frame.f_locals\np[\"saved\"]=[9]\nprint(read()[0],next(g)[0],read.__closure__[0].cell_contents[0])\nread.__closure__[0].cell_contents=[11]\nprint(p[\"saved\"][0],next(g)[0])\n",
+      "stdout": "9 9 9\n11 11\n"
+    },
+    {
+      "id": "proxy-identity-and-frame-equality",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\nframe=g.gi_frame\np=frame.f_locals\nq=frame.f_locals\nother=f(7).gi_frame.f_locals\nprint(p is q,p==q,p==other,p!=other,isinstance(p,dict),type(p).__name__)\nprint(type(p)(frame)==p)\n",
+      "stdout": "False True False True False FrameLocalsProxy\nTrue\n"
+    },
+    {
+      "id": "proxy-keys-values-items",
+      "stage": "O74",
+      "source": "def f(x):\n y=7\n yield x\ng=f(1)\np=g.gi_frame.f_locals\np[\"extra\"]=9\nprint(*p.keys())\nnext(g)\nprint(*p.keys())\nprint(*p.values())\nprint(type(p.keys()).__name__,type(p.values()).__name__,type(p.items()).__name__)\nprint(type(iter(p)).__name__,type(reversed(p)).__name__)\nprint(*reversed(p))\nprint(p.items()[0][0],p.items()[0][1])\n",
+      "stdout": "x extra\nx y extra\n1 7 9\nlist list list\nlist_iterator list\nextra y x\nx 1\n"
+    },
+    {
+      "id": "proxy-extra-operations",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np[\"extra\"]=[9]\nprint(p[\"extra\"][0],len(p),\"extra\" in p,p.get(\"absent\"))\nprint(p.setdefault(\"second\",11),p.setdefault(\"second\",13))\nprint(p.copy()[\"extra\"][0],dict(p)[\"second\"])\ndel p[\"extra\"]\nprint(p.pop(\"second\"),p.pop(\"missing\",17),bool(p))\n",
+      "stdout": "9 2 True None\n11 11\n9 11\n11 17 True\n"
+    },
+    {
+      "id": "proxy-union-update",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np.update({\"x\":11,\"extra\":13})\np|={\"next\":17}\nprint(*p.keys())\nprint((p|{\"other\":19})[\"other\"],({\"before\":23}|p)[\"x\"])\nq=f(3).gi_frame.f_locals\np.update(q)\nprint(p[\"x\"],next(g))\n",
+      "stdout": "x extra next\n19 11\nbody\n3 3\n"
+    },
+    {
+      "id": "extras-visible-to-snapshots",
+      "stage": "O74",
+      "source": "def f():\n x=7\n yield x\n ns=locals()\n print(ns[\"extra\"],\"extra\" in vars(),\"extra\" in dir())\n yield x\ng=f()\nnext(g)\np=g.gi_frame.f_locals\np[\"extra\"]=9\nprint(next(g))\n",
+      "stdout": "9 True True\n7\n"
+    },
+    {
+      "id": "proxy-error-14",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\ndel p[\"x\"]\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "proxy-error-15",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np.pop(\"x\")\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "proxy-error-16",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\ndel p[\"missing\"]\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "proxy-error-17",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np.pop(\"missing\")\n",
+      "stdout": "",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "proxy-error-18",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np[[]]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-error-19",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np.update([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-error-20",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np.update()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "proxy-error-21",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\np.update({},x=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "unbound-local-setdefault",
+      "stage": "O74",
+      "source": "def f():\n if False: x=1\n yield x\ng=f()\np=g.gi_frame.f_locals\nprint(\"x\" in p,p.get(\"x\"),p.setdefault(\"x\",11))\nprint(next(g))\n",
+      "stdout": "False None 11\n11\n"
+    },
+    {
+      "id": "callback-key-live-cell",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\nclass K:\n def __hash__(self):\n  print(\"hash\")\n  return hash(\"x\")\n def __eq__(self,other):\n  print(\"equal\",other)\n  return other==\"x\"\nk=K()\np[k]=11\nprint(p[k],p[\"x\"],k in p)\n",
+      "stdout": "hash\nequal x\nhash\nequal x\nhash\nequal x\n11 11 True\n"
+    },
+    {
+      "id": "callback-key-extra",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\np=g.gi_frame.f_locals\nclass K:\n def __hash__(self):\n  print(\"hash\")\n  return hash(\"extra\")\n def __eq__(self,other):\n  print(\"equal\")\n  return other==\"extra\"\nk=K()\np[k]=[9]\nprint(p[\"extra\"][0])\ndel p[\"extra\"]\nprint(k in p)\n",
+      "stdout": "hash\nhash\nequal\n9\nequal\nhash\nhash\nFalse\n"
+    },
+    {
+      "id": "generator-names-snapshot",
+      "stage": "O74",
+      "source": "def f(): yield 7\nf.__name__=\"before\"\nf.__qualname__=\"path.before\"\ng=f()\nf.__name__=\"after\"\nf.__qualname__=\"path.after\"\nprint(g.__name__,g.__qualname__)\ng.__name__=\"changed\"\ng.__qualname__=\"path.changed\"\nprint(g.__name__,g.__qualname__,next(g))\n",
+      "stdout": "before path.before\nchanged path.changed 7\n"
+    },
+    {
+      "id": "generator-readonly-gi_code",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_code=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "generator-readonly-gi_frame",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_frame=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "generator-readonly-gi_running",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_running=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "generator-readonly-gi_suspended",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_suspended=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "generator-readonly-gi_yieldfrom",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_yieldfrom=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "generator-name-error-31",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.__name__=None\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "generator-name-error-32",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ndel g.__qualname__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "frame-readonly-f_code",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_frame.f_code=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frame-readonly-f_back",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_frame.f_back=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frame-readonly-f_globals",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_frame.f_globals=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frame-readonly-f_builtins",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_frame.f_builtins=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frame-readonly-f_locals",
+      "stage": "O74",
+      "source": "def f(x):\n print(\"body\")\n yield x\n yield x+1\ng=f(7)\ng.gi_frame.f_locals=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "delegation-reflection",
+      "stage": "O74",
+      "source": "def inner():\n yield 7\n yield 9\ndef outer():\n yield from child\nchild=inner()\ng=outer()\nprint(g.gi_yieldfrom is None)\nprint(next(g),g.gi_yieldfrom is child,g.gi_suspended,child.gi_suspended)\ng.close()\nprint(g.gi_yieldfrom is None,g.gi_frame is None,child.gi_frame is None)\n",
+      "stdout": "True\n7 True True True\nTrue True True\n"
+    },
+    {
+      "id": "code-replacement-keeps-generator-code",
+      "stage": "O74",
+      "source": "def f():\n yield 7\n yield 9\ndef other(): yield 13\ng=f()\ncode=g.gi_code\nframe=g.gi_frame\nf.__code__=other.__code__\nprint(g.gi_code is code,frame.f_code is code,next(g),next(f()))\n",
+      "stdout": "True True 7 13\n"
+    },
+    {
+      "id": "generator-expression-frame",
+      "stage": "O74",
+      "source": "g=(x+7 for x in [1,2])\nf=g.gi_frame\nprint(g.__name__,f.f_code.co_name,\".0\" in f.f_locals)\nprint(next(g),f.f_locals[\"x\"])\nf.f_locals[\"extra\"]=9\nprint(f.f_locals[\"extra\"],next(g))\n",
+      "stdout": "<genexpr> <genexpr> True\n8 1\n9 9\n"
+    },
+    {
+      "id": "class-body-frame",
+      "stage": "O74",
+      "source": "saved=None\ndef child():\n global saved\n saved=g.gi_frame.f_back\n yield 7\ng=child()\nclass C:\n value=next(g)\n ns=locals()\n saved.f_locals[\"extra\"]=9\n print(saved.f_locals is ns,saved.f_code.co_name)\nprint(C.extra)\n",
+      "stdout": "True C\n9\n"
+    },
+    {
+      "id": "inlined-class-comprehension",
+      "stage": "O74",
+      "source": "saved=None\ndef child():\n global saved\n saved=g.gi_frame.f_back\n print(saved.f_code.co_name,type(saved.f_locals).__name__,*saved.f_locals.keys())\n yield 7\ng=child()\nclass C:\n before=9\n result=[next(g) for target in [0]]\nprint(saved.f_locals[\"before\"],type(saved.f_locals).__name__)\n",
+      "stdout": "C FrameLocalsProxy target\n9 dict\n"
+    },
+    {
+      "id": "inlined-function-comprehension",
+      "stage": "O74",
+      "source": "saved=None\ndef child():\n global saved\n frame=g.gi_frame.f_back\n saved=frame.f_locals\n print(frame.f_code.co_name)\n saved[\"x\"]=13\n yield 7\ng=child()\ndef parent():\n x=3\n result=[next(g)+x for x in [1]]\n print(result[0],x,saved[\"x\"])\nparent()\n",
+      "stdout": "parent\n20 3 3\n"
+    },
+    {
+      "id": "inlined-builtins-snapshot",
+      "stage": "O74",
+      "source": "__builtins__={\"len\":lambda x:7}\ndef f():\n global __builtins__\n __builtins__={\"len\":lambda x:9}\n return [len([]) for x in [1]][0]\nprint(f())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "update-callback-error",
+      "stage": "O74",
+      "source": "def f(x): yield x\ng=f(7)\np=g.gi_frame.f_locals\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,o):\n  print(\"callback\")\n  raise ValueError(\"stop\")\nd={K():9}\np.update(d)\n",
+      "stdout": "callback\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "inplace-union-native-error",
+      "stage": "O74",
+      "source": "def f(x): yield x\ng=f(7)\np=g.gi_frame.f_locals\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,o):\n  print(\"callback\")\n  raise ValueError(\"stop\")\nd={K():9}\np|=d\n",
+      "stdout": "callback\n",
+      "error_type": "SystemError",
+      "error_context_type": "ValueError"
+    },
+    {
+      "id": "union-reflected-fallback",
+      "stage": "O74",
+      "source": "def f():yield 7\ng=f()\np=g.gi_frame.f_locals\nclass Other:\n def __ror__(self,value):\n  print(value is p)\n  return [9]\np|=Other()\nprint(p[0])\n",
+      "stdout": "True\n9\n"
+    },
+    {
+      "id": "native-union-notimplemented",
+      "stage": "O74",
+      "source": "def f():yield 7\ng=f()\np=g.gi_frame.f_locals\nprint(p.__or__([]) is NotImplemented,p.__ior__([]) is NotImplemented)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "proxy-copy-callback-order",
+      "stage": "O74",
+      "source": "def f(x):yield x\ng=f(7)\np=g.gi_frame.f_locals\nclass K:\n match=False\n def __hash__(self):\n  print(\"hash\")\n  return hash(\"x\")\n def __eq__(self,o):\n  print(\"equal\",o)\n  return self.match and o==\"x\"\nk=K()\np[k]=9\nk.match=True\nprint(len(p),len(p.keys()))\nq=p.copy()\nprint(q[\"x\"],len(q))\n",
+      "stdout": "hash\nequal x\nhash\n2 2\nhash\nequal x\nhash\nequal x\n7 1\n"
+    },
+    {
+      "id": "frame-missing-namespace",
+      "stage": "O74",
+      "source": "def f():yield 7\ng=f()\nprint(hasattr(g,\"absent\"),hasattr(g.gi_frame,\"absent\"),hasattr(g.gi_frame,\"__dict__\"))\nvars(g.gi_frame)\n",
+      "stdout": "False False False\n",
+      "error_type": "TypeError"
+    }
+  ]
+}

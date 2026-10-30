@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O55",
-    "O62"
+    "O62",
+    "O74"
   ],
   "cases": [
     {
@@ -311,13 +312,13 @@
     {
       "id": "unread-frame",
       "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(g.gi_frame is None)\n",
-      "stage": "Future",
+      "stage": "O74",
       "stdout": "False\n"
     },
     {
       "id": "unread-code",
       "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(g.gi_code is None)\n",
-      "stage": "Future",
+      "stage": "O74",
       "stdout": "False\n"
     },
     {

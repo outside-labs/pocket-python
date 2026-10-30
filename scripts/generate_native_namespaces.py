@@ -7,6 +7,7 @@ from pathlib import Path
 import platform
 import re
 import types
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,11 +24,15 @@ def inventory():
         'method': 'MethodType', 'method-wrapper': 'MethodWrapperType',
         'method_descriptor': 'MethodDescriptorType', 'wrapper_descriptor': 'WrapperDescriptorType',
         'builtin_function_or_method': 'BuiltinFunctionType', 'generator': 'GeneratorType',
-        'module': 'ModuleType', 'code': 'CodeType', 'cell': 'CellType', 'NoneType': 'NoneType',
+        'module': 'ModuleType', 'code': 'CodeType', 'frame': 'FrameType', 'cell': 'CellType', 'NoneType': 'NoneType',
         'NotImplementedType': 'NotImplementedType', 'getset_descriptor': 'GetSetDescriptorType',
         'member_descriptor': 'MemberDescriptorType', 'classmethod_descriptor': 'ClassMethodDescriptorType',
     }.items():
         registry[name] = object if label == 'object' else getattr(types, label)
+
+    def proxy_type():
+        return type(sys._getframe().f_locals)
+    registry['FrameLocalsProxy'] = proxy_type()
 
     class Indexed:
         def __getitem__(self, key):
