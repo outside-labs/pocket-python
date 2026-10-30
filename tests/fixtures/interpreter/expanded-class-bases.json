@@ -176,6 +176,47 @@
       "source": "class C(7): print(\"body\")\n",
       "stdout": "body\n",
       "error_type": "TypeError"
+    },
+    {
+      "id": "function-base-hook",
+      "source": "class A: pass\ndef factory(): pass\nfactory.__mro_entries__=lambda bases:(A,)\nclass C(factory): pass\nprint(C.__bases__==(A,),C.__orig_bases__[0] is factory)\n",
+      "stage": "O79",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-method-base-hook",
+      "source": "class A: pass\nclass Proxy:\n def method(self): pass\nProxy.method.__mro_entries__=lambda bases:(A,)\nproxy=Proxy().method\nclass C(proxy): pass\nprint(C.__bases__==(A,),C.__orig_bases__[0] is proxy)\n",
+      "stage": "O79",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "wrapper-base-hook",
+      "source": "class A: pass\nproxy=staticmethod(lambda:None)\nproxy.__mro_entries__=lambda bases:(A,)\nclass C(proxy): pass\nprint(C.__bases__==(A,),C.__orig_bases__[0] is proxy)\n",
+      "stage": "O79",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "super-base-hook",
+      "source": "class A: pass\nclass Proxy:\n def __mro_entries__(self,bases): return (A,)\nclass Middle(Proxy): pass\nclass Leaf(Middle): pass\nproxy=super(Middle,Leaf())\nclass C(proxy): pass\nprint(C.__bases__==(A,),C.__orig_bases__[0] is proxy)\n",
+      "stage": "O79",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-base-hook",
+      "source": "import base\nclass C(base): pass\nprint(C.__bases__==(base.A,),C.__orig_bases__[0] is base)\n",
+      "imports": [
+        "base"
+      ],
+      "modules": [
+        {
+          "name": "base",
+          "source": "class A: pass\ndef __mro_entries__(bases): return (A,)\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stage": "O79",
+      "stdout": "True True\n"
     }
   ]
 }

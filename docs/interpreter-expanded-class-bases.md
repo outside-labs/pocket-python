@@ -10,7 +10,7 @@ class-body effects. The existing argument, base, work and memory bounds apply.
 
 | Construction | Base resolution and identity |
 | --- | --- |
-| Class statement | Skip actual types. For each remaining original base, optionally read `__mro_entries__` through ordinary attribute lookup and call it with the same original bases tuple. Only lookup AttributeError is optional; callback failures propagate. |
+| Class statement | Skip actual types. Owned instances, functions/wrappers, Python bound methods, modules and super proxies can expose the hook. For each remaining original base, optionally read `__mro_entries__` through ordinary attribute lookup and call it with the same original bases tuple. Only lookup AttributeError is optional; callback failures propagate. |
 | Replacement | Require a tuple, splice its members once and do not resolve replacements recursively. Select the metaclass from the resolved bases. Duplicate bases and hierarchy conflicts retain their normal construction timing. |
 | Original bases | After body execution, store the exact original tuple as `__orig_bases__` only when a hook replaced bases. This overwrites a body entry and remains visible in escaped body dictionaries and the final class. |
 | Direct `type` or metaclass call | Require tuple bases and dictionary namespace. Do not perform MRO entry resolution; non-type bases fail without invoking hooks. |
@@ -21,7 +21,7 @@ type parameters remain #125. Prepared mappings, factories and custom MRO are
 O80–O82. Every callback shares the caller's recursion/instruction/work/allocation
 limits, original source frames, parking, cancellation and close ownership.
 
-The [26-case source matrix](../tests/fixtures/interpreter/expanded-class-bases.json)
+The [31-case source matrix](../tests/fixtures/interpreter/expanded-class-bases.json)
 uses CPython 3.14.7 as its reference. Node units also collect at instruction
 boundaries and interrupt a suspended base-resolution callback. The common
 manifest includes Node/Chromium drain, stepped and parked execution; installed

@@ -18,7 +18,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     while (record.position < record.bases.length) {
       const base = record.bases[record.position];
-      if (!classes.isType(base) && (base instanceof InstanceValue || base instanceof FunctionValue || base instanceof MethodWrapperValue))
+      if (!classes.isType(base) && (base instanceof InstanceValue || base instanceof FunctionValue || base instanceof MethodWrapperValue ||
+          base instanceof ModuleValue || base instanceof SuperValue || classes.isPythonMethod(base)))
         return attributeTask(base, "__mro_entries__", site, continuation("class-base-lookup", record));
       record = {...record, resolved: [...record.resolved, base], position: record.position + 1};
     }
