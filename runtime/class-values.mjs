@@ -10,7 +10,7 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
   "list_iterator", "tuple_iterator", "str_iterator", "str_ascii_iterator", "dict_keyiterator", "range_iterator", "longrange_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 for (const name of Object.keys(NATIVE_NAMESPACES)) if (name !== "object") NATIVE_TYPES.add(name);
 const NAMESPACE_DESCRIPTOR_KINDS = new Set(["method_descriptor", "wrapper_descriptor", "classmethod_descriptor", "getset_descriptor", "member_descriptor"]);
-const META_SPECIALS = new Set(["__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set(["__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
@@ -354,6 +354,7 @@ export class ClassRuntime {
     for (const [key, expected] of [["__qualname__", qualname]])
       if (namespace.has(key) && this.values.text(namespace.get(key)) !== expected)
         this.fail("UnsupportedOperationError", "Class metadata overrides are outside C1.", "UNSUPPORTED");
+    namespace.delete("__qualname__");
     const pending = [...bases.map(base => [...this.mro(base)]), [...bases]], parents = [];
     while (pending.some(items => items.length)) {
       this.charge(1); let candidate = null;
@@ -467,6 +468,10 @@ export class ClassRuntime {
       const entry = cached.found ? dictionary.entries.find(entry => entry.key === cached.key) : null;
       return {found: !!entry, value: entry?.value ?? null, key: entry?.key};
     }
+    if (phase === -1 && owner instanceof ClassValue && !owner.root) {
+      if (owner.namespace.has(name) && !["__qualname__", "__classcell__", "__classdictcell__"].includes(name)) return {found: true, value: owner.namespace.get(name)};
+      if (!["__dict__", "__weakref__", "__doc__", "__module__", "__firstlineno__", "__static_attributes__"].includes(name)) return {found: false, value: null};
+    }
     const entry = dictionary.entries.find(entry => this.values.text(entry.key) === name);
     return {found: !!entry, value: entry?.value ?? null, key: entry?.key};
   }
@@ -483,9 +488,13 @@ export class ClassRuntime {
         continue;
       }
       if (!native && base.root && ["__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) continue;
-      if (base.namespaceEntries?.some(entry => this.values.needsOwnedHash(entry.key))) this.namespaceDictionary(base);
-      const own = this.ownNamespaceEntry(base, name, -1);
-      if (own.found) return own;
+      if (base.root) { if (base.namespace.has(name)) return {found: true, value: base.namespace.get(name)}; }
+      else {
+        if (base.namespaceEntries?.some(entry => this.values.needsOwnedHash(entry.key)) ||
+            ["__firstlineno__", "__static_attributes__"].includes(name) && !base.namespaceDictionary) this.namespaceDictionary(base);
+        const own = this.ownNamespaceEntry(base, name, -1);
+        if (own.found) return own;
+      }
       if (name === "__doc__" && !base.root) return {found: true, value: null};
       if (native && base.root && name === "__init_subclass__") {
         const value = this.make(MethodWrapperValue, "classmethod", this.builtin("object.__init_subclass__"));
@@ -495,7 +504,7 @@ export class ClassRuntime {
         return {found: true, value};
       }
       if (native && base.root && ["__dir__", "__hash__", "__new__", "__init__", "__getattribute__", "__setattr__", "__delattr__"].includes(name)) {
-        const value = this.make(BuiltinValue, "object." + name);
+        const value = this.builtin("object." + name);
         base.namespace.set(name, value);
         try { const layout = valueLayout(base); this.memory?.resize(base, layout.bytes, layout.children); }
         catch (error) { base.namespace.delete(name); throw error; }
@@ -730,11 +739,6 @@ export class ClassRuntime {
         this.namespaceDictionary(receiver);
         return value(this.make(ClassNamespaceValue, receiver));
       }
-      if (["__firstlineno__", "__static_attributes__"].includes(name) && !receiver.namespace.has(name)) {
-        this.namespaceDictionary(receiver); const entry = this.ownNamespaceEntry(receiver, name, -1);
-        if (!entry.found) this.fail("AttributeError", "Class has no attribute " + name);
-        return value(entry.value);
-      }
       if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
       if (name === "__doc__") { this.namespaceDictionary(receiver); return this.bindAttribute(this.ownNamespaceEntry(receiver, name).value, null, receiver); }
       if (name === "__module__") {
@@ -750,6 +754,7 @@ export class ClassRuntime {
       if (name === "__base__") return value(this.primaryBase(receiver));
     }
     let item = this.lookup(owner, name);
+    if (!item.found) item = this.nativeEntry(owner, name);
     if (!item.found && receiver instanceof InstanceValue && name === "__weakref__") {
       this.materializeInstanceStorage(receiver.type);
       item = this.lookup(owner, name);
@@ -942,7 +947,7 @@ export class ClassRuntime {
           } else if (["__dict__", "__weakref__"].includes(key)) value = this.namespaceDescriptor(owner, key, "getset_descriptor");
           else throw new TypeError("Incomplete source namespace entry: " + key);
           roots.push(value);
-          if (stored) { dictionary.entries.push({hash: stored.hash, key: label, value}); dictionary.ownedKeys ||= this.values.needsOwnedHash(label); }
+          if (stored) { dictionary.entries.push({hash: stored.hash, key: label, value, position: this.values.prepareDictionarySlot(dictionary)}); dictionary.ownedKeys ||= this.values.needsOwnedHash(label); }
           else this.values.set(dictionary, label, value);
         }
       }
@@ -950,9 +955,7 @@ export class ClassRuntime {
       dictionary.namespace = {serial: dictionary.entries.length};
       dictionary.entries.forEach((entry, serial) => { entry.serial = serial; });
       let layout = valueLayout(dictionary); this.memory?.resize(dictionary, layout.bytes, layout.children);
-      owner.namespaceDictionary = dictionary;
-      try { layout = valueLayout(owner); this.memory?.resize(owner, layout.bytes, layout.children); }
-      catch (error) { delete owner.namespaceDictionary; throw error; }
+      this.installNamespaceDictionary(owner, dictionary);
       return dictionary;
     } finally { leave?.(); }
   }
@@ -962,9 +965,11 @@ export class ClassRuntime {
       dictionary.entries.forEach((entry, serial) => { entry.serial = serial; });
       const layout = valueLayout(dictionary); this.memory?.resize(dictionary, layout.bytes, layout.children);
     }
+    const entries = owner instanceof ClassValue ? owner.namespaceEntries : null;
     owner.namespaceDictionary = dictionary;
+    if (owner instanceof ClassValue) owner.namespaceEntries = null;
     try { const layout = valueLayout(owner); this.memory?.resize(owner, layout.bytes, layout.children); }
-    catch (error) { delete owner.namespaceDictionary; throw error; }
+    catch (error) { delete owner.namespaceDictionary; if (owner instanceof ClassValue) owner.namespaceEntries = entries; throw error; }
   }
   nativeEntry(type, name) {
     for (const base of this.mro(type)) {
@@ -1065,6 +1070,7 @@ export class ClassRuntime {
   }
   namespaceEntry(receiver, key) { return this.values.classNamespaceEntry(receiver, key); }
   rememberNamespaceKey(owner, name, key) {
+    if (owner.namespaceDictionary?.entries.some(entry => entry.key === key)) return;
     if (owner.namespaceEntries?.some(entry => this.values.text(entry.key) === name)) return;
     const before = owner.namespaceEntries;
     owner.namespaceEntries = [...(before || []), {key, hash: this.values.hash(key)}];

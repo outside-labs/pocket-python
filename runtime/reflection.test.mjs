@@ -287,7 +287,7 @@ test('directory sorting retains stability and every entry across repeated collec
   const source = 'class Entry:\n def __init__(self,key,label): self.key=key; self.label=label\n def __lt__(self,other): return self.key<other.key\nsaved=[Entry(i%3,i) for i in range(20)]\nclass A:\n def __dir__(self): return saved\nresult=dir(A())\nprint([x.label for x in result]==[0,3,6,9,12,15,18,1,4,7,10,13,16,19,2,5,8,11,14,17],saved[1].label)\n';
   const {registry} = await compileSourceModules([unit(source)], profile);
   const session = new ModuleSession(registry); let output = '';
-  session.context.begin({}, text => { output += text; }); const execution = Execution.modules(session.context);
+  session.context.begin({maxWork: 5000000}, text => { output += text; }); const execution = Execution.modules(session.context);
   try {
     while (execution.state !== 'completed') { execution.advance(); session.memory.collect([], {cleanup: true}); }
     assert.equal(output, 'True 1\n');
@@ -299,7 +299,7 @@ test('directory comparison and truth callbacks share recursion, work and allocat
   for (const slot of ['__lt__', '__bool__']) for (const [body, options, limits, expected] of [
     ['return dir(A())', {maxDepth: 12}, undefined, 'PYTHON'],
     ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
-    ['print("entered")\n  while True: pass', {maxSteps: 100000, maxWork: 20000}, undefined, 'BUDGET'],
+    ['print("entered")\n  while True: pass', {maxSteps: 100000, maxWork: 150000}, undefined, 'BUDGET'],
     ['saved=[]\n  while True: saved.append([7])', {maxSteps: 100000}, {maxBytes: 28000}, 'OOM'],
   ]) {
     const source = slot === '__lt__' ? 'class Entry:\n def __lt__(self,other):\n  '+body+'\n' :
@@ -344,7 +344,7 @@ test('directory hints share work, instruction and actual allocation limits witho
   for (const slot of ['__len__', '__length_hint__']) for (const [body, options, limits, expected] of [
     ['return 1025', {}, undefined, 'BUDGET'],
     ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
-    ['print("entered")\n  while True: pass', {maxSteps: 100000, maxWork: 20000}, undefined, 'BUDGET'],
+    ['print("entered")\n  while True: pass', {maxSteps: 100000, maxWork: 150000}, undefined, 'BUDGET'],
     ['saved=[]\n  while True: saved.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
   ]) {
     const result = await run('class Items:\n def __iter__(self): return iter(())\n def '+slot+'(self):\n  '+body+'\nclass A:\n def __dir__(self): return Items()\ndir(A())\n', options, limits);

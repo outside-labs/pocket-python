@@ -19,9 +19,11 @@ same operations. The actual mappingproxy type can wrap an admitted dictionary
 or another proxy, including the native `mapping` keyword. Its dictionary is
 retained rather than copied.
 
-Forward iterators retain stable insertion positions, observe replacements and
+Forward iterators retain native entry positions, observe replacements and
 detect changed sizes or unexpected remaining keys. Reverse iterators preserve
-the native behavior after equal-size changes. Observed size errors stay errors;
+the pinned 3.14.7 behavior after equal-size changes, including reused positions
+after dictionary compaction. This does not adopt a later maintenance release's
+changed reverse-iterator error. Observed size errors stay errors;
 exhausted iterators remain exhausted and release their dictionaries while
 retaining their actual type. Allocation failure while creating an item tuple
 does not advance the iterator. Keys/items views are unhashable; values views
@@ -31,8 +33,9 @@ Proxy, view, iterator, copy and pending equality/union graphs have explicit
 charged memory edges. Partial union results remain private and rooted across
 callbacks. Work, instruction, cancellation and real allocation limits apply to
 all phases; teardown releases transient roots and cyclic owners. Namespace
-copy/union results use the same stable dictionary mutation positions. Existing
-composed execution-accounting observations remain unchanged from revision 5.
+copy/union results use the same physical entry bookkeeping. Accounting revision 6
+records real class-body/copy dictionary storage and retains all revision 5
+observations. Canonical dictionaries replace duplicate namespace key records.
 
 The corpus enumerates all 81 adopted native own dictionaries and covers both
 source/native storage, metaclass shadows, callback errors, key identities,

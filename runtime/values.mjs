@@ -24,7 +24,14 @@ class ListValue { constructor(items) { this.items = [...items]; } }
 class SliceValue {
   constructor(start, stop, step) { this.start = start; this.stop = stop; this.step = step; Object.freeze(this); }
 }
-class DictValue { constructor() { this.entries = []; this.version = 0; this.ownedKeys = false; } }
+class DictValue {
+  constructor(size = 0) {
+    this.entries = []; this.version = 0; this.ownedKeys = false;
+    this.capacity = 8;
+    while (Math.floor(this.capacity * 2 / 3) < size) this.capacity *= 2;
+    this.slots = 0; this.usable = Math.floor(this.capacity * 2 / 3);
+  }
+}
 class SetValue {
   constructor(storage, frozen) { this.storage = storage; this.frozen = frozen; Object.freeze(this); }
 }
@@ -44,11 +51,12 @@ class RangeValue {
 }
 export class IteratorValue {
   constructor(value, dictionaryKind = null, reverse = false) {
-    this.value = value; this.index = value instanceof RangeValue ? 0n : reverse ? value.entries.length - 1 : 0;
+    this.value = value; this.index = value instanceof RangeValue ? 0n : reverse ? value.slots - 1 : 0;
     if (dictionaryKind !== null) { this.dictionaryKind = dictionaryKind; this.reverse = reverse; }
     if (value instanceof DictValue || value instanceof SetValue) {
       const storage = value instanceof SetValue ? value.storage : value;
-      if (storage.namespace) { this.remaining = storage.entries.length; this.serial = reverse ? storage.namespace.serial - 1 : 0; }
+      this.remaining = storage.entries.length;
+      if (storage.namespace) { this.serial = reverse ? storage.namespace.serial - 1 : 0; }
       this.size = storage.entries.length; this.version = storage.version;
     }
   }
@@ -515,7 +523,7 @@ export class ValueRuntime {
   list(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new ListValue(items)); }
   tuple(items) { this.limit(items.length <= VALUE_LIMITS.items, "Container length budget exceeded."); this.charge(items.length + 1); return this.make(64 + 8 * items.length, items, () => new TupleValue(items)); }
   dict(pairs) {
-    const result = this.make(96, [], () => new DictValue()); this.charge(1);
+    const result = this.make(96, [], () => new DictValue(pairs.length)); this.charge(1);
     for (const [key, value] of pairs) this.set(result, key, value);
     return result;
   }
@@ -863,6 +871,19 @@ export class ValueRuntime {
   }
   dictionaryNeedsProtocol(dict, key) { return dict instanceof DictValue && (dict.ownedKeys || this.needsOwnedHash(key)); }
   dictionaryEntryHash(entry) { return entry.hash.startsWith('p:') ? this.int(BigInt(entry.hash.slice(2))) : this.pythonHash(entry.key); }
+  dictionarySlotPlan(dictionary) {
+    if (dictionary.usable > 0) return {capacity: dictionary.capacity, slots: dictionary.slots, usable: dictionary.usable, compact: false};
+    let capacity = 8;
+    while (capacity < dictionary.entries.length * 3) capacity *= 2;
+    this.charge(dictionary.entries.length + 1);
+    return {capacity, slots: dictionary.entries.length, usable: Math.floor(capacity * 2 / 3) - dictionary.entries.length, compact: true};
+  }
+  commitDictionarySlot(dictionary, plan) {
+    if (plan.compact) dictionary.entries.forEach((entry, position) => { entry.position = position; });
+    dictionary.capacity = plan.capacity; dictionary.slots = plan.slots + 1; dictionary.usable = plan.usable - 1;
+    return plan.slots;
+  }
+  prepareDictionarySlot(dictionary) { return this.commitDictionarySlot(dictionary, this.dictionarySlotPlan(dictionary)); }
   commitDictionary(dict, key, item, hash, position, remove = false) {
     this.charge(1);
     if (remove) {
@@ -876,10 +897,10 @@ export class ValueRuntime {
       dict.entries[position].value = item;
     } else {
       this.limit(dict.entries.length < VALUE_LIMITS.items, "Container length budget exceeded.");
-      const bucket = 'p:' + hash;
+      const bucket = 'p:' + hash, plan = this.dictionarySlotPlan(dict);
       this.resize(dict, valueLayout(dict).bytes + (dict.namespace ? 56 : 48) + 2 * bucket.length,
         [...dict.entries.flatMap(entry => [entry.key, entry.value]), key, item]);
-      dict.entries.push({hash: bucket, key, value: item, ...(dict.namespace ? {serial: dict.namespace.serial++} : {})}); dict.version++;
+      dict.entries.push({hash: bucket, key, value: item, position: this.commitDictionarySlot(dict, plan), ...(dict.namespace ? {serial: dict.namespace.serial++} : {})}); dict.version++;
     }
     dict.ownedKeys = true; return null;
   }
@@ -888,6 +909,13 @@ export class ValueRuntime {
     this.memory?.primitive(dictionary); this.charge(dictionary.entries.length + 1);
     const result = new DictValue();
     result.entries = dictionary.entries.map(entry => ({...entry}));
+    if (dictionary.entries.length >= Math.floor(dictionary.slots * 2 / 3)) {
+      result.capacity = dictionary.capacity; result.slots = dictionary.slots; result.usable = dictionary.usable;
+    } else {
+      while (Math.floor(result.capacity * 2 / 3) < result.entries.length) result.capacity *= 2;
+      result.slots = result.entries.length; result.usable = Math.floor(result.capacity * 2 / 3) - result.entries.length;
+      result.entries.forEach((entry, position) => { entry.position = position; });
+    }
     result.ownedKeys = dictionary.ownedKeys;
     if (dictionary.namespace) { result.namespace = {serial: result.entries.length}; result.entries.forEach((entry, serial) => { entry.serial = serial; }); }
     const layout = valueLayout(result);
@@ -1007,10 +1035,10 @@ export class ValueRuntime {
       }
       else {
         this.limit(value.entries.length < VALUE_LIMITS.items, "Container length budget exceeded.");
-        this.charge(1);
+        this.charge(1); const plan = this.dictionarySlotPlan(value);
         this.resize(value, valueLayout(value).bytes + (value.namespace ? 56 : 48) + 2 * hash.length,
           [...value.entries.flatMap(entry => [entry.key, entry.value]), key, item]);
-        value.entries.push({hash, key, value: item, ...(value.namespace ? {serial: value.namespace.serial++} : {})}); value.version++;
+        value.entries.push({hash, key, value: item, position: this.commitDictionarySlot(value, plan), ...(value.namespace ? {serial: value.namespace.serial++} : {})}); value.version++;
       }
       return null;
     }
@@ -1128,10 +1156,24 @@ export class ValueRuntime {
   }
   enableNamespace(dictionary) {
     if (dictionary.namespace) return dictionary;
+    if (dictionary.entries.some(entry => entry.position === undefined)) {
+      dictionary.slots = dictionary.entries.length;
+      while (Math.floor(dictionary.capacity * 2 / 3) < dictionary.slots) dictionary.capacity *= 2;
+      dictionary.usable = Math.floor(dictionary.capacity * 2 / 3) - dictionary.slots;
+      dictionary.entries.forEach((entry, position) => { entry.position = position; });
+    }
     const bytes = valueLayout(dictionary).bytes + 16 + 8 * dictionary.entries.length;
     this.resize(dictionary, bytes, dictionary.entries.flatMap(entry => [entry.key, entry.value]));
     dictionary.namespace = {serial: dictionary.entries.length};
     dictionary.entries.forEach((entry, serial) => { entry.serial = serial; }); return dictionary;
+  }
+  dictionaryPosition(dictionary, position, reverse = false) {
+    let lower = 0, upper = dictionary.entries.length;
+    while (lower < upper) {
+      this.charge(1); const middle = Math.floor((lower + upper) / 2), slot = dictionary.entries[middle].position;
+      if (slot < position || reverse && slot === position) lower = middle + 1; else upper = middle;
+    }
+    return reverse ? lower - 1 : lower < dictionary.entries.length ? lower : -1;
   }
   dictionaryIterator(dictionary, kind = 0, reverse = false) {
     this.enableNamespace(dictionary); this.charge(1);
@@ -1141,6 +1183,7 @@ export class ValueRuntime {
   iterator(value) {
     if (value instanceof ClassNamespaceValue) return this.dictionaryIterator(this.classNamespaceDictionary(value));
     if (value instanceof DictionaryViewValue) return this.dictionaryIterator(value.dictionary, value.kind);
+    if (value instanceof DictValue && value.namespace) return this.dictionaryIterator(value);
     if (value instanceof IteratorValue) return value;
     if (value instanceof RangeValue) { this.charge(1); return this.make(80, [value, 0n], () => new IteratorValue(value)); }
     if (value instanceof MemoryViewValue) this.liveView(value);
@@ -1174,15 +1217,20 @@ export class ValueRuntime {
         iterator.invalidated = true; this.fail("RuntimeError", label + " changed size during iteration");
       }
       if (storage.namespace) {
-        const entry = iterator.reverse ? storage.entries.findLast(entry => entry.serial <= iterator.serial) : storage.entries.find(entry => entry.serial >= iterator.serial);
+        if (iterator.dictionaryKind === undefined) {
+          this.resize(iterator, 96, [value]); iterator.dictionaryKind = 0; iterator.reverse = false;
+        }
+        const index = this.dictionaryPosition(storage, iterator.index, iterator.reverse);
+        const entry = index < 0 ? null : storage.entries[index];
         if (!entry) return this.finishDictionaryIterator(iterator);
         if (!iterator.reverse && iterator.remaining === 0) return this.finishDictionaryIterator(iterator, "RuntimeError", "dictionary keys changed during iteration");
         const item = iterator.dictionaryKind === 1 ? entry.value : iterator.dictionaryKind === 2 ? this.tuple([entry.key, entry.value]) : entry.key;
-        iterator.serial = entry.serial + (iterator.reverse ? -1 : 1); iterator.remaining--; return item;
+        iterator.serial = entry.serial + (iterator.reverse ? -1 : 1); iterator.index = entry.position + (iterator.reverse ? -1 : 1); iterator.remaining--; return item;
       }
       if (iterator.version !== storage.version) this.fail("UnsupportedOperationError", "Equal-size key mutation during iteration is deferred.", "UNSUPPORTED");
-      if (iterator.index >= storage.entries.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
-      return storage.entries[iterator.index++].key;
+      const index = this.dictionaryPosition(storage, iterator.index);
+      if (index < 0) { iterator.exhausted = true; this.fail("StopIteration", ""); }
+      iterator.index = storage.entries[index].position + 1; iterator.remaining--; return storage.entries[index].key;
     }
     const items = elements(value);
     if (iterator.index >= items.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }

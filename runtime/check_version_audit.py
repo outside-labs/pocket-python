@@ -17,7 +17,7 @@ FIXTURES = ROOT / "tests/fixtures/interpreter/version-audit"
 MANIFEST = FIXTURES / "cases.json"
 ORACLE = {"implementation": "CPython", "version": "3.14.7", "unicode": "16.0.0"}
 PROFILES = ("core-source/1", "classes-source/1")
-CLASSIFICATIONS = {"supported", "unsupported", "unavailable-builtin", "denied-import", "syntax-rejection"}
+CLASSIFICATIONS = {"supported", "pinned-observation", "unsupported", "unavailable-builtin", "denied-import", "syntax-rejection"}
 
 # This script receives only sources loaded from the bounded committed corpus.
 # Application code never runs inside the audit process or an engine adapter.
@@ -98,12 +98,19 @@ def load_corpus():
             raise ValueError("A delta needs a separately labelled later expectation")
         expectation = case.get("engine_expectation")
         if expectation:
-            if expectation.get("classification") not in CLASSIFICATIONS:
-                raise ValueError("Unknown engine observation classification")
-            validate_expected(expectation["expected"])
-            if expectation["classification"] == "supported" and (
-                    case["kind"] != "control" or not expectation["expected"]["ok"]):
-                raise ValueError("Refusals and delta expectations cannot receive compatibility credit")
+            overrides = expectation.get("profiles", {})
+            if not isinstance(overrides, dict) or not set(overrides) <= set(PROFILES):
+                raise ValueError("Unknown engine expectation profile")
+            for variant in [expectation, *overrides.values()]:
+                if variant.get("classification") not in CLASSIFICATIONS:
+                    raise ValueError("Unknown engine observation classification")
+                validate_expected(variant["expected"])
+                if variant["classification"] == "supported" and (
+                        case["kind"] != "control" or not variant["expected"]["ok"]):
+                    raise ValueError("Refusals and delta expectations cannot receive compatibility credit")
+                if variant["classification"] == "pinned-observation" and (
+                        variant["expected"] != case["pinned_expected"]):
+                    raise ValueError("Pinned engine observations must match the unchanged oracle expectation")
         ids.add(identifier)
         files.add(name)
         prepared.append({**case, "source": source, "source_sha256": sha256(path)})
@@ -204,7 +211,8 @@ def teardown_observation(actual):
 
 
 def classify_observation(case, profile, actual):
-    expectation = case["engine_expectation"]
+    base = case["engine_expectation"]
+    expectation = base.get("profiles", {}).get(profile, base)
     classification = expectation["classification"]
     passed = matches(expectation["expected"], actual)
     if classification == "supported":

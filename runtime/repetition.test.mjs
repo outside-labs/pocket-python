@@ -134,7 +134,7 @@ test('index binding and callback loops share recursion, instruction, work and ar
   for (const sequence of ['[7]', '(7,)', '"x"']) for (const binding of [false, true]) {
     for (const [body, options, memoryLimits, code] of [
       ['while True: pass', {maxSteps: 300}, undefined, 'BUDGET'],
-      ['while True: pass', {maxSteps: 100000, maxWork: 10000}, undefined, 'BUDGET'],
+      ['while True: pass', {maxSteps: 100000, maxWork: 100000}, undefined, 'BUDGET'],
       ['held=[]\n  while True: held.append([1,2,3])', {maxSteps: 100000, maxWork: 20000000}, {maxBytes: 24000}, 'OOM'],
     ]) {
       const source = 'class I:\n '+(binding ? '@property\n ' : '')+'def __index__(self):\n  print("entered")\n  '+body+'\n'+sequence+'*I()\n';

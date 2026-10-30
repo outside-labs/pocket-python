@@ -7,7 +7,7 @@ import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, valueTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -143,6 +143,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const environment = frame.callable.globals;
     if (className(frame, key) && !frame.fn.nonlocals?.includes(key) && frame.namespaceEnvironment) {
       const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
+      const dictionary = frame.namespaceEnvironment.dictionary;
+      if (!dictionary.ownedKeys) {
+        if (bound) values.set(dictionary, name, value);
+        else { const index = values.find(dictionary, name); if (index >= 0) values.remove(dictionary, name); }
+        return after ? valueTask(null, state.current, after) : null;
+      }
       return dictionaryTask(frame.namespaceEnvironment.dictionary, name, state.current, after || continuation("name-stored"), 0, bound ? "set" : "discard", value);
     }
     if (!key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key)) && environment.dictionary !== null) {
@@ -157,6 +163,10 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const dictionary = nameDictionary(frame, name);
     if (dictionary === null) { const value = load(frame, name); return after ? {value, after} : {value}; }
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
+    if (className(frame, name) && !dictionary.ownedKeys) {
+      const index = values.find(dictionary, key);
+      if (index >= 0) return after ? {value: dictionary.entries[index].value, after} : {value: dictionary.entries[index].value};
+    }
     return {task: dictionaryTask(dictionary, key, site, continuation(className(frame, name) && frame.namespaceEnvironment ? "class-name" : "global-name", {name, receiver: dictionary, after}), 0, "probe")};
   };
   const classQualification = () => {
@@ -166,7 +176,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const classFirstline = () => {
     const frame = state.frames.at(-1);
-    if (frame.fn.globals?.includes("__firstlineno__") || frame.fn.nonlocals?.includes("__firstlineno__"))
+    if (frame.namespaceEnvironment || frame.fn.globals?.includes("__firstlineno__") || frame.fn.nonlocals?.includes("__firstlineno__"))
       return store(frame, "__firstlineno__", values.int(BigInt(frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1)));
     frame.namespaceOrder.add("__firstlineno__"); return null;
   };
@@ -182,6 +192,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   const enterClass = (record, rawModule, site) => {
     const module = values.text(rawModule) ?? record.callable.pool.module.name;
     enter(record.callable, new Map(), site, continuation("class", {...record, module}));
+    classNamespace(state.frames.at(-1));
     const writing = store(state.frames.at(-1), "__module__", rawModule, true, continuation("class-qualname"));
     return writing || classQualification();
   };

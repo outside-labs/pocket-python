@@ -977,7 +977,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       count("notify-entry");
       const [name, value] = entries[index++];
       // Keep the name rooted while planning a bound callback can allocate.
-      const stored = typeof name === "string" ? type.namespaceEntries?.find(entry => values.text(entry.key) === name)?.key : name;
+      const stored = typeof name === "string" ? (type.namespaceDictionary?.entries.find(entry => values.text(entry.key) === name)?.key ?? type.namespaceEntries?.find(entry => values.text(entry.key) === name)?.key) : name;
       const nameValue = stored ?? values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(nameValue);
       if (typeof name === "string" && (value instanceof InstanceValue || value instanceof PropertyValue)) classes.rememberNamespaceKey(type, name, nameValue);
       const plan = classes.notification(value, type, nameValue);
@@ -1111,12 +1111,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const dictionaryNext = (record, site, position = 0) => {
     const {left, right, operation, after, depth, version, otherVersion} = record;
     checkDictionaryComparison(record);
-    if (left.namespace && record.serial !== undefined && record.serial !== null) position = left.entries.findIndex(entry => entry.serial > record.serial);
+    if (left.namespace && record.serial !== undefined && record.serial !== null) position = values.dictionaryPosition(left, record.serial + 1);
     if (position < 0 || position >= left.entries.length) return valueTask(operation === "equal", site, after);
     const entry = left.entries[position];
     return dictionaryTask(right, entry.key, site,
       continuation("dict-pair", {left, right, value: entry.value, operation, after, depth, version, otherVersion, position,
-        serial: left.namespace ? entry.serial : null}), depth,
+        serial: left.namespace ? entry.position : null}), depth,
       "probe", null, values.dictionaryEntryHash(entry));
   };
   const proxyRelay = (left, right, after) => continuation("relay", {receiver: left, after: continuation("relay", {receiver: right, after})});
@@ -1124,9 +1124,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const {left, right, result, size, depth, after} = record;
     state.temporaries.push(left, right, result);
     if (right.entries.length !== size) python("RuntimeError", "dict mutated during update");
-    const entry = right.entries.find(entry => entry.serial > record.serial);
+    const position = values.dictionaryPosition(right, record.serial + 1), entry = position < 0 ? null : right.entries[position];
     if (!entry) return valueTask(result, site, after);
-    return dictionaryTask(result, entry.key, site, continuation("dict-union", {...record, serial: entry.serial}), depth,
+    return dictionaryTask(result, entry.key, site, continuation("dict-union", {...record, serial: entry.position}), depth,
       "set", entry.value, values.dictionaryEntryHash(entry));
   };
   const dispatch = task => {
@@ -1140,7 +1140,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const {phase, dictionary} = task;
           const probe = (name, field, operation = "pop-probe", item = null) => {
             const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key, item);
-            return dictionaryTask(dictionary, key, site, continuation("namespace-build", {task, field}), depth, operation, item);
+            const after = continuation("namespace-build", {task, field});
+            if (!dictionary.ownedKeys) {
+              const index = values.find(dictionary, key), found = index >= 0, value = found ? dictionary.entries[index].value : null;
+              state.temporaries.push(value);
+              if (operation === "pop-probe") { if (found) values.remove(dictionary, key); return valueTask(values.tuple([found, value]), site, after); }
+              if (operation === "probe") return valueTask(values.tuple([found, value]), site, after);
+              if (!found) values.set(dictionary, key, item);
+              return valueTask(found ? value : item, site, after);
+            }
+            return dictionaryTask(dictionary, key, site, after, depth, operation, item);
           };
           if (phase === 0) { task = probe("__qualname__", "qualname"); continue; }
           if (phase === 1) { task = probe("__module__", "module", "probe"); continue; }

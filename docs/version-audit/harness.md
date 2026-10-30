@@ -91,3 +91,12 @@ Existing CI's broader browser suite remains separate evidence from this audit.
 The checked-in [observation snapshot](observations.json) is historical evidence
 for its recorded hashes. It must not be interpreted as a fresh run of a later
 merged engine tree. Recreate a current matrix before using it after integration.
+
+
+O70 adds profile-specific expected engine observations for dictionary reverse
+iteration. `classes-source/1` executes the unchanged 3.14.7 compaction case;
+`core-source/1` retains its unavailable-builtin observation. The delta is labelled
+`pinned-observation` and earns no compatibility credit. Neither this executed
+3.14.7 result nor a source-only later expectation establishes 3.14.8/3.14.9
+compatibility. Profile overrides must name an existing profile and match the
+pinned expected signature; later outcomes remain separately unverified.

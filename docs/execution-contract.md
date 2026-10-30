@@ -272,3 +272,22 @@ recorded hashes, so a later materialized dictionary exposes those same objects.
 composed observations retain the accounting/4 values in `accounting_4_cases`;
 only affected notification cases change. Complete native dictionaries, native
 owner edges and suspended lookup caches use ordinary charged VM storage.
+
+
+## Native namespace entry-position accounting revision 6
+
+Source class bodies now use their actual dictionary from entry. The native type
+copy keeps physical entry positions through qualification/cell removal, storage
+descriptor insertion and compaction, reproducing pinned CPython 3.14.7 iterator
+behavior even after equal-size replacement. Primitive keys retain direct owned
+storage fast paths. Once a canonical class dictionary is installed, it replaces
+its duplicate temporary key/hash records. The complete body, copy, metadata and
+descriptor graphs are charged using the existing dictionary, key and owner
+layouts. Fixed dictionary storage includes scalar capacity/occupancy counts;
+entry costs include physical positions (and namespace serials where present).
+
+`execution-accounting/6` updates the eight composed observations; all prior
+revision 5 values remain in `accounting_5_cases`. Source instruction counts are
+unchanged; work, allocations and retained/peak storage reflect the real namespace
+operations. Module globals still retain their lazy compact path. This is an
+internal representation/accounting change, not a CPython memory-size promise.

@@ -80,7 +80,7 @@ test('metaclass read and binding phases share recursion, work, instruction and r
   for (const phase of ['read', 'fallback', 'bind']) for (const [body, options, limits, code] of [
     ['return obj.x', {maxDepth: 12}, undefined, 'PYTHON'],
     ['while True: pass', {maxSteps: 250}, undefined, 'BUDGET'],
-    ['while True: pass', {maxSteps: 100000, maxWork: 30000}, undefined, 'BUDGET'],
+    ['while True: pass', {maxSteps: 100000, maxWork: 150000}, undefined, 'BUDGET'],
     ['held=[]\n  while True: held.append([7])', {maxSteps: 100000}, {maxBytes: 24000}, 'OOM'],
   ]) {
     const source = phase === 'bind' ? 'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  '+body+'\nclass M(type): __getattribute__=D()\nclass A(metaclass=M): pass\nA.x\n' :
@@ -117,7 +117,7 @@ test('metaclass mutation hooks and bindings preserve frames and actual activatio
       for (const [body, options, limits, code] of [
         [setting ? (phase === 'bind' ? 'obj.x=[7]' : 'cls.x=value') : (phase === 'bind' ? 'del obj.x' : 'del cls.x'), {maxDepth: 12}, undefined, 'PYTHON'],
         ['while True: pass', {maxSteps: 250}, undefined, 'BUDGET'],
-        ['while True: pass', {maxSteps: 100000, maxWork: 30000}, undefined, 'BUDGET'],
+        ['while True: pass', {maxSteps: 100000, maxWork: 150000}, undefined, 'BUDGET'],
         ['held=[]\n  while True: held.append([7])', {maxSteps: 100000}, {maxBytes: 26000}, 'OOM'],
       ]) {
         const result = await run(prefix(body), options, limits);
