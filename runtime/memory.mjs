@@ -1,4 +1,5 @@
 import {valueLayout} from "./values.mjs";
+import {IntegerIdentityRecord} from "./function-objects.mjs";
 
 export const MEMORY_LIMITS = Object.freeze({maxBytes: 8_388_608, maxObjects: 4096, maxRoots: 1024, maxFrames: 64});
 const owners = new WeakMap();
@@ -23,6 +24,7 @@ export class MemoryArena {
   #leases = new WeakSet();
   #identityHashes = new WeakMap();
   #nextIdentityHash = 1n;
+  #integerIdentities = new Map();
 
   constructor(options = {}) {
     const limits = {...MEMORY_LIMITS, ...options};
@@ -110,10 +112,15 @@ export class MemoryArena {
         const layout = valueLayout(value);
         if (layout.work) charge(layout.work);
         bytes += layout.bytes;
+        if (this.#integerIdentities.size && typeof value === "bigint") {
+          const identity = this.#integerIdentities.get(value);
+          if (identity && !seen.has(identity)) { charge(); pending.push(identity); }
+        }
       }
       check();
     }
     if (validateOnly) return this.stats();
+    for (const [integer, identity] of this.#integerIdentities) if (!records.has(identity)) this.#integerIdentities.delete(integer);
     for (const value of this.#records.keys()) if (!records.has(value)) this.#reclaimed++;
     for (const value of records.keys()) {
       if (!owners.has(value)) { owners.set(value, this); this.#allocations++; }
@@ -168,6 +175,18 @@ export class MemoryArena {
     if (!this.#identityHashes.has(value)) this.#identityHashes.set(value, this.#nextIdentityHash++);
     return this.#identityHashes.get(value);
   }
+  integerIdentity(value) {
+    this.active();
+    if (typeof value !== "bigint") throw new TypeError("Canonical integer identity requires an integer scalar.");
+    const previous = this.#integerIdentities.get(value);
+    if (previous) return previous.identity;
+    const identity = this.#nextIdentityHash;
+    const record = new IntegerIdentityRecord(value, identity), layout = valueLayout(record);
+    this.allocate(layout.bytes, [value], () => record);
+    this.#nextIdentityHash++;
+    this.#integerIdentities.set(value, record);
+    return identity;
+  }
 
   external(bytes) {
     this.active();
@@ -195,5 +214,6 @@ export class MemoryArena {
     this.#reclaimed += this.#records.size;
     this.#records.clear(); this.#pins.clear(); this.#external.clear(); this.#scopes.length = 0; this.#parked.clear(); this.#bytes = 0;
     this.#identityHashes = new WeakMap(); this.#nextIdentityHash = 1n;
+    this.#integerIdentities.clear();
   }
 }

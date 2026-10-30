@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-integer-identity/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O75"
+  ],
+  "cases": [
+    {
+      "id": "integer-alias",
+      "stage": "O75",
+      "source": "value=int(\"1000000000000000000000007\")\nalias=value\nprint(value is alias,id(value)==id(alias),id(value)>0,type(id(value)).__name__)\n",
+      "stdout": "True True True int\n"
+    },
+    {
+      "id": "equal-values-agree-with-ids",
+      "stage": "O75",
+      "source": "a=int(\"1000000000000000000000007\")\nb=int(\"1000000000000000000000007\")\nprint(a==b,(a is b)==(id(a)==id(b)),(a is not b)==(id(a)!=id(b)))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "distinct-integer-values",
+      "stage": "O75",
+      "source": "a=int(\"1000000000000000000000007\")\nb=a+1\nprint(a is b,id(a)!=id(b),a is not b)\n",
+      "stdout": "False True True\n"
+    },
+    {
+      "id": "zero-sign-and-boolean",
+      "stage": "O75",
+      "source": "zero=int(\"-0\")\nother=int(\"0\")\nprint((zero is other)==(id(zero)==id(other)),zero==False,zero is False,id(zero)!=id(False))\nvalue=int(\"1\")\nprint(value==True,value is True,id(value)!=id(True),value is not None)\n",
+      "stdout": "True True False True\nTrue False True True\n"
+    },
+    {
+      "id": "live-identities-do-not-collide",
+      "stage": "O75",
+      "source": "values=[None,True,False,0,1,-1,1000,1.0,complex(1,0),[],{},set(),object()]\nidentities={id(value) for value in values}\nprint(len(identities)==len(values))\nprint(all((a is b)==(id(a)==id(b)) for a in values for b in values))\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "container-aliases",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\nitems=[value]\npair=(value,)\nmapping={\"key\":value}\nprint(items[0] is value,pair[0] is value,mapping[\"key\"] is value)\nprint(id(items[0])==id(value)==id(pair[0])==id(mapping[\"key\"]))\n",
+      "stdout": "True True True\nTrue\n"
+    },
+    {
+      "id": "dictionary-key-alias",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\nmapping={value:\"saved\"}\nkey=list(mapping)[0]\nprint(key is value,id(key)==id(value),mapping[value])\n",
+      "stdout": "True True saved\n"
+    },
+    {
+      "id": "set-entry-alias",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\nheld={value}\nitem=list(held)[0]\nprint(item is value,id(item)==id(value),item in held)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "cell-alias-and-mutation",
+      "stage": "O75",
+      "source": "def make(value):\n def read(): return value\n return read\nvalue=int(\"1234567890123456789012345\")\nf=make(value)\ncell=f.__closure__[0]\nprint(f() is value,cell.cell_contents is value,id(f())==id(value))\nother=value+1\ncell.cell_contents=other\nprint(f() is other,id(f())==id(other),id(value)!=id(other))\n",
+      "stdout": "True True True\nTrue True True\n"
+    },
+    {
+      "id": "defaults-retain-aliases",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\ndef f(pos=value,*,key=value): return pos,key\nprint(f()[0] is value,f()[1] is value,f.__defaults__[0] is value,f.__kwdefaults__[\"key\"] is value)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "generator-frame-cell-alias",
+      "stage": "O75",
+      "source": "def generate(value):\n yield value\n yield value\nvalue=int(\"1234567890123456789012345\")\ng=generate(value)\nframe=g.gi_frame\nprint(frame.f_locals[\"value\"] is value,next(g) is value)\nother=value+1\nframe.f_locals[\"value\"]=other\nprint(next(g) is other,id(frame.f_locals[\"value\"])==id(other))\ng.close()\nprint(frame.f_locals[\"value\"] is other)\n",
+      "stdout": "True True\nTrue True\nTrue\n"
+    },
+    {
+      "id": "bound-native-receiver-alias",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\nmethod=value.__dir__\nprint(method.__self__ is value,id(method.__self__)==id(value))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bound-python-call-alias",
+      "stage": "O75",
+      "source": "class Keeper:\n def save(self,value):\n  self.value=value\n  return value\nobj=Keeper()\nmethod=obj.save\nvalue=int(\"1234567890123456789012345\")\nprint(method(value) is value,obj.value is value,id(obj.value)==id(value))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "owned-hash-callback",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\nclass Key:\n def __hash__(self):\n  print(\"hash\",id(value)==id(alias))\n  return 7\n def __eq__(self,other):\n  print(\"equal\",value is alias)\n  return True\nalias=value\nkey=Key()\nmapping={key:value}\nprint(mapping[Key()] is value)\n",
+      "stdout": "hash True\nhash True\nequal True\nTrue\n"
+    },
+    {
+      "id": "id-bypasses-user-protocols",
+      "stage": "O75",
+      "source": "class A:\n def __hash__(self): raise ValueError(\"hash\")\n def __eq__(self,other): raise ValueError(\"equal\")\n def __getattribute__(self,name): raise ValueError(\"attribute\")\na=A()\nvalue=int(\"1234567890123456789012345\")\nprint(id(a)!=id(value),a is not value,value is not a,id(value)==id(value))\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "integer-id-results-are-ordinary-integers",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\nidentity=id(value)\nalias=identity\nprint(identity is alias,id(identity)==id(alias),identity+1>identity,hash(identity)==hash(int(str(identity))))\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "arbitrary-precision-positive-negative",
+      "stage": "O75",
+      "source": "a=int(\"9\"*200)\nb=-a\nprint(a is a,b is b,id(a)!=id(b),id(a)==id(a),id(b)==id(b))\nprint((a+0 is a)==(id(a+0)==id(a)),(b*1 is b)==(id(b*1)==id(b)))\n",
+      "stdout": "True True True True True\nTrue True\n"
+    },
+    {
+      "id": "arithmetic-and-hash-stay-numeric",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\nbefore=hash(value)\nidentity=id(value)\nprint(value+7-7==value,hash(value)==before,hash(value)==hash(int(str(value))))\nprint({True:7,1:9}[True],len({True,1,1.0}),value//3*3+value%3==value)\n",
+      "stdout": "True True True\n9 1 True\n"
+    },
+    {
+      "id": "constructors-and-container-copy",
+      "stage": "O75",
+      "source": "value=int(\"1234567890123456789012345\")\nitems=[value]\nprint(int(value) is value,list(items)[0] is value,tuple(items)[0] is value,items[:][0] is value)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "argument-return-after-exception",
+      "stage": "O75",
+      "source": "def forward(value): return value\nvalue=int(\"1234567890123456789012345\")\nidentity=id(value)\ntry: raise ValueError(value)\nexcept ValueError: print(forward(value) is value,id(forward(value))==identity)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "different-modules-retain-alias",
+      "stage": "O75",
+      "source": "import helper\nvalue=helper.value\nprint(helper.read() is value,id(helper.read())==id(value))\n",
+      "stdout": "True True\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "value=int(\"1234567890123456789012345\")\ndef read(): return value\n"
+        }
+      ]
+    },
+    {
+      "id": "id-missing-argument",
+      "stage": "O75",
+      "source": "id()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "id-extra-argument",
+      "stage": "O75",
+      "source": "id(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "id-keyword-argument",
+      "stage": "O75",
+      "source": "id(value=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    }
+  ]
+}

@@ -1171,8 +1171,8 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned attribute reflection, stable adopted object identities, optimized function and generator-expression snapshots, custom vars/dir hooks, directory length hints and stable rich ordering in classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46). Ordinary instance dictionaries are live with exact replacement/deletion aliases and owned collision callbacks (O47/O48). O49 adds fresh read-only keyed class namespace views, live mutations and unbound stored descriptors with metaclass priority. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O59 adds str/list/tuple/dict default directories, preserving native merge order, cyclic graphs, contents, iterator positions and exact native caller binding without contained callbacks. O60 adds set/frozenset/bytes/bytearray/memoryview directories with exact native binding, preserved hash/storage/iterator state and directories after view release without restoring data authority. O63 adds numeric and sentinel type directories, including native raw order, canonical binding and ordinary advertised type namespaces. O64 adds sequence, container and buffer type directories with native binding, advertised namespaces and preserved instance data authority. O65 adds callable, descriptor, property and mappingproxy type directories with canonical native binding, raw namespace order and ordinary advertised namespaces; callable/accessor metadata and per-instance keys remain separate. O66 adds generator and adopted native iterator type directories, preserving generator state, iterator positions, sentinel isolation and released buffer authority through canonical native binding and owned namespace merging. O67\u2013O70 add live module/global and class-body dictionaries, complete native/source own dictionaries, and live mappingproxy iteration/views/copy/equality/union with owned key callbacks.",
-      "gaps": "Function globals/defaults, code/cell/frame/annotation metadata, integer identity, prepared mappings, remaining directories and dynamic source retain their named roadmap owners.",
+      "scope": "Owned reflection and identity, live module/class/function/wrapper namespaces, function defaults/namespaces, verified code/cells, generator/source-frame metadata and optimized frame-local proxies in classes-source/1.",
+      "gaps": "Annotations #125, remaining directories O76\u2013O78, prepared mappings/metaclasses, builtin subclasses and dynamic source/import APIs retain their named roadmap owners.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1955,7 +1955,7 @@
       "id": "function-defaults-defining-namespaces",
       "status": "supported",
       "scope": "O72: live positional/keyword defaults, actual defining globals and captured builtin dictionaries, owned default-key/name callbacks, native validation and persistent callback updates.",
-      "gaps": "Code/cells O73, frame reflection O74, annotations #125 and dynamic source/import APIs O91\u2013O94 retain their owners.",
+      "gaps": "Annotations #125 and dynamic source/import APIs O91\u2013O94 retain their owners.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1997,7 +1997,7 @@
       "id": "owned-code-closures-cells",
       "status": "supported",
       "scope": "O73: verified owned source-code metadata, stable code and closure identities, writable/empty cells, native cell construction and compatible function-code replacement with active/generator executable snapshots.",
-      "gaps": "CPython bytecode/C-layout interchange and backend code constructors remain outside the source interface. Frame reflection O74, directory completion O78, native API completion O90 and dynamic compilation O91 remain separately owned.",
+      "gaps": "CPython bytecode/C-layout interchange and backend code constructors remain outside the source interface. Directory completion O78, native API completion O90 and dynamic compilation O91 remain separately owned.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2096,6 +2096,45 @@
         "tests/fixtures/interpreter/generator-frames.json:native-union-notimplemented",
         "tests/fixtures/interpreter/generator-frames.json:proxy-copy-callback-order",
         "tests/fixtures/interpreter/generator-frames.json:frame-missing-namespace"
+      ]
+    },
+    {
+      "id": "integer-identity",
+      "status": "supported",
+      "scope": "O75: canonical session-owned integer identities; aliases, is/id agreement, noncolliding live object identities, containers/cells/callbacks/collection and ordinary numeric/hash semantics.",
+      "gaps": "Equal integer interning choices are implementation-specific; addresses and cross-session identity are outside the contract.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/integer-identity.json:integer-alias",
+        "tests/fixtures/interpreter/integer-identity.json:equal-values-agree-with-ids",
+        "tests/fixtures/interpreter/integer-identity.json:distinct-integer-values",
+        "tests/fixtures/interpreter/integer-identity.json:zero-sign-and-boolean",
+        "tests/fixtures/interpreter/integer-identity.json:live-identities-do-not-collide",
+        "tests/fixtures/interpreter/integer-identity.json:container-aliases",
+        "tests/fixtures/interpreter/integer-identity.json:dictionary-key-alias",
+        "tests/fixtures/interpreter/integer-identity.json:set-entry-alias",
+        "tests/fixtures/interpreter/integer-identity.json:cell-alias-and-mutation",
+        "tests/fixtures/interpreter/integer-identity.json:defaults-retain-aliases",
+        "tests/fixtures/interpreter/integer-identity.json:generator-frame-cell-alias",
+        "tests/fixtures/interpreter/integer-identity.json:bound-native-receiver-alias",
+        "tests/fixtures/interpreter/integer-identity.json:bound-python-call-alias",
+        "tests/fixtures/interpreter/integer-identity.json:owned-hash-callback",
+        "tests/fixtures/interpreter/integer-identity.json:id-bypasses-user-protocols",
+        "tests/fixtures/interpreter/integer-identity.json:integer-id-results-are-ordinary-integers",
+        "tests/fixtures/interpreter/integer-identity.json:arbitrary-precision-positive-negative",
+        "tests/fixtures/interpreter/integer-identity.json:arithmetic-and-hash-stay-numeric",
+        "tests/fixtures/interpreter/integer-identity.json:constructors-and-container-copy",
+        "tests/fixtures/interpreter/integer-identity.json:argument-return-after-exception",
+        "tests/fixtures/interpreter/integer-identity.json:different-modules-retain-alias",
+        "tests/fixtures/interpreter/integer-identity.json:id-missing-argument",
+        "tests/fixtures/interpreter/integer-identity.json:id-extra-argument",
+        "tests/fixtures/interpreter/integer-identity.json:id-keyword-argument"
       ]
     }
   ],
@@ -3745,22 +3784,22 @@
     },
     {
       "id": "id",
-      "status": "partial",
-      "scope": "Positional id(value) for adopted arena objects and None/bool singletons in classes-source/1; stable across collection, mutation and persistent callbacks.",
-      "gaps": "Unboxed integer identity and address/cross-session guarantees remain outside this finite contract.",
+      "status": "supported",
+      "scope": "Positional id(value) for adopted arena objects, canonically interned integers and None/bool singletons in classes-source/1; aliases and is agree across collection, cells, containers and persistent callbacks.",
+      "gaps": "No address, exact interning-policy or cross-session guarantee.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-OBJECT-01"
-      ],
+      "next_tasks": [],
       "probes": [
         "builtin-id"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/reflection.json:identity-alias"
+        "tests/fixtures/interpreter/reflection.json:identity-alias",
+        "tests/fixtures/interpreter/integer-identity.json:integer-alias",
+        "tests/fixtures/interpreter/integer-identity.json:live-identities-do-not-collide"
       ]
     },
     {

@@ -25,7 +25,7 @@ observations remain unchanged.
 
 This is classes-source/1 and bytecode 5. Listing numeric methods, native metadata
 or serialization names adopts none of their unread APIs. Core-source admission,
-unboxed integer identity, other default layouts, wrapper namespaces, dynamic source and native async/host
+other default layouts, wrapper namespaces, dynamic source and native async/host
 work retain their separate contracts. No dependency, host grant, release,
 publication or deployment is included.
 
@@ -45,3 +45,5 @@ a waiting core-profile update. The [payload record](measurements/2026-10-29-nume
 verifies the exact 38-file example. These are finite semantic/source/payload
 observations. Repeated directories and large numeric expressions retain the
 configured execution budgets.
+
+O75 adopts integer receiver identity, including detached numeric directory handles; see [integer identity](interpreter-integer-identity.md).

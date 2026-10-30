@@ -343,3 +343,16 @@ changes invalidate obsolete cell maps without retaining private activation stack
 Class code now stores its original definition line. All eight composed work and
 instruction observations remain unchanged; earlier storage observations remain
 in `accounting_10_cases`.
+
+## Integer identity accounting revision 12
+
+O75 retains unboxed arbitrary-precision arithmetic and canonicalizes integer
+identity by numeric value within one arena. `id` lazily allocates an internal
+record: 64 bytes plus two per character of its signed integer and identity
+counter. The cost includes the registry entry. Reachable integer edges trace
+that record; the registry itself is not a root. Collection reclaims records with
+no live scalar edges, and close clears the registry. Failed allocations publish
+neither record nor counter. Integer `is` charges both operands' digit work;
+ordinary numeric/hash storage and operations retain their prior costs.
+The eight composed observations are unchanged and retained in
+`accounting_11_cases`. No addresses or interning-policy match is promised.

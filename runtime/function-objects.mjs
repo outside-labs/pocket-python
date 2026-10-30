@@ -136,6 +136,10 @@ export class ProtocolIteratorValue {
   }
 }
 export class NotImplementedValue {}
+// Internal canonical scalar identity record; never a source-visible value.
+export class IntegerIdentityRecord {
+  constructor(integer, identity) { this.integer = integer; this.identity = identity; Object.freeze(this); }
+}
 export class ExceptionValue {
   constructor(name, args, message) {
     this.name = name; this.args = args; this.message = message;

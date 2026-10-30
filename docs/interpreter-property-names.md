@@ -14,8 +14,8 @@ explicit rebinding, actual property receiver validation, native names/owner
 metadata, identity, equality and hashing. It accepts two positional arguments
 after its receiver; keywords and invalid arity/receivers raise TypeError.
 Neither the owner nor the name invokes read, truth, equality or type-check hooks.
-Unboxed integer identity retains its existing refusal; numeric names preserve
-their value without adopting interning.
+[O75 integer identity](interpreter-integer-identity.md) preserves numeric name
+aliases through the canonical integer identity model.
 
 Getter-name lookup runs only when needed, can return arbitrary adopted values,
 and preserves AttributeError-only optional lookup semantics. Explicit None is

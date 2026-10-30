@@ -141,3 +141,5 @@ function field. Functions without dictionary access or custom attributes retain
 their accounting/3 layout. The eight composed cases do not access function
 dictionaries and keep their existing observations. Replacement validates the
 new graph before committing; failed transfers restore the prior dictionary.
+
+O75 adds lazy, collectable canonical integer identity records under [execution-accounting/12](execution-contract.md#integer-identity-accounting-revision-12). The registry traces only live scalar edges and cannot retain unreachable integers; ordinary scalar storage keeps its conservative per-edge cost.
