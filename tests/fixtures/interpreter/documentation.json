@@ -7,7 +7,8 @@
     "O41",
     "O42",
     "O71",
-    "O72"
+    "O72",
+    "O87"
   ],
   "cases": [
     {
@@ -431,7 +432,7 @@
     },
     {
       "id": "property-subclass",
-      "stage": "Future",
+      "stage": "O87",
       "source": "class P(property): pass\nprint(P(doc=\"text\").__doc__)\n",
       "stdout": "text\n"
     },
