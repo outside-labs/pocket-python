@@ -135,7 +135,7 @@ for (const fixture of corpus.cases.filter(c => corpus.implemented_stages.include
     const result = await run(fixture.source);
     assert.equal(result.stdout, fixture.stdout);
     assert.equal(result.error?.type, fixture.error_type, JSON.stringify(result.error));
-    closed(result.closed);
+    if (result.closed) closed(result.closed); else assert.equal(result.error?.code, 'SYNTAX');
   });
 
 test('identities survive collection at every instruction and generator suspension', async () => {
@@ -209,10 +209,9 @@ test('recursive snapshot graphs share real memory and work budgets', async () =>
   }
 });
 
-test('class body namespaces retain their separate admission boundary', async () => {
-  for (const source of ['class A:\n locals()\n']) {
-    const result = await run(source); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
-  }
+test('class body locals share the live dictionary', async () => {
+  const result = await run('class A:\n print(locals() is vars())\n');
+  assert.equal(result.stdout, 'True\n'); assert.equal(result.error, undefined); closed(result.closed);
 });
 
 test('generator-expression snapshots retain iterator and target owners through close and collection', async () => {

@@ -60,6 +60,8 @@ class Compiler {
       if (["Function", "Lambda"].includes(value.kind)) {
         const params = Object.fromEntries(Object.entries(value.params).map(([key, group]) => [key,
           group.map(param => ({...param, name: name(param.name, owner, param), value: rewrite(param.value, owner)}))]));
+        if (value.walrusTargets) value = {...value, walrusTargets: value.walrusTargets.map(key => name(key, owner, value)),
+          comprehensionTargets: value.comprehensionTargets.map(key => name(key, owner, value))};
         const names = Object.values(params).flat().map(param => param.name);
         if (new Set(names).size !== names.length) this.fail("Duplicate function parameter after name mangling.", value, "SYNTAX", "bind");
         return {...value, bindingName: name(value.name, owner, value), params, body: rewrite(value.body, owner),
@@ -70,6 +72,7 @@ class Compiler {
           bindingName: name(alias.asname || (value.specifier === null ? alias.name.split(".")[0] : alias.name), owner, value)}))};
       const result = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, key === "span" ? child : rewrite(child, owner)]));
       if (["Name", "Attribute", "NamedExpression"].includes(value.kind)) result.name = name(value.name, owner, value);
+      if (value.kind === "Attribute") result.staticAttributeName = value.name;
       if (value.kind === "Handler" && value.alias) result.alias = name(value.alias, owner, value);
       if (value.kind === "Declaration") result.names = value.names.map(key => name(key, owner, value));
       return result;
@@ -83,14 +86,25 @@ class Compiler {
       qualname: parent === null ? "<module>" : !parent.parent ? node.name :
         parent.qualname + (parent.node.kind === "Class" ? "." : ".<locals>.") + node.name};
     this.scopes.push(scope); this.scopeOf.set(node, scope);
+    if (node.walrusTargets?.length) {
+      let owner = parent;
+      while (owner && ["<listcomp>", "<dictcomp>", "<setcomp>", "<genexpr>"].includes(owner.node.name)) owner = owner.parent;
+      if (owner?.node.kind === "Class") this.fail("Assignment expressions in comprehensions cannot bind a class namespace.", node, "SYNTAX", "bind");
+      for (const key of node.walrusTargets) {
+        for (let outer = scope; outer && outer !== owner; outer = outer.parent)
+          if (outer.node.comprehensionTargets?.includes(key)) this.fail("Assignment expression rebinds a comprehension iteration variable.", node, "SYNTAX", "bind");
+        if (!owner?.parent || owner.globals.has(key)) scope.globals.add(key);
+        else scope.nonlocals.add(key);
+        if (!owner.globals.has(key) && !owner.nonlocals.has(key)) owner.locals.add(key);
+        owner.assigned.add(key);
+      }
+    }
     scope.classContext = node.kind === "Class" || !!parent?.classContext;
     if (scope.qualname.length > 256) this.fail("Qualified function name budget exceeded.", node, "COMPILE_BUDGET", "bind");
     if (["Function", "Lambda"].includes(node.kind)) for (const group of Object.values(node.params)) for (const param of group) scope.locals.add(param.name);
     if (node.kind === "Class") { scope.locals.add("__module__"); scope.locals.add("__qualname__"); }
     if (this.classes && node.kind === "Class" && docstring(node)) scope.locals.add("__doc__");
     const binding = (name, site) => {
-      if (node.kind === "Class" && ["__module__", "__qualname__"].includes(name))
-        this.fail("Class metadata overrides are outside C1.", site, "UNSUPPORTED", "bind");
       scope.assigned.add(name);
       if (!scope.globals.has(name) && !scope.nonlocals.has(name)) scope.locals.add(name);
     };
@@ -109,7 +123,6 @@ class Compiler {
             this.fail("A parameter conflicts with a scope declaration.", value, "SYNTAX", "bind");
           if ((global ? scope.nonlocals : scope.globals).has(key)) this.fail("A name is both global and nonlocal.", value, "SYNTAX", "bind");
           if (scope.uses.has(key) || scope.assigned.has(key)) this.fail("A name is used or assigned before its scope declaration.", value, "SYNTAX", "bind");
-          if (node.kind === "Class" && ["__module__", "__qualname__"].includes(key)) this.fail("Class metadata declarations require a later construction stage.", value, "UNSUPPORTED", "bind");
           (global ? scope.globals : scope.nonlocals).add(key); scope.locals.delete(key);
         }
         return;
@@ -142,17 +155,34 @@ class Compiler {
       if (value.kind) this.charge(value);
       const node = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, key === "span" ? child : lower(child)]));
       if (node.kind !== "Comprehension") return node;
-      const forbidden = child => {
+      const walrusTargets = new Set(), comprehensionTargets = new Set();
+      const targetNames = value => {
+        if (value.kind === "Name") comprehensionTargets.add(value.name);
+        else if (["Tuple", "List"].includes(value.kind)) value.items.forEach(targetNames);
+        else if (value.kind === "Starred") targetNames(value.value);
+      };
+      node.clauses.forEach(clause => targetNames(clause.target));
+      const iterableWalrus = value => {
+        if (!value || typeof value !== "object") return;
+        if (value.kind === "NamedExpression") this.fail("Assignment expressions cannot appear in comprehension iterables.", value, "SYNTAX", "bind");
+        if (value.kind === "Lambda") return;
+        Object.values(value).forEach(iterableWalrus);
+      };
+      node.clauses.forEach(clause => iterableWalrus(clause.iterable));
+      const forbidden = (child, defaults = false) => {
         if (!child || typeof child !== "object") return;
         if (child.kind === "Lambda") {
           // Defaults run in the containing comprehension; only the body has
           // the lambda's independent binding scope.
           for (const group of Object.values(child.params)) for (const param of group)
-            if (param.value) forbidden(param.value);
+            if (param.value) forbidden(param.value, true);
           return;
         }
-        if (["NamedExpression", "Yield"].includes(child.kind)) this.fail("Yield and assignment expressions in comprehensions require a separate scope stage.", child);
-        Object.values(child).forEach(forbidden);
+        if (child.kind === "Yield") this.fail("Yield and assignment expressions in comprehension defaults require a separate scope stage.", child);
+        if (child.kind === "NamedExpression") {
+          walrusTargets.add(child.name);
+        }
+        Object.values(child).forEach(value => forbidden(value, defaults));
       };
       forbidden(node);
       const make = (kind, fields = {}) => ({kind, span: node.span, ...fields});
@@ -170,7 +200,7 @@ class Compiler {
       }
       if (node.form !== "generator") body = [make("Assign", {targets: [name(result)], value: make(node.form === "dict" ? "Dict" : node.form === "set" ? "Set" : "List", node.form === "dict" ? {entries: []} : {items: []})}),
         ...body, make("Return", {value: name(result)})];
-      const callable = make("Lambda", {name: {list: "<listcomp>", dict: "<dictcomp>", set: "<setcomp>", generator: "<genexpr>"}[node.form],
+      const callable = make("Lambda", {walrusTargets: [...walrusTargets], comprehensionTargets: [...comprehensionTargets], name: {list: "<listcomp>", dict: "<dictcomp>", set: "<setcomp>", generator: "<genexpr>"}[node.form],
         params: {posonly: [{name: parameter, value: null, span: node.span}], positional: [], kwonly: [], vararg: [], kwarg: []}, body});
       return make("ComprehensionCall", {callable, iterable: node.clauses[0].iterable});
     };
@@ -269,6 +299,23 @@ class Compiler {
     if (scope.locals.size > FUNCTION_LIMITS.names) this.fail("Local name budget exceeded.", node, "COMPILE_BUDGET");
     return name;
   }
+  staticAttributes(node) {
+    const names = new Set();
+    const target = value => {
+      if (value.kind === "Attribute" && value.value.kind === "Name" && value.value.name === "self") names.add(value.staticAttributeName ?? value.name);
+      else if (["Tuple", "List"].includes(value.kind)) value.items.forEach(target);
+      else if (value.kind === "Starred") target(value.value);
+    };
+    const visit = (value, method = false) => {
+      if (!value || typeof value !== "object") return;
+      if (Array.isArray(value)) { value.forEach(item => visit(item, method)); return; }
+      if (value.kind === "Class" && value !== node) return;
+      if (value.kind === "Function") method = true;
+      if (method && value.kind === "Assign") value.targets.forEach(target);
+      for (const [key, child] of Object.entries(value)) if (key !== "span") visit(child, method);
+    };
+    visit(node); return [...names].sort(nameOrder);
+  }
   function(scope) {
     const node = scope.node, isModule = node.kind === "Module", isClass = node.kind === "Class";
     const document = this.classes ? docstring(node) : null;
@@ -287,6 +334,9 @@ class Compiler {
       ...(this.classes ? {kind: isModule ? "module" : isClass ? "class" : "function"} : {}),
       ...(scope.globals.size ? {globals: [...scope.globals].sort()} : {}),
       ...(scope.nonlocals.size ? {nonlocals: [...scope.nonlocals].sort()} : {})};
+    const staticAttributes = isClass ? this.staticAttributes(node) : [];
+    if (staticAttributes.length) fn.staticAttributes = staticAttributes;
+    if (isClass && node.decorators?.length) fn.firstLine = node.decorators[0].span[0];
     if (node.kind === "Function" && document) fn.doc = this.constant(documentation, document);
     this.program.functions[scope.index] = fn;
     const makeBlock = (nodes, expression = false) => {

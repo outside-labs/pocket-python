@@ -15,7 +15,8 @@
     "O47",
     "O49",
     "O61",
-    "O67"
+    "O67",
+    "O68"
   ],
   "cases": [
     {
@@ -450,7 +451,7 @@
     },
     {
       "id": "class-locals-live-deferred",
-      "stage": "Future",
+      "stage": "O68",
       "source": "class A:\n print(locals() is locals())\n",
       "stdout": "True\n"
     },
@@ -1396,7 +1397,7 @@
     },
     {
       "id": "comprehension-iterable-walrus-deferred",
-      "stage": "Future",
+      "stage": "O68",
       "source": "def f(p):\n r=[locals() for x in (a:=[1])]\n print(list(r[0])==[\"p\",\"a\",\"x\"],r[0][\"a\"][0])\nf(7)\n",
       "stdout": "",
       "error_type": "SyntaxError"
@@ -1499,7 +1500,7 @@
     },
     {
       "id": "comprehension-class-iterable-live-refusal",
-      "stage": "Future",
+      "stage": "O68",
       "source": "class A:\n r=[locals() for x in [vars()]]\n",
       "stdout": ""
     },

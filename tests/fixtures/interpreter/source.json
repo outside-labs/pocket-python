@@ -565,6 +565,20 @@
       "features": [
         "source.grammar"
       ]
+    },
+    {
+      "id": "adopted-walrus-comprehension",
+      "source": "print('must not run')\nx=[(z:=n) for n in []]",
+      "features": [
+        "source.scope.comprehension-walrus"
+      ]
+    },
+    {
+      "id": "adopted-walrus-set-comprehension",
+      "source": "print('must not run')\nx={(z:=n) for n in []}",
+      "features": [
+        "source.scope.comprehension-walrus"
+      ]
     }
   ],
   "boundaries": [
@@ -583,24 +597,6 @@
       "features": [
         "source.feature-boundary"
       ]
-    },
-    {
-      "id": "unsupported-comprehension",
-      "source": "print('must not run')\nx=[(z:=n) for n in []]",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ],
-      "phase": "compile"
-    },
-    {
-      "id": "unsupported-set-comprehension",
-      "source": "print('must not run')\nx={(z:=n) for n in []}",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ],
-      "phase": "compile"
     },
     {
       "id": "unsupported-import-star",

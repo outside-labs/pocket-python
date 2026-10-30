@@ -36,6 +36,7 @@ SUITES = {
 }
 
 CORPORA = (
+    'class-body-namespaces',
     'module-namespaces',
     'iterator-type-directories',
     'callable-type-directories',
@@ -50,9 +51,10 @@ CORPORA = (
 )
 CORE_CORPORA = {'sequences', 'function-binding', 'ordinary-syntax', 'value-families',
                 'generators', 'repetition', 'ordering'}
-PARKED_CORPORA = {'module-namespaces', 'iterator-type-directories', 'callable-type-directories', 'container-type-directories', 'numeric-type-directories', 'instance-directories', 'class-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'method-directories', 'function-directories', 'class-namespaces', 'instance-dictionaries', 'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
+PARKED_CORPORA = {'class-body-namespaces', 'module-namespaces', 'iterator-type-directories', 'callable-type-directories', 'container-type-directories', 'numeric-type-directories', 'instance-directories', 'class-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'method-directories', 'function-directories', 'class-namespaces', 'instance-dictionaries', 'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
                   'execution', 'object-hashing'}
 REFERENCE_CORPORA = {
+    'class-body-namespaces',
     'module-namespaces',
     'iterator-type-directories',
     'callable-type-directories',

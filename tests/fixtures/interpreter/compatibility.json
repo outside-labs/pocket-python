@@ -9810,6 +9810,84 @@
         "stdout": "26 True\n",
         "error_type": null
       }
+    },
+    {
+      "id": "class-body-namespaces-body-write",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n ns[\"value\"]=[7]\n print(value is ns[\"value\"])\n value.append(9)\nprint(*C.value)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True\n7 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True\n7 9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "class-body-namespaces-body-primitive-keys",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n key=(7,9)\n ns[key]=[17]\n ns[7]=19\nprint(C.__dict__[7],C.__dict__[(7,9)][0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "19 17\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "19 17\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "class-body-namespaces-body-free-cell-fallback",
+      "source": "__name__=\"app\"\ndef outer(value):\n class C:\n  ns=locals()\n  print(value)\n  ns[\"value\"]=7\n  print(value)\n  del ns[\"value\"]\n  print(value)\nouter(19)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "19\n7\n19\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "19\n7\n19\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "class-body-namespaces-body-metaclass-retained-original",
+      "source": "__name__=\"app\"\nsaved=[]\nclass M(type):\n def __new__(meta,name,bases,ns):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,ns)\nclass C(metaclass=M):\n ns=locals()\n value=7\nprint(saved[-1] is C.ns,C.value)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 7\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 7\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "class-body-namespaces-body-callback-key-lookup",
+      "source": "__name__=\"app\"\nclass Key:\n def __hash__(self): return hash(\"value\")\n def __eq__(self,name): return name==\"value\"\nclass C:\n ns=locals()\n ns[Key()]=7\n print(value)\n value=9\n print(ns[\"value\"])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "7\n9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "7\n9\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "class-body-namespaces-module-comprehension-walrus-live",
+      "source": "__name__=\"app\"\nns=globals()\nresult=[(value:=item) for item in [7,9]]\nprint(value,ns[\"value\"],*result)\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "9 9 7 9\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "9 9 7 9\n",
+        "error_type": null
+      }
     }
   ]
 }

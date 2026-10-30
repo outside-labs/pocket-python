@@ -1,0 +1,408 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-class-body-namespaces/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O68"
+  ],
+  "cases": [
+    {
+      "id": "body-aliases",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n print(ns is locals(),ns is vars(),ns is globals())\nprint(C.ns is C.__dict__)\n",
+      "stage": "O68",
+      "stdout": "True True False\nFalse\n"
+    },
+    {
+      "id": "body-write",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n ns[\"value\"]=[7]\n print(value is ns[\"value\"])\n value.append(9)\nprint(*C.value)\n",
+      "stage": "O68",
+      "stdout": "True\n7 9\n"
+    },
+    {
+      "id": "body-delete-rebind",
+      "source": "__name__=\"app\"\nvalue=19\nclass C:\n ns=locals()\n ns[\"value\"]=7\n print(value)\n del ns[\"value\"]\n print(value)\n value=9\n print(ns[\"value\"])\n del value\n print(\"value\" in ns)\n",
+      "stage": "O68",
+      "stdout": "7\n19\n9\nFalse\n"
+    },
+    {
+      "id": "body-primitive-keys",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n key=(7,9)\n ns[key]=[17]\n ns[7]=19\nprint(C.__dict__[7],C.__dict__[(7,9)][0])\n",
+      "stage": "O68",
+      "stdout": "19 17\n"
+    },
+    {
+      "id": "body-implicit-metadata",
+      "source": "__name__=\"app\"\nclass C:\n print(*locals())\n ns=locals()\nprint(*C.ns)\n",
+      "stage": "O68",
+      "stdout": "__module__ __qualname__ __firstlineno__\n__module__ __qualname__ __firstlineno__ ns __static_attributes__\n"
+    },
+    {
+      "id": "body-firstline",
+      "source": "__name__=\"app\"\nclass C:\n print(__firstlineno__)\n ns=locals()\n print(ns[\"__firstlineno__\"])\n",
+      "stage": "O68",
+      "stdout": "2\n2\n"
+    },
+    {
+      "id": "body-firstline-delete",
+      "source": "__name__=\"app\"\nclass C:\n del __firstlineno__\n ns=locals()\n print(\"__firstlineno__\" in ns)\n",
+      "stage": "O68",
+      "stdout": "False\n"
+    },
+    {
+      "id": "body-firstline-write",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n ns[\"__firstlineno__\"]=17\n print(__firstlineno__)\n",
+      "stage": "O68",
+      "stdout": "17\n"
+    },
+    {
+      "id": "body-order-delete-reinsert",
+      "source": "__name__=\"app\"\nclass C:\n z=7\n a=9\n del z\n z=11\n ns=locals()\nprint(*[k for k in C.ns if k==\"z\" or k==\"a\"])\n",
+      "stage": "O68",
+      "stdout": "a z\n"
+    },
+    {
+      "id": "body-stored-function-not-bound",
+      "source": "__name__=\"app\"\ndef f(): return 17\nclass C:\n locals()[\"f\"]=f\n print(f())\nprint(C.f())\n",
+      "stage": "O68",
+      "stdout": "17\n17\n"
+    },
+    {
+      "id": "body-descriptor-not-bound",
+      "source": "__name__=\"app\"\nclass D:\n def __get__(self,obj,owner): print(\"bound\"); return 17\nd=D()\nclass C:\n locals()[\"value\"]=d\n print(value is d)\nprint(C.value)\n",
+      "stage": "O68",
+      "stdout": "True\nbound\n17\n"
+    },
+    {
+      "id": "body-global-declaration",
+      "source": "__name__=\"app\"\nvalue=19\nclass C:\n global value\n ns=locals()\n ns[\"value\"]=7\n print(value)\n value=9\n print(ns[\"value\"])\nprint(value,C.value)\n",
+      "stage": "O68",
+      "stdout": "19\n7\n9 7\n"
+    },
+    {
+      "id": "body-nonlocal-declaration",
+      "source": "__name__=\"app\"\ndef outer():\n value=19\n class C:\n  nonlocal value\n  ns=locals()\n  ns[\"value\"]=7\n  print(value)\n  value=9\n  print(ns[\"value\"])\n print(value,C.value)\nouter()\n",
+      "stage": "O68",
+      "stdout": "7\n7\n9 7\n"
+    },
+    {
+      "id": "body-free-cell-fallback",
+      "source": "__name__=\"app\"\ndef outer(value):\n class C:\n  ns=locals()\n  print(value)\n  ns[\"value\"]=7\n  print(value)\n  del ns[\"value\"]\n  print(value)\nouter(19)\n",
+      "stage": "O68",
+      "stdout": "19\n7\n19\n"
+    },
+    {
+      "id": "body-transitive-cell-mask",
+      "source": "__name__=\"app\"\nvalue=23\ndef outer(value):\n class C:\n  ns=locals()\n  def f(): return value\n  print(value)\n  value=7\n  del ns[\"value\"]\n  print(value)\n return C\nC=outer(19)\nprint(C.f())\n",
+      "stage": "O68",
+      "stdout": "23\n23\n19\n"
+    },
+    {
+      "id": "body-private-names",
+      "source": "__name__=\"app\"\nclass C:\n __value=7\n ns=locals()\n ns[\"_C__value\"]=9\n print(__value,\"__value\" in ns)\n def read(self): return self.__value\nprint(C().read())\n",
+      "stage": "O68",
+      "stdout": "9 False\n9\n"
+    },
+    {
+      "id": "body-exception-cleanup",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n try: 1//0\n except ZeroDivisionError as error: print(\"error\" in ns)\n print(\"error\" in ns)\n",
+      "stage": "O68",
+      "stdout": "True\nFalse\n"
+    },
+    {
+      "id": "body-loop-bindings",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n for value in [7,9]: print(value,ns[\"value\"])\n",
+      "stage": "O68",
+      "stdout": "7 7\n9 9\n"
+    },
+    {
+      "id": "body-nested-class",
+      "source": "__name__=\"app\"\nclass Outer:\n ns=locals()\n ns[\"value\"]=7\n class Inner:\n  own=locals()\n  value=9\n print(value,Inner.value,ns is Inner.own)\n",
+      "stage": "O68",
+      "stdout": "7 9 False\n"
+    },
+    {
+      "id": "body-method-does-not-close-over-class-map",
+      "source": "__name__=\"app\"\nvalue=23\nclass C:\n ns=locals()\n ns[\"value\"]=7\n def f(self): return value\nprint(C().f())\n",
+      "stage": "O68",
+      "stdout": "23\n"
+    },
+    {
+      "id": "body-classcell-alias",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n def f(self): return __class__\nprint(\"__classcell__\" in C.ns,\"__classcell__\" in C.__dict__,C().f() is C)\n",
+      "stage": "O68",
+      "stdout": "True False True\n"
+    },
+    {
+      "id": "body-classcell-after-dictionary-growth",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n for value in range(12): ns[value]=[value]\n def f(self): return __class__\nprint(C().f() is C,C.ns[7][0])\n",
+      "stage": "O68",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "body-static-attributes",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n def f(self):\n  self.z=7\n  self.a=9\nprint(*C.ns[\"__static_attributes__\"])\n",
+      "stage": "O68",
+      "stdout": "a z\n"
+    },
+    {
+      "id": "body-static-private-and-nested",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n def f(self):\n  self.__z=7\n  def inner(): self.a=9\nprint(*C.ns[\"__static_attributes__\"])\n",
+      "stage": "O68",
+      "stdout": "__z a\n"
+    },
+    {
+      "id": "body-static-delete-augment",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n def f(self):\n  del self.z\n  self.a+=1\nprint(len(C.ns[\"__static_attributes__\"]))\n",
+      "stage": "O68",
+      "stdout": "0\n"
+    },
+    {
+      "id": "body-static-namespace-overwrite",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n ns[\"__static_attributes__\"]=7\n def f(self): self.value=9\nprint(*C.ns[\"__static_attributes__\"])\n",
+      "stage": "O68",
+      "stdout": "value\n"
+    },
+    {
+      "id": "body-dir-copy",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n ns[\"z\"]=7\n names=dir()\n ns[\"a\"]=9\n print(\"z\" in names,\"a\" in names,\"a\" in dir())\n",
+      "stage": "O68",
+      "stdout": "True False True\n"
+    },
+    {
+      "id": "body-dir-nonstring",
+      "source": "__name__=\"app\"\nclass C:\n locals()[7]=9\n dir()\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "body-original-dictionary-independent-after-type-copy",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n value=7\nC.ns[\"value\"]=9\nprint(C.value,C.ns[\"value\"])\nC.value=11\nprint(C.value,C.ns[\"value\"])\n",
+      "stage": "O68",
+      "stdout": "7 9\n11 9\n"
+    },
+    {
+      "id": "body-inserted-descriptor-notified",
+      "source": "__name__=\"app\"\nclass D:\n def __set_name__(self,owner,name): print(name)\nclass C:\n ns=locals()\n ns[\"value\"]=D()\n",
+      "stage": "O68",
+      "stdout": "value\n"
+    },
+    {
+      "id": "body-saved-on-failure",
+      "source": "__name__=\"app\"\nsaved=[]\ntry:\n class C:\n  ns=locals()\n  saved.append(ns)\n  ns[\"value\"]=7\n  raise ValueError(\"body\")\nexcept ValueError: print(saved[0][\"value\"],\"C\" in globals())\n",
+      "stage": "O68",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "body-qualname-update",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n ns[\"__qualname__\"]=\"Other\"\nprint(C.__qualname__)\n",
+      "stage": "O68",
+      "stdout": "Other\n"
+    },
+    {
+      "id": "body-qualname-invalid",
+      "source": "__name__=\"app\"\nclass C:\n locals()[\"__qualname__\"]=7\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "body-qualname-deleted",
+      "source": "__name__=\"app\"\ndef outer():\n class C:\n  ns=locals()\n  del ns[\"__qualname__\"]\n return C\nprint(outer().__qualname__)\n",
+      "stage": "O68",
+      "stdout": "C\n"
+    },
+    {
+      "id": "body-module-alias",
+      "source": "__name__=\"app\"\nvalue=[7]\nclass C:\n locals()[\"__module__\"]=value\nprint(C.__module__ is value)\n",
+      "stage": "O68",
+      "stdout": "True\n"
+    },
+    {
+      "id": "body-module-source-overrides",
+      "source": "__name__=\"app\"\nclass C:\n __module__=\"custom\"\n __qualname__=\"Other\"\n ns=locals()\nprint(C.__module__,C.__qualname__)\n",
+      "stage": "O68",
+      "stdout": "custom Other\n"
+    },
+    {
+      "id": "body-metaclass-retained-original",
+      "source": "__name__=\"app\"\nsaved=[]\nclass M(type):\n def __new__(meta,name,bases,ns):\n  saved.append(ns)\n  return type.__new__(meta,name,bases,ns)\nclass C(metaclass=M):\n ns=locals()\n value=7\nprint(saved[-1] is C.ns,C.value)\n",
+      "stage": "O68",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "body-callback-key-lookup",
+      "source": "__name__=\"app\"\nclass Key:\n def __hash__(self): return hash(\"value\")\n def __eq__(self,name): return name==\"value\"\nclass C:\n ns=locals()\n ns[Key()]=7\n print(value)\n value=9\n print(ns[\"value\"])\n",
+      "stage": "O68",
+      "stdout": "7\n9\n"
+    },
+    {
+      "id": "body-callback-key-error",
+      "source": "__name__=\"app\"\nclass Key:\n def __hash__(self): return hash(\"value\")\n def __eq__(self,name): raise ValueError(\"key\")\nclass C:\n ns=locals()\n ns[Key()]=7\n print(value)\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "body-comprehension-first-iterable",
+      "source": "__name__=\"app\"\nclass C:\n ns=locals()\n ns[\"values\"]=[7,9]\n result=[value for value in values]\n print(*result,\"value\" in ns)\n",
+      "stage": "O68",
+      "stdout": "7 9 False\n"
+    },
+    {
+      "id": "body-comprehension-first-iterable-alias",
+      "source": "__name__=\"app\"\nclass C:\n result=[locals() for value in [locals()]]\n ns=locals()\nprint(C.result[0] is C.ns,\"value\" in C.result[0])\n",
+      "stage": "O68",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "body-comprehension-isolated-lookup",
+      "source": "__name__=\"app\"\nvalue=23\nclass C:\n ns=locals()\n ns[\"value\"]=7\n result=[value for item in [1]]\n print(*result)\n",
+      "stage": "O68",
+      "stdout": "23\n"
+    },
+    {
+      "id": "body-comprehension-walrus-error",
+      "source": "__name__=\"app\"\nprint(\"must not execute\")\nclass C:\n result=[(value:=item) for item in [1]]\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "body-generator-walrus-error",
+      "source": "__name__=\"app\"\nprint(\"must not execute\")\nclass C:\n result=((value:=item) for item in [1])\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "module-comprehension-walrus-live",
+      "source": "__name__=\"app\"\nns=globals()\nresult=[(value:=item) for item in [7,9]]\nprint(value,ns[\"value\"],*result)\n",
+      "stage": "O68",
+      "stdout": "9 9 7 9\n"
+    },
+    {
+      "id": "function-comprehension-walrus-cell",
+      "source": "__name__=\"app\"\ndef outer():\n result=[(value:=item) for item in [7,9]]\n print(value,*result)\n print(*locals())\nouter()\n",
+      "stage": "O68",
+      "stdout": "9 7 9\nvalue result\n"
+    },
+    {
+      "id": "nested-comprehension-walrus",
+      "source": "__name__=\"app\"\nns=globals()\nresult=[[(value:=item) for item in [7,9]] for outer in [1]]\nprint(value,ns[\"value\"],*result[0])\n",
+      "stage": "O68",
+      "stdout": "9 9 7 9\n"
+    },
+    {
+      "id": "comprehension-walrus-iterator-error",
+      "source": "__name__=\"app\"\nprint(\"must not execute\")\nresult=[(item:=7) for item in [1]]\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "comprehension-walrus-iterable-error",
+      "source": "__name__=\"app\"\nprint(\"must not execute\")\nresult=[item for item in (values:=[1])]\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "body-locals-signature",
+      "source": "__name__=\"app\"\nclass C: locals(7)\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "body-vars-signature",
+      "source": "__name__=\"app\"\nclass C: vars(7,9)\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "body-dir-signature",
+      "source": "__name__=\"app\"\nclass C: dir(7,9)\n",
+      "stage": "O68",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "body-metadata-global-declarations",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nclass C:\n global __module__,__qualname__\n ns=locals()\nprint(C.__qualname__,C.__module__,__module__,__qualname__,*C.ns)\n",
+      "stdout": "C app app C __firstlineno__ ns __static_attributes__\n"
+    },
+    {
+      "id": "body-metadata-decorator-line",
+      "stage": "O68",
+      "source": "__name__=\"app\"\ndef deco(cls): return cls\n@deco\nclass C:\n ns=locals()\nprint(C.ns[\"__firstlineno__\"])\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "body-global-module-value-alias",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nsaved=[7]\nglobals()[\"__name__\"]=saved\nclass C:\n ns=locals()\nprint(C.ns[\"__module__\"] is saved,C.__module__ is saved)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-method-comprehension-walrus-private",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nclass C:\n def f(self):\n  result=[(__value:=x) for x in [7,9]]\n  print(__value,*result)\nC().f()\n",
+      "stdout": "9 7 9\n"
+    },
+    {
+      "id": "function-default-comprehension-walrus",
+      "stage": "O68",
+      "source": "__name__=\"app\"\ndef outer():\n values=[lambda x=(y:=7):x for item in [1]]\n print(y,values[0]())\nouter()\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "class-default-comprehension-walrus-error",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nprint(\"must not execute\")\nclass C:\n values=[lambda x=(y:=7):x for item in [1]]\n",
+      "stdout": "",
+      "error_type": "SyntaxError"
+    },
+    {
+      "id": "generator-comprehension-walrus-late",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nns=globals()\nvalue=19\ng=((value:=item) for item in [7,9])\nprint(value,next(g),value,next(g),value)\n",
+      "stdout": "19 7 7 9 9\n"
+    },
+    {
+      "id": "class-nonlocal-delete",
+      "stage": "O68",
+      "source": "__name__=\"app\"\ndef outer():\n value=19\n class C:\n  nonlocal value\n  ns=locals()\n  ns[\"value\"]=7\n  del value\n  print(value,ns[\"value\"])\nouter()\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "body-global-firstline",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nclass C:\n global __firstlineno__\n ns=locals()\nprint(\"__firstlineno__\" in C.ns,\"__firstlineno__\" in globals())\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "body-global-static-attributes",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nclass C:\n global __static_attributes__\n ns=locals()\n def f(self): self.x=7\nprint(\"__static_attributes__\" in C.ns,\"__static_attributes__\" in globals())\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "body-global-classcell",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nclass C:\n global __classcell__\n ns=locals()\n def f(self): return __class__\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "body-invalid-qualification-function",
+      "stage": "O68",
+      "source": "__name__=\"app\"\nclass C:\n def __qualname__(self): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    }
+  ]
+}

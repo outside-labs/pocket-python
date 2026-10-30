@@ -97,11 +97,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     environment.cells.set(name, cell); return () => environment.cells.delete(name);
   });
   const block = (frame, id) => frame.tasks.push({type: "block", block: frame.fn.blocks[id], pc: 0, stack: []});
-  const load = (frame, key) => {
-    const global = frame.fn.globals?.includes(key), local = global ? null : frame.locals.get(key), classBody = frame.fn.kind === "class";
+  const load = (frame, key, globalOnly = false) => {
+    const global = globalOnly || frame.fn.globals?.includes(key), local = global ? null : frame.locals.get(key), classBody = frame.fn.kind === "class";
     const cell = global ? environmentCell(frame.callable.globals, key) : local?.bound ? local : classBody && local ? environmentCell(frame.callable.globals, key) :
       local || frame.closure.get(key) || environmentCell(frame.callable.globals, key);
     if (cell?.bound) return cell.value;
+    if (!global && classBody && !frame.namespaceEnvironment && key === "__firstlineno__" && frame.namespaceOrder.has(key)) return values.int(BigInt(frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1));
     if (local && !classBody && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
     if (!global && frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
@@ -123,10 +124,27 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (!cell && create) { cell = allocate(Cell); state.temporaries.push(cell); addCell(environment, key, cell); }
     return cell;
   };
-  const nameDictionary = (frame, key) => !key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key) ||
+  const classNamespace = frame => {
+    if (frame.namespaceEnvironment) return frame.namespaceEnvironment.dictionary;
+    const environment = allocate(Environment); state.temporaries.push(environment);
+    if (frame.namespaceOrder.has("__firstlineno__") && !frame.locals.get("__firstlineno__")?.bound) {
+      const first = allocate(Cell); state.temporaries.push(first); setCell(first, values.int(BigInt(frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1)));
+      frame.locals.set("__firstlineno__", first);
+    }
+    environment.cells = frame.locals; environment.order = frame.namespaceOrder;
+    const layout = valueLayout(environment); memory.resize(environment, layout.bytes, layout.children);
+    const dictionary = values.environmentDictionary(environment);
+    frame.namespaceEnvironment = environment; return dictionary;
+  };
+  const className = (frame, key) => frame.fn.kind === "class" && !frame.fn.globals?.includes(key) && !key.startsWith("@source:");
+  const nameDictionary = (frame, key) => className(frame, key) && !frame.namespaceEnvironment && key === "__firstlineno__" && frame.namespaceOrder.has(key) ? null : className(frame, key) && frame.namespaceEnvironment ? frame.namespaceEnvironment.dictionary : !key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key) ||
     !frame.locals.has(key) && !frame.closure.has(key)) ? frame.callable.globals.dictionary : null;
   const store = (frame, key, value, bound = true, after = null) => {
     const environment = frame.callable.globals;
+    if (className(frame, key) && !frame.fn.nonlocals?.includes(key) && frame.namespaceEnvironment) {
+      const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
+      return dictionaryTask(frame.namespaceEnvironment.dictionary, name, state.current, after || continuation("name-stored"), 0, bound ? "set" : "discard", value);
+    }
     if (!key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key)) && environment.dictionary !== null) {
       const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
       return dictionaryTask(environment.dictionary, name, state.current, after || continuation("name-stored"), 0, bound ? "set" : "discard", value);
@@ -139,7 +157,33 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const dictionary = nameDictionary(frame, name);
     if (dictionary === null) { const value = load(frame, name); return after ? {value, after} : {value}; }
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
-    return {task: dictionaryTask(dictionary, key, site, continuation("global-name", {name, receiver: dictionary, after}), 0, "probe")};
+    return {task: dictionaryTask(dictionary, key, site, continuation(className(frame, name) && frame.namespaceEnvironment ? "class-name" : "global-name", {name, receiver: dictionary, after}), 0, "probe")};
+  };
+  const classQualification = () => {
+    const frame = state.frames.at(-1), value = values.string(Array.from(frame.fn.qualname, char => char.codePointAt(0))); state.temporaries.push(value);
+    const writing = store(frame, "__qualname__", value, true, continuation("class-firstline"));
+    return writing || classFirstline();
+  };
+  const classFirstline = () => {
+    const frame = state.frames.at(-1);
+    if (frame.fn.globals?.includes("__firstlineno__") || frame.fn.nonlocals?.includes("__firstlineno__"))
+      return store(frame, "__firstlineno__", values.int(BigInt(frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1)));
+    frame.namespaceOrder.add("__firstlineno__"); return null;
+  };
+  const classEnd = record => {
+    const frame = state.frames.at(-1);
+    while (record.position < record.names.length) {
+      const position = record.position++, name = record.names[position], item = record.items[position];
+      const writing = store(frame, name, item, true, continuation("class-end", record));
+      if (writing) return writing;
+    }
+    settle({kind: record.signal, value: record.value}); return null;
+  };
+  const enterClass = (record, rawModule, site) => {
+    const module = values.text(rawModule) ?? record.callable.pool.module.name;
+    enter(record.callable, new Map(), site, continuation("class", {...record, module}));
+    const writing = store(state.frames.at(-1), "__module__", rawModule, true, continuation("class-qualname"));
+    return writing || classQualification();
   };
   const handlerNext = (position, names, site) => {
     const frame = state.frames.at(-1), task = frame.tasks.at(-1), handlers = task.instruction[2];
@@ -224,7 +268,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       tasks: [], activeException: state.frames.at(-1)?.activeException || inheritedException, callsite,
       completion, namespaceOrder: fn.kind === "class" ? new Set() : null, returnInstruction: state.current?.instruction ?? null};
     frame.leave = memory.enter(() => [callable, ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
-      ...frame.tasks.flatMap(controlRoots), ...(frame.generator ? [frame.generator] : []), ...completionRoots(frame.completion, true)], {charge, fail: hard});
+      ...frame.tasks.flatMap(controlRoots), ...(frame.namespaceEnvironment ? [frame.namespaceEnvironment] : []), ...(frame.generator ? [frame.generator] : []), ...completionRoots(frame.completion, true)], {charge, fail: hard});
     state.frames.push(frame);
     // Keep the established cell allocation/root order; source local order is
     // independently carried by the verified function for namespace snapshots.
@@ -241,7 +285,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
-    setCell, load, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
+    setCell, load, loadName, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
     const generator = frame.generator, completion = frame.completion;
@@ -408,7 +452,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           void body;
           if (task.phase === "body" && signal.kind === "raise") {
             task.phase = "matching"; task.caught = signal.value; frame.activeException = signal.value; frame.ownsException = true;
-            if (frame.callable.globals.dictionary !== null) {
+            if (frame.callable.globals.dictionary !== null || frame.namespaceEnvironment) {
               task.handlerIndex = 0; const matching = handlerNext(0, [], state.current);
               if (matching) dispatch(matching); return;
             }
@@ -501,10 +545,30 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         continue;
       }
       if (frame.completion?.kind === "class") {
-        const namespace = new Map([...frame.namespaceOrder].filter(key => frame.locals.get(key).bound && !key.startsWith("@source:"))
-          .map(key => [key, frame.locals.get(key).value]));
+        const bodyDictionary = frame.namespaceEnvironment?.dictionary;
+        const routed = name => frame.fn.globals?.includes(name) || frame.fn.nonlocals?.includes(name);
+        if (!frame.namespaceFinished && (bodyDictionary || routed("__static_attributes__") || routed("__classcell__"))) {
+          frame.namespaceFinished = true;
+          const entries = [];
+          if (bodyDictionary || routed("__static_attributes__")) {
+            const names = (frame.fn.staticAttributes || []).map(name => {
+              const value = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(value); return value;
+            });
+            const tuple = values.tuple(names); state.temporaries.push(tuple); entries.push(["__static_attributes__", tuple]);
+          }
+          if (bodyDictionary && frame.fn.blocks.some(block => block.instructions.some(([op]) => ["function", "function-defaults"].includes(op)))) {
+            const cell = allocate(Cell); state.temporaries.push(cell); setCell(cell, bodyDictionary); entries.push(["__classdictcell__", cell]);
+          }
+          const cell = frame.locals.get("@source:class"); if (cell) entries.push(["__classcell__", cell]);
+          const pending = classEnd({names: entries.map(([name]) => name), items: entries.map(([,value]) => value), position: 0, signal: signal.kind, value: returned});
+          if (pending) dispatch(pending); return;
+        }
+        const namespace = bodyDictionary ? new Map(bodyDictionary.entries.map(entry => [values.text(entry.key) ?? entry.key, entry.value])
+          .filter(([key]) => !["__classdictcell__", "__classcell__"].includes(key))) :
+          new Map([...frame.namespaceOrder].filter(key => frame.locals.get(key)?.bound && !key.startsWith("@source:"))
+            .map(key => [key, frame.locals.get(key).value]));
         const completion = frame.completion;
-        state.temporaries.push(...namespace.values(), ...completion.bases, ...(completion.keywordValues ?? []));
+        state.temporaries.push(...namespace.values(), ...[...namespace.keys()].filter(key => typeof key !== "string"), ...(bodyDictionary ? [bodyDictionary] : []), ...completion.bases, ...(completion.keywordValues ?? []));
         if (completion.metaclass) state.temporaries.push(completion.metaclass);
         const classCell = frame.locals.get("@source:class");
         if (classCell) state.temporaries.push(classCell);
@@ -512,9 +576,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         frame.leave(); state.frames.pop();
         if (completion.invalidMetaclass) python("TypeError", "Metaclass is not callable");
         if (completion.metaclass instanceof ClassValue) {
-          const dictionary = values.dict([]); state.temporaries.push(dictionary);
-          for (const [key, value] of [...namespace, ...(classCell ? [["__classcell__", classCell]] : [])]) {
-            const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
+          const dictionary = bodyDictionary || values.dict([]); state.temporaries.push(dictionary);
+          for (const [key, value] of bodyDictionary ? [] : [...namespace, ...(classCell ? [["__classcell__", classCell]] : [])]) {
+            const name = typeof key === "string" ? values.string(Array.from(key, char => char.codePointAt(0))) : key; state.temporaries.push(name);
             values.set(dictionary, name, value);
           }
           const name = values.string(Array.from(frame.fn.name, char => char.codePointAt(0))); state.temporaries.push(name);
@@ -522,9 +586,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           call(completion.metaclass, [name, bases, dictionary], completion.keywords ?? [], completion.keywordValues ?? [], frame.callsite,
             classCell ? continuation("class-created", {cell: classCell}) : null); return;
         }
-        const type = classes.create(frame.fn.name, frame.fn.qualname, completion.module, completion.bases, namespace, objectType());
-        if (classCell) { state.temporaries.push(type, classCell); setCell(classCell, type); }
-        dispatch(notifyNext(type, [...namespace], 0, frame.callsite, null, completion.keywords, completion.keywordValues)); return;
+        const qualification = namespace.has("__qualname__") ? values.text(namespace.get("__qualname__")) : frame.fn.name;
+        if (qualification === null) python("TypeError", "type __qualname__ must be a str");
+        const type = classes.create(frame.fn.name, qualification, completion.module, completion.bases, namespace, objectType(),
+          {firstLine: (bodyDictionary ? namespace.has("__firstlineno__") : frame.namespaceOrder.has("__firstlineno__")) ? frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1 : null,
+            staticAttributes: routed("__static_attributes__") ? null : frame.fn.staticAttributes || []});
+        if (classCell) { state.temporaries.push(type, classCell); if (!routed("__classcell__")) setCell(classCell, type); }
+        dispatch(notifyNext(type, [...namespace], 0, frame.callsite, classCell && routed("__classcell__") ? continuation("class-created", {cell: classCell}) : null, completion.keywords, completion.keywordValues)); return;
       }
       const completion = frame.completion;
       retainTransfer(state.temporaries, [], completion);
@@ -559,22 +627,23 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     try {
       if (op === "const") stack.push(frame.callable.pool.code.constants[arg]);
       else if (op === "load") {
-        const dictionary = nameDictionary(frame, arg);
-        if (dictionary !== null) {
-          const key = values.string(Array.from(arg, char => char.codePointAt(0))); state.temporaries.push(key);
-          dispatch(dictionaryTask(dictionary, key, summary(frame, cursor), continuation("global-name", {name: arg, receiver: dictionary} ), 0, "probe"));
-        } else stack.push(load(frame, arg));
+        const result = loadName(frame, arg, summary(frame, cursor));
+        if (result.task) dispatch(result.task); else stack.push(result.value);
       }
       else if (op === "store") { const task = store(frame, arg, stack.pop()); if (task) dispatch(task); }
       else if (op === "delete") {
-        const dictionary = !arg.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(arg)) ? frame.callable.globals.dictionary : null;
+        const dictionary = className(frame, arg) && !frame.fn.nonlocals?.includes(arg) && frame.namespaceEnvironment ? frame.namespaceEnvironment.dictionary :
+          !arg.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(arg)) ? frame.callable.globals.dictionary : null;
         if (dictionary !== null) {
           const key = values.string(Array.from(arg, char => char.codePointAt(0))); state.temporaries.push(key);
           dispatch(dictionaryTask(dictionary, key, summary(frame, cursor), continuation("global-delete", {name: arg, receiver: dictionary}), 0, "remove-probe")); return;
         }
+        if (frame.fn.kind === "class" && arg === "__firstlineno__" && !frame.namespaceEnvironment && frame.namespaceOrder.has(arg)) {
+          frame.namespaceOrder.delete(arg); const cell = targetCell(frame, arg); if (cell?.bound) setCell(cell, null, false); return;
+        }
         if (!targetCell(frame, arg)?.bound) {
           if (frame.fn.nonlocals?.includes(arg)) python("NameError", "cannot access free variable '" + arg + "' where it is not associated with a value in enclosing scope");
-          if (frame.callable.index === 0 || frame.fn.globals?.includes(arg)) python("NameError", "name '" + arg + "' is not defined");
+          if (frame.callable.index === 0 || frame.fn.kind === "class" || frame.fn.globals?.includes(arg)) python("NameError", "name '" + arg + "' is not defined");
           python("UnboundLocalError", "cannot access local variable '" + arg + "' where it is not associated with a value");
         }
         store(frame, arg, null, false);
@@ -592,15 +661,15 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           const metaIndex = keywords.indexOf("metaclass"), hasMeta = op === "class-meta" || metaIndex !== -1;
           const explicit = op === "class-meta" ? stack.pop() : metaIndex === -1 ? undefined : keywordValues.splice(metaIndex, 1)[0];
           if (metaIndex !== -1) keywords.splice(metaIndex, 1);
-          const bases = stack.splice(stack.length - extra), name = values.text(environmentCell(frame.callable.globals, "__name__")?.value);
+          const bases = stack.splice(stack.length - extra);
           state.temporaries.push(callable);
-          if (name === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Class module metadata requires text in C1.");
           classes.validateNamespace(bases, owner.code.functions[arg].locals);
           const invalidMetaclass = hasMeta && !classes.isType(explicit) && !classes.callable(explicit);
           const metaclass = !invalidMetaclass && (hasMeta || bases.some(base => base instanceof ClassValue && base.metaclass !== null)) ? classes.selectMetaclass(bases, explicit) : null;
-          enter(callable, new Map(), summary(frame, cursor), continuation("class", {bases, module: name, metaclass, invalidMetaclass, keywords, keywordValues}));
-          store(state.frames.at(-1), "__module__", values.string(Array.from(name, char => char.codePointAt(0))));
-          store(state.frames.at(-1), "__qualname__", values.string(Array.from(owner.code.functions[arg].qualname, char => char.codePointAt(0))));
+          const record = {callable, bases, metaclass, invalidMetaclass, keywords, keywordValues};
+          const resolved = loadName(frame, "__name__", summary(frame, cursor), continuation("class-module", record));
+          const pending = resolved.task || enterClass(record, resolved.value, summary(frame, cursor));
+          if (pending) dispatch(pending);
         }
       } else if (op === "yield") yieldGenerator(stack.pop());
       else if (op === "yield-from") {

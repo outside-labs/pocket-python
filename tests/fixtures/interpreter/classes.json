@@ -192,7 +192,7 @@
     },
     {
       "id": "metadata-override",
-      "stage": "C2",
+      "stage": "O68",
       "source": "class A:\n    __module__=\"custom\"\nprint(A.__module__)\n",
       "stdout": "custom\n"
     },
@@ -247,6 +247,7 @@
     "C3-length",
     "C3-hash",
     "O4",
-    "O5"
+    "O5",
+    "O68"
   ]
 }

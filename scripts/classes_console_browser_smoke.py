@@ -240,7 +240,8 @@ def smoke(channel=None):
                     iterator_type_directories = json.loads((ROOT / 'tests/fixtures/interpreter/iterator-type-directories.json').read_bytes())
                     callable_type_directories = json.loads((ROOT / 'tests/fixtures/interpreter/callable-type-directories.json').read_bytes())
                     module_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/module-namespaces.json').read_bytes())
-                    for corpus in [module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    class_body_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/class-body-namespaces.json').read_bytes())
+                    for corpus in [class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c and not c.get('modules'))
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -531,9 +532,8 @@ def smoke(channel=None):
                     checks.append('reflection-source-errors-and-live-namespace-refusals-remain-explicit-offline')
                     checks.append('generator-expression-iterator-snapshots-and-owned-directory-hints-and-ordering-compose-offline')
                     checks.append('optimized-and-isolated-comprehension-snapshots-compose-after-offline-reload')
-                    refused('print("must not execute")\ny=9\nr=[lambda a=(y:=7):a for x in [1]]\n', 'UnsupportedSyntaxError:')
-                    assert page.locator('#result').inner_text() == ''
-                    checks.append('comprehension-lambda-default-bindings-refuse-before-offline-effects')
+                    run('y=9\nr=[lambda a=(y:=7):a for x in [1]]\nprint(y,r[0]())\n', '7 7\n')
+                    checks.append('comprehension-lambda-default-bindings-execute-with-enclosing-scope-offline')
                     run(REPETITION_SOURCE, 'copies True 1 2 1\nevents run save run save\nbanner 6 True\nmutation 2 4 finish finish\ninplace True 6 True\n')
                     for case in repetition['cases']:
                         if case['stage'] not in repetition['implemented_stages']:

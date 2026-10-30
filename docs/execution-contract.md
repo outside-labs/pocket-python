@@ -252,3 +252,13 @@ their prior layouts and costs. Deletion resets compact storage and detaches old
 aliases. Materialization roots all temporary keys, and dictionary attachment
 validates the new graph before committing. Earlier composed observations remain
 recorded and unchanged unless they use a newly adopted operation.
+
+## Class namespace accounting revision 4
+
+O68 preserves the defining module value identity when initializing a class body.
+It also carries verified source static-attribute metadata, charged as scalar name
+storage in the resulting class. The eight accounting/4 observations replace the
+current expected counters in `tests/fixtures/interpreter/execution-resources.json`;
+accounting/3 counters remain under `accounting_3_cases`. Exposed class body storage
+uses namespace-storage/1. The [class body contract](interpreter-class-body-namespaces.md)
+records the semantic reason for these changes.

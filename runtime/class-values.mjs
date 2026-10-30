@@ -315,7 +315,7 @@ export class ClassRuntime {
         this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
     }
   }
-  create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null} = {}) {
+  create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null, firstLine = 1, staticAttributes = []} = {}) {
     this.key(name);
     if (!dynamic && !isPythonIdentifier(name)) throw new TypeError("Invalid class name.");
     this.bounded(typeof qualname === "string" && qualname.length <= 256 && typeof module === "string" && module.length <= 192,
@@ -338,6 +338,7 @@ export class ClassRuntime {
     }
     if (new Set(bases).size !== bases.length) this.fail("TypeError", "Duplicate class base.");
     for (const key of namespace.keys()) {
+      if (typeof key !== "string") continue;
       this.key(key);
       if (!allowsClassSpecial(key, "define"))
         this.fail("UnsupportedOperationError", "Custom special methods require a later class stage.", "UNSUPPORTED");
@@ -346,7 +347,7 @@ export class ClassRuntime {
       namespace.set("__new__", this.make(MethodWrapperValue, "staticmethod", namespace.get("__new__")));
     if (namespace.get("__init_subclass__") instanceof FunctionValue)
       namespace.set("__init_subclass__", this.make(MethodWrapperValue, "classmethod", namespace.get("__init_subclass__")));
-    for (const [key, expected] of [["__module__", module], ["__qualname__", qualname]])
+    for (const [key, expected] of [["__qualname__", qualname]])
       if (namespace.has(key) && this.values.text(namespace.get(key)) !== expected)
         this.fail("UnsupportedOperationError", "Class metadata overrides are outside C1.", "UNSUPPORTED");
     const pending = [...bases.map(base => [...this.mro(base)]), [...bases]], parents = [];
@@ -365,7 +366,10 @@ export class ClassRuntime {
       parents.push(candidate);
       for (const items of pending) if (items[0] === candidate) items.shift();
     }
-    return this.make(ClassValue, name, qualname, module, bases, parents, namespace, false, metaclass, !dynamic, automaticHash);
+    const type = new ClassValue(name, qualname, module, bases, parents, namespace, false, metaclass, !dynamic, automaticHash);
+    type.firstLine = firstLine; type.staticAttributes = staticAttributes === null ? null : [...staticAttributes];
+    const layout = valueLayout(type);
+    return this.memory ? this.memory.allocate(layout.bytes, layout.children, () => type) : type;
   }
   instance(type) {
     if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
@@ -670,6 +674,7 @@ export class ClassRuntime {
         return value(this.make(ClassNamespaceValue, receiver));
       }
       if (name === "__class__") return value(receiver.metaclass || this.builtin("type"));
+      if (name === "__module__" && receiver.namespace.has(name)) return value(receiver.namespace.get(name));
       if (["__name__", "__qualname__", "__module__"].includes(name) && !(name === "__name__" && metaItem?.found)) return value(this.values.string(Array.from(
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
       if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
@@ -931,10 +936,10 @@ export class ClassRuntime {
       this.charge(1);
       if (name === "__qualname__" || name === "__classcell__" || name === "__hash__" && type.automaticHash) continue;
       names.push(name);
-      if (name === "__module__" && type.sourceDefined) names.push("__firstlineno__");
+      if (name === "__module__" && type.sourceDefined && type.firstLine !== null && !type.namespace.has("__firstlineno__")) names.push("__firstlineno__");
     }
     if (!type.namespace.has("__module__")) names.push("__module__");
-    if (type.sourceDefined) names.push("__static_attributes__");
+    if (type.sourceDefined && type.staticAttributes !== null && !type.namespace.has("__static_attributes__")) names.push("__static_attributes__");
     if (type.bases.every(base => base instanceof ClassValue && base.root)) {
       if (!type.namespace.has("__dict__")) names.push("__dict__");
       names.push("__weakref__");

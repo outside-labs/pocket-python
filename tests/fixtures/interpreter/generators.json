@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "G1",
-    "G2"
+    "G2",
+    "O68"
   ],
   "cases": [
     {
@@ -274,7 +275,7 @@
     },
     {
       "id": "comprehension-walrus",
-      "stage": "Future",
+      "stage": "O68",
       "source": "a=[(y:=x) for x in range(2)]\nprint(y)\n",
       "stdout": "1\n",
       "profiles": [
