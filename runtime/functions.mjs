@@ -1,13 +1,13 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {GeneratorValue, Cell, Environment, environmentCell, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, Cell, Environment, environmentCell, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, valueTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -109,7 +109,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
         (frame.callable.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
-        (frame.callable.pool.code.version === 5 && ["id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash"].includes(key))) {
+        (frame.callable.pool.code.version === 5 && ["id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -143,6 +143,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const environment = frame.callable.globals;
     if (className(frame, key) && !frame.fn.nonlocals?.includes(key) && frame.namespaceEnvironment) {
       const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
+      const dictionary = frame.namespaceEnvironment.dictionary;
+      if (!dictionary.ownedKeys) {
+        if (bound) values.set(dictionary, name, value);
+        else { const index = values.find(dictionary, name); if (index >= 0) values.remove(dictionary, name); }
+        return after ? valueTask(null, state.current, after) : null;
+      }
       return dictionaryTask(frame.namespaceEnvironment.dictionary, name, state.current, after || continuation("name-stored"), 0, bound ? "set" : "discard", value);
     }
     if (!key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key)) && environment.dictionary !== null) {
@@ -157,6 +163,10 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const dictionary = nameDictionary(frame, name);
     if (dictionary === null) { const value = load(frame, name); return after ? {value, after} : {value}; }
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
+    if (className(frame, name) && !dictionary.ownedKeys) {
+      const index = values.find(dictionary, key);
+      if (index >= 0) return after ? {value: dictionary.entries[index].value, after} : {value: dictionary.entries[index].value};
+    }
     return {task: dictionaryTask(dictionary, key, site, continuation(className(frame, name) && frame.namespaceEnvironment ? "class-name" : "global-name", {name, receiver: dictionary, after}), 0, "probe")};
   };
   const classQualification = () => {
@@ -166,7 +176,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const classFirstline = () => {
     const frame = state.frames.at(-1);
-    if (frame.fn.globals?.includes("__firstlineno__") || frame.fn.nonlocals?.includes("__firstlineno__"))
+    if (frame.namespaceEnvironment || frame.fn.globals?.includes("__firstlineno__") || frame.fn.nonlocals?.includes("__firstlineno__"))
       return store(frame, "__firstlineno__", values.int(BigInt(frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1)));
     frame.namespaceOrder.add("__firstlineno__"); return null;
   };
@@ -182,6 +192,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   const enterClass = (record, rawModule, site) => {
     const module = values.text(rawModule) ?? record.callable.pool.module.name;
     enter(record.callable, new Map(), site, continuation("class", {...record, module}));
+    classNamespace(state.frames.at(-1));
     const writing = store(state.frames.at(-1), "__module__", rawModule, true, continuation("class-qualname"));
     return writing || classQualification();
   };
@@ -753,7 +764,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           else if (values.isBinary(receiver)) { values.binaryMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (arg === "encode" && values.isString(receiver)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
-          else if (op === "attribute-get" && (receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+          else if (op === "attribute-get" && (receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             if (arg === "__get__" && frame.callable.pool.code.version !== 5 &&
                 (receiver instanceof FunctionValue || classes.nativeDescriptorKind(receiver) !== null))
               hard("UNSUPPORTED", "UnsupportedOperationError", "Explicit descriptor binding requires the class profile.");
@@ -849,7 +860,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else if (op === "contains" && (frame.callable.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
-          (stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
+          (stack.at(-1) instanceof DictionaryViewValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
            values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));
@@ -860,7 +871,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const right = stack.pop(); dispatch(compareTask(op, stack.pop(), right, summary(frame, cursor)));
       }
       else if (Object.hasOwn(ARITHMETIC_SLOTS, op.startsWith("inplace-") ? op.slice(8) : op) &&
-          (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
+          (stack.at(-2) instanceof ClassNamespaceValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
         const right = stack.pop(), left = stack.pop(); dispatch(arithmeticTask(op, [left, right], summary(frame, cursor)));
       }
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }

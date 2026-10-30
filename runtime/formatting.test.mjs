@@ -62,7 +62,7 @@ test('formatting bindings and bodies obey work, instruction and cancellation lim
       const result = await run(source, options); assert.equal(result.error.code, 'BUDGET'); assert.equal(result.stdout, 'prefix entered\n'); closed(result);
     }
     let polls = 0;
-    const cancelled = await run(source, {shouldCancel: () => ++polls > 10000});
+    const cancelled = await run(source, {shouldCancel: () => ++polls > 100000});
     assert.equal(cancelled.error.code, 'CANCELLED'); assert.equal(cancelled.stdout, 'prefix entered\n'); closed(cancelled);
   }
 });

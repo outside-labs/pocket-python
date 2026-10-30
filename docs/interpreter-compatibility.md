@@ -368,3 +368,5 @@ The combined 200-case matrix passes six Node/Chromium drivers. Listed names reta
 their separate API boundaries; live mappings, custom metaclass and remaining
 native type namespaces, module/wrapper/super directories and dynamic source remain
 open.
+
+The [O70 live mapping proxy contract](interpreter-class-mapping-proxies.md) completes namespace iteration, live views, owned callback lookups, copying, equality and unions across source and native class dictionaries.

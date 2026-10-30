@@ -63,6 +63,9 @@ export class ClassValue {
 export class ClassNamespaceValue {
   constructor(owner) { this.owner = owner; Object.freeze(this); }
 }
+export class DictionaryViewValue {
+  constructor(dictionary, kind) { this.dictionary = dictionary; this.kind = kind; Object.freeze(this); }
+}
 // A suspended attribute plan retains the results of owned key comparisons.
 // Results are local to that plan; a callback that changes a dictionary forces
 // a fresh probe before the plan resumes.

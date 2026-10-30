@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O62",
-    "O63"
+    "O63",
+    "O70"
   ],
   "cases": [
     {
@@ -378,7 +379,7 @@
     {
       "id": "class-mapping-enumeration",
       "source": "class A: pass\nprint(len(list(A.__dict__)))\n",
-      "stage": "Future",
+      "stage": "O70",
       "stdout": "6\n"
     },
     {

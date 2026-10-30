@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "O62",
-    "O65"
+    "O65",
+    "O70"
   ],
   "cases": [
     {
@@ -475,7 +476,7 @@
     {
       "id": "native-type-mapping",
       "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(len(value.__dict__))\n",
-      "stage": "Future",
+      "stage": "O70",
       "stdout": "18\n"
     },
     {

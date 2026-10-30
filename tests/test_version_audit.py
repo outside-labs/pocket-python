@@ -138,6 +138,19 @@ class VersionAuditTests(unittest.TestCase):
                 self.assertFalse(record["compatibility_credit"])
                 self.assertFalse(record["teardown"]["zero_teardown_measured"])
 
+    def test_profile_overrides_cannot_promote_a_delta_or_change_the_pinned_signature(self):
+        original = json.loads(audit.MANIFEST.read_text(encoding="utf-8"))
+        for field in ["classification", "expected"]:
+            corpus = copy.deepcopy(original)
+            case = next(case for case in corpus["cases"] if case["id"] == "dict-reverse-mutation")
+            variant = case["engine_expectation"]["profiles"]["classes-source/1"]
+            variant[field] = "supported" if field == "classification" else {"ok": True, "stdout": "changed\n"}
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temporary:
+                manifest = Path(temporary) / "cases.json"
+                manifest.write_text(json.dumps(corpus), encoding="utf-8")
+                with patch.object(audit, "MANIFEST", manifest), self.assertRaises(ValueError):
+                    audit.load_corpus()
+
     @unittest.skipUnless(PINNED and shutil.which("node"), "Requires the pinned oracle and installed Node")
     def test_real_node_observations_preserve_profile_and_evidence_boundaries(self):
         report = audit.engine_report("node")
@@ -147,6 +160,11 @@ class VersionAuditTests(unittest.TestCase):
         self.assertEqual(len(report["engine_observations"]), 2 * len(report["cases"]))
         self.assertEqual(set(report["profiles"]), {"core-source/1", "classes-source/1"})
         self.assertGreater(report["summary"]["supported_observations"], 0)
+        reverse = next(item for item in report["engine_observations"]
+                       if item["id"] == "classes-source/1:dict-reverse-mutation")
+        self.assertEqual(reverse["classification"], "pinned-observation")
+        self.assertEqual(reverse["actual"]["stdout"], "9\n2\n1\n0\n")
+        self.assertFalse(reverse["compatibility_credit"])
         self.assertEqual(report["summary"]["engine_executed"], report["summary"]["zero_teardown"])
         for observation in report["engine_observations"]:
             if observation["classification"] != "supported":

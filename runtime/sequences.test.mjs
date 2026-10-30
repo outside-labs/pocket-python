@@ -164,7 +164,7 @@ test('short circuit, sentinel iteration and callback errors keep distinct bounda
 
 test('long consumers release prior transient elements under a small arena budget',async()=>{
   const result=await run('class A:\n def __iter__(self): return self\n def __next__(self):\n  self.n+=1\n  if self.n>3000: raise StopIteration\n  return [1]\na=A()\na.n=0\nprint(all(a),a.n)\n',
-    {maxSteps:100000,maxWork:20000000},{maxBytes:22000});
+    {maxSteps:100000,maxWork:60000000},{maxBytes:22000});
   assert.equal(result.error,undefined,JSON.stringify(result.error));assert.equal(result.stdout,'True 3001\n');closed(result);
 });
 

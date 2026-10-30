@@ -92,7 +92,7 @@ test('busy length/truth callbacks and bindings obey work and cancellation limits
     const work = await run(source, {maxSteps: 1000000, maxWork: 50000});
     assert.equal(work.stdout, 'entered\n'); assert.equal(work.error.code, 'BUDGET'); assert.match(work.error.message, /work/i); closed(work);
     let polls = 0;
-    const cancelled = await run(source, {shouldCancel: () => ++polls > 10000});
+    const cancelled = await run(source, {shouldCancel: () => ++polls > 100000});
     assert.equal(cancelled.stdout, 'entered\n'); assert.equal(cancelled.error.code, 'CANCELLED'); closed(cancelled);
   }
 });

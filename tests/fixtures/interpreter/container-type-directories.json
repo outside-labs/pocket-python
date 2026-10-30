@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O62",
     "O64",
-    "O66"
+    "O66",
+    "O70"
   ],
   "cases": [
     {
@@ -41,7 +42,7 @@
     },
     {
       "id": "str-instance-agreement",
-      "source": "value=str\nitem=\"a😀\"\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
+      "source": "value=str\nitem=\"a\ud83d\ude00\"\nprint(dir(value)==dir(item),type.__dir__(value)==object.__dir__(item))\n",
       "stage": "O64",
       "stdout": "True True\n"
     },
@@ -640,7 +641,7 @@
     {
       "id": "native-type-mapping",
       "source": "print(len(str.__dict__))\n",
-      "stage": "Future",
+      "stage": "O70",
       "stdout": "70\n"
     },
     {

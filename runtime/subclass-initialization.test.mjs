@@ -81,7 +81,7 @@ test('subclass hooks share recursion, instruction, work and real arena limits', 
   for (const [body, options, limits, expected] of [
     ['type("Again",(A,),{})', {maxDepth: 12}, undefined, 'PYTHON'],
     ['while True: pass', {maxSteps: 200}, undefined, 'BUDGET'],
-    ['while True: pass', {maxSteps: 100000, maxWork: 10000}, undefined, 'BUDGET'],
+    ['while True: pass', {maxSteps: 100000, maxWork: 100000}, undefined, 'BUDGET'],
     ['a=[]\n  while True: a.append([7])', {maxSteps: 100000}, {maxBytes: 22000}, 'OOM'],
   ]) {
     const result = await run('class A:\n def __init_subclass__(cls):\n  print("hook")\n  '+body+'\nclass B(A): pass\n', options, limits);

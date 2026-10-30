@@ -16,7 +16,10 @@ execution and the namespace copied into the class.
 | Final type | Native construction copies the namespace. Subsequent changes to the original dictionary and class attributes are independent. Stored descriptors bind only through class/instance access and receive ordinary name notifications. |
 | Inlined comprehensions | Their first iterable uses the live containing namespace. Their body retains the isolated optimized snapshot/lookup contract. Walrus targets use the containing non-comprehension function/module owner, including lambda defaults and delayed generator evaluation. Class-body walrus binding, iterator rebinding and walrus expressions in iterable clauses raise SyntaxError before effects. |
 
-Class dictionary materialization is lazy and transactional. Internal compiler
+Class bodies use owned dictionaries from entry so native type copies preserve
+physical entry positions through deletion and compaction. Primitive string keys
+use direct internal fast paths until callback-bearing keys require owned phases.
+Construction and dictionary publication remain transactional. Internal compiler
 cells remain private and traced. Namespace, callback, closure and lexical-class
 owners survive instruction-boundary stepping, parking, collection, cancellation
 and close. Class construction failures preserve escaped original dictionaries.

@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O62",
-    "O63"
+    "O63",
+    "O70"
   ],
   "cases": [
     {
@@ -429,7 +430,7 @@
     {
       "id": "native-type-mapping",
       "source": "print(len(bool.__dict__))\n",
-      "stage": "Future",
+      "stage": "O70",
       "stdout": "10\n"
     },
     {

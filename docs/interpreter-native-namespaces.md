@@ -8,7 +8,8 @@ records ordered names, literal values and descriptor kinds. Verify it with
 the oracle changes. Native documentation carries the PSF license in
 `runtime/licenses/CPYTHON.txt`.
 
-Each type owns one lazily materialized dictionary. Repeated namespace views
+Native types materialize complete dictionaries lazily; source construction owns
+its actual body and independently copied class dictionary. Repeated namespace views
 share its exact keys, stored descriptors and values. Materialization publishes
 the complete dictionary atomically. Native method, wrapper, classmethod,
 getset and member descriptors retain their defining owner and validate actual

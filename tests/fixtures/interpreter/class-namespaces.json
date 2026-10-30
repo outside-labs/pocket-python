@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O49",
-    "O69"
+    "O69",
+    "O70"
   ],
   "cases": [
     {
@@ -213,13 +214,13 @@
     },
     {
       "id": "class-enumeration",
-      "stage": "Future",
+      "stage": "O70",
       "source": "class C: pass\nlist(C.__dict__)\n",
       "stdout": ""
     },
     {
       "id": "class-length",
-      "stage": "Future",
+      "stage": "O70",
       "source": "class C: pass\nlen(C.__dict__)\n",
       "stdout": ""
     },
@@ -249,7 +250,7 @@
     },
     {
       "id": "mapping-copy",
-      "stage": "Future",
+      "stage": "O70",
       "source": "class C: tag=7\np=C.__dict__.copy()\nprint(p[\"tag\"])\n",
       "stdout": "7\n"
     },
