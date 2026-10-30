@@ -1,6 +1,7 @@
 import {NATIVE_SUBCLASS_BASES} from "./class-values.mjs";
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
+import {RegistryError} from "./module-registry.mjs";
 import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, hierarchyTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
@@ -98,7 +99,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const moduleMissing = (record, site) => {
     if (record.mode === "import") {
       const frame = state.frames.at(-1);
-      const result = moduleContext.planAttribute(record.receiver, record.name, true, frame.pool.module.name);
+      let result;
+      try { result = moduleContext.planAttribute(record.receiver, record.name, true, frame.pool.module.name, record.skipNamespace); }
+      catch (error) { if (error instanceof RegistryError && error.code === "IMPORT") python(error.name, error.message); throw error; }
       if (result.kind === "load") { state.pendingImport = {plan: result.plan, inheritedException: frame.activeException}; return null; }
       return valueTask(result.value, site, record.after);
     }
@@ -1661,6 +1664,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           continue;
         }
         if (task.kind === "attribute") {
+          if (task.receiver instanceof ModuleValue && task.receiver.type && task.operation === "import") {
+            task = attributeTask(task.receiver, task.name, site, continuation("module-missing", {receiver: task.receiver, name: task.name, mode: "import", skipNamespace: true, after: completion}), depth);
+            continue;
+          }
           if (task.receiver instanceof ModuleValue && (!task.receiver.type || ["native-get", "native-set", "native-delete"].includes(task.operation))) {
             state.temporaries = operationRoots(task);
             const {receiver, name, operation} = task, environment = receiver.environment;
@@ -2697,14 +2704,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (callable.name.startsWith("instance-dictionary-")) {
             const [receiver, dictionary, key, item, found, fallback, skipNative = false] = args, operation = callable.name.slice("instance-dictionary-".length);
-            if (!(receiver instanceof InstanceValue) || !values.isDict(dictionary) || !values.isString(key) || typeof found !== "boolean" || typeof skipNative !== "boolean" || ![6, 7].includes(args.length) || keywords.length)
+            if (!classes.isInstance(receiver) || !values.isDict(dictionary) || !values.isString(key) || typeof found !== "boolean" || typeof skipNative !== "boolean" || ![6, 7].includes(args.length) || keywords.length)
               throw new TypeError("Invalid instance dictionary operation.");
             const after = continuation("instance-entry", {receiver, key, operation, found, fallback, skipNative, depth, after: completion});
             task = dictionaryTask(dictionary, key, site, after,
               depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
           }
           if (callable.name === "instance-attribute-missing") {
-            if (!(args[0] instanceof InstanceValue) || !values.isString(args[1]) || args.length !== 2 || keywords.length)
+            if (!classes.isInstance(args[0]) || !values.isString(args[1]) || args.length !== 2 || keywords.length)
               throw new TypeError("Invalid instance attribute failure.");
             classes.instanceMissing(args[0], values.text(args[1]), {found: false, skipNative: true});
           }

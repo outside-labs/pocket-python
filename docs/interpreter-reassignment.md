@@ -1,7 +1,7 @@
 # Compatible type and hierarchy reassignment
 
 O88 of #123 completes the storage workstream. The
-[80-case matrix](../tests/fixtures/interpreter/reassignment.json) uses the pinned
+[85-case matrix](../tests/fixtures/interpreter/reassignment.json) uses the pinned
 CPython 3.14.7 oracle in Node and Chromium drain, stepped and parked execution.
 
 | Surface | Contract |
@@ -14,6 +14,9 @@ CPython 3.14.7 oracle in Node and Chromium drain, stepped and parked execution.
 | Metadata | Source type name and qualification require strings and preserve the assigned object's identity, including string subclasses. Name rejects embedded nulls; qualification preserves them. Module accepts arbitrary owned values and removes first-line metadata. Deletion rules and immutable native types retain native errors. Existing function identities and member names remain stable. Source member/getset descriptor qualification performs owned metaclass lookup once and caches the successful result. |
 
 Actual type assignment remains distinct from advertised __class__ attributes.
+Existing from-import lookup honors the replacement module type and preserves
+ImportError handling. The installed offline console exercises a module class
+change, imported lookup, retained namespace alias and restoration to native type.
 Source attribute hooks and descriptors retain their normal precedence; explicit
 native object/type descriptors bypass those hooks. Aliases, mapping proxies,
 existing super objects and detached callables observe the appropriate retained

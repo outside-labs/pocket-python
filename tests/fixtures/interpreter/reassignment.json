@@ -557,6 +557,80 @@
       "stage": "O88",
       "source": "bad=True\nclass M(type):\n def __getattribute__(cls,n):\n  if n==\"__qualname__\" and bad: return 7\n  return type.__getattribute__(cls,n)\nclass A(metaclass=M): __slots__=(\"x\",)\ntry: print(A.x.__qualname__)\nexcept TypeError: print(\"bad\")\nbad=False\nprint(A.x.__qualname__)\n",
       "stdout": "bad\nA.x\n"
+    },
+    {
+      "id": "module-import-hook",
+      "stage": "O88",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   print(\"lookup\")\n   return 9\n  return super().__getattribute__(n)\nhelper.__class__=M\nfrom helper import x\nprint(x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "lookup\n9\n"
+    },
+    {
+      "id": "module-import-missing",
+      "stage": "O88",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   print(\"lookup\")\n   return 9\n  return super().__getattribute__(n)\nhelper.__class__=M\ntry:\n from helper import missing\nexcept ImportError: print(\"missing\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "missing\n"
+    },
+    {
+      "id": "module-import-hidden",
+      "stage": "O88",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   raise AttributeError(\"hidden\")\n  return super().__getattribute__(n)\nhelper.__class__=M\ntry:\n from helper import x\nexcept ImportError: print(\"hidden\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "hidden\n"
+    },
+    {
+      "id": "module-owned-key",
+      "stage": "O88",
+      "source": "import helper\nclass M(type(helper)): pass\nhelper.__class__=M\ndel helper.x\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  print(\"eq\")\n  return n==\"x\"\nhelper.__dict__[K()]=[9]\nprint(helper.x[0])\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "eq\n9\n"
+    },
+    {
+      "id": "super-base-change-during-state-lookup",
+      "stage": "O88",
+      "source": "class P: pass\nclass Q: foo=7\nclass A(P): pass\nclass B(A): pass\nclass S(super): pass\ns=S(B,B())\nclass K:\n def __hash__(self): return hash(\"foo\")\n def __eq__(self,n):\n  A.__bases__=(Q,)\n  return False\nobject.__getattribute__(s,\"__dict__\")[K()]=0\nprint(getattr(s,\"foo\",9),A.foo)\n",
+      "stdout": "9 7\n"
     }
   ]
 }

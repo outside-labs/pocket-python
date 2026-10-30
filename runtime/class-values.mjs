@@ -1366,7 +1366,6 @@ export class ClassRuntime {
   }
   instanceMissing(receiver, name, fallback = {found: false}) {
     if (fallback.found) return this.bindAttribute(fallback.value, receiver, receiver.type);
-    if (!fallback.skipNative && receiver.nativePayload instanceof SuperValue) return this.read(receiver.nativePayload, name);
     if (!fallback.skipNative && this.nativeModule(receiver)) return {kind: "call", callable: this.builtin("native-module-missing"), args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
   }

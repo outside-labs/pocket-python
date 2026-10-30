@@ -83,7 +83,7 @@ export function completion(kind, fields = {}) {
     case "module-entry": case "module-hook":
       record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, mode: fields.mode, depth: fields.depth, after}; break;
     case "module-native-dir": case "module-dir": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
-    case "module-missing": record = {kind, receiver: fields.receiver, name: fields.name, mode: fields.mode, after}; break;
+    case "module-missing": record = {kind, receiver: fields.receiver, name: fields.name, mode: fields.mode, skipNamespace: fields.skipNamespace ?? false, after}; break;
     case "class": record = {kind, nameValue: fields.nameValue, basesTuple: fields.basesTuple, originalBases: fields.originalBases, bases: operands(fields.bases), module: fields.module,
       ...(fields.keywords?.length ? {keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)} : {}),
       ...(fields.metaclass ? {metaclass: fields.metaclass} : {}), ...(fields.invalidMetaclass ? {invalidMetaclass: true} : {})}; break;
