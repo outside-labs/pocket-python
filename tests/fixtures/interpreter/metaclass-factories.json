@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-metaclass-factories/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O81"
+  ],
+  "cases": [
+    {
+      "id": "function-factory",
+      "stage": "O81",
+      "source": "saved=[]\ndef factory(name,bases,ns):\n saved.append(ns)\n print(name,len(bases),ns[\"x\"])\n return 7\nclass C(metaclass=factory):\n print(\"body\")\n x=9\nprint(C,saved[0][\"x\"])\n",
+      "stdout": "body\nC 0 9\n7 9\n"
+    },
+    {
+      "id": "factory-arbitrary-result",
+      "stage": "O81",
+      "source": "value=[7]\ndef factory(name,bases,ns): return value\nclass C(metaclass=factory): pass\nprint(C is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "factory-creates-type",
+      "stage": "O81",
+      "source": "def factory(name,bases,ns): return type(name,bases,ns)\nclass C(metaclass=factory):\n def f(self): return __class__\nprint(C().f() is C,type(C) is type)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "object-factory",
+      "stage": "O81",
+      "source": "class Factory:\n def __call__(self,name,bases,ns,*,tag):\n  print(name,tag is value,ns[\"ns\"] is ns)\n  return ns\nvalue=[7]\nclass C(metaclass=Factory(),tag=value): ns=locals()\nprint(C[\"ns\"] is C)\n",
+      "stdout": "C True True\nTrue\n"
+    },
+    {
+      "id": "factory-preparation-identities",
+      "stage": "O81",
+      "source": "saved=[]\ndef prepare(name,bases,**kw):\n ns={}\n saved.append((name,bases,ns,kw[\"tag\"]))\n return ns\ndef factory(name,bases,ns,**kw):\n old=saved[0]\n print(name is old[0],bases is old[1],ns is old[2],kw[\"tag\"] is old[3])\n return 7\nfactory.__prepare__=prepare\nclass C(metaclass=factory,**{\"tag\":[9]}): pass\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "factory-object-prepare",
+      "stage": "O81",
+      "source": "class Factory:\n def __prepare__(self,name,bases,*,tag):\n  print(\"prepare\",name,tag)\n  return {\"x\":7}\n def __call__(self,name,bases,ns,*,tag):\n  print(\"call\",ns[\"x\"],tag)\n  return ns[\"x\"]\nclass C(metaclass=Factory(),tag=9):\n print(x)\nprint(C)\n",
+      "stdout": "prepare C 9\n7\ncall 7 9\n7\n"
+    },
+    {
+      "id": "factory-prepare-lookup",
+      "stage": "O81",
+      "source": "class Factory:\n def __getattribute__(self,name):\n  print(name)\n  raise AttributeError(name)\n def __call__(self,name,bases,ns): return 7\nclass C(metaclass=Factory()): print(\"body\")\nprint(C)\n",
+      "stdout": "__prepare__\nbody\n7\n"
+    },
+    {
+      "id": "factory-prepare-descriptor",
+      "stage": "O81",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"prepare lookup\")\n  return lambda name,bases: {}\nclass Factory:\n __prepare__=D()\n def __call__(self,name,bases,ns): return 7\nclass C(metaclass=Factory()): pass\nprint(C)\n",
+      "stdout": "prepare lookup\n7\n"
+    },
+    {
+      "id": "factory-prepare-attributeerror-body",
+      "stage": "O81",
+      "source": "def prepare(name,bases):\n print(\"prepare\")\n raise AttributeError(\"original\")\ndef factory(name,bases,ns): print(\"never\")\nfactory.__prepare__=prepare\nclass C(metaclass=factory): print(\"never\")\n",
+      "stdout": "prepare\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "factory-body-error",
+      "stage": "O81",
+      "source": "def factory(name,bases,ns):\n print(\"factory\")\n raise ValueError(\"original\")\nclass C(metaclass=factory): print(\"body\")\n",
+      "stdout": "body\nfactory\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "factory-invalid-prepare",
+      "stage": "O81",
+      "source": "def factory(name,bases,ns): return 7\nfactory.__prepare__=lambda name,bases: 7\nclass C(metaclass=factory): print(\"never\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "noncallable-meta-body-effects",
+      "stage": "O81",
+      "source": "class C(metaclass=7): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "noncallable-meta-prepares",
+      "stage": "O81",
+      "source": "class Factory:\n def __prepare__(self,name,bases): print(\"prepare\"); return {}\nclass C(metaclass=Factory()): print(\"body\")\n",
+      "stdout": "prepare\nbody\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "none-meta-body-effects",
+      "stage": "O81",
+      "source": "class C(metaclass=None): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "class-factory",
+      "stage": "O81",
+      "source": "class Factory:\n def __new__(factory,name,bases,ns):\n  print(name,ns[\"x\"])\n  return 7\nclass C(metaclass=Factory): x=9\nprint(C)\n",
+      "stdout": "C 9\n7\n"
+    },
+    {
+      "id": "class-factory-prepare",
+      "stage": "O81",
+      "source": "class Factory:\n @classmethod\n def __prepare__(factory,name,bases): print(\"prepare\"); return {\"x\":7}\n def __init__(self,name,bases,ns): self.value=ns[\"x\"]\nclass C(metaclass=Factory): print(x)\nprint(type(C) is Factory,C.value)\n",
+      "stdout": "prepare\n7\nTrue 7\n"
+    },
+    {
+      "id": "factory-skips-metaclass-conflict",
+      "stage": "O81",
+      "source": "class M(type): pass\nclass N(type): pass\nclass A(metaclass=M): pass\nclass B(metaclass=N): pass\ndef factory(name,bases,ns):\n print(bases==(A,B))\n return 7\nclass C(A,B,metaclass=factory): pass\nprint(C)\n",
+      "stdout": "True\n7\n"
+    },
+    {
+      "id": "factory-resolved-base-identities",
+      "stage": "O81",
+      "source": "saved=[]\nclass A: pass\nclass Proxy:\n def __mro_entries__(self,bases): saved.append(bases); return (A,)\np=Proxy()\ndef factory(name,bases,ns):\n print(bases==(A,),ns[\"__orig_bases__\"] is saved[0],ns[\"__orig_bases__\"][0] is p)\n return 7\nclass C(p,metaclass=factory): pass\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "factory-cell-arbitrary-return",
+      "stage": "O81",
+      "source": "def factory(name,bases,ns): return 7\nclass C(metaclass=factory):\n def f(self): return __class__\nprint(C)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "factory-cell-not-propagated",
+      "stage": "O81",
+      "source": "def factory(name,bases,ns): return type(name,bases,{})\nclass C(metaclass=factory):\n def f(self): return __class__\n",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "factory-mutates-original",
+      "stage": "O81",
+      "source": "saved=[]\ndef factory(name,bases,ns):\n saved.append(ns)\n ns[\"x\"]=9\n return type(name,bases,ns)\nclass C(metaclass=factory):\n ns=locals()\n x=7\nprint(C.x,C.ns is saved[0])\n",
+      "stdout": "9 True\n"
+    },
+    {
+      "id": "direct-factory-no-preparation",
+      "stage": "O81",
+      "source": "def factory(name,bases,ns): print(\"factory\"); return 7\nfactory.__prepare__=lambda *args: print(\"never\")\nprint(factory(\"C\",(),{}))\n",
+      "stdout": "factory\n7\n"
+    },
+    {
+      "id": "factory-decorator-result",
+      "stage": "O81",
+      "source": "def factory(name,bases,ns): return [ns[\"x\"]]\ndef decorate(value):\n print(value[0])\n return value\n@decorate\nclass C(metaclass=factory): x=7\nprint(C[0])\n",
+      "stdout": "7\n7\n"
+    }
+  ]
+}

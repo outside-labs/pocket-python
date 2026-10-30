@@ -478,3 +478,6 @@ construction remain O80–O83.
 
 [O80](interpreter-prepared-class-namespaces.md) adopts prepared dictionaries and
 custom mapping class bodies with owned namespace callbacks and class cells.
+
+[O81](interpreter-metaclass-factories.md) adopts callable metaclass factories,
+optional preparation, exact argument identities and arbitrary decorated results.

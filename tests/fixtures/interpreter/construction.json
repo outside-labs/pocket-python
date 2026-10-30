@@ -12,7 +12,8 @@
     "O23",
     "O24",
     "O68",
-    "O80"
+    "O80",
+    "O81"
   ],
   "cases": [
     {
@@ -725,7 +726,7 @@
     },
     {
       "id": "future-metaclass-factory",
-      "stage": "Future",
+      "stage": "O81",
       "source": "def factory(name,bases,ns): return 7\nclass A(metaclass=factory): pass\nprint(A)\n",
       "stdout": "7\n"
     },
