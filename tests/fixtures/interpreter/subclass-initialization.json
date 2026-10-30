@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O23",
     "O24",
-    "O79"
+    "O79",
+    "O80"
   ],
   "cases": [
     {
@@ -385,7 +386,7 @@
     },
     {
       "id": "deferred-prepare",
-      "stage": "Future",
+      "stage": "O80",
       "source": "class M(type):\n @classmethod\n def __prepare__(meta,name,bases): return {}\nclass A(metaclass=M): pass\n",
       "stdout": ""
     },

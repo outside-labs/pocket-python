@@ -10,7 +10,8 @@
     "O9",
     "O17",
     "O23",
-    "O25"
+    "O25",
+    "O80"
   ],
   "cases": [
     {
@@ -467,7 +468,7 @@
     },
     {
       "id": "future-prepare",
-      "stage": "Future",
+      "stage": "O80",
       "source": "class M(type):\n @classmethod\n def __prepare__(cls,name,bases): return {}\nclass A(metaclass=M): pass\nprint(A.__name__)\n",
       "stdout": "A\n"
     },
