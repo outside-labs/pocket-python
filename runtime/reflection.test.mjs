@@ -167,8 +167,8 @@ test('identities remain stable across separate persistent callback activations',
   closed(session.stats());
 });
 
-test('integer identity refuses explicitly and core admission remains unchanged', async () => {
-  const result = await run('id(7)\n'); assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
+test('integer identity is adopted while core builtin admission remains unchanged', async () => {
+  const result = await run('print(id(7)==id(7))\n'); assert.equal(result.stdout, 'True\n'); assert.equal(result.ok, true); closed(result.closed);
   const core = await runSourceRequest({modules: [unit('id([])\n')]});
   assert.equal(core.error.type, 'NameError'); closed(core.closed);
 });

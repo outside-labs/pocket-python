@@ -6016,15 +6016,15 @@
     {
       "id": "numeric-directories-unboxed-integer-identity",
       "source": "value=10**50+7\nd=value.__dir__\nprint(d.__self__ is value)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "UnsupportedOperationError",
-        "code": "UNSUPPORTED"
+        "stdout": "True\n",
+        "error_type": null,
+        "code": null
       }
     },
     {

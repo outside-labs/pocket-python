@@ -459,3 +459,5 @@ Native async/host adapters remain under #34.
 [O73](interpreter-code-cells.md) adopts owned verified code metadata, actual closure cells and compatible code replacement while retaining active and generator executable snapshots.
 
 [O74](interpreter-generator-frames.md) adopts non-resuming generator/frame metadata and live optimized-frame local proxies, including cells, extras, inlined scopes and retained-frame teardown.
+
+[O75](interpreter-integer-identity.md) completes owned integer identity, coherent `is`/`id` behavior and collection/callback lifetimes under accounting revision 12. O71–O75 complete the metadata and identity workstream; O76–O96 remain separate stages.

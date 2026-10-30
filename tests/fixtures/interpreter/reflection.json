@@ -16,7 +16,8 @@
     "O49",
     "O61",
     "O67",
-    "O68"
+    "O68",
+    "O75"
   ],
   "cases": [
     {
@@ -427,7 +428,7 @@
     },
     {
       "id": "integer-identity-deferred",
-      "stage": "Future",
+      "stage": "O75",
       "source": "print(id(7)==id(7))\n",
       "stdout": "True\n"
     },

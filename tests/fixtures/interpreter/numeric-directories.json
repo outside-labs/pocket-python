@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O57"
+    "O57",
+    "O75"
   ],
   "cases": [
     {
@@ -617,7 +618,7 @@
     {
       "id": "unboxed-integer-identity",
       "source": "value=10**50+7\nd=value.__dir__\nprint(d.__self__ is value)\n",
-      "stage": "Future",
+      "stage": "O75",
       "stdout": "True\n"
     }
   ]

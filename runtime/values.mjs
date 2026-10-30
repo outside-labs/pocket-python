@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {GeneratorValue, FrameValue, FrameLocalsValue, generatorRoots, Cell, Environment, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, FrameValue, FrameLocalsValue, generatorRoots, Cell, Environment, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue, IntegerIdentityRecord} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -88,6 +88,7 @@ export class ValueRuntime {
     });
     this.nanIds = new WeakMap(); this.nextNan = 1;
     this.identityIds = new WeakMap(); this.nextIdentity = 1n;
+    this.integerIdentityIds = new Map();
   }
   make(bytes, children, create) { return this.memory ? this.memory.allocate(bytes, children, create) : create(); }
   resize(value, bytes, children) { this.memory?.resize(value, bytes, children); }
@@ -767,7 +768,15 @@ export class ValueRuntime {
     this.charge(1);
     if (value === null) return this.int(1n);
     if (typeof value === "boolean") return this.int(value ? 2n : 3n);
-    if (typeof value === "bigint") this.fail("UnsupportedOperationError", "Integer identity requires an owned integer layout.", "UNSUPPORTED");
+    if (typeof value === "bigint") {
+      let identity;
+      if (this.memory) identity = this.memory.integerIdentity(value);
+      else {
+        if (!this.integerIdentityIds.has(value)) this.integerIdentityIds.set(value, this.nextIdentity++);
+        identity = this.integerIdentityIds.get(value);
+      }
+      return this.int(identity + 3n);
+    }
     return this.int(this.identityHash(value) + 3n);
   }
   identityHash(value) {
@@ -1325,7 +1334,7 @@ export class ValueRuntime {
     if (operation === "greater-equal") return this.less(right, left) || this.equal(left, right);
     if (operation === "is") {
       if (left === null || right === null) return left === right;
-      if (typeof left === "bigint" || typeof right === "bigint") this.fail("UnsupportedOperationError", "Integer interning identity is outside this stage.", "UNSUPPORTED");
+      if (typeof left === "bigint" && typeof right === "bigint") this.charge(valueLayout(left).work + valueLayout(right).work);
       return left === right;
     }
     if (operation === "contains") return this.contains(left, right);
@@ -1496,6 +1505,7 @@ export function encodeValue(value) {
 // Logical byte costs and explicit edges for the lifetime/accounting layer.
 // Primitive BigInts are conservatively counted per root/edge; object aliases once.
 export function valueLayout(value) {
+  if (value instanceof IntegerIdentityRecord) return {bytes: 64 + 2 * (value.integer.toString().length + value.identity.toString().length), children: []};
   if (value === null || typeof value === "boolean") return {bytes: 8, children: []};
   if (typeof value === "bigint") {
     const digits = value.toString().replace(/^-/, "").length;

@@ -250,8 +250,9 @@ def smoke(channel=None):
                     wrapper_metadata = json.loads((ROOT / 'tests/fixtures/interpreter/wrapper-metadata.json').read_bytes())
                     function_state = json.loads((ROOT / 'tests/fixtures/interpreter/function-state.json').read_bytes())
                     code_cells = json.loads((ROOT / 'tests/fixtures/interpreter/code-cells.json').read_bytes())
+                    integer_identity = json.loads((ROOT / 'tests/fixtures/interpreter/integer-identity.json').read_bytes())
                     generator_frames = json.loads((ROOT / 'tests/fixtures/interpreter/generator-frames.json').read_bytes())
-                    for corpus in [generator_frames, code_cells, function_state, wrapper_metadata, class_mapping_proxies, native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    for corpus in [integer_identity, generator_frames, code_cells, function_state, wrapper_metadata, class_mapping_proxies, native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c and not c.get('modules'))
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -281,7 +282,7 @@ def smoke(channel=None):
                                                            text=True, encoding='utf-8', timeout=5)
                         run(program, expected)
                         cases.append({'source_sha256': hashlib.sha256(program.encode()).hexdigest(), 'stdout': expected, 'status': 'pass'})
-                    for corpus in [native_namespaces, class_mapping_proxies]:
+                    for corpus in [integer_identity, native_namespaces, class_mapping_proxies]:
                         for case in corpus['cases']:
                             if 'error_type' in case:
                                 try:
