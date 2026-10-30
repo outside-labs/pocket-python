@@ -7,14 +7,14 @@ owned through preparation, execution, construction and any escaped aliases.
 
 | Operation | Contract |
 | --- | --- |
-| Selection | An explicit non-type factory bypasses type-metaclass conflict calculation. Actual type candidates retain the normal most-derived selection rules. A factory class need not derive from `type`. |
+| Selection | An explicit non-type factory bypasses type-metaclass conflict calculation. Without an explicit metaclass, the actual type of the first resolved base supplies the candidate, including a non-type base without a replacement hook. Actual type candidates retain the normal most-derived selection rules. A factory class need not derive from `type`. |
 | Preparation | Optional ordinary `__prepare__` lookup uses descriptors and custom read/fallback hooks. Lookup AttributeError selects a fresh dictionary; preparation-call exceptions propagate. Invalid results fail before body effects. |
 | Invocation | Call once after body completion with the original name, resolved bases tuple, exact namespace and class keyword values. Prepared name/base argument identities survive unchanged. Forward `__orig_bases__` and required lexical cells in the namespace. |
 | Results | Preserve any returned value. Actual type results validate the original class cell; arbitrary results leave its original unbound state intact. |
 | Failure | Non-callable metaclasses still perform available preparation and body effects before invocation fails. Callback failures retain original frames and visible effects. |
 | Direct calls | Calling a factory or metaclass directly does not run preparation or source-statement base resolution. Native `type.__new__` retains its metaclass/dictionary validation. |
 
-The [23-case source matrix](../tests/fixtures/interpreter/metaclass-factories.json)
+The [26-case source matrix](../tests/fixtures/interpreter/metaclass-factories.json)
 is pinned to CPython 3.14.7 and registered for all six Node/Chromium drivers.
 Focused lifecycle tests suspend inside preparation and invocation, collect at
 instruction boundaries, then finish, cancel or close with zero logical teardown
