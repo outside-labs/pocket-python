@@ -97,7 +97,10 @@ export class NamespaceLookupRequest {
   constructor(owner, name, dictionary, phase = 0) { this.owner = owner; this.name = name; this.dictionary = dictionary; this.phase = phase; }
 }
 export class InstanceValue {
-  constructor(type) { this.type = type; this.attributes = new Map(); }
+  constructor(type) {
+    this.type = type; this.attributes = new Map();
+    if (type.storage?.count) this.slotValues = new Map();
+  }
 }
 export class BoundMethodValue {
   constructor(callable, receiver, pythonMethod = false) {

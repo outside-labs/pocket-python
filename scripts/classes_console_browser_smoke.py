@@ -279,6 +279,8 @@ def smoke(channel=None):
                     programs.extend(c['source'] for c in prepared_namespaces['cases'] if 'error_type' not in c)
                     factories = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-factories.json').read_bytes())
                     programs.extend(c['source'] for c in factories['cases'] if 'error_type' not in c)
+                    slots = json.loads((ROOT / 'tests/fixtures/interpreter/slots.json').read_bytes())
+                    programs.extend(c['source'] for c in slots['cases'] if 'error_type' not in c)
                     custom_mro = json.loads((ROOT / 'tests/fixtures/interpreter/custom-mro.json').read_bytes())
                     programs.extend(c['source'] for c in custom_mro['cases'] if 'error_type' not in c)
                     meta_protocols = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-protocols.json').read_bytes())

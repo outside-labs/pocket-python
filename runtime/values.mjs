@@ -1549,15 +1549,15 @@ export function valueLayout(value) {
     return {bytes: 80 + 8 * (value.closure.size + defaults.length + (value.attributes === null ? 0 : 1) + (value.documentation === null ? 0 : 1) + metadata.length),
       children: [value.pool, value.globals, ...value.closure.values(), ...defaults, ...(value.attributes === null ? [] : [value.attributes]), ...(value.documentation === null ? [] : [value.documentation]), ...metadata]};
   }
-  if (value instanceof ClassValue) return {bytes: (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
+  if (value instanceof ClassValue) return {bytes: (value.storage?.explicit || value.storage?.count ? 48 + value.storage.ownNames.reduce((sum, name) => sum + 8 + 2 * name.length, 0) : 0) + (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
     8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1) + (value.namespaceDictionary ? 1 : 0)) + (value.protocolNames === null ? 0 : 8 + value.protocolNames.reduce((sum, name) => sum + 8 + 2 * name.length, 0)) + (value.namespaceEntries === null ? 0 : 8 + value.namespaceEntries.reduce((sum, entry) => sum + 40 + 2 * entry.hash.length, 0)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
     children: [...(value.namespaceKeys || []), ...value.bases, ...value.mro.filter(item => item !== value), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.namespaceEntries || []).map(entry => entry.key), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.metaclass === null ? [] : [value.metaclass])]};
   if (value instanceof NamespaceLookupCache) return {bytes: 64 + value.entries.reduce((sum, entry) => sum + 48 + 2 * entry.name.length, 0),
     children: value.entries.flatMap(entry => [entry.owner, entry.dictionary, entry.key])};
   if (value instanceof ClassNamespaceValue) return {bytes: 48, children: [value.owner]};
   if (value instanceof InstanceValue) return value.attributes instanceof Map ?
-    {bytes: 80 + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
-      children: [value.type, ...value.attributes.values()]} : {bytes: 88, children: [value.type, value.attributes]};
+    {bytes: 80 + (value.slotValues ? 8 + 8 * value.type.storage.count : 0) + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
+      children: [value.type, ...value.attributes.values(), ...(value.slotValues?.values() || [])]} : {bytes: 88 + (value.slotValues ? 8 + 8 * value.type.storage.count : 0), children: [value.type, value.attributes, ...(value.slotValues?.values() || [])]};
   if (value instanceof BoundMethodValue) return {bytes: 64, children: [value.callable, value.receiver]};
   if (value instanceof SuperValue) return {bytes: 72, children: [value.thisclass, value.self, value.selfClass]};
   if (value instanceof PropertyValue) return {bytes: 80 + (value.propertyName === undefined ? 0 : 8) + (value.documentation == null ? 0 : 8),

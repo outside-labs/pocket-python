@@ -483,7 +483,7 @@ export function operationRoots(task) {
 }
 function taskRoots(task) {
   switch (task.kind) {
-    case "namespace-create": return [task.dictionary, ...task.bases, task.defaultModule, task.moduleObject, task.cell, task.dictcell, task.type,
+    case "namespace-create": return [...(task.slotNames || []), task.dictionary, ...task.bases, task.defaultModule, task.moduleObject, task.cell, task.dictcell, task.type,
       ...(task.metaclass ? [task.metaclass] : []), ...task.keywordValues, ...completionRoots(task.completion)].filter(value => value !== undefined);
     case "notify": return [task.type, ...task.entries.flatMap(entry => typeof entry[0] === "string" ? [entry[1]] : entry), ...task.keywordValues, ...completionRoots(task.completion)];
     case "instance": case "subclass": return [task.receiver, task.type, ...completionRoots(task.completion)];

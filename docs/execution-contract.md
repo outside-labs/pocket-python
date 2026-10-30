@@ -370,3 +370,18 @@ solely to list native keys. All eight existing composed observations remain
 unchanged; `accounting_12_cases` retains the prior checkpoint. Compatibility probes
 share the source matrices' explicit instruction/work bounds; runtime defaults and
 hard cancellation semantics are unchanged.
+
+## Slot storage accounting revision 14
+
+O84 adds a 48-byte layout record for an explicitly slotted class or a class
+inheriting member storage, plus eight bytes and two bytes per character for
+each own member name. Each instance with members adds eight bytes for the
+storage table and eight per inherited/own member position. Occupied positions
+trace their exact values; empty positions add no value edge. Stored native
+member descriptors use the existing descriptor allocation and retain their
+declaring class. Member mutation preflights the full graph and restores its
+previous edge on failure. Classes and instances without members retain their
+prior allocation layout. Slot iterators and declaration values remain owned
+by the existing construction/iteration continuations.
+The eight existing composed instruction, work, storage and collection
+observations remain unchanged.

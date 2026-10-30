@@ -1,0 +1,355 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-slots/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O84"
+  ],
+  "cases": [
+    {
+      "id": "empty",
+      "stage": "O84",
+      "source": "class A: __slots__=()\na=A()\nprint(hasattr(a,\"__dict__\"),hasattr(a,\"__weakref__\"))\na.x=7\n",
+      "stdout": "False False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "basic",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",\"y\")\na=A()\nprint(hasattr(a,\"x\"))\na.x=[7]\na.y=a.x\nprint(a.x is a.y,a.x[0])\ndel a.x\nprint(hasattr(a,\"x\"),a.y[0])\n",
+      "stdout": "False\nTrue 7\nFalse 7\n"
+    },
+    {
+      "id": "descriptor",
+      "stage": "O84",
+      "source": "class A: __slots__=\"x\"\na=A()\nd=A.x\nprint(type(d).__name__,d.__objclass__ is A,d.__name__,d.__doc__,d.__get__(None,A) is d)\nprint(d.__set__(a,7),d.__get__(a,A),d.__delete__(a),hasattr(a,\"x\"))\n",
+      "stdout": "member_descriptor True x None True\nNone 7 None False\n"
+    },
+    {
+      "id": "descriptor-inherited",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nclass B(A): __slots__=(\"y\",)\nb=B()\nA.x.__set__(b,7)\nb.y=9\nprint(b.x,b.y,B.x is A.x,hasattr(b,\"__dict__\"))\n",
+      "stdout": "7 9 True False\n"
+    },
+    {
+      "id": "duplicate-shadow",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nclass B(A): __slots__=(\"x\",)\nb=B()\nA.x.__set__(b,7)\nb.x=9\nprint(A.x.__get__(b),b.x)\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "duplicate-name",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",\"x\")\na=A()\na.x=7\nprint(a.x,type(A.x).__name__)\n",
+      "stdout": "7 member_descriptor\n"
+    },
+    {
+      "id": "mangling",
+      "stage": "O84",
+      "source": "class __A:\n __slots__=(\"__x\",)\n def f(self): self.__x=7; return self.__x\na=__A()\nprint(a.f(),a._A__x,\"_A__x\" in __A.__dict__)\n",
+      "stdout": "7 7 True\n"
+    },
+    {
+      "id": "all-underscore-name",
+      "stage": "O84",
+      "source": "class ___: __slots__=(\"__x\",)\na=___()\nsetattr(a,\"__x\",7)\nprint(getattr(a,\"__x\"))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "dictionary",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",\"__dict__\")\na=A()\na.x=7\na.y=9\nprint(a.x,a.__dict__[\"y\"],\"x\" in a.__dict__)\na.__dict__[\"x\"]=11\nprint(a.x)\na.__dict__={\"z\":13}\nprint(a.z,a.x)\ndel a.__dict__\nprint(len(a.__dict__),a.x)\n",
+      "stdout": "7 9 False\n7\n13 7\n0 7\n"
+    },
+    {
+      "id": "weak-layout",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",\"__weakref__\")\na=A()\nprint(a.__weakref__,hasattr(a,\"__dict__\"),type(A.__weakref__).__name__)\na.__weakref__=7\n",
+      "stdout": "None False getset_descriptor\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "ordinary-child",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nclass B(A): pass\nb=B()\nb.x=7\nb.y=9\nprint(b.x,b.y,hasattr(b,\"__dict__\"),hasattr(b,\"__weakref__\"))\n",
+      "stdout": "7 9 True True\n"
+    },
+    {
+      "id": "ordinary-parent",
+      "stage": "O84",
+      "source": "class A: pass\nclass B(A): __slots__=(\"x\",)\nb=B()\nb.x=7\nb.y=9\nprint(b.x,b.y,hasattr(b,\"__dict__\"),hasattr(b,\"__weakref__\"))\n",
+      "stdout": "7 9 True True\n"
+    },
+    {
+      "id": "diamond",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nclass B(A): __slots__=()\nclass C(A): __slots__=()\nclass D(B,C): __slots__=(\"y\",)\nd=D()\nd.x=7\nd.y=9\nprint(d.x,d.y,D.__base__ is B)\n",
+      "stdout": "7 9 True\n"
+    },
+    {
+      "id": "layout-conflict",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nclass B: __slots__=(\"y\",)\nclass C(A,B): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "empty-mixin",
+      "stage": "O84",
+      "source": "class A: __slots__=()\nclass B: __slots__=(\"x\",)\nclass C(A,B): __slots__=()\nc=C()\nc.x=7\nprint(c.x,C.__base__ is B)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "dict-mixin",
+      "stage": "O84",
+      "source": "class A: pass\nclass B: __slots__=(\"x\",)\nclass C(A,B): __slots__=()\nc=C()\nc.x=7\nc.y=9\nprint(c.x,c.y,C.__base__ is B)\n",
+      "stdout": "7 9 True\n"
+    },
+    {
+      "id": "dynamic",
+      "stage": "O84",
+      "source": "A=type(\"A\",(),{\"__slots__\":(\"x\",)})\na=A()\na.x=7\nprint(a.x,hasattr(a,\"__dict__\"))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "slots-list",
+      "stage": "O84",
+      "source": "class A: __slots__=[\"x\"]\na=A()\na.x=7\nprint(a.x,A.__slots__[0])\n",
+      "stdout": "7 x\n"
+    },
+    {
+      "id": "slots-mapping",
+      "stage": "O84",
+      "source": "class A: __slots__={\"x\":\"documentation\"}\na=A()\na.x=7\nprint(a.x,A.x.__doc__)\n",
+      "stdout": "7 None\n"
+    },
+    {
+      "id": "slots-generator",
+      "stage": "O84",
+      "source": "def fields():\n print(\"entered\")\n yield \"x\"\nclass A: __slots__=fields()\na=A()\na.x=7\nprint(a.x,len(list(A.__slots__)))\n",
+      "stdout": "entered\n7 0\n"
+    },
+    {
+      "id": "slots-iterable",
+      "stage": "O84",
+      "source": "class Fields:\n def __iter__(self): print(\"iter\"); return iter((\"x\",))\n def __len__(self): print(\"len\"); return 1\nclass A: __slots__=Fields()\na=A()\na.x=7\nprint(a.x)\n",
+      "stdout": "iter\n7\n"
+    },
+    {
+      "id": "slots-iterator-hint",
+      "stage": "O84",
+      "source": "class Fields:\n def __iter__(self): print(\"iter\"); return self\n def __length_hint__(self): print(\"hint\"); return 1\n def __next__(self):\n  if hasattr(self,\"done\"): raise StopIteration\n  self.done=True\n  return \"x\"\nclass A: __slots__=Fields()\nprint(type(A.x).__name__)\n",
+      "stdout": "iter\nmember_descriptor\n"
+    },
+    {
+      "id": "slot-mutation-after-build",
+      "stage": "O84",
+      "source": "fields=[\"x\"]\nclass A: __slots__=fields\nfields.append(\"y\")\na=A()\na.x=7\nprint(a.x,\"y\" in A.__dict__)\na.y=9\n",
+      "stdout": "7 False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "slot-rebinding",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\na=A()\na.x=7\nd=A.x\nA.x=9\nprint(a.x,d.__get__(a))\ndel A.x\nprint(hasattr(a,\"x\"),d.__get__(a))\n",
+      "stdout": "9 7\nFalse 7\n"
+    },
+    {
+      "id": "slot-policy-after-rebinding",
+      "stage": "O84",
+      "source": "class A: __slots__=()\nA.__slots__=(\"x\",)\na=A()\na.x=7\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "dict-shadow",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",\"__dict__\")\na=A()\na.__dict__[\"x\"]=9\nprint(hasattr(a,\"x\"))\na.x=7\nprint(a.x,a.__dict__[\"x\"])\n",
+      "stdout": "False\n7 9\n"
+    },
+    {
+      "id": "hooks",
+      "stage": "O84",
+      "source": "class A:\n __slots__=(\"x\",)\n def __getattr__(self,name): print(\"missing\",name); return 9\n def __setattr__(self,name,value): print(\"set\",name); object.__setattr__(self,name,value)\na=A()\nprint(a.x)\na.x=7\nprint(a.x)\n",
+      "stdout": "missing x\n9\nset x\n7\n"
+    },
+    {
+      "id": "super-slot",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nclass B(A):\n __slots__=()\n def f(self): return super().x\nb=B()\nb.x=7\nprint(b.f())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "slots-directory",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\na=A()\nprint(\"x\" in dir(a),\"__dict__\" in dir(a),\"__weakref__\" in dir(a),\"__get__\" in dir(A.x))\n",
+      "stdout": "True False False True\n"
+    },
+    {
+      "id": "notification-order",
+      "stage": "O84",
+      "source": "class D:\n def __set_name__(self,owner,name): print(name,type(owner.x).__name__,hasattr(owner,\"__dict__\"))\nclass A:\n __slots__=(\"x\",)\n d=D()\n",
+      "stdout": "d member_descriptor True\n"
+    },
+    {
+      "id": "metaclass-slots",
+      "stage": "O84",
+      "source": "class M(type): __slots__=(\"x\",)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "custom-mro-slots",
+      "stage": "O84",
+      "source": "class M(type):\n def mro(cls): return type.mro(cls)\nclass A(metaclass=M): __slots__=(\"x\",)\na=A()\na.x=7\nprint(a.x)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "none",
+      "stage": "O84",
+      "source": "class A: __slots__=None\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "integer",
+      "stage": "O84",
+      "source": "class A: __slots__=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "nonstring",
+      "stage": "O84",
+      "source": "class A: __slots__=(7,)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-name",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"a-b\",)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "empty-name",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"\",)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "duplicate-dict",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"__dict__\",\"__dict__\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "duplicate-weak",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"__weakref__\",\"__weakref__\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "inherited-__dict__",
+      "stage": "O84",
+      "source": "class A: pass\nclass B(A): __slots__=(\"__dict__\",)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "inherited-__weakref__",
+      "stage": "O84",
+      "source": "class A: pass\nclass B(A): __slots__=(\"__weakref__\",)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "class-variable-conflict",
+      "stage": "O84",
+      "source": "class A:\n __slots__=(\"x\",)\n x=7\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "private-conflict",
+      "stage": "O84",
+      "source": "class A:\n __slots__=(\"__x\",)\n __x=7\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "validation-43",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nA.x.__get__(object())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "validation-44",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nA.x.__set__(object(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "validation-45",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nA.x.__delete__(object())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "validation-46",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nA.x.__get__(None,None)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "validation-47",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nA.x.__set__(A())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "validation-48",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nA.x.__delete__(A(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "validation-49",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nA.x.__get__(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "validation-50",
+      "stage": "O84",
+      "source": "class A: __slots__=(\"x\",)\nA.x.__delete__(A())\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "iterator-failure",
+      "stage": "O84",
+      "source": "def fields():\n print(\"entered\")\n yield \"x\"\n raise ValueError(\"failed\")\nclass A: __slots__=fields()\n",
+      "stdout": "entered\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "failed-definition-unpublished",
+      "stage": "O84",
+      "source": "class A: pass\ntry:\n class A:\n  __slots__=(\"x\",)\n  x=7\nexcept ValueError: print(A.__name__,hasattr(A(),\"__dict__\"))\n",
+      "stdout": "A True\n"
+    }
+  ]
+}
