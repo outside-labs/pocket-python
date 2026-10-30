@@ -471,3 +471,7 @@ instance/type directories with live dictionaries and retained native callers.
 [O78](interpreter-native-directory-closure.md) closes the current native directory
 matrix with an 85-type audit and canonical namespace keys under accounting revision
 13. O76–O78 complete the directory workstream; O79–O96 remain separate stages.
+
+[O79](interpreter-expanded-class-bases.md) adopts expanded class headers, owned base
+resolution and original-base retention. Prepared mappings and further metaclass
+construction remain O80–O83.

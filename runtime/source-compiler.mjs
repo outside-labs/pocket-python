@@ -545,11 +545,22 @@ class Compiler {
           if (value.kind === "Function") makeFunction(value);
           else {
             if (value.bases.length > 16) this.fail("Class base budget exceeded.", value, "COMPILE_BUDGET");
-            value.bases.forEach(expr);
-            if (value.keywords) {
+            if (value.bases.some(item => item.kind === "StarredArgument") || value.keywords?.some(item => item.name === null)) {
+              pushNone(value); emit(value, "call-start");
+              for (const base of value.bases) {
+                expr(base.kind === "StarredArgument" ? base.value : base);
+                emit(base, base.kind === "StarredArgument" ? "call-star" : "call-argument");
+              }
+              for (const keyword of value.keywords || []) {
+                expr(keyword.value); emit(value, keyword.name === null ? "call-mapping" : "call-keyword", ...(keyword.name === null ? [] : [keyword.name]));
+              }
+              emit(value, "class-expanded", this.scopeOf.get(value).index);
+            } else if (value.keywords) {
+              value.bases.forEach(expr);
               value.keywords.forEach(item => expr(item.value));
               emit(value, "class-keywords", this.scopeOf.get(value).index, value.bases.length, value.keywords.map(item => item.name));
             } else {
+              value.bases.forEach(expr);
               if (value.metaclass) expr(value.metaclass);
               emit(value, value.metaclass ? "class-meta" : "class", this.scopeOf.get(value).index, value.bases.length);
             }
