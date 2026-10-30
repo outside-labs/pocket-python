@@ -385,3 +385,9 @@ prior allocation layout. Slot iterators and declaration values remain owned
 by the existing construction/iteration continuations.
 The eight existing composed instruction, work, storage and collection
 observations remain unchanged.
+
+O85 extends revision 14 with an optional eight-byte immutable native payload
+edge on a source instance. That edge traces the existing native allocation;
+member and dictionary storage retain the same rules. Native constructor
+continuations retain the selected subtype through result publication. All eight
+existing composed observations remain unchanged.

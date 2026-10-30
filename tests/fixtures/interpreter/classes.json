@@ -122,7 +122,7 @@
     },
     {
       "id": "builtin-subclass",
-      "stage": "C2",
+      "stage": "O85",
       "source": "class A(str): pass\n"
     },
     {
@@ -248,6 +248,7 @@
     "C3-hash",
     "O4",
     "O5",
-    "O68"
+    "O68",
+    "O85"
   ]
 }

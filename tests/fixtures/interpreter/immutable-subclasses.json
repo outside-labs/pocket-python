@@ -1,0 +1,475 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-immutable-subclasses/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O85"
+  ],
+  "cases": [
+    {
+      "id": "int-state",
+      "stage": "O85",
+      "source": "class C(int): pass\na=C(7)\na.x=9\nprint(type(a) is C,isinstance(a,int),a.x,a==int(7),hash(a)==hash(int(7)),type(a+2) is int)\n",
+      "stdout": "True True 9 True True True\n"
+    },
+    {
+      "id": "int-new",
+      "stage": "O85",
+      "source": "class C(int): pass\na=int.__new__(C,7)\nprint(type(a) is C,a==int(7),type(int.__new__(int,7)) is int)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "int-empty-slots",
+      "stage": "O85",
+      "source": "class C(int): __slots__=()\na=C(7)\nprint(type(a) is C,hasattr(a,\"__dict__\"))\na.x=7\n",
+      "stdout": "True False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "int-init",
+      "stage": "O85",
+      "source": "class C(int):\n def __init__(self,value): print(\"init\"); self.x=9\na=C(7)\nprint(a.x,a==int(7))\n",
+      "stdout": "init\n9 True\n"
+    },
+    {
+      "id": "int-conversion",
+      "stage": "O85",
+      "source": "class C(int): pass\na=C(7)\nb=int(a)\nprint(type(b) is int,b==a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "float-state",
+      "stage": "O85",
+      "source": "class C(float): pass\na=C(2.5)\na.x=9\nprint(type(a) is C,isinstance(a,float),a.x,a==float(2.5),hash(a)==hash(float(2.5)),type(a+2) is float)\n",
+      "stdout": "True True 9 True True True\n"
+    },
+    {
+      "id": "float-new",
+      "stage": "O85",
+      "source": "class C(float): pass\na=float.__new__(C,2.5)\nprint(type(a) is C,a==float(2.5),type(float.__new__(float,2.5)) is float)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "float-empty-slots",
+      "stage": "O85",
+      "source": "class C(float): __slots__=()\na=C(2.5)\nprint(type(a) is C,hasattr(a,\"__dict__\"))\na.x=7\n",
+      "stdout": "True False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "float-init",
+      "stage": "O85",
+      "source": "class C(float):\n def __init__(self,value): print(\"init\"); self.x=9\na=C(2.5)\nprint(a.x,a==float(2.5))\n",
+      "stdout": "init\n9 True\n"
+    },
+    {
+      "id": "float-conversion",
+      "stage": "O85",
+      "source": "class C(float): pass\na=C(2.5)\nb=float(a)\nprint(type(b) is float,b==a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "complex-state",
+      "stage": "O85",
+      "source": "class C(complex): pass\na=C(2+3j)\na.x=9\nprint(type(a) is C,isinstance(a,complex),a.x,a==complex(2+3j),hash(a)==hash(complex(2+3j)),type(a+2) is complex)\n",
+      "stdout": "True True 9 True True True\n"
+    },
+    {
+      "id": "complex-new",
+      "stage": "O85",
+      "source": "class C(complex): pass\na=complex.__new__(C,2+3j)\nprint(type(a) is C,a==complex(2+3j),type(complex.__new__(complex,2+3j)) is complex)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "complex-empty-slots",
+      "stage": "O85",
+      "source": "class C(complex): __slots__=()\na=C(2+3j)\nprint(type(a) is C,hasattr(a,\"__dict__\"))\na.x=7\n",
+      "stdout": "True False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "complex-init",
+      "stage": "O85",
+      "source": "class C(complex):\n def __init__(self,value): print(\"init\"); self.x=9\na=C(2+3j)\nprint(a.x,a==complex(2+3j))\n",
+      "stdout": "init\n9 True\n"
+    },
+    {
+      "id": "complex-conversion",
+      "stage": "O85",
+      "source": "class C(complex): pass\na=C(2+3j)\nb=complex(a)\nprint(type(b) is complex,b==a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "str-state",
+      "stage": "O85",
+      "source": "class C(str): pass\na=C(\"abc\")\na.x=9\nprint(type(a) is C,isinstance(a,str),a.x,a==str(\"abc\"),hash(a)==hash(str(\"abc\")),type(a+\"d\") is str)\n",
+      "stdout": "True True 9 True True True\n"
+    },
+    {
+      "id": "str-new",
+      "stage": "O85",
+      "source": "class C(str): pass\na=str.__new__(C,\"abc\")\nprint(type(a) is C,a==str(\"abc\"),type(str.__new__(str,\"abc\")) is str)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "str-empty-slots",
+      "stage": "O85",
+      "source": "class C(str): __slots__=()\na=C(\"abc\")\nprint(type(a) is C,hasattr(a,\"__dict__\"))\na.x=7\n",
+      "stdout": "True False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "str-init",
+      "stage": "O85",
+      "source": "class C(str):\n def __init__(self,value): print(\"init\"); self.x=9\na=C(\"abc\")\nprint(a.x,a==str(\"abc\"))\n",
+      "stdout": "init\n9 True\n"
+    },
+    {
+      "id": "str-conversion",
+      "stage": "O85",
+      "source": "class C(str): pass\na=C(\"abc\")\nb=str(a)\nprint(type(b) is str,b==a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bytes-state",
+      "stage": "O85",
+      "source": "class C(bytes): pass\na=C(b\"abc\")\na.x=9\nprint(type(a) is C,isinstance(a,bytes),a.x,a==bytes(b\"abc\"),hash(a)==hash(bytes(b\"abc\")),type(a+b\"d\") is bytes)\n",
+      "stdout": "True True 9 True True True\n"
+    },
+    {
+      "id": "bytes-new",
+      "stage": "O85",
+      "source": "class C(bytes): pass\na=bytes.__new__(C,b\"abc\")\nprint(type(a) is C,a==bytes(b\"abc\"),type(bytes.__new__(bytes,b\"abc\")) is bytes)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "bytes-empty-slots",
+      "stage": "O85",
+      "source": "class C(bytes): __slots__=()\na=C(b\"abc\")\nprint(type(a) is C,hasattr(a,\"__dict__\"))\na.x=7\n",
+      "stdout": "True False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "bytes-init",
+      "stage": "O85",
+      "source": "class C(bytes):\n def __init__(self,value): print(\"init\"); self.x=9\na=C(b\"abc\")\nprint(a.x,a==bytes(b\"abc\"))\n",
+      "stdout": "init\n9 True\n"
+    },
+    {
+      "id": "bytes-conversion",
+      "stage": "O85",
+      "source": "class C(bytes): pass\na=C(b\"abc\")\nb=bytes(a)\nprint(type(b) is bytes,b==a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "tuple-state",
+      "stage": "O85",
+      "source": "class C(tuple): pass\na=C((7,9))\na.x=9\nprint(type(a) is C,isinstance(a,tuple),a.x,a==tuple((7,9)),hash(a)==hash(tuple((7,9))),type(a+(11,)) is tuple)\n",
+      "stdout": "True True 9 True True True\n"
+    },
+    {
+      "id": "tuple-new",
+      "stage": "O85",
+      "source": "class C(tuple): pass\na=tuple.__new__(C,(7,9))\nprint(type(a) is C,a==tuple((7,9)),type(tuple.__new__(tuple,(7,9))) is tuple)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "tuple-empty-slots",
+      "stage": "O85",
+      "source": "class C(tuple): __slots__=()\na=C((7,9))\nprint(type(a) is C,hasattr(a,\"__dict__\"))\na.x=7\n",
+      "stdout": "True False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "tuple-init",
+      "stage": "O85",
+      "source": "class C(tuple):\n def __init__(self,value): print(\"init\"); self.x=9\na=C((7,9))\nprint(a.x,a==tuple((7,9)))\n",
+      "stdout": "init\n9 True\n"
+    },
+    {
+      "id": "tuple-conversion",
+      "stage": "O85",
+      "source": "class C(tuple): pass\na=C((7,9))\nb=tuple(a)\nprint(type(b) is tuple,b==a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "frozenset-state",
+      "stage": "O85",
+      "source": "class C(frozenset): pass\na=C((7,9))\na.x=9\nprint(type(a) is C,isinstance(a,frozenset),a.x,a==frozenset((7,9)),hash(a)==hash(frozenset((7,9))),type(a|frozenset((11,))) is frozenset)\n",
+      "stdout": "True True 9 True True True\n"
+    },
+    {
+      "id": "frozenset-new",
+      "stage": "O85",
+      "source": "class C(frozenset): pass\na=frozenset.__new__(C,(7,9))\nprint(type(a) is C,a==frozenset((7,9)),type(frozenset.__new__(frozenset,(7,9))) is frozenset)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "frozenset-empty-slots",
+      "stage": "O85",
+      "source": "class C(frozenset): __slots__=()\na=C((7,9))\nprint(type(a) is C,hasattr(a,\"__dict__\"))\na.x=7\n",
+      "stdout": "True False\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "frozenset-init",
+      "stage": "O85",
+      "source": "class C(frozenset):\n def __init__(self,value): print(\"init\"); self.x=9\na=C((7,9))\nprint(a.x,a==frozenset((7,9)))\n",
+      "stdout": "init\n9 True\n"
+    },
+    {
+      "id": "frozenset-conversion",
+      "stage": "O85",
+      "source": "class C(frozenset): pass\na=C((7,9))\nb=frozenset(a)\nprint(type(b) is frozenset,b==a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "int-custom-new",
+      "stage": "O85",
+      "source": "class I(int):\n def __new__(cls,n):\n  print(\"new\",n)\n  return int.__new__(cls,n+1)\n def __init__(self,n): print(\"init\",n); self.original=n\ni=I(7)\nprint(int(i),i.original,type(i) is I)\n",
+      "stdout": "new 7\ninit 7\n8 7 True\n"
+    },
+    {
+      "id": "new-foreign-result",
+      "stage": "O85",
+      "source": "class I(int):\n def __new__(cls,n): return \"other\"\n def __init__(self,n): print(\"never\")\nprint(I(7))\n",
+      "stdout": "other\n"
+    },
+    {
+      "id": "inherited-new",
+      "stage": "O85",
+      "source": "class I(int): pass\nclass J(I): pass\nj=J(7)\nprint(type(j) is J,j+2,J.__base__ is I)\n",
+      "stdout": "True 9 True\n"
+    },
+    {
+      "id": "numeric-repr",
+      "stage": "O85",
+      "source": "class I(int):\n def __repr__(self): return \"custom\"\ni=I(7)\nprint(i,str(i),repr(i),int(i),i+2)\n",
+      "stdout": "custom custom custom 7 9\n"
+    },
+    {
+      "id": "numeric-overrides",
+      "stage": "O85",
+      "source": "class I(int):\n def __int__(self): print(\"int\"); return 11\n def __index__(self): print(\"index\"); return 13\n def __add__(self,other): print(\"add\"); return 17\n def __radd__(self,other): print(\"radd\"); return 19\n def __hash__(self): print(\"hash\"); return 23\ni=I(7)\nprint(int(i),i+2,2+i,hash(i),int.__add__(i,2),int.__int__(i),int.__index__(i))\n",
+      "stdout": "int\nadd\nradd\nhash\n11 17 19 23 9 7 7\n"
+    },
+    {
+      "id": "reflected-priority",
+      "stage": "O85",
+      "source": "class I(int):\n def __add__(self,other): print(\"I\"); return 7\nclass J(I):\n def __radd__(self,other): print(\"J\"); return 9\nprint(I(1)+J(2),J(2)+I(1))\n",
+      "stdout": "J\nI\n9 7\n"
+    },
+    {
+      "id": "equality-and-hash",
+      "stage": "O85",
+      "source": "class I(int):\n def __eq__(self,other): print(\"eq\"); return True\ni=I(7)\nprint(i==9,9==i)\nhash(i)\n",
+      "stdout": "eq\neq\nTrue True\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "numeric-keys",
+      "stage": "O85",
+      "source": "class I(int): pass\ni=I(7)\nd={i:9}\nprint(d[7],d[I(7)],7 in {i},hash((i,))==hash((7,)))\n",
+      "stdout": "9 9 True True\n"
+    },
+    {
+      "id": "numeric-fields",
+      "stage": "O85",
+      "source": "class I(int): pass\nclass F(float): pass\nclass C(complex): pass\ni=I(7)\nf=F(2.5)\nc=C(2,3)\nprint(i.real==7,i.imag==0,i.numerator==7,i.denominator==1,f.real==2.5,f.imag==0.0,c.real==2.0,c.imag==3.0)\n",
+      "stdout": "True True True True True True True True\n"
+    },
+    {
+      "id": "numeric-unary",
+      "stage": "O85",
+      "source": "class I(int): pass\nclass F(float): pass\nclass C(complex): pass\ni=I(-7)\nf=F(-2.5)\nc=C(2,3)\nprint(-i==7,+i==-7,~i==6,abs(i)==7,round(f)==-2,int(f)==-2,float(i)==-7.0,bool(I(0)),bool(c),type(-c) is complex)\n",
+      "stdout": "True True True True True True True False True True\n"
+    },
+    {
+      "id": "int-index",
+      "stage": "O85",
+      "source": "class I(int):\n def __index__(self): print(\"never\"); return 0\ni=I(1)\nprint([7,9][i],\"ab\"*i,range(i)[0])\n",
+      "stdout": "9 ab 0\n"
+    },
+    {
+      "id": "str-override",
+      "stage": "O85",
+      "source": "class S(str):\n def __len__(self): return 7\n def __getitem__(self,key): return \"override\"\n def __str__(self): return \"shown\"\ns=S(\"abc\")\nprint(len(s),s[0],str(s),str.__len__(s),str.__getitem__(s,0),type(s+\"d\") is str)\n",
+      "stdout": "7 override shown 3 a True\n"
+    },
+    {
+      "id": "str-methods",
+      "stage": "O85",
+      "source": "class S(str): pass\ns=S(\"abc\")\nprint(s.encode()==b\"abc\",\"b\" in s,type(s.encode()) is bytes,s*2,2*s)\n",
+      "stdout": "True True True abcabc abcabc\n"
+    },
+    {
+      "id": "tuple-override",
+      "stage": "O85",
+      "source": "class T(tuple):\n def __len__(self): return 7\n def __iter__(self): return iter((11,13))\nt=T((7,9))\nprint(len(t),tuple.__len__(t),next(iter(t)),t[0],type(t[:]) is tuple)\n",
+      "stdout": "7 2 11 7 True\n"
+    },
+    {
+      "id": "bytes-override",
+      "stage": "O85",
+      "source": "class B(bytes):\n def __bytes__(self): return b\"z\"\nb=B(b\"abc\")\nprint(bytes(b)==b\"z\",b[0],len(b),type(b[:]) is bytes,type(b+b\"d\") is bytes)\n",
+      "stdout": "True 97 3 True True\n"
+    },
+    {
+      "id": "frozenset-override",
+      "stage": "O85",
+      "source": "class F(frozenset):\n def __contains__(self,key): return False\nf=F((7,9))\nprint(7 in f,frozenset.__contains__(f,7),len(f),type(f.copy()) is frozenset)\n",
+      "stdout": "False True 2 True\n"
+    },
+    {
+      "id": "float-members",
+      "stage": "O85",
+      "source": "class C(float): __slots__=(\"x\",)\na=C(2.5)\na.x=9\nprint(a.x,hasattr(a,\"__dict__\"),type(C.x).__name__)\n",
+      "stdout": "9 False member_descriptor\n"
+    },
+    {
+      "id": "complex-members",
+      "stage": "O85",
+      "source": "class C(complex): __slots__=(\"x\",)\na=C(2+3j)\na.x=9\nprint(a.x,hasattr(a,\"__dict__\"),type(C.x).__name__)\n",
+      "stdout": "9 False member_descriptor\n"
+    },
+    {
+      "id": "str-members",
+      "stage": "O85",
+      "source": "class C(str): __slots__=(\"x\",)\na=C(\"abc\")\na.x=9\nprint(a.x,hasattr(a,\"__dict__\"),type(C.x).__name__)\n",
+      "stdout": "9 False member_descriptor\n"
+    },
+    {
+      "id": "frozenset-members",
+      "stage": "O85",
+      "source": "class C(frozenset): __slots__=(\"x\",)\na=C((7,9))\na.x=9\nprint(a.x,hasattr(a,\"__dict__\"),type(C.x).__name__)\n",
+      "stdout": "9 False member_descriptor\n"
+    },
+    {
+      "id": "int-reject-members",
+      "stage": "O85",
+      "source": "class C(int): __slots__=(\"x\",)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bytes-reject-members",
+      "stage": "O85",
+      "source": "class C(bytes): __slots__=(\"x\",)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-reject-members",
+      "stage": "O85",
+      "source": "class C(tuple): __slots__=(\"x\",)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bool-not-subclassable",
+      "stage": "O85",
+      "source": "class C(bool): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "range-not-subclassable",
+      "stage": "O85",
+      "source": "class C(range): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "slice-not-subclassable",
+      "stage": "O85",
+      "source": "class C(slice): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "memoryview-not-subclassable",
+      "stage": "O85",
+      "source": "class C(memoryview): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "incompatible-layouts",
+      "stage": "O85",
+      "source": "class C(int,str): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-receiver-error",
+      "stage": "O85",
+      "source": "class I(int): pass\nint.__new__(I,\"wrong\")\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "wrong-new-subtype",
+      "stage": "O85",
+      "source": "class S(str): pass\nint.__new__(S,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "object-new-reject",
+      "stage": "O85",
+      "source": "class I(int): pass\nobject.__new__(I)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-method-receiver-error",
+      "stage": "O85",
+      "source": "class S(str): pass\nint.__add__(S(\"a\"),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "int-directory",
+      "stage": "O85",
+      "source": "class C(int): pass\na=C()\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),type(C.__dict__[\"__dict__\"]).__name__,C.__base__ is int)\n",
+      "stdout": "True True getset_descriptor True\n"
+    },
+    {
+      "id": "float-directory",
+      "stage": "O85",
+      "source": "class C(float): pass\na=C()\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),type(C.__dict__[\"__dict__\"]).__name__,C.__base__ is float)\n",
+      "stdout": "True True getset_descriptor True\n"
+    },
+    {
+      "id": "complex-directory",
+      "stage": "O85",
+      "source": "class C(complex): pass\na=C()\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),type(C.__dict__[\"__dict__\"]).__name__,C.__base__ is complex)\n",
+      "stdout": "True True getset_descriptor True\n"
+    },
+    {
+      "id": "str-directory",
+      "stage": "O85",
+      "source": "class C(str): pass\na=C()\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),type(C.__dict__[\"__dict__\"]).__name__,C.__base__ is str)\n",
+      "stdout": "True True getset_descriptor True\n"
+    },
+    {
+      "id": "bytes-directory",
+      "stage": "O85",
+      "source": "class C(bytes): pass\na=C()\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),type(C.__dict__[\"__dict__\"]).__name__,C.__base__ is bytes)\n",
+      "stdout": "True True getset_descriptor True\n"
+    },
+    {
+      "id": "tuple-directory",
+      "stage": "O85",
+      "source": "class C(tuple): pass\na=C()\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),type(C.__dict__[\"__dict__\"]).__name__,C.__base__ is tuple)\n",
+      "stdout": "True True getset_descriptor True\n"
+    },
+    {
+      "id": "frozenset-directory",
+      "stage": "O85",
+      "source": "class C(frozenset): pass\na=C()\nprint(\"__class__\" in dir(a),\"__new__\" in dir(C),type(C.__dict__[\"__dict__\"]).__name__,C.__base__ is frozenset)\n",
+      "stdout": "True True getset_descriptor True\n"
+    }
+  ]
+}

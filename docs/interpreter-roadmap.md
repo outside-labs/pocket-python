@@ -494,3 +494,7 @@ and builtin subclasses remain O84–O88.
 [O84](interpreter-slots.md) adopts slots, inherited member storage, native
 member descriptors and optional instance dictionary/weak-reference layouts.
 Builtin payload subclasses and compatible type/base reassignment remain O85–O88.
+
+[O85](interpreter-immutable-subclasses.md) adopts owned immutable builtin
+payload subclasses, native construction, state, dispatch and base-value results.
+The remaining storage stages are O86–O88.

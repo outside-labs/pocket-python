@@ -1556,8 +1556,8 @@ export function valueLayout(value) {
     children: value.entries.flatMap(entry => [entry.owner, entry.dictionary, entry.key])};
   if (value instanceof ClassNamespaceValue) return {bytes: 48, children: [value.owner]};
   if (value instanceof InstanceValue) return value.attributes instanceof Map ?
-    {bytes: 80 + (value.slotValues ? 8 + 8 * value.type.storage.count : 0) + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
-      children: [value.type, ...value.attributes.values(), ...(value.slotValues?.values() || [])]} : {bytes: 88 + (value.slotValues ? 8 + 8 * value.type.storage.count : 0), children: [value.type, value.attributes, ...(value.slotValues?.values() || [])]};
+    {bytes: 80 + (value.nativePayload === undefined ? 0 : 8) + (value.slotValues ? 8 + 8 * value.type.storage.count : 0) + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
+      children: [value.type, ...(value.nativePayload === undefined ? [] : [value.nativePayload]), ...value.attributes.values(), ...(value.slotValues?.values() || [])]} : {bytes: 88 + (value.nativePayload === undefined ? 0 : 8) + (value.slotValues ? 8 + 8 * value.type.storage.count : 0), children: [value.type, value.attributes, ...(value.nativePayload === undefined ? [] : [value.nativePayload]), ...(value.slotValues?.values() || [])]};
   if (value instanceof BoundMethodValue) return {bytes: 64, children: [value.callable, value.receiver]};
   if (value instanceof SuperValue) return {bytes: 72, children: [value.thisclass, value.self, value.selfClass]};
   if (value instanceof PropertyValue) return {bytes: 80 + (value.propertyName === undefined ? 0 : 8) + (value.documentation == null ? 0 : 8),
