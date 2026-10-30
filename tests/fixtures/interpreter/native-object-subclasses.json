@@ -419,7 +419,7 @@
     {
       "id": "module-owned-missing",
       "stage": "O87",
-      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  print(\"eq\")\n  return False\nm.__dict__[K()]=7\ndef missing(n):\n print(\"missing\")\n return 9\nm.__dict__[\"__getattr__\"]=missing\nprint(m.x)\n",
+      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\nseen=[]\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  seen.append(1)\n  return False\nm.__dict__[K()]=7\ndef missing(n):\n print(\"missing\")\n return 9\nm.__dict__[\"__getattr__\"]=missing\nprint(m.x)\nfirst=len(seen)\nseen=[]\nprint(type(m).__getattribute__(m,\"x\"))\nprint(first>0,first==len(seen))\n",
       "imports": [
         "helper"
       ],
@@ -431,7 +431,7 @@
           "package": false
         }
       ],
-      "stdout": "eq\nmissing\n9\n"
+      "stdout": "missing\n9\nmissing\n9\nTrue True\n"
     },
     {
       "id": "super-owned-target-key",
@@ -442,7 +442,7 @@
     {
       "id": "module-owned-native-bypass",
       "stage": "O87",
-      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  print(\"eq\")\n  return False\nm.__dict__[K()]=7\ndef missing(n):\n print(\"missing\")\n return 9\nm.__dict__[\"__getattr__\"]=missing\ntry: object.__getattribute__(m,\"x\")\nexcept AttributeError: print(\"blocked\")\n",
+      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\nseen=[]\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  seen.append(1)\n  return False\nm.__dict__[K()]=7\ndef missing(n):\n print(\"missing\")\n return 9\nm.__dict__[\"__getattr__\"]=missing\ntry: object.__getattribute__(m,\"x\")\nexcept AttributeError: print(\"blocked\")\nprint(bool(seen))\n",
       "imports": [
         "helper"
       ],
@@ -454,7 +454,7 @@
           "package": false
         }
       ],
-      "stdout": "eq\nblocked\n"
+      "stdout": "blocked\nTrue\n"
     }
   ]
 }
