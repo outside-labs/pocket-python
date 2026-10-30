@@ -47,6 +47,7 @@ export class IteratorValue {
     this.value = value; this.index = value instanceof RangeValue ? 0n : 0;
     if (value instanceof DictValue || value instanceof SetValue) {
       const storage = value instanceof SetValue ? value.storage : value;
+      if (storage.namespace) { this.remaining = storage.entries.length; this.serial = 0; }
       this.size = storage.entries.length; this.version = storage.version;
     }
   }
@@ -852,7 +853,7 @@ export class ValueRuntime {
     this.charge(1);
     if (remove) {
       const entries = dict.entries.filter((_, index) => index !== position);
-      const bytes = 96 + entries.reduce((sum, entry) => sum + 48 + 2 * entry.hash.length, 0);
+      const bytes = 96 + (dict.namespace ? 16 : 0) + entries.reduce((sum, entry) => sum + (dict.namespace ? 56 : 48) + 2 * entry.hash.length, 0);
       this.resize(dict, bytes, entries.flatMap(entry => [entry.key, entry.value]));
       dict.entries = entries; dict.version++; return null;
     }
@@ -862,9 +863,9 @@ export class ValueRuntime {
     } else {
       this.limit(dict.entries.length < VALUE_LIMITS.items, "Container length budget exceeded.");
       const bucket = 'p:' + hash;
-      this.resize(dict, valueLayout(dict).bytes + 48 + 2 * bucket.length,
+      this.resize(dict, valueLayout(dict).bytes + (dict.namespace ? 56 : 48) + 2 * bucket.length,
         [...dict.entries.flatMap(entry => [entry.key, entry.value]), key, item]);
-      dict.entries.push({hash: bucket, key, value: item}); dict.version++;
+      dict.entries.push({hash: bucket, key, value: item, ...(dict.namespace ? {serial: dict.namespace.serial++} : {})}); dict.version++;
     }
     dict.ownedKeys = true; return null;
   }
@@ -877,11 +878,35 @@ export class ValueRuntime {
     const layout = valueLayout(result);
     return this.make(layout.bytes, layout.children, () => result);
   }
+  environmentDictionary(environment) {
+    if (environment.dictionary !== null) return environment.dictionary;
+    const roots = [environment], leave = this.memory?.enter(() => roots);
+    try {
+      const dictionary = this.dict([]); roots.push(dictionary);
+      for (const name of environment.order) {
+        this.charge(name.length + 1);
+        const cell = environment.cells.get(name);
+        if (!cell?.bound || name.startsWith("@source:")) continue;
+        const key = this.string(Array.from(name, char => char.codePointAt(0))); roots.push(key);
+        this.set(dictionary, key, cell.value);
+      }
+      // Publish only after all allocations succeed. Cells cease to own stale
+      // values; every subsequent source access uses this dictionary.
+      dictionary.namespace = {serial: dictionary.entries.length};
+      dictionary.entries.forEach((entry, serial) => { entry.serial = serial; });
+      const layout = valueLayout(dictionary); this.resize(dictionary, layout.bytes, layout.children);
+      const internal = [...environment.cells].filter(([name]) => name.startsWith("@source:"));
+      this.resize(environment, 72 + internal.reduce((size, [name]) => size + 32 + 2 * name.length, 0), [dictionary, ...internal.map(([,cell]) => cell)]);
+      environment.dictionary = dictionary; environment.cells.clear();
+      for (const [name, cell] of internal) environment.cells.set(name, cell);
+      return dictionary;
+    } finally { leave?.(); }
+  }
   find(dict, key) {
     const hash = this.hash(key);
     for (let i = 0; i < dict.entries.length; i++) {
       this.charge(1); const entry = dict.entries[i];
-      if (hash === entry.hash && (entry.key === key || this.equal(entry.key, key))) return i;
+      if ((hash === entry.hash || entry.hash.startsWith("p:") && this.pythonHash(key) === this.dictionaryEntryHash(entry)) && (entry.key === key || this.equal(entry.key, key))) return i;
     }
     return -1;
   }
@@ -962,9 +987,9 @@ export class ValueRuntime {
       else {
         this.limit(value.entries.length < VALUE_LIMITS.items, "Container length budget exceeded.");
         this.charge(1);
-        this.resize(value, valueLayout(value).bytes + 48 + 2 * hash.length,
+        this.resize(value, valueLayout(value).bytes + (value.namespace ? 56 : 48) + 2 * hash.length,
           [...value.entries.flatMap(entry => [entry.key, entry.value]), key, item]);
-        value.entries.push({hash, key, value: item}); value.version++;
+        value.entries.push({hash, key, value: item, ...(value.namespace ? {serial: value.namespace.serial++} : {})}); value.version++;
       }
       return null;
     }
@@ -1079,7 +1104,7 @@ export class ValueRuntime {
     if (value instanceof RangeValue) { this.charge(1); return this.make(80, [value, 0n], () => new IteratorValue(value)); }
     if (value instanceof MemoryViewValue) this.liveView(value);
     if (!sequence(value) && !(value instanceof DictValue || value instanceof SetValue || value instanceof MemoryViewValue)) this.fail("TypeError", "Value is not iterable in this stage.");
-    this.charge(1); return this.make(64, [value], () => new IteratorValue(value));
+    this.charge(1); return this.make(value.namespace ? 80 : 64, [value], () => new IteratorValue(value));
   }
   isIterator(value) { this.charge(1); return value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue; }
   next(iterator) {
@@ -1102,6 +1127,12 @@ export class ValueRuntime {
       const storage = value instanceof SetValue ? value.storage : value, label = value instanceof SetValue ? "Set" : "dictionary";
       if (iterator.invalidated || iterator.size !== storage.entries.length) {
         iterator.invalidated = true; this.fail("RuntimeError", label + " changed size during iteration");
+      }
+      if (storage.namespace) {
+        const entry = storage.entries.find(entry => entry.serial >= iterator.serial);
+        if (!entry) { iterator.exhausted = true; this.fail("StopIteration", ""); }
+        if (iterator.remaining === 0) { iterator.exhausted = true; this.fail("RuntimeError", "dictionary keys changed during iteration"); }
+        iterator.serial = entry.serial + 1; iterator.remaining--; return entry.key;
       }
       if (iterator.version !== storage.version) this.fail("UnsupportedOperationError", "Equal-size key mutation during iteration is deferred.", "UNSUPPORTED");
       if (iterator.index >= storage.entries.length) { iterator.exhausted = true; this.fail("StopIteration", ""); }
@@ -1368,16 +1399,18 @@ export function valueLayout(value) {
   if (value instanceof BinaryValue) return {bytes: 64 + value.items.length, children: []};
   if (value instanceof MemoryViewValue) return {bytes: 112, children: value.released ? [] : [value.owner]};
   if (value instanceof TupleValue || value instanceof ListValue) return {bytes: 64 + 8 * value.items.length, children: value.items};
-  if (value instanceof DictValue) return {bytes: 96 + value.entries.reduce((bytes, entry) => bytes + 48 + 2 * entry.hash.length, 0),
+  if (value instanceof DictValue) return {bytes: 96 + (value.namespace ? 16 : 0) + value.entries.reduce((bytes, entry) => bytes + (value.namespace ? 56 : 48) + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
   if (value instanceof SetValue) return {bytes: 64, children: [value.storage]};
-  if (value instanceof IteratorValue) return value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
+  if (value instanceof IteratorValue) return value.value?.namespace ? {bytes: 80, children: [value.value]} : value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
   if (value instanceof GeneratorValue) return {bytes: 128 + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};
   if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};
   if (value instanceof NotImplementedValue) return {bytes: 48, children: []};
   if (value instanceof SliceValue) return {bytes: 88, children: [value.start, value.stop, value.step]};
   if (value instanceof Cell) return {bytes: 48, children: value.bound ? [value.value] : []};
-  if (value instanceof Environment) return {bytes: 64 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [...value.cells.values()]};
+  if (value instanceof Environment) return value.dictionary === null ?
+    {bytes: 64 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [...value.cells.values()]} :
+    {bytes: 72 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [value.dictionary, ...value.cells.values()]};
   if (value instanceof CodePool) return {bytes: value.bytes, children: [...value.code.constants, ...(value.module ? [value.module] : [])]};
   if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length, children: [value.environment, value.pool]};
   if (value instanceof CallArguments) return {bytes: 80 + (value.keywordMap === null ? 0 : 8) + 8 * value.args.length + value.keywords.reduce((sum, key) => sum + 24 + 2 * key.length, 0),

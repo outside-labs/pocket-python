@@ -1,6 +1,6 @@
 import {VerifiedRegistry, RegistryError} from "./module-registry.mjs";
 import {MemoryArena, ResourceError} from "./memory.mjs";
-import {Cell, Environment, ModuleValue} from "./function-objects.mjs";
+import {Cell, Environment, ModuleValue, environmentCell} from "./function-objects.mjs";
 import {ValueRuntime, valueLayout} from "./values.mjs";
 
 const contexts = new WeakSet();
@@ -58,6 +58,11 @@ export class ModuleContext {
     this.memory.collect([], {cleanup: true});
   }
   binding(environment, key, value) {
+    if (environment.dictionary !== null) {
+      const values = new ValueRuntime({memory: this.memory, charge: amount => this.charge(amount)});
+      const name = values.string(Array.from(key, char => char.codePointAt(0)));
+      return values.set(environment.dictionary, name, value);
+    }
     let cell = environment.cells.get(key);
     if (!cell) {
       cell = this.memory.allocate(48, [value], () => { const item = new Cell(); item.bound = true; item.value = value; return item; });
@@ -67,6 +72,7 @@ export class ModuleContext {
     } else {
       this.memory.resize(cell, 48, [value]); cell.value = value; cell.bound = true;
     }
+    environment.order.add(key);
   }
   module(name) { return this.cache.cells.get(name)?.value || null; }
   builtin(name, create) {
@@ -110,7 +116,7 @@ export class ModuleContext {
           try {
             module.status = "ready";
             const parts = name.split("."), namespace = this.module(parts.slice(0, -1).join("."));
-            if (namespace) this.binding(namespace.environment, parts.at(-1), module);
+            if (namespace && namespace.environment.dictionary === null) this.binding(namespace.environment, parts.at(-1), module);
           } catch (error) { abort(); throw error; }
           release();
         }};
@@ -126,7 +132,7 @@ export class ModuleContext {
   }
   planAttribute(module, name, fromImport, importer) {
     if (!(module instanceof ModuleValue)) throw new RegistryError("Only module attributes are adopted in this profile.", "UnsupportedOperationError", "UNSUPPORTED");
-    const cell = module.environment.cells.get(name);
+    const cell = environmentCell(module.environment, name);
     if (cell?.bound) return {kind: "value", value: cell.value};
     if (fromImport && module.package) {
       const child = module.name + "." + name;

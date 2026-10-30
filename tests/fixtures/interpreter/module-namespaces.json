@@ -1,0 +1,638 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-module-namespaces/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O67"
+  ],
+  "cases": [
+    {
+      "id": "exact-global-aliases",
+      "source": "ns=globals()\nprint(ns is globals(),ns is locals(),ns is vars())\nns[\"value\"]=[7]\nprint(value is ns[\"value\"])\nvalue.append(9)\nprint(*ns[\"value\"])\n",
+      "stage": "O67",
+      "stdout": "True True True\nTrue\n7 9\n"
+    },
+    {
+      "id": "module-aliases",
+      "source": "import helper\nns=vars(helper)\nprint(ns is helper.__dict__,ns is helper.names())\nns[\"value\"]=9\nprint(helper.value,helper.read())\nhelper.value=11\nprint(ns[\"value\"])\ndel helper.value\nprint(hasattr(helper,\"value\"))\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "value=7\ndef read(): return value\ndef names(): return globals()\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "True True\n9 9\n11\nFalse\n"
+    },
+    {
+      "id": "global-write-delete",
+      "source": "ns=globals()\nns[\"value\"]=7\nprint(value)\nvalue=9\nprint(ns[\"value\"])\ndel value\nprint(\"value\" in ns)\nns[\"value\"]=11\ndel ns[\"value\"]\ntry: print(value)\nexcept NameError: print(\"missing\")\n",
+      "stage": "O67",
+      "stdout": "7\n9\nFalse\nmissing\n"
+    },
+    {
+      "id": "existing-functions",
+      "source": "ns=globals()\ndef f(): return value\nns[\"value\"]=7\nprint(f())\nns[\"value\"]=9\nprint(f())\n",
+      "stage": "O67",
+      "stdout": "7\n9\n"
+    },
+    {
+      "id": "global-declarations",
+      "source": "ns=globals()\ndef f():\n global value\n value=7\ndef g():\n global value\n del value\nf()\nprint(ns[\"value\"])\ng()\nprint(\"value\" in ns)\n",
+      "stage": "O67",
+      "stdout": "7\nFalse\n"
+    },
+    {
+      "id": "global-from-class",
+      "source": "ns=globals()\nclass A:\n global value\n value=17\nprint(value,ns[\"value\"])\n",
+      "stage": "O67",
+      "stdout": "17 17\n"
+    },
+    {
+      "id": "nonstring-keys",
+      "source": "ns=globals()\nkey=(7,9)\nitem=[17]\nns[key]=item\nns[7]=19\nprint(ns[key] is item,ns[7],key in ns)\ndel ns[key]\nprint(key in ns)\n",
+      "stage": "O67",
+      "stdout": "True 19 True\nFalse\n"
+    },
+    {
+      "id": "binding-order-before-exposure",
+      "source": "z=7\na=9\ndel z\nz=11\nprint(*[k for k in globals() if k==\"z\" or k==\"a\"])\n",
+      "stage": "O67",
+      "stdout": "a z\n"
+    },
+    {
+      "id": "binding-order-after-exposure",
+      "source": "ns=globals()\nz=7\na=9\ndel z\nz=11\nprint(*[k for k in ns if k==\"z\" or k==\"a\"])\n",
+      "stage": "O67",
+      "stdout": "a z\n"
+    },
+    {
+      "id": "loop-bindings",
+      "source": "ns=globals()\nfor value in [7,9]: print(value,ns[\"value\"])\nprint(*[x for x in [1,2]])\nprint(\"x\" in ns)\n",
+      "stage": "O67",
+      "stdout": "7 7\n9 9\n1 2\nFalse\n"
+    },
+    {
+      "id": "exception-alias-cleanup",
+      "source": "ns=globals()\ntry: 1//0\nexcept ZeroDivisionError as error: print(\"error\" in ns)\nprint(\"error\" in ns)\n",
+      "stage": "O67",
+      "stdout": "True\nFalse\n"
+    },
+    {
+      "id": "exception-finally",
+      "source": "ns=globals()\ndef f():\n global error\n try: 1//0\n except ZeroDivisionError as error: return \"error\" in ns\n finally: print(\"error\" in ns)\nprint(f())\n",
+      "stage": "O67",
+      "stdout": "False\nTrue\n"
+    },
+    {
+      "id": "optimized-locals-stay-snapshots",
+      "source": "ns=globals()\ndef f(value):\n a=locals()\n a[\"value\"]=9\n print(value,locals() is a,globals() is ns)\nf(7)\n",
+      "stage": "O67",
+      "stdout": "7 False True\n"
+    },
+    {
+      "id": "generator-global-lookup",
+      "source": "ns=globals()\ndef f():\n yield value\n yield value\ng=f()\nns[\"value\"]=7\nprint(next(g))\nns[\"value\"]=9\nprint(next(g))\n",
+      "stage": "O67",
+      "stdout": "7\n9\n"
+    },
+    {
+      "id": "shadow-and-reveal-builtin",
+      "source": "ns=globals()\nold=len\nns[\"len\"]=7\nprint(len)\ndel ns[\"len\"]\nprint(len([1,2])==old([1,2]))\n",
+      "stage": "O67",
+      "stdout": "7\nTrue\n"
+    },
+    {
+      "id": "global-delete-missing",
+      "source": "ns=globals()\ndel absent\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "NameError"
+    },
+    {
+      "id": "globals-argument",
+      "source": "globals(7)\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "globals-keyword",
+      "source": "globals(value=7)\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "locals-argument",
+      "source": "locals(7)\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "vars-extra-arguments",
+      "source": "vars(7,9)\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "vars-missing-dictionary",
+      "source": "vars(7)\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "module-attribute-builtins",
+      "source": "import helper\nns=vars(helper)\nsetattr(helper,\"value\",7)\nprint(getattr(helper,\"value\"),ns[\"value\"],hasattr(helper,\"value\"))\ndelattr(helper,\"value\")\nprint(getattr(helper,\"value\",9),hasattr(helper,\"value\"))\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "7 7 True\n9 False\n"
+    },
+    {
+      "id": "module-readonly-22",
+      "source": "import helper\nhelper.__dict__={}\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "module-readonly-23",
+      "source": "import helper\ndel helper.__dict__\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "module-readonly-24",
+      "source": "import helper\ndel helper.missing\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "module-getattr",
+      "source": "import helper\nprint(helper.missing,getattr(helper,\"absent\",9),hasattr(helper,\"absent\"))\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "def __getattr__(name):\n if name==\"missing\": return 17\n raise AttributeError(name)\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "17 9 False\n"
+    },
+    {
+      "id": "module-getattr-error",
+      "source": "import helper\ngetattr(helper,\"missing\",7)\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "def __getattr__(name): raise ValueError(name)\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "module-getattr-live-replacement",
+      "source": "import helper\nns=vars(helper)\ndef hook(name): return 19\nns[\"__getattr__\"]=hook\nprint(helper.missing)\ndel ns[\"__getattr__\"]\nprint(hasattr(helper,\"missing\"))\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "19\nFalse\n"
+    },
+    {
+      "id": "module-getattr-import",
+      "source": "from helper import missing\nprint(missing)\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "def __getattr__(name):\n if name==\"missing\": return 17\n raise AttributeError(name)\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "17\n"
+    },
+    {
+      "id": "module-dir-raw-and-sorted",
+      "source": "import helper\nprint(*helper.__dir__())\nprint(*dir(helper))\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "def __dir__(): return [\"z\",\"a\",\"a\"]\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "z a a\na a z\n"
+    },
+    {
+      "id": "module-default-dir",
+      "source": "import helper\nprint(\"value\" in dir(helper),\"__name__\" in helper.__dir__())\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "value=7\ndef __getattr__(name): raise AttributeError(name)\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-dir-live",
+      "source": "import helper\nns=vars(helper)\ndef hook(): return [\"z\",\"a\"]\nns[\"__dir__\"]=hook\nprint(*dir(helper))\ndel ns[\"__dir__\"]\nprint(\"value\" in dir(helper))\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "a z\nTrue\n"
+    },
+    {
+      "id": "module-dir-error",
+      "source": "import helper\ndir(helper)\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "def __dir__(): raise ValueError(\"dir\")\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "module-dir-noncallable",
+      "source": "import helper\ndir(helper)\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "__dir__=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "module-dir-iterator",
+      "source": "import helper\nprint(*dir(helper))\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "def __dir__(): return (x for x in [\"z\",\"a\"])\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "a z\n"
+    },
+    {
+      "id": "import-reads-current-dictionary",
+      "source": "import helper\nns=vars(helper)\nns[\"value\"]=19\nfrom helper import value\nprint(value,helper.read())\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "value=7\ndef read(): return value\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "19 19\n"
+    },
+    {
+      "id": "import-deleted-value",
+      "source": "import helper\ndel vars(helper)[\"value\"]\nfrom helper import value\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "",
+      "error_type": "ImportError"
+    },
+    {
+      "id": "failed-module-retry",
+      "source": "import state\ntry: import helper\nexcept ValueError: print(state.seen[0][\"value\"])\nimport helper\nprint(len(state.seen),state.seen[0] is state.seen[1],helper.value)\n",
+      "stage": "O67",
+      "imports": [
+        "state",
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "state",
+          "package": false,
+          "imports": [],
+          "source": "seen=[]\n"
+        },
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [
+            "state"
+          ],
+          "source": "import state\nns=globals()\nns[\"value\"]=7\nstate.seen.append(ns)\nif len(state.seen)==1: raise ValueError(\"retry\")\nvalue=9\n"
+        }
+      ],
+      "stdout": "7\n2 False 9\n"
+    },
+    {
+      "id": "callback-key-global-lookup",
+      "source": "class Key:\n def __hash__(self): return hash(\"value\")\n def __eq__(self,other): return other==\"value\"\nns=globals()\nkey=Key()\nns[key]=7\nprint(value)\nvalue=9\nprint(ns[key])\ndel value\nprint(key in ns)\n",
+      "stage": "O67",
+      "stdout": "7\n9\nFalse\n"
+    },
+    {
+      "id": "callback-key-defining-globals",
+      "source": "class Key:\n def __hash__(self): return hash(\"value\")\n def __eq__(self,other): return other==\"value\"\nns=globals()\nkey=Key()\nns[key]=7\ndef f(): return value\nprint(f())\n",
+      "stage": "O67",
+      "stdout": "7\n"
+    },
+    {
+      "id": "callback-key-error",
+      "source": "class Key:\n def __hash__(self): return hash(\"value\")\n def __eq__(self,other): raise ValueError(\"key\")\nns=globals()\nns[Key()]=7\nprint(value)\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "callback-key-structural-restart",
+      "source": "class Key:\n def __hash__(self): return hash(\"value\")\n def __eq__(self,other):\n  del ns[self]\n  ns[\"value\"]=19\n  return True\nns=globals()\nns[Key()]=7\nprint(value)\n",
+      "stage": "O67",
+      "stdout": "19\n"
+    },
+    {
+      "id": "namespace-iterator-values",
+      "source": "ns=globals()\nns[7]=[9]\ndef f():\n it=iter(ns)\n ns[7]=[11]\n print(7 in list(it),ns[7][0])\nf()\n",
+      "stage": "O67",
+      "stdout": "True 11\n"
+    },
+    {
+      "id": "namespace-iterator-size-change",
+      "source": "ns=globals()\nit=iter(ns)\nnext(it)\nns[7]=9\nnext(it)\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "namespace-iterator-keys-change",
+      "source": "ns=globals()\nns[7]=9\nit=iter(ns)\nfirst=next(it)\ndel ns[first]\nns[8]=11\nprint(*list(it))\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "RuntimeError"
+    },
+    {
+      "id": "module-comprehension-first-iterable",
+      "source": "r=[locals() for x in [locals()]]\nprint(\"x\" in r[0],r[0] is globals())\n",
+      "stage": "O67",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "module-dir-nonstring-keys",
+      "source": "import helper\nvars(helper)[7]=9\ndir(helper)\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "module-dir-default-copy",
+      "source": "import helper\na=helper.__dir__()\nhelper.value=7\nprint(\"value\" in a,\"value\" in helper.__dir__(),a is helper.__dir__())\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "False True False\n"
+    },
+    {
+      "id": "module-native-dictionary-precedence",
+      "source": "import helper\nns=vars(helper)\nns[\"__dict__\"]=7\nns[\"__class__\"]=9\nprint(helper.__dict__ is ns,helper.__class__ is type(helper))\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "__dict__=7\n__class__=9\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-key-callback",
+      "source": "import helper\nclass Key:\n def __hash__(self): return hash(\"value\")\n def __eq__(self,other): return other==\"value\"\nns=vars(helper)\nkey=Key()\nns[key]=17\nprint(helper.value)\nhelper.value=19\nprint(ns[key])\ndel helper.value\nprint(key in ns)\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "17\n19\nFalse\n"
+    },
+    {
+      "id": "module-raw-nonstring-key-identity",
+      "source": "import helper\nkey=(7,9)\nvars(helper)[key]=17\nprint(key in helper.__dir__())\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "module-dir-global-sort-error",
+      "source": "ns=globals()\nns[7]=9\ndir()\n",
+      "stage": "O67",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "module-export-rebinding",
+      "source": "import helper\nns=globals()\nns[\"helper\"]=7\nprint(helper)\nimport helper\nprint(helper.value)\n",
+      "stage": "O67",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "value=17\n",
+          "package": false,
+          "imports": []
+        }
+      ],
+      "stdout": "7\n17\n"
+    },
+    {
+      "id": "namespace-iterator-deletion-before-cursor",
+      "source": "ns=globals()\nns[7]=9\nns[8]=11\ndef f():\n it=iter(ns)\n first=next(it)\n del ns[8]\n ns[9]=13\n print(9 in list(it))\nf()\n",
+      "stage": "O67",
+      "stdout": "True\n"
+    },
+    {
+      "id": "callback-bearing-exception-name",
+      "stage": "O67",
+      "source": "class Key:\n def __hash__(self): return hash(\"ValueError\")\n def __eq__(self,other): return other==\"ValueError\"\nns=globals()\nns[Key()]=ZeroDivisionError\ntry: raise ZeroDivisionError(\"value\")\nexcept ValueError as error: print(\"caught\", \"error\" in ns)\nprint(\"error\" in ns)\n",
+      "stdout": "caught True\nFalse\n"
+    },
+    {
+      "id": "namespace-exception-match-order",
+      "stage": "O67",
+      "source": "ns=globals()\ntry:\n try: raise ValueError(\"value\")\n except TypeError: print(\"wrong\")\n except (ZeroDivisionError,ValueError) as error: print(\"caught\")\n finally: print(\"finally\")\nexcept Exception: print(\"wrong\")\n",
+      "stdout": "caught\nfinally\n"
+    }
+  ]
+}

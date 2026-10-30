@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {GeneratorValue, Cell, Environment, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, Cell, Environment, environmentCell, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -99,8 +99,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   const block = (frame, id) => frame.tasks.push({type: "block", block: frame.fn.blocks[id], pc: 0, stack: []});
   const load = (frame, key) => {
     const global = frame.fn.globals?.includes(key), local = global ? null : frame.locals.get(key), classBody = frame.fn.kind === "class";
-    const cell = global ? frame.callable.globals.cells.get(key) : local?.bound ? local : classBody && local ? frame.callable.globals.cells.get(key) :
-      local || frame.closure.get(key) || frame.callable.globals.cells.get(key);
+    const cell = global ? environmentCell(frame.callable.globals, key) : local?.bound ? local : classBody && local ? environmentCell(frame.callable.globals, key) :
+      local || frame.closure.get(key) || environmentCell(frame.callable.globals, key);
     if (cell?.bound) return cell.value;
     if (local && !classBody && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
     if (!global && frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
@@ -123,9 +123,49 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (!cell && create) { cell = allocate(Cell); state.temporaries.push(cell); addCell(environment, key, cell); }
     return cell;
   };
-  const store = (frame, key, value, bound = true) => {
+  const nameDictionary = (frame, key) => !key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key) ||
+    !frame.locals.has(key) && !frame.closure.has(key)) ? frame.callable.globals.dictionary : null;
+  const store = (frame, key, value, bound = true, after = null) => {
+    const environment = frame.callable.globals;
+    if (!key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key)) && environment.dictionary !== null) {
+      const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
+      return dictionaryTask(environment.dictionary, name, state.current, after || continuation("discard"), 0, bound ? "set" : "discard", value);
+    }
     setCell(targetCell(frame, key, bound), value, bound);
+    if (frame.callable.index === 0 || frame.fn.globals?.includes(key)) { if (bound) environment.order.add(key); else environment.order.delete(key); }
     if (frame.namespaceOrder && frame.locals.has(key)) { if (bound) frame.namespaceOrder.add(key); else frame.namespaceOrder.delete(key); }
+  };
+  const loadName = (frame, name, site, after = null) => {
+    const dictionary = nameDictionary(frame, name);
+    if (dictionary === null) { const value = load(frame, name); return after ? {value, after} : {value}; }
+    const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
+    return {task: dictionaryTask(dictionary, key, site, continuation("global-name", {name, receiver: dictionary, after}), 0, "probe")};
+  };
+  const handlerNext = (position, names, site) => {
+    const frame = state.frames.at(-1), task = frame.tasks.at(-1), handlers = task.instruction[2];
+    while (task.handlerIndex < handlers.length) {
+      const [types, alias, body, span] = handlers[task.handlerIndex];
+      if (position < types.length) {
+        state.current = {...state.current, location: task.site ? {filename: task.site.filename, span} : null};
+        const after = continuation("handler-type", {position, names});
+        const result = loadName(frame, types[position], site, after);
+        if (result.task) return result.task;
+        return handlerType(after, result.value, site);
+      }
+      if (!types.length || names.some(name => matchesException(task.caught.name, name))) {
+        task.phase = "handler"; task.alias = alias;
+        const writing = alias ? store(frame, alias, task.caught, true, continuation("store-body", {body})) : null;
+        if (writing) return writing;
+        block(frame, body); return null;
+      }
+      task.handlerIndex++; position = 0; names = [];
+    }
+    task.phase = "unmatched"; settle({kind: "raise", value: task.caught}); return null;
+  };
+  const handlerType = (record, value, site) => {
+    if (!(value instanceof BuiltinValue) || !Object.hasOwn(EXCEPTIONS, value.name))
+      python("TypeError", "catching classes that do not inherit from BaseException is not allowed");
+    return handlerNext(record.position + 1, [...record.names, value.name], site);
   };
   const bind = (callable, positional, keywordNames, keywordValues) => {
     const fn = callable.pool.code.functions[callable.index], constants = callable.pool.code.constants;
@@ -201,7 +241,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
-    setCell, resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
+    setCell, load, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
     const generator = frame.generator, completion = frame.completion;
@@ -360,13 +400,18 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             if (!(error instanceof Raised) || error.value.name !== "StopIteration") throw error;
             frame.tasks.pop(); block(frame, task.otherwise); return;
           }
-          store(frame, task.target, item); block(frame, task.body); return;
+          const writing = store(frame, task.target, item, true, continuation("store-body", {body: task.body}));
+          if (writing) dispatch(writing); else block(frame, task.body); return;
         }
         if (task.type === "try") {
           const [, body, handlers, otherwise, final] = task.instruction;
           void body;
           if (task.phase === "body" && signal.kind === "raise") {
             task.phase = "matching"; task.caught = signal.value; frame.activeException = signal.value; frame.ownsException = true;
+            if (frame.callable.globals.dictionary !== null) {
+              task.handlerIndex = 0; const matching = handlerNext(0, [], state.current);
+              if (matching) dispatch(matching); return;
+            }
             const clause = handlers.find(([types, , , span]) => {
               state.current = {...state.current, location: task.site ? {filename: task.site.filename, span} : null};
               const resolved = types.map(type => {
@@ -381,14 +426,21 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             if (clause) {
               task.phase = "handler"; task.caught = signal.value; task.alias = clause[1];
               frame.activeException = signal.value;
-              if (task.alias) store(frame, task.alias, signal.value);
+              if (task.alias) {
+                const writing = store(frame, task.alias, signal.value, true, continuation("store-body", {body: clause[2]}));
+                if (writing) { dispatch(writing); return; }
+              }
               block(frame, clause[2]); return;
             }
           } else if (task.phase === "body" && signal.kind === "normal" && otherwise !== null) {
             task.phase = "else"; block(frame, otherwise); return;
           }
           if (task.phase === "handler") {
-            if (task.alias) store(frame, task.alias, null, false);
+            if (task.alias) {
+              const alias = task.alias; task.alias = null;
+              const writing = store(frame, alias, null, false, continuation("resume-control", {signal: signal.kind, value: signal.value}));
+              if (writing) { dispatch(writing); return; }
+            }
             frame.activeException = task.previous; frame.ownsException = task.previousOwned;
           }
           if (task.phase === "finally") {
@@ -426,6 +478,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       state.temporaries = [returned, frame.callable];
       const parent = state.frames.at(-2);
       if (!parent) {
+        if (signal.kind !== "raise" && module && !entryCall && !frame.packagePublished) {
+          frame.packagePublished = true;
+          const parts = module.name.split("."), owner = moduleContext.module(parts.slice(0, -1).join("."));
+          if (owner?.environment.dictionary !== null && owner) {
+            dispatch(attributeTask(owner, parts.at(-1), state.current, continuation("resume-control", {signal: signal.kind, value: returned}), 0, "set", null, null, module)); return;
+          }
+        }
         if (signal.kind === "raise") throw new Unhandled(returned);
         state.result = retainResult ? memory.pin([returned]) : returned;
         frame.leave(); state.frames.pop(); return;
@@ -499,9 +558,20 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     state.temporaries = stack.slice();
     try {
       if (op === "const") stack.push(frame.callable.pool.code.constants[arg]);
-      else if (op === "load") stack.push(load(frame, arg));
-      else if (op === "store") store(frame, arg, stack.pop());
+      else if (op === "load") {
+        const dictionary = nameDictionary(frame, arg);
+        if (dictionary !== null) {
+          const key = values.string(Array.from(arg, char => char.codePointAt(0))); state.temporaries.push(key);
+          dispatch(dictionaryTask(dictionary, key, summary(frame, cursor), continuation("global-name", {name: arg, receiver: dictionary} ), 0, "probe"));
+        } else stack.push(load(frame, arg));
+      }
+      else if (op === "store") { const task = store(frame, arg, stack.pop()); if (task) dispatch(task); }
       else if (op === "delete") {
+        const dictionary = !arg.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(arg)) ? frame.callable.globals.dictionary : null;
+        if (dictionary !== null) {
+          const key = values.string(Array.from(arg, char => char.codePointAt(0))); state.temporaries.push(key);
+          dispatch(dictionaryTask(dictionary, key, summary(frame, cursor), continuation("global-delete", {name: arg, receiver: dictionary}), 0, "remove-probe")); return;
+        }
         if (!targetCell(frame, arg)?.bound) {
           if (frame.fn.nonlocals?.includes(arg)) python("NameError", "cannot access free variable '" + arg + "' where it is not associated with a value in enclosing scope");
           if (frame.callable.index === 0 || frame.fn.globals?.includes(arg)) python("NameError", "name '" + arg + "' is not defined");
@@ -522,7 +592,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           const metaIndex = keywords.indexOf("metaclass"), hasMeta = op === "class-meta" || metaIndex !== -1;
           const explicit = op === "class-meta" ? stack.pop() : metaIndex === -1 ? undefined : keywordValues.splice(metaIndex, 1)[0];
           if (metaIndex !== -1) keywords.splice(metaIndex, 1);
-          const bases = stack.splice(stack.length - extra), name = values.text(frame.callable.globals.cells.get("__name__")?.value);
+          const bases = stack.splice(stack.length - extra), name = values.text(environmentCell(frame.callable.globals, "__name__")?.value);
           state.temporaries.push(callable);
           if (name === null) hard("UNSUPPORTED", "UnsupportedOperationError", "Class module metadata requires text in C1.");
           classes.validateNamespace(bases, owner.code.functions[arg].locals);
@@ -558,7 +628,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
         if (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
-        if (classes.hasAttributeHook(receiver, op === "attribute-set" ? "__setattr__" : "__delattr__")) {
+        if (receiver instanceof ModuleValue || classes.hasAttributeHook(receiver, op === "attribute-set" ? "__setattr__" : "__delattr__")) {
           dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "attribute-set" ? "set" : "delete", null, null, value)); return;
         }
         const plan = classes.write(receiver, arg, value, op === "attribute-delete");
@@ -576,7 +646,19 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           inheritedException: frame.activeException};
         else {
           const receiver = stack.pop();
-          if (op === "attribute-get" &&
+          if (receiver instanceof ModuleValue) {
+            const environment = receiver.environment, cell = environment.cells.get(arg);
+            if (frame.callable.pool.code.version !== 5) {
+              const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
+              if (result.kind === "value") stack.push(result.value);
+              else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};
+            } else if (environment.dictionary === null && cell?.bound && !["__dict__", "__class__"].includes(arg)) stack.push(cell.value);
+            else if (environment.dictionary === null && !environment.cells.get("__getattr__")?.bound && !["__dict__", "__class__", "__dir__"].includes(arg)) {
+              const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
+              if (result.kind === "value") stack.push(result.value);
+              else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};
+            } else dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "import-from" ? "import" : "get"));
+          } else if (op === "attribute-get" &&
               (classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && arg === "__class__" && classes.hasSlot(receiver.type, "__class__")))
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
