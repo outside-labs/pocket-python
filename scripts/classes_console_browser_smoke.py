@@ -279,6 +279,8 @@ def smoke(channel=None):
                     programs.extend(c['source'] for c in prepared_namespaces['cases'] if 'error_type' not in c)
                     factories = json.loads((ROOT / 'tests/fixtures/interpreter/metaclass-factories.json').read_bytes())
                     programs.extend(c['source'] for c in factories['cases'] if 'error_type' not in c)
+                    custom_mro = json.loads((ROOT / 'tests/fixtures/interpreter/custom-mro.json').read_bytes())
+                    programs.extend(c['source'] for c in custom_mro['cases'] if 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
                     programs.append(PROPERTY_DIRECTORIES_SOURCE)
                     programs.append(NAMESPACE_VIEW_DIRECTORIES_SOURCE)

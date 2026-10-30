@@ -739,7 +739,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         let protocolNames = task.protocolNames || [];
         if (found && values.needsOwnedHash(key)) {
           const metaclass = task.bases.some(base => base instanceof BuiltinValue && base.name === "type" || classes.isMetaclass(base));
-          if (name === "__slots__" || metaclass && name === "mro")
+          if (name === "__slots__")
             hard("UNSUPPORTED", "UnsupportedOperationError", "Custom slots, MRO and prepared mappings retain their construction stages.");
           protocolNames = [...protocolNames, name];
           const position = task.dictionary.entries.findIndex(entry => entry.key === key), entry = task.dictionary.entries[position];
@@ -825,6 +825,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "module-dir") return callTask(value, [], [], [], site, continuation("dir-result", completion), completion.depth);
     if (completion?.kind === "module-native-dir") return moduleDirectory(completion, value.items[0], value.items[1], site);
     if (completion?.kind === "module-missing") return valueTask(value, site, completion.after);
+    if (completion?.kind === "mro-result") return unaryTask("iter", value, site, continuation("mro-iter", completion));
+    if (completion?.kind === "mro-iter") {
+      const after = continuation("mro-sequence", completion);
+      if (value instanceof InstanceValue) return valueTask(value, site, continuation("dir-iter", {receiver: value, depth: 0, after}));
+      const result = values.list([]); state.temporaries.push(value, result);
+      return consumeNext("list", value, result, site, after, 0);
+    }
+    if (completion?.kind === "mro-sequence") {
+      const type = completion.type;
+      classes.validateMro(type, value.items);
+      mutate(type, () => {
+        const previous = type.mro; type.mro = Object.freeze([...value.items]); type.mroPending = false;
+        return () => { type.mro = previous; type.mroPending = true; };
+      });
+      return finalizeType(completion, site);
+    }
     if (completion?.kind === "class-prepare-lookup") return callTask(value, [completion.nameValue, completion.basesTuple], completion.keywords, completion.keywordValues, site, continuation("class-prepare-result", completion));
     if (completion?.kind === "class-prepare-result") return preparedClass(completion, value, site);
     if (completion?.kind === "class-body-module") return classModule(value);
@@ -1245,6 +1261,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     charge(1);
     return unaryTask("hash", parts[position], site, continuation("sequence-hash", {receiver, position, hash, depth, after}), depth + 1);
   };
+  const finalizeType = (record, site) => {
+    const {type, entries, cell, dictcell, keywords, keywordValues, after} = record;
+    if (cell) setCell(cell, type);
+    if (dictcell) setCell(dictcell, classes.namespaceDictionary(type));
+    return notifyNext(type, entries, 0, site, after, keywords, keywordValues);
+  };
+  const finishType = (type, entries, site, after, keywords, keywordValues, cell = null, dictcell = null) => {
+    const record = {type, entries, cell, dictcell, keywords, keywordValues, after};
+    if (!type.mroPending) return finalizeType(record, site);
+    const item = classes.lookup(type.metaclass, "mro");
+    if (!item.found) python("AttributeError", "mro");
+    const plan = classes.bindAttribute(item.value, type, type.metaclass);
+    const target = continuation("mro-result", record);
+    return plan.kind === "value" ? callTask(plan.value, [], [], [], site, target) :
+      callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: target, depth: 0}));
+  };
   const notifyNext = (type, entries, index, site, after = null, keywords = [], keywordValues = []) => Object.freeze({
     kind: "notify", type, entries, index, site, completion: after, keywords, keywordValues, depth: 0});
   const notifyPlan = (type, entries, index, site, after = null, keywords = [], keywordValues = []) => {
@@ -1279,7 +1311,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const initializePlan = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
     const type = instance instanceof InstanceValue ? instance.type : classes.typeOf(instance);
-    const initializer = classes.lookup(type, "__init__", instance instanceof ClassValue);
+    let initializer = classes.lookup(type, "__init__", instance instanceof ClassValue);
+    if (instance instanceof ClassValue && classes.isMetaclass(type) && !classes.hasSlot(type, "__init__") && initializer.value instanceof BuiltinValue && initializer.value.name === "object.__init__")
+      initializer = {found: true, value: classes.builtin("type.__init__")};
     if (!initializer.found) {
       if (!customNew && (args.length || keywords.length)) python("TypeError", instance.type.name + "() takes no arguments");
       return valueTask(instance, site, after);
@@ -1465,9 +1499,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (phase === 8) { task = probe("__doc__", "stored", "set-default", null); continue; }
           if (phase === 9 && task.type.automaticHash) { task = probe("__hash__", "stored", "set-default", null); continue; }
-          if (task.cell) setCell(task.cell, task.type);
-          if (task.dictcell) setCell(task.dictcell, dictionary);
-          task = notifyNext(task.type, dictionary.entries.map(entry => [entry.key, entry.value]), 0, site, completion, keywords, keywordValues); continue;
+          task = finishType(task.type, dictionary.entries.map(entry => [entry.key, entry.value]), site, completion, keywords, keywordValues, task.cell, task.dictcell); continue;
         }
         if (task.kind === "notify") {
           task = notifyPlan(task.type, task.entries, task.index, site, completion, keywords, keywordValues); continue;
@@ -2081,7 +2113,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (classes.hasSlot(callable, "__new__") || classes.isMetaclass(callable)) {
             if (++depth > maxDepth) python("RecursionError", "maximum constructor dispatch depth exceeded");
-            const item = classes.lookup(callable, "__new__"), plan = classes.bindAttribute(item.value, null, callable);
+            let item = classes.lookup(callable, "__new__");
+            if (classes.isMetaclass(callable) && !classes.hasSlot(callable, "__new__") && item.value instanceof BuiltinValue && item.value.name === "object.__new__")
+              item = {found: true, value: classes.builtin("type.__new__")};
+            const plan = classes.bindAttribute(item.value, null, callable);
             const target = continuation("new-result", {type: callable, args, keywords, keywordValues, after: completion, depth});
             const positional = [callable, ...args];
             task = plan.kind === "value" ? callTask(plan.value, positional, keywords, keywordValues, site, target, depth) :
@@ -2207,9 +2242,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const type = classes.create(name, qualname, module, bases, namespace, classes.builtin("object"),
               {dynamic: true, metaclass: metaclass instanceof ClassValue ? metaclass : null, namespaceEntries: namespaceValue.entries});
             state.temporaries.push(type);
-            if (cell) setCell(cell, type);
-            if (dictcell) setCell(dictcell, classes.namespaceDictionary(type));
-            task = notifyNext(type, [...namespace], 0, site, completion, keywords, keywordValues); continue;
+            task = finishType(type, [...namespace], site, completion, keywords, keywordValues, cell, dictcell); continue;
           }
           if (classes.isType(callable) && !["FrameLocalsProxy", "cell", "code", "mappingproxy", "type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
             if (/^dict_(keys|values|items|(?:reverse)?(?:key|value|item)iterator)$/.test(callable.name)) python("TypeError", "cannot create dictionary view or iterator instances");
@@ -2222,9 +2255,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (callable.name === "type.__prepare__") { task = valueTask(values.dict([]), site, completion); continue; }
           if (callable.name === "type.mro") {
-            if (keywords.length || args.length !== 1 || !classes.isType(args[0]))
+            if (keywords.length || args.length !== 1 || !classes.isType(args[0]) || !classes.hasTypeNamespace(args[0]))
               python("TypeError", "type.mro requires one positional actual type");
-            task = valueTask(values.list(classes.mro(args[0])), site, completion); continue;
+            task = valueTask(values.list(classes.defaultMro(args[0])), site, completion); continue;
           }
           if (callable.name === "super") {
             if (keywords.length || args.length > 2) python("TypeError", "super received invalid arguments");

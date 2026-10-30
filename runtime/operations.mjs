@@ -269,6 +269,9 @@ export function completion(kind, fields = {}) {
     case "delegate-bind": record = {kind, receiver: fields.receiver, args: operands(fields.args), after}; break;
     case "invoke": record = {kind, args: operands(fields.args), keywords: operands(fields.keywords),
       keywordValues: operands(fields.keywordValues), depth: fields.depth, fallback: fields.fallback ?? null, after}; break;
+    case "mro-result": case "mro-iter": case "mro-sequence":
+      record = {kind, type: fields.type, entries: Object.freeze(fields.entries.map(entry => Object.freeze([...entry]))),
+        cell: fields.cell ?? null, dictcell: fields.dictcell ?? null, keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues), after}; break;
     case "notify": record = {kind, type: fields.type, entries: Object.freeze(fields.entries.map(entry => Object.freeze([...entry]))), index: fields.index,
       keywords: operands(fields.keywords ?? []), keywordValues: operands(fields.keywordValues ?? []), after};
       if (record.entries.length > 128) throw new TypeError("Invalid notification snapshot.");
@@ -369,6 +372,7 @@ function visit(record) {
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];
     case "delegate-bind": return [record.receiver, ...record.args, ...completionRoots(record.after)];
     case "invoke": return [...record.args, ...record.keywordValues, ...completionRoots(record.after)];
+    case "mro-result": case "mro-iter": case "mro-sequence": return [record.type, record.cell, record.dictcell, ...record.entries.flatMap(entry => typeof entry[0] === "string" ? [entry[1]] : entry), ...record.keywordValues, ...completionRoots(record.after)];
     case "notify": return [record.type, ...record.entries.flatMap(entry => typeof entry[0] === "string" ? [entry[1]] : entry), ...record.keywordValues, ...completionRoots(record.after)];
     default: throw new TypeError("Unknown operation root owner.");
   }

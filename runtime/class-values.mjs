@@ -314,8 +314,6 @@ export class ClassRuntime {
     const metaLayout = bases.some(base => base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base));
     if (metaLayout) {
       const entries = [...names];
-      if (entries.includes("mro") || bases.some(base => base instanceof ClassValue && this.hasSlot(base, "mro")))
-        this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
       if (entries.some(key => isSpecialName(key) && !META_SPECIALS.has(key)))
         this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
     }
@@ -357,6 +355,18 @@ export class ClassRuntime {
       if (namespace.has(key) && this.values.text(namespace.get(key)) !== expected)
         this.fail("UnsupportedOperationError", "Class metadata overrides are outside C1.", "UNSUPPORTED");
     namespace.delete("__qualname__");
+    const customMro = metaclass instanceof ClassValue && (this.hasSlot(metaclass, "mro") || !this.hasTypeNamespace({metaclass}));
+    const parents = customMro ? [] : this.mergeMro(bases);
+    const type = new ClassValue(name, qualname, module, bases, parents, namespace, false, metaclass, !dynamic, automaticHash);
+    type.mroPending = customMro; type.customMro = customMro;
+    type.protocolNames = protocolNames?.length ? [...protocolNames] : null;
+    type.firstLine = firstLine; type.staticAttributes = staticAttributes === null ? null : [...staticAttributes];
+    type.namespaceEntries = namespaceEntries === null ? null : namespaceEntries.filter(entry => !["__qualname__", "__classcell__", "__classdictcell__"].includes(this.values.text(entry.key))).map(entry => ({key: entry.key, hash: entry.hash}));
+    const layout = valueLayout(type);
+    return this.memory ? this.memory.allocate(layout.bytes, layout.children, () => type) : type;
+  }
+  mergeMro(bases) {
+    if (bases.some(base => base.mroPending)) this.fail("TypeError", "Cannot extend an incomplete type");
     const pending = [...bases.map(base => [...this.mro(base)]), [...bases]], parents = [];
     while (pending.some(items => items.length)) {
       this.charge(1); let candidate = null;
@@ -373,12 +383,29 @@ export class ClassRuntime {
       parents.push(candidate);
       for (const items of pending) if (items[0] === candidate) items.shift();
     }
-    const type = new ClassValue(name, qualname, module, bases, parents, namespace, false, metaclass, !dynamic, automaticHash);
-    type.protocolNames = protocolNames?.length ? [...protocolNames] : null;
-    type.firstLine = firstLine; type.staticAttributes = staticAttributes === null ? null : [...staticAttributes];
-    type.namespaceEntries = namespaceEntries === null ? null : namespaceEntries.filter(entry => !["__qualname__", "__classcell__", "__classdictcell__"].includes(this.values.text(entry.key))).map(entry => ({key: entry.key, hash: entry.hash}));
-    const layout = valueLayout(type);
-    return this.memory ? this.memory.allocate(layout.bytes, layout.children, () => type) : type;
+    return parents;
+  }
+  defaultMro(type) { return type instanceof ClassValue ? [type, ...this.mergeMro(type.bases)] : this.mro(type); }
+  layoutFamily(type) {
+    const pending = [type], seen = new Set();
+    while (pending.length) {
+      this.charge(1); const item = pending.pop();
+      if (seen.has(item)) continue; seen.add(item);
+      if (item instanceof BuiltinValue) { if (item.name !== "type") return item.name; return "type"; }
+      if (item instanceof ClassValue) pending.push(...item.bases);
+    }
+    return "object";
+  }
+  validateMro(type, items) {
+    if (!items.length) this.fail("TypeError", "type MRO must not be empty");
+    this.bounded(items.length <= CLASS_LIMITS.mro, "Class MRO budget exceeded.");
+    const layout = this.layoutFamily(type);
+    for (const item of items) {
+      this.charge(1);
+      if (!this.isType(item)) this.fail("TypeError", "mro() returned a non-class");
+      const family = this.layoutFamily(item);
+      if (family !== "object" && family !== layout) this.fail("TypeError", "mro() returned base with unsuitable layout");
+    }
   }
   instance(type) {
     if (!(type instanceof ClassValue)) throw new TypeError("An adopted class is required.");
@@ -391,7 +418,8 @@ export class ClassRuntime {
   }
   isType(value) { return value instanceof ClassValue || value?.constructor === BuiltinValue && NATIVE_TYPES.has(value.name); }
   isPythonMethod(value) { return value instanceof BoundMethodValue && (value.pythonMethod || !(value.callable instanceof BuiltinValue)); }
-  isMetaclass(value) { return value instanceof ClassValue && value.mro.some(base => base instanceof BuiltinValue && base.name === "type"); }
+  isMetaclass(value) { return value instanceof ClassValue && value.typeLayout; }
+  hasTypeNamespace(value) { return !value.metaclass || value.metaclass.mro.some(base => base instanceof BuiltinValue && base.name === "type"); }
   mro(type) {
     if (type instanceof ClassValue) return type.mro;
     if (!this.isType(type)) this.fail("TypeError", "An adopted type is required");
@@ -554,8 +582,10 @@ export class ClassRuntime {
   subclassNotification(type, required = false) {
     // Default construction retains the established allocation/work accounting.
     // The new class's own hook is excluded, just as with super(newclass, newclass).
-    if (!required && !type.mro.slice(1).some(base => base instanceof ClassValue && !base.root && (base.namespace.has("__init_subclass__") || this.values.callbackKeyMayMatch(base.namespaceDictionary || {ownedKeys: false}, "__init_subclass__")))) return null;
-    const item = this.lookup(type, "__init_subclass__", true, 1);
+    if (type.customMro && !type.mro.includes(type)) this.fail("TypeError", "super receiver is not a subtype of its class");
+    if (!required && !type.customMro && !type.mro.slice(1).some(base => base instanceof ClassValue && !base.root && (base.namespace.has("__init_subclass__") || this.values.callbackKeyMayMatch(base.namespaceDictionary || {ownedKeys: false}, "__init_subclass__")))) return null;
+    const item = this.lookup(type, "__init_subclass__", true, type.mro.indexOf(type) + 1);
+    if (!item.found) return null;
     return this.bindAttribute(item.value, null, type);
   }
   read(receiver, name, native = false, key = null) {
@@ -807,6 +837,14 @@ export class ClassRuntime {
     const metaDescriptor = metaItem?.found ? this.descriptor(metaItem.value) : null;
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
       return this.bindAttribute(metaItem.value, receiver, metaclass);
+    if (receiver instanceof ClassValue && !this.hasTypeNamespace(receiver) &&
+        ["__dict__", "__name__", "__qualname__", "__module__", "__mro__", "__bases__", "__base__"].includes(name)) {
+      this.namespaceDictionary(receiver);
+      const item = this.lookup(receiver, name);
+      if (item.found) return this.bindAttribute(item.value, null, receiver);
+      if (metaItem?.found) return this.bindAttribute(metaItem.value, receiver, metaclass);
+      this.fail("AttributeError", "Class has no attribute '" + name + "'.");
+    }
     if (receiver instanceof ClassValue) {
       if (name === "__dict__") {
         if (metaItem?.found) {
@@ -831,7 +869,7 @@ export class ClassRuntime {
       }
       if (["__name__", "__qualname__"].includes(name) && !(name === "__name__" && metaItem?.found)) return value(this.values.string(Array.from(
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
-      if (["__bases__", "__mro__"].includes(name)) return value(this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
+      if (["__bases__", "__mro__"].includes(name)) return value(name === "__mro__" && receiver.mroPending ? null : this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
       if (name === "__base__") return value(this.primaryBase(receiver));
     }
     let item = this.lookup(owner, name);
@@ -1166,7 +1204,7 @@ export class ClassRuntime {
     if (owner instanceof BuiltinValue && owner.name === "type" && receiver instanceof ClassValue && ["__name__", "__qualname__", "__module__", "__bases__", "__mro__", "__base__"].includes(name)) {
       if (operation !== "get") this.fail("UnsupportedOperationError", "Native type metadata mutation is owned by O88.", "UNSUPPORTED");
       if (name === "__module__") { this.namespaceDictionary(receiver); const entry = this.ownNamespaceEntry(receiver, name); if (!entry.found) this.fail("AttributeError", "Class has no module"); return {kind: "value", value: entry.value}; }
-      return {kind: "value", value: name === "__bases__" ? this.values.tuple(receiver.bases) : name === "__mro__" ? this.values.tuple(receiver.mro) : name === "__base__" ? this.primaryBase(receiver) : this.values.string(Array.from(receiver[name === "__name__" ? "name" : "qualname"], char => char.codePointAt(0)))};
+      return {kind: "value", value: name === "__bases__" ? this.values.tuple(receiver.bases) : name === "__mro__" ? receiver.mroPending ? null : this.values.tuple(receiver.mro) : name === "__base__" ? this.primaryBase(receiver) : this.values.string(Array.from(receiver[name === "__name__" ? "name" : "qualname"], char => char.codePointAt(0)))};
     }
     if (receiver instanceof FrameValue || receiver instanceof GeneratorValue || receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof SuperValue || receiver instanceof BoundMethodValue || receiver instanceof MethodWrapperValue)
       return operation === "get" ? this.read(receiver, name, true) : this.write(receiver, name, item, operation === "delete");
@@ -1550,8 +1588,6 @@ export class ClassRuntime {
     if (receiver instanceof ClassValue && name === "__dict__" && !namespaceShadow) this.fail("AttributeError", "Class namespace views cannot be replaced or deleted.");
     if (receiver instanceof ClassValue && name === "__base__") this.fail("AttributeError", "Primary base metadata is read-only.");
     if (receiver instanceof ClassValue && name === "__bases__") this.fail("UnsupportedOperationError", "Type base reassignment remains O88.", "UNSUPPORTED");
-    if (receiver instanceof ClassValue && this.isMetaclass(receiver) && name === "mro")
-      this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
     if (receiver instanceof ClassValue && this.isMetaclass(receiver) && isSpecialName(name) && !META_SPECIALS.has(name))
       this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
     if (!allowsClassSpecial(name, "mutate") && !namespaceShadow && !(receiver instanceof InstanceValue && name === "__dict__"))
@@ -1676,8 +1712,6 @@ export class ClassRuntime {
       if (this.subclass(candidate, selected)) selected = candidate;
       else this.fail("TypeError", "Metaclass conflict");
     }
-    if (selected instanceof ClassValue && this.hasSlot(selected, "mro"))
-      this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
     return selected;
   }
 }

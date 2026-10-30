@@ -94,15 +94,15 @@ test('MRO callbacks and retained lists obey actual recursion, work, instruction 
   assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, 'OOM', JSON.stringify(result.error)); closed(result.closed);
 });
 
-test('deferred custom MRO construction refuses before class bodies and inherited hook effects', async () => {
+test('custom MRO construction accepts inherited definitions and dynamic mutation', async () => {
   for (const source of [
-    'class M(type):\n print("never")\n def mro(cls): return type.mro(cls)\n',
-    'class A:\n def mro(cls): return type.mro(cls)\nclass M(A,type):\n print("never")\n',
-    'class A: pass\nclass M(A,type): pass\nA.mro=lambda cls:type.mro(cls)\nclass C(metaclass=M):\n print("never")\n',
+    'class M(type):\n print("body")\n def mro(cls): return type.mro(cls)\n',
+    'class A:\n def mro(cls): return type.mro(cls)\nclass M(A,type):\n print("body")\n',
+    'class A: pass\nclass M(A,type): pass\nA.mro=lambda cls:type.mro(cls)\nclass C(metaclass=M):\n print("body")\n',
     'class A: pass\nclass M(A,type): pass\nA.mro=lambda cls:type.mro(cls)\nM("C",(),{})\n',
   ]) {
-    const result = await run(source); assert.equal(result.error?.code, 'UNSUPPORTED', JSON.stringify(result.error));
-    assert.equal(result.stdout, ''); closed(result.closed);
+    const result = await run(source); assert.equal(result.error, undefined, JSON.stringify(result.error));
+    assert.equal(result.stdout, source.includes('print("body")') ? 'body\n' : ''); closed(result.closed);
   }
 });
 
