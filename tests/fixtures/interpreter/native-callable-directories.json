@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O54",
     "O71",
-    "O77"
+    "O77",
+    "O76"
   ],
   "cases": [
     {
@@ -277,7 +278,7 @@
     {
       "id": "native-type-layout",
       "source": "print(\"mro\" in dir(type))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "True\n"
     },
     {

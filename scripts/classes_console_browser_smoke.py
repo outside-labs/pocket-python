@@ -113,7 +113,9 @@ def smoke(channel=None):
                         assert page.locator('#run').is_enabled()
                         page.locator('#run').dispatch_event('click')
                         prefixes = [prefix] if isinstance(prefix, str) else prefix
-                        page.wait_for_function("prefixes=>prefixes.some(prefix=>document.querySelector('#status').textContent.startsWith(prefix))", arg=prefixes)
+                        page.wait_for_function("prefixes=>document.querySelector('#status').textContent==='Completed' || prefixes.some(prefix=>document.querySelector('#status').textContent.startsWith(prefix))", arg=prefixes)
+                        status = page.locator('#status').inner_text()
+                        assert any(status.startswith(prefix) for prefix in prefixes), (status, source)
 
                     page.goto(url)
                     ready()

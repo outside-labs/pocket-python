@@ -100,7 +100,6 @@ test('deferred custom MRO construction refuses before class bodies and inherited
     'class A:\n def mro(cls): return type.mro(cls)\nclass M(A,type):\n print("never")\n',
     'class A: pass\nclass M(A,type): pass\nA.mro=lambda cls:type.mro(cls)\nclass C(metaclass=M):\n print("never")\n',
     'class A: pass\nclass M(A,type): pass\nA.mro=lambda cls:type.mro(cls)\nM("C",(),{})\n',
-    'class M(type):\n def __getattribute__(cls,name):\n  print("never")\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M): pass\ntype.mro.__get__(C).__qualname__\n',
   ]) {
     const result = await run(source); assert.equal(result.error?.code, 'UNSUPPORTED', JSON.stringify(result.error));
     assert.equal(result.stdout, ''); closed(result.closed);
