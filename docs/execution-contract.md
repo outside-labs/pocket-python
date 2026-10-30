@@ -291,3 +291,12 @@ revision 5 values remain in `accounting_5_cases`. Source instruction counts are
 unchanged; work, allocations and retained/peak storage reflect the real namespace
 operations. Module globals still retain their lazy compact path. This is an
 internal representation/accounting change, not a CPython memory-size promise.
+
+## Protocol namespace lookup accounting revision 7
+
+Callback-bearing protocol names have a per-type presence index, charged as eight
+bytes plus eight bytes and two bytes per character of each indexed name.
+Descriptor values can themselves introduce owned key lookups; inspecting each
+such graph edge charges one work unit. Three composed work observations change
+in `execution-accounting/7`, with instruction counts and memory observations
+unchanged. Revision 6 observations remain in `accounting_6_cases`.

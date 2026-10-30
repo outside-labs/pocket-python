@@ -773,6 +773,120 @@
       "source": "__name__=\"app\"\nactive=False\nclass K:\n def __hash__(self):return hash(\"__dict__\")\n def __eq__(self,other):\n  if active:raise ValueError(\"key\")\n  return other==\"__dict__\"\nC=type(\"C\",(),{K():7})\nactive=True\nprint(C().__dict__)\n",
       "stdout": "",
       "error_type": "AttributeError"
+    },
+    {
+      "id": "protocol-key-new",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__new__\")\ndef make(cls,value):\n instance=object.__new__(cls)\n instance.value=value\n return instance\noriginal={key:make}\nC=type(\"C\",(),original)\nprint(type(C.__dict__[key]).__name__,list(C.__dict__)[0] is key,original[key] is make,C(7).value)\n",
+      "stdout": "staticmethod True True 7\n"
+    },
+    {
+      "id": "protocol-key-init",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__init__\")\ndef initialize(self,value):self.value=value\nC=type(\"C\",(),{key:initialize})\nprint(C(7).value,list(C.__dict__)[0] is key)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "protocol-key-new-and-init",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nnew=K(\"__new__\");init=K(\"__init__\")\ndef make(cls,value):return object.__new__(cls)\ndef initialize(self,value):self.value=value\nC=type(\"C\",(),{new:make,init:initialize})\nprint(C(9).value,type(C.__dict__[new]).__name__)\n",
+      "stdout": "9 staticmethod\n"
+    },
+    {
+      "id": "protocol-key-subclass",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__init_subclass__\")\ndef initialize(cls,tag=4):cls.tag=tag\nBase=type(\"Base\",(),{key:initialize})\nclass Child(Base,tag=7):pass\nprint(Child.tag,type(Base.__dict__[key]).__name__)\n",
+      "stdout": "7 classmethod\n"
+    },
+    {
+      "id": "protocol-key-equality",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__eq__\")\ndef equal(self,other):return 7\nC=type(\"C\",(),{key:equal})\nprint(C.__dict__[\"__hash__\"] is None,C()==C())\ntry:hash(C())\nexcept TypeError:print(\"unhashable\")\n",
+      "stdout": "True 7\nunhashable\n"
+    },
+    {
+      "id": "protocol-key-explicit-hash",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\neq=K(\"__eq__\");hashed=K(\"__hash__\")\ndef equal(self,other):return True\ndef h(self):return 17\nC=type(\"C\",(),{eq:equal,hashed:h})\nprint(hash(C()),\"__hash__\" in C.__dict__,C.__dict__[hashed] is h)\n",
+      "stdout": "17 True True\n"
+    },
+    {
+      "id": "protocol-key-call-mutation",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__call__\")\ndef call(self):return 7\nC=type(\"C\",(),{key:call});instance=C()\nprint(callable(instance),instance())\nC.__call__=lambda self:9\nprint(callable(instance),instance(),list(C.__dict__)[0] is key)\ndel C.__call__\nprint(callable(instance),key in C.__dict__)\n",
+      "stdout": "True 7\nTrue 9 True\nFalse False\n"
+    },
+    {
+      "id": "protocol-key-length",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__len__\")\nC=type(\"C\",(),{key:lambda self:7});instance=C()\nprint(len(instance),bool(instance))\nC.__len__=lambda self:0\nprint(len(instance),bool(instance))\ndel C.__len__\ntry:len(instance)\nexcept TypeError:print(\"deleted\")\n",
+      "stdout": "7 True\n0 False\ndeleted\n"
+    },
+    {
+      "id": "protocol-key-attribute-hooks",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__getattribute__\")\ndef get(self,name):return 9 if name==\"tag\" else object.__getattribute__(self,name)\nC=type(\"C\",(),{key:get})\nprint(C().tag,C().__class__ is C)\n",
+      "stdout": "9 True\n"
+    },
+    {
+      "id": "protocol-key-missing-hook",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__getattr__\")\nC=type(\"C\",(),{key:lambda self,name:7})\nprint(C().tag)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "protocol-key-descriptor",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nget=K(\"__get__\");setter=K(\"__set__\")\ndef read(self,instance,owner):return 7\ndef write(self,instance,value):instance.tag=value\nD=type(\"D\",(),{get:read,setter:write})\nclass C:field=D()\nc=C();c.field=9\nprint(c.field,c.tag)\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "protocol-key-set-name",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__set_name__\")\ndef named(self,owner,name):owner.tag=name\nD=type(\"D\",(),{key:named})\nclass C:field=D()\nprint(C.tag)\n",
+      "stdout": "field\n"
+    },
+    {
+      "id": "protocol-key-iteration",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nit=K(\"__iter__\");nxt=K(\"__next__\")\ndef iterate(self):return self\ndef next_value(self):\n if self.value==3:raise StopIteration\n self.value+=1\n return self.value\nC=type(\"C\",(),{it:iterate,nxt:next_value,\"value\":0})\nresult=list(C());print(len(result),result[0],result[1],result[2])\n",
+      "stdout": "3 1 2 3\n"
+    },
+    {
+      "id": "protocol-key-inheritance",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nkey=K(\"__call__\")\nBase=type(\"Base\",(),{key:lambda self:7})\nclass C(Base):pass\nc=C();print(callable(c),c())\ndel Base.__call__\nprint(callable(c))\nBase.__call__=lambda self:9\nprint(callable(c),c())\n",
+      "stdout": "True 7\nFalse\nTrue 9\n"
+    },
+    {
+      "id": "protocol-key-collision-not-equal",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nclass Collision:\n def __hash__(self):return hash(\"__call__\")\n def __eq__(self,other):return False\nkey=Collision()\nC=type(\"C\",(),{key:lambda self:7})\nprint(callable(C()),C.__dict__[key](C()))\n",
+      "stdout": "False 7\n"
+    },
+    {
+      "id": "protocol-key-new-error",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nclass ErrorKey:\n def __hash__(self):return hash(\"__new__\")\n def __eq__(self,other):raise ValueError(\"key\")\ntry:type(\"C\",(),{ErrorKey():lambda cls:None})\nexcept ValueError:print(\"key error\")\n",
+      "stdout": "key error\n"
+    },
+    {
+      "id": "protocol-key-call-lookup-error",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nclass ErrorKey:\n def __hash__(self):return hash(\"__call__\")\n def __eq__(self,other):raise ValueError(\"key\")\nC=type(\"C\",(),{ErrorKey():lambda self:7})\nprint(callable(C()))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "protocol-key-disabled-at-construction",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nclass Conditional:\n enabled=False\n def __hash__(self):return hash(\"__call__\")\n def __eq__(self,other):return self.enabled and other==\"__call__\"\nkey=Conditional();C=type(\"C\",(),{key:lambda self:7})\nkey.enabled=True\nprint(callable(C()))\ntry:C()()\nexcept TypeError:print(\"not callable\")\n",
+      "stdout": "False\nnot callable\n"
+    },
+    {
+      "id": "protocol-key-disabled-after-construction",
+      "stage": "O69",
+      "source": "__name__=\"app\"\nclass K:\n def __init__(self,name):self.name=name\n def __hash__(self):return hash(self.name)\n def __eq__(self,other):return other==self.name\nclass Conditional:\n enabled=True\n def __hash__(self):return hash(\"__call__\")\n def __eq__(self,other):return self.enabled and other==\"__call__\"\nkey=Conditional();C=type(\"C\",(),{key:lambda self:7})\nkey.enabled=False\nprint(callable(C()))\ntry:C()()\nexcept AttributeError:print(\"missing call\")\n",
+      "stdout": "True\nmissing call\n"
     }
   ]
 }

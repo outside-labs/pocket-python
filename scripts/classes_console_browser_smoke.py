@@ -101,13 +101,17 @@ def smoke(channel=None):
 
                     def run(source, expected):
                         page.fill('#input', source)
-                        page.click('#run')
+                        assert page.locator('#run').is_enabled()
+                        # Repeated corpus runs need the normal click handler,
+                        # without waiting two animation frames for a stable box.
+                        page.locator('#run').dispatch_event('click')
                         page.wait_for_function("()=>document.querySelector('#status').textContent==='Completed'")
                         assert page.locator('#result').inner_text() == expected
 
                     def refused(source, prefix):
                         page.fill('#input', source)
-                        page.click('#run')
+                        assert page.locator('#run').is_enabled()
+                        page.locator('#run').dispatch_event('click')
                         prefixes = [prefix] if isinstance(prefix, str) else prefix
                         page.wait_for_function("prefixes=>prefixes.some(prefix=>document.querySelector('#status').textContent.startsWith(prefix))", arg=prefixes)
 

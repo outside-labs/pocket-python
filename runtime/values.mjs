@@ -784,6 +784,17 @@ export class ValueRuntime {
     return value instanceof SliceValue ? [value.start, value.stop, value.step] : value instanceof TupleValue ? value.items : null;
   }
   combineHash(hash, item) { return BigInt.asUintN(64, (hash ^ BigInt.asUintN(64, item)) * 1099511628211n); }
+  nameHash(name) {
+    this.charge(1);
+    let hash = 14695981039346656037n, length = 0;
+    for (const char of name) { this.charge(1); length++; hash = this.combineHash(hash, BigInt(char.codePointAt(0))); }
+    return this.hashResult(BigInt.asIntN(64, hash ^ BigInt(length)));
+  }
+  callbackKeyMayMatch(dictionary, name) {
+    if (!dictionary.ownedKeys) return false;
+    const hash = this.nameHash(name);
+    return dictionary.entries.some(entry => this.needsOwnedHash(entry.key) && this.dictionaryEntryHash(entry) === hash);
+  }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
     if (value instanceof ClassNamespaceValue) this.fail("TypeError", "unhashable type: 'mappingproxy'");
@@ -1518,7 +1529,7 @@ export function valueLayout(value) {
       children: [value.pool, value.globals, ...value.closure.values(), ...(value.defaults ?? []), ...(value.attributes === null ? [] : [value.attributes]), ...(value.documentation === null ? [] : [value.documentation]), ...metadata]};
   }
   if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
-    8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1) + (value.namespaceDictionary ? 1 : 0)) + (value.namespaceEntries === null ? 0 : 8 + value.namespaceEntries.reduce((sum, entry) => sum + 40 + 2 * entry.hash.length, 0)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
+    8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1) + (value.namespaceDictionary ? 1 : 0)) + (value.protocolNames === null ? 0 : 8 + value.protocolNames.reduce((sum, name) => sum + 8 + 2 * name.length, 0)) + (value.namespaceEntries === null ? 0 : 8 + value.namespaceEntries.reduce((sum, entry) => sum + 40 + 2 * entry.hash.length, 0)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
     children: [...value.bases, ...value.mro.slice(1), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.namespaceEntries || []).map(entry => entry.key), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.metaclass === null ? [] : [value.metaclass])]};
   if (value instanceof NamespaceLookupCache) return {bytes: 64 + value.entries.reduce((sum, entry) => sum + 48 + 2 * entry.name.length, 0),
     children: value.entries.flatMap(entry => [entry.owner, entry.dictionary, entry.key])};

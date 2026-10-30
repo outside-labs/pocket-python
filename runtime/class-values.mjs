@@ -319,7 +319,7 @@ export class ClassRuntime {
         this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
     }
   }
-  create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null, firstLine = 1, staticAttributes = [], namespaceEntries = null} = {}) {
+  create(name, qualname, module, bases, namespace, root, {dynamic = false, metaclass = null, firstLine = 1, staticAttributes = [], namespaceEntries = null, protocolNames = null} = {}) {
     this.key(name);
     if (!dynamic && !isPythonIdentifier(name)) throw new TypeError("Invalid class name.");
     this.bounded(typeof qualname === "string" && qualname.length <= 256 && typeof module === "string" && module.length <= 192,
@@ -328,8 +328,9 @@ export class ClassRuntime {
     this.touch(root);
     this.bounded(bases.length <= CLASS_LIMITS.bases && namespace.size <= CLASS_LIMITS.attributes, "Class base/namespace budget exceeded.");
     bases = bases.length ? [...bases] : [root]; namespace = new Map(namespace);
-    this.validateNamespace(bases, namespace.keys());
-    const automaticHash = namespace.has("__eq__") && !namespace.has("__hash__");
+    this.validateNamespace(bases, [...namespace.keys(), ...(protocolNames || [])]);
+    const has = name => namespace.has(name) || protocolNames?.includes(name);
+    const automaticHash = has("__eq__") && !has("__hash__");
     if (automaticHash) namespace.set("__hash__", null);
     this.bounded(namespace.size <= CLASS_LIMITS.attributes, "Class namespace budget exceeded.");
     for (const base of bases) {
@@ -372,6 +373,7 @@ export class ClassRuntime {
       for (const items of pending) if (items[0] === candidate) items.shift();
     }
     const type = new ClassValue(name, qualname, module, bases, parents, namespace, false, metaclass, !dynamic, automaticHash);
+    type.protocolNames = protocolNames?.length ? [...protocolNames] : null;
     type.firstLine = firstLine; type.staticAttributes = staticAttributes === null ? null : [...staticAttributes];
     type.namespaceEntries = namespaceEntries === null ? null : namespaceEntries.filter(entry => !["__qualname__", "__classcell__", "__classdictcell__"].includes(this.values.text(entry.key))).map(entry => ({key: entry.key, hash: entry.hash}));
     const layout = valueLayout(type);
@@ -384,7 +386,7 @@ export class ClassRuntime {
   hasSlot(type, name) {
     // The bounded MRO is also the native slot-presence index. Default calls keep
     // their original lookup/accounting path; only adopted overrides add phases.
-    return type.mro.some(base => base instanceof ClassValue && !base.root && base.namespace.has(name));
+    return type.mro.some(base => base instanceof ClassValue && !base.root && (base.namespace.has(name) || base.protocolNames?.includes(name)));
   }
   isType(value) { return value instanceof ClassValue || value?.constructor === BuiltinValue && NATIVE_TYPES.has(value.name); }
   isPythonMethod(value) { return value instanceof BoundMethodValue && (value.pythonMethod || !(value.callable instanceof BuiltinValue)); }
@@ -456,13 +458,20 @@ export class ClassRuntime {
   }
   lookupMayCallback(receiver) {
     const types = receiver instanceof ClassValue ? [receiver, receiver.metaclass] : receiver instanceof InstanceValue ? [receiver.type] : [];
-    return types.some(type => type && this.mro(type).some(base => base.namespaceDictionary?.entries.some(entry => this.values.needsOwnedHash(entry.key)) ||
-      base.namespaceEntries?.some(entry => this.values.needsOwnedHash(entry.key))));
+    const seen = new Set();
+    while (types.length) {
+      const type = types.pop(); if (!type || seen.has(type)) continue; seen.add(type);
+      for (const base of this.mro(type)) {
+        if (base.namespaceDictionary?.ownedKeys || base.namespaceEntries?.some(entry => this.values.needsOwnedHash(entry.key))) return true;
+        for (const value of base.namespace?.values() || []) if (value instanceof InstanceValue) { this.charge(1); types.push(value.type); }
+      }
+    }
+    return false;
   }
   ownNamespaceEntry(owner, name, phase = 0) {
     const dictionary = owner.namespaceDictionary;
     if (!dictionary) return {found: owner.namespace.has(name), value: owner.namespace.get(name) ?? null};
-    if (dictionary.entries.some(entry => this.values.needsOwnedHash(entry.key))) {
+    if (this.values.callbackKeyMayMatch(dictionary, name)) {
       const cached = this.lookupCache?.entries.find(entry => entry.owner === owner && entry.name === name && entry.phase === phase && entry.version === dictionary.version);
       if (!cached) throw new NamespaceLookupRequest(owner, name, dictionary, phase);
       const entry = cached.found ? dictionary.entries.find(entry => entry.key === cached.key) : null;
@@ -542,7 +551,7 @@ export class ClassRuntime {
   subclassNotification(type, required = false) {
     // Default construction retains the established allocation/work accounting.
     // The new class's own hook is excluded, just as with super(newclass, newclass).
-    if (!required && !type.mro.slice(1).some(base => base instanceof ClassValue && !base.root && base.namespace.has("__init_subclass__"))) return null;
+    if (!required && !type.mro.slice(1).some(base => base instanceof ClassValue && !base.root && (base.namespace.has("__init_subclass__") || this.values.callbackKeyMayMatch(base.namespaceDictionary || {ownedKeys: false}, "__init_subclass__")))) return null;
     const item = this.lookup(type, "__init_subclass__", true, 1);
     return this.bindAttribute(item.value, null, type);
   }
@@ -826,7 +835,10 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "This implicit special protocol is outside classes-source/1.", "UNSUPPORTED");
     const type = this.checkingType(receiver);
     if (type === null) throw new TypeError("Implicit user protocols require a class or instance.");
-    const item = this.lookup(type, name);
+    const present = this.hasSlot(type, name), callbacks = this.lookupMayCallback(receiver);
+    const start = !present && callbacks ? this.mro(type).findIndex(base => base instanceof BuiltinValue || base.root) : 0;
+    const item = this.lookup(type, name, true, Math.max(start, 0));
+    if (!item.found && present && callbacks) this.fail("AttributeError", "Type slot '" + name + "' is missing.");
     return item.found ? this.bindAttribute(item.value, receiver, type) : null;
   }
 
@@ -1355,11 +1367,14 @@ export class ClassRuntime {
     this.bounded(remove || present || map.size < CLASS_LIMITS.attributes, "Class/instance attribute budget exceeded.");
     const initialCount = receiver instanceof ClassValue ? receiver.directoryInitialCount : null;
     const entries = receiver.namespaceEntries;
+    const protocolNames = receiver instanceof ClassValue ? receiver.protocolNames : null;
     if (remove && initialCount !== null && mapPresent && [...map.keys()].indexOf(mapName) < initialCount) receiver.directoryInitialCount--;
     if (remove) map.delete(mapName); else map.set(mapName, value);
+    if (receiver instanceof ClassValue && (protocolNames?.includes(name) || own?.found && this.values.needsOwnedHash(own.key)))
+      receiver.protocolNames = remove ? (protocolNames || []).filter(item => item !== name) : [...new Set([...(protocolNames || []), name])];
     if (receiver instanceof ClassValue && entries) receiver.namespaceEntries = remove ? entries.filter(entry => entry.key !== own?.key && this.values.text(entry.key) !== name) : entries;
     const rollback = () => {
-      if (initialCount !== null) { receiver.directoryInitialCount = initialCount; receiver.namespaceEntries = entries; }
+      if (initialCount !== null) { receiver.directoryInitialCount = initialCount; receiver.namespaceEntries = entries; receiver.protocolNames = protocolNames; }
       if (mapPresent) map.set(mapName, before); else map.delete(mapName);
     };
     try {
@@ -1401,7 +1416,7 @@ export class ClassRuntime {
   }
   callable(value) {
     this.touch(value);
-    if (value instanceof InstanceValue) return this.lookup(value.type, "__call__").found;
+    if (value instanceof InstanceValue) return this.hasSlot(value.type, "__call__");
     return value instanceof ClassValue || value instanceof FunctionValue || value instanceof BuiltinValue && !["getset_descriptor", "member_descriptor"].includes(value.nativeKind) ||
       value instanceof BoundMethodValue || value instanceof MethodWrapperValue && value.kind === "staticmethod";
   }
