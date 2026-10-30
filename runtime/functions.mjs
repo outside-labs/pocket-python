@@ -97,7 +97,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     environment.cells.set(name, cell); return () => environment.cells.delete(name);
   });
   const block = (frame, id) => frame.tasks.push({type: "block", block: frame.fn.blocks[id], pc: 0, stack: []});
-  const load = (frame, key, globalOnly = false) => {
+  const load = (frame, key, globalOnly = false, fallback = null) => {
     const global = globalOnly || frame.fn.globals?.includes(key), local = global ? null : frame.locals.get(key), classBody = frame.fn.kind === "class";
     const cell = global ? environmentCell(frame.callable.globals, key) : local?.bound ? local : classBody && local ? environmentCell(frame.callable.globals, key) :
       local || frame.closure.get(key) || environmentCell(frame.callable.globals, key);
@@ -105,6 +105,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (!global && classBody && !frame.namespaceEnvironment && key === "__firstlineno__" && frame.namespaceOrder.has(key)) return values.int(BigInt(frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1));
     if (local && !classBody && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
     if (!global && frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
+    if (fallback) return fallback();
     if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
     if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
@@ -159,9 +160,22 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.callable.index === 0 || frame.fn.globals?.includes(key)) { if (bound) environment.order.add(key); else environment.order.delete(key); }
     if (frame.namespaceOrder && frame.locals.has(key)) { if (bound) frame.namespaceOrder.add(key); else frame.namespaceOrder.delete(key); }
   };
-  const loadName = (frame, name, site, after = null) => {
-    const dictionary = nameDictionary(frame, name);
-    if (dictionary === null) { const value = load(frame, name); return after ? {value, after} : {value}; }
+  const builtinLookup = (frame, name, site, after = null) => {
+    const namespace = frame.callable.builtins === undefined ? moduleContext?.defaultBuiltins : frame.callable.builtins;
+    const dictionary = namespace instanceof Environment ? namespace.dictionary : namespace;
+    if ((namespace === null || namespace === undefined) && frame.callable.builtins === undefined || dictionary === null && namespace instanceof Environment || frame.callable.pool.code.version < 5)
+      return {value: load(frame, name, true)};
+    if (!values.isDict(dictionary)) python("TypeError", "Function builtins must support dictionary lookup");
+    const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
+    return {task: dictionaryTask(dictionary, key, site, continuation("builtin-name", {receiver: dictionary, name, after}), 0, "probe")};
+  };
+  const loadName = (frame, name, site, after = null, globalOnly = false) => {
+    const dictionary = globalOnly ? frame.callable.globals.dictionary : nameDictionary(frame, name);
+    if (dictionary === null || globalOnly && !frame.callable.globals.dictionary) {
+      let result;
+      const value = load(frame, name, globalOnly, () => { result = builtinLookup(frame, name, site, after); return null; });
+      return result || (after ? {value, after} : {value});
+    }
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
     if (className(frame, name) && !dictionary.ownedKeys) {
       const index = values.find(dictionary, key);
@@ -225,6 +239,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   const bind = (callable, positional, keywordNames, keywordValues) => {
     const fn = callable.pool.code.functions[callable.index], constants = callable.pool.code.constants;
     const p = fn.params, ordered = [...p.posonly, ...p.positional], bindings = new Map();
+    const defaults = Array.isArray(callable.positionalDefaults) ? callable.positionalDefaults : callable.positionalDefaults?.items ?? [];
+    const keywordDefaults = callable.keywordDefaults;
     const label = fn.qualname + "()";
     positional.slice(0, ordered.length).forEach((value, index) => bindings.set(ordered[index], value));
     const positionalOnly = p.kwarg ? [] : keywordNames.filter(key => p.posonly.includes(key));
@@ -239,9 +255,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       bindings.set(key, keywordValues[index]);
     });
     if (positional.length > ordered.length && !p.vararg) {
-      const range = p.defaults.length ? "from " + (ordered.length - p.defaults.length) + " to " + ordered.length : String(ordered.length);
+      const range = defaults.length ? "from " + (ordered.length - defaults.length) + " to " + ordered.length : String(ordered.length);
       const kw = keywordNames.filter(key => p.kwonly.includes(key)).length;
-      python("TypeError", label + " takes " + range + " positional argument" + (ordered.length === 1 && !p.defaults.length ? "" : "s") +
+      python("TypeError", label + " takes " + range + " positional argument" + (ordered.length === 1 && !defaults.length ? "" : "s") +
         " but " + positional.length + (kw ? " positional argument" + (positional.length === 1 ? "" : "s") + " (and " + kw + " keyword-only argument" + (kw === 1 ? "" : "s") + ")" : "") +
         (positional.length === 1 && !kw ? " was" : " were") + " given");
     }
@@ -252,14 +268,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       python("TypeError", label + " missing " + keys.length + " required " + kind + " argument" + (keys.length === 1 ? "" : "s") + ": " + list);
     };
     for (let i = 0; i < ordered.length; i++) {
-      const key = ordered[i], defaultIndex = i - ordered.length + p.defaults.length;
-      if (!bindings.has(key) && defaultIndex >= 0) bindings.set(key, callable.defaults ? callable.defaults[defaultIndex] : constants[p.defaults[defaultIndex]]);
+      const key = ordered[i], defaultIndex = i - ordered.length + defaults.length;
+      if (!bindings.has(key) && defaultIndex >= 0) bindings.set(key, defaults[defaultIndex]);
     }
     missing(ordered.filter(key => !bindings.has(key)), "positional");
-    for (const key of p.kwonly) {
-      if (!bindings.has(key) && Object.hasOwn(p.kwdefaults, key)) bindings.set(key, callable.defaults ? callable.defaults[p.defaults.length + Object.keys(p.kwdefaults).indexOf(key)] : constants[p.kwdefaults[key]]);
-    }
-    missing(p.kwonly.filter(key => !bindings.has(key)), "keyword-only");
+    if (keywordDefaults instanceof Map) {
+      for (const key of p.kwonly) if (!bindings.has(key) && keywordDefaults.has(key)) bindings.set(key, keywordDefaults.get(key));
+      missing(p.kwonly.filter(key => !bindings.has(key)), "keyword-only");
+    } else if (keywordDefaults === null) missing(p.kwonly.filter(key => !bindings.has(key)), "keyword-only");
     if (p.vararg) {
       const packed = values.tuple(positional.slice(ordered.length)); state.temporaries.push(packed); bindings.set(p.vararg, packed);
     }
@@ -270,6 +286,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         values.set(packed, name, value);
       }
     }
+    if (values.isDict(keywordDefaults)) bindings.pendingDefaults = p.kwonly.filter(key => !bindings.has(key));
     return bindings;
   };
   const enter = (callable, bindings, callsite = null, completion = null) => {
@@ -296,7 +313,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
-    setCell, load, loadName, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
+    setCell, load, loadName, builtinLookup, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
     const generator = frame.generator, completion = frame.completion;
@@ -532,7 +549,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       }
       state.temporaries = [returned, frame.callable];
       const parent = state.frames.at(-2);
-      if (!parent) {
+      if (!parent && frame.completion === null) {
         if (signal.kind !== "raise" && module && !entryCall && !frame.packagePublished) {
           frame.packagePublished = true;
           const parts = module.name.split("."), owner = moduleContext.module(parts.slice(0, -1).join("."));
@@ -551,6 +568,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           state.current = {...frame.callsite, instruction: frame.returnInstruction};
           frame.leave(); state.frames.pop(); dispatch(recovery); return;
         }
+        if (!parent) throw new Unhandled(returned);
         addTrace(returned, frame.callsite);
         frame.leave(); state.frames.pop();
         continue;
@@ -625,13 +643,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (entryCall) {
       state.pool = entryCall.callable.pool; state.globals = module.environment;
       const args = entryCall.arguments.map(record => values.decode(record, {retain: value => state.temporaries.push(value)}));
-      enter(entryCall.callable, bind(entryCall.callable, args, [], []));
+      call(entryCall.callable, args, [], [], null);
       return;
     }
     state.pool = allocate(CodePool, verified.code, verified.bytes, module);
     state.globals = module ? module.environment : allocate(Environment);
     if (module) mutate(module, () => { const before = module.pool; module.pool = state.pool; return () => { module.pool = before; }; });
-    const entry = allocate(FunctionValue, state.pool, 0, state.globals, new Map());
+    const entry = allocate(FunctionValue, state.pool, 0, state.globals, new Map(), null, undefined);
     state.temporaries = [entry]; enter(entry, new Map());
   };
   const step = () => {
@@ -672,8 +690,17 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const closure = new Map(owner.code.functions[arg].free.map(key => [key,
           frame.fn.kind === "class" ? key === "__class__" && frame.locals.has("@source:class") ? frame.locals.get("@source:class") : frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
         const defaults = op === "function-defaults" ? stack.splice(stack.length - extra - fourth.length) : null;
-        const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure, defaults);
-        if (op !== "class" && op !== "class-meta" && op !== "class-keywords") stack.push(callable);
+        const builtinEntry = environmentCell(frame.callable.globals, "__builtins__");
+        const captured = builtinEntry?.bound ? builtinEntry.value instanceof ModuleValue ? builtinEntry.value.environment : builtinEntry.value : undefined;
+        const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure, defaults, captured);
+        if (op !== "class" && op !== "class-meta" && op !== "class-keywords") {
+          const dictionary = frame.callable.globals.dictionary;
+          if (dictionary?.ownedKeys) {
+            state.temporaries.push(callable);
+            const key = values.string(Array.from("__builtins__", char => char.codePointAt(0))); state.temporaries.push(key);
+            dispatch(dictionaryTask(dictionary, key, summary(frame, cursor), continuation("function-capture", {receiver: callable}), 0, "probe"));
+          } else stack.push(callable);
+        }
         else {
           const keywordValues = op === "class-keywords" ? stack.splice(stack.length - fourth.length) : [];
           const keywords = op === "class-keywords" ? [...fourth] : [];

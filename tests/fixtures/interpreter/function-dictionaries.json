@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O45",
     "O46",
-    "O71"
+    "O71",
+    "O72"
   ],
   "cases": [
     {
@@ -386,13 +387,13 @@
     },
     {
       "id": "deferred-__defaults__",
-      "stage": "Future",
+      "stage": "O72",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__defaults__')\n",
       "stdout": ""
     },
     {
       "id": "deferred-__kwdefaults__",
-      "stage": "Future",
+      "stage": "O72",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__kwdefaults__')\n",
       "stdout": ""
     },
@@ -416,7 +417,7 @@
     },
     {
       "id": "deferred-__globals__",
-      "stage": "Future",
+      "stage": "O72",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__globals__')\n",
       "stdout": ""
     },

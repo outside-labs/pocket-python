@@ -1950,6 +1950,48 @@
         "tests/fixtures/interpreter/wrapper-metadata.json:property-copy-native-origin",
         "tests/fixtures/interpreter/wrapper-metadata.json:super-dictionary"
       ]
+    },
+    {
+      "id": "function-defaults-defining-namespaces",
+      "status": "supported",
+      "scope": "O72: live positional/keyword defaults, actual defining globals and captured builtin dictionaries, owned default-key/name callbacks, native validation and persistent callback updates.",
+      "gaps": "Code/cells O73, frame reflection O74, annotations #125 and dynamic source/import APIs O91\u2013O94 retain their owners.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/function-state.json:defaults-alias",
+        "tests/fixtures/interpreter/function-state.json:defaults-replace",
+        "tests/fixtures/interpreter/function-state.json:none-defaults",
+        "tests/fixtures/interpreter/function-state.json:__defaults__-invalid-3",
+        "tests/fixtures/interpreter/function-state.json:__defaults__-invalid-4",
+        "tests/fixtures/interpreter/function-state.json:__defaults__-invalid-5",
+        "tests/fixtures/interpreter/function-state.json:__defaults__-missing-None",
+        "tests/fixtures/interpreter/function-state.json:__defaults__-missing-delete",
+        "tests/fixtures/interpreter/function-state.json:__kwdefaults__-invalid-8",
+        "tests/fixtures/interpreter/function-state.json:__kwdefaults__-invalid-9",
+        "tests/fixtures/interpreter/function-state.json:__kwdefaults__-invalid-10",
+        "tests/fixtures/interpreter/function-state.json:__kwdefaults__-missing-None",
+        "tests/fixtures/interpreter/function-state.json:__kwdefaults__-missing-delete",
+        "tests/fixtures/interpreter/function-state.json:bound-and-closures",
+        "tests/fixtures/interpreter/function-state.json:keyword-default-key-callback",
+        "tests/fixtures/interpreter/function-state.json:keyword-default-errors-after-positional",
+        "tests/fixtures/interpreter/function-state.json:global-live-alias",
+        "tests/fixtures/interpreter/function-state.json:builtins-live",
+        "tests/fixtures/interpreter/function-state.json:builtins-capture",
+        "tests/fixtures/interpreter/function-state.json:builtins-missing",
+        "tests/fixtures/interpreter/function-state.json:builtins-invalid",
+        "tests/fixtures/interpreter/function-state.json:builtins-callback",
+        "tests/fixtures/interpreter/function-state.json:__globals__-readonly-22",
+        "tests/fixtures/interpreter/function-state.json:__globals__-readonly-23",
+        "tests/fixtures/interpreter/function-state.json:__builtins__-readonly-24",
+        "tests/fixtures/interpreter/function-state.json:__builtins__-readonly-25",
+        "tests/fixtures/interpreter/function-state.json:qualified-getset"
+      ]
     }
   ],
   "builtin_reference_names": [

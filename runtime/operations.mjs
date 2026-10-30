@@ -49,7 +49,7 @@ export function completion(kind, fields = {}) {
     case "class-qualname": record = {kind}; break;
     case "class-module": record = {kind, callable: fields.callable, bases: operands(fields.bases), metaclass: fields.metaclass, invalidMetaclass: fields.invalidMetaclass, keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)}; break;
     case "handler-type": record = {kind, position: fields.position, names: operands(fields.names), after}; break;
-    case "class-name": case "module-delete": case "global-name": case "global-delete":
+    case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name":
       record = {kind, receiver: fields.receiver, name: fields.name, after}; break;
     case "store-body": record = {kind, body: fields.body, after}; break;
     case "resume-control": record = {kind, signal: fields.signal, value: fields.value, after}; break;
@@ -66,6 +66,10 @@ export function completion(kind, fields = {}) {
       record = {kind, type: fields.type, args: operands(fields.args), keywords: operands(fields.keywords),
         keywordValues: operands(fields.keywordValues), depth: fields.depth, after};
       depthCheck(record.depth); break;
+    case "function-defaults":
+      record = {kind, receiver: fields.receiver, dictionary: fields.dictionary, names: operands(fields.names), keys: operands(fields.keys), items: operands(fields.items), position: fields.position, after};
+      break;
+    case "function-capture":
     case "relay": case "subclass-result": case "vars-result": case "property-name": record = {kind, receiver: fields.receiver, after}; break;
     case "function-entry":
       record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation), after}; break;
@@ -252,7 +256,7 @@ function visit(record) {
     case "dict-union": return [record.left, record.right, record.result, ...completionRoots(record.after)];
     case "namespace-build": return operationRoots(record.task);
     case "namespace-lookup": return [record.cache, record.owner, record.dictionary, ...operationRoots(record.task)];
-    case "class-name": case "module-delete": case "global-name": case "global-delete": case "module-missing": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
+    case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
     case "class-end": return [...record.items, record.value];
     case "class-firstline": case "class-qualname": return [];
     case "class-module": return [record.callable, ...record.bases, record.metaclass, ...record.keywordValues];
@@ -264,6 +268,8 @@ function visit(record) {
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];
+    case "function-defaults": return [record.receiver, record.dictionary, ...record.items, ...completionRoots(record.after)];
+    case "function-capture":
     case "relay": case "subclass-result": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "abstract-lookup": case "abstract-truth":
     case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":

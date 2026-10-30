@@ -12,7 +12,7 @@ export class ModuleContext {
   constructor(registry, memory) {
     if (!(registry instanceof VerifiedRegistry) || !(memory instanceof MemoryArena)) throw new TypeError("Verified registry and arena required.");
     registry.entry;
-    this.registry = registry; this.memory = memory; this.cache = null; this.builtins = null; this.closed = false;
+    this.registry = registry; this.memory = memory; this.cache = null; this.builtins = null; this.defaultBuiltins = null; this.closed = false;
     this.chain = []; this.outputLeases = []; this.activeRun = false;
     let lease = null, external = null;
     const leave = memory.enter(() => [this.cache]);
@@ -73,6 +73,13 @@ export class ModuleContext {
       this.memory.resize(cell, 48, [value]); cell.value = value; cell.bound = true;
     }
     environment.order.add(key);
+  }
+  sourceBuiltins() {
+    if (this.defaultBuiltins === null) {
+      const value = this.memory.allocate(64, [], () => new Environment());
+      this.binding(this.cache, "@source-builtins", value); this.defaultBuiltins = value;
+    }
+    return this.defaultBuiltins;
   }
   module(name) { return this.cache.cells.get(name)?.value || null; }
   builtin(name, create) {

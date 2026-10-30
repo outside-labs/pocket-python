@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O41",
     "O42",
-    "O71"
+    "O71",
+    "O72"
   ],
   "cases": [
     {
@@ -424,7 +425,7 @@
     },
     {
       "id": "function-defaults-deferred",
-      "stage": "Future",
+      "stage": "O72",
       "source": "def f(): pass\nf.__defaults__\n",
       "stdout": ""
     },
