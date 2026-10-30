@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {GeneratorValue, Cell, Environment, environmentCell, CodePool, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, Cell, Environment, environmentCell, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -103,14 +103,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       local || frame.closure.get(key) || environmentCell(frame.callable.globals, key);
     if (cell?.bound) return cell.value;
     if (!global && classBody && !frame.namespaceEnvironment && key === "__firstlineno__" && frame.namespaceOrder.has(key)) return values.int(BigInt(frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1));
-    if (local && !classBody && frame.callable.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
+    if (local && !classBody && frame.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
     if (!global && frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
     if (fallback) return fallback();
-    if (frame.callable.pool.code.version === 5 && key === "object") return objectType();
-    if (frame.callable.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
+    if (frame.pool.code.version === 5 && key === "object") return objectType();
+    if (frame.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.callable.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
-        (frame.callable.pool.code.version === 5 && ["id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
+        (frame.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
+        (frame.pool.code.version === 5 && ["id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -138,7 +138,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     frame.namespaceEnvironment = environment; return dictionary;
   };
   const className = (frame, key) => frame.fn.kind === "class" && !frame.fn.globals?.includes(key) && !key.startsWith("@source:");
-  const nameDictionary = (frame, key) => className(frame, key) && !frame.namespaceEnvironment && key === "__firstlineno__" && frame.namespaceOrder.has(key) ? null : className(frame, key) && frame.namespaceEnvironment ? frame.namespaceEnvironment.dictionary : !key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key) ||
+  const nameDictionary = (frame, key) => className(frame, key) && !frame.namespaceEnvironment && key === "__firstlineno__" && frame.namespaceOrder.has(key) ? null : className(frame, key) && frame.namespaceEnvironment ? frame.namespaceEnvironment.dictionary : !key.startsWith("@source:") && (frame.index === 0 || frame.fn.globals?.includes(key) ||
     !frame.locals.has(key) && !frame.closure.has(key)) ? frame.callable.globals.dictionary : null;
   const store = (frame, key, value, bound = true, after = null) => {
     const environment = frame.callable.globals;
@@ -152,18 +152,18 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       }
       return dictionaryTask(frame.namespaceEnvironment.dictionary, name, state.current, after || continuation("name-stored"), 0, bound ? "set" : "discard", value);
     }
-    if (!key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key)) && environment.dictionary !== null) {
+    if (!key.startsWith("@source:") && (frame.index === 0 || frame.fn.globals?.includes(key)) && environment.dictionary !== null) {
       const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
       return dictionaryTask(environment.dictionary, name, state.current, after || continuation("name-stored"), 0, bound ? "set" : "discard", value);
     }
     setCell(targetCell(frame, key, bound), value, bound);
-    if (frame.callable.index === 0 || frame.fn.globals?.includes(key)) { if (bound) environment.order.add(key); else environment.order.delete(key); }
+    if (frame.index === 0 || frame.fn.globals?.includes(key)) { if (bound) environment.order.add(key); else environment.order.delete(key); }
     if (frame.namespaceOrder && frame.locals.has(key)) { if (bound) frame.namespaceOrder.add(key); else frame.namespaceOrder.delete(key); }
   };
   const builtinLookup = (frame, name, site, after = null) => {
     const namespace = frame.callable.builtins === undefined ? moduleContext?.defaultBuiltins : frame.callable.builtins;
     const dictionary = namespace instanceof Environment ? namespace.dictionary : namespace;
-    if ((namespace === null || namespace === undefined) && frame.callable.builtins === undefined || dictionary === null && namespace instanceof Environment || frame.callable.pool.code.version < 5)
+    if ((namespace === null || namespace === undefined) && frame.callable.builtins === undefined || dictionary === null && namespace instanceof Environment || frame.pool.code.version < 5)
       return {value: load(frame, name, true)};
     if (!values.isDict(dictionary)) python("TypeError", "Function builtins must support dictionary lookup");
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
@@ -289,23 +289,24 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (values.isDict(keywordDefaults)) bindings.pendingDefaults = p.kwonly.filter(key => !bindings.has(key));
     return bindings;
   };
-  const enter = (callable, bindings, callsite = null, completion = null) => {
+  const enter = (callable, bindings, callsite = null, completion = null, executable = callable) => {
     if (state.frames.length >= Math.min(maxDepth, memory.limits.maxFrames - 1) || memory.stats().frames >= memory.limits.maxFrames) python("RecursionError", "maximum recursion depth exceeded");
-    const fn = callable.pool.code.functions[callable.index];
-    const frame = {fn, callable, closure: callable.closure, locals: callable.index === 0 ? callable.globals.cells : new Map(),
+    const fn = executable.pool.code.functions[executable.index];
+    const frame = {fn, callable, pool: executable.pool, index: executable.index, closure: executable.closure, locals: executable.index === 0 ? callable.globals.cells : new Map(),
       tasks: [], activeException: state.frames.at(-1)?.activeException || inheritedException, callsite,
       completion, namespaceOrder: fn.kind === "class" ? new Set() : null, returnInstruction: state.current?.instruction ?? null};
-    frame.leave = memory.enter(() => [callable, ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
+    frame.leave = memory.enter(() => [callable, ...(frame.pool === callable.pool ? [] : [frame.pool]),
+      ...(frame.closure === callable.closure ? [] : frame.closure.values()), ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
       ...frame.tasks.flatMap(controlRoots), ...(frame.namespaceEnvironment ? [frame.namespaceEnvironment] : []), ...(frame.generator ? [frame.generator] : []), ...completionRoots(frame.completion, true)], {charge, fail: hard});
     state.frames.push(frame);
     // Keep the established cell allocation/root order; source local order is
     // independently carried by the verified function for namespace snapshots.
-    const localNames = callable.pool.code.version === 5 && fn.kind === "function" ? [...fn.locals].sort() : fn.locals;
+    const localNames = frame.pool.code.version === 5 && fn.kind === "function" ? [...fn.locals].sort() : fn.locals;
     for (const key of localNames) {
       let cell = frame.locals.get(key);
       if (!cell) {
         cell = allocate(Cell);
-        if (callable.index === 0) addCell(callable.globals, key, cell); else frame.locals.set(key, cell);
+        if (frame.index === 0) addCell(callable.globals, key, cell); else frame.locals.set(key, cell);
       }
       if (bindings.has(key)) setCell(cell, bindings.get(key));
     }
@@ -398,15 +399,15 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const fresh = generator.status === "created";
     if (fresh && mode === "send" && value !== null) python("TypeError", "can't send non-None value to a just-started generator");
     if (generator.status === "closed" || fresh && mode !== "send") {
-      if (fresh && mode === "throw") addTrace(value, definitionSite(generator.callable));
-      generator.status = "closed"; generator.callable = null; generator.bindings.clear();
+      if (fresh && mode === "throw") addTrace(value, definitionSite(generator));
+      generator.status = "closed"; generator.callable = null; generator.closure = null; generator.bindings.clear();
       if (mode === "close") { dispatch(deliver(null, completion, site)); return; }
       if (mode === "throw") { addTrace(value, site); throw new Raised(value); }
       python("StopIteration", "");
     }
     state.temporaries.push(generator, value, ...completionRoots(completion));
     if (fresh) {
-      enter(generator.callable, generator.bindings, site, completion);
+      enter(generator.callable, generator.bindings, site, completion, generator);
       generator.frame = state.frames.at(-1); generator.frame.generator = generator;
       generator.bindings.clear();
     } else {
@@ -533,7 +534,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       let returned = signal.kind === "normal" ? null : signal.value;
       if (frame.generator) {
         const generator = frame.generator, mode = frame.generatorMode;
-        generator.status = "closed"; generator.frame = null; generator.callable = null; generator.bindings.clear();
+        generator.status = "closed"; generator.frame = null; generator.callable = null; generator.closure = null; generator.bindings.clear();
         if (signal.kind === "raise" && returned.name === "StopIteration") {
           const original = returned;
           returned = exception("RuntimeError", "generator raised StopIteration");
@@ -662,7 +663,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     state.current = {...summary(frame, cursor), instruction: cursor.pc - 1};
     state.temporaries = stack.slice();
     try {
-      if (op === "const") stack.push(frame.callable.pool.code.constants[arg]);
+      if (op === "const") stack.push(frame.pool.code.constants[arg]);
       else if (op === "load") {
         const result = loadName(frame, arg, summary(frame, cursor));
         if (result.task) dispatch(result.task); else stack.push(result.value);
@@ -670,7 +671,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (op === "store") { const task = store(frame, arg, stack.pop()); if (task) dispatch(task); }
       else if (op === "delete") {
         const dictionary = className(frame, arg) && !frame.fn.nonlocals?.includes(arg) && frame.namespaceEnvironment ? frame.namespaceEnvironment.dictionary :
-          !arg.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(arg)) ? frame.callable.globals.dictionary : null;
+          !arg.startsWith("@source:") && (frame.index === 0 || frame.fn.globals?.includes(arg)) ? frame.callable.globals.dictionary : null;
         if (dictionary !== null) {
           const key = values.string(Array.from(arg, char => char.codePointAt(0))); state.temporaries.push(key);
           dispatch(dictionaryTask(dictionary, key, summary(frame, cursor), continuation("global-delete", {name: arg, receiver: dictionary}), 0, "remove-probe")); return;
@@ -680,13 +681,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         }
         if (!targetCell(frame, arg)?.bound) {
           if (frame.fn.nonlocals?.includes(arg)) python("NameError", "cannot access free variable '" + arg + "' where it is not associated with a value in enclosing scope");
-          if (frame.callable.index === 0 || frame.fn.kind === "class" || frame.fn.globals?.includes(arg)) python("NameError", "name '" + arg + "' is not defined");
+          if (frame.index === 0 || frame.fn.kind === "class" || frame.fn.globals?.includes(arg)) python("NameError", "name '" + arg + "' is not defined");
           python("UnboundLocalError", "cannot access local variable '" + arg + "' where it is not associated with a value");
         }
         store(frame, arg, null, false);
       }
       else if (op === "function" || op === "function-defaults" || op === "class" || op === "class-meta" || op === "class-keywords") {
-        const owner = frame.callable.pool;
+        const owner = frame.pool;
         const closure = new Map(owner.code.functions[arg].free.map(key => [key,
           frame.fn.kind === "class" ? key === "__class__" && frame.locals.has("@source:class") ? frame.locals.get("@source:class") : frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
         const defaults = op === "function-defaults" ? stack.splice(stack.length - extra - fourth.length) : null;
@@ -755,7 +756,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after, depth: 0}) : after);
         }
       } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
-        const owner = frame.callable.pool.module;
+        const owner = frame.pool.module;
         if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
         if (op === "import") state.pendingImport = {plan: moduleContext.planLoad(owner.name, arg, extra, fourth),
           inheritedException: frame.activeException};
@@ -763,7 +764,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           const receiver = stack.pop();
           if (receiver instanceof ModuleValue) {
             const environment = receiver.environment, cell = environment.cells.get(arg);
-            if (frame.callable.pool.code.version !== 5) {
+            if (frame.pool.code.version !== 5) {
               const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
               if (result.kind === "value") stack.push(result.value);
               else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};
@@ -778,7 +779,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
           else if (["attribute-get", "module-get"].includes(op) && arg === "__dir__" && classes.hasFixedDirectory(receiver)) {
-            if (frame.callable.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Native directories require classes-source/1.");
+            if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Native directories require classes-source/1.");
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           } else if (receiver instanceof GeneratorValue) {
             if (!["send", "throw", "close", "__iter__", "__next__"].includes(arg)) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires a separate stage.");
@@ -791,8 +792,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           else if (values.isBinary(receiver)) { values.binaryMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (arg === "encode" && values.isString(receiver)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
-          else if (op === "attribute-get" && (receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
-            if (arg === "__get__" && frame.callable.pool.code.version !== 5 &&
+          else if (op === "attribute-get" && (receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+            if (arg === "__get__" && frame.pool.code.version !== 5 &&
                 (receiver instanceof FunctionValue || classes.nativeDescriptorKind(receiver) !== null))
               hard("UNSUPPORTED", "UnsupportedOperationError", "Explicit descriptor binding requires the class profile.");
             const plan = classes.read(receiver, arg);
@@ -843,7 +844,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           dictionaryTask(receiver.storage, value, summary(frame, cursor), continuation("display-insert", {receiver}), 0, "set", null));
       } else if (["build-list", "build-tuple", "build-dict"].includes(op)) {
         const items = stack.splice(stack.length - arg * (op === "build-dict" ? 2 : 1));
-        if (op === "build-dict" && frame.callable.pool.code.version === 5 && items.some((item, index) => index % 2 === 0 && values.needsOwnedHash(item)))
+        if (op === "build-dict" && frame.pool.code.version === 5 && items.some((item, index) => index % 2 === 0 && values.needsOwnedHash(item)))
           dispatch(dictionaryBuildTask(values.dict([]), items, summary(frame, cursor)));
         else stack.push(op === "build-dict" ? values.dict(Array.from({length: arg}, (_, index) => items.slice(index * 2, index * 2 + 2))) :
           op === "build-list" ? values.list(items) : values.tuple(items));
@@ -868,11 +869,11 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (op === "setitem") {
         const item = stack.pop(), key = stack.pop(), receiver = stack.pop();
         if (receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key) || (values.isBinary(receiver) || values.isView(receiver)) && item instanceof InstanceValue ||
-            frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(receiver, key))
+            frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(receiver, key))
           dispatch(itemTask(receiver, key, summary(frame, cursor), null, 0, "set", item));
         else stack.push(values.set(receiver, key, item));
       } else if (op === "dict-delete" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
-          frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
+          frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor), null, 0, "delete"));
       }
       else if (op === "slice") {
@@ -881,18 +882,18 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           dispatch(sliceTask(receiver, [start, stop, step], summary(frame, cursor)));
         else stack.push(values.slice(receiver, start, stop, step));
       } else if (op === "getitem" && (stack.at(-2) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
-          frame.callable.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
+          frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor)));
       }
       else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
-      else if (op === "contains" && (frame.callable.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
+      else if (op === "contains" && (frame.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
           (stack.at(-1) instanceof DictionaryViewValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
            values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));
       }
-      else if (frame.callable.pool.code.version === 5 &&
+      else if (frame.pool.code.version === 5 &&
           (["equal", "not-equal"].includes(op) && (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1))) ||
            Object.hasOwn(ORDERING_SLOTS, op) && (values.hasUserEquality(stack.at(-2)) || values.hasUserEquality(stack.at(-1))))) {
         const right = stack.pop(); dispatch(compareTask(op, stack.pop(), right, summary(frame, cursor)));

@@ -23,7 +23,7 @@ def inventory():
         'method': 'MethodType', 'method-wrapper': 'MethodWrapperType',
         'method_descriptor': 'MethodDescriptorType', 'wrapper_descriptor': 'WrapperDescriptorType',
         'builtin_function_or_method': 'BuiltinFunctionType', 'generator': 'GeneratorType',
-        'module': 'ModuleType', 'cell': 'CellType', 'NoneType': 'NoneType',
+        'module': 'ModuleType', 'code': 'CodeType', 'cell': 'CellType', 'NoneType': 'NoneType',
         'NotImplementedType': 'NotImplementedType', 'getset_descriptor': 'GetSetDescriptorType',
         'member_descriptor': 'MemberDescriptorType', 'classmethod_descriptor': 'ClassMethodDescriptorType',
     }.items():

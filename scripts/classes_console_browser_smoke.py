@@ -249,7 +249,8 @@ def smoke(channel=None):
                     class_mapping_proxies = json.loads((ROOT / 'tests/fixtures/interpreter/class-mapping-proxies.json').read_bytes())
                     wrapper_metadata = json.loads((ROOT / 'tests/fixtures/interpreter/wrapper-metadata.json').read_bytes())
                     function_state = json.loads((ROOT / 'tests/fixtures/interpreter/function-state.json').read_bytes())
-                    for corpus in [function_state, wrapper_metadata, class_mapping_proxies, native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    code_cells = json.loads((ROOT / 'tests/fixtures/interpreter/code-cells.json').read_bytes())
+                    for corpus in [code_cells, function_state, wrapper_metadata, class_mapping_proxies, native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c and not c.get('modules'))
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -909,6 +910,11 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('iterator-type-directories-compose-with-native-binding-advertised-namespaces-and-lazy-generators-offline')
                     checks.append('iterator-type-directories-preserve-native-errors-and-unread-namespace-boundaries-offline')
+                    for case in code_cells['cases']:
+                        if 'error_type' in case:
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('verified-code-objects-closure-cells-and-code-replacement-offline')
                     for case in function_state['cases']:
                         if 'error_type' in case:
                             refused(case['source'], case['error_type'] + ':')

@@ -455,3 +455,5 @@ Native async/host adapters remain under #34.
 [O71](interpreter-wrapper-metadata.md) adopts copied wrapper metadata, live wrapper dictionaries, qualified native documents, property accessor-copy origins and super dictionary/getset reflection.
 
 [O72](interpreter-function-state.md) adopts live function defaults, defining globals and captured builtins, including owned binding callbacks and persistent callback updates.
+
+[O73](interpreter-code-cells.md) adopts owned verified code metadata, actual closure cells and compatible code replacement while retaining active and generator executable snapshots.

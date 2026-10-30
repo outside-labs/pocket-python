@@ -1992,6 +1992,45 @@
         "tests/fixtures/interpreter/function-state.json:__builtins__-readonly-25",
         "tests/fixtures/interpreter/function-state.json:qualified-getset"
       ]
+    },
+    {
+      "id": "owned-code-closures-cells",
+      "status": "supported",
+      "scope": "O73: verified owned source-code metadata, stable code and closure identities, writable/empty cells, native cell construction and compatible function-code replacement with active/generator executable snapshots.",
+      "gaps": "CPython bytecode/C-layout interchange and backend code constructors remain outside the source interface. Frame reflection O74, directory completion O78, native API completion O90 and dynamic compilation O91 remain separately owned.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/code-cells.json:code-identity",
+        "tests/fixtures/interpreter/code-cells.json:code-signature",
+        "tests/fixtures/interpreter/code-cells.json:code-doc-constants",
+        "tests/fixtures/interpreter/code-cells.json:code-free-cells",
+        "tests/fixtures/interpreter/code-cells.json:cell-write-through",
+        "tests/fixtures/interpreter/code-cells.json:empty-cell",
+        "tests/fixtures/interpreter/code-cells.json:cell-getset",
+        "tests/fixtures/interpreter/code-cells.json:compatible-code-replacement",
+        "tests/fixtures/interpreter/code-cells.json:replacement-captures-cells-by-position",
+        "tests/fixtures/interpreter/code-cells.json:replacement-preserves-globals",
+        "tests/fixtures/interpreter/code-cells.json:replacement-bound-method",
+        "tests/fixtures/interpreter/code-cells.json:replacement-active-frame",
+        "tests/fixtures/interpreter/code-cells.json:replacement-created-generator",
+        "tests/fixtures/interpreter/code-cells.json:replacement-suspended-generator",
+        "tests/fixtures/interpreter/code-cells.json:invalid-14",
+        "tests/fixtures/interpreter/code-cells.json:invalid-15",
+        "tests/fixtures/interpreter/code-cells.json:invalid-16",
+        "tests/fixtures/interpreter/code-cells.json:invalid-17",
+        "tests/fixtures/interpreter/code-cells.json:invalid-18",
+        "tests/fixtures/interpreter/code-cells.json:invalid-19",
+        "tests/fixtures/interpreter/code-cells.json:closure-mismatch",
+        "tests/fixtures/interpreter/code-cells.json:code-getset",
+        "tests/fixtures/interpreter/code-cells.json:cell-constructor",
+        "tests/fixtures/interpreter/code-cells.json:decorated-definition-line"
+      ]
     }
   ],
   "builtin_reference_names": [

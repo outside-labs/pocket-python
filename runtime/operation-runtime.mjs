@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
-import {ModuleValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -63,7 +63,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const moduleMissing = (record, site) => {
     if (record.mode === "import") {
       const frame = state.frames.at(-1);
-      const result = moduleContext.planAttribute(record.receiver, record.name, true, frame.callable.pool.module.name);
+      const result = moduleContext.planAttribute(record.receiver, record.name, true, frame.pool.module.name);
       if (result.kind === "load") { state.pendingImport = {plan: result.plan, inheritedException: frame.activeException}; return null; }
       return valueTask(result.value, site, record.after);
     }
@@ -165,7 +165,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (moduleContext && callable.name === "isinstance") {
       if (args.length !== 2) python("TypeError", "isinstance expected 2 arguments, got " + args.length);
-      if (state.frames.at(-1).callable.pool.code.version === 5) return classes.isinstance(args[0], args[1]);
+      if (state.frames.at(-1).pool.code.version === 5) return classes.isinstance(args[0], args[1]);
       const type = args[1];
       if (type instanceof ClassValue) return classes.isinstance(args[0], type);
       if (type instanceof BuiltinValue && type.name === "memoryview") return values.isView(args[0]);
@@ -1866,7 +1866,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = valueTask(null, site, completion); continue;
           }
           if (callable.name === "isinstance" && (classes.needsAdvertised(args[0]) || classes.customCheck(args[1], "__instancecheck__") ||
-              state.frames.at(-1).callable.pool.code.version === 5 && values.isSequenceType(args[1], "tuple"))) {
+              state.frames.at(-1).pool.code.version === 5 && values.isSequenceType(args[1], "tuple"))) {
             if (keywords.length || args.length !== 2) python("TypeError", "isinstance requires two positional arguments");
             task = instanceTask(args[0], args[1], site, completion, depth); continue;
           }
@@ -1944,7 +1944,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (dictcell) setCell(dictcell, classes.namespaceDictionary(type));
             task = notifyNext(type, [...namespace], 0, site, completion, keywords, keywordValues); continue;
           }
-          if (classes.isType(callable) && !["mappingproxy", "type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
+          if (classes.isType(callable) && !["cell", "code", "mappingproxy", "type", "super", "property", "staticmethod", "classmethod", "slice", "dict", "bool", "int", "float", "complex", "str", "list", "tuple", "range", "set", "frozenset", "bytes", "bytearray", "memoryview", ...Object.keys(EXCEPTIONS)].includes(callable.name)) {
             if (/^dict_(keys|values|items|(?:reverse)?(?:key|value|item)iterator)$/.test(callable.name)) python("TypeError", "cannot create dictionary view or iterator instances");
             if (["method_descriptor", "wrapper_descriptor", "getset_descriptor", "member_descriptor", "classmethod_descriptor"].includes(callable.name)) python("TypeError", "cannot create '" + callable.name + "' instances");
             if (["NoneType", "NotImplementedType"].includes(callable.name)) {
@@ -2011,6 +2011,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth); continue;
             }
             task = valueTask(classes.bindNativeDescriptor(callable.name.slice(0, callable.name.indexOf(".")), args[0], args[1]), site, completion); continue;
+          }
+          if (callable.name === "code" && !callable.nativeKind) hard("UNSUPPORTED", "UnsupportedOperationError", "Code creation requires independent verified source; CPython bytecode and raw code layouts are outside this interface");
+          if (callable.name === "cell" && !callable.nativeKind) {
+            if (keywords.length || args.length > 1) python("TypeError", "cell() accepts at most one positional argument");
+            const cell = allocate(Cell); state.temporaries.push(cell);
+            if (args.length) setCell(cell, args[0]);
+            task = valueTask(cell, site, completion); continue;
           }
           if (callable.name === "function-builtins") {
             const namespace = args[0].builtins === undefined ? moduleContext.sourceBuiltins() : args[0].builtins;
@@ -2144,7 +2151,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
             const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && (args[0] instanceof FunctionValue || classes.isPythonMethod(args[0]));
             const directoryLayout = classes.hasFixedDirectory(args[0]) && name === "__dir__";
-            if (!(args[0] instanceof InstanceValue || args[0] instanceof MethodWrapperValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            if (!(args[0] instanceof Cell || args[0] instanceof CodeValue || args[0] instanceof InstanceValue || args[0] instanceof MethodWrapperValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             if (identityLayout && !writing && classes.isPythonMethod(args[0])) python("AttributeError", "Method identity metadata requires ordinary callable fallback.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
@@ -2412,7 +2419,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               continue;
             }
             const frame = state.frames.at(-1);
-            if (frame.callable.index === 0 || frame.fn.kind === "class") {
+            if (frame.index === 0 || frame.fn.kind === "class") {
               const dictionary = frame.fn.kind === "class" ? classNamespace(frame) : values.environmentDictionary(frame.callable.globals);
               task = callable.name === "dir" ? valueTask(values.list(dictionary.entries.map(entry => entry.key)), site, continuation("dir-sort", {receiver: dictionary, depth, after: completion})) :
                 valueTask(dictionary, site, completion); continue;
@@ -2440,9 +2447,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             } else task = unaryTask("hash", args[0], site, completion, depth);
             continue;
           }
-          if (["iter", "next"].includes(callable.name) && state.frames.at(-1).callable.pool.code.version >= 4) {
+          if (["iter", "next"].includes(callable.name) && state.frames.at(-1).pool.code.version >= 4) {
             count("builtin:" + callable.name);
-            if (state.frames.at(-1).callable.pool.code.version === 4 && args.length === 2 && !(callable.name === "next" && args[0] instanceof GeneratorValue))
+            if (state.frames.at(-1).pool.code.version === 4 && args.length === 2 && !(callable.name === "next" && args[0] instanceof GeneratorValue))
               hard("UNSUPPORTED", "UnsupportedOperationError", "This two-argument primitive iteration form requires classes-source/1.");
             if (args.length < 1 || args.length > 2 || keywords.length) python("TypeError", callable.name + "() requires one or two positional arguments");
             if (callable.name === "iter" && args.length === 2) {
@@ -2471,7 +2478,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (["len", "bool"].includes(callable.name) && args.length === 1 && !keywords.length) {
             task = unaryTask(callable.name === "bool" ? "truth" : "len", args[0], site, completion, depth); continue;
           }
-          if (callable.name === "bool" && state.frames.at(-1).callable.pool.code.version === 5 &&
+          if (callable.name === "bool" && state.frames.at(-1).pool.code.version === 5 &&
               (args.length > 1 || keywords.length)) python("TypeError", "bool() accepts at most one positional argument");
           let value;
           if (callable.name === "property") {

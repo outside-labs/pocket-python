@@ -16,7 +16,10 @@ export function environmentCell(environment, name) {
   return entry ? {bound: true, value: entry.value} : undefined;
 }
 export class CodePool {
-  constructor(code, bytes, module = null) { this.code = code; this.bytes = bytes; this.module = module; }
+  constructor(code, bytes, module = null) { this.code = code; this.bytes = bytes; this.module = module; this.codeObjects = null; }
+}
+export class CodeValue {
+  constructor(pool, index) { this.pool = pool; this.index = index; this.metadata = new Map(); Object.freeze(this); }
 }
 export class ModuleValue {
   constructor(name, package_, environment) {
@@ -33,6 +36,7 @@ export class FunctionValue {
       [name, defaults === null ? pool.code.constants[index] : defaults[params.defaults.length + position]]));
     this.builtins = builtins;
     this.attributes = null;
+    this.closureTuple = undefined;
     this.documentation = pool?.code.functions[index]?.doc === undefined ? null : pool.code.constants[pool.code.functions[index].doc];
     this.identityName = undefined; this.identityQualname = undefined;
     const ordinary = pool?.code.version === 5 && index !== 0 && pool.code.functions[index]?.kind === "function";
@@ -43,12 +47,14 @@ export class FunctionValue {
 export class GeneratorValue {
   constructor(callable, bindings) {
     this.callable = callable; this.bindings = bindings; this.frame = null;
+    this.pool = callable.pool; this.index = callable.index; this.closure = callable.closure;
     this.status = "created";
   }
 }
 export function generatorRoots(value) {
   const frame = value.frame;
-  return [value.callable, ...value.bindings.values(), ...(frame ?
+  return [value.callable, ...(value.pool === value.callable?.pool ? [] : [value.pool]),
+    ...(value.closure && value.closure !== value.callable?.closure ? value.closure.values() : []), ...value.bindings.values(), ...(frame ?
     [...frame.locals.values(), frame.activeException, ...frame.tasks.flatMap(controlRoots)] : [])];
 }
 export class CallArguments {

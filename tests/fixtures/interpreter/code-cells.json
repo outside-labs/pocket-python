@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-code-cells/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O73"
+  ],
+  "cases": [
+    {
+      "id": "code-identity",
+      "stage": "O73",
+      "source": "def make():\n def f(): return 7\n return f\na=make()\nb=make()\nprint(a.__code__ is a.__code__,a.__code__ is b.__code__,type(a.__code__).__name__,a.__closure__)\n",
+      "stdout": "True True code None\n"
+    },
+    {
+      "id": "code-signature",
+      "stage": "O73",
+      "source": "def f(a,/,b=7,*rest,c=9,**kw):\n local=11\n return a\nc=f.__code__\nprint(c.co_name,c.co_qualname,c.co_argcount,c.co_posonlyargcount,c.co_kwonlyargcount,c.co_nlocals)\nprint(*c.co_varnames)\nprint(c.co_filename,c.co_firstlineno,len(c.co_freevars),len(c.co_cellvars))\nprint(c.co_varnames is c.co_varnames,c.co_consts is c.co_consts,11 in c.co_consts)\n",
+      "stdout": "f f 2 1 1 6\na b c rest kw local\nsources/app.py 1 0 0\nTrue True True\n"
+    },
+    {
+      "id": "code-doc-constants",
+      "stage": "O73",
+      "source": "def f():\n \"document\"\n return 7\nc=f.__code__\nprint(c.co_consts[0],type(c.co_consts).__name__)\n",
+      "stdout": "document tuple\n"
+    },
+    {
+      "id": "code-free-cells",
+      "stage": "O73",
+      "source": "def make(z):\n a=[7]\n def read(): return a,z\n return read\nf=make([9])\nc=f.__code__\nprint(*c.co_freevars)\nprint(f.__closure__ is f.__closure__,len(f.__closure__))\nprint(f.__closure__[0].cell_contents is f()[0])\nprint(type(f.__closure__[0]).__name__)\n",
+      "stdout": "a z\nTrue 2\nTrue\ncell\n"
+    },
+    {
+      "id": "cell-write-through",
+      "stage": "O73",
+      "source": "def make():\n x=[7]\n def read(): return x\n def write(value):\n  nonlocal x\n  x=value\n return read,write\nf,g=make()\nc=f.__closure__[0]\nprint(c is g.__closure__[0])\nc.cell_contents=[9]\nprint(f()[0])\ng([11])\nprint(c.cell_contents[0])\ndel c.cell_contents\ntry: f()\nexcept NameError: print(\"empty\")\ntry: c.cell_contents\nexcept ValueError: print(\"read empty\")\ndel c.cell_contents\nc.cell_contents=[13]\nprint(f()[0])\n",
+      "stdout": "True\n9\n11\nempty\nread empty\n13\n"
+    },
+    {
+      "id": "empty-cell",
+      "stage": "O73",
+      "source": "def make():\n if False: x=7\n def f(): return x\n return f\nf=make()\nc=f.__closure__[0]\ntry: c.cell_contents\nexcept ValueError: print(\"empty\")\nc.cell_contents=17\nprint(f())\n",
+      "stdout": "empty\n17\n"
+    },
+    {
+      "id": "cell-getset",
+      "stage": "O73",
+      "source": "def make():\n x=7\n return lambda:x\nf=make()\nc=f.__closure__[0]\nd=type(c).__dict__[\"cell_contents\"]\nprint(d.__get__(c))\nd.__set__(c,[9])\nprint(f()[0])\nd.__delete__(c)\ntry: d.__get__(c)\nexcept ValueError: print(\"empty\")\n",
+      "stdout": "7\n9\nempty\n"
+    },
+    {
+      "id": "compatible-code-replacement",
+      "stage": "O73",
+      "source": "value=7\ndef f(x=9): return value+x\ndef g(y): return value*y\nold=f.__code__\nf.__code__=g.__code__\nprint(f.__name__,f.__qualname__,f.__code__ is g.__code__,f())\nf.__code__=old\nprint(f())\n",
+      "stdout": "f f True 63\n16\n"
+    },
+    {
+      "id": "replacement-captures-cells-by-position",
+      "stage": "O73",
+      "source": "def one():\n a=[7]\n return lambda:a\ndef two():\n z=[9]\n return lambda:z[0]+10\nf=one()\ng=two()\nc=f.__closure__\nf.__code__=g.__code__\nprint(f(),f.__closure__ is c,c[0].cell_contents[0])\n",
+      "stdout": "17 True 7\n"
+    },
+    {
+      "id": "replacement-preserves-globals",
+      "stage": "O73",
+      "source": "import helper\nvalue=7\ndef f(): return 0\nf.__code__=helper.read.__code__\nprint(f(),f.__globals__ is globals())\n",
+      "stdout": "7 True\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "value=9\ndef read(): return value\n"
+        }
+      ]
+    },
+    {
+      "id": "replacement-bound-method",
+      "stage": "O73",
+      "source": "class C:\n def f(self,x=7): return x\n def g(self,x): return x+10\no=C()\nm=o.f\nC.f.__code__=C.g.__code__\nprint(m(),m.__func__ is C.f)\n",
+      "stdout": "17 True\n"
+    },
+    {
+      "id": "replacement-active-frame",
+      "stage": "O73",
+      "source": "def update():\n f.__code__=g.__code__\n return 3\ndef f():\n x=7\n update()\n return x+5\ndef g(): return 19\nprint(f(),f())\n",
+      "stdout": "12 19\n"
+    },
+    {
+      "id": "replacement-created-generator",
+      "stage": "O73",
+      "source": "def f(x=7):\n yield x\n yield 9\ndef g(): return 13\na=f()\nf.__code__=g.__code__\nprint(next(a),next(a),f())\n",
+      "stdout": "7 9 13\n"
+    },
+    {
+      "id": "replacement-suspended-generator",
+      "stage": "O73",
+      "source": "def f():\n yield 7\n yield 9\ndef g(): return 13\na=f()\nprint(next(a))\nf.__code__=g.__code__\nprint(next(a),f())\n",
+      "stdout": "7\n9 13\n"
+    },
+    {
+      "id": "invalid-14",
+      "stage": "O73",
+      "source": "def f(): return 7\nf.__code__=None\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-15",
+      "stage": "O73",
+      "source": "def f(): return 7\nf.__code__=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-16",
+      "stage": "O73",
+      "source": "def f(): return 7\ndel f.__code__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-17",
+      "stage": "O73",
+      "source": "def f(): return 7\nf.__closure__=None\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "invalid-18",
+      "stage": "O73",
+      "source": "def f(): return 7\ndel f.__closure__\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "invalid-19",
+      "stage": "O73",
+      "source": "def f(): return 7\nf.__code__.co_name=\"x\"\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "closure-mismatch",
+      "stage": "O73",
+      "source": "def f(): return 1\ndef make():\n x=7\n return lambda:x\nf.__code__=make().__code__\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "code-getset",
+      "stage": "O73",
+      "source": "def f(): return 7\ndef g(): return 9\nd=type(f).__dict__[\"__code__\"]\nprint(d.__get__(f) is f.__code__)\nd.__set__(f,g.__code__)\nprint(f())\n",
+      "stdout": "True\n9\n"
+    },
+    {
+      "id": "cell-constructor",
+      "stage": "O73",
+      "source": "def make():\n x=7\n return lambda:x\nt=type(make().__closure__[0])\nc=t()\ntry: c.cell_contents\nexcept ValueError: print(\"empty\")\nd=t([9])\nprint(d.cell_contents[0],type(d) is t)\n",
+      "stdout": "empty\n9 True\n"
+    },
+    {
+      "id": "decorated-definition-line",
+      "stage": "O73",
+      "source": "def decorator(f): return f\n@decorator\ndef f(): return 7\nprint(f.__code__.co_firstlineno)\n",
+      "stdout": "2\n"
+    }
+  ]
+}

@@ -1,12 +1,13 @@
+import {isVerifiedFunctionCode} from "./function-bytecode.mjs";
 import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS} from "./native-namespaces.mjs";
-import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
+import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
-  "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "cell",
+  "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "code", "cell",
   "list_iterator", "tuple_iterator", "str_iterator", "str_ascii_iterator", "dict_keyiterator", "range_iterator", "longrange_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 for (const name of Object.keys(NATIVE_NAMESPACES)) if (name !== "object") NATIVE_TYPES.add(name);
 const NAMESPACE_DESCRIPTOR_KINDS = new Set(["method_descriptor", "wrapper_descriptor", "classmethod_descriptor", "getset_descriptor", "member_descriptor"]);
@@ -20,7 +21,7 @@ const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set_
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__", "getset_descriptor.__get__", "member_descriptor.__get__", "classmethod_descriptor.__get__", "getset_descriptor.__set__", "getset_descriptor.__delete__", "member_descriptor.__set__", "member_descriptor.__delete__"]);
 const nativeWrapper = name => NATIVE_TYPE_WRAPPERS.has(name) || NATIVE_DESCRIPTOR_WRAPPERS.has(name) || NATIVE_BINDING_WRAPPERS.has(name) ||
   NATIVE_NAMESPACES[name.slice(0, name.indexOf("."))]?.some(([key, kind]) => key === name.slice(name.indexOf(".") + 1) && kind === "wrapper_descriptor");
-const FUNCTION_DATA = new Set(["__dict__", "__class__", "__name__", "__qualname__", "__module__", "__doc__", "__defaults__", "__kwdefaults__", "__globals__", "__builtins__"]);
+const FUNCTION_DATA = new Set(["__dict__", "__class__", "__name__", "__qualname__", "__module__", "__doc__", "__defaults__", "__kwdefaults__", "__globals__", "__builtins__", "__code__", "__closure__"]);
 const FUNCTION_DEFERRED_DATA = new Set(["__builtins__", "__code__", "__defaults__", "__kwdefaults__", "__closure__", "__globals__", "__annotations__", "__annotate__", "__type_params__"]);
 const FUNCTION_DEFERRED_METHODS = new Set(["__call__", "__getattribute__", "__setattr__", "__delattr__", "__repr__", "__str__", "__hash__", "__eq__", "__ne__", "__reduce__", "__reduce_ex__", "__sizeof__", "__format__", "__dir__", "__init__", "__new__", "__init_subclass__", "__subclasshook__", "__getstate__"]);
 const NATIVE_CLASS_METHODS = new Set(["object.__init_subclass__"]);
@@ -419,6 +420,7 @@ export class ClassRuntime {
       if (this.isType(value)) name = "type";
       else if (value instanceof BuiltinValue) name = value.nativeKind || (NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" : nativeWrapper(value.name) ? "wrapper_descriptor" : "builtin_function_or_method");
       else if (value instanceof FunctionValue) name = "function";
+      else if (value instanceof CodeValue) name = "code";
       else if (value instanceof BoundMethodValue) name = !value.pythonMethod && value.callable instanceof BuiltinValue ?
         NATIVE_METHOD_DESCRIPTORS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
       else if (value instanceof PropertyValue) name = "property";
@@ -698,6 +700,25 @@ export class ClassRuntime {
         args: [receiver, key ?? this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     }
     if (receiver instanceof FunctionValue && name === "__class__") return value(this.builtin("function"));
+    if (receiver instanceof Cell) {
+      if (name === "__class__") return value(this.builtin("cell"));
+      if (name === "cell_contents") {
+        if (!receiver.bound) this.fail("ValueError", "Cell is empty");
+        return value(receiver.value);
+      }
+      if (name === "__doc__") return value(this.nativeDocumentation(this.builtin("cell")));
+      this.fail("UnsupportedOperationError", "Additional cell protocols retain O78/O90", "UNSUPPORTED");
+    }
+    if (receiver instanceof CodeValue) {
+      if (name === "__class__") return value(this.builtin("code"));
+      if (name === "__doc__") return value(this.nativeDocumentation(this.builtin("code")));
+      return value(this.codeMetadata(receiver, name));
+    }
+    if (receiver instanceof FunctionValue && name === "__code__") return value(this.codeObject(receiver.pool, receiver.index));
+    if (receiver instanceof FunctionValue && name === "__closure__") {
+      if (receiver.closureTuple === undefined) this.functionMetadata(receiver, "closureTuple", receiver.closure.size ? this.values.tuple([...receiver.closure.values()]) : null);
+      return value(receiver.closureTuple);
+    }
     if (receiver instanceof FunctionValue && name === "__globals__") return value(this.values.environmentDictionary(receiver.globals));
     if (receiver instanceof FunctionValue && name === "__builtins__") return {kind: "call", callable: this.builtin("function-builtins"), args: [receiver]};
     if (receiver instanceof FunctionValue && ["__defaults__", "__kwdefaults__"].includes(name)) return value(this.functionDefaults(receiver, name));
@@ -856,6 +877,14 @@ export class ClassRuntime {
     return result.value;
   }
   write(receiver, name, value, remove = false, key = null) {
+    if (receiver instanceof Cell) {
+      if (name !== "cell_contents") this.fail("AttributeError", "Cell attributes are read-only");
+      const before = [receiver.bound, receiver.value]; receiver.bound = !remove; receiver.value = remove ? null : value;
+      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+      catch (error) { [receiver.bound, receiver.value] = before; throw error; }
+      return {kind: "value", value: null};
+    }
+    if (receiver instanceof CodeValue) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Code metadata is read-only");
     if (receiver instanceof BuiltinValue && !this.isType(receiver)) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Native callable/descriptor attributes are read-only");
     this.key(name); this.touch(receiver);
     if (name === "__dir__" && this.hasFixedDirectory(receiver)) this.fail("AttributeError", "Native directory attributes are read-only.");
@@ -1060,7 +1089,7 @@ export class ClassRuntime {
       return {kind: "value", value: this.make(ClassNamespaceValue, receiver.dictionary)};
     }
     const fieldOwner = this.nativeFieldOwner(name);
-    if (fieldOwner && !(receiver instanceof FunctionValue && fieldOwner === "O72")) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
+    if (fieldOwner && !(receiver instanceof FunctionValue && ["O72", "O73"].includes(fieldOwner) || receiver instanceof Cell && fieldOwner === "O73")) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
     if (operation !== "get" && (receiver instanceof PropertyValue && ["fget", "fset", "fdel"].includes(name) ||
         receiver instanceof MethodWrapperValue && ["__func__", "__wrapped__"].includes(name))) this.fail("AttributeError", "Native storage is read-only");
     if (name === "__dict__") {
@@ -1088,7 +1117,7 @@ export class ClassRuntime {
       if (name === "__module__") { this.namespaceDictionary(receiver); const entry = this.ownNamespaceEntry(receiver, name); if (!entry.found) this.fail("AttributeError", "Class has no module"); return {kind: "value", value: entry.value}; }
       return {kind: "value", value: name === "__bases__" ? this.values.tuple(receiver.bases) : name === "__mro__" ? this.values.tuple(receiver.mro) : name === "__base__" ? this.primaryBase(receiver) : this.values.string(Array.from(receiver[name === "__name__" ? "name" : "qualname"], char => char.codePointAt(0)))};
     }
-    if (receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof SuperValue || receiver instanceof BoundMethodValue || receiver instanceof MethodWrapperValue)
+    if (receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof SuperValue || receiver instanceof BoundMethodValue || receiver instanceof MethodWrapperValue)
       return operation === "get" ? this.read(receiver, name, true) : this.write(receiver, name, item, operation === "delete");
     if (owner instanceof ClassValue && owner.root && name === "__class__") {
       if (operation !== "get") { if (!this.isType(item)) this.fail("TypeError", "__class__ must be set to a class"); this.fail("UnsupportedOperationError", "Compatible class reassignment is O88.", "UNSUPPORTED"); }
@@ -1282,6 +1311,76 @@ export class ClassRuntime {
     if (this.ownClassDirectoryNames(type).includes(name)) return null;
     this.fail("KeyError", "Class directory namespace changed during merging.");
   }
+  codeObject(pool, index) {
+    if (!isVerifiedFunctionCode(pool.code) || !Number.isSafeInteger(index) || index < 0 || index >= pool.code.functions.length) this.fail("TypeError", "Code objects require independently verified code");
+    if (pool.codeObjects?.has(index)) return pool.codeObjects.get(index);
+    const value = this.make(CodeValue, pool, index), previous = pool.codeObjects;
+    pool.codeObjects = new Map(previous); pool.codeObjects.set(index, value);
+    try { const layout = valueLayout(pool); this.memory?.resize(pool, layout.bytes, layout.children); }
+    catch (error) { pool.codeObjects = previous; throw error; }
+    return value;
+  }
+  codeMetadata(code, name) {
+    if (code.metadata.has(name)) return code.metadata.get(name);
+    const roots = [code], leave = this.memory?.enter(() => roots, {charge: this.charge});
+    try {
+    const fn = code.pool.code.functions[code.index], p = fn.params;
+    const strings = names => this.values.tuple(names.map(name => { const value = this.values.string(Array.from(name, char => char.codePointAt(0))); roots.push(value); return value; }));
+    const text = text => this.values.string(Array.from(text, char => char.codePointAt(0)));
+    const instructions = fn.blocks.flatMap(block => block.instructions);
+    this.charge(instructions.length + fn.locals.length + fn.free.length + 1);
+    const parameters = [...p.posonly, ...p.positional, ...p.kwonly, ...(p.vararg ? [p.vararg] : []), ...(p.kwarg ? [p.kwarg] : [])];
+    const captured = new Set(instructions.filter(([op]) => ["function", "function-defaults", "class", "class-meta", "class-keywords"].includes(op)).flatMap(([,index]) => code.pool.code.functions[index].free).filter(name => fn.locals.includes(name)));
+    const locals = fn.kind === "function" ? [...parameters, ...(fn.namespace ?? fn.locals).filter(name => !parameters.includes(name) && !captured.has(name) && !name.startsWith("@source:"))] : [];
+    let result;
+    if (["co_name", "co_qualname", "co_filename"].includes(name)) result = text(name === "co_name" ? fn.name : name === "co_qualname" ? fn.qualname : fn.blocks.find(block => block.source)?.source.filename ?? "<source>");
+    else if (name === "co_firstlineno") result = this.values.int(BigInt(fn.firstLine ?? 1));
+    else if (name === "co_argcount") result = this.values.int(BigInt(p.posonly.length + p.positional.length));
+    else if (name === "co_posonlyargcount") result = this.values.int(BigInt(p.posonly.length));
+    else if (name === "co_kwonlyargcount") result = this.values.int(BigInt(p.kwonly.length));
+    else if (name === "co_nlocals") result = this.values.int(BigInt(locals.length));
+    else if (name === "co_varnames") result = strings(locals);
+    else if (name === "co_freevars") result = strings(fn.free);
+    else if (name === "co_cellvars") result = strings(fn.kind === "class" ? fn.locals.includes("@source:class") ? ["__class__"] : [] : [...parameters.filter(name => captured.has(name)), ...[...captured].filter(name => !parameters.includes(name)).sort()]);
+    else if (name === "co_flags") result = this.values.int(BigInt((fn.kind === "function" ? 3 : 0) | (p.vararg ? 4 : 0) | (p.kwarg ? 8 : 0) | (fn.kind === "function" && fn.qualname.includes("<locals>") ? 16 : 0) | (instructions.some(([op]) => ["yield", "yield-from"].includes(op)) ? 32 : 0)));
+    else if (name === "co_names") result = strings([...new Set(instructions.filter(([op,key]) => ["attribute-get", "attribute-set", "attribute-delete"].includes(op) || ["load", "store", "delete"].includes(op) && (fn.kind !== "function" || !fn.locals.includes(key)) && !fn.free.includes(key)).map(([,key]) => key))]);
+    else if (name === "co_consts") {
+      const items = [fn.doc === undefined ? null : code.pool.code.constants[fn.doc]], roots = [code, ...items], leave = this.memory?.enter(() => roots, {charge: this.charge});
+      try {
+        for (const [op,index] of instructions) {
+          let item;
+          if (op === "const") item = code.pool.code.constants[index];
+          else if (["function", "function-defaults", "class", "class-meta", "class-keywords"].includes(op)) item = this.codeObject(code.pool, index);
+          else continue;
+          roots.push(item); if (!items.includes(item)) items.push(item);
+        }
+        result = this.values.tuple(items);
+      } finally { leave?.(); }
+    } else this.fail("UnsupportedOperationError", "Code field " + name + " is outside the source-code metadata interface; CPython bytecode and C layouts are not executable here", "UNSUPPORTED");
+    code.metadata.set(name, result);
+    try { const layout = valueLayout(code); this.memory?.resize(code, layout.bytes, layout.children); }
+    catch (error) { code.metadata.delete(name); throw error; }
+    return result;
+    } finally { leave?.(); }
+  }
+  replaceCode(receiver, code) {
+    if (!(code instanceof CodeValue) || !isVerifiedFunctionCode(code.pool.code) || code.pool.code.functions[code.index]?.kind !== "function") this.fail("TypeError", "__code__ must be set to an owned verified function code object");
+    this.touch(code);
+    const names = code.pool.code.functions[code.index].free, cells = [...receiver.closure.values()];
+    if (names.length !== cells.length) this.fail("ValueError", "Function requires a code object with " + cells.length + " free vars, not " + names.length);
+    const roots = [receiver, code], leave = this.memory?.enter(() => roots, {charge: this.charge});
+    try {
+      const original = receiver.pool.code.functions[receiver.index];
+      const name = receiver.identityName ?? this.values.string(Array.from(original.name, char => char.codePointAt(0))); roots.push(name);
+      const qualification = receiver.identityQualname ?? this.values.string(Array.from(original.qualname, char => char.codePointAt(0))); roots.push(qualification);
+      const previous = [receiver.pool, receiver.index, receiver.closure, receiver.identityName, receiver.identityQualname];
+      receiver.pool = code.pool; receiver.index = code.index; receiver.closure = new Map(names.map((name, i) => [name, cells[i]]));
+      receiver.identityName = name; receiver.identityQualname = qualification;
+      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+      catch (error) { [receiver.pool, receiver.index, receiver.closure, receiver.identityName, receiver.identityQualname] = previous; throw error; }
+      return null;
+    } finally { leave?.(); }
+  }
   functionDefaults(receiver, name) {
     if (name === "__defaults__" && Array.isArray(receiver.positionalDefaults)) {
       const items = receiver.positionalDefaults;
@@ -1342,6 +1441,11 @@ export class ClassRuntime {
       const item = this.lookup(receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.found && !(item.value instanceof PropertyValue) && !(descriptor && (descriptor.set.found || descriptor.delete.found)))
         return this.mutate(receiver, name, value, remove, key, true);
+    }
+    if (receiver instanceof FunctionValue && name === "__closure__") this.fail("AttributeError", "Function closure is read-only");
+    if (receiver instanceof FunctionValue && name === "__code__") {
+      if (remove) this.fail("TypeError", "__code__ cannot be deleted");
+      return this.replaceCode(receiver, value);
     }
     if (receiver instanceof FunctionValue && ["__globals__", "__builtins__"].includes(name)) this.fail("AttributeError", "Function defining namespaces are read-only");
     if (receiver instanceof FunctionValue && ["__defaults__", "__kwdefaults__"].includes(name)) {
