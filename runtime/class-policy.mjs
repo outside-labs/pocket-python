@@ -20,7 +20,7 @@ export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
   ["__name__", Object.freeze({define: true, attribute: true, mutate: true})],
   ["__isabstractmethod__", Object.freeze({define: true, attribute: true, mutate: true})],
   ["__doc__", Object.freeze({define: true, attribute: true, mutate: true})],
-  ["__base__", Object.freeze({attribute: true, mutate: true})],
+  ["__bases__", ordinarySlot], ["__base__", Object.freeze({attribute: true, mutate: true})],
   ["__objclass__", Object.freeze({attribute: true, mutate: true})]
 ]));
 export const isSpecialName = name => typeof name === "string" && name.startsWith("__") && name.endsWith("__");

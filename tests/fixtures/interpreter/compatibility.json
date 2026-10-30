@@ -2526,14 +2526,14 @@
     {
       "id": "type-reflection-mro-hooked-method-qualification",
       "source": "class M(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M): pass\nprint(type.mro.__get__(C).__qualname__)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "__qualname__\nC.mro\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "UnsupportedOperationError"
+        "stdout": "__qualname__\nC.mro\n",
+        "error_type": null
       }
     },
     {
@@ -7011,29 +7011,27 @@
     {
       "id": "instance-directories-custom-metaclass-namespace",
       "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"virtual\":7}\nclass A(metaclass=Meta): pass\nprint(\"virtual\" in dir(A()))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "True\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "True\n",
+        "error_type": null
       }
     },
     {
       "id": "instance-directories-advertised-nonclass",
       "source": "class A:\n @property\n def __class__(self): return None\nprint(*dir(A()))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "\n",
+        "error_type": null
       }
     },
     {
@@ -7221,15 +7219,14 @@
     {
       "id": "class-directories-custom-metaclass-namespace-hook",
       "source": "class Meta(type):\n @property\n def __dict__(cls):\n  print(\"namespace\")\n  return {\"virtual\":7}\nclass A(metaclass=Meta): pass\nprint(\"virtual\" in dir(A))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "namespace\nTrue\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "namespace\nTrue\n",
+        "error_type": null
       }
     },
     {
@@ -7261,15 +7258,14 @@
     {
       "id": "class-directories-custom-metaclass-native-qualification",
       "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nd=type.__dir__.__get__(A)\nprint(d.__qualname__)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "__qualname__\nA.__dir__\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "__qualname__\nA.__dir__\n",
+        "error_type": null
       }
     },
     {
@@ -7678,29 +7674,27 @@
     {
       "id": "numeric-type-directories-object-directory-of-type",
       "source": "print(len(object.__dir__(bool)))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "49\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "49\n",
+        "error_type": null
       }
     },
     {
       "id": "numeric-type-directories-custom-metaclass-namespace",
       "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint(len(type.__dir__(A)))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "29\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "29\n",
+        "error_type": null
       }
     },
     {
@@ -8369,29 +8363,27 @@
     {
       "id": "container-type-directories-object-directory-of-type",
       "source": "print(len(object.__dir__(str)))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "49\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "49\n",
+        "error_type": null
       }
     },
     {
       "id": "container-type-directories-custom-metaclass-namespace",
       "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint(len(type.__dir__(A)))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "29\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "29\n",
+        "error_type": null
       }
     },
     {
@@ -8890,28 +8882,28 @@
     },
     {
       "id": "callable-type-directories-object-directory-of-type",
-      "classification": "deferred",
+      "classification": "supported",
       "source": "def f(): return 7\nitem=f\nvalue=type(item)\nprint(len(object.__dir__(value)))\n",
       "reference": {
         "stdout": "49\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED"
+        "stdout": "49\n",
+        "error_type": null
       }
     },
     {
       "id": "callable-type-directories-custom-metaclass-namespace",
-      "classification": "deferred",
+      "classification": "supported",
       "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint(len(type.__dir__(A)))\n",
       "reference": {
         "stdout": "29\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED"
+        "stdout": "29\n",
+        "error_type": null
       }
     },
     {
@@ -9735,28 +9727,28 @@
     },
     {
       "id": "iterator-type-directories-object-directory-of-type",
-      "classification": "deferred",
+      "classification": "supported",
       "source": "def g():\n print(\"body\")\n yield 7\nitem=g()\nvalue=type(item)\nprint(len(object.__dir__(value)))\n",
       "reference": {
         "stdout": "49\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED"
+        "stdout": "49\n",
+        "error_type": null
       }
     },
     {
       "id": "iterator-type-directories-custom-metaclass-namespace",
-      "classification": "deferred",
+      "classification": "supported",
       "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint(len(type.__dir__(A)))\n",
       "reference": {
         "stdout": "29\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED"
+        "stdout": "29\n",
+        "error_type": null
       }
     },
     {

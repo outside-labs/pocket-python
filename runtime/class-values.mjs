@@ -11,7 +11,7 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
   "list_iterator", "tuple_iterator", "str_iterator", "str_ascii_iterator", "dict_keyiterator", "range_iterator", "longrange_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 for (const name of Object.keys(NATIVE_NAMESPACES)) if (name !== "object") NATIVE_TYPES.add(name);
 const NAMESPACE_DESCRIPTOR_KINDS = new Set(["method_descriptor", "wrapper_descriptor", "classmethod_descriptor", "getset_descriptor", "member_descriptor"]);
-const META_SPECIALS = new Set(["__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set(["__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
@@ -561,6 +561,9 @@ export class ClassRuntime {
   read(receiver, name, native = false, key = null) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
+    if (["__dict__", "__bases__"].includes(name) && !this.isType(receiver) &&
+        !(receiver instanceof InstanceValue || receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || this.isPythonMethod(receiver)))
+      this.fail("AttributeError", "Object has no attribute " + name);
     if (this.values.typeName(receiver) !== null) {
       if (name === "__doc__") return value(this.nativeDocumentation(this.typeOf(receiver)));
       if (["__module__", "__name__", "__qualname__"].includes(name)) this.fail("AttributeError", "Value has no callable metadata");
@@ -684,8 +687,8 @@ export class ClassRuntime {
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_CLASS_METHODS.has(receiver.callable.name) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + "__init_subclass__", char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue &&
-        ["type.mro", "type.__dir__"].includes(receiver.callable.name) && name === "__qualname__" && this.hasAttributeHook(receiver.receiver, "__getattribute__"))
-      this.fail("UnsupportedOperationError", "Hooked native MRO method qualification requires a separate stage.", "UNSUPPORTED");
+        (NATIVE_CHECK_METHODS.has(receiver.callable.name) || ["type.mro", "type.__dir__"].includes(receiver.callable.name)) && name === "__qualname__" && this.hasAttributeHook(receiver.receiver, "__getattribute__"))
+      return {kind: "call", callable: this.builtin("native-method-qualname"), args: [receiver]};
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && (NATIVE_CHECK_METHODS.has(receiver.callable.name) || ["type.mro", "type.__dir__"].includes(receiver.callable.name)) && ["__name__", "__qualname__"].includes(name))
       return value(this.values.string(Array.from((name === "__qualname__" ? (receiver.receiver.qualname ?? receiver.receiver.name) + "." : "") + receiver.callable.name.slice("type.".length), char => char.codePointAt(0))));
     if (receiver instanceof BoundMethodValue && !receiver.pythonMethod && receiver.callable instanceof BuiltinValue && NATIVE_PROPERTY_METHODS.has(receiver.callable.name)) {
@@ -1256,6 +1259,7 @@ export class ClassRuntime {
   }
   nativeTypeDirectoryNames(type) {
     if (!(type instanceof BuiltinValue)) return null;
+    if (type.name === "type") return [...NATIVE_NAMESPACES.type.map(entry => entry[0]), ...OBJECT_DIRECTORY_KEYS];
     if (Object.hasOwn(CONTAINER_DIRECTORY_KEYS, type.name)) return CONTAINER_DIRECTORY_KEYS[type.name];
     switch (type.name) {
       case "bool": return BOOL_DIRECTORY_KEYS;
@@ -1321,10 +1325,10 @@ export class ClassRuntime {
     this.touch(type); this.charge(1);
     const native = this.nativeTypeDirectoryNames(type);
     if (native !== null) return native;
-    if (!(type instanceof ClassValue) || !namespace && (type.metaclass !== null || this.isMetaclass(type)))
+    if (!(type instanceof ClassValue))
       this.fail("UnsupportedOperationError", "Further class namespace reflection requires a separate directory contract.", "UNSUPPORTED");
     if (type.root) return OBJECT_DIRECTORY_KEYS;
-    if (type.namespaceDictionary) return type.namespaceDictionary.entries.map(entry => this.values.text(entry.key) ?? entry.key);
+    if (type.namespaceDictionary) return type.namespaceDictionary.entries.map(entry => entry.key);
     const names = [], initial = [...type.namespace.keys()].slice(0, type.directoryInitialCount);
     for (const name of initial) {
       this.charge(1);
@@ -1350,6 +1354,11 @@ export class ClassRuntime {
     this.touch(type); this.charge(1);
     // Finite native lists already include base keys; enumeration does not read entries.
     if (this.nativeTypeDirectoryNames(type) !== null) return null;
+    if (type.namespaceDictionary) {
+      const entry = type.namespaceDictionary.entries.find(entry => entry.key === name);
+      if (entry) return entry.value;
+      this.fail("KeyError", "Class directory namespace changed during merging.");
+    }
     if (type.namespace.has(name)) return type.namespace.get(name);
     if (this.ownClassDirectoryNames(type).includes(name)) return null;
     this.fail("KeyError", "Class directory namespace changed during merging.");
@@ -1575,6 +1584,7 @@ export class ClassRuntime {
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
     if (receiver instanceof ClassValue && name === "__dict__" && !namespaceShadow) this.fail("AttributeError", "Class namespace views cannot be replaced or deleted.");
     if (receiver instanceof ClassValue && name === "__base__") this.fail("AttributeError", "Primary base metadata is read-only.");
+    if (receiver instanceof ClassValue && name === "__bases__") this.fail("UnsupportedOperationError", "Type base reassignment remains O88.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && this.isMetaclass(receiver) && name === "mro")
       this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
     if (receiver instanceof ClassValue && this.isMetaclass(receiver) && isSpecialName(name) && !META_SPECIALS.has(name))

@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O61",
-    "O62"
+    "O62",
+    "O76"
   ],
   "cases": [
     {
@@ -284,9 +285,9 @@
     },
     {
       "id": "arbitrary-string-keys",
-      "source": "class A: pass\nv=A()\nv.__dict__={\"\":1,\"a b\":2,\"𐀀\":3,\"\":4}\nresult=dir(v)\nprint(result[0],result[-2],result[-1],\"a b\" in result)\n",
+      "source": "class A: pass\nv=A()\nv.__dict__={\"\":1,\"a b\":2,\"\ud800\udc00\":3,\"\ue000\":4}\nresult=dir(v)\nprint(result[0],result[-2],result[-1],\"a b\" in result)\n",
       "stage": "O61",
-      "stdout": "  𐀀 True\n"
+      "stdout": " \ue000 \ud800\udc00 True\n"
     },
     {
       "id": "nonstring-raw-identities",
@@ -372,13 +373,13 @@
     {
       "id": "custom-metaclass-namespace",
       "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"virtual\":7}\nclass A(metaclass=Meta): pass\nprint(\"virtual\" in dir(A()))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "True\n"
     },
     {
       "id": "advertised-nonclass",
       "source": "class A:\n @property\n def __class__(self): return None\nprint(*dir(A()))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "\n"
     },
     {

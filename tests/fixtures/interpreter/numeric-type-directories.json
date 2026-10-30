@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O62",
     "O63",
-    "O70"
+    "O70",
+    "O76"
   ],
   "cases": [
     {
@@ -436,19 +437,19 @@
     {
       "id": "object-directory-of-type",
       "source": "print(len(object.__dir__(bool)))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "49\n"
     },
     {
       "id": "metaclass-native-namespace",
       "source": "print(len(dir(type)))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "49\n"
     },
     {
       "id": "custom-metaclass-namespace",
       "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint(len(type.__dir__(A)))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "29\n"
     },
     {

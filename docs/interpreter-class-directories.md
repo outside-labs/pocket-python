@@ -1,5 +1,8 @@
 # Ordinary class directories
 
+The [O76 contract](interpreter-advertised-directories.md) supersedes the earlier
+type/custom-metaclass and advertised namespace/base refusals in this checkpoint.
+
 O62 continues #123 and #33 over O61's ordinary namespace merge contract. Pinned
 CPython 3.14.7 is the semantic oracle; `class-directories.json` records independently
 authored source/reference cases before adoption.

@@ -1,5 +1,8 @@
 # Ordinary instance directories
 
+The [O76 contract](interpreter-advertised-directories.md) supersedes the earlier
+type/custom-metaclass and advertised namespace/base refusals in this checkpoint.
+
 O61 continues #123 and #33 with default directories for root objects and ordinary
 instances. Pinned CPython 3.14.7 is the semantic oracle. The independently authored
 `instance-directories.json` records reference observations before adoption.

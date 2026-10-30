@@ -34,6 +34,22 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
+    case "graph-dir-dict": case "graph-dir-ready": case "graph-dir-keys": case "graph-dir-call": case "graph-dir-copy":
+    case "graph-dir-value": case "graph-dir-store":
+    case "graph-dir-bases": case "graph-dir-length": case "graph-dir-child":
+      record = {kind, receiver: fields.receiver, result: fields.result, owner: fields.owner,
+        bases: operands(fields.bases), positions: operands(fields.positions), visits: fields.visits,
+        source: fields.source ?? null, keys: fields.keys ?? null, position: fields.position ?? 0,
+        key: fields.key ?? null, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (record.bases.length > 256 || record.positions.length !== record.bases.length || !Number.isSafeInteger(record.visits))
+        throw new TypeError("Invalid advertised directory traversal.");
+      break;
+    case "bases-check": case "bases-class": case "bases-instance": case "bases-walk":
+      record = {kind, receiver: fields.receiver, type: fields.type, owner: fields.owner ?? null,
+        pending: operands(fields.pending ?? []), level: fields.level ?? 0, mode: fields.mode, depth: fields.depth, after};
+      depthCheck(record.depth); break;
+    case "native-method-qualname": record = {kind, receiver: fields.receiver, after}; break;
     case "view-item": record = {kind, receiver: fields.receiver, key: fields.key, depth: fields.depth, after}; depthCheck(record.depth); break;
     case "proxy-get": record = {kind, receiver: fields.receiver, fallback: fields.fallback, after}; break;
     case "dict-union":
@@ -260,6 +276,13 @@ export function completion(kind, fields = {}) {
 }
 function visit(record) {
   switch (record.kind) {
+    case "graph-dir-dict": case "graph-dir-ready": case "graph-dir-keys": case "graph-dir-call": case "graph-dir-copy":
+    case "graph-dir-value": case "graph-dir-store":
+    case "graph-dir-bases": case "graph-dir-length": case "graph-dir-child":
+      return [record.receiver, record.result, record.owner, ...record.bases, record.source, record.keys, record.key, ...completionRoots(record.after)];
+    case "bases-check": case "bases-class": case "bases-instance": case "bases-walk":
+      return [record.receiver, record.type, record.owner, ...record.pending, ...completionRoots(record.after)];
+    case "native-method-qualname": return [record.receiver, ...completionRoots(record.after)];
     case "view-item": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "proxy-get": return [record.receiver, record.fallback, ...completionRoots(record.after)];
     case "dict-union": return [record.left, record.right, record.result, ...completionRoots(record.after)];

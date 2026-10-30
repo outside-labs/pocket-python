@@ -1,5 +1,8 @@
 # Custom instance and subclass checking
 
+The [O76 contract](interpreter-advertised-directories.md) supersedes the earlier
+type/custom-metaclass and advertised namespace/base refusals in this checkpoint.
+
 The later [O25/O26 metaclass attribute contract](interpreter-metaclass-attributes.md)
 supersedes the earlier metaclass read/mutation refusals below. Live namespace,
 layout and further construction protocols retain their separate boundaries.
