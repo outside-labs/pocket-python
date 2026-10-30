@@ -1,5 +1,12 @@
 # Construction, super and type relations
 
+The [O79–O83 construction contracts](interpreter-expanded-class-bases.md),
+[prepared namespaces](interpreter-prepared-class-namespaces.md),
+[callable factories](interpreter-metaclass-factories.md),
+[custom MRO](interpreter-custom-mro.md) and
+[actual-metaclass protocols](interpreter-metaclass-protocols.md) supersede the
+earlier stage boundaries for those features below.
+
 The later [O25/O26 metaclass attribute contract](interpreter-metaclass-attributes.md)
 supersedes the earlier metaclass read/mutation refusals below. Live namespace,
 layout and further construction protocols retain their separate boundaries.

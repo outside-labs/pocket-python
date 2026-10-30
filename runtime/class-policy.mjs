@@ -36,3 +36,13 @@ export function allowsClassSpecial(name, context) {
   if (typeof name !== "string" || !contexts.has(context)) throw new TypeError("Invalid special-method policy query.");
   return !isSpecialName(name) || Object.hasOwn(CLASS_SPECIAL_POLICY, name) && CLASS_SPECIAL_POLICY[name][context] === true;
 }
+
+// The finite O83 slot inventory shares the ordinary instance dispatch paths.
+export const METACLASS_PROTOCOLS = Object.freeze([
+  "__call__", "__len__", "__bool__", "__repr__", "__str__", "__index__", "__bytes__",
+  "__getitem__", "__setitem__", "__delitem__", "__iter__", "__next__", "__contains__",
+  "__eq__", "__ne__", "__hash__", "__lt__", "__le__", "__gt__", "__ge__",
+  "__int__", "__float__", "__complex__", "__abs__", "__round__", "__neg__", "__pos__", "__invert__", "__length_hint__",
+  ...Object.values(ARITHMETIC_SLOTS).flatMap(stem => ["", "r", ...(stem === "divmod" ? [] : ["i"])].map(prefix => "__" + prefix + stem + "__")),
+  ...DESCRIPTOR_HOOKS, "__class__"
+]);

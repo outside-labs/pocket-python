@@ -1,0 +1,639 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-metaclass-protocols/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O83"
+  ],
+  "cases": [
+    {
+      "id": "operator-add",
+      "stage": "O83",
+      "source": "class M(type):\n def __add__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C + 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-radd",
+      "stage": "O83",
+      "source": "class M(type):\n def __radd__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 + C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-iadd",
+      "stage": "O83",
+      "source": "class M(type):\n def __iadd__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue +=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-sub",
+      "stage": "O83",
+      "source": "class M(type):\n def __sub__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C - 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rsub",
+      "stage": "O83",
+      "source": "class M(type):\n def __rsub__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 - C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-isub",
+      "stage": "O83",
+      "source": "class M(type):\n def __isub__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue -=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-mul",
+      "stage": "O83",
+      "source": "class M(type):\n def __mul__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C * 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rmul",
+      "stage": "O83",
+      "source": "class M(type):\n def __rmul__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 * C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-imul",
+      "stage": "O83",
+      "source": "class M(type):\n def __imul__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue *=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-truediv",
+      "stage": "O83",
+      "source": "class M(type):\n def __truediv__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C / 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rtruediv",
+      "stage": "O83",
+      "source": "class M(type):\n def __rtruediv__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 / C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-itruediv",
+      "stage": "O83",
+      "source": "class M(type):\n def __itruediv__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue /=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-floordiv",
+      "stage": "O83",
+      "source": "class M(type):\n def __floordiv__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C // 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rfloordiv",
+      "stage": "O83",
+      "source": "class M(type):\n def __rfloordiv__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 // C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-ifloordiv",
+      "stage": "O83",
+      "source": "class M(type):\n def __ifloordiv__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue //=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-mod",
+      "stage": "O83",
+      "source": "class M(type):\n def __mod__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C % 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rmod",
+      "stage": "O83",
+      "source": "class M(type):\n def __rmod__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 % C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-imod",
+      "stage": "O83",
+      "source": "class M(type):\n def __imod__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue %=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-pow",
+      "stage": "O83",
+      "source": "class M(type):\n def __pow__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C ** 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rpow",
+      "stage": "O83",
+      "source": "class M(type):\n def __rpow__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 ** C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-ipow",
+      "stage": "O83",
+      "source": "class M(type):\n def __ipow__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue **=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-and",
+      "stage": "O83",
+      "source": "class M(type):\n def __and__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C & 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rand",
+      "stage": "O83",
+      "source": "class M(type):\n def __rand__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 & C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-iand",
+      "stage": "O83",
+      "source": "class M(type):\n def __iand__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue &=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-or",
+      "stage": "O83",
+      "source": "class M(type):\n def __or__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C | 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-ror",
+      "stage": "O83",
+      "source": "class M(type):\n def __ror__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 | C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-ior",
+      "stage": "O83",
+      "source": "class M(type):\n def __ior__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue |=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-xor",
+      "stage": "O83",
+      "source": "class M(type):\n def __xor__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C ^ 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rxor",
+      "stage": "O83",
+      "source": "class M(type):\n def __rxor__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 ^ C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-ixor",
+      "stage": "O83",
+      "source": "class M(type):\n def __ixor__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue ^=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-lshift",
+      "stage": "O83",
+      "source": "class M(type):\n def __lshift__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C << 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rlshift",
+      "stage": "O83",
+      "source": "class M(type):\n def __rlshift__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 << C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-ilshift",
+      "stage": "O83",
+      "source": "class M(type):\n def __ilshift__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue <<=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rshift",
+      "stage": "O83",
+      "source": "class M(type):\n def __rshift__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((C >> 7)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-rrshift",
+      "stage": "O83",
+      "source": "class M(type):\n def __rrshift__(cls,other): return [other]\nclass C(metaclass=M): pass\nprint((7 >> C)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-irshift",
+      "stage": "O83",
+      "source": "class M(type):\n def __irshift__(cls,other): return [other]\nclass C(metaclass=M): pass\nvalue=C\nvalue >>=7\nprint(value[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "operator-divmod",
+      "stage": "O83",
+      "source": "class M(type):\n def __divmod__(cls,other): return (other,9)\nclass C(metaclass=M): pass\nvalue=divmod(C,7)\nprint(value[0],value[1])\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "operator-rdivmod",
+      "stage": "O83",
+      "source": "class M(type):\n def __rdivmod__(cls,other): return (other,9)\nclass C(metaclass=M): pass\nvalue=divmod(7,C)\nprint(value[0],value[1])\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "unary-len",
+      "stage": "O83",
+      "source": "class M(type):\n def __len__(cls):return 7\nclass C(metaclass=M): pass\nprint(len(C))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "unary-bool",
+      "stage": "O83",
+      "source": "class M(type):\n def __bool__(cls):return False\nclass C(metaclass=M): pass\nprint(bool(C))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "unary-neg",
+      "stage": "O83",
+      "source": "class M(type):\n def __neg__(cls):return 7\nclass C(metaclass=M): pass\nprint(-C)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "unary-pos",
+      "stage": "O83",
+      "source": "class M(type):\n def __pos__(cls):return 7\nclass C(metaclass=M): pass\nprint(+C)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "unary-invert",
+      "stage": "O83",
+      "source": "class M(type):\n def __invert__(cls):return 7\nclass C(metaclass=M): pass\nprint(~C)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "unary-abs",
+      "stage": "O83",
+      "source": "class M(type):\n def __abs__(cls):return 7\nclass C(metaclass=M): pass\nprint(abs(C))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "unary-int",
+      "stage": "O83",
+      "source": "class M(type):\n def __int__(cls):return 7\nclass C(metaclass=M): pass\nprint(int(C))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "unary-float",
+      "stage": "O83",
+      "source": "class M(type):\n def __float__(cls):return 7.5\nclass C(metaclass=M): pass\nprint(float(C)==7.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "unary-complex",
+      "stage": "O83",
+      "source": "class M(type):\n def __complex__(cls):return 7+2j\nclass C(metaclass=M): pass\nprint(complex(C)==7+2j)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "unary-round",
+      "stage": "O83",
+      "source": "class M(type):\n def __round__(cls,n=None):return [n]\nclass C(metaclass=M): pass\nprint(round(C,2)[0])\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "index-composition",
+      "stage": "O83",
+      "source": "class M(type):\n def __index__(cls): return 2\nclass C(metaclass=M): pass\nprint([7,8,9][C],[7,8,9][C:][0],len([7]*C),bin(C),len(bytes(C)),range(C)[1])\n",
+      "stdout": "9 9 2 0b10 2 1\n"
+    },
+    {
+      "id": "index-byte-assignment",
+      "stage": "O83",
+      "source": "class M(type):\n def __index__(cls): return 65\nclass C(metaclass=M): pass\nb=bytearray(1)\nb[0]=C\nprint(b[0],C in b)\n",
+      "stdout": "65 True\n"
+    },
+    {
+      "id": "len-index-result",
+      "stage": "O83",
+      "source": "class N(type):\n def __index__(cls): return 7\nclass Index(metaclass=N): pass\nclass M(type):\n def __len__(cls): return Index\nclass C(metaclass=M): pass\nprint(len(C),bool(C))\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "truth-fallback",
+      "stage": "O83",
+      "source": "class M(type):\n def __len__(cls): return 0\nclass C(metaclass=M): pass\nprint(bool(C),not C)\nM.__len__=lambda cls:7\nprint(bool(C),not C)\n",
+      "stdout": "False True\nTrue False\n"
+    },
+    {
+      "id": "truth-call-precedence",
+      "stage": "O83",
+      "source": "class M(type):\n def __bool__(cls): print(\"bool\"); return False\n def __len__(cls): print(\"never\"); return 7\nclass C(metaclass=M): pass\nif C: print(\"never\")\nelse: print(\"false\")\n",
+      "stdout": "bool\nfalse\n"
+    },
+    {
+      "id": "repr-str",
+      "stage": "O83",
+      "source": "class M(type):\n def __repr__(cls): return \"representation\"\n def __str__(cls): return \"text\"\nclass C(metaclass=M): pass\nprint(C,repr(C),str(C))\n",
+      "stdout": "text representation text\n"
+    },
+    {
+      "id": "repr-str-fallback",
+      "stage": "O83",
+      "source": "class M(type):\n def __repr__(cls): return \"representation\"\nclass C(metaclass=M): pass\nprint(str(C))\n",
+      "stdout": "representation\n"
+    },
+    {
+      "id": "bytes-conversion",
+      "stage": "O83",
+      "source": "class M(type):\n def __bytes__(cls): return b\"yes\"\nclass C(metaclass=M): pass\nprint(bytes(C)==b\"yes\")\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iteration",
+      "stage": "O83",
+      "source": "class M(type):\n def __iter__(cls): return iter((7,9))\nclass C(metaclass=M): pass\nprint(tuple(C)==(7,9),list(C)==[7,9],all(C),any(C))\nfor value in C: print(value)\n",
+      "stdout": "True True True True\n7\n9\n"
+    },
+    {
+      "id": "class-iterator",
+      "stage": "O83",
+      "source": "class M(type):\n def __iter__(cls): return cls\n def __next__(cls):\n  cls.index+=1\n  if cls.index>2: raise StopIteration\n  return cls.index\nclass C(metaclass=M): index=0\nprint(tuple(C)==(1,2))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "getitem-fallback",
+      "stage": "O83",
+      "source": "class M(type):\n def __getitem__(cls,index):\n  if index>=2: raise IndexError\n  return index+7\nclass C(metaclass=M): pass\nprint(tuple(C)==(7,8),8 in C,9 in C)\n",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "getitem-set-delete",
+      "stage": "O83",
+      "source": "class M(type):\n def __getitem__(cls,key): return cls.items[key]\n def __setitem__(cls,key,value): cls.items[key]=value\n def __delitem__(cls,key): del cls.items[key]\nclass C(metaclass=M): items={}\nC[7]=[9]\nprint(C[7][0])\ndel C[7]\nprint(len(C.items))\n",
+      "stdout": "9\n0\n"
+    },
+    {
+      "id": "membership",
+      "stage": "O83",
+      "source": "class M(type):\n def __contains__(cls,value): return [value]\nclass C(metaclass=M): pass\nprint(7 in C,7 not in C)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "equality-arbitrary",
+      "stage": "O83",
+      "source": "class M(type):\n def __eq__(cls,value): return [value]\nclass C(metaclass=M): pass\nprint((C==7)[0],C!=7,7!=C)\n",
+      "stdout": "7 False False\n"
+    },
+    {
+      "id": "comparison-reflected-priority",
+      "stage": "O83",
+      "source": "class M(type):\n def __lt__(cls,other): print(\"left\"); return NotImplemented\n def __eq__(cls,other): print(\"eq-left\"); return NotImplemented\nclass N(M):\n def __gt__(cls,other): print(\"right\"); return [7]\n def __eq__(cls,other): print(\"eq-right\"); return [9]\nclass A(metaclass=M): pass\nclass B(metaclass=N): pass\nprint((A<B)[0],(A==B)[0])\n",
+      "stdout": "right\neq-right\n7 9\n"
+    },
+    {
+      "id": "arithmetic-reflected-priority",
+      "stage": "O83",
+      "source": "class M(type):\n def __add__(cls,value): print(\"left\"); return [7]\n def __radd__(cls,value): print(\"same\"); return [8]\nclass N(M):\n def __radd__(cls,value): print(\"right\"); return [9]\nclass A(metaclass=M): pass\nclass B(metaclass=N): pass\nprint((A+B)[0])\n",
+      "stdout": "right\n9\n"
+    },
+    {
+      "id": "arithmetic-notimplemented",
+      "stage": "O83",
+      "source": "class M(type):\n def __add__(cls,value): print(\"left\"); return NotImplemented\nclass N(type):\n def __radd__(cls,value): print(\"right\"); return [7]\nclass A(metaclass=M): pass\nclass B(metaclass=N): pass\nprint((A+B)[0])\n",
+      "stdout": "left\nright\n7\n"
+    },
+    {
+      "id": "inplace-fallback",
+      "stage": "O83",
+      "source": "class M(type):\n def __iadd__(cls,value): print(\"inplace\"); return NotImplemented\n def __add__(cls,value): print(\"add\"); return [7]\nclass C(metaclass=M): pass\na=C\na+=9\nprint(a[0])\n",
+      "stdout": "inplace\nadd\n7\n"
+    },
+    {
+      "id": "same-type-reflected-suppressed",
+      "stage": "O83",
+      "source": "class M(type):\n def __add__(cls,value): print(\"add\"); return NotImplemented\n def __radd__(cls,value): print(\"never\"); return [7]\nclass A(metaclass=M): pass\nclass B(metaclass=M): pass\nA+B\n",
+      "stdout": "add\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-and-dict",
+      "stage": "O83",
+      "source": "class M(type):\n def __hash__(cls): return 7\n def __eq__(cls,other): return cls.value==other.value\nclass A(metaclass=M): value=9\nclass B(metaclass=M): value=9\nd={A:[7]}\nprint(hash(A),d[B][0],B in {A},(A,)==(B,))\n",
+      "stdout": "7 7 True True\n"
+    },
+    {
+      "id": "default-hash",
+      "stage": "O83",
+      "source": "class M(type): pass\nclass C(metaclass=M): pass\nprint(hash(C)==object.__hash__(C),hash(C)==hash(C),hash(M)==object.__hash__(M))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "hash-mutation",
+      "stage": "O83",
+      "source": "class M(type):\n def __hash__(cls): return 7\nclass C(metaclass=M): pass\nprint(hash(C))\nM.__hash__=lambda cls:9\nprint(hash(C))\nM.__hash__=None\nhash(C)\n",
+      "stdout": "7\n9\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "automatic-unhashable",
+      "stage": "O83",
+      "source": "class M(type):\n def __eq__(cls,value): return True\nclass C(metaclass=M): pass\nhash(C)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "actual-metaclass-descriptor",
+      "stage": "O83",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(obj is C,owner is M)\n  return lambda:7\nclass M(type): __len__=D()\nclass C(metaclass=M): pass\nprint(len(C))\n",
+      "stdout": "True True\n7\n"
+    },
+    {
+      "id": "actual-metaclass-classmethod",
+      "stage": "O83",
+      "source": "class M(type):\n @classmethod\n def __len__(meta):\n  print(meta is M)\n  return 7\nclass C(metaclass=M): pass\nprint(len(C))\n",
+      "stdout": "True\n7\n"
+    },
+    {
+      "id": "actual-metaclass-staticmethod",
+      "stage": "O83",
+      "source": "class M(type): __len__=staticmethod(lambda:7)\nclass C(metaclass=M): pass\nprint(len(C))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "ignore-class-shadow",
+      "stage": "O83",
+      "source": "class M(type):\n def __len__(cls): return 7\nclass C(metaclass=M):\n __len__=lambda self:9\nprint(len(C),len(C()))\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "advertised-class",
+      "stage": "O83",
+      "source": "class Other: pass\nclass M(type):\n @property\n def __class__(cls): print(\"class\"); return Other\nclass C(metaclass=M): pass\nprint(C.__class__ is Other,type(C) is M,isinstance(C,M),isinstance(C,Other))\n",
+      "stdout": "class\nclass\nTrue True True True\n"
+    },
+    {
+      "id": "mutation-invalidation",
+      "stage": "O83",
+      "source": "class M(type): pass\nclass C(metaclass=M): pass\nM.__len__=lambda cls:7\nprint(len(C))\ndel M.__len__\ntry: len(C)\nexcept TypeError: print(\"missing\")\nM.__iter__=lambda cls:iter((9,))\nprint(next(iter(C)))\n",
+      "stdout": "7\nmissing\n9\n"
+    },
+    {
+      "id": "descriptor-class-object",
+      "stage": "O83",
+      "source": "class DM(type):\n def __get__(descriptor,obj,owner): print(\"get\",obj is None); return 7\n def __set__(descriptor,obj,value): print(\"set\",value)\n def __delete__(descriptor,obj): print(\"delete\")\n def __set_name__(descriptor,owner,name): print(\"name\",name)\nclass D(metaclass=DM): pass\nclass C: field=D\nc=C()\nprint(C.field,c.field)\nc.field=9\ndel c.field\n",
+      "stdout": "name field\nget True\nget False\n7 7\nset 9\ndelete\n"
+    },
+    {
+      "id": "ordering-lt",
+      "stage": "O83",
+      "source": "class M(type):\n def __lt__(cls,value): return [7]\nclass C(metaclass=M): pass\nprint((C<9)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "ordering-le",
+      "stage": "O83",
+      "source": "class M(type):\n def __le__(cls,value): return [7]\nclass C(metaclass=M): pass\nprint((C<=9)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "ordering-gt",
+      "stage": "O83",
+      "source": "class M(type):\n def __gt__(cls,value): return [7]\nclass C(metaclass=M): pass\nprint((C>9)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "ordering-ge",
+      "stage": "O83",
+      "source": "class M(type):\n def __ge__(cls,value): return [7]\nclass C(metaclass=M): pass\nprint((C>=9)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "ordering-ne",
+      "stage": "O83",
+      "source": "class M(type):\n def __ne__(cls,value): return [7]\nclass C(metaclass=M): pass\nprint((C!=9)[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "call-and-mutation",
+      "stage": "O83",
+      "source": "class M(type):\n def __call__(cls,value): return [value]\nclass C(metaclass=M): pass\nprint(C(7)[0])\nM.__call__=lambda cls,value:[value+1]\nprint(C(7)[0])\n",
+      "stdout": "7\n8\n"
+    },
+    {
+      "id": "class-iterator-directory-hint",
+      "stage": "O83",
+      "source": "class N(type):\n def __iter__(cls): return cls\n def __next__(cls):\n  if cls.done: raise StopIteration\n  cls.done=True\n  return \"x\"\n def __length_hint__(cls): print(\"hint\"); return 1\nclass Items(metaclass=N): done=False\nclass M(type):\n def __dir__(cls): return Items\nclass C(metaclass=M): pass\nprint(dir(C)==[\"x\"])\n",
+      "stdout": "hint\nTrue\n"
+    },
+    {
+      "id": "slot-selected-before-mutation",
+      "stage": "O83",
+      "source": "class D:\n def __get__(self,obj,owner):\n  owner.__len__=lambda cls:9\n  return lambda:7\nclass M(type): __len__=D()\nclass C(metaclass=M): pass\nprint(len(C),len(C))\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "slot-descriptor-error",
+      "stage": "O83",
+      "source": "class D:\n def __get__(self,obj,owner): print(\"binding\"); raise ValueError(\"original\")\nclass M(type): __len__=D()\nclass C(metaclass=M): pass\nlen(C)\n",
+      "stdout": "binding\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "slot-body-error",
+      "stage": "O83",
+      "source": "class M(type):\n def __add__(cls,value): print(\"entered\"); raise ValueError(\"original\")\nclass C(metaclass=M): pass\nC+7\n",
+      "stdout": "entered\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "actual-type-bypasses-advertised-class",
+      "stage": "O83",
+      "source": "class M(type):\n @property\n def __class__(cls): print(\"never\"); return int\n def __len__(cls): return 7\nclass C(metaclass=M): pass\nprint(len(C),type(C) is M,isinstance(C,M))\n",
+      "stdout": "7 True True\n"
+    },
+    {
+      "id": "invalid-len-89",
+      "stage": "O83",
+      "source": "class M(type):\n def __len__(cls): return -1\nclass C(metaclass=M): pass\nprint(len(C))\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "invalid-len-90",
+      "stage": "O83",
+      "source": "class M(type):\n def __len__(cls): return 7.5\nclass C(metaclass=M): pass\nprint(len(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-bool-91",
+      "stage": "O83",
+      "source": "class M(type):\n def __bool__(cls): return 7\nclass C(metaclass=M): pass\nprint(bool(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-hash-92",
+      "stage": "O83",
+      "source": "class M(type):\n def __hash__(cls): return []\nclass C(metaclass=M): pass\nprint(hash(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-index-93",
+      "stage": "O83",
+      "source": "class M(type):\n def __index__(cls): return 7.5\nclass C(metaclass=M): pass\nprint(bin(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-int-94",
+      "stage": "O83",
+      "source": "class M(type):\n def __int__(cls): return []\nclass C(metaclass=M): pass\nprint(int(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-float-95",
+      "stage": "O83",
+      "source": "class M(type):\n def __float__(cls): return 7\nclass C(metaclass=M): pass\nprint(float(C)==7.5)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-complex-96",
+      "stage": "O83",
+      "source": "class M(type):\n def __complex__(cls): return 7\nclass C(metaclass=M): pass\nprint(complex(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-repr-97",
+      "stage": "O83",
+      "source": "class M(type):\n def __repr__(cls): return 7\nclass C(metaclass=M): pass\nprint(repr(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-str-98",
+      "stage": "O83",
+      "source": "class M(type):\n def __str__(cls): return 7\nclass C(metaclass=M): pass\nprint(str(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-iter-99",
+      "stage": "O83",
+      "source": "class M(type):\n def __iter__(cls): return 7\nclass C(metaclass=M): pass\nprint(iter(C))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-contains-100",
+      "stage": "O83",
+      "source": "class M(type):\n def __contains__(cls,value): return None\nclass C(metaclass=M): pass\nprint(7 in C)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "advertised-class-mutation",
+      "stage": "O83",
+      "source": "class M(type):\n @property\n def __class__(cls): return cls.value\n @__class__.setter\n def __class__(cls,value):\n  print(\"set\",value[0])\n  cls.value=value\n @__class__.deleter\n def __class__(cls): print(\"delete\"); cls.value=None\nclass C(metaclass=M): value=None\nvalue=[7]\nC.__class__=value\nprint(C.__class__ is value,type(C) is M)\ndel C.__class__\nprint(C.__class__ is None,type(C) is M)\n",
+      "stdout": "set 7\nTrue True\ndelete\nTrue True\n"
+    }
+  ]
+}

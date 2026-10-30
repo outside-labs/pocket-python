@@ -325,8 +325,8 @@
     {
       "id": "class-construction",
       "status": "partial",
-      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Ordinary class docstrings, default None documentation and instance shadowing are adopted. Expanded class headers, owned MRO entry resolution/original bases, prepared mapping bodies, callable factories and custom metaclass MRO construction are adopted by O79\u2013O82.",
-      "gaps": "Builtin instance layouts and remaining metaclass special protocols retain O83\u2013O88; generic aliases, formatting, context and async protocols retain their named milestones.",
+      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Ordinary class docstrings, default None documentation and instance shadowing are adopted. Expanded class headers, owned MRO entry resolution/original bases, prepared mapping bodies, callable factories and custom metaclass MRO construction are adopted by O79\u2013O82. O83 applies the finite 72-name actual-metaclass slot inventory with owned reflected dispatch, descriptors, hashing and mutation.",
+      "gaps": "Builtin storage/layouts and compatible class/base reassignment remain O84\u2013O88. Additional arithmetic, native diagnostics, generics, context, formatting, buffer and async protocols retain their named milestones.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -397,7 +397,11 @@
         "tests/fixtures/interpreter/expanded-class-bases.json:replacement-original-identity",
         "tests/fixtures/interpreter/prepared-class-namespaces.json:prepared-mapping-classcell",
         "tests/fixtures/interpreter/metaclass-factories.json:factory-preparation-identities",
-        "tests/fixtures/interpreter/custom-mro.json:mro-reordered"
+        "tests/fixtures/interpreter/custom-mro.json:mro-reordered",
+        "tests/fixtures/interpreter/metaclass-protocols.json:actual-metaclass-descriptor",
+        "tests/fixtures/interpreter/metaclass-protocols.json:arithmetic-reflected-priority",
+        "tests/fixtures/interpreter/metaclass-protocols.json:hash-and-dict",
+        "tests/fixtures/interpreter/metaclass-protocols.json:advertised-class"
       ]
     },
     {

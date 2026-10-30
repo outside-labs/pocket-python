@@ -88,6 +88,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     return state.builtins.get(name);
   };
   const classes = new ClassRuntime({memory, charge, values, fail: values.fail, builtin: nativeBuiltin});
+  const userProtocol = value => classes.protocolObject(value);
   const objectType = () => moduleContext.builtin("object", () => classes.root());
   const setCell = (cell, value, bound = true) => mutate(cell, () => {
     const before = [cell.value, cell.bound]; cell.value = value; cell.bound = bound;
@@ -415,7 +416,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const delegateMethod = (iterator, name) => {
     if (iterator instanceof GeneratorValue) return {kind: "value", value: allocate(ValueMethod, iterator, name)};
-    if (iterator instanceof InstanceValue) return classes.read(iterator, name);
+    if (userProtocol(iterator)) return classes.read(iterator, name);
     python("AttributeError", "Delegate has no attribute '" + name + "'");
   };
   const injectGenerator = value => {
@@ -540,7 +541,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             task.owned = true; task.phase = "body"; task.iterator = signal.value;
             dispatch(unaryTask("next", task.iterator, task.site, continuation("for-next"))); return;
           }
-          if (task.phase === "iterable" && (signal.value instanceof GeneratorValue || signal.value instanceof InstanceValue || signal.value instanceof ProtocolIteratorValue)) {
+          if (task.phase === "iterable" && (signal.value instanceof GeneratorValue || userProtocol(signal.value) || signal.value instanceof ProtocolIteratorValue)) {
             task.owned = true; task.phase = "acquire";
             dispatch(unaryTask("iter", signal.value, task.site, continuation("for-iter"))); return;
           }
@@ -827,7 +828,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
         if (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
-        if (receiver instanceof ModuleValue || classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, op === "attribute-set" ? "__setattr__" : "__delattr__")) {
+        if (receiver instanceof ModuleValue || classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, op === "attribute-set" ? "__setattr__" : "__delattr__") ||
+            userProtocol(receiver) && arg === "__class__" && classes.hasSlot(classes.checkingType(receiver), "__class__")) {
           dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "attribute-set" ? "set" : "delete", null, null, value)); return;
         }
         const plan = classes.write(receiver, arg, value, op === "attribute-delete");
@@ -858,7 +860,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};
             } else dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "import-from" ? "import" : "get"));
           } else if (op === "attribute-get" &&
-              (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && arg === "__class__" && classes.hasSlot(receiver.type, "__class__")))
+              (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || userProtocol(receiver) && arg === "__class__" && classes.hasSlot(classes.checkingType(receiver), "__class__")))
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
           else if (["attribute-get", "module-get"].includes(op) && arg === "__dir__" && classes.hasFixedDirectory(receiver)) {
@@ -954,27 +956,27 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         else { values.set(receiver, key, item); stack.push(receiver); }
       } else if (op === "setitem") {
         const item = stack.pop(), key = stack.pop(), receiver = stack.pop();
-        if (receiver instanceof FrameLocalsValue || receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key) || (values.isBinary(receiver) || values.isView(receiver)) && item instanceof InstanceValue ||
+        if (receiver instanceof FrameLocalsValue || userProtocol(receiver) || userProtocol(key) || values.isSlice(key) || (values.isBinary(receiver) || values.isView(receiver)) && userProtocol(item) ||
             frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(receiver, key))
           dispatch(itemTask(receiver, key, summary(frame, cursor), null, 0, "set", item));
         else stack.push(values.set(receiver, key, item));
-      } else if (op === "dict-delete" && (stack.at(-2) instanceof FrameLocalsValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
+      } else if (op === "dict-delete" && (stack.at(-2) instanceof FrameLocalsValue || userProtocol(stack.at(-2)) || userProtocol(stack.at(-1)) || values.isSlice(stack.at(-1)) ||
           frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor), null, 0, "delete"));
       }
       else if (op === "slice") {
         const step = stack.pop(), stop = stack.pop(), start = stack.pop(), receiver = stack.pop();
-        if (receiver instanceof FrameLocalsValue || [receiver, start, stop, step].some(value => value instanceof InstanceValue))
+        if (receiver instanceof FrameLocalsValue || [receiver, start, stop, step].some(value => userProtocol(value)))
           dispatch(sliceTask(receiver, [start, stop, step], summary(frame, cursor)));
         else stack.push(values.slice(receiver, start, stop, step));
-      } else if (op === "getitem" && (stack.at(-2) instanceof FrameLocalsValue || stack.at(-2) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
+      } else if (op === "getitem" && (stack.at(-2) instanceof FrameLocalsValue || stack.at(-2) instanceof ClassNamespaceValue || userProtocol(stack.at(-2)) || userProtocol(stack.at(-1)) || values.isSlice(stack.at(-1)) ||
           frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor)));
       }
       else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else if (op === "contains" && (frame.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
-          (stack.at(-1) instanceof FrameLocalsValue || stack.at(-1) instanceof DictionaryViewValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
+          (stack.at(-1) instanceof FrameLocalsValue || stack.at(-1) instanceof DictionaryViewValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || userProtocol(stack.at(-1)) || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
            values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));
@@ -985,7 +987,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const right = stack.pop(); dispatch(compareTask(op, stack.pop(), right, summary(frame, cursor)));
       }
       else if (Object.hasOwn(ARITHMETIC_SLOTS, op.startsWith("inplace-") ? op.slice(8) : op) &&
-          (stack.at(-2) instanceof FrameLocalsValue || stack.at(-1) instanceof FrameLocalsValue || stack.at(-2) instanceof ClassNamespaceValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
+          (stack.at(-2) instanceof FrameLocalsValue || stack.at(-1) instanceof FrameLocalsValue || stack.at(-2) instanceof ClassNamespaceValue || stack.at(-1) instanceof ClassNamespaceValue || userProtocol(stack.at(-2)) || userProtocol(stack.at(-1)))) {
         const right = stack.pop(), left = stack.pop(); dispatch(arithmeticTask(op, [left, right], summary(frame, cursor)));
       }
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }

@@ -8,7 +8,8 @@
     "O26",
     "O49",
     "O69",
-    "O80"
+    "O80",
+    "O83"
   ],
   "cases": [
     {
@@ -411,7 +412,7 @@
     },
     {
       "id": "future-meta-layout",
-      "stage": "Future",
+      "stage": "O83",
       "source": "class M(type):\n @property\n def __class__(cls): return type\nclass A(metaclass=M): pass\nprint(A.__class__ is type)\n",
       "stdout": "True\n"
     },

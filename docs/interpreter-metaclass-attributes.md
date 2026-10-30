@@ -1,5 +1,12 @@
 # Metaclass attribute access
 
+The [O79–O83 construction contracts](interpreter-expanded-class-bases.md),
+[prepared namespaces](interpreter-prepared-class-namespaces.md),
+[callable factories](interpreter-metaclass-factories.md),
+[custom MRO](interpreter-custom-mro.md) and
+[actual-metaclass protocols](interpreter-metaclass-protocols.md) supersede the
+earlier stage boundaries for those features below.
+
 O25/O26 continue #123 against pinned CPython 3.14.7. The executable matrix is
 `tests/fixtures/interpreter/metaclass-attributes.json`. Reference results alone
 do not establish independent execution. The explicit classes-source/1 profile

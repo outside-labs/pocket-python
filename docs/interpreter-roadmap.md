@@ -485,3 +485,8 @@ optional preparation, exact argument identities and arbitrary decorated results.
 [O82](interpreter-custom-mro.md) adopts owned custom MRO construction, atomic
 hierarchy installation and native C3 recomputation. Remaining metaclass slots
 are O83; storage and base reassignment remain O84–O88.
+
+[O83](interpreter-metaclass-protocols.md) completes actual-metaclass special
+protocol dispatch, including reflected priority, owned descriptors, hashing and
+live mutation. O79–O83 complete the advanced construction workstream; storage
+and builtin subclasses remain O84–O88.
