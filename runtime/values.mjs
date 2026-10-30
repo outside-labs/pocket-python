@@ -1334,6 +1334,8 @@ export class ValueRuntime {
     if (operation === "greater-equal") return this.less(right, left) || this.equal(left, right);
     if (operation === "is") {
       if (left === null || right === null) return left === right;
+      if (!this.numeric && (typeof left === "bigint" || typeof right === "bigint"))
+        this.fail("UnsupportedOperationError", "Integer identity requires the current source value profile.", "UNSUPPORTED");
       if (typeof left === "bigint" && typeof right === "bigint") this.charge(valueLayout(left).work + valueLayout(right).work);
       return left === right;
     }

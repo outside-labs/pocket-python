@@ -51,7 +51,7 @@ test('canonical interning shares equal scalar identities without changing numeri
   const memory = new MemoryArena(), roots = [1000000000000000000000007n];
   const leave = memory.enter(() => roots);
   try {
-    const first = new ValueRuntime({memory}), second = new ValueRuntime({memory});
+    const first = new ValueRuntime({memory, numeric: true}), second = new ValueRuntime({memory, numeric: true});
     const equal = BigInt('1000000000000000000000007');
     assert.equal(first.binary('is', roots[0], equal), true);
     assert.equal(first.objectId(roots[0]), second.objectId(equal));
@@ -142,4 +142,11 @@ test('integer identity and comparison obey shared work and allocation limits', a
 test('core integer identity comparisons preserve aliases and distinguish types', async () => {
   const result = await runSourceRequest({modules: [unit('a=int("1234567890123456789")\nb=a\nc=a+1\nprint(a is b,a is not c,a is not True)\n')]});
   assert.equal(result.stdout, 'True True True\n'); assert.equal(result.ok, true); closed(result.closed);
+});
+
+test('frozen legacy value profiles retain their integer identity refusal', () => {
+  const legacy = new ValueRuntime();
+  for (const pair of [[7n, 7n], [7n, true], [false, 0n]])
+    assert.throws(() => legacy.binary('is', ...pair), {code: 'UNSUPPORTED'});
+  assert.equal(legacy.binary('is', 7n, null), false);
 });

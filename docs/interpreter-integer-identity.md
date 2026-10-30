@@ -4,6 +4,8 @@ O75 of #123 adopts integer identity alongside the existing arena object and
 None/bool identities. `id(value, /)` in classes-source/1 returns an opaque positive
 integer. Integer `is` and `is not` work in both existing source profiles; the core
 profile keeps its existing builtin-name boundary.
+Frozen bytecode-2/3 value profiles retain their original integer-identity refusal;
+the adopted source profiles use bytecode 4/5 and the current numeric value model.
 
 The model canonically interns equal integer values within a session. Integer
 aliases therefore preserve identity, and `a is b` agrees with `id(a)==id(b)` for
