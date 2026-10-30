@@ -13,7 +13,7 @@ same owned binding, callback, result-validation and fallback paths.
 | Comparison and hashing | `__eq__`, `__ne__`, `__hash__`, `__lt__`, `__le__`, `__gt__`, `__ge__` |
 | Numeric conversion and unary | `__int__`, `__float__`, `__complex__`, `__abs__`, `__round__`, `__neg__`, `__pos__`, `__invert__` |
 | Binary/reflected/in-place | Stems `add`, `sub`, `mul`, `truediv`, `floordiv`, `mod`, `pow`, `and`, `or`, `xor`, `lshift`, `rshift` with ordinary, `r` and `i` forms; `divmod` with ordinary and `r` forms. |
-| Descriptor composition | `__get__`, `__set__`, `__delete__`, `__set_name__`; metaclass `__class__` descriptors preserve advertised identity while `type()` and implicit lookup use the actual metaclass. |
+| Descriptor composition | `__get__`, `__set__`, `__delete__`, `__set_name__`; metaclass `__class__` get/set/delete descriptors preserve advertised identity while `type()` and implicit lookup use the actual metaclass. |
 | Existing directory hints | `__length_hint__` participates in the adopted custom-directory and MRO-iterator contracts. General constructor length hints remain #116. |
 
 Implicit lookup bypasses class namespace shadows and metaclass read hooks.
@@ -35,7 +35,7 @@ slot caches. A callback already selected before mutation retains its captured
 binding. `__class__` descriptors never replace actual layout identity. Compatible
 class/base assignment remains O88.
 
-The [101-case matrix](../tests/fixtures/interpreter/metaclass-protocols.json) is
+The [102-case matrix](../tests/fixtures/interpreter/metaclass-protocols.json) is
 pinned to CPython 3.14.7 and runs through all six Node/Chromium source drivers.
 Focused tests cover descriptor and body suspension, class operands in arithmetic,
 comparison, hashing and iteration, selected-binding mutation, recursion/work/arena

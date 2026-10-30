@@ -77,3 +77,8 @@ test('metaclass slot inventory is frozen and preserves named protocol boundaries
     assert.throws(() => compileSource('class M(type):\n '+slot+'=None\n', profile), {code: 'UNSUPPORTED'});
   }
 });
+
+test('actual layout reassignment retains its runtime boundary after descriptor admission', async () => {
+  const result = await runSourceRequest({modules: [unit('class A: pass\na=A()\nprint("entered")\na.__class__=A\n')], compileOptions: profile});
+  assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+});

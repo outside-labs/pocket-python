@@ -628,6 +628,12 @@
       "stage": "O83",
       "source": "class M(type):\n def __contains__(cls,value): return None\nclass C(metaclass=M): pass\nprint(7 in C)\n",
       "stdout": "False\n"
+    },
+    {
+      "id": "advertised-class-mutation",
+      "stage": "O83",
+      "source": "class M(type):\n @property\n def __class__(cls): return cls.value\n @__class__.setter\n def __class__(cls,value):\n  print(\"set\",value[0])\n  cls.value=value\n @__class__.deleter\n def __class__(cls): print(\"delete\"); cls.value=None\nclass C(metaclass=M): value=None\nvalue=[7]\nC.__class__=value\nprint(C.__class__ is value,type(C) is M)\ndel C.__class__\nprint(C.__class__ is None,type(C) is M)\n",
+      "stdout": "set 7\nTrue True\ndelete\nTrue True\n"
     }
   ]
 }
