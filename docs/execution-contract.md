@@ -404,3 +404,26 @@ their native namespace; payload records retain their existing allocation rules.
 New constructor/documentation/copy continuations trace their named receivers
 and use existing rollback and unwind paths. Ordinary source allocation and the
 eight existing composed observations remain unchanged.
+
+## Hierarchy accounting revision 15
+
+O88 adds a 96-byte hierarchy transaction plus eight bytes per proposed base.
+Each visited class adds a 64-byte snapshot and eight bytes per retained old
+base, old MRO member and installed MRO member. These edges trace the class and
+all retained hierarchy values. Original storage flags and shared member names
+remain available for rollback; no additional child registry owns classes.
+Live subclass queries collect and charge traversal of existing arena records.
+Creation ordering uses the existing weak arena identity counter.
+
+Assigned type name/qualification values each add an optional eight-byte edge;
+the type's existing text lengths are still charged. A source native descriptor's
+successfully cached qualification adds eight bytes and traces its string. A
+registry module with a source type adds eight bytes and traces that type; its
+instance dictionary aliases the already owned module environment dictionary.
+
+Installing MROs and their transaction snapshots preflights the entire graph.
+Failure, cancellation and close restore the appropriate previous hierarchy
+before execution roots unwind, without invoking source cleanup callbacks.
+All continuations trace their receiver, transaction, pending types and outer
+completion. Allocation without these optional records and all eight existing
+composed resource observations remain unchanged.

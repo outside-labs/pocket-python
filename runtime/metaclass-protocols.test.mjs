@@ -79,7 +79,7 @@ test('metaclass slot inventory is frozen and preserves named protocol boundaries
   }
 });
 
-test('actual layout reassignment retains its runtime boundary after descriptor admission', async () => {
+test('the class descriptor accepts same-class reassignment', async () => {
   const result = await runSourceRequest({modules: [unit('class A: pass\na=A()\nprint("entered")\na.__class__=A\n')], compileOptions: profile});
-  assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+  assert.equal(result.stdout, 'entered\n'); assert.ok(result.ok, JSON.stringify(result.error)); closed(result.closed);
 });

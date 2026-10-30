@@ -90,6 +90,22 @@ type(module).__init__(m,"renamed")
 print(m.__name__,m.slot[0],m.extra[0],d is vars(m),type(m) is M)
 '''
 
+MODULE_REASSIGNMENT_SOURCE = '''import operator as module
+native=type(module)
+original=module
+module.marker=11
+d=vars(module)
+class M(native):
+ def __getattribute__(self,n):
+  if n=="marker": return 7
+  return super().__getattribute__(n)
+module.__class__=M
+from operator import marker
+print(module is original,type(module) is M,marker)
+module.__class__=native
+print(d is vars(module),module.marker)
+'''
+
 
 def smoke(channel=None):
     checks, cases = [], []
@@ -293,6 +309,9 @@ def smoke(channel=None):
                     native_object_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/native-object-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in native_object_subclasses['cases'] if 'error_type' not in c and not c.get('modules'))
                     programs.append(NATIVE_MODULE_SUBCLASS_SOURCE)
+                    reassignment = json.loads((ROOT / 'tests/fixtures/interpreter/reassignment.json').read_bytes())
+                    programs.extend(case['source'] for case in reassignment['cases'] if 'error_type' not in case and not case.get('modules'))
+                    programs.append(MODULE_REASSIGNMENT_SOURCE)
                     mutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/mutable-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in mutable_subclasses['cases'] if 'error_type' not in c)
                     immutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/immutable-subclasses.json').read_bytes())

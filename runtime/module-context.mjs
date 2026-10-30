@@ -137,10 +137,10 @@ export class ModuleContext {
   planLoad(importer, specifier, level, root) {
     return this.initializationPlan(this.registry.resolve(importer, specifier, level), root);
   }
-  planAttribute(module, name, fromImport, importer) {
+  planAttribute(module, name, fromImport, importer, skipNamespace = false) {
     if (!(module instanceof ModuleValue)) throw new RegistryError("Only module attributes are adopted in this profile.", "UnsupportedOperationError", "UNSUPPORTED");
     const cell = environmentCell(module.environment, name);
-    if (cell?.bound) return {kind: "value", value: cell.value};
+    if (!skipNamespace && cell?.bound) return {kind: "value", value: cell.value};
     if (fromImport && module.package) {
       const child = module.name + "." + name;
       if (this.registry.names.includes(child)) return {kind: "load", plan: this.planLoad(importer, child, 0, false)};

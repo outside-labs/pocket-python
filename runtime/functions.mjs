@@ -36,7 +36,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       entryCall.callable.pool.module !== module || !Array.isArray(entryCall.arguments) || entryCall.arguments.length > 128))
     throw new TypeError("Invalid module callback entry.");
   const state = {frames: [], outputLeases: [], builtins: new Map(), pool: null, globals: null,
-    temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null, pendingImport: null,
+    transactions: [], temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null, pendingImport: null,
     transitions: moduleContext?.transitions || Object.create(null)};
   const hard = (code, name, message) => {
     const error = new ExecutionError(code, name, message, state.current?.instruction ?? null, null);
@@ -724,7 +724,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const start = () => {
     if (entryCall) state.temporaries.push(entryCall.callable);
-    state.rootLeave = memory.enter(() => [state.pool, state.globals, inheritedException, ...state.builtins.values(), ...state.temporaries], {charge, fail: hard});
+    state.rootLeave = memory.enter(() => [state.pool, state.globals, inheritedException, ...state.builtins.values(), ...state.temporaries, ...state.transactions], {charge, fail: hard});
     if (entryCall) {
       state.pool = entryCall.callable.pool; state.globals = module.environment;
       const args = entryCall.arguments.map(record => values.decode(record, {retain: value => state.temporaries.push(value)}));
@@ -827,7 +827,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (["attribute-set", "attribute-delete"].includes(op)) {
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
-        if (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver)) python("AttributeError", "Value attributes are read-only");
+        if (arg !== "__class__" && (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver))) python("AttributeError", "Value attributes are read-only");
         if (receiver instanceof ModuleValue || classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, op === "attribute-set" ? "__setattr__" : "__delattr__") ||
             userProtocol(receiver) && arg === "__class__" && classes.hasSlot(classes.checkingType(receiver), "__class__")) {
           dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "attribute-set" ? "set" : "delete", null, null, value)); return;
@@ -1005,6 +1005,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
   };
   const close = () => {
+    for (const transaction of [...state.transactions].reverse()) transaction.rollback();
+    state.transactions.length = 0;
     while (state.frames.length) {
       const frame = state.frames.pop(); frame.active = false;
       if (frame.generator) { const generator = frame.generator; if (frame.reflector) frame.reflector.back = null; generator.status = "closed"; generator.frame = null; generator.reflector = null; generator.callable = null; generator.closure = null; generator.bindings.clear(); }

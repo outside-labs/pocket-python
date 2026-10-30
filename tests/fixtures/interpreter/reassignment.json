@@ -1,0 +1,636 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-reassignment/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O88"
+  ],
+  "cases": [
+    {
+      "id": "class-state",
+      "stage": "O88",
+      "source": "class A:\n def f(self): return 7\nclass B:\n def f(self): return 9\na=A()\nb=a\na.x=[11]\nd=a.__dict__\nf=a.f\na.__class__=B\nprint(type(a) is B,a is b,a.f(),f(),a.x[0],a.__dict__ is d,isinstance(a,B),isinstance(a,A))\n",
+      "stdout": "True True 9 7 11 True True False\n"
+    },
+    {
+      "id": "int-class",
+      "stage": "O88",
+      "source": "class A(int): pass\nclass B(int): pass\na=A(7)\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,int))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "float-class",
+      "stage": "O88",
+      "source": "class A(float): pass\nclass B(float): pass\na=A(2.5)\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,float))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "complex-class",
+      "stage": "O88",
+      "source": "class A(complex): pass\nclass B(complex): pass\na=A(2,3)\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,complex))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "str-class",
+      "stage": "O88",
+      "source": "class A(str): pass\nclass B(str): pass\na=A(\"abc\")\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,str))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "bytes-class",
+      "stage": "O88",
+      "source": "class A(bytes): pass\nclass B(bytes): pass\na=A(b\"ab\")\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,bytes))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "tuple-class",
+      "stage": "O88",
+      "source": "class A(tuple): pass\nclass B(tuple): pass\na=A((7,9))\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,tuple))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "frozenset-class",
+      "stage": "O88",
+      "source": "class A(frozenset): pass\nclass B(frozenset): pass\na=A((7,9))\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,frozenset))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "list-class",
+      "stage": "O88",
+      "source": "class A(list): pass\nclass B(list): pass\na=A((7,9))\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,list))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "dict-class",
+      "stage": "O88",
+      "source": "class A(dict): pass\nclass B(dict): pass\na=A()\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,dict))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "set-class",
+      "stage": "O88",
+      "source": "class A(set): pass\nclass B(set): pass\na=A((7,9))\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,set))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "bytearray-class",
+      "stage": "O88",
+      "source": "class A(bytearray): pass\nclass B(bytearray): pass\na=A(b\"ab\")\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,bytearray))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "property-class",
+      "stage": "O88",
+      "source": "class A(property): pass\nclass B(property): pass\na=A(lambda self:7)\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,property))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "staticmethod-class",
+      "stage": "O88",
+      "source": "class A(staticmethod): pass\nclass B(staticmethod): pass\na=A(lambda:7)\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,staticmethod))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "classmethod-class",
+      "stage": "O88",
+      "source": "class A(classmethod): pass\nclass B(classmethod): pass\na=A(lambda cls:7)\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,classmethod))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "super-class",
+      "stage": "O88",
+      "source": "class A(super): pass\nclass B(super): pass\na=A(object)\na.tag=[11]\na.__class__=B\nprint(type(a) is B,a.tag[0],isinstance(a,super))\n",
+      "stdout": "True 11 True\n"
+    },
+    {
+      "id": "slot-same",
+      "stage": "O88",
+      "source": "class A: __slots__=(\"x\",\"y\")\nclass B:\n __slots__=(\"y\",\"x\")\n def f(self): return self.x+self.y\na=A()\na.x=7\na.y=9\na.__class__=B\nprint(type(a) is B,a.x,a.y,a.f())\n",
+      "stdout": "True 7 9 16\n"
+    },
+    {
+      "id": "slot-different",
+      "stage": "O88",
+      "source": "class A: __slots__=(\"x\",)\nclass B: __slots__=(\"y\",)\na=A()\na.x=7\ntry: a.__class__=B\nexcept TypeError: print(type(a) is A,a.x)\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "slot-inherited",
+      "stage": "O88",
+      "source": "class X: __slots__=(\"x\",)\nclass Y: __slots__=(\"x\",)\nclass A(X): __slots__=()\nclass B(Y): __slots__=()\na=A()\na.x=7\na.__class__=B\nprint(type(a) is B,a.x)\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "dict-layout-change",
+      "stage": "O88",
+      "source": "class A: pass\nclass B: __slots__=()\na=A()\na.x=7\na.__class__=B\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "class-native-reject",
+      "stage": "O88",
+      "source": "class L(list): __slots__=()\na=L((7,))\na.__class__=list\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-class-reject",
+      "stage": "O88",
+      "source": "class L(list): __slots__=()\na=[]\na.__class__=L\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "native-payload-change",
+      "stage": "O88",
+      "source": "class A(int): pass\nclass B(str): pass\na=A(7)\na.__class__=B\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "class-delete",
+      "stage": "O88",
+      "source": "class A: pass\na=A()\ndel a.__class__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "class-nontype",
+      "stage": "O88",
+      "source": "class A: pass\na=A()\na.__class__=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "class-source-descriptor",
+      "stage": "O88",
+      "source": "class D:\n def __set__(self,obj,value): print(\"set\",value.__name__)\nclass A: __class__=D()\nclass B: pass\na=A()\na.__class__=B\nprint(type(a) is A)\nobject.__dict__[\"__class__\"].__set__(a,B)\nprint(type(a) is B)\n",
+      "stdout": "set B\nTrue\nTrue\n"
+    },
+    {
+      "id": "class-hook",
+      "stage": "O88",
+      "source": "class A:\n def __setattr__(self,name,value): print(name); object.__setattr__(self,name,value)\nclass B: pass\na=A()\na.__class__=B\nprint(type(a) is B)\n",
+      "stdout": "__class__\nTrue\n"
+    },
+    {
+      "id": "meta-class",
+      "stage": "O88",
+      "source": "class M(type): pass\nclass N(type):\n def f(cls): return 7\nclass A(metaclass=M): pass\nA.__class__=N\nprint(type(A) is N,A.f())\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "default-meta-class-reject",
+      "stage": "O88",
+      "source": "class M(type): pass\nclass A: pass\nA.__class__=M\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-simple",
+      "stage": "O88",
+      "source": "class A: x=7\nclass B: x=9\nclass C(A): pass\nclass D(C): pass\nc=C()\nd=D()\nC.__bases__=(B,)\nprint(c.x,d.x,C.__mro__==(C,B,object),D.__mro__==(D,C,B,object),C.__base__ is B)\n",
+      "stdout": "9 9 True True True\n"
+    },
+    {
+      "id": "bases-slots",
+      "stage": "O88",
+      "source": "class A: __slots__=(\"x\",)\nclass B: __slots__=(\"x\",)\nclass C(A): __slots__=(\"y\",)\nclass D(C): __slots__=()\nd=D()\nd.x=7\nd.y=9\nC.__bases__=(B,)\nprint(d.x,d.y,D.__mro__==(D,C,B,object),B.x.__get__(d))\n",
+      "stdout": "7 9 True 7\n"
+    },
+    {
+      "id": "bases-native",
+      "stage": "O88",
+      "source": "class A(list): pass\nclass B(list): pass\nclass C(A): pass\nc=C((7,9))\nC.__bases__=(B,)\nprint(c[0],len(c),C.__base__ is B,isinstance(c,B),isinstance(c,A))\n",
+      "stdout": "7 2 True True False\n"
+    },
+    {
+      "id": "bases-super",
+      "stage": "O88",
+      "source": "class A:\n def f(self): return 7\nclass B:\n def f(self): return 9\nclass C(A):\n def f(self): return super().f()+1\nc=C()\ns=super(C,c)\nf=c.f\nC.__bases__=(B,)\nprint(c.f(),f(),s.f(),s.__self__ is c)\n",
+      "stdout": "10 10 9 True\n"
+    },
+    {
+      "id": "bases-proxies",
+      "stage": "O88",
+      "source": "class A: pass\nclass B: pass\nclass C(A): pass\np=C.__dict__\nC.__bases__=(B,)\nC.x=7\nprint(p[\"x\"],C.__bases__==(B,),C in B.__subclasses__(),C in A.__subclasses__())\n",
+      "stdout": "7 True True False\n"
+    },
+    {
+      "id": "bases-empty",
+      "stage": "O88",
+      "source": "class A: pass\nclass C(A): pass\nC.__bases__=()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-list",
+      "stage": "O88",
+      "source": "class A: pass\nclass C(A): pass\nC.__bases__=[object]\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-nontype",
+      "stage": "O88",
+      "source": "class A: pass\nclass C(A): pass\nC.__bases__=(7,)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-duplicate",
+      "stage": "O88",
+      "source": "class A: pass\nclass C(A): pass\nC.__bases__=(A,A)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-cycle",
+      "stage": "O88",
+      "source": "class A: pass\nclass C(A): pass\nC.__bases__=(C,)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-descendant-cycle",
+      "stage": "O88",
+      "source": "class A: pass\nclass C(A): pass\nclass D(C): pass\nC.__bases__=(D,)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-incompatible",
+      "stage": "O88",
+      "source": "class A: __slots__=(\"x\",)\nclass B: __slots__=(\"y\",)\nclass C(A): pass\ntry: C.__bases__=(B,)\nexcept TypeError: print(C.__bases__==(A,),C.__mro__==(C,A,object))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bases-object-deallocator",
+      "stage": "O88",
+      "source": "class A: pass\nclass C(A): pass\nC.__bases__=(object,)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-native-incompatible",
+      "stage": "O88",
+      "source": "class A(list): pass\nclass B(dict): pass\nclass C(A): pass\nC.__bases__=(B,)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "bases-mro-conflict",
+      "stage": "O88",
+      "source": "class X: pass\nclass Y: pass\nclass A(X,Y): pass\nclass B(Y,X): pass\nclass C(A): pass\ntry: C.__bases__=(A,B)\nexcept TypeError: print(C.__bases__==(A,),C.__mro__==(C,A,X,Y,object))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bases-diamond",
+      "stage": "O88",
+      "source": "class A: x=7\nclass B: x=9\nclass C(A): pass\nclass D(C): pass\nclass E(C): pass\nclass F(D,E): pass\nC.__bases__=(B,)\nprint(F().x,F.__mro__==(F,D,E,C,B,object))\n",
+      "stdout": "9 True\n"
+    },
+    {
+      "id": "bases-mro-callback",
+      "stage": "O88",
+      "source": "changing=False\nclass M(type):\n def mro(cls):\n  if changing: print(cls.__name__,cls.__bases__[0].__name__,cls.__mro__[-2].__name__)\n  return type.mro(cls)\nclass A: pass\nclass B: pass\nclass C(A,metaclass=M): pass\nclass D(C): pass\nchanging=True\nC.__bases__=(B,)\nprint(D.__mro__==(D,C,B,object))\n",
+      "stdout": "C B A\nD C A\nTrue\n"
+    },
+    {
+      "id": "bases-mro-failure",
+      "stage": "O88",
+      "source": "changing=False\nclass M(type):\n def mro(cls):\n  if changing: print(cls.__name__); raise ValueError(\"failed\")\n  return type.mro(cls)\nclass A: pass\nclass B: pass\nclass C(A,metaclass=M): pass\nchanging=True\ntry: C.__bases__=(B,)\nexcept ValueError: print(C.__bases__==(A,),C.__mro__==(C,A,object))\n",
+      "stdout": "C\nTrue True\n"
+    },
+    {
+      "id": "bases-descendant-failure",
+      "stage": "O88",
+      "source": "changing=False\nclass M(type):\n def mro(cls):\n  if changing:\n   print(cls.__name__)\n   if cls.__name__==\"D\": raise ValueError(\"failed\")\n  return type.mro(cls)\nclass A: x=7\nclass B: x=9\nclass C(A,metaclass=M): pass\nclass D(C): pass\nchanging=True\ntry: C.__bases__=(B,)\nexcept ValueError: print(C.x,D.x,C.__bases__==(A,),D.__mro__==(D,C,A,object))\n",
+      "stdout": "C\nD\n7 7 True True\n"
+    },
+    {
+      "id": "bases-invalid-mro",
+      "stage": "O88",
+      "source": "changing=False\nclass M(type):\n def mro(cls):\n  if changing: return [7]\n  return type.mro(cls)\nclass A: pass\nclass B: pass\nclass C(A,metaclass=M): pass\nchanging=True\ntry: C.__bases__=(B,)\nexcept TypeError: print(C.__bases__==(A,),C.__mro__==(C,A,object))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bases-mro-generator",
+      "stage": "O88",
+      "source": "changing=False\nclass M(type):\n def mro(cls):\n  if changing: return (item for item in type.mro(cls))\n  return type.mro(cls)\nclass A: pass\nclass B: pass\nclass C(A,metaclass=M): pass\nchanging=True\nC.__bases__=(B,)\nprint(C.__mro__==(C,B,object))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bases-reentrant",
+      "stage": "O88",
+      "source": "changing=False\nclass M(type):\n def mro(cls):\n  global changing\n  if changing:\n   changing=False\n   cls.__bases__=(D,)\n  return type.mro(cls)\nclass A: pass\nclass B: pass\nclass D: pass\nclass C(A,metaclass=M): pass\nchanging=True\nC.__bases__=(B,)\nprint(C.__bases__==(D,),C.__mro__==(C,D,object))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bases-reentrant-error",
+      "stage": "O88",
+      "source": "changing=False\nclass M(type):\n def mro(cls):\n  global changing\n  if changing:\n   changing=False\n   cls.__bases__=(D,)\n   raise ValueError(\"failed\")\n  return type.mro(cls)\nclass A: pass\nclass B: pass\nclass D: pass\nclass C(A,metaclass=M): pass\nchanging=True\ntry: C.__bases__=(B,)\nexcept ValueError: print(C.__bases__==(D,),C.__mro__==(C,D,object))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "bases-subclasses-callback",
+      "stage": "O88",
+      "source": "changing=False\nclass M(type):\n def mro(cls):\n  if changing: print(cls in A.__subclasses__(),cls in B.__subclasses__())\n  return type.mro(cls)\nclass A: pass\nclass B: pass\nclass C(A,metaclass=M): pass\nchanging=True\nC.__bases__=(B,)\nprint(C in A.__subclasses__(),C in B.__subclasses__())\n",
+      "stdout": "True False\nFalse True\n"
+    },
+    {
+      "id": "subclasses-order",
+      "stage": "O88",
+      "source": "class A: pass\nclass B(A): pass\nclass C(A): pass\nclass D(B): pass\na=A.__subclasses__()\nb=A.__subclasses__()\nprint(a==[B,C],a is b,type.__subclasses__(B)==[D],B in object.__subclasses__(),A in object.__subclasses__())\n",
+      "stdout": "True False True False True\n"
+    },
+    {
+      "id": "subclasses-native",
+      "stage": "O88",
+      "source": "class I(int): pass\nclass J(I): pass\nprint(bool in int.__subclasses__(),I in int.__subclasses__(),J in int.__subclasses__(),I.__subclasses__()==[J])\n",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "subclasses-shadow",
+      "stage": "O88",
+      "source": "class A: __subclasses__=7\nclass B(A): pass\nprint(A.__subclasses__,type.__subclasses__(A)==[B])\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "subclasses-meta",
+      "stage": "O88",
+      "source": "class M(type):\n def __subclasses__(cls): print(\"meta\"); return [7]\nclass A(metaclass=M): pass\nprint(A.__subclasses__()[0],type.__subclasses__(A)==[])\n",
+      "stdout": "meta\n7 True\n"
+    },
+    {
+      "id": "subclasses-wrong-receiver",
+      "stage": "O88",
+      "source": "type.__subclasses__(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclasses-extra-arg",
+      "stage": "O88",
+      "source": "class A: pass\nA.__subclasses__(7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "metadata",
+      "stage": "O88",
+      "source": "class A: pass\np=A.__dict__\nA.__name__=\"Renamed\"\nA.__qualname__=\"Scope.Name\"\nA.__module__=7\nprint(A.__name__,A.__qualname__,A.__module__,p[\"__module__\"],\"__firstlineno__\" in p)\n",
+      "stdout": "Renamed Scope.Name 7 7 False\n"
+    },
+    {
+      "id": "member-qualification",
+      "stage": "O88",
+      "source": "class A: __slots__=(\"x\",)\nd=A.x\nA.__name__=\"Renamed\"\nA.__qualname__=\"Scope.Name\"\nprint(d.__name__,d.__qualname__,d.__objclass__ is A)\n",
+      "stdout": "x Scope.Name.x True\n"
+    },
+    {
+      "id": "metadata-function-identity",
+      "stage": "O88",
+      "source": "class A:\n def f(self): return __class__\na=A()\nf=a.f\nA.__name__=\"Renamed\"\nA.__qualname__=\"Scope.Name\"\nprint(f() is A,f.__qualname__,type(a).__name__,type(a).__qualname__)\n",
+      "stdout": "True A.f Renamed Scope.Name\n"
+    },
+    {
+      "id": "__name__-integer",
+      "stage": "O88",
+      "source": "class A: pass\nA.__name__=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__name__-none",
+      "stage": "O88",
+      "source": "class A: pass\nA.__name__=None\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__name__-delete",
+      "stage": "O88",
+      "source": "class A: pass\ndel A.__name__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__qualname__-integer",
+      "stage": "O88",
+      "source": "class A: pass\nA.__qualname__=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__qualname__-none",
+      "stage": "O88",
+      "source": "class A: pass\nA.__qualname__=None\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "__qualname__-delete",
+      "stage": "O88",
+      "source": "class A: pass\ndel A.__qualname__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "module-delete",
+      "stage": "O88",
+      "source": "class A: pass\ndel A.__module__\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "name-null",
+      "stage": "O88",
+      "source": "class A: pass\nA.__name__=\"bad\\x00name\"\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "qualname-null",
+      "stage": "O88",
+      "source": "class A: pass\nA.__qualname__=\"bad\\x00name\"\nprint(len(A.__qualname__))\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "native-name-reject",
+      "stage": "O88",
+      "source": "int.__name__=\"changed\"\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "module-class",
+      "stage": "O88",
+      "source": "import helper\nModule=type(helper)\nclass M(Module):\n def f(self): return self.x+1\nhelper.__class__=M\nprint(type(helper) is M,helper.f(),helper.__dict__[\"x\"],\"x\" in dir(helper))\nhelper.__class__=Module\nprint(type(helper) is Module,helper.x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "True 8 7 True\nTrue 7\n"
+    },
+    {
+      "id": "module-source-class",
+      "stage": "O88",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nclass N(Module):\n def f(self): return self.x+1\nm=M(\"named\")\nm.x=7\nd=m.__dict__\nm.__class__=N\nprint(type(m) is N,m.f(),m.__dict__ is d,m.__name__)\nm.__class__=Module\nprint(type(m) is Module,m.x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "True 8 True named\nTrue 7\n"
+    },
+    {
+      "id": "module-slot-reject",
+      "stage": "O88",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): __slots__=(\"x\",)\nhelper.__class__=M\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "module-class-hook",
+      "stage": "O88",
+      "source": "import helper\nModule=type(helper)\nclass M(Module):\n def __getattribute__(self,name):\n  if name==\"special\": return 11\n  return Module.__getattribute__(self,name)\nhelper.__class__=M\nhelper.__getattr__=lambda name:13\nprint(helper.special,helper.missing,helper.x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "x=7\n"
+        }
+      ],
+      "stdout": "11 13 7\n"
+    },
+    {
+      "id": "metadata-assigned-string-identity",
+      "stage": "O88",
+      "source": "class S(str): pass\nclass A: pass\nn=S(\"Renamed\")\nq=S(\"outer.Renamed\")\nn.held=[7]\nA.__name__=n\nA.__qualname__=q\ndel n\nprint(type(A.__name__) is S,A.__name__.held[0],A.__qualname__ is q,type.__dict__[\"__name__\"].__get__(A) is A.__name__)\n",
+      "stdout": "True 7 True True\n"
+    },
+    {
+      "id": "member-qualification-cache",
+      "stage": "O88",
+      "source": "class A: __slots__=(\"x\",)\nd=A.x\nA.__qualname__=\"outer.A\"\nq=d.__qualname__\nA.__qualname__=\"other.A\"\nprint(q,d.__qualname__,q is d.__qualname__)\n",
+      "stdout": "outer.A.x outer.A.x True\n"
+    },
+    {
+      "id": "member-qualification-metaclass",
+      "stage": "O88",
+      "source": "class M(type):\n def __getattribute__(cls,n):\n  if n==\"__qualname__\":\n   print(\"qualified\")\n   return \"other\"\n  return type.__getattribute__(cls,n)\nclass A(metaclass=M): __slots__=(\"x\",)\nprint(A.x.__qualname__)\nprint(A.x.__qualname__)\n",
+      "stdout": "qualified\nother.x\nother.x\n"
+    },
+    {
+      "id": "member-qualification-retry",
+      "stage": "O88",
+      "source": "bad=True\nclass M(type):\n def __getattribute__(cls,n):\n  if n==\"__qualname__\" and bad: return 7\n  return type.__getattribute__(cls,n)\nclass A(metaclass=M): __slots__=(\"x\",)\ntry: print(A.x.__qualname__)\nexcept TypeError: print(\"bad\")\nbad=False\nprint(A.x.__qualname__)\n",
+      "stdout": "bad\nA.x\n"
+    },
+    {
+      "id": "module-import-hook",
+      "stage": "O88",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   print(\"lookup\")\n   return 9\n  return super().__getattribute__(n)\nhelper.__class__=M\nfrom helper import x\nprint(x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "lookup\n9\n"
+    },
+    {
+      "id": "module-import-missing",
+      "stage": "O88",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   print(\"lookup\")\n   return 9\n  return super().__getattribute__(n)\nhelper.__class__=M\ntry:\n from helper import missing\nexcept ImportError: print(\"missing\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "missing\n"
+    },
+    {
+      "id": "module-import-hidden",
+      "stage": "O88",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   raise AttributeError(\"hidden\")\n  return super().__getattribute__(n)\nhelper.__class__=M\ntry:\n from helper import x\nexcept ImportError: print(\"hidden\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "hidden\n"
+    },
+    {
+      "id": "module-owned-key",
+      "stage": "O88",
+      "source": "import helper\nclass M(type(helper)): pass\nhelper.__class__=M\ndel helper.x\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  print(\"eq\")\n  return n==\"x\"\nhelper.__dict__[K()]=[9]\nprint(helper.x[0])\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "eq\n9\n"
+    },
+    {
+      "id": "super-base-change-during-state-lookup",
+      "stage": "O88",
+      "source": "class P: pass\nclass Q: foo=7\nclass A(P): pass\nclass B(A): pass\nclass S(super): pass\ns=S(B,B())\nclass K:\n def __hash__(self): return hash(\"foo\")\n def __eq__(self,n):\n  A.__bases__=(Q,)\n  return False\nobject.__getattribute__(s,\"__dict__\")[K()]=0\nprint(getattr(s,\"foo\",9),A.foo)\n",
+      "stdout": "9 7\n"
+    }
+  ]
+}

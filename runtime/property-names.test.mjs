@@ -89,15 +89,15 @@ test('detached native notifications and namespace snapshots survive collection a
   await lifecycle('p=property()\nclass D:\n def __set_name__(self,owner,name):\n  print("entered")\n  print(p.__name__)\n  p.__set_name__(owner,[9])\nclass C:\n first=p\n callback=D()\n last=p\nprint(p.__name__)\n', 'entered\nfirst\nlast\n', ['entered\n', 'entered\nfirst\n']);
 });
 
-test('property names retain source profile and unrelated mutation boundaries', async () => {
+test('property names retain source profile boundaries and type-name validation', async () => {
   for (const source of ['p=property()\np.__name__="x"\n', 'property().__set_name__(None,"x")\n']) {
     const result = await runSourceRequest({modules: [unit(source)]});
     assert.ok(['UNSUPPORTED', 'PYTHON'].includes(result.error?.code));
     if (result.error?.code === 'PYTHON') assert.equal(result.error.type, 'NameError');
     if (result.closed) closed(result.closed);
   }
-  for (const source of ['class C: pass\nC.__name__="x"\n']) {
-    const result = await run(source); assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+  for (const source of ['class C: pass\nC.__name__=None\n']) {
+    const result = await run(source); assert.equal(result.error?.type, 'TypeError'); closed(result.closed);
   }
 });
 

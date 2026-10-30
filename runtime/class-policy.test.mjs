@@ -16,8 +16,8 @@ test('shared policy is immutable and keeps metadata distinct from ordinary slot 
   for (const name of ['__instancecheck__', '__subclasscheck__', '__dir__', '__length_hint__'])
     for (const context of ['define', 'attribute', 'mutate', 'implicit']) assert.equal(allowsClassSpecial(name, context), true);
   assert.equal(allowsClassSpecial('__module__', 'define'), true);
-  assert.equal(allowsClassSpecial('__module__', 'attribute'), false);
-  assert.equal(allowsClassSpecial('__module__', 'mutate'), false);
+  assert.equal(allowsClassSpecial('__module__', 'attribute'), true);
+  assert.equal(allowsClassSpecial('__module__', 'mutate'), true);
   assert.equal(allowsClassSpecial('__dict__', 'define'), true);
   assert.equal(allowsClassSpecial('__dict__', 'attribute'), true);
   assert.equal(allowsClassSpecial('__dict__', 'mutate'), false);

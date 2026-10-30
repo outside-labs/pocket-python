@@ -506,3 +506,8 @@ native dispatch. O87–O88 finish the remaining storage workstream.
 [O87](interpreter-native-object-subclasses.md) adopts property, wrapper, module
 and super subtype construction, state, hooks, binding and native metadata.
 Compatible class/base reassignment is the remaining storage stage, O88.
+
+[O88](interpreter-reassignment.md) adopts compatible class and base changes,
+transactional descendant MRO recomputation, live weak subclass enumeration and
+type metadata mutation. O84–O88 complete slots and builtin subtype storage;
+protocol completion and dynamic source/import work remain O89–O96.

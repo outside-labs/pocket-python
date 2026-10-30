@@ -1,8 +1,9 @@
 import {NATIVE_SUBCLASS_BASES} from "./class-values.mjs";
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
+import {RegistryError} from "./module-registry.mjs";
 import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
+import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, hierarchyTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
 
@@ -11,6 +12,7 @@ export class Raised { constructor(value) { this.value = value; } }
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const userProtocol = value => classes.protocolObject(value);
+  classes.transactions = state.transactions;
   const resolveClassBases = (record, site) => {
     if (!record.originalBases && record.bases.every(base => classes.isType(base))) return beginClass(record, site);
     if (!record.originalBases) {
@@ -97,7 +99,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const moduleMissing = (record, site) => {
     if (record.mode === "import") {
       const frame = state.frames.at(-1);
-      const result = moduleContext.planAttribute(record.receiver, record.name, true, frame.pool.module.name);
+      let result;
+      try { result = moduleContext.planAttribute(record.receiver, record.name, true, frame.pool.module.name, record.skipNamespace); }
+      catch (error) { if (error instanceof RegistryError && error.code === "IMPORT") python(error.name, error.message); throw error; }
       if (result.kind === "load") { state.pendingImport = {plan: result.plan, inheritedException: frame.activeException}; return null; }
       return valueTask(result.value, site, record.after);
     }
@@ -127,6 +131,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       [...environment.order].filter(name => environment.cells.get(name)?.bound).map(name => values.string(Array.from(name, char => char.codePointAt(0))));
     state.temporaries.push(...names);
     return valueTask(values.list(names), site, record.after);
+  };
+  const nativeModuleDirectory = (receiver, site, after, depth) => {
+    const environment = receiver.environment, record = {receiver, depth, after};
+    if (environment.dictionary !== null) {
+      const key = values.string(Array.from("__dir__", char => char.codePointAt(0))); state.temporaries.push(key);
+      return dictionaryTask(environment.dictionary, key, site, continuation("module-native-dir", record), depth, "probe");
+    }
+    const hook = environmentCell(environment, "__dir__"); return moduleDirectory(record, !!hook?.bound, hook?.value, site);
   };
   const namespaceSnapshot = bindings => {
     const result = values.dict([]); state.temporaries.push(result);
@@ -657,6 +669,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         failure.frameUpdateFailure = true; mutate(failure, () => { failure.context = current.inplace ? value : current.context; return () => { failure.context = null; }; });
         throw new Raised(failure);
       }
+      if (current.kind.startsWith("hierarchy-")) { current.transaction.rollback(); hierarchyDone(current.transaction); }
       if (current.kind === "native-doc-result" && current.ignoreAttribute && value.name === "AttributeError") return valueTask(null, site, current.after);
       if (current.kind === "wrapper-metadata" && value.name === "AttributeError") return wrapperNext({...current, position: current.position + 1}, site);
       if (current.kind === "property-documentation" && value.name === "AttributeError") return propertyResult(current, null, false, site);
@@ -899,6 +912,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "property-documentation") return propertyResult(completion, value, value !== null, site);
     if (completion?.kind === "advertised-instance")
       return valueTask(classes.isType(value) && classes.subclass(value, completion.type), site, completion.after);
+    if (completion?.kind === "descriptor-qualification") {
+      const name = values.text(classes.payload(value));
+      if (name === null) python("TypeError", "Type __qualname__ is not a string");
+      const result = values.string(Array.from(name + "." + completion.receiver.nativeKey, char => char.codePointAt(0)));
+      classes.functionMetadata(completion.receiver, "qualifiedName", result);
+      return valueTask(result, site, completion.after);
+    }
     if (completion?.kind === "native-method-qualname") {
       const text = values.text(value);
       if (text === null) python("TypeError", "native method qualification requires a string __qualname__");
@@ -945,6 +965,27 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       values.checkBufferResize(receiver);
       mutate(receiver, () => { const items = receiver.items; receiver.items = [...value.items]; return () => { receiver.items = items; }; });
       return valueTask(null, site, completion.after);
+    }
+    if (completion?.kind === "hierarchy-result") return unaryTask("iter", value, site, continuation("hierarchy-iter", completion));
+    if (completion?.kind === "hierarchy-iter") {
+      const after = continuation("hierarchy-sequence", completion);
+      if (userProtocol(value)) return valueTask(value, site, continuation("dir-iter", {receiver: value, depth: 0, after}));
+      const result = values.list([]); state.temporaries.push(value, result); return consumeNext("list", value, result, site, after, 0);
+    }
+    if (completion?.kind === "hierarchy-sequence") {
+      const {transaction, type} = completion;
+      if (type.mro === completion.before) {
+        classes.validateMro(type, value.items);
+        const entry = transaction.snapshots.find(item => item.type === type);
+        mutate(type, () => {
+          const previous = [type.mro, type.storage, type.typeLayout], installed = entry.installed;
+          type.mro = Object.freeze([...value.items]); type.storage = classes.derivedStorage(type, type.bases); type.typeLayout = type.storage.family === "type";
+          entry.installed = type.mro;
+          return () => { [type.mro, type.storage, type.typeLayout] = previous; entry.installed = installed; };
+        });
+      }
+      if (type === transaction.type && type.bases !== transaction.bases) return hierarchyTask(transaction, [], site, completion.after);
+      return hierarchyTask(transaction, [...classes.subclasses(type).filter(item => item instanceof ClassValue), ...completion.pending], site, completion.after);
     }
     if (completion?.kind === "native-doc-result") return valueTask(null, site, completion.after);
     if (completion?.kind === "native-reinit") {
@@ -1490,12 +1531,42 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return dictionaryTask(result, entry.key, site, continuation("dict-union", {...record, serial: entry.position}), depth,
       "set", entry.value, values.dictionaryEntryHash(entry));
   };
+  const hierarchyDone = transaction => {
+    transaction.active = false;
+    const index = state.transactions.indexOf(transaction); if (index >= 0) state.transactions.splice(index, 1);
+  };
+  const hierarchyNext = (transaction, pending, site, after) => {
+    if (!pending.length || !transaction.active) { hierarchyDone(transaction); return valueTask(null, site, after); }
+    const [type, ...tail] = pending;
+    let entry = transaction.snapshots.find(item => item.type === type);
+    if (!entry) {
+      entry = {type, bases: type.bases, mro: type.mro, storage: type.storage, typeLayout: type.typeLayout, installed: null};
+      mutate(transaction, () => { transaction.snapshots.push(entry); return () => transaction.snapshots.pop(); });
+    }
+    const storage = classes.derivedStorage(type, type.bases);
+    mutate(type, () => { const previous = type.storage; type.storage = storage; return () => { type.storage = previous; }; });
+    const record = {transaction, type, before: type.mro, pending: tail, after};
+    const item = type.metaclass ? classes.lookup(type.metaclass, "mro") : {found: false};
+    if (item.found && !(item.value instanceof BuiltinValue && item.value.name === "type.mro")) {
+      const plan = classes.bindAttribute(item.value, type, type.metaclass);
+      return plan.kind === "value" ? callTask(plan.value, [], [], [], site, continuation("hierarchy-result", record)) :
+        callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], depth: 0, after: continuation("hierarchy-result", record)}));
+    }
+    const result = values.list(classes.defaultMro(type)); state.temporaries.push(result);
+    return valueTask(result, site, continuation("hierarchy-sequence", record));
+  };
   const dispatch = task => {
     while (task) {
       classes.lookupCache = task.lookupCache || null;
       count("dispatch:" + task.kind);
       let {callable, args, keywords, keywordValues, site, completion, depth} = task;
       try {
+        if (task.kind === "hierarchy-next") {
+          state.temporaries = operationRoots(task);
+          try { task = hierarchyNext(task.transaction, task.pending, site, completion); }
+          catch (error) { if (!(error instanceof NamespaceLookupRequest)) { task.transaction.rollback(); hierarchyDone(task.transaction); } throw error; }
+          continue;
+        }
         if (task.kind === "namespace-create") {
           state.temporaries = operationRoots(task);
           const {phase, dictionary} = task;
@@ -1593,7 +1664,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           continue;
         }
         if (task.kind === "attribute") {
-          if (task.receiver instanceof ModuleValue) {
+          if (task.receiver instanceof ModuleValue && task.receiver.type && task.operation === "import") {
+            task = attributeTask(task.receiver, task.name, site, continuation("module-missing", {receiver: task.receiver, name: task.name, mode: "import", skipNamespace: true, after: completion}), depth);
+            continue;
+          }
+          if (task.receiver instanceof ModuleValue && (!task.receiver.type || ["native-get", "native-set", "native-delete"].includes(task.operation))) {
             state.temporaries = operationRoots(task);
             const {receiver, name, operation} = task, environment = receiver.environment;
             const writing = ["set", "delete", "native-set", "native-delete"].includes(operation);
@@ -1602,7 +1677,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = valueTask(values.environmentDictionary(environment), site, completion); continue;
             }
             if (name === "__class__") {
-              if (writing) python("TypeError", "module class assignment requires compatible layouts");
+              if (writing) { task = valueTask(classes.reassignClass(receiver, task.item, operation.includes("delete")), site, completion); continue; }
               task = valueTask(classes.classAttribute(receiver), site, completion); continue;
             }
             const key = task.key || values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
@@ -2209,7 +2284,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               state.temporaries.push(payload);
               task = valueTask(payload, site, continuation("native-new", {type: original, after: completion})); continue;
             }
-            if (original instanceof InstanceValue && original.nativePayload !== undefined) {
+            if (classes.isInstance(original) && (original.nativePayload !== undefined || original instanceof ModuleValue)) {
               const finish = continuation("relay", {receiver: original, after: completion});
               if (nativeName === "__init__") {
                 if (nativeOwner === "property") {
@@ -2257,14 +2332,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 const writing = nativeName !== "__getattribute__", remove = nativeName === "__delattr__";
                 if (keywords.length || rest.length !== (writing && !remove ? 2 : 1)) python("TypeError", "Invalid native attribute arguments");
                 const name = values.text(rest[0]); if (name === null) python("TypeError", "Attribute name must be a string");
-                task = !writing && name === "__class__" ? valueTask(original.type, site, finish) : attributeTask(raw, name, site, finish, depth, writing ? remove ? "delete" : "set" : "get", null, null, rest[1]); continue;
+                task = !writing && name === "__class__" ? valueTask(original.type, site, finish) : attributeTask(raw, name, site, finish, depth, writing ? remove ? "native-delete" : "native-set" : "native-get", null, null, rest[1]); continue;
               }
-              if (nativeOwner === "module" && nativeName === "__dir__") { task = callTask(classes.builtin("module.__dir__"), [raw], keywords, keywordValues, site, finish, depth); continue; }
+              if (nativeOwner === "module" && nativeName === "__dir__") { if (rest.length || keywords.length) python("TypeError", "__dir__ takes no arguments"); task = nativeModuleDirectory(raw, site, finish, depth); continue; }
             }
           }
-          if (callable.name === "native-module-get") { task = attributeTask(args[0].nativePayload, values.text(args[1]), site, continuation("relay", {receiver: args[0], after: completion}), depth); continue; }
           if (callable.name === "native-module-missing") {
-            const receiver = args[0] instanceof ModuleValue ? args[0] : args[0].nativePayload;
+            const receiver = classes.nativeModule(args[0]);
             task = moduleEntry({receiver, key: args[1], name: values.text(args[1]), mode: "get", depth, after: continuation("relay", {receiver: args[0], after: completion})}, site, false, null); continue;
           }
           if (NATIVE_SUBCLASS_BASES.includes(nativeOwner) && callable.name.includes(".") && (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined)) {
@@ -2355,6 +2429,20 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (values.isSet(receiver)) values.setMethod(receiver, nativeName);
               task = callTask(allocate(ValueMethod, receiver, nativeName), rest, keywords, keywordValues, site, finish, depth); continue;
             }
+          }
+          if (callable.name === "type.__subclasses__") {
+            if (keywords.length || args.length !== 1 || !classes.isType(args[0])) python("TypeError", "__subclasses__ requires one type receiver");
+            const roots = classes.subclasses(args[0]); state.temporaries.push(...roots);
+            task = valueTask(values.list(roots), site, completion); continue;
+          }
+          if (callable.name === "assign-bases") {
+            const {transaction, storage} = classes.beginBases(args[0], args[1], args[2]); state.temporaries.push(transaction);
+            state.transactions.push(transaction);
+            try {
+              mutate(args[0], () => { const before = [args[0].bases, args[0].storage]; args[0].bases = transaction.bases; args[0].storage = storage; return () => { [args[0].bases, args[0].storage] = before; }; });
+              task = hierarchyTask(transaction, [args[0]], site, completion);
+            } catch (error) { transaction.rollback(); hierarchyDone(transaction); throw error; }
+            continue;
           }
           if (callable.name === "module.__dir__") {
             const bound = callable instanceof ValueMethod, receiver = bound ? callable.receiver : args[0];
@@ -2616,14 +2704,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (callable.name.startsWith("instance-dictionary-")) {
             const [receiver, dictionary, key, item, found, fallback, skipNative = false] = args, operation = callable.name.slice("instance-dictionary-".length);
-            if (!(receiver instanceof InstanceValue) || !values.isDict(dictionary) || !values.isString(key) || typeof found !== "boolean" || typeof skipNative !== "boolean" || ![6, 7].includes(args.length) || keywords.length)
+            if (!classes.isInstance(receiver) || !values.isDict(dictionary) || !values.isString(key) || typeof found !== "boolean" || typeof skipNative !== "boolean" || ![6, 7].includes(args.length) || keywords.length)
               throw new TypeError("Invalid instance dictionary operation.");
             const after = continuation("instance-entry", {receiver, key, operation, found, fallback, skipNative, depth, after: completion});
             task = dictionaryTask(dictionary, key, site, after,
               depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
           }
           if (callable.name === "instance-attribute-missing") {
-            if (!(args[0] instanceof InstanceValue) || !values.isString(args[1]) || args.length !== 2 || keywords.length)
+            if (!classes.isInstance(args[0]) || !values.isString(args[1]) || args.length !== 2 || keywords.length)
               throw new TypeError("Invalid instance attribute failure.");
             classes.instanceMissing(args[0], values.text(args[1]), {found: false, skipNative: true});
           }
@@ -2891,6 +2979,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const result = values.copyDictionary(dictionary); state.temporaries.push(result);
             task = nativeDirectoryNext({receiver, result, position: 0, depth, after: completion}, site); continue;
           }
+          if (callable.name === "descriptor-qualification") {
+            task = attributeTask(args[0].nativeOwner, "__qualname__", site, continuation("descriptor-qualification", {receiver: args[0], after: completion}), depth); continue;
+          }
           if (callable.name === "native-method-qualname") {
             task = attributeTask(args[0].receiver, "__qualname__", site, continuation("native-method-qualname", {receiver: args[0], after: completion}), depth); continue;
           }
@@ -3020,7 +3111,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             count("builtin:" + callable.name);
             if (args.length !== 1 || keywords.length) python("TypeError", "hash requires one positional value");
             if (callable.name === "object.__hash__") {
-              if (!(args[0] instanceof InstanceValue || args[0] instanceof ClassValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "The object hash descriptor supports source objects in this stage.");
+              if (!(classes.isInstance(args[0]) || args[0] instanceof ClassValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "The object hash descriptor supports source objects in this stage.");
               task = deliver(values.identityHash(args[0]), completion, site);
             } else task = unaryTask("hash", args[0], site, completion, depth);
             continue;

@@ -1,14 +1,14 @@
 """Known source-console assets, canonical LF bytes; refresh with scripts/lock_interpreter.py."""
 
-ENGINE_FINGERPRINT = '065069d106565d183fb4985c7e49416f7fc21caa7337c3dad6644c8092857433'
+ENGINE_FINGERPRINT = '851de8ac7b9ecea31016c0f23eb592168ce2648b8c92b8a768dbfdb1181d3106'
 ENGINE_FILES = (
     ('browser-protocol.mjs', 10589, '920e8d07c7070995636dff40fdf4333afc9bd4143483db5d8dff82ec1f28ff76'),
     ('bytecode.mjs', 6836, 'e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4'),
-    ('class-policy.mjs', 4497, '8bf79856b97ab97c154297f94fdc46641964490de89f2fc97982ded443158143'),
-    ('class-values.mjs', 134631, 'a8ae2c6325e5dff5b2d672e26be419592b68fdfd89cab548b622a7e5658ae711'),
+    ('class-policy.mjs', 4480, '64023a36f7a319420a81c42cf23a9fb0f7b9b7087b16f4706711859a2ffe4734'),
+    ('class-values.mjs', 144019, '11ab26efd4d339a267a3314202842cae44769f8ee6269b72b88c2160b11998f0'),
     ('function-bytecode.mjs', 23919, 'fb3a94bc9f4f6ab44953926640aa103e20f74c7acc6348783a47b235d7f86a29'),
-    ('function-objects.mjs', 9701, '4f38942ad9f4aca929fae5632848f661a4d6da55303a12d8a4b70fa0e4392080'),
-    ('functions.mjs', 89427, '32d7ca20f13c01f47b180eeb6d42cd629fd8b7e4c2f712a48116f15309edaa8e'),
+    ('function-objects.mjs', 10316, '0abaca714ebd350b634644adc5cd007a4820e7f29bc1fe73ee11776e200a5a02'),
+    ('functions.mjs', 89617, '3cbb7a9c528047ce046b6de8da50a0a6878b6c805e3d0017261d7ed2419c8524'),
     ('interpreter-host.mjs', 7318, '4afadfd987000afa6221ee73dcd64e9c00a2d13c4324718248d396302a39296d'),
     ('interpreter-worker.mjs', 8855, '324cc23100eb40ef04f2909b805d7abc0c8651b4608b3a61a95470ec7e74e19e'),
     ('library-catalog.mjs', 907, '0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c'),
@@ -17,20 +17,20 @@ ENGINE_FILES = (
     ('licenses/POCKET-PYTHON.txt', 1066, '30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85'),
     ('licenses/UNICODE.txt', 1995, 'e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96'),
     ('memory.mjs', 9742, 'e934db7a46b9c7dd52ad2d848f7bc9d24eb124150ee7dd1fe8d96cdb4227b249'),
-    ('module-context.mjs', 9010, '8aab5d6568b5d3a2df7348bbcd4806fb4c06bfb6b72a61d7918588b5b06bc158'),
+    ('module-context.mjs', 9051, 'd437935aadf455f9a154db8f9fe13f83587a0bd59d42e30f69d0aa6db93acf8a'),
     ('module-registry.mjs', 10439, 'bd3e07292b937c8d587ef92230b59d23bc414d975a21bdaf351dad829e1f43ba'),
     ('module-session.mjs', 12883, 'b7b7859d18ecfee53cc79fbb3eb92820eabe0ad67ea97f5d317d5c59bd0619f1'),
     ('native-namespaces.mjs', 171420, '87c52893438008dfe69d5a53e567fc274e0d6c352cbdb25668a708870d2b550b'),
     ('numeric.mjs', 13954, '2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad'),
-    ('operation-runtime.mjs', 245118, 'd90edcaaf199b0ecd420fde7a6fc78c19954836c8451b5362be43867709a902c'),
-    ('operations.mjs', 46015, 'b28ceb6fbd1200d8c6c8e1b41698ff2803715c5250e512a374471a4e66fdb9a4'),
+    ('operation-runtime.mjs', 251857, '849b031d480ce02c03a1a14481848d5d78442389ca51d5c0553886f62976ff02'),
+    ('operations.mjs', 46873, 'ed2c502d9e51c49eb73aa033fe8151fc2a9a630fd0da5591136de12b7ad649dd'),
     ('source-compiler.mjs', 48203, '18a3bdb6e9b8cfdb3b40cf794d61acd08e078b29e8538c01b940eb3e00338eab'),
     ('source-identifiers.mjs', 25949, '1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914'),
     ('source-modules.mjs', 5115, '3f824a8cf79a9ab78c1b817ed1597d114d851748a6b0894a4ac6b4bdbe01cfef'),
     ('source-parser.mjs', 34413, 'b629fa1e77dd224a04dc03c2418251d444c7ad8e4ca072ba16c79b0711fbb94a'),
     ('source-tokens.mjs', 15061, 'e044276920224f8ed788f4e3445bee926698444e6cf0b9e8573bd15fec94ad54'),
     ('string-printability.mjs', 13287, '355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f'),
-    ('values.mjs', 109773, '9cdd3932190019ebc2d5296a86b3e621bb407c5aeab6e70fec4ae4b1e9df8d31'),
+    ('values.mjs', 110648, '12f9c9c2c88c71ab39d44be9cf4c65063e134047ad6da03ca3ca81683979fdef'),
     ('vm.mjs', 6080, '796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d'),
 )
 ENGINE_IMPORTS = (
@@ -82,6 +82,7 @@ ENGINE_IMPORTS = (
     ('operation-runtime.mjs', 'class-policy.mjs'),
     ('operation-runtime.mjs', 'class-values.mjs'),
     ('operation-runtime.mjs', 'function-objects.mjs'),
+    ('operation-runtime.mjs', 'module-registry.mjs'),
     ('operation-runtime.mjs', 'operations.mjs'),
     ('operation-runtime.mjs', 'values.mjs'),
     ('operations.mjs', 'class-policy.mjs'),

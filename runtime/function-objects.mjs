@@ -83,6 +83,20 @@ export class ClassValue {
     this.directoryInitialCount = namespace.size; this.defaultDoc = !namespace.has("__doc__");
   }
 }
+export class HierarchyTransaction {
+  constructor(type, bases, snapshots) { this.type = type; this.bases = bases; this.snapshots = snapshots; this.active = true; }
+  rollback() {
+    if (!this.active) return;
+    for (const entry of [...this.snapshots].reverse()) {
+      const type = entry.type;
+      if (entry.installed === null ? type.mro === entry.mro : type.mro === entry.installed) {
+        type.mro = entry.mro; type.storage = entry.storage; type.typeLayout = entry.typeLayout;
+      }
+    }
+    if (this.type.bases === this.bases) this.type.bases = this.snapshots[0].bases;
+    this.active = false;
+  }
+}
 export class ClassNamespaceValue {
   constructor(owner) { this.owner = owner; Object.freeze(this); }
 }

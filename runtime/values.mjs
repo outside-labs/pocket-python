@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {GeneratorValue, FrameValue, FrameLocalsValue, generatorRoots, Cell, Environment, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue, IntegerIdentityRecord} from "./function-objects.mjs";
+import {GeneratorValue, FrameValue, FrameLocalsValue, generatorRoots, Cell, Environment, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, HierarchyTransaction, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue, IntegerIdentityRecord} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -476,7 +476,7 @@ export class ValueRuntime {
     const pending = [value], seen = new Set();
     while (pending.length) {
       const item = pending.pop();
-      if (item instanceof FrameLocalsValue || item instanceof InstanceValue || item instanceof ClassValue && item.metaclass !== null || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
+      if (item instanceof FrameLocalsValue || item instanceof InstanceValue || item instanceof ModuleValue && item.type instanceof ClassValue || item instanceof ClassValue && item.metaclass !== null || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
       if (item instanceof SetValue) { pending.push(...item.storage.entries.map(entry => entry.key)); continue; }
       if (item instanceof DictValue && item.ownedKeys) return true;
       if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;
@@ -1548,7 +1548,7 @@ export function valueLayout(value) {
     {bytes: 72 + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [value.dictionary, ...value.cells.values()]};
   if (value instanceof CodePool) return {bytes: value.bytes + (value.codeObjects === null ? 0 : 8 + 8 * value.codeObjects.size), children: [...value.code.constants, ...(value.module ? [value.module] : []), ...(value.codeObjects?.values() ?? [])]};
   if (value instanceof CodeValue) return {bytes: 56 + 24 * value.metadata.size, children: [value.pool, ...value.metadata.values()]};
-  if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length, children: [value.environment, value.pool]};
+  if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length + (value.type ? 8 : 0), children: [value.environment, value.pool, ...(value.type ? [value.type] : [])]};
   if (value instanceof CallArguments) return {bytes: 80 + (value.keywordMap === null ? 0 : 8) + 8 * value.args.length + value.keywords.reduce((sum, key) => sum + 24 + 2 * key.length, 0),
     children: [value.callable, ...value.args, ...value.keywordValues, ...(value.keywordMap === null ? [] : [value.keywordMap])]};
   if (value instanceof FunctionValue) {
@@ -1559,10 +1559,12 @@ export function valueLayout(value) {
       children: [value.pool, value.globals, ...value.closure.values(), ...defaults, ...(value.attributes === null ? [] : [value.attributes]), ...(value.documentation === null ? [] : [value.documentation]), ...metadata]};
   }
   if (value instanceof ClassValue) return {bytes: (value.storage?.explicit || value.storage?.count ? 48 + value.storage.ownNames.reduce((sum, name) => sum + 8 + 2 * name.length, 0) : 0) + (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
-    8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1) + (value.namespaceDictionary ? 1 : 0)) + (value.protocolNames === null ? 0 : 8 + value.protocolNames.reduce((sum, name) => sum + 8 + 2 * name.length, 0)) + (value.namespaceEntries === null ? 0 : 8 + value.namespaceEntries.reduce((sum, entry) => sum + 40 + 2 * entry.hash.length, 0)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
-    children: [...(value.namespaceKeys || []), ...value.bases, ...value.mro.filter(item => item !== value), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.namespaceEntries || []).map(entry => entry.key), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.metaclass === null ? [] : [value.metaclass])]};
+    8 * (value.bases.length + value.mro.length + (value.identityName === undefined ? 0 : 1) + (value.identityQualname === undefined ? 0 : 1) + (value.metaclass === null ? 0 : 1) + (value.namespaceDictionary ? 1 : 0)) + (value.protocolNames === null ? 0 : 8 + value.protocolNames.reduce((sum, name) => sum + 8 + 2 * name.length, 0)) + (value.namespaceEntries === null ? 0 : 8 + value.namespaceEntries.reduce((sum, entry) => sum + 40 + 2 * entry.hash.length, 0)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
+    children: [...(value.namespaceKeys || []), ...value.bases, ...value.mro.filter(item => item !== value), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.namespaceEntries || []).map(entry => entry.key), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.metaclass === null ? [] : [value.metaclass]), ...(value.identityName === undefined ? [] : [value.identityName]), ...(value.identityQualname === undefined ? [] : [value.identityQualname])]};
   if (value instanceof NamespaceLookupCache) return {bytes: 64 + value.entries.reduce((sum, entry) => sum + 48 + 2 * entry.name.length, 0),
     children: value.entries.flatMap(entry => [entry.owner, entry.dictionary, entry.key])};
+  if (value instanceof HierarchyTransaction) return {bytes: 96 + 8 * value.bases.length + value.snapshots.reduce((sum, entry) => sum + 64 + 8 * (entry.bases.length + entry.mro.length + (entry.installed?.length || 0)), 0),
+    children: [value.type, ...value.bases, ...value.snapshots.flatMap(entry => [entry.type, ...entry.bases, ...entry.mro, ...(entry.installed || [])])]};
   if (value instanceof ClassNamespaceValue) return {bytes: 48, children: [value.owner]};
   if (value instanceof InstanceValue) return value.attributes instanceof Map ?
     {bytes: 80 + (value.nativePayload === undefined ? 0 : 8) + (value.slotValues ? 8 + 8 * value.type.storage.count : 0) + [...value.attributes.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0),
@@ -1575,8 +1577,8 @@ export function valueLayout(value) {
   if (value instanceof PropertyAccessorValue) return {bytes: 64, children: [value.property]};
   if (value instanceof AppendValue) return {bytes: 64, children: [value.receiver]};
   if (value instanceof ValueMethod) return {bytes: 64 + 2 * value.name.length, children: [value.receiver]};
-  if (value instanceof BuiltinValue) return {bytes: (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 48 + 2 * value.name.length + (value.nativeOwner ? 8 : 0) + (value.namespaceDictionary ? 8 : 0),
-    children: [...(value.namespaceKeys || []), ...(value.nativeOwner ? [value.nativeOwner] : []), ...(value.namespaceDictionary ? [value.namespaceDictionary] : [])]};
+  if (value instanceof BuiltinValue) return {bytes: (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 48 + 2 * value.name.length + (value.nativeOwner ? 8 : 0) + (value.namespaceDictionary ? 8 : 0) + (value.qualifiedName === undefined ? 0 : 8),
+    children: [...(value.namespaceKeys || []), ...(value.nativeOwner ? [value.nativeOwner] : []), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.qualifiedName === undefined ? [] : [value.qualifiedName])]};
   if (value instanceof ExceptionValue) return {bytes: 96 + 2 * (value.name.length + value.message.length) +
     value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),
     children: [...value.args, ...(value.context ? [value.context] : [])]};

@@ -49,7 +49,7 @@ export function completion(kind, fields = {}) {
       record = {kind, receiver: fields.receiver, type: fields.type, owner: fields.owner ?? null,
         pending: operands(fields.pending ?? []), level: fields.level ?? 0, mode: fields.mode, depth: fields.depth, after};
       depthCheck(record.depth); break;
-    case "native-method-qualname": record = {kind, receiver: fields.receiver, after}; break;
+    case "native-method-qualname": case "descriptor-qualification": record = {kind, receiver: fields.receiver, after}; break;
     case "view-item": record = {kind, receiver: fields.receiver, key: fields.key, depth: fields.depth, after}; depthCheck(record.depth); break;
     case "proxy-get": record = {kind, receiver: fields.receiver, fallback: fields.fallback, after}; break;
     case "dict-union":
@@ -83,12 +83,13 @@ export function completion(kind, fields = {}) {
     case "module-entry": case "module-hook":
       record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, mode: fields.mode, depth: fields.depth, after}; break;
     case "module-native-dir": case "module-dir": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
-    case "module-missing": record = {kind, receiver: fields.receiver, name: fields.name, mode: fields.mode, after}; break;
+    case "module-missing": record = {kind, receiver: fields.receiver, name: fields.name, mode: fields.mode, skipNamespace: fields.skipNamespace ?? false, after}; break;
     case "class": record = {kind, nameValue: fields.nameValue, basesTuple: fields.basesTuple, originalBases: fields.originalBases, bases: operands(fields.bases), module: fields.module,
       ...(fields.keywords?.length ? {keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)} : {}),
       ...(fields.metaclass ? {metaclass: fields.metaclass} : {}), ...(fields.invalidMetaclass ? {invalidMetaclass: true} : {})}; break;
     case "class-created": record = {kind, cell: fields.cell, after}; break;
     case "init": record = {kind, instance: fields.instance, after}; break;
+    case "hierarchy-result": case "hierarchy-iter": case "hierarchy-sequence": record = {kind, transaction: fields.transaction, type: fields.type, before: fields.before, pending: operands(fields.pending), after}; break;
     case "native-doc-result": record = {kind, receiver: fields.receiver, ignoreAttribute: fields.ignoreAttribute, after}; break;
     case "native-reinit": case "native-property-copy": record = {kind, receiver: fields.receiver, after}; break;
     case "native-repeat": record = {kind, receiver: fields.receiver, inplace: fields.inplace, after}; break;
@@ -301,7 +302,7 @@ function visit(record) {
       return [record.receiver, record.result, record.owner, ...record.bases, record.source, record.keys, record.key, ...completionRoots(record.after)];
     case "bases-check": case "bases-class": case "bases-instance": case "bases-walk":
       return [record.receiver, record.type, record.owner, ...record.pending, ...completionRoots(record.after)];
-    case "native-method-qualname": return [record.receiver, ...completionRoots(record.after)];
+    case "native-method-qualname": case "descriptor-qualification": return [record.receiver, ...completionRoots(record.after)];
     case "view-item": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "proxy-get": return [record.receiver, record.fallback, ...completionRoots(record.after)];
     case "dict-union": return [record.left, record.right, record.result, ...completionRoots(record.after)];
@@ -320,6 +321,7 @@ function visit(record) {
     case "module-entry": case "module-hook": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "class": case "condition": case "name-stored": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
+    case "hierarchy-result": case "hierarchy-iter": case "hierarchy-sequence": return [record.transaction, record.type, ...record.before, ...record.pending, ...completionRoots(record.after)];
     case "native-doc-result":
     case "native-reinit": case "native-property-copy": return [record.receiver, ...completionRoots(record.after)];
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
@@ -484,6 +486,9 @@ export function dictionaryBuildTask(receiver, parts, site, after = null, depth =
     throw new TypeError("Invalid dictionary build phase.");
   return Object.freeze({kind: "dict-build", receiver, parts: operands(parts), position, site, completion: after, depth});
 }
+export function hierarchyTask(transaction, pending, site, after = null) {
+  completionRoots(after); return Object.freeze({kind: "hierarchy-next", transaction, pending: operands(pending), site, completion: after, depth: 0});
+}
 export function namespaceCreateTask(fields, site, after = null, depth = 0) {
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "namespace-create", ...fields, phase: fields.phase ?? 0, site, completion: after, depth});
@@ -493,6 +498,7 @@ export function operationRoots(task) {
 }
 function taskRoots(task) {
   switch (task.kind) {
+    case "hierarchy-next": return [task.transaction, ...task.pending, ...completionRoots(task.completion)];
     case "namespace-create": return [...(task.slotNames || []), task.dictionary, ...task.bases, task.defaultModule, task.moduleObject, task.cell, task.dictcell, task.type,
       ...(task.metaclass ? [task.metaclass] : []), ...task.keywordValues, ...completionRoots(task.completion)].filter(value => value !== undefined);
     case "notify": return [task.type, ...task.entries.flatMap(entry => typeof entry[0] === "string" ? [entry[1]] : entry), ...task.keywordValues, ...completionRoots(task.completion)];
