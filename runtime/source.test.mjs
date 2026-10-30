@@ -13,7 +13,7 @@ const unit = (source, name = "app", imports = [], package_ = false) => ({name, s
 async function run(source, options = {}) { return runSourceRequest({modules: [unit(source)], ...options}); }
 const error = (source, code, options = {}) => assert.throws(() => compileSource(source, options), e => e instanceof SourceError && e.code === code);
 
-test("comprehension lambda defaults retain deferred admission while lambda bodies keep their own scope", async () => {
+test("comprehension lambda defaults bind in their containing scope while lambda bodies keep their own scope", async () => {
   const expressions = [
     "[lambda a=(y:=7):a for x in [1]]",
     "{x:lambda a=(y:=7):a for x in [1]}",
@@ -24,9 +24,9 @@ test("comprehension lambda defaults retain deferred admission while lambda bodie
   ];
   for (const languageProfile of ["core-source/1", "classes-source/1"]) {
     for (const expression of expressions) {
-      const result = await run("print('must not execute')\ny=9\nr="+expression+"\n", {compileOptions: {languageProfile}});
-      assert.equal(result.error?.code, "UNSUPPORTED", JSON.stringify(result.error));
-      assert.equal(result.stdout, ""); assert.equal(result.stats, null);
+      const result = await run("print('entered')\ny=9\nr="+expression+"\n", {compileOptions: {languageProfile}});
+      assert.equal(result.ok, true, JSON.stringify(result.error));
+      assert.equal(result.stdout, "entered\n"); assert.equal(result.closed.bytes, 0);
     }
     const result = await run("y=9\na=[lambda:(y:=7) for x in [1]]\nb=[lambda p=x+1:p for x in [7]]\nc=[lambda p=(lambda:(y:=8)):p for x in [1]]\nprint(y,a[0](),b[0](),c[0]()())\n", {compileOptions: {languageProfile}});
     assert.equal(result.ok, true, JSON.stringify(result.error)); assert.equal(result.stdout, "9 7 8 8\n");
@@ -78,9 +78,10 @@ test("augmented lists retain aliases and self-extension/multiplication semantics
 
 test("syntax and feature diagnostics reject complete source before application effects", async () => {
   for (const source of ["return 1", "break", "continue", "if True print(1)", "def f(:\n pass", "x=(1+)", "f(a=1,a=2)", "f(a=1,2)", "try:\n pass\n", "def f(a=1,b):\n pass", "def f(*):\n pass", "def f(a,a):\n pass", "None=1", "import *"]) error(source, "SYNTAX");
-  for (const source of ["class C: pass", "async def f(): pass", "x=[(n:=1) for n in []]", "x=2@3", "from x import *", "x:int=1", "def f(a:int): pass", "raise ValueError() from None", "'\\N{SNOWMAN}'"]) {
+  for (const source of ["class C: pass", "async def f(): pass", "x=2@3", "from x import *", "x:int=1", "def f(a:int): pass", "raise ValueError() from None", "'\\N{SNOWMAN}'"]) {
     error(source, "UNSUPPORTED");
   }
+  error("x=[(n:=1) for n in []]", "SYNTAX");
   const r = await run("print('must not execute')\nclass Deferred: pass\n");
   assert.equal(r.ok, false); assert.equal(r.stdout, ""); assert.equal(r.error.code, "UNSUPPORTED"); assert.equal(r.stats, null);
 });

@@ -533,8 +533,7 @@ def smoke(channel=None):
                     checks.append('generator-expression-iterator-snapshots-and-owned-directory-hints-and-ordering-compose-offline')
                     checks.append('optimized-and-isolated-comprehension-snapshots-compose-after-offline-reload')
                     run('y=9\nr=[lambda a=(y:=7):a for x in [1]]\nprint(y,r[0]())\n', '7 7\n')
-                    assert page.locator('#result').inner_text() == ''
-                    checks.append('comprehension-lambda-default-bindings-refuse-before-offline-effects')
+                    checks.append('comprehension-lambda-default-bindings-execute-with-enclosing-scope-offline')
                     run(REPETITION_SOURCE, 'copies True 1 2 1\nevents run save run save\nbanner 6 True\nmutation 2 4 finish finish\ninplace True 6 True\n')
                     for case in repetition['cases']:
                         if case['stage'] not in repetition['implemented_stages']:

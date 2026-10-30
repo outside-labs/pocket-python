@@ -10,7 +10,8 @@
     "O8",
     "O9",
     "O23",
-    "O24"
+    "O24",
+    "O68"
   ],
   "cases": [
     {
@@ -466,7 +467,7 @@
     },
     {
       "id": "dynamic-namespace-key",
-      "stage": "Future",
+      "stage": "O68",
       "source": "type(\"A\",(),{1:2})\n",
       "stdout": ""
     },

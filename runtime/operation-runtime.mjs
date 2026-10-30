@@ -1696,7 +1696,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const bases = basesValue.items, namespace = new Map();
             for (const entry of namespaceValue.entries) {
               charge(1); const key = values.text(entry.key);
-              if (key.length > 256) hard("BUDGET", "ExecutionLimitError", "Class attribute name budget exceeded.");
+              if (key !== null && key.length > 256) hard("BUDGET", "ExecutionLimitError", "Class attribute name budget exceeded.");
               if (key !== null) classes.key(key); namespace.set(key ?? entry.key, entry.value);
             }
             const frame = state.frames.at(-1), currentModule = values.text(environmentCell(frame.callable.globals, "__name__")?.value) || "builtins";
