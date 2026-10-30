@@ -51,7 +51,8 @@ def check(target, channel=None):
     assert platform.python_version() == corpus['reference_version'], 'Oracle changes require an explicit version decision.'
     requests = [{'id': case['id'], 'modules': [{'name': 'app', 'package': False, 'imports': [],
         'notice': 'Synthetic coverage probe notice\n', 'source': case['source']}],
-        'compileOptions': {'languageProfile': corpus['language_profile']}} for case in corpus['cases']]
+        'compileOptions': {'languageProfile': corpus['language_profile']},
+        'options': {'maxSteps': 50000, 'maxWork': 20000000}} for case in corpus['cases']]
     if target == 'node':
         response = json.loads(subprocess.check_output(['node', str(ROOT / 'source-runner.mjs')],
             input=json.dumps(requests), text=True, encoding='utf-8', timeout=30))

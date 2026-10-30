@@ -86,6 +86,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const hook = environmentCell(environment, "__getattr__");
     return moduleHook(record, site, !!hook?.bound, hook?.value);
   };
+  const moduleDirectory = (record, found, hook, site) => {
+    if (found) return callTask(hook, [], [], [], site, record.after, record.depth);
+    const environment = record.receiver.environment;
+    const names = environment.dictionary !== null ? environment.dictionary.entries.map(entry => entry.key) :
+      [...environment.order].filter(name => environment.cells.get(name)?.bound).map(name => values.string(Array.from(name, char => char.codePointAt(0))));
+    state.temporaries.push(...names);
+    return valueTask(values.list(names), site, record.after);
+  };
   const namespaceSnapshot = bindings => {
     const result = values.dict([]); state.temporaries.push(result);
     for (const [name, cell] of bindings) {
@@ -273,7 +281,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     state.temporaries.push(record.receiver, record.result);
     const names = classes.directoryNames(record.receiver);
     while (record.position < names.length) {
-      const key = values.string(Array.from(names[record.position], char => char.codePointAt(0)));
+      const name = names[record.position], key = typeof name === "string" ? values.string(Array.from(name, char => char.codePointAt(0))) : name;
       state.temporaries.push(key);
       const next = {...record, position: record.position + 1};
       if (values.dictionaryNeedsProtocol(record.result, key))
@@ -289,7 +297,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return nativeDirectoryNext({...record, result, position: 0}, site);
   };
   const classDirectoryNext = (record, site) => {
-    state.temporaries.push(record.receiver, record.result, ...record.pending);
+    state.temporaries.push(record.receiver, record.result, record.owner, ...record.pending, ...record.names.filter(name => typeof name !== "string"));
     while (true) {
       if (record.owner === null || record.position === record.names.length) {
         if (record.owner !== null) {
@@ -301,13 +309,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (record.pending.length > 1024) hard("BUDGET", "ExecutionLimitError", "Class directory traversal budget exceeded.");
         const [owner, ...pending] = record.pending;
         record = {...record, owner, pending, names: classes.ownClassDirectoryNames(owner), position: 0};
-        state.temporaries.push(owner, ...pending);
+        state.temporaries.push(owner, ...pending, ...record.names.filter(name => typeof name !== "string"));
       }
       const name = record.names[record.position];
       const item = classes.classDirectoryEntry(record.owner, name);
       const stored = record.owner.namespaceEntries?.find(entry => typeof name === "string" ? values.text(entry.key) === name : entry.key === name);
       const key = stored?.key ?? (typeof name === "string" ? values.string(Array.from(name, char => char.codePointAt(0))) : name);
-      state.temporaries.push(key, item, ...record.names.filter(name => typeof name !== "string"));
+      state.temporaries.push(key, item);
       const next = {...record, position: record.position + 1};
       if (values.dictionaryNeedsProtocol(record.result, key))
         return dictionaryTask(record.result, key, site, continuation("class-dir-merge", next), record.depth, "set", item);
@@ -752,6 +760,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "module-entry") return moduleEntry(completion, site, value.items[0], value.items[1]);
     if (completion?.kind === "module-hook") return moduleHook(completion, site, value.items[0], value.items[1]);
     if (completion?.kind === "module-dir") return callTask(value, [], [], [], site, continuation("dir-result", completion), completion.depth);
+    if (completion?.kind === "module-native-dir") return moduleDirectory(completion, value.items[0], value.items[1], site);
     if (completion?.kind === "module-missing") return valueTask(value, site, completion.after);
     while (["init", "relay", "subclass-result", "vars-result", "property-name", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
@@ -2050,13 +2059,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             classes.namespaceDescriptorValid(callable, args[0], callable.nativeKind === "classmethod_descriptor");
           }
           if (callable.name === "module.__dir__") {
-            const receiver = callable.receiver;
-            if (!(receiver instanceof ModuleValue) || args.length || keywords.length) python("TypeError", "module.__dir__ takes no arguments");
+            const bound = callable instanceof ValueMethod, receiver = bound ? callable.receiver : args[0];
+            if (!(receiver instanceof ModuleValue) || args.length !== (bound ? 0 : 1) || keywords.length) python("TypeError", "module.__dir__ requires one module receiver");
             const environment = receiver.environment;
-            const names = environment.dictionary !== null ? environment.dictionary.entries.map(entry => entry.key) :
-              [...environment.order].filter(name => environment.cells.get(name)?.bound).map(name => values.string(Array.from(name, char => char.codePointAt(0))));
-            state.temporaries.push(...names);
-            task = valueTask(values.list(names), site, completion); continue;
+            const record = {receiver, depth, after: completion};
+            if (environment.dictionary !== null) {
+              const key = values.string(Array.from("__dir__", char => char.codePointAt(0))); state.temporaries.push(key);
+              task = dictionaryTask(environment.dictionary, key, site, continuation("module-native-dir", record), depth, "probe"); continue;
+            }
+            const hook = environmentCell(environment, "__dir__");
+            task = moduleDirectory(record, !!hook?.bound, hook?.value, site); continue;
           }
           if (callable.name === "object.__init_subclass__") {
             if (args.length !== 1 || keywords.length || !classes.isType(args[0])) python("TypeError", "__init_subclass__ takes no arguments");
@@ -2568,7 +2580,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = attributeTask(receiver, "__dict__", site,
                 continuation("object-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
             }
-            if (classes.isPythonMethod(receiver) || receiver instanceof SuperValue || receiver instanceof MethodWrapperValue) {
+            if (classes.isPythonMethod(receiver) || receiver instanceof SuperValue || receiver instanceof MethodWrapperValue || receiver instanceof ModuleValue) {
               task = attributeTask(receiver, "__dict__", site,
                 continuation("method-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
             }

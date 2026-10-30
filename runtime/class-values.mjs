@@ -1,6 +1,6 @@
 import {isVerifiedFunctionCode} from "./function-bytecode.mjs";
 import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS} from "./native-namespaces.mjs";
-import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
+import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
@@ -423,7 +423,7 @@ export class ClassRuntime {
       else if (value instanceof CodeValue) name = "code";
       else if (value instanceof FrameValue) name = "frame";
       else if (value instanceof BoundMethodValue) name = !value.pythonMethod && value.callable instanceof BuiltinValue ?
-        NATIVE_METHOD_DESCRIPTORS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) ? "builtin_function_or_method" : "method-wrapper" : "method";
+        NATIVE_METHOD_DESCRIPTORS.has(value.callable.name) || NATIVE_CLASS_METHODS.has(value.callable.name) || ["method_descriptor", "classmethod_descriptor", "builtin_function_or_method"].includes(value.callable.nativeKind) ? "builtin_function_or_method" : "method-wrapper" : "method";
       else if (value instanceof PropertyValue) name = "property";
       else if (value instanceof MethodWrapperValue) name = value.kind;
       else if (value instanceof SuperValue) name = "super";
@@ -620,6 +620,7 @@ export class ClassRuntime {
         if (name === "__mro__") return value(this.values.tuple(this.mro(receiver)));
         if (name === "__base__") return value(this.primaryBase(receiver));
         if (name === "__bases__") return value(this.values.tuple([this.mro(receiver)[1]]));
+        if (receiver.name === "module" && name === "__dir__") return this.bindAttribute(this.namespaceDescriptor(receiver, name, "method_descriptor"), null, receiver);
         let item = this.lookup(receiver, name);
         if (!item.found) item = this.nativeEntry(receiver, name);
         if (item.found) return this.bindAttribute(item.value, null, receiver);
@@ -1034,9 +1035,9 @@ export class ClassRuntime {
       if (native) {
         const name = owner.root ? "object" : owner.name, entries = NATIVE_NAMESPACES[name];
         if (!entries) this.fail("UnsupportedOperationError", "This native namespace is owned by O78.", "UNSUPPORTED");
-        for (const [key, kind, data] of entries) {
+        for (const [index, [key, kind, data]] of entries.entries()) {
           this.charge(key.length + 1);
-          const label = this.values.string(Array.from(key, char => char.codePointAt(0))); roots.push(label);
+          const label = owner.namespaceKeys?.[index] ?? this.values.string(Array.from(key, char => char.codePointAt(0))); roots.push(label);
           let value;
           if (kind === "value") value = data.type === "text" ? this.values.string(Array.from(data.value, char => char.codePointAt(0))) : this.values.decode(data);
           else if (kind === "staticmethod") value = this.make(MethodWrapperValue, "staticmethod", this.namespaceDescriptor(owner, key, "builtin_function_or_method"));
@@ -1078,10 +1079,12 @@ export class ClassRuntime {
       const layout = valueLayout(dictionary); this.memory?.resize(dictionary, layout.bytes, layout.children);
     }
     const entries = owner instanceof ClassValue ? owner.namespaceEntries : null;
+    const keys = owner.namespaceKeys;
     owner.namespaceDictionary = dictionary;
+    delete owner.namespaceKeys;
     if (owner instanceof ClassValue) owner.namespaceEntries = null;
     try { const layout = valueLayout(owner); this.memory?.resize(owner, layout.bytes, layout.children); }
-    catch (error) { delete owner.namespaceDictionary; if (owner instanceof ClassValue) owner.namespaceEntries = entries; throw error; }
+    catch (error) { delete owner.namespaceDictionary; if (keys) owner.namespaceKeys = keys; if (owner instanceof ClassValue) owner.namespaceEntries = entries; throw error; }
   }
   nativeEntry(type, name) {
     for (const base of this.mro(type)) {
@@ -1235,10 +1238,10 @@ export class ClassRuntime {
   nativeCallableDirectoryKind(receiver) {
     const kind = this.nativeDescriptorKind(receiver);
     if (kind !== null) return kind;
+    if (receiver instanceof BuiltinValue && !this.isType(receiver)) return "builtin_function_or_method";
     if (receiver instanceof BoundMethodValue && !this.isPythonMethod(receiver) && receiver.callable instanceof BuiltinValue) {
       if (nativeWrapper(receiver.callable.name)) return "method-wrapper";
-      if (NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name) || NATIVE_CLASS_METHODS.has(receiver.callable.name))
-        return "builtin_function_or_method";
+      return this.typeOf(receiver).name;
     }
     return null;
   }
@@ -1255,76 +1258,32 @@ export class ClassRuntime {
     return CONTAINER_DIRECTORY_KEYS[this.values.containerDirectoryType(receiver)] ?? null;
   }
   hasFixedDirectory(receiver) {
-    return receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
+    return receiver instanceof ModuleValue || receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof FrameValue || receiver instanceof FrameLocalsValue || receiver instanceof ExceptionValue || receiver instanceof DictionaryViewValue ||
+      receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
       receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind) ||
       this.values.isRange(receiver) || this.values.isSlice(receiver) || this.containerDirectoryNames(receiver) !== null || this.numericDirectoryNames(receiver) !== null || this.nativeCallableDirectoryKind(receiver) !== null;
   }
   nativeTypeDirectoryNames(type) {
-    if (!(type instanceof BuiltinValue)) return null;
-    if (["staticmethod", "classmethod", "super"].includes(type.name))
-      return this.mro(type).flatMap(base => NATIVE_NAMESPACES[base.root ? "object" : base.name].map(entry => entry[0]));
-    if (type.name === "type") return [...NATIVE_NAMESPACES.type.map(entry => entry[0]), ...OBJECT_DIRECTORY_KEYS];
-    if (Object.hasOwn(CONTAINER_DIRECTORY_KEYS, type.name)) return CONTAINER_DIRECTORY_KEYS[type.name];
-    switch (type.name) {
-      case "bool": return BOOL_DIRECTORY_KEYS;
-      case "int": return INT_DIRECTORY_KEYS;
-      case "float": return FLOAT_DIRECTORY_KEYS;
-      case "complex": return COMPLEX_DIRECTORY_KEYS;
-      case "NoneType": return NONE_DIRECTORY_KEYS;
-      case "NotImplementedType": return NOT_IMPLEMENTED_DIRECTORY_KEYS;
-      case "range": return RANGE_DIRECTORY_KEYS;
-      case "slice": return SLICE_DIRECTORY_KEYS;
-      case "function": return FUNCTION_DIRECTORY_KEYS;
-      case "method": return METHOD_DIRECTORY_KEYS;
-      case "method_descriptor":
-      case "wrapper_descriptor": return NATIVE_DESCRIPTOR_DIRECTORY_KEYS;
-      case "builtin_function_or_method": return NATIVE_METHOD_DIRECTORY_KEYS;
-      case "method-wrapper": return NATIVE_WRAPPER_DIRECTORY_KEYS;
-      case "property": return PROPERTY_DIRECTORY_KEYS;
-      case "mappingproxy": return NAMESPACE_VIEW_DIRECTORY_KEYS;
-      case "generator": return GENERATOR_DIRECTORY_KEYS;
-      case "list_iterator":
-      case "tuple_iterator":
-      case "str_iterator":
-      case "str_ascii_iterator":
-      case "range_iterator":
-      case "longrange_iterator":
-      case "bytes_iterator":
-      case "bytearray_iterator":
-      case "iterator": return ITERATOR_DIRECTORY_KEYS;
-      case "dict_keyiterator":
-      case "set_iterator": return HASH_ITERATOR_DIRECTORY_KEYS;
-      case "memory_iterator": return MEMORY_ITERATOR_DIRECTORY_KEYS;
-      case "callable_iterator": return CALLABLE_ITERATOR_DIRECTORY_KEYS;
-      default: return null;
-    }
+    if (!(type instanceof BuiltinValue) || !this.isType(type)) return null;
+    return this.mro(type).flatMap(base => this.nativeNamespaceKeys(base));
+  }
+  nativeNamespaceKeys(owner) {
+    if (owner.namespaceDictionary) return owner.namespaceDictionary.entries.map(entry => entry.key);
+    if (owner.namespaceKeys) return owner.namespaceKeys;
+    const entries = NATIVE_NAMESPACES[owner.root ? "object" : owner.name], keys = [], roots = [owner], leave = this.memory?.enter(() => [...roots, ...keys], {charge: this.charge});
+    try {
+      for (const [name] of entries) {
+        this.charge(name.length + 1);
+        keys.push(this.values.string(Array.from(name, char => char.codePointAt(0))));
+      }
+      owner.namespaceKeys = keys;
+      try { const layout = valueLayout(owner); this.memory?.resize(owner, layout.bytes, layout.children); }
+      catch (error) { delete owner.namespaceKeys; throw error; }
+      return keys;
+    } finally { leave?.(); }
   }
   directoryNames(receiver) {
-    if (receiver instanceof MethodWrapperValue || receiver instanceof SuperValue) return this.nativeTypeDirectoryNames(this.typeOf(receiver));
-    const container = this.containerDirectoryNames(receiver);
-    if (container !== null) return container;
-    const numeric = this.numericDirectoryNames(receiver);
-    if (numeric !== null) return numeric;
-    if (receiver instanceof FunctionValue) return FUNCTION_DIRECTORY_KEYS;
-    if (receiver instanceof ClassNamespaceValue) return NAMESPACE_VIEW_DIRECTORY_KEYS;
-    if (receiver instanceof PropertyValue) return PROPERTY_DIRECTORY_KEYS;
-    if (this.values.isRange(receiver)) return RANGE_DIRECTORY_KEYS;
-    if (this.values.isSlice(receiver)) return SLICE_DIRECTORY_KEYS;
-    if (receiver instanceof GeneratorValue) return GENERATOR_DIRECTORY_KEYS;
-    if (receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind))
-      return receiver.kind === "callable" ? CALLABLE_ITERATOR_DIRECTORY_KEYS : ITERATOR_DIRECTORY_KEYS;
-    if (receiver instanceof IteratorValue) {
-      const kind = this.values.typeName(receiver);
-      if (kind === "memory_iterator") return MEMORY_ITERATOR_DIRECTORY_KEYS;
-      if (kind === "dict_keyiterator" || kind === "set_iterator") return HASH_ITERATOR_DIRECTORY_KEYS;
-      return ITERATOR_DIRECTORY_KEYS;
-    }
-    if (this.isPythonMethod(receiver)) return METHOD_DIRECTORY_KEYS;
-    const kind = this.nativeCallableDirectoryKind(receiver);
-    if (kind === "method_descriptor" || kind === "wrapper_descriptor") return NATIVE_DESCRIPTOR_DIRECTORY_KEYS;
-    if (kind === "builtin_function_or_method") return NATIVE_METHOD_DIRECTORY_KEYS;
-    if (kind === "method-wrapper") return NATIVE_WRAPPER_DIRECTORY_KEYS;
-    throw new TypeError("Invalid native directory receiver.");
+    return this.nativeTypeDirectoryNames(this.typeOf(receiver));
   }
   ownClassDirectoryNames(type, namespace = false) {
     this.touch(type); this.charge(1);
@@ -1332,6 +1291,7 @@ export class ClassRuntime {
     if (native !== null) return native;
     if (!(type instanceof ClassValue))
       this.fail("UnsupportedOperationError", "Further class namespace reflection requires a separate directory contract.", "UNSUPPORTED");
+    if (!namespace) return type.root ? this.nativeNamespaceKeys(type) : this.namespaceDictionary(type).entries.map(entry => entry.key);
     if (type.root) return OBJECT_DIRECTORY_KEYS;
     if (type.namespaceDictionary) return type.namespaceDictionary.entries.map(entry => entry.key);
     const names = [], initial = [...type.namespace.keys()].slice(0, type.directoryInitialCount);
