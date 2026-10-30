@@ -1,0 +1,289 @@
+{
+  "suite": "interpreter-wrapper-super-directories/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O77"
+  ],
+  "cases": [
+    {
+      "id": "staticmethod-raw",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nprint(*object.__dir__(w))\n",
+      "stdout": "__module__ __name__ __qualname__ __doc__ __new__ __repr__ __call__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "staticmethod-sorted",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nprint(*dir(w))\n",
+      "stdout": "__annotate__ __annotations__ __call__ __class__ __class_getitem__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __isabstractmethod__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __wrapped__\n"
+    },
+    {
+      "id": "staticmethod-type",
+      "stage": "O77",
+      "source": "print(*type.__dir__(staticmethod))\nprint(*dir(staticmethod))\n",
+      "stdout": "__new__ __repr__ __call__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __doc__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__annotate__ __annotations__ __call__ __class__ __class_getitem__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __isabstractmethod__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __wrapped__\n"
+    },
+    {
+      "id": "staticmethod-bound",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nd=w.__dir__\nprint(d.__self__ is w,d.__name__,d.__qualname__)\nprint(*d())\n",
+      "stdout": "True __dir__ staticmethod.__dir__\n__module__ __name__ __qualname__ __doc__ __new__ __repr__ __call__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "staticmethod-detached",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nd=object.__dir__.__get__(w)\ndel w\nprint(*d())\nprint(len(d.__dir__()))\n",
+      "stdout": "__module__ __name__ __qualname__ __doc__ __new__ __repr__ __call__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n30\n"
+    },
+    {
+      "id": "staticmethod-live",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\na=object.__dir__(w)\nw.marker=8\nb=object.__dir__(w)\ndel w.__dict__[\"__name__\"]\nprint(*a)\nprint(*b)\nprint(*object.__dir__(w))\nprint(a is b)\n",
+      "stdout": "__module__ __name__ __qualname__ __doc__ __new__ __repr__ __call__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__module__ __name__ __qualname__ __doc__ marker __new__ __repr__ __call__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__module__ __qualname__ __doc__ marker __new__ __repr__ __call__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nFalse\n"
+    },
+    {
+      "id": "staticmethod-mixed-keys",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nkey=7\nw.__dict__[key]=8\nprint(object.__dir__(w)[-1] is key)\ndir(w)\n",
+      "stdout": "False\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-custom-shadow",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nw.__dict__[\"__dir__\"]=lambda:[\"shadow\"]\nprint(*w.__dir__())\nprint(\"__func__\" in dir(w))\n",
+      "stdout": "shadow\nTrue\n"
+    },
+    {
+      "id": "staticmethod-dictionary-shadow",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nw.__dict__[\"__dict__\"]={\"fake\":7}\nprint(\"fake\" in dir(w),\"__dict__\" in dir(w))\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "staticmethod-no-wrapped-effects",
+      "stage": "O77",
+      "source": "class Callable:\n def __call__(self):\n  print(\"never-call\")\n  return 7\n @property\n def __isabstractmethod__(self):\n  print(\"never-flag\")\n  return True\nw=staticmethod(Callable())\nprint(\"__isabstractmethod__\" in dir(w),\"__wrapped__\" in object.__dir__(w))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "staticmethod-bad-call-10",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nprint(\"before\")\nw.__dir__(1)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-bad-call-11",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nprint(\"before\")\nw.__dir__(unexpected=1)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "staticmethod-bad-call-12",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=staticmethod(f)\nprint(\"before\")\nobject.__dir__(w,1)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-raw",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nprint(*object.__dir__(w))\n",
+      "stdout": "__module__ __name__ __qualname__ __doc__ __new__ __repr__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "classmethod-sorted",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nprint(*dir(w))\n",
+      "stdout": "__annotate__ __annotations__ __class__ __class_getitem__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __isabstractmethod__ __le__ __lt__ __module__ __name__ __ne__ __new__ __qualname__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __wrapped__\n"
+    },
+    {
+      "id": "classmethod-type",
+      "stage": "O77",
+      "source": "print(*type.__dir__(classmethod))\nprint(*dir(classmethod))\n",
+      "stdout": "__new__ __repr__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __doc__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__annotate__ __annotations__ __class__ __class_getitem__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __func__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __isabstractmethod__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __sizeof__ __str__ __subclasshook__ __wrapped__\n"
+    },
+    {
+      "id": "classmethod-bound",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nd=w.__dir__\nprint(d.__self__ is w,d.__name__,d.__qualname__)\nprint(*d())\n",
+      "stdout": "True __dir__ classmethod.__dir__\n__module__ __name__ __qualname__ __doc__ __new__ __repr__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "classmethod-detached",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nd=object.__dir__.__get__(w)\ndel w\nprint(*d())\nprint(len(d.__dir__()))\n",
+      "stdout": "__module__ __name__ __qualname__ __doc__ __new__ __repr__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n30\n"
+    },
+    {
+      "id": "classmethod-live",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\na=object.__dir__(w)\nw.marker=8\nb=object.__dir__(w)\ndel w.__dict__[\"__name__\"]\nprint(*a)\nprint(*b)\nprint(*object.__dir__(w))\nprint(a is b)\n",
+      "stdout": "__module__ __name__ __qualname__ __doc__ __new__ __repr__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__module__ __name__ __qualname__ __doc__ marker __new__ __repr__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__module__ __qualname__ __doc__ marker __new__ __repr__ __get__ __init__ __class_getitem__ __func__ __wrapped__ __isabstractmethod__ __dict__ __annotations__ __annotate__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nFalse\n"
+    },
+    {
+      "id": "classmethod-mixed-keys",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nkey=7\nw.__dict__[key]=8\nprint(object.__dir__(w)[-1] is key)\ndir(w)\n",
+      "stdout": "False\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-custom-shadow",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nw.__dict__[\"__dir__\"]=lambda:[\"shadow\"]\nprint(*w.__dir__())\nprint(\"__func__\" in dir(w))\n",
+      "stdout": "shadow\nTrue\n"
+    },
+    {
+      "id": "classmethod-dictionary-shadow",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nw.__dict__[\"__dict__\"]={\"fake\":7}\nprint(\"fake\" in dir(w),\"__dict__\" in dir(w))\n",
+      "stdout": "False True\n"
+    },
+    {
+      "id": "classmethod-no-wrapped-effects",
+      "stage": "O77",
+      "source": "class Callable:\n def __call__(self):\n  print(\"never-call\")\n  return 7\n @property\n def __isabstractmethod__(self):\n  print(\"never-flag\")\n  return True\nw=classmethod(Callable())\nprint(\"__isabstractmethod__\" in dir(w),\"__wrapped__\" in object.__dir__(w))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "classmethod-bad-call-23",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nprint(\"before\")\nw.__dir__(1)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-bad-call-24",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nprint(\"before\")\nw.__dir__(unexpected=1)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "classmethod-bad-call-25",
+      "stage": "O77",
+      "source": "def f(): return 7\nw=classmethod(f)\nprint(\"before\")\nobject.__dir__(w,1)\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "super-raw-26",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\ns=super(B)\nprint(*object.__dir__(s))\nprint(*dir(s))\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __self_class__ __setattr__ __sizeof__ __str__ __subclasshook__ __thisclass__\n"
+    },
+    {
+      "id": "super-detached-27",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\ns=super(B)\nd=object.__dir__.__get__(s)\ndel s\nprint(*d())\nprint(d.__self__.__class__ is super)\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nTrue\n"
+    },
+    {
+      "id": "super-raw-28",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\ns=super(B,B())\nprint(*object.__dir__(s))\nprint(*dir(s))\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __self_class__ __setattr__ __sizeof__ __str__ __subclasshook__ __thisclass__\n"
+    },
+    {
+      "id": "super-detached-29",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\ns=super(B,B())\nd=object.__dir__.__get__(s)\ndel s\nprint(*d())\nprint(d.__self__.__class__ is super)\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nTrue\n"
+    },
+    {
+      "id": "super-raw-30",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\ns=super(B,B)\nprint(*object.__dir__(s))\nprint(*dir(s))\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __self_class__ __setattr__ __sizeof__ __str__ __subclasshook__ __thisclass__\n"
+    },
+    {
+      "id": "super-detached-31",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\ns=super(B,B)\nd=object.__dir__.__get__(s)\ndel s\nprint(*d())\nprint(d.__self__.__class__ is super)\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nTrue\n"
+    },
+    {
+      "id": "super-raw-32",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\ns=super(A,B())\nprint(*object.__dir__(s))\nprint(*dir(s))\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __self_class__ __setattr__ __sizeof__ __str__ __subclasshook__ __thisclass__\n"
+    },
+    {
+      "id": "super-detached-33",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\ns=super(A,B())\nd=object.__dir__.__get__(s)\ndel s\nprint(*d())\nprint(d.__self__.__class__ is super)\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nTrue\n"
+    },
+    {
+      "id": "super-type",
+      "stage": "O77",
+      "source": "print(*type.__dir__(super))\nprint(*dir(super))\n",
+      "stdout": "__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __self_class__ __setattr__ __sizeof__ __str__ __subclasshook__ __thisclass__\n"
+    },
+    {
+      "id": "super-instance-state",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\nb=B()\nb.marker=7\ns=super(B,b)\nprint(*object.__dir__(s))\nprint(*s.__dir__())\nprint(s.__dir__.__self__ is b)\n",
+      "stdout": "marker __new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nmarker __module__ __firstlineno__ __static_attributes__ __doc__ __dict__ __weakref__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nTrue\n"
+    },
+    {
+      "id": "super-nested",
+      "stage": "O77",
+      "source": "class A: pass\nclass B(A): pass\nclass C(B): pass\nb=C()\nb.marker=7\ns=super(C,b)\nt=super(B,s.__self__)\nprint(*dir(s))\nprint(*dir(t))\n",
+      "stdout": "__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __self_class__ __setattr__ __sizeof__ __str__ __subclasshook__ __thisclass__ marker\n__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __get__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __self__ __self_class__ __setattr__ __sizeof__ __str__ __subclasshook__ __thisclass__ marker\n"
+    },
+    {
+      "id": "super-native-ignores-receiver-hooks",
+      "stage": "O77",
+      "source": "class A:\n def __getattribute__(self,name):\n  print(\"never\",name)\n  return object.__getattribute__(self,name)\n def __dir__(self):\n  print(\"never-dir\")\n  return [\"custom\"]\nclass B(A): pass\nb=B()\nb.marker=7\ns=super(B,b)\nprint(\"marker\" in dir(s),\"custom\" in dir(s))\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "super-dictionary-38",
+      "stage": "O77",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"dictionary\")\n  return {\"virtual\":7}\nclass B(A): pass\ns=super(B,B())\nprint(\"virtual\" in dir(s))\n",
+      "stdout": "dictionary\nTrue\n"
+    },
+    {
+      "id": "super-dictionary-39",
+      "stage": "O77",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"dictionary\")\n  return None\nclass B(A): pass\ns=super(B,B())\nprint(\"virtual\" in dir(s))\n",
+      "stdout": "dictionary\nFalse\n"
+    },
+    {
+      "id": "super-dictionary-40",
+      "stage": "O77",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"dictionary\")\n  return 7\nclass B(A): pass\ns=super(B,B())\nprint(\"virtual\" in dir(s))\n",
+      "stdout": "dictionary\nFalse\n"
+    },
+    {
+      "id": "super-dictionary-AttributeError",
+      "stage": "O77",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"dictionary\")\n  raise AttributeError(\"failure\")\nclass B(A): pass\ns=super(B,B())\nprint(\"__self__\" in dir(s))\n",
+      "stdout": "dictionary\nTrue\n"
+    },
+    {
+      "id": "super-dictionary-ValueError",
+      "stage": "O77",
+      "source": "class A:\n @property\n def __dict__(self):\n  print(\"dictionary\")\n  raise ValueError(\"failure\")\nclass B(A): pass\ns=super(B,B())\nprint(\"__self__\" in dir(s))\n",
+      "stdout": "dictionary\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "super-unbound-native",
+      "stage": "O77",
+      "source": "class A: pass\ns=super(A)\nprint(s.__dir__.__self__ is s,s.__dir__.__qualname__)\nprint(*s.__dir__())\n",
+      "stdout": "True super.__dir__\n__new__ __repr__ __getattribute__ __get__ __init__ __thisclass__ __self__ __self_class__ __doc__ __hash__ __str__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n"
+    },
+    {
+      "id": "wrapper-super-native-return-fresh",
+      "stage": "O77",
+      "source": "class A: pass\nfor v in [staticmethod(lambda:7),classmethod(lambda:7),super(A)]:\n a=dir(v)\n b=dir(v)\n print(a is b,a==b)\n",
+      "stdout": "False True\nFalse True\nFalse True\n"
+    }
+  ]
+}

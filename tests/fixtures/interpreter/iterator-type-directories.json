@@ -7,7 +7,8 @@
     "O62",
     "O66",
     "O70",
-    "O76"
+    "O76",
+    "O77"
   ],
   "cases": [
     {
@@ -753,13 +754,13 @@
     {
       "id": "wrapper-directory",
       "source": "def f(): pass\nprint(len(dir(staticmethod(f))))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": "36\n"
     },
     {
       "id": "super-directory",
       "source": "class A: pass\nprint(len(dir(super(A,A()))))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": "28\n"
     },
     {

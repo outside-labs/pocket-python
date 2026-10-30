@@ -2568,7 +2568,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = attributeTask(receiver, "__dict__", site,
                 continuation("object-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
             }
-            if (classes.isPythonMethod(receiver)) {
+            if (classes.isPythonMethod(receiver) || receiver instanceof SuperValue || receiver instanceof MethodWrapperValue) {
               task = attributeTask(receiver, "__dict__", site,
                 continuation("method-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
             }

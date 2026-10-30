@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O60"
+    "O60",
+    "O77"
   ],
   "cases": [
     {
@@ -630,7 +631,7 @@
     {
       "id": "other-default-directory",
       "source": "dir(classmethod(lambda cls:7))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": ""
     }
   ]

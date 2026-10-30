@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O53",
     "O61",
-    "O65"
+    "O65",
+    "O77"
   ],
   "cases": [
     {
@@ -221,7 +222,7 @@
     {
       "id": "other-wrapper-layout",
       "source": "print(\"__dict__\" in dir(staticmethod(lambda:None)))\n",
-      "stage": "Future",
+      "stage": "O77",
       "stdout": "True\n"
     },
     {
