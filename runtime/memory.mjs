@@ -71,7 +71,7 @@ export class MemoryArena {
     };
   }
 
-  collect(extraRoots = [], {probe = null, replacement = null, extraBytes = 0, cleanup = false} = {}) {
+  collect(extraRoots = [], {probe = null, replacement = null, extraBytes = 0, cleanup = false, validateOnly = false} = {}) {
     this.active();
     const pending = [...extraRoots], records = new Map(), seen = new Set();
     let bytes = extraBytes, objects = 0, work = 0;
@@ -113,6 +113,7 @@ export class MemoryArena {
       }
       check();
     }
+    if (validateOnly) return this.stats();
     for (const value of this.#records.keys()) if (!records.has(value)) this.#reclaimed++;
     for (const value of records.keys()) {
       if (!owners.has(value)) { owners.set(value, this); this.#allocations++; }

@@ -272,3 +272,17 @@ test('falsy values thrown by host hooks reject exactly once and preserve the nex
     }
   } finally { close(); }
 });
+
+
+test('paused callback owners remain collectable at tight allocation boundaries', async () => {
+  for (const maxBytes of [23964, 23972, 23980, 24000]) {
+    const {session, close} = await setup('def update():\n held=[]\n while True: held.append([7])\n', {memoryLimits: {maxBytes}});
+    try {
+      session.run(); const handle = session.register('update');
+      const event = session.enqueue(handle, [], {maxSteps:100000, maxWork:100000000});
+      pump(session, 3);
+      await assert.rejects(event.result, {code:'OOM'});
+      assert.equal(session.stats().frames, 0);
+    } finally { close(); }
+  }
+});

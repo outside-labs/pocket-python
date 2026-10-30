@@ -317,3 +317,10 @@ Exposed defaults replace compact edges with an owned tuple/dictionary; captured
 namespace dictionaries and callback-binding continuations trace their actual
 values. All eight composed observations retain revision 8 costs; those previous
 observations remain in `accounting_8_cases`.
+
+Before exposing a paused execution, the controller validates its complete live
+root graph against the arena's existing limits. This bounded read-only pass does
+not change collection counters, imports, work observations or ownership. A limit
+failure is released through the execution's normal failure path, so a host may
+collect or close every successfully paused owner. This also covers result stack
+slots created after the last allocating operation in an instruction.
