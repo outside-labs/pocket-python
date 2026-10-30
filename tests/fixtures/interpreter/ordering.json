@@ -7,7 +7,8 @@
     "Base",
     "O12",
     "O13",
-    "O14"
+    "O14",
+    "O83"
   ],
   "cases": [
     {
@@ -749,7 +750,7 @@
     },
     {
       "id": "future-metaclass-ordering",
-      "stage": "Future",
+      "stage": "O83",
       "source": "class M(type):\n def __lt__(cls,other): return True\nclass A(metaclass=M): pass\nprint(A<7)\n",
       "stdout": "True\n"
     },

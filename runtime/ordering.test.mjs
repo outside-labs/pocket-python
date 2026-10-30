@@ -125,14 +125,14 @@ test('ordering dictionaries and user-key sets retain their own boundaries', asyn
   assert.equal(set.error.code, 'UNSUPPORTED'); assert.equal(set.stdout, ''); closed(set.closed);
 });
 
-test('core admission and metaclass ordering refuse before user effects', async () => {
+test('core admission refuses while metaclass ordering executes owned definitions and mutation', async () => {
   const result = await runSourceRequest({modules: [unit('print("never")\nclass A:\n def __lt__(self,other): return True\nA()<7\n')]});
   assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); assert.equal(result.stats, null);
   for (const source of [
-    'class M(type):\n print("never")\n def __lt__(cls,other): return True\n',
+    'class M(type):\n def __lt__(cls,other): return True\n',
     'class M(type): pass\nM.__lt__=lambda self,other: True\n',
   ]) {
-    const result = await run(source);
-    assert.equal(result.error.code, 'UNSUPPORTED'); assert.equal(result.stdout, ''); closed(result.closed);
+    const result = await run(source+'class C(metaclass=M): pass\nprint(C<7)\n');
+    assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, 'True\n'); closed(result.closed);
   }
 });

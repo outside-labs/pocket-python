@@ -1,5 +1,12 @@
 # Native descriptor owners and type hierarchy reflection
 
+The [O79–O83 construction contracts](interpreter-expanded-class-bases.md),
+[prepared namespaces](interpreter-prepared-class-namespaces.md),
+[callable factories](interpreter-metaclass-factories.md),
+[custom MRO](interpreter-custom-mro.md) and
+[actual-metaclass protocols](interpreter-metaclass-protocols.md) supersede the
+earlier stage boundaries for those features below.
+
 O35/O36 continue #123 and #33 with a finite CPython 3.14.7 contract.
 The reference matrix is `tests/fixtures/interpreter/type-reflection.json`.
 Reference observations alone do not establish independent execution.

@@ -467,7 +467,7 @@ export class ValueRuntime {
     const pending = [value], seen = new Set();
     while (pending.length) {
       const item = pending.pop();
-      if (item instanceof FrameLocalsValue || item instanceof InstanceValue || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
+      if (item instanceof FrameLocalsValue || item instanceof InstanceValue || item instanceof ClassValue && item.metaclass !== null || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
       if (item instanceof SetValue) { pending.push(...item.storage.entries.map(entry => entry.key)); continue; }
       if (item instanceof DictValue && item.ownedKeys) return true;
       if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;

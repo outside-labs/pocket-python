@@ -1,5 +1,12 @@
 # Staged Python class contract
 
+The [O79–O83 construction contracts](interpreter-expanded-class-bases.md),
+[prepared namespaces](interpreter-prepared-class-namespaces.md),
+[callable factories](interpreter-metaclass-factories.md),
+[custom MRO](interpreter-custom-mro.md) and
+[actual-metaclass protocols](interpreter-metaclass-protocols.md) supersede the
+earlier stage boundaries for those features below.
+
 INT-09 adopts the following stages before adding class execution. The existing
 core-source/1 source profile and bytecode 3/4 behavior remain available. New
 syntax is selected explicitly through classes-source/1, using verified bytecode

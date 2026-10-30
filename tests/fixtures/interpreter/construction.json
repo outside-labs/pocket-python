@@ -13,7 +13,8 @@
     "O24",
     "O68",
     "O80",
-    "O81"
+    "O81",
+    "O83"
   ],
   "cases": [
     {
@@ -720,7 +721,7 @@
     },
     {
       "id": "future-metaclass-equality",
-      "stage": "Future",
+      "stage": "O83",
       "source": "class M(type):\n def __eq__(cls,other): return True\nclass A(metaclass=M): pass\nprint(A==7)\n",
       "stdout": "True\n"
     },

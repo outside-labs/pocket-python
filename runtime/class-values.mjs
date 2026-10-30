@@ -1,7 +1,7 @@
 import {isVerifiedFunctionCode} from "./function-bytecode.mjs";
 import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS} from "./native-namespaces.mjs";
 import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
-import {allowsClassSpecial, isSpecialName} from "./class-policy.mjs";
+import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
@@ -11,7 +11,7 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
   "list_iterator", "tuple_iterator", "str_iterator", "str_ascii_iterator", "dict_keyiterator", "range_iterator", "longrange_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 for (const name of Object.keys(NATIVE_NAMESPACES)) if (name !== "object") NATIVE_TYPES.add(name);
 const NAMESPACE_DESCRIPTOR_KINDS = new Set(["method_descriptor", "wrapper_descriptor", "classmethod_descriptor", "getset_descriptor", "member_descriptor"]);
-const META_SPECIALS = new Set(["__prepare__", "__classcell__", "__classdictcell__", "__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set([...METACLASS_PROTOCOLS, "__mro_entries__", "__orig_bases__", "__prepare__", "__classcell__", "__classdictcell__", "__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
@@ -468,9 +468,10 @@ export class ClassRuntime {
     return this.typeOf(value);
   }
   needsAdvertised(value) {
-    return value instanceof InstanceValue && this.hasSlot(value.type, "__class__") ||
+    return this.protocolObject(value) && this.hasSlot(this.checkingType(value), "__class__") ||
       ["__getattribute__", "__getattr__"].some(name => this.hasAttributeHook(value, name));
   }
+  protocolObject(value) { return value instanceof InstanceValue || value instanceof ClassValue && value.metaclass !== null; }
   checkingType(value) {
     return value instanceof ClassValue ? value.metaclass : value instanceof InstanceValue ? value.type : null;
   }
@@ -555,21 +556,22 @@ export class ClassRuntime {
   descriptor(value) {
     if (value instanceof BuiltinValue && ["getset_descriptor", "member_descriptor"].includes(value.nativeKind))
       return {get: {found: true, value: this.builtin(value.nativeKind + ".__get__")}, set: {found: true, value: this.builtin(value.nativeKind + ".__set__")}, delete: {found: true, value: this.builtin(value.nativeKind + ".__delete__")}};
-    if (!(value instanceof InstanceValue)) return null;
-    return {get: this.lookup(value.type, "__get__"), set: this.lookup(value.type, "__set__"),
-      delete: this.lookup(value.type, "__delete__")};
+    if (!this.protocolObject(value)) return null;
+    const type = this.checkingType(value);
+    return {get: this.lookup(type, "__get__"), set: this.lookup(type, "__set__"),
+      delete: this.lookup(type, "__delete__")};
   }
   boundHook(receiver, name, args) {
     if (receiver instanceof BuiltinValue && ["getset_descriptor", "member_descriptor"].includes(receiver.nativeKind) && ["__get__", "__set__", "__delete__"].includes(name))
       return {kind: "call", callable: this.builtin(receiver.nativeKind + "." + name), args: [receiver, ...args]};
-    if (!(receiver instanceof InstanceValue)) return null;
-    const hook = this.lookup(receiver.type, name);
+    if (!this.protocolObject(receiver)) return null;
+    const hook = this.lookup(this.checkingType(receiver), name);
     if (!hook.found) return null;
     if (hook.value instanceof MethodWrapperValue) return {kind: "call",
-      callable: hook.value.kind === "classmethod" ? this.make(BoundMethodValue, hook.value.callable, receiver.type, !NATIVE_CLASS_METHODS.has(hook.value.callable?.name)) : hook.value.callable, args};
+      callable: hook.value.kind === "classmethod" ? this.make(BoundMethodValue, hook.value.callable, this.checkingType(receiver), !NATIVE_CLASS_METHODS.has(hook.value.callable?.name)) : hook.value.callable, args};
     if (hook.value instanceof FunctionValue) return {kind: "call", callable: hook.value, args: [receiver, ...args]};
     if (hook.value instanceof PropertyValue || this.descriptor(hook.value)?.get.found) {
-      const plan = this.bindAttribute(hook.value, receiver, receiver.type);
+      const plan = this.bindAttribute(hook.value, receiver, this.checkingType(receiver));
       return {kind: "bind-call", callable: plan.callable, args: plan.args, invokeArgs: args};
     }
     return {kind: "call", callable: hook.value, args};
@@ -937,6 +939,7 @@ export class ClassRuntime {
     const type = this.checkingType(receiver);
     if (type === null) throw new TypeError("Implicit user protocols require a class or instance.");
     const present = this.hasSlot(type, name), callbacks = this.lookupMayCallback(receiver);
+    if (!present && ["__eq__", "__ne__", "__repr__", "__str__"].includes(name)) return null;
     const start = !present && callbacks ? this.mro(type).findIndex(base => base instanceof BuiltinValue || base.root) : 0;
     const item = this.lookup(type, name, true, Math.max(start, 0));
     if (!item.found && present && callbacks) this.fail("AttributeError", "Type slot '" + name + "' is missing.");

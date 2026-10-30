@@ -9,6 +9,7 @@ export class Raised { constructor(value) { this.value = value; } }
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  const userProtocol = value => classes.protocolObject(value);
   const resolveClassBases = (record, site) => {
     if (!record.originalBases && record.bases.every(base => classes.isType(base))) return beginClass(record, site);
     if (!record.originalBases) {
@@ -418,7 +419,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const expandArguments = (receiver, iterable, site) => {
     argumentOwner(receiver);
     const hintOwner = iterable instanceof ProtocolIteratorValue && iterable.kind === "indexed" ? iterable.source : iterable;
-    if (hintOwner instanceof InstanceValue && ["__len__", "__length_hint__"].some(slot => classes.hasSlot(hintOwner.type, slot)))
+    if (userProtocol(hintOwner) && ["__len__", "__length_hint__"].some(slot => classes.hasSlot(classes.checkingType(hintOwner), slot)))
       hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
     return unaryTask("iter", iterable, site, continuation("call-star-iter", {receiver}));
   };
@@ -474,7 +475,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const keys = values.tuple(mapping.entries.map(entry => entry.key)); state.temporaries.push(keys);
       return mappingNext({receiver, mapping, keys, position: 0, version: mapping.version, mode, after: null}, site);
     }
-    if (!(mapping instanceof InstanceValue)) python("TypeError", "Argument after ** must be a mapping");
+    if (!userProtocol(mapping)) python("TypeError", "Argument after ** must be a mapping");
     let plan;
     try { plan = classes.read(mapping, "keys"); }
     catch (error) {
@@ -498,13 +499,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return [keywords, items];
   };
   const duplicateKeyword = (receiver, key, site, after = null) => {
-    const formatted = key instanceof InstanceValue && ["__str__", "__repr__"].some(slot => classes.hasSlot(key.type, slot));
+    const formatted = userProtocol(key) && ["__str__", "__repr__"].some(slot => classes.hasSlot(classes.checkingType(key), slot));
     return formatted ? unaryTask("str", key, site, continuation("call-duplicate-result", {receiver, key, after})) :
       unaryTask("call-keyword-duplicate", receiver, site, after);
   };
   const refuseHints = receiver => {
     const owner = receiver instanceof ProtocolIteratorValue && receiver.kind === "indexed" ? receiver.source : receiver;
-    if (owner instanceof InstanceValue && ["__len__", "__length_hint__"].some(slot => classes.hasSlot(owner.type, slot)))
+    if (userProtocol(owner) && ["__len__", "__length_hint__"].some(slot => classes.hasSlot(classes.checkingType(owner), slot)))
       hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
   };
   const expandDisplay = (receiver, iterable, site) => {
@@ -711,7 +712,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (completion.slot === "__bool__") {
           if (typeof value !== "boolean") python("TypeError", "__bool__() should return bool");
         } else {
-          if (value instanceof InstanceValue) return unaryTask("index", value, site, completion, completion.depth);
+          if (userProtocol(value)) return unaryTask("index", value, site, completion, completion.depth);
           value = lengthResult(value);
         }
         if (completion.operation !== "len") {
@@ -827,7 +828,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "mro-result") return unaryTask("iter", value, site, continuation("mro-iter", completion));
     if (completion?.kind === "mro-iter") {
       const after = continuation("mro-sequence", completion);
-      if (value instanceof InstanceValue) return valueTask(value, site, continuation("dir-iter", {receiver: value, depth: 0, after}));
+      if (userProtocol(value)) return valueTask(value, site, continuation("dir-iter", {receiver: value, depth: 0, after}));
       const result = values.list([]); state.temporaries.push(value, result);
       return consumeNext("list", value, result, site, after, 0);
     }
@@ -1060,14 +1061,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "native-dir-merge") return nativeDirectoryNext(completion, site);
     if (completion?.kind === "dir-result") {
       const after = continuation("dir-sort", {receiver: value, depth: completion.depth, after: completion.after});
-      return value instanceof InstanceValue ? unaryTask("iter", value, site,
+      return userProtocol(value) ? unaryTask("iter", value, site,
         continuation("dir-iter", {receiver: value, depth: completion.depth, after}), completion.depth) :
         consumeTask("list", value, site, after, completion.depth);
     }
     if (completion?.kind === "dir-iter") {
       state.temporaries.push(value);
       const record = {...completion, iterator: value};
-      return classes.hasSlot(completion.receiver.type, "__len__") ? unaryTask("len", completion.receiver, site,
+      return classes.hasSlot(classes.checkingType(completion.receiver), "__len__") ? unaryTask("len", completion.receiver, site,
         continuation("dir-length", record), completion.depth) : directoryHint(record, site);
     }
     if (completion?.kind === "dir-length") {
@@ -1196,7 +1197,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return compareTask("equal", value, completion.key, site, continuation("search-equal", completion), completion.depth);
     }
     if (completion?.kind === "iter-result") {
-      if (!(values.isIterator(value) || value instanceof InstanceValue && classes.hasSlot(value.type, "__next__")))
+      if (!(values.isIterator(value) || userProtocol(value) && classes.hasSlot(classes.checkingType(value), "__next__")))
         python("TypeError", "__iter__ returned a non-iterator");
       return valueTask(value, site, completion.after);
     }
@@ -1285,7 +1286,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       // Keep the name rooted while planning a bound callback can allocate.
       const stored = typeof name === "string" ? (type.namespaceDictionary?.entries.find(entry => values.text(entry.key) === name)?.key ?? type.namespaceEntries?.find(entry => values.text(entry.key) === name)?.key) : name;
       const nameValue = stored ?? values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(nameValue);
-      if (typeof name === "string" && (value instanceof InstanceValue || value instanceof PropertyValue)) classes.rememberNamespaceKey(type, name, nameValue);
+      if (typeof name === "string" && (userProtocol(value) || value instanceof PropertyValue)) classes.rememberNamespaceKey(type, name, nameValue);
       const plan = classes.notification(value, type, nameValue);
       if (!plan) continue;
       return callTask(plan.callable, plan.args, [], [], site,
@@ -1323,7 +1324,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     let text = prefix;
     for (; index < args.length; index++) {
       if (index) text += " ";
-      if (args[index] instanceof InstanceValue) {
+      if (userProtocol(args[index])) {
         if (text) write(text);
         return unaryTask("str", args[index], site, continuation("print-argument", {args, index, depth, after}), depth);
       }
@@ -1349,7 +1350,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     for (; position < 3; position++) {
       charge(1);
       const index = [2, 0, 1][position], value = parts[index];
-      if (value instanceof InstanceValue) return unaryTask("index", value, site,
+      if (userProtocol(value)) return unaryTask("index", value, site,
         continuation("slice-index", {receiver, parts, position, after, depth, operation, item}), depth);
       if (value !== null && typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "slice indices must be integers or None");
       if (index === 2 && (value === 0n || value === false)) python("ValueError", "slice step cannot be zero");
@@ -1629,24 +1630,24 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
 
           if (operation === "bit-or" && (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue)) {
             if (inplace && left instanceof ClassNamespaceValue) python("TypeError", "mappingproxy does not support in-place union");
-            if (left instanceof ClassNamespaceValue || !(left instanceof InstanceValue) || task.position > 0) {
+            if (left instanceof ClassNamespaceValue || !userProtocol(left) || task.position > 0) {
               const a = left instanceof ClassNamespaceValue ? values.classNamespaceDictionary(left) : left;
               const b = right instanceof ClassNamespaceValue ? values.classNamespaceDictionary(right) : right;
               task = arithmeticTask("bit-or", [a, b], site, proxyRelay(left, right, completion), depth); continue;
             }
           }
-          if (modulus instanceof InstanceValue) hard("UNSUPPORTED", "UnsupportedOperationError", "User modulus dispatch requires a separate power stage.");
+          if (userProtocol(modulus)) hard("UNSUPPORTED", "UnsupportedOperationError", "User modulus dispatch requires a separate power stage.");
           const stem = ARITHMETIC_SLOTS[operation], ordinary = "__" + stem + "__", reflected = "__r" + stem + "__";
-          const rightFirst = task.order ?? (left instanceof InstanceValue && right instanceof InstanceValue && left.type !== right.type &&
-            right.type.mro.includes(left.type) && classes.lookup(right.type, reflected).found &&
-            (!classes.lookup(left.type, reflected).found || classes.lookup(right.type, reflected).value !== classes.lookup(left.type, reflected).value));
+          const rightFirst = task.order ?? (userProtocol(left) && userProtocol(right) && classes.checkingType(left) !== classes.checkingType(right) &&
+            classes.checkingType(right).mro.includes(classes.checkingType(left)) && classes.lookup(classes.checkingType(right), reflected).found &&
+            (!classes.lookup(classes.checkingType(left), reflected).found || classes.lookup(classes.checkingType(right), reflected).value !== classes.lookup(classes.checkingType(left), reflected).value));
           const candidates = inplace ? [[left, "__i" + stem + "__", right]] : rightFirst ?
             [[right, reflected, left], [left, ordinary, right]] : [[left, ordinary, right], [right, reflected, left]];
           let position = task.position, plan = null;
           for (; position < candidates.length; position++) {
             charge(1);
             const [receiver, slot] = candidates[position];
-            if (!(receiver instanceof InstanceValue) || !inplace && slot === reflected && left instanceof InstanceValue && right instanceof InstanceValue && left.type === right.type) continue;
+            if (!userProtocol(receiver) || !inplace && slot === reflected && userProtocol(left) && userProtocol(right) && classes.checkingType(left) === classes.checkingType(right)) continue;
             plan = classes.special(receiver, slot); if (plan) break;
           }
           if (plan) {
@@ -1658,15 +1659,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             continue;
           }
           if (inplace) { task = arithmeticTask(operation, args, site, completion, depth, 0, null, true); continue; }
-          if (task.nativeInplace && operation === "add" && values.isList(left) && right instanceof InstanceValue) {
-            const iterator = classes.lookup(right.type, "__iter__");
-            if (iterator.found ? iterator.value !== null : classes.lookup(right.type, "__getitem__").found)
+          if (task.nativeInplace && operation === "add" && values.isList(left) && userProtocol(right)) {
+            const iterator = classes.lookup(classes.checkingType(right), "__iter__");
+            if (iterator.found ? iterator.value !== null : classes.lookup(classes.checkingType(right), "__getitem__").found)
               hard("UNSUPPORTED", "UnsupportedOperationError", "List += with a user iterable requires its own sequence stage.");
           }
           if (operation === "multiply") {
             const repeatable = value => values.isString(value) || values.isBinary(value) || values.isList(value) || values.isSequenceType(value, "tuple");
-            const count = repeatable(left) && right instanceof InstanceValue ? 1 : repeatable(right) && left instanceof InstanceValue ? 0 : -1;
-            if (count >= 0 && classes.lookup(args[count].type, "__index__").found) {
+            const count = repeatable(left) && userProtocol(right) ? 1 : repeatable(right) && userProtocol(left) ? 0 : -1;
+            if (count >= 0 && classes.lookup(classes.checkingType(args[count]), "__index__").found) {
               task = unaryTask("index", args[count], site, continuation("arithmetic-index", {operation: task.nativeInplace ? "inplace-" + operation : operation, args, position: count, order: rightFirst, nativeInplace: task.nativeInplace, depth, after: completion}), depth); continue;
             }
           }
@@ -1681,8 +1682,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries = operationRoots(task);
           const {name, receiver} = task, building = ["list", "tuple"].includes(name);
           const hintOwner = receiver instanceof ProtocolIteratorValue && receiver.kind === "indexed" ? receiver.source : receiver;
-          if ((building || name === "bytes") && hintOwner instanceof InstanceValue &&
-              ["__len__", "__length_hint__"].some(slot => classes.lookup(hintOwner.type, slot).found))
+          if ((building || name === "bytes") && userProtocol(hintOwner) &&
+              ["__len__", "__length_hint__"].some(slot => classes.lookup(classes.checkingType(hintOwner), slot).found))
             hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
           const result = task.result ?? (building ? values.list([]) : ["bytes", "bytearray"].includes(name) ? values.binaryValue([], true) :
             ["set", "frozenset"].includes(name) ? values.newSet(name === "frozenset") : null);
@@ -1693,12 +1694,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (task.kind === "numeric") {
           state.temporaries = operationRoots(task);
           const name = task.name;
-          if (["pow", "divmod"].includes(name) && args.some(value => value instanceof InstanceValue)) {
+          if (["pow", "divmod"].includes(name) && args.some(userProtocol)) {
             task = arithmeticTask(name === "pow" ? "power" : "divmod", args.slice(0, name === "pow" && args[2] !== null ? 3 : 2), site, completion, depth); continue;
           }
           let position = task.position;
           if (name === "range") {
-            while (position < args.length && !(args[position] instanceof InstanceValue)) {
+            while (position < args.length && !userProtocol(args[position])) {
               if (!["bigint", "boolean"].includes(typeof args[position])) python("TypeError", "range() argument cannot be interpreted as an integer");
               position++;
             }
@@ -1707,22 +1708,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             continue;
           }
           if (name === "complex" && args.length === 2 && values.isString(args[0])) python("TypeError", "complex() first argument cannot be a string with two arguments");
-          if (name === "round" && !(args[0] instanceof InstanceValue) && !values.isPrimitive(args[0],"int") && !values.isPrimitive(args[0],"float"))
+          if (name === "round" && !userProtocol(args[0]) && !values.isPrimitive(args[0],"int") && !values.isPrimitive(args[0],"float"))
             python("TypeError", "round() argument has no numeric type slot");
           if (name === "int" && args.length === 2) {
-            if (args[1] instanceof InstanceValue) {
+            if (userProtocol(args[1])) {
               task = unaryTask("index",args[1],site,continuation("numeric-index",{name,args,position:1,depth,after:completion}),depth); continue;
             }
             task = deliver(values.realConstructor(name,args,true),completion,site); continue;
           }
-          if (["bin","oct","hex","chr"].includes(name) && args[0] instanceof InstanceValue ||
-              name === "round" && !(args[0] instanceof InstanceValue) && args[1] instanceof InstanceValue) {
+          if (["bin","oct","hex","chr"].includes(name) && userProtocol(args[0]) ||
+              name === "round" && !userProtocol(args[0]) && userProtocol(args[1])) {
             position = name === "round" ? 1 : 0;
             task = unaryTask("index",args[position],site,continuation("numeric-index",{name,args,position,depth,after:completion}),depth); continue;
           }
-          if (name === "complex") while (position < args.length && !(args[position] instanceof InstanceValue)) position++;
+          if (name === "complex") while (position < args.length && !userProtocol(args[position])) position++;
           const receiver = args[position];
-          if (receiver instanceof InstanceValue && ["int","float","complex","abs","round"].includes(name)) {
+          if (userProtocol(receiver) && ["int","float","complex","abs","round"].includes(name)) {
             charge(1);
             if (++depth > maxDepth) python("RecursionError","maximum implicit numeric dispatch depth exceeded");
             const slots = name === "int" ? ["__int__","__index__"] : name === "float" ? ["__float__","__index__"] :
@@ -1782,7 +1783,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           const ordering = Object.hasOwn(ORDERING_SLOTS, operation);
           if (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue) {
-            if (left instanceof ClassNamespaceValue || !(left instanceof InstanceValue) || position > 0) {
+            if (left instanceof ClassNamespaceValue || !userProtocol(left) || position > 0) {
               const a = left instanceof ClassNamespaceValue ? values.classNamespaceDictionary(left) : left;
               const b = right instanceof ClassNamespaceValue ? values.classNamespaceDictionary(right) : right;
               if (values.isDict(a)) values.enableNamespace(a);
@@ -1791,7 +1792,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
           }
           if (!ordering && values.isSet(left) && values.isSet(right)) { left = left.storage; right = right.storage; }
-          if (!(left instanceof InstanceValue || right instanceof InstanceValue)) {
+          if (!(userProtocol(left) || userProtocol(right))) {
             if (values.sameSequenceKind(left, right)) {
               const a = values.comparisonSequence(left), b = values.comparisonSequence(right);
               task = !ordering && a.length !== b.length ? valueTask(operation === "not-equal", site, completion) :
@@ -1807,14 +1808,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
             task = deliver(values.binary(operation, left, right), completion, site); continue;
           }
-          const reflected = left instanceof InstanceValue && right instanceof InstanceValue && left.type !== right.type && right.type.mro.includes(left.type);
+          const reflected = userProtocol(left) && userProtocol(right) && classes.checkingType(left) !== classes.checkingType(right) && classes.checkingType(right).mro.includes(classes.checkingType(left));
           const candidates = reflected ? [[right, left, 1], [left, right, 0]] : [[left, right, 0], [right, left, 1]];
           if (position >= candidates.length) {
             if (ordering) python("TypeError", "Ordering is not supported between these values");
             task = deliver(operation === "equal" ? left === right : left !== right, completion, site); continue;
           }
           const [receiver, other, direction] = candidates[position];
-          if (!(receiver instanceof InstanceValue)) { task = compareTask(operation, left, right, site, completion, depth, position + 1); continue; }
+          if (!userProtocol(receiver)) { task = compareTask(operation, left, right, site, completion, depth, position + 1); continue; }
           if (depth >= maxDepth) python("RecursionError", "maximum implicit comparison dispatch depth exceeded");
           const fallback = {operation: "compare-next", comparison: operation, left, right, position: position + 1, after: completion, depth};
           let plan, invert = false;
@@ -1851,7 +1852,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (receiver instanceof ClassNamespaceValue) {
             task = dictionaryTask(values.classNamespaceDictionary(receiver), key, site, continuation("relay", {receiver, after: completion}), depth, "contains"); continue;
           }
-          if (values.isBinary(receiver) && key instanceof InstanceValue) {
+          if (values.isBinary(receiver) && userProtocol(key)) {
             task = unaryTask("index", key, site, continuation("binary-member", {receiver, after: completion}), depth); continue;
           }
           if (values.isSet(receiver)) {
@@ -1859,10 +1860,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = dictionaryTask(receiver.storage, key, site, completion, depth, "contains"); continue;
           }
           if (values.dictionaryNeedsProtocol(receiver, key)) { task = dictionaryTask(receiver, key, site, completion, depth, "contains"); continue; }
-          if (task.search || values.isIterator(receiver) || values.isView(receiver) || values.isRange(receiver) && key instanceof InstanceValue) {
+          if (task.search || values.isIterator(receiver) || values.isView(receiver) || values.isRange(receiver) && userProtocol(key)) {
             task = unaryTask("iter", receiver, site, continuation("search-iter", {receiver, key, after: completion, depth}), depth); continue;
           }
-          if (!(receiver instanceof InstanceValue)) {
+          if (!userProtocol(receiver)) {
             if (values.comparisonSequence(receiver) !== null) { task = containsTask(receiver, key, site, completion, depth, true); continue; }
             task = deliver(values.contains(key, receiver), completion, site); continue;
           }
@@ -1899,7 +1900,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (operation === "delete" || operation === "set" && receiver.readonly) python("TypeError", "cannot modify this memoryview");
           }
           if (task.kind === "slice") {
-            if (receiver instanceof InstanceValue) {
+            if (userProtocol(receiver)) {
               const key = values.sliceKey(...task.parts); state.temporaries.push(key);
               task = itemTask(receiver, key, site, completion, depth, operation, item);
             } else task = sliceNext(receiver, task.parts, 0, site, completion, depth, operation, item);
@@ -1907,7 +1908,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           const {key} = task;
           if (values.dictionaryNeedsProtocol(receiver, key)) { task = dictionaryTask(receiver, key, site, completion, depth, operation, item); continue; }
-          if (receiver instanceof InstanceValue) {
+          if (userProtocol(receiver)) {
             charge(1);
             if (++depth > maxDepth) python("RecursionError", "maximum implicit item dispatch depth exceeded");
             const slot = {get: "__getitem__", set: "__setitem__", delete: "__delitem__"}[operation];
@@ -1920,9 +1921,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               continuation("invoke", {args, keywords: [], keywordValues: [], after: finish, depth}), depth);
           } else if (values.isSlice(key) && (operation === "get" ? values.isSequence(receiver) : values.isList(receiver) || values.isView(receiver) || values.isBinary(receiver))) {
             task = sliceTask(receiver, [key.start, key.stop, key.step], site, completion, depth, operation, item);
-          } else if (key instanceof InstanceValue && values.isSequence(receiver)) {
+          } else if (userProtocol(key) && values.isSequence(receiver)) {
             task = unaryTask("index", key, site, continuation("index-key", {receiver, key, after: completion, depth, operation, item}), depth);
-          } else if (operation === "set" && (values.isBinary(receiver) && receiver.mutable || values.isView(receiver) && !receiver.readonly) && item instanceof InstanceValue) {
+          } else if (operation === "set" && (values.isBinary(receiver) && receiver.mutable || values.isView(receiver) && !receiver.readonly) && userProtocol(item)) {
             task = unaryTask("index", item, site, continuation("byte-assignment", {receiver, key, after: completion}), depth);
           } else task = deliver(operation === "get" ? values.binary("getitem", receiver, key) :
             operation === "set" ? values.set(receiver, key, item) : values.binary("dict-delete", receiver, key), completion, site);
@@ -1947,7 +1948,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (depth >= maxDepth) python("RecursionError", "maximum sequence hash depth exceeded");
               task = hashNext(value, 0, 14695981039346656037n, site, completion, depth); continue;
             }
-            if (!(value instanceof InstanceValue)) { task = deliver(values.pythonHash(value), completion, site); continue; }
+            if (!userProtocol(value)) { task = deliver(values.pythonHash(value), completion, site); continue; }
             if (++depth > maxDepth) python("RecursionError", "maximum implicit hash dispatch depth exceeded");
             const fallback = {operation: "hash-unhashable", receiver: value, after: completion, depth};
             let plan;
@@ -1977,11 +1978,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 callTask(value.source, [], [], [], site, finish, depth);
               continue;
             }
-            if (!(value instanceof InstanceValue)) { task = deliver(values.unary(operation, value), completion, site); continue; }
+            if (!userProtocol(value)) { task = deliver(values.unary(operation, value), completion, site); continue; }
             charge(1);
             if (++depth > maxDepth) python("RecursionError", "maximum implicit iteration dispatch depth exceeded");
             if (operation === "iter-indexed") {
-              if (!classes.lookup(value.type, "__getitem__").found) python("TypeError", "Instance is not iterable");
+              if (!classes.lookup(classes.checkingType(value), "__getitem__").found) python("TypeError", "Instance is not iterable");
               task = deliver(allocate(ProtocolIteratorValue, "indexed", value), completion, site); continue;
             }
             const slot = operation === "iter" ? "__iter__" : "__next__";
@@ -2003,7 +2004,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             continue;
           }
           if (operation === "index") {
-            if (!(value instanceof InstanceValue)) {
+            if (!userProtocol(value)) {
               if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "An integer index is required");
               task = deliver(typeof value === "boolean" ? values.int(BigInt(value)) : value, completion, site); continue;
             }
@@ -2019,7 +2020,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (["repr", "str", "repr-default"].includes(operation)) {
             if (operation === "repr-default") hard("UNSUPPORTED", "UnsupportedOperationError", "Default object representations require a later formatting stage.");
-            if (!(value instanceof InstanceValue)) {
+            if (!userProtocol(value)) {
               const result = operation === "repr" ? values.repr(value) :
                 values.text(value) !== null ? value : values.string(Array.from(display(value), char => char.codePointAt(0)));
               task = deliver(result, completion, site); continue;
@@ -2042,7 +2043,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 {operation: "repr-default", receiver: value, after: completion, depth} : null}), depth);
             continue;
           }
-          if (value instanceof InstanceValue && ["negative", "positive", "invert"].includes(operation)) {
+          if (userProtocol(value) && ["negative", "positive", "invert"].includes(operation)) {
             const slot = {negative: "__neg__", positive: "__pos__", invert: "__invert__"}[operation], plan = classes.special(value, slot);
             if (!plan) python("TypeError", "bad operand type for unary " + operation);
             if (++depth > maxDepth) python("RecursionError", "maximum implicit arithmetic dispatch depth exceeded");
@@ -2050,7 +2051,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = plan.kind === "value" ? callTask(plan.value, [], [], [], site, finish, depth) :
               callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: finish, depth}), depth); continue;
           }
-          if (!(value instanceof InstanceValue) || !["len", "truth", "not"].includes(operation)) {
+          if (!userProtocol(value) || !["len", "truth", "not"].includes(operation)) {
             task = deliver(values.unary(operation, value), completion, site); continue;
           }
           charge(1);
@@ -2514,7 +2515,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = attributeTask(receiver, attribute, site, completion, depth, name === "setattr" ? "set" : "delete", args[1], null, args[2] ?? null); continue;
             }
             if (!writing &&
-                (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || receiver instanceof InstanceValue && attribute === "__class__" && classes.hasSlot(receiver.type, "__class__"))) {
+                (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || userProtocol(receiver) && attribute === "__class__" && classes.hasSlot(classes.checkingType(receiver), "__class__"))) {
               task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue;
             }
             let plan;
@@ -2573,7 +2574,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (values.isString(source)) python("TypeError", "string argument without an encoding");
             if (values.isView(source)) { task = valueTask(values.binaryValue(values.viewItems(source), mutable), site, completion); continue; }
             if (values.isBinary(source)) { task = valueTask(!mutable && !source.mutable ? source : values.binaryValue(source.items, mutable), site, completion); continue; }
-            if (source instanceof InstanceValue) {
+            if (userProtocol(source)) {
               const plan = !mutable ? classes.special(source, "__bytes__") : null;
               if (plan) {
                 const finish = continuation("binary-result", {receiver: source, after: completion});
@@ -2581,7 +2582,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                   callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [], keywords: [], keywordValues: [], after: finish, depth}), depth);
                 continue;
               }
-              if (classes.lookup(source.type, "__index__").found) {
+              if (classes.lookup(classes.checkingType(source), "__index__").found) {
                 task = unaryTask("index", source, site, continuation("binary-count", {receiver: source, mutable, after: completion}), depth); continue;
               }
             }
@@ -2612,7 +2613,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             count("builtin:" + callable.name);
             if (args.length > 1 || keywords.length) python("TypeError", callable.name + "() accepts at most one positional argument");
             const source = args[0];
-            if (args.length && (source instanceof FrameLocalsValue || source instanceof GeneratorValue || source instanceof InstanceValue || source instanceof ProtocolIteratorValue)) {
+            if (args.length && (source instanceof FrameLocalsValue || source instanceof GeneratorValue || userProtocol(source) || source instanceof ProtocolIteratorValue)) {
               task = consumeTask(callable.name, source, site, completion, depth); continue;
             }
             if (callable.name === "tuple" && values.isSequenceType(source, "tuple")) { task = valueTask(source, site, completion); continue; }
@@ -2798,7 +2799,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             count("builtin:" + callable.name);
             if (args.length !== 1 || keywords.length) python("TypeError", "hash requires one positional value");
             if (callable.name === "object.__hash__") {
-              if (!(args[0] instanceof InstanceValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "The object hash descriptor supports user instances in this stage.");
+              if (!(args[0] instanceof InstanceValue || args[0] instanceof ClassValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "The object hash descriptor supports source objects in this stage.");
               task = deliver(values.identityHash(args[0]), completion, site);
             } else task = unaryTask("hash", args[0], site, completion, depth);
             continue;
@@ -2825,10 +2826,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length) python("TypeError", "repr() requires one positional argument");
             task = unaryTask("repr", args[0], site, completion, depth); continue;
           }
-          if (callable.name === "str" && args.length === 1 && !keywords.length && args[0] instanceof InstanceValue) {
+          if (callable.name === "str" && args.length === 1 && !keywords.length && userProtocol(args[0])) {
             count("builtin:str"); task = unaryTask("str", args[0], site, completion, depth); continue;
           }
-          if (callable.name === "print" && !keywords.length && args.some(value => value instanceof InstanceValue)) {
+          if (callable.name === "print" && !keywords.length && args.some(userProtocol)) {
             count("builtin:print"); task = printNext(args, 0, site, completion, depth); continue;
           }
           if (["len", "bool"].includes(callable.name) && args.length === 1 && !keywords.length) {
