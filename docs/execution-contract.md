@@ -356,3 +356,17 @@ neither record nor counter. Integer `is` charges both operands' digit work;
 ordinary numeric/hash storage and operations retain their prior costs.
 The eight composed observations are unchanged and retained in
 `accounting_11_cases`. No addresses or interning-policy match is promised.
+
+## Native namespace key accounting revision 13
+
+O78 charges a lazily materialized native namespace key table at eight bytes plus
+eight per key edge, in addition to the existing owned string costs. Native type
+values and the root object trace every key. Full namespace dictionaries reuse the
+same keys and remove the table; failed table allocation/publication and failed
+dictionary materialization retain the prior state. Directory results retain their
+exact keys across this transition. Source class directories use their actual
+materialized namespaces. No native descriptor values or documentation are loaded
+solely to list native keys. All eight existing composed observations remain
+unchanged; `accounting_12_cases` retains the prior checkpoint. Compatibility probes
+share the source matrices' explicit instruction/work bounds; runtime defaults and
+hard cancellation semantics are unchanged.

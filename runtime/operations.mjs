@@ -71,7 +71,7 @@ export function completion(kind, fields = {}) {
     case "resume-control": record = {kind, signal: fields.signal, value: fields.value, after}; break;
     case "module-entry": case "module-hook":
       record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, mode: fields.mode, depth: fields.depth, after}; break;
-    case "module-dir": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
+    case "module-native-dir": case "module-dir": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
     case "module-missing": record = {kind, receiver: fields.receiver, name: fields.name, mode: fields.mode, after}; break;
     case "class": record = {kind, bases: operands(fields.bases), module: fields.module,
       ...(fields.keywords?.length ? {keywords: operands(fields.keywords), keywordValues: operands(fields.keywordValues)} : {}),
@@ -132,7 +132,7 @@ export function completion(kind, fields = {}) {
     case "native-dir-merge":
       record = {kind, receiver: fields.receiver, result: fields.result, position: fields.position, depth: fields.depth, after};
       depthCheck(record.depth);
-      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 49)
+      if (!Number.isSafeInteger(record.position) || record.position < 0 || record.position > 256)
         throw new TypeError("Invalid native directory merge position.");
       break;
     case "dir-result": case "dir-iter": case "dir-sort": record = {kind, receiver: fields.receiver, depth: fields.depth ?? 0, after}; depthCheck(record.depth); break;
@@ -288,7 +288,7 @@ function visit(record) {
     case "dict-union": return [record.left, record.right, record.result, ...completionRoots(record.after)];
     case "namespace-build": return operationRoots(record.task);
     case "namespace-lookup": return [record.cache, record.owner, record.dictionary, ...operationRoots(record.task)];
-    case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
+    case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-native-dir": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
     case "class-end": return [...record.items, record.value];
     case "class-firstline": case "class-qualname": return [];
     case "class-module": return [record.callable, ...record.bases, record.metaclass, ...record.keywordValues];

@@ -7,7 +7,8 @@
     "O54",
     "O71",
     "O77",
-    "O76"
+    "O76",
+    "O78"
   ],
   "cases": [
     {
@@ -284,13 +285,13 @@
     {
       "id": "primitive-method-layout",
       "source": "print(\"__self__\" in dir([].append))\n",
-      "stage": "Future",
+      "stage": "O78",
       "stdout": "True\n"
     },
     {
       "id": "ordinary-builtin-layout",
       "source": "print(\"__self__\" in dir(print))\n",
-      "stage": "Future",
+      "stage": "O78",
       "stdout": "True\n"
     },
     {

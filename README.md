@@ -328,3 +328,7 @@ The [O70 live mapping proxy contract](docs/interpreter-class-mapping-proxies.md)
 
 [Advertised namespace directories](docs/interpreter-advertised-directories.md) complete
 type/custom-metaclass traversal and class-like advertised base checking.
+
+The [native directory audit](docs/interpreter-native-directory-closure.md) covers the
+currently exposed native type, wrapper, super, module, code, frame, cell, exception
+and callable layouts with exact namespace key identities.

@@ -467,3 +467,7 @@ namespace directories, hooked native qualification and abstract base checking.
 
 [O77](interpreter-wrapper-super-directories.md) completes native wrapper and super
 instance/type directories with live dictionaries and retained native callers.
+
+[O78](interpreter-native-directory-closure.md) closes the current native directory
+matrix with an 85-type audit and canonical namespace keys under accounting revision
+13. O76–O78 complete the directory workstream; O79–O96 remain separate stages.

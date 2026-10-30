@@ -1,0 +1,459 @@
+{
+  "schema_version": 1,
+  "reference_version": "3.14.7",
+  "stage": "O78",
+  "native_types": [
+    {
+      "type": "ArithmeticError",
+      "type_case": "type-ArithmeticError",
+      "instance_case": "instance-ArithmeticError"
+    },
+    {
+      "type": "AssertionError",
+      "type_case": "type-AssertionError",
+      "instance_case": "instance-AssertionError"
+    },
+    {
+      "type": "AttributeError",
+      "type_case": "type-AttributeError",
+      "instance_case": "instance-AttributeError"
+    },
+    {
+      "type": "BaseException",
+      "type_case": "type-BaseException",
+      "instance_case": "instance-BaseException"
+    },
+    {
+      "type": "Exception",
+      "type_case": "type-Exception",
+      "instance_case": "instance-Exception"
+    },
+    {
+      "type": "FrameLocalsProxy",
+      "type_case": "type-FrameLocalsProxy",
+      "instance_case": "instance-FrameLocalsProxy"
+    },
+    {
+      "type": "GeneratorExit",
+      "type_case": "type-GeneratorExit",
+      "instance_case": "instance-GeneratorExit"
+    },
+    {
+      "type": "ImportError",
+      "type_case": "type-ImportError",
+      "instance_case": "instance-ImportError"
+    },
+    {
+      "type": "IndexError",
+      "type_case": "type-IndexError",
+      "instance_case": "instance-IndexError"
+    },
+    {
+      "type": "KeyError",
+      "type_case": "type-KeyError",
+      "instance_case": "instance-KeyError"
+    },
+    {
+      "type": "LookupError",
+      "type_case": "type-LookupError",
+      "instance_case": "instance-LookupError"
+    },
+    {
+      "type": "ModuleNotFoundError",
+      "type_case": "type-ModuleNotFoundError",
+      "instance_case": "instance-ModuleNotFoundError"
+    },
+    {
+      "type": "NameError",
+      "type_case": "type-NameError",
+      "instance_case": "instance-NameError"
+    },
+    {
+      "type": "NoneType",
+      "type_case": "type-NoneType",
+      "instance_case": "instance-NoneType"
+    },
+    {
+      "type": "NotImplementedType",
+      "type_case": "type-NotImplementedType",
+      "instance_case": "instance-NotImplementedType"
+    },
+    {
+      "type": "OverflowError",
+      "type_case": "type-OverflowError",
+      "instance_case": "instance-OverflowError"
+    },
+    {
+      "type": "RecursionError",
+      "type_case": "type-RecursionError",
+      "instance_case": "instance-RecursionError"
+    },
+    {
+      "type": "RuntimeError",
+      "type_case": "type-RuntimeError",
+      "instance_case": "instance-RuntimeError"
+    },
+    {
+      "type": "StopIteration",
+      "type_case": "type-StopIteration",
+      "instance_case": "instance-StopIteration"
+    },
+    {
+      "type": "SystemError",
+      "type_case": "type-SystemError",
+      "instance_case": "instance-SystemError"
+    },
+    {
+      "type": "TypeError",
+      "type_case": "type-TypeError",
+      "instance_case": "instance-TypeError"
+    },
+    {
+      "type": "UnboundLocalError",
+      "type_case": "type-UnboundLocalError",
+      "instance_case": "instance-UnboundLocalError"
+    },
+    {
+      "type": "UnicodeDecodeError",
+      "type_case": "type-UnicodeDecodeError",
+      "instance_case": "instance-UnicodeDecodeError"
+    },
+    {
+      "type": "UnicodeEncodeError",
+      "type_case": "type-UnicodeEncodeError",
+      "instance_case": "instance-UnicodeEncodeError"
+    },
+    {
+      "type": "UnicodeError",
+      "type_case": "type-UnicodeError",
+      "instance_case": "instance-UnicodeError"
+    },
+    {
+      "type": "UnicodeTranslateError",
+      "type_case": "type-UnicodeTranslateError",
+      "instance_boundary": {
+        "case": "unicode-translate-construction-boundary",
+        "owner": "#124",
+        "error": "UnsupportedOperationError",
+        "reason": "CPython-compatible UnicodeTranslateError construction requires the #124 multiple-argument signature; the internal representation has the audited native directory."
+      }
+    },
+    {
+      "type": "ValueError",
+      "type_case": "type-ValueError",
+      "instance_case": "instance-ValueError"
+    },
+    {
+      "type": "ZeroDivisionError",
+      "type_case": "type-ZeroDivisionError",
+      "instance_case": "instance-ZeroDivisionError"
+    },
+    {
+      "type": "bool",
+      "type_case": "type-bool",
+      "instance_case": "instance-bool"
+    },
+    {
+      "type": "builtin_function_or_method",
+      "type_case": "type-builtin_function_or_method",
+      "instance_case": "instance-builtin_function_or_method"
+    },
+    {
+      "type": "bytearray",
+      "type_case": "type-bytearray",
+      "instance_case": "instance-bytearray"
+    },
+    {
+      "type": "bytearray_iterator",
+      "type_case": "type-bytearray_iterator",
+      "instance_case": "instance-bytearray_iterator"
+    },
+    {
+      "type": "bytes",
+      "type_case": "type-bytes",
+      "instance_case": "instance-bytes"
+    },
+    {
+      "type": "bytes_iterator",
+      "type_case": "type-bytes_iterator",
+      "instance_case": "instance-bytes_iterator"
+    },
+    {
+      "type": "callable_iterator",
+      "type_case": "type-callable_iterator",
+      "instance_case": "instance-callable_iterator"
+    },
+    {
+      "type": "cell",
+      "type_case": "type-cell",
+      "instance_case": "instance-cell"
+    },
+    {
+      "type": "classmethod",
+      "type_case": "type-classmethod",
+      "instance_case": "instance-classmethod"
+    },
+    {
+      "type": "classmethod_descriptor",
+      "type_case": "type-classmethod_descriptor",
+      "instance_case": "instance-classmethod_descriptor"
+    },
+    {
+      "type": "code",
+      "type_case": "type-code",
+      "instance_case": "instance-code"
+    },
+    {
+      "type": "complex",
+      "type_case": "type-complex",
+      "instance_case": "instance-complex"
+    },
+    {
+      "type": "dict",
+      "type_case": "type-dict",
+      "instance_case": "instance-dict"
+    },
+    {
+      "type": "dict_itemiterator",
+      "type_case": "type-dict_itemiterator",
+      "instance_case": "instance-dict_itemiterator"
+    },
+    {
+      "type": "dict_items",
+      "type_case": "type-dict_items",
+      "instance_case": "instance-dict_items"
+    },
+    {
+      "type": "dict_keyiterator",
+      "type_case": "type-dict_keyiterator",
+      "instance_case": "instance-dict_keyiterator"
+    },
+    {
+      "type": "dict_keys",
+      "type_case": "type-dict_keys",
+      "instance_case": "instance-dict_keys"
+    },
+    {
+      "type": "dict_reverseitemiterator",
+      "type_case": "type-dict_reverseitemiterator",
+      "instance_case": "instance-dict_reverseitemiterator"
+    },
+    {
+      "type": "dict_reversekeyiterator",
+      "type_case": "type-dict_reversekeyiterator",
+      "instance_case": "instance-dict_reversekeyiterator"
+    },
+    {
+      "type": "dict_reversevalueiterator",
+      "type_case": "type-dict_reversevalueiterator",
+      "instance_case": "instance-dict_reversevalueiterator"
+    },
+    {
+      "type": "dict_valueiterator",
+      "type_case": "type-dict_valueiterator",
+      "instance_case": "instance-dict_valueiterator"
+    },
+    {
+      "type": "dict_values",
+      "type_case": "type-dict_values",
+      "instance_case": "instance-dict_values"
+    },
+    {
+      "type": "float",
+      "type_case": "type-float",
+      "instance_case": "instance-float"
+    },
+    {
+      "type": "frame",
+      "type_case": "type-frame",
+      "instance_case": "instance-frame"
+    },
+    {
+      "type": "frozenset",
+      "type_case": "type-frozenset",
+      "instance_case": "instance-frozenset"
+    },
+    {
+      "type": "function",
+      "type_case": "type-function",
+      "instance_case": "instance-function"
+    },
+    {
+      "type": "generator",
+      "type_case": "type-generator",
+      "instance_case": "instance-generator"
+    },
+    {
+      "type": "getset_descriptor",
+      "type_case": "type-getset_descriptor",
+      "instance_case": "instance-getset_descriptor"
+    },
+    {
+      "type": "int",
+      "type_case": "type-int",
+      "instance_case": "instance-int"
+    },
+    {
+      "type": "iterator",
+      "type_case": "type-iterator",
+      "instance_case": "instance-iterator"
+    },
+    {
+      "type": "list",
+      "type_case": "type-list",
+      "instance_case": "instance-list"
+    },
+    {
+      "type": "list_iterator",
+      "type_case": "type-list_iterator",
+      "instance_case": "instance-list_iterator"
+    },
+    {
+      "type": "longrange_iterator",
+      "type_case": "type-longrange_iterator",
+      "instance_case": "instance-longrange_iterator"
+    },
+    {
+      "type": "mappingproxy",
+      "type_case": "type-mappingproxy",
+      "instance_case": "instance-mappingproxy"
+    },
+    {
+      "type": "member_descriptor",
+      "type_case": "type-member_descriptor",
+      "instance_case": "instance-member_descriptor"
+    },
+    {
+      "type": "memory_iterator",
+      "type_case": "type-memory_iterator",
+      "instance_case": "instance-memory_iterator"
+    },
+    {
+      "type": "memoryview",
+      "type_case": "type-memoryview",
+      "instance_case": "instance-memoryview"
+    },
+    {
+      "type": "method",
+      "type_case": "type-method",
+      "instance_case": "instance-method"
+    },
+    {
+      "type": "method-wrapper",
+      "type_case": "type-method-wrapper",
+      "instance_case": "instance-method-wrapper"
+    },
+    {
+      "type": "method_descriptor",
+      "type_case": "type-method_descriptor",
+      "instance_case": "instance-method_descriptor"
+    },
+    {
+      "type": "module",
+      "type_case": "type-module",
+      "instance_case": "instance-module"
+    },
+    {
+      "type": "object",
+      "type_case": "type-object",
+      "instance_case": "instance-object"
+    },
+    {
+      "type": "property",
+      "type_case": "type-property",
+      "instance_case": "instance-property"
+    },
+    {
+      "type": "range",
+      "type_case": "type-range",
+      "instance_case": "instance-range"
+    },
+    {
+      "type": "range_iterator",
+      "type_case": "type-range_iterator",
+      "instance_case": "instance-range_iterator"
+    },
+    {
+      "type": "set",
+      "type_case": "type-set",
+      "instance_case": "instance-set"
+    },
+    {
+      "type": "set_iterator",
+      "type_case": "type-set_iterator",
+      "instance_case": "instance-set_iterator"
+    },
+    {
+      "type": "slice",
+      "type_case": "type-slice",
+      "instance_case": "instance-slice"
+    },
+    {
+      "type": "staticmethod",
+      "type_case": "type-staticmethod",
+      "instance_case": "instance-staticmethod"
+    },
+    {
+      "type": "str",
+      "type_case": "type-str",
+      "instance_case": "instance-str"
+    },
+    {
+      "type": "str_ascii_iterator",
+      "type_case": "type-str_ascii_iterator",
+      "instance_case": "instance-str_ascii_iterator"
+    },
+    {
+      "type": "str_iterator",
+      "type_case": "type-str_iterator",
+      "instance_case": "instance-str_iterator"
+    },
+    {
+      "type": "super",
+      "type_case": "type-super",
+      "instance_case": "instance-super"
+    },
+    {
+      "type": "tuple",
+      "type_case": "type-tuple",
+      "instance_case": "instance-tuple"
+    },
+    {
+      "type": "tuple_iterator",
+      "type_case": "type-tuple_iterator",
+      "instance_case": "instance-tuple_iterator"
+    },
+    {
+      "type": "type",
+      "type_case": "type-type",
+      "instance_case": "instance-type"
+    },
+    {
+      "type": "wrapper_descriptor",
+      "type_case": "type-wrapper_descriptor",
+      "instance_case": "instance-wrapper_descriptor"
+    }
+  ],
+  "source_layouts": {
+    "ClassValue": "advertised-directories.json:transparent-metaclass",
+    "InstanceValue": "instance-directories.json:root-sorted"
+  },
+  "internal_only": [
+    "Environment",
+    "CodePool",
+    "CallArguments",
+    "NamespaceLookupCache",
+    "NamespaceLookupRequest",
+    "IntegerIdentityRecord"
+  ],
+  "native_callable_layouts": [
+    "builtin_function_or_method",
+    "method-wrapper",
+    "method_descriptor",
+    "wrapper_descriptor",
+    "classmethod_descriptor",
+    "getset_descriptor",
+    "member_descriptor"
+  ],
+  "extension_policy": "O84\u2013O88 extend this inventory and its directory evidence when they introduce layouts."
+}

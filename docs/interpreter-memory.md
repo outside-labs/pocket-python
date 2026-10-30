@@ -143,3 +143,5 @@ dictionaries and keep their existing observations. Replacement validates the
 new graph before committing; failed transfers restore the prior dictionary.
 
 O75 adds lazy, collectable canonical integer identity records under [execution-accounting/12](execution-contract.md#integer-identity-accounting-revision-12). The registry traces only live scalar edges and cannot retain unreachable integers; ordinary scalar storage keeps its conservative per-edge cost.
+
+O78 adds lazy native namespace key tables under [execution-accounting/13](execution-contract.md#native-namespace-key-accounting-revision-13), charged at eight bytes plus eight per key edge. Dictionary materialization reuses these keys and removes the table; failed allocation/publication rolls back.

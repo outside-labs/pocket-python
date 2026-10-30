@@ -73,7 +73,7 @@ for (const operation of ['dir(type(object.__dir__))', 'type.__dir__(type(propert
   for (const [options, limits, expected] of [
     [{maxSteps: 300}, undefined, 'BUDGET'],
     [{maxSteps: 100000, maxWork: 30000}, undefined, 'BUDGET'],
-    [{maxSteps: 100000, maxWork: 20000000}, {maxBytes: 16000}, 'OOM'],
+    [{maxSteps: 100000, maxWork: 20000000}, {maxBytes: 12000}, 'OOM'],
   ]) {
     const result = await run('d=type.__dir__.__get__(type(object.__dir__))\nprint("entered")\nwhile True: names='+operation+'\n', options, limits);
     assert.equal(result.error?.code, expected, JSON.stringify(result.error));

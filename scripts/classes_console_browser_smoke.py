@@ -67,6 +67,19 @@ from examples.interpreter_iterator_type_directories import SOURCE as ITERATOR_TY
 from examples.interpreter_callable_type_directories import SOURCE as CALLABLE_TYPE_DIRECTORIES_SOURCE
 
 
+NATIVE_MODULE_DIRECTORY_SOURCE = '''import operator as module
+ns=vars(module)
+for name in list(ns): del ns[name]
+ns["marker"]=7
+print(*module.__dir__())
+print(*type(module).__dir__(module))
+print("__dict__" in object.__dir__(module))
+ns["__dir__"]=lambda:["z","a"]
+print(*dir(module))
+print(*type(module).__dir__(module))
+'''
+
+
 def smoke(channel=None):
     checks, cases = [], []
     with tempfile.TemporaryDirectory() as temporary:
@@ -113,7 +126,7 @@ def smoke(channel=None):
                         assert page.locator('#run').is_enabled()
                         page.locator('#run').dispatch_event('click')
                         prefixes = [prefix] if isinstance(prefix, str) else prefix
-                        page.wait_for_function("prefixes=>document.querySelector('#status').textContent==='Completed' || prefixes.some(prefix=>document.querySelector('#status').textContent.startsWith(prefix))", arg=prefixes)
+                        page.wait_for_function("prefixes=>document.querySelector('#status').textContent==='Completed' || document.querySelector('#status').textContent.includes('Error:') || prefixes.some(prefix=>document.querySelector('#status').textContent.startsWith(prefix))", arg=prefixes)
                         status = page.locator('#status').inner_text()
                         assert any(status.startswith(prefix) for prefix in prefixes), (status, source)
 
@@ -252,11 +265,12 @@ def smoke(channel=None):
                     wrapper_metadata = json.loads((ROOT / 'tests/fixtures/interpreter/wrapper-metadata.json').read_bytes())
                     function_state = json.loads((ROOT / 'tests/fixtures/interpreter/function-state.json').read_bytes())
                     code_cells = json.loads((ROOT / 'tests/fixtures/interpreter/code-cells.json').read_bytes())
+                    native_directory_closure = json.loads((ROOT / 'tests/fixtures/interpreter/native-directory-closure.json').read_bytes())
                     wrapper_super_directories = json.loads((ROOT / 'tests/fixtures/interpreter/wrapper-super-directories.json').read_bytes())
                     advertised_directories = json.loads((ROOT / 'tests/fixtures/interpreter/advertised-directories.json').read_bytes())
                     integer_identity = json.loads((ROOT / 'tests/fixtures/interpreter/integer-identity.json').read_bytes())
                     generator_frames = json.loads((ROOT / 'tests/fixtures/interpreter/generator-frames.json').read_bytes())
-                    for corpus in [wrapper_super_directories, advertised_directories, integer_identity, generator_frames, code_cells, function_state, wrapper_metadata, class_mapping_proxies, native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
+                    for corpus in [native_directory_closure, wrapper_super_directories, advertised_directories, integer_identity, generator_frames, code_cells, function_state, wrapper_metadata, class_mapping_proxies, native_namespaces, class_body_namespaces, module_namespaces, iterator_type_directories, callable_type_directories, container_type_directories, numeric_type_directories, class_directories, instance_directories, buffer_directories, container_directories, sequence_directories, numeric_directories, iterator_directories, generator_directories, native_callable_directories, property_directories, namespace_view_directories, method_directories, function_directories, class_namespaces, instance_dictionaries, function_dictionaries, generators, objects, construction, attributes, type_checks, ordering, object_hashing, reflection, repetition, subclasses, metaclasses, nested_descriptors, native_descriptors, descriptor_binding, native_rebinding, type_reflection, property_names, abstract_flags, documentation, function_metadata]:
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c and not c.get('modules'))
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
@@ -286,7 +300,7 @@ def smoke(channel=None):
                                                            text=True, encoding='utf-8', timeout=5)
                         run(program, expected)
                         cases.append({'source_sha256': hashlib.sha256(program.encode()).hexdigest(), 'stdout': expected, 'status': 'pass'})
-                    for corpus in [wrapper_super_directories, advertised_directories, integer_identity, native_namespaces, class_mapping_proxies]:
+                    for corpus in [native_directory_closure, wrapper_super_directories, advertised_directories, integer_identity, native_namespaces, class_mapping_proxies]:
                         for case in corpus['cases']:
                             if 'error_type' in case:
                                 try:
@@ -916,6 +930,13 @@ def smoke(channel=None):
                             assert page.locator('#result').inner_text() == case['stdout']
                     checks.append('iterator-type-directories-compose-with-native-binding-advertised-namespaces-and-lazy-generators-offline')
                     checks.append('iterator-type-directories-preserve-native-errors-and-unread-namespace-boundaries-offline')
+                    native_module_expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', NATIVE_MODULE_DIRECTORY_SOURCE], text=True, encoding='utf-8')
+                    run(NATIVE_MODULE_DIRECTORY_SOURCE, native_module_expected)
+                    for case in native_directory_closure['cases']:
+                        if case['stage'] in native_directory_closure['implemented_stages'] and 'error_type' in case and not case.get('modules'):
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                    checks.append('remaining-native-directory-layouts-and-module-hook-defaults-offline')
                     for case in wrapper_super_directories['cases']:
                         if 'error_type' in case:
                             refused(case['source'], case['error_type'] + ':')
@@ -1026,6 +1047,7 @@ def smoke(channel=None):
                         'class Spin:\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n',
                         'class Spin:\n @property\n def __str__(self):\n  print("entered")\n  while True: pass\nprint("prefix",Spin())\n']
                     busy.extend([
+                        'import operator\ndef busy():\n while True: pass\noperator.__dir__=busy\ndir(operator)\n',
                         'class A:\n @property\n def __dict__(self):\n  while True: pass\nclass B(A): pass\ndir(super(B,B()))\n',
                         'class Meta(type):\n @property\n def __dict__(cls):\n  while True: pass\nclass A(metaclass=Meta): pass\ndir(A)\n',
                         'class Fake:\n @property\n def __bases__(self):\n  while True: pass\nisinstance(object(),Fake())\n','class M(type):\n def __getattribute__(cls,name):\n  print("entered")\n  while True: pass\nclass A(metaclass=M): pass\nA.x\n', 'class M(type):\n def __getattr__(cls,name):\n  print("entered")\n  while True: pass\nclass A(metaclass=M): pass\ngetattr(A,"x",[7])\n', 'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass M(type): __getattribute__=D()\nclass A(metaclass=M): pass\nA.x\n', 'class M(type):\n def __setattr__(cls,name,value):\n  print("entered")\n  while True: pass\nclass A(metaclass=M): pass\nA.x=[7]\n', 'class M(type):\n def __delattr__(cls,name):\n  print("entered")\n  while True: pass\nclass A(metaclass=M): x=[7]\ndel A.x\n', 'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass M(type): __setattr__=D()\nclass A(metaclass=M): pass\nA.x=[7]\n'])

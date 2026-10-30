@@ -1549,9 +1549,9 @@ export function valueLayout(value) {
     return {bytes: 80 + 8 * (value.closure.size + defaults.length + (value.attributes === null ? 0 : 1) + (value.documentation === null ? 0 : 1) + metadata.length),
       children: [value.pool, value.globals, ...value.closure.values(), ...defaults, ...(value.attributes === null ? [] : [value.attributes]), ...(value.documentation === null ? [] : [value.documentation]), ...metadata]};
   }
-  if (value instanceof ClassValue) return {bytes: 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
+  if (value instanceof ClassValue) return {bytes: (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 128 + 2 * (value.name.length + value.qualname.length + value.module.length) +
     8 * (value.bases.length + value.mro.length + (value.metaclass === null ? 0 : 1) + (value.namespaceDictionary ? 1 : 0)) + (value.protocolNames === null ? 0 : 8 + value.protocolNames.reduce((sum, name) => sum + 8 + 2 * name.length, 0)) + (value.namespaceEntries === null ? 0 : 8 + value.namespaceEntries.reduce((sum, entry) => sum + 40 + 2 * entry.hash.length, 0)) + (value.staticAttributes || []).reduce((sum, name) => sum + 8 + 2 * name.length, 0) + [...value.namespace.keys()].reduce((sum, key) => sum + 32 + (typeof key === "string" ? 2 * key.length : 8), 0),
-    children: [...value.bases, ...value.mro.slice(1), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.namespaceEntries || []).map(entry => entry.key), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.metaclass === null ? [] : [value.metaclass])]};
+    children: [...(value.namespaceKeys || []), ...value.bases, ...value.mro.slice(1), ...[...value.namespace.keys()].filter(key => typeof key !== "string"), ...value.namespace.values(), ...(value.namespaceEntries || []).map(entry => entry.key), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.metaclass === null ? [] : [value.metaclass])]};
   if (value instanceof NamespaceLookupCache) return {bytes: 64 + value.entries.reduce((sum, entry) => sum + 48 + 2 * entry.name.length, 0),
     children: value.entries.flatMap(entry => [entry.owner, entry.dictionary, entry.key])};
   if (value instanceof ClassNamespaceValue) return {bytes: 48, children: [value.owner]};
@@ -1566,8 +1566,8 @@ export function valueLayout(value) {
   if (value instanceof PropertyAccessorValue) return {bytes: 64, children: [value.property]};
   if (value instanceof AppendValue) return {bytes: 64, children: [value.receiver]};
   if (value instanceof ValueMethod) return {bytes: 64 + 2 * value.name.length, children: [value.receiver]};
-  if (value instanceof BuiltinValue) return {bytes: 48 + 2 * value.name.length + (value.nativeOwner ? 8 : 0) + (value.namespaceDictionary ? 8 : 0),
-    children: [...(value.nativeOwner ? [value.nativeOwner] : []), ...(value.namespaceDictionary ? [value.namespaceDictionary] : [])]};
+  if (value instanceof BuiltinValue) return {bytes: (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 48 + 2 * value.name.length + (value.nativeOwner ? 8 : 0) + (value.namespaceDictionary ? 8 : 0),
+    children: [...(value.namespaceKeys || []), ...(value.nativeOwner ? [value.nativeOwner] : []), ...(value.namespaceDictionary ? [value.namespaceDictionary] : [])]};
   if (value instanceof ExceptionValue) return {bytes: 96 + 2 * (value.name.length + value.message.length) +
     value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),
     children: [...value.args, ...(value.context ? [value.context] : [])]};
