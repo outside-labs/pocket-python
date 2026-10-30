@@ -1037,7 +1037,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "instance-entry") {
       if (completion.operation === "set") return valueTask(null, site, completion.after);
       if (value.items[0]) return valueTask(value.items[1], site, completion.after);
-      const fallback = completion.operation === "get" ? {found: completion.found, value: completion.fallback} : undefined;
+      const fallback = completion.operation === "get" ? {found: completion.found, value: completion.fallback, skipNative: completion.skipNative} : {found: false, skipNative: true};
       const plan = classes.instanceMissing(completion.receiver, values.text(completion.key), fallback);
       return plan.kind === "value" ? valueTask(plan.value, site, completion.after) :
         callTask(plan.callable, plan.args, [], [], site, completion.after, completion.depth);
@@ -2330,7 +2330,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (nativeOwner === "module" && nativeName === "__dir__") { if (rest.length || keywords.length) python("TypeError", "__dir__ takes no arguments"); task = nativeModuleDirectory(raw, site, finish, depth); continue; }
             }
           }
-          if (callable.name === "native-module-get") { task = attributeTask(classes.nativeModule(args[0]), values.text(args[1]), site, continuation("relay", {receiver: args[0], after: completion}), depth, "native-get"); continue; }
+          if (callable.name === "native-module-missing") {
+            const receiver = classes.nativeModule(args[0]);
+            task = moduleEntry({receiver, key: args[1], name: values.text(args[1]), mode: "get", depth, after: continuation("relay", {receiver: args[0], after: completion})}, site, false, null); continue;
+          }
           if (NATIVE_SUBCLASS_BASES.includes(nativeOwner) && callable.name.includes(".") && (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined)) {
             if (nativeName === "__new__") {
               if (!args.length || !classes.isType(args[0]) || !classes.subclass(args[0], classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
@@ -2693,17 +2696,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
           }
           if (callable.name.startsWith("instance-dictionary-")) {
-            const [receiver, dictionary, key, item, found, fallback] = args, operation = callable.name.slice("instance-dictionary-".length);
-            if (!(receiver instanceof InstanceValue) || !values.isDict(dictionary) || !values.isString(key) || typeof found !== "boolean" || args.length !== 6 || keywords.length)
+            const [receiver, dictionary, key, item, found, fallback, skipNative = false] = args, operation = callable.name.slice("instance-dictionary-".length);
+            if (!(receiver instanceof InstanceValue) || !values.isDict(dictionary) || !values.isString(key) || typeof found !== "boolean" || typeof skipNative !== "boolean" || ![6, 7].includes(args.length) || keywords.length)
               throw new TypeError("Invalid instance dictionary operation.");
-            const after = continuation("instance-entry", {receiver, key, operation, found, fallback, depth, after: completion});
+            const after = continuation("instance-entry", {receiver, key, operation, found, fallback, skipNative, depth, after: completion});
             task = dictionaryTask(dictionary, key, site, after,
               depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
           }
           if (callable.name === "instance-attribute-missing") {
             if (!(args[0] instanceof InstanceValue) || !values.isString(args[1]) || args.length !== 2 || keywords.length)
               throw new TypeError("Invalid instance attribute failure.");
-            classes.instanceMissing(args[0], values.text(args[1]));
+            classes.instanceMissing(args[0], values.text(args[1]), {found: false, skipNative: true});
           }
           if (callable.name === "method-attribute") {
             const [receiver, key] = args;

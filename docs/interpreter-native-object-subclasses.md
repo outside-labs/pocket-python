@@ -1,7 +1,7 @@
 # Descriptor, wrapper, module and super subclasses
 
 O87 of #123 adopts property, staticmethod, classmethod, module and super
-subclasses. The [48-case matrix](../tests/fixtures/interpreter/native-object-subclasses.json)
+subclasses. The [54-case matrix](../tests/fixtures/interpreter/native-object-subclasses.json)
 uses the pinned CPython 3.14.7 oracle and all six Node/Chromium source drivers.
 
 | Layout | Contract |
@@ -20,7 +20,14 @@ and close. No foreign executable data or host authority is introduced.
 
 The native namespace and directory inventory remains O78's existing matrix;
 these source subtypes inherit its native descriptor layouts and add their real
-instance state. Existing object/type-derived layouts are retained. Compatible
+instance state.
+Native super target lookup precedes subtype state; native object lookup can
+read that state directly. Module missing-name hooks follow a single namespace
+probe, and failed writes never invoke native read fallback.
+The installed offline console also constructs and reinitializes a slotted
+module subtype while retaining its dictionary alias and member values.
+
+Existing object/type-derived layouts are retained. Compatible
 class and base reassignment is the final storage stage, O88. Remaining native
 entry-point and property diagnostic completion remains O90.
 
