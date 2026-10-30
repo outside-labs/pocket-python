@@ -10,7 +10,7 @@ const unit = source => ({name: 'app', package: false, imports: [], source, notic
 const closed = stats => { for (const key of ['bytes', 'objects', 'roots', 'frames', 'external']) assert.equal(stats[key], 0, key); };
 const corpus = JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/expanded-class-bases.json', import.meta.url)));
 for (const item of corpus.cases) test('expanded class bases: ' + item.id, async () => {
-  const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: profile,
+  const result = await runSourceRequest({modules: [{...unit(item.source), imports: item.imports || []}, ...(item.modules || []).map(module => ({package: false, imports: [], notice: 'Synthetic expanded base module', ...module}))], compileOptions: profile,
     options: {maxSteps: 50000, maxWork: 20000000}});
   assert.equal(result.stdout, item.stdout); assert.equal(result.error?.type, item.error_type, JSON.stringify(result.error));
   if (result.closed) closed(result.closed);
