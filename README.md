@@ -325,3 +325,6 @@ The finite [range and slice directory profile](docs/interpreter-sequence-directo
 The [O69 native namespace contract](docs/interpreter-native-namespaces.md) materializes complete own dictionaries for source classes and every adopted native layout, with stable descriptors, native storage fields, exact namespace keys and explicit owners for deferred APIs.
 
 The [O70 live mapping proxy contract](docs/interpreter-class-mapping-proxies.md) completes namespace iteration, live views, owned callback lookups, copying, equality and unions across source and native class dictionaries.
+
+[Advertised namespace directories](docs/interpreter-advertised-directories.md) complete
+type/custom-metaclass traversal and class-like advertised base checking.

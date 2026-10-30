@@ -8,7 +8,8 @@
     "O9",
     "O10",
     "O11",
-    "O25"
+    "O25",
+    "O76"
   ],
   "cases": [
     {
@@ -465,7 +466,7 @@
     },
     {
       "id": "future-class-bases-spoof",
-      "stage": "Future",
+      "stage": "O76",
       "source": "class Fake:\n __bases__=()\nprint(issubclass(Fake(),object))\n",
       "stdout": "False\n"
     },

@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O62",
     "O63",
-    "O70"
+    "O70",
+    "O76"
   ],
   "cases": [
     {
@@ -361,19 +362,19 @@
     {
       "id": "metaclass-native-namespace",
       "source": "print(len(dir(type)))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "49\n"
     },
     {
       "id": "custom-metaclass-native-directory",
       "source": "class Meta(type): pass\nclass A(metaclass=Meta): pass\nprint(len(type.__dir__(A)))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "29\n"
     },
     {
       "id": "custom-metaclass-namespace-hook",
       "source": "class Meta(type):\n @property\n def __dict__(cls):\n  print(\"namespace\")\n  return {\"virtual\":7}\nclass A(metaclass=Meta): pass\nprint(\"virtual\" in dir(A))\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "namespace\nTrue\n"
     },
     {
@@ -618,7 +619,7 @@
     {
       "id": "custom-metaclass-native-qualification",
       "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nd=type.__dir__.__get__(A)\nprint(d.__qualname__)\n",
-      "stage": "Future",
+      "stage": "O76",
       "stdout": "__qualname__\nA.__dir__\n"
     }
   ]

@@ -1,0 +1,328 @@
+{
+  "suite": "interpreter-advertised-directories/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "O76"
+  ],
+  "cases": [
+    {
+      "id": "type-native-raw",
+      "stage": "O76",
+      "source": "print(*type.__dir__(type))\n",
+      "stdout": "__new__ __repr__ __call__ __getattribute__ __setattr__ __delattr__ __init__ __or__ __ror__ mro __subclasses__ __prepare__ __instancecheck__ __subclasscheck__ __dir__ __sizeof__ __basicsize__ __itemsize__ __flags__ __weakrefoffset__ __base__ __dictoffset__ __name__ __qualname__ __bases__ __mro__ __module__ __abstractmethods__ __dict__ __doc__ __text_signature__ __annotations__ __annotate__ __type_params__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __class__\n"
+    },
+    {
+      "id": "type-native-sorted",
+      "stage": "O76",
+      "source": "print(*dir(type))\n",
+      "stdout": "__abstractmethods__ __annotate__ __annotations__ __base__ __bases__ __basicsize__ __call__ __class__ __delattr__ __dict__ __dictoffset__ __dir__ __doc__ __eq__ __flags__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __instancecheck__ __itemsize__ __le__ __lt__ __module__ __mro__ __name__ __ne__ __new__ __or__ __prepare__ __qualname__ __reduce__ __reduce_ex__ __repr__ __ror__ __setattr__ __sizeof__ __str__ __subclasscheck__ __subclasses__ __subclasshook__ __text_signature__ __type_params__ __weakrefoffset__ mro\n"
+    },
+    {
+      "id": "transparent-metaclass",
+      "stage": "O76",
+      "source": "class Meta(type): extra=7\nclass A(metaclass=Meta): marker=1\nprint(*type.__dir__(Meta))\nprint(*type.__dir__(A))\nprint(\"extra\" in dir(A),\"extra\" in dir(Meta))\n",
+      "stdout": "__module__ __firstlineno__ extra __static_attributes__ __doc__ __new__ __repr__ __call__ __getattribute__ __setattr__ __delattr__ __init__ __or__ __ror__ mro __subclasses__ __prepare__ __instancecheck__ __subclasscheck__ __dir__ __sizeof__ __basicsize__ __itemsize__ __flags__ __weakrefoffset__ __base__ __dictoffset__ __name__ __qualname__ __bases__ __mro__ __abstractmethods__ __dict__ __text_signature__ __annotations__ __annotate__ __type_params__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __class__\n__module__ __firstlineno__ marker __static_attributes__ __dict__ __weakref__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\nFalse True\n"
+    },
+    {
+      "id": "object-directory-class",
+      "stage": "O76",
+      "source": "class A: marker=1\nprint(*object.__dir__(A))\n",
+      "stdout": "__new__ __repr__ __call__ __getattribute__ __setattr__ __delattr__ __init__ __or__ __ror__ mro __subclasses__ __prepare__ __instancecheck__ __subclasscheck__ __dir__ __sizeof__ __basicsize__ __itemsize__ __flags__ __weakrefoffset__ __base__ __dictoffset__ __name__ __qualname__ __bases__ __mro__ __module__ __abstractmethods__ __dict__ __doc__ __text_signature__ __annotations__ __annotate__ __type_params__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __class__\n"
+    },
+    {
+      "id": "object-directory-metaclass",
+      "stage": "O76",
+      "source": "class Meta(type): extra=7\nclass A(metaclass=Meta): marker=1\nprint(*object.__dir__(A))\n",
+      "stdout": "__module__ __firstlineno__ extra __static_attributes__ __doc__ __new__ __repr__ __call__ __getattribute__ __setattr__ __delattr__ __init__ __or__ __ror__ mro __subclasses__ __prepare__ __instancecheck__ __subclasscheck__ __dir__ __sizeof__ __basicsize__ __itemsize__ __flags__ __weakrefoffset__ __base__ __dictoffset__ __name__ __qualname__ __bases__ __mro__ __abstractmethods__ __dict__ __text_signature__ __annotations__ __annotate__ __type_params__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __class__\n"
+    },
+    {
+      "id": "hooked-qualification-mro",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nd=type.mro.__get__(A)\nprint(d.__name__,d.__qualname__)\n",
+      "stdout": "__qualname__\nmro A.mro\n"
+    },
+    {
+      "id": "hooked-qualification-__dir__",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nd=type.__dir__.__get__(A)\nprint(d.__name__,d.__qualname__)\n",
+      "stdout": "__qualname__\n__dir__ A.__dir__\n"
+    },
+    {
+      "id": "hooked-qualification-__instancecheck__",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nd=type.__instancecheck__.__get__(A)\nprint(d.__name__,d.__qualname__)\n",
+      "stdout": "__qualname__\n__instancecheck__ A.__instancecheck__\n"
+    },
+    {
+      "id": "hooked-qualification-__subclasscheck__",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nd=type.__subclasscheck__.__get__(A)\nprint(d.__name__,d.__qualname__)\n",
+      "stdout": "__qualname__\n__subclasscheck__ A.__subclasscheck__\n"
+    },
+    {
+      "id": "qualification-7",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  if name==\"__qualname__\": return 7\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nprint(type.mro.__get__(A).__qualname__)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "qualification-None",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  if name==\"__qualname__\": return None\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nprint(type.mro.__get__(A).__qualname__)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "qualification-Alias",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  if name==\"__qualname__\": return \"Alias\"\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nprint(type.mro.__get__(A).__qualname__)\n",
+      "stdout": "Alias.mro\n"
+    },
+    {
+      "id": "qualification-error",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  if name==\"__qualname__\": raise ValueError(\"qualification\")\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): pass\nprint(type.__dir__.__get__(A).__qualname__)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "meta-read-order",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): x=7\nprint(\"x\" in dir(A))\n",
+      "stdout": "__dict__\n__bases__\nTrue\n"
+    },
+    {
+      "id": "optional-__dict__-AttributeError",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  if name==\"__dict__\": raise AttributeError(\"missing\")\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): marker=7\nprint(*type.__dir__(A))\n",
+      "stdout": "__dict__\n__bases__\n__new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ __doc__\n"
+    },
+    {
+      "id": "optional-__dict__-ValueError",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  if name==\"__dict__\": raise ValueError(\"missing\")\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): marker=7\nprint(*type.__dir__(A))\n",
+      "stdout": "__dict__\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "optional-__bases__-AttributeError",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  if name==\"__bases__\": raise AttributeError(\"missing\")\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): marker=7\nprint(*type.__dir__(A))\n",
+      "stdout": "__dict__\n__bases__\n__module__ __firstlineno__ marker __static_attributes__ __dict__ __weakref__ __doc__\n"
+    },
+    {
+      "id": "optional-__bases__-ValueError",
+      "stage": "O76",
+      "source": "class Meta(type):\n def __getattribute__(cls,name):\n  print(name)\n  if name==\"__bases__\": raise ValueError(\"missing\")\n  return type.__getattribute__(cls,name)\nclass A(metaclass=Meta): marker=7\nprint(*type.__dir__(A))\n",
+      "stdout": "__dict__\n__bases__\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "advertised-instance-graph",
+      "stage": "O76",
+      "source": "class Node:\n def __init__(self,names,bases):\n  self.names=names\n  self.bases=bases\n @property\n def __dict__(self):\n  print(\"dict\")\n  return self.names\n @property\n def __bases__(self):\n  print(\"bases\")\n  return self.bases\nleaf=Node({\"leaf\":1},())\nleft=Node({\"left\":1},(leaf,))\nright=Node({\"right\":1},(leaf,))\nroot=Node({\"top\":1},[left,right])\nclass A:\n @property\n def __class__(self): return root\nprint(*object.__dir__(A()))\n",
+      "stdout": "dict\nbases\ndict\nbases\ndict\nbases\ndict\nbases\ndict\nbases\ntop left leaf right\n"
+    },
+    {
+      "id": "advertised-dictionary-19",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return None\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "advertised-dictionary-20",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return 7\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "advertised-dictionary-21",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return [(\"pair\",1),(\"other\",2)]\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "advertised-dictionary-22",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return [(\"bad\",)]\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "advertised-dictionary-23",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return [(\"bad\",1,2)]\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "advertised-dictionary-24",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return [7]\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "advertised-mapping",
+      "stage": "O76",
+      "source": "class Mapping:\n def keys(self):\n  print(\"keys\")\n  return [\"b\",\"a\"]\n def __getitem__(self,key):\n  print(key)\n  return 7\nclass Meta(type):\n @property\n def __dict__(cls): return Mapping()\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "keys\nb\na\nb a\n"
+    },
+    {
+      "id": "advertised-sequence-bases",
+      "stage": "O76",
+      "source": "class Bases:\n def __len__(self):\n  print(\"len\")\n  return 2\n def __getitem__(self,index):\n  print(index)\n  return object\nclass Meta(type):\n @property\n def __dict__(cls): return {\"own\":7}\n @property\n def __bases__(cls): return Bases()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "len\n0\n1\nown __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ __doc__\n"
+    },
+    {
+      "id": "advertised-bases-27",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"own\":7}\n @property\n def __bases__(cls): return None\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-bases-28",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"own\":7}\n @property\n def __bases__(cls): return 7\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-bases-29",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"own\":7}\n @property\n def __bases__(cls): return {}\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "advertised-bases-30",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"own\":7}\n @property\n def __bases__(cls): return [None]\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "own\n"
+    },
+    {
+      "id": "advertised-bases-31",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return {\"own\":7}\n @property\n def __bases__(cls): return (object,)\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\n",
+      "stdout": "own __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__ __doc__\n"
+    },
+    {
+      "id": "exact-keys",
+      "stage": "O76",
+      "source": "key=\"unique directory key\"\nclass Meta(type):\n @property\n def __dict__(cls): return {key:7}\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(type.__dir__(A)[0] is key)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "mixed-key-sorting",
+      "stage": "O76",
+      "source": "class Meta(type):\n @property\n def __dict__(cls): return {7:1,\"x\":2}\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\nprint(*type.__dir__(A))\ndir(A)\n",
+      "stdout": "7 x\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "fresh-live-raw",
+      "stage": "O76",
+      "source": "names={\"b\":7}\nclass Meta(type):\n @property\n def __dict__(cls): return names\n @property\n def __bases__(cls): return ()\nclass A(metaclass=Meta): pass\na=type.__dir__(A)\nnames[\"a\"]=8\nb=type.__dir__(A)\nprint(*a)\nprint(*b)\nprint(*dir(A))\nprint(a is b)\n",
+      "stdout": "b\nb a\na b\nFalse\n"
+    },
+    {
+      "id": "directory-cycle",
+      "stage": "O76",
+      "source": "class Node:\n @property\n def __dict__(self): return {}\n @property\n def __bases__(self): return (self,self)\nnode=Node()\nclass A:\n @property\n def __class__(self): return node\ndir(A())\n",
+      "stdout": "",
+      "error_type": "RecursionError"
+    },
+    {
+      "id": "abstract-base-empty",
+      "stage": "O76",
+      "source": "class Fake: __bases__=()\nfake=Fake()\nprint(issubclass(fake,object),issubclass(fake,fake),isinstance(object(),fake))\n",
+      "stdout": "False True False\n"
+    },
+    {
+      "id": "abstract-base-chain",
+      "stage": "O76",
+      "source": "class Fake: pass\na=Fake()\nb=Fake()\na.__bases__=()\nb.__bases__=(a,)\nclass A:\n @property\n def __class__(self): return b\nprint(issubclass(b,a),isinstance(A(),a),type.__subclasscheck__(object,b))\n",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "abstract-base-validation-order",
+      "stage": "O76",
+      "source": "class Fake:\n @property\n def __bases__(self):\n  print(\"bases\")\n  return ()\na=Fake()\nprint(issubclass(a,a))\nprint(isinstance(object(),a))\n",
+      "stdout": "bases\nbases\nTrue\nbases\nFalse\n"
+    },
+    {
+      "id": "abstract-invalid-39",
+      "stage": "O76",
+      "source": "class Fake: __bases__=None\nfake=Fake()\nissubclass(fake,object)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "abstract-invalid-40",
+      "stage": "O76",
+      "source": "class Fake: __bases__=[]\nfake=Fake()\nissubclass(fake,object)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "abstract-invalid-41",
+      "stage": "O76",
+      "source": "class Fake: __bases__=7\nfake=Fake()\nissubclass(fake,object)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "abstract-error-AttributeError",
+      "stage": "O76",
+      "source": "class Fake:\n @property\n def __bases__(self):\n  print(\"bases\")\n  raise AttributeError(\"failure\")\nissubclass(Fake(),object)\n",
+      "stdout": "bases\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "abstract-error-ValueError",
+      "stage": "O76",
+      "source": "class Fake:\n @property\n def __bases__(self):\n  print(\"bases\")\n  raise ValueError(\"failure\")\nissubclass(Fake(),object)\n",
+      "stdout": "bases\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "abstract-native-tuple-short-circuit",
+      "stage": "O76",
+      "source": "class Fake: __bases__=(int,)\nfake=Fake()\nprint(issubclass(fake,(str,int,7)))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "actual-namespace-key-identity",
+      "stage": "O76",
+      "source": "key=\"unique directory key\"\nA=type(\"A\",(),{key:7})\nprint(type.__dir__(A)[0] is key)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "mapping-key-lookup-attributeerror",
+      "stage": "O76",
+      "source": "class Mapping:\n @property\n def keys(self): raise AttributeError(\"keys\")\nclass Meta(type):\n @property\n def __dict__(cls): return Mapping()\nclass A(metaclass=Meta): pass\ntype.__dir__(A)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "mapping-call-attributeerror",
+      "stage": "O76",
+      "source": "class Mapping:\n def keys(self): raise AttributeError(\"keys\")\nclass Meta(type):\n @property\n def __dict__(cls): return Mapping()\nclass A(metaclass=Meta): pass\ntype.__dir__(A)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "mapping-item-attributeerror",
+      "stage": "O76",
+      "source": "class Mapping:\n def keys(self): return [\"x\"]\n def __getitem__(self,key): raise AttributeError(\"item\")\nclass Meta(type):\n @property\n def __dict__(cls): return Mapping()\nclass A(metaclass=Meta): pass\ntype.__dir__(A)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    }
+  ]
+}

@@ -305,7 +305,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       const name = record.names[record.position];
       const item = classes.classDirectoryEntry(record.owner, name);
-      const key = typeof name === "string" ? values.string(Array.from(name, char => char.codePointAt(0))) : name;
+      const stored = record.owner.namespaceEntries?.find(entry => typeof name === "string" ? values.text(entry.key) === name : entry.key === name);
+      const key = stored?.key ?? (typeof name === "string" ? values.string(Array.from(name, char => char.codePointAt(0))) : name);
       state.temporaries.push(key, item, ...record.names.filter(name => typeof name !== "string"));
       const next = {...record, position: record.position + 1};
       if (values.dictionaryNeedsProtocol(record.result, key))
@@ -320,6 +321,42 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return attributeTask(record.receiver, "__class__", site,
       continuation("object-dir-class", {...record, result}), record.depth);
   };
+  const graphDirectoryVisit = (record, owner, site) => {
+    charge(1);
+    if (record.bases.length >= maxDepth) python("RecursionError", "maximum advertised directory recursion depth exceeded");
+    if (record.visits >= 4096) hard("BUDGET", "ExecutionLimitError", "Advertised directory traversal budget exceeded");
+    return attributeTask(owner, "__dict__", site,
+      continuation("graph-dir-dict", {...record, owner, visits: record.visits + 1}), record.depth);
+  };
+  const graphDirectoryNext = (record, site) => {
+    while (record.bases.length) {
+      const source = record.bases.at(-1), [position, length] = record.positions.at(-1);
+      if (position < length) {
+        const positions = [...record.positions.slice(0, -1), [position + 1, length]];
+        return itemTask(source, values.int(BigInt(position)), site,
+          continuation("graph-dir-child", {...record, positions}), record.depth);
+      }
+      record = {...record, bases: record.bases.slice(0, -1), positions: record.positions.slice(0, -1)};
+    }
+    return valueTask(values.list(record.result.entries.map(entry => entry.key)), site, record.after);
+  };
+  const graphDirectoryBases = (record, site) => attributeTask(record.owner, "__bases__", site,
+    continuation("graph-dir-bases", record), record.depth);
+  const graphDirectoryCopy = (record, site) => {
+    if (record.position === record.keys.items.length) return graphDirectoryBases(record, site);
+    const key = record.keys.items[record.position];
+    return itemTask(record.source, key, site, continuation("graph-dir-value", {...record, key}), record.depth);
+  };
+  const graphDirectory = (record, owner, site) => graphDirectoryVisit(
+    {...record, owner, bases: [], positions: [], visits: 0}, owner, site);
+  const basesWalk = (record, owner, site) => {
+    charge(1);
+    if (owner === record.type) return valueTask(true, site, record.after);
+    if (record.level >= 1024) python("RecursionError", "maximum advertised base traversal depth exceeded");
+    return attributeTask(owner, "__bases__", site, continuation("bases-walk", {...record, owner, level: record.level + 1}), record.depth);
+  };
+  const basesNext = (record, site) => record.pending.length ?
+    basesWalk({...record, pending: record.pending.slice(1)}, record.pending[0], site) : valueTask(false, site, record.after);
   const argumentOwner = receiver => {
     if (!(receiver instanceof CallArguments)) hard("BYTECODE", "BytecodeError", "Call assembly requires its owned argument record.");
   };
@@ -557,6 +594,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "object-dir-dictionary" && value.name === "AttributeError") return objectDirectoryDictionary(current, null, site);
       if (current.kind === "object-dir-class" && value.name === "AttributeError")
         return valueTask(values.list(current.result.entries.map(entry => entry.key)), site, current.after);
+      if (current.kind === "graph-dir-dict" && value.name === "AttributeError") return graphDirectoryBases(current, site);
+      if (current.kind === "graph-dir-bases" && value.name === "AttributeError") return graphDirectoryNext(current, site);
+      if (["bases-check", "bases-class"].includes(current.kind) && value.name === "AttributeError")
+        python("TypeError", "type checking requires a class or an object with tuple __bases__");
+      if (current.kind === "bases-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
+      if (current.kind === "bases-walk" && value.name === "AttributeError") return basesNext(current, site);
       if (current.kind === "method-dir-dictionary" && value.name === "AttributeError") return methodDirectory(current, null, site);
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
@@ -768,6 +811,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "property-documentation") return propertyResult(completion, value, value !== null, site);
     if (completion?.kind === "advertised-instance")
       return valueTask(classes.isType(value) && classes.subclass(value, completion.type), site, completion.after);
+    if (completion?.kind === "native-method-qualname") {
+      const text = values.text(value);
+      if (text === null) python("TypeError", "native method qualification requires a string __qualname__");
+      return valueTask(values.string(Array.from(text + "." + completion.receiver.callable.name.slice(5), char => char.codePointAt(0))), site, completion.after);
+    }
+    if (completion?.kind === "bases-check") {
+      if (!values.isSequenceType(value, "tuple")) python("TypeError", "type checking requires tuple __bases__");
+      return attributeTask(completion.type, "__bases__", site, continuation("bases-class", completion), completion.depth);
+    }
+    if (completion?.kind === "bases-class") {
+      if (!values.isSequenceType(value, "tuple")) python("TypeError", "type checking requires tuple __bases__");
+      return completion.mode === "instance" ? attributeTask(completion.receiver, "__class__", site, continuation("bases-instance", completion), completion.depth) :
+        basesWalk(completion, completion.receiver, site);
+    }
+    if (completion?.kind === "bases-instance") return basesWalk(completion, value, site);
+    if (completion?.kind === "bases-walk") {
+      const pending = values.isSequenceType(value, "tuple") ? [...value.items, ...completion.pending] : completion.pending;
+      if (pending.length > 4096) hard("BUDGET", "ExecutionLimitError", "Advertised base traversal budget exceeded");
+      return basesNext({...completion, pending}, site);
+    }
     if (completion?.kind === "abstract-lookup") return unaryTask("truth", value, site,
       continuation("abstract-truth", completion), completion.depth);
     if (completion?.kind === "abstract-truth") return value ? valueTask(true, site, completion.after) :
@@ -888,7 +951,35 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "object-dir-dictionary") return objectDirectoryDictionary(completion, value, site);
     if (completion?.kind === "object-dir-class")
-      return classDirectoryNext({...completion, owner: null, pending: [value], names: [], position: 0}, site);
+      return classes.isType(value) && !(value instanceof ClassValue && value.metaclass !== null) ?
+        classDirectoryNext({...completion, owner: null, pending: [value], names: [], position: 0}, site) : graphDirectory(completion, value, site);
+    if (completion?.kind === "graph-dir-dict") return valueTask(value, site, continuation("graph-dir-ready", completion));
+    if (completion?.kind === "graph-dir-ready") {
+      const source = value instanceof ClassNamespaceValue ? classes.namespaceDictionary(value.owner) : value;
+      state.temporaries.push(source);
+      if (values.isDict(source)) {
+        const keys = values.list(source.entries.map(entry => entry.key)); state.temporaries.push(keys);
+        return graphDirectoryCopy({...completion, source, keys, position: 0}, site);
+      }
+      if (source === null || values.typeName(source) !== null) python("AttributeError", "advertised class dictionary has no keys method");
+      return attributeTask(source, "keys", site, continuation("graph-dir-keys", {...completion, source}), completion.depth);
+    }
+    if (completion?.kind === "graph-dir-keys") return callTask(value, [], [], [], site, continuation("graph-dir-call", completion), completion.depth);
+    if (completion?.kind === "graph-dir-call") return consumeTask("list", value, site, continuation("graph-dir-copy", completion), completion.depth);
+    if (completion?.kind === "graph-dir-copy") return graphDirectoryCopy({...completion, keys: value, position: 0}, site);
+    if (completion?.kind === "graph-dir-value")
+      return dictionaryTask(completion.result, completion.key, site, continuation("graph-dir-store", completion), completion.depth, "set", value);
+    if (completion?.kind === "graph-dir-store") return graphDirectoryCopy({...completion, position: completion.position + 1}, site);
+    if (completion?.kind === "graph-dir-bases") {
+      if (values.isDict(value) || value instanceof ClassNamespaceValue) python("TypeError", "advertised bases must be a sequence");
+      return unaryTask("len", value, site, continuation("graph-dir-length", {...completion, source: value}), completion.depth);
+    }
+    if (completion?.kind === "graph-dir-length") {
+      const length = lengthResult(value);
+      if (length > 1024n) hard("BUDGET", "ExecutionLimitError", "Advertised directory base sequence budget exceeded");
+      return graphDirectoryNext({...completion, bases: [...completion.bases, completion.source], positions: [...completion.positions, [0, Number(length)]]}, site);
+    }
+    if (completion?.kind === "graph-dir-child") return graphDirectoryVisit(completion, value, site);
     if (completion?.kind === "class-dir-merge") return classDirectoryNext(completion, site);
     if (completion?.kind === "method-dir-dictionary") return methodDirectory(completion, value, site);
     if (completion?.kind === "native-dir-merge") return nativeDirectoryNext(completion, site);
@@ -1351,8 +1442,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: [receiver], keywords: [], keywordValues: [], after: target, depth}), depth);
             continue;
           }
-          if (subclass) { task = valueTask(classes.subclass(receiver, type), site, completion); continue; }
-          if (!classes.isType(type)) python("TypeError", "isinstance requires an adopted type");
+          if (subclass && classes.isType(receiver) && classes.isType(type)) { task = valueTask(classes.subclass(receiver, type), site, completion); continue; }
+          if (subclass || !classes.isType(type)) {
+            task = attributeTask(subclass ? receiver : type, "__bases__", site,
+              continuation(subclass ? "bases-check" : "bases-class", {receiver, type, mode: subclass ? "subclass" : "instance", depth, after: completion}), depth); continue;
+          }
           if (classes.subclass(classes.typeOf(receiver), type)) { task = valueTask(true, site, completion); continue; }
           if (!classes.needsAdvertised(receiver)) { task = valueTask(false, site, completion); continue; }
           task = attributeTask(receiver, "__class__", site, continuation("advertised-instance", {receiver, type, after: completion}), depth);
@@ -1968,7 +2062,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length || !classes.isType(args[0])) python("TypeError", "__init_subclass__ takes no arguments");
             task = valueTask(null, site, completion); continue;
           }
-          if (callable.name === "isinstance" && (classes.needsAdvertised(args[0]) || classes.customCheck(args[1], "__instancecheck__") ||
+          if (callable.name === "isinstance" && (args.length === 2 && !classes.isType(args[1]) || classes.needsAdvertised(args[0]) || classes.customCheck(args[1], "__instancecheck__") ||
               state.frames.at(-1).pool.code.version === 5 && values.isSequenceType(args[1], "tuple"))) {
             if (keywords.length || args.length !== 2) python("TypeError", "isinstance requires two positional arguments");
             task = instanceTask(args[0], args[1], site, completion, depth); continue;
@@ -1977,7 +2071,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length !== 2 || !classes.isType(args[0])) python("TypeError", "type.__instancecheck__ requires a type and instance");
             task = instanceTask(args[1], args[0], site, completion, depth, 0, true); continue;
           }
-          if (callable.name === "issubclass" && (classes.customCheck(args[1], "__subclasscheck__") || values.isSequenceType(args[1], "tuple"))) {
+          if (callable.name === "issubclass") {
             if (keywords.length || args.length !== 2) python("TypeError", "issubclass requires two positional arguments");
             task = subclassTask(args[0], args[1], site, completion, depth); continue;
           }
@@ -2462,12 +2556,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length || !classes.isType(args[0]))
               python("TypeError", "type.__dir__ requires one positional actual type");
             const receiver = args[0], result = values.dict([]); state.temporaries.push(receiver, result);
+            if (receiver instanceof ClassValue && receiver.metaclass !== null) {
+              task = graphDirectory({receiver, result, depth, after: completion}, receiver, site); continue;
+            }
             task = classDirectoryNext({receiver, result, pending: [receiver], owner: null, names: [], position: 0, depth, after: completion}, site); continue;
           }
           if (callable.name === "object.__dir__") {
             if (args.length !== 1 || keywords.length) python("TypeError", "object.__dir__ requires one positional receiver");
             const receiver = args[0];
-            if (receiver instanceof InstanceValue) {
+            if (receiver instanceof InstanceValue || classes.isType(receiver)) {
               task = attributeTask(receiver, "__dict__", site,
                 continuation("object-dir-dictionary", {receiver, depth, after: completion}), depth); continue;
             }
@@ -2483,6 +2580,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const dictionary = classes.functionDictionary(receiver); state.temporaries.push(dictionary);
             const result = values.copyDictionary(dictionary); state.temporaries.push(result);
             task = nativeDirectoryNext({receiver, result, position: 0, depth, after: completion}, site); continue;
+          }
+          if (callable.name === "native-method-qualname") {
+            task = attributeTask(args[0].receiver, "__qualname__", site, continuation("native-method-qualname", {receiver: args[0], after: completion}), depth); continue;
           }
           if (["mappingproxy", "mappingproxy.__new__"].includes(callable.name)) {
             let operands = callable.name.endsWith(".__new__") ? args.slice(1) : args;

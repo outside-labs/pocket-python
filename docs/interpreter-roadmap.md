@@ -461,3 +461,6 @@ Native async/host adapters remain under #34.
 [O74](interpreter-generator-frames.md) adopts non-resuming generator/frame metadata and live optimized-frame local proxies, including cells, extras, inlined scopes and retained-frame teardown.
 
 [O75](interpreter-integer-identity.md) completes owned integer identity, coherent `is`/`id` behavior and collection/callback lifetimes under accounting revision 12. O71–O75 complete the metadata and identity workstream; O76–O96 remain separate stages.
+
+[O76](interpreter-advertised-directories.md) completes type/metaclass and advertised
+namespace directories, hooked native qualification and abstract base checking.
