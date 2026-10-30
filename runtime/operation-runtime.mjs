@@ -27,7 +27,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const prepareClass = (record, rawModule, site) => {
     const meta = record.metaclass;
-    if (!(meta instanceof ClassValue) || !classes.hasSlot(meta, "__prepare__") && !["__getattribute__", "__getattr__"].some(name => classes.hasAttributeHook(meta, name)))
+    const factory = meta instanceof InstanceValue || meta instanceof FunctionValue || meta instanceof MethodWrapperValue;
+    if (!factory && (!(meta instanceof ClassValue) || !classes.hasSlot(meta, "__prepare__") && !["__getattribute__", "__getattr__"].some(name => classes.hasAttributeHook(meta, name))))
       return enterClass(record, rawModule, site);
     const nameValue = values.string(Array.from(record.callable.pool.code.functions[record.callable.index].name, char => char.codePointAt(0)));
     state.temporaries.push(nameValue);

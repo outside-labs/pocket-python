@@ -216,7 +216,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const {bases, explicit, hasMeta} = record;
     classes.validateNamespace(bases, record.callable.pool.code.functions[record.callable.index].locals);
     const invalidMetaclass = hasMeta && !classes.isType(explicit) && !classes.callable(explicit);
-    const metaclass = !invalidMetaclass && (hasMeta || bases.some(base => base instanceof ClassValue && base.metaclass !== null)) ? classes.selectMetaclass(bases, explicit) : null;
+    const metaclass = hasMeta ? classes.selectMetaclass(bases, explicit) :
+      bases.length && !classes.isType(bases[0]) ? classes.selectMetaclass(bases, classes.typeOf(bases[0])) :
+      bases.some(base => base instanceof ClassValue && base.metaclass !== null) ? classes.selectMetaclass(bases) : null;
     record = {...record, metaclass, invalidMetaclass};
     const resolved = loadName(state.frames.at(-1), "__name__", site, continuation("class-module", record));
     return resolved.task || prepareClass(record, resolved.value, site);
@@ -686,7 +688,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         state.current = {...frame.callsite, instruction: frame.returnInstruction};
         frame.leave(); state.frames.pop();
         if (completion.invalidMetaclass) python("TypeError", "Metaclass is not callable");
-        if (completion.metaclass instanceof ClassValue) {
+        if (completion.metaclass && !(completion.metaclass instanceof BuiltinValue && completion.metaclass.name === "type")) {
           const dictionary = bodyDictionary || values.dict([]); state.temporaries.push(dictionary);
           for (const [key, value] of bodyDictionary ? [] : [...namespace, ...(classCell ? [["__classcell__", classCell]] : [])]) {
             const name = typeof key === "string" ? values.string(Array.from(key, char => char.codePointAt(0))) : key; state.temporaries.push(name);

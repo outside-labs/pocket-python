@@ -1668,8 +1668,7 @@ export class ClassRuntime {
   }
   selectMetaclass(bases, explicit = undefined) {
     let selected = explicit === undefined ? this.builtin("type") : explicit;
-    if (!this.callable(selected)) this.fail("TypeError", "Metaclass must be callable");
-    if (!this.isType(selected)) this.fail("UnsupportedOperationError", "Callable metaclass factories require a separate construction stage", "UNSUPPORTED");
+    if (!this.isType(selected)) return selected;
     for (const base of bases) {
       this.charge(1);
       const candidate = this.typeOf(base);
@@ -1677,8 +1676,6 @@ export class ClassRuntime {
       if (this.subclass(candidate, selected)) selected = candidate;
       else this.fail("TypeError", "Metaclass conflict");
     }
-    if (!(selected instanceof BuiltinValue && selected.name === "type") && !this.isMetaclass(selected))
-      this.fail("UnsupportedOperationError", "Non-type metaclass constructors require a separate stage", "UNSUPPORTED");
     if (selected instanceof ClassValue && this.hasSlot(selected, "mro"))
       this.fail("UnsupportedOperationError", "Custom metaclass MRO construction requires a separate stage", "UNSUPPORTED");
     return selected;
