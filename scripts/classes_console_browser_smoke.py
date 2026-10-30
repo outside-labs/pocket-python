@@ -274,7 +274,7 @@ def smoke(channel=None):
                         programs.extend(c['source'] for c in corpus['cases']
                                         if c['stage'] in corpus['implemented_stages'] and 'error_type' not in c and not c.get('modules'))
                     expanded_bases = json.loads((ROOT / 'tests/fixtures/interpreter/expanded-class-bases.json').read_bytes())
-                    programs.extend(c['source'] for c in expanded_bases['cases'] if 'error_type' not in c)
+                    programs.extend(c['source'] for c in expanded_bases['cases'] if 'error_type' not in c and not c.get('modules'))
                     prepared_namespaces = json.loads((ROOT / 'tests/fixtures/interpreter/prepared-class-namespaces.json').read_bytes())
                     programs.extend(c['source'] for c in prepared_namespaces['cases'] if 'error_type' not in c)
                     programs.append(NATIVE_CALLABLE_DIRECTORIES_SOURCE)
