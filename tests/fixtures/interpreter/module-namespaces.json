@@ -633,6 +633,24 @@
       "stage": "O67",
       "source": "ns=globals()\ntry:\n try: raise ValueError(\"value\")\n except TypeError: print(\"wrong\")\n except (ZeroDivisionError,ValueError) as error: print(\"caught\")\n finally: print(\"finally\")\nexcept Exception: print(\"wrong\")\n",
       "stdout": "caught\nfinally\n"
+    },
+    {
+      "id": "global-named-expression-stack",
+      "source": "ns=globals()\nprint((value:=7)+2,ns[\"value\"])\n",
+      "stage": "O67",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "global-assignment-expanded-display",
+      "source": "ns=globals()\nprint(*[(value:=7),9])\n",
+      "stage": "O67",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "global-assignment-recursion-return",
+      "source": "ns=globals()\ndef f():\n global value\n return (value:=7)+2\nprint(f(),ns[\"value\"])\n",
+      "stage": "O67",
+      "stdout": "9 7\n"
     }
   ]
 }

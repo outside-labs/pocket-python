@@ -216,6 +216,7 @@ export function completion(kind, fields = {}) {
     case "condition":
       if (!["if", "while", "jump"].includes(fields.control)) throw new TypeError("Invalid condition destination.");
       record = {kind, control: fields.control, body: fields.body, otherwise: fields.otherwise, target: fields.target}; break;
+    case "name-stored": record = {kind}; break;
     case "discard": record = {kind}; break;
     default: throw new TypeError("Unknown operation completion: " + kind);
   }
@@ -231,7 +232,7 @@ function visit(record) {
     case "store-body": return completionRoots(record.after);
     case "resume-control": return [record.value, ...completionRoots(record.after)];
     case "module-entry": case "module-hook": return [record.receiver, record.key, ...completionRoots(record.after)];
-    case "class": case "condition": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
+    case "class": case "condition": case "name-stored": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];

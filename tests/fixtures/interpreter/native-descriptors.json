@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "O29",
-    "O30"
+    "O30",
+    "O67"
   ],
   "cases": [
     {
@@ -578,10 +579,9 @@
     },
     {
       "id": "future-live-namespace",
-      "stage": "Future",
-      "source": "print(globals()[\"__name__\"])\n",
-      "stdout": "",
-      "error_type": "KeyError"
+      "stage": "O67",
+      "source": "__name__=\"app\"\nprint(globals()[\"__name__\"])\n",
+      "stdout": "app\n"
     },
     {
       "id": "future-property-documentation",

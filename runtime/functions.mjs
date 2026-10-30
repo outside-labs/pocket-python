@@ -129,7 +129,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const environment = frame.callable.globals;
     if (!key.startsWith("@source:") && (frame.callable.index === 0 || frame.fn.globals?.includes(key)) && environment.dictionary !== null) {
       const name = values.string(Array.from(key, char => char.codePointAt(0))); state.temporaries.push(name);
-      return dictionaryTask(environment.dictionary, name, state.current, after || continuation("discard"), 0, bound ? "set" : "discard", value);
+      return dictionaryTask(environment.dictionary, name, state.current, after || continuation("name-stored"), 0, bound ? "set" : "discard", value);
     }
     setCell(targetCell(frame, key, bound), value, bound);
     if (frame.callable.index === 0 || frame.fn.globals?.includes(key)) { if (bound) environment.order.add(key); else environment.order.delete(key); }

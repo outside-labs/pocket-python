@@ -544,6 +544,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
+    if (completion?.kind === "name-stored") return null;
     if (completion?.kind === "handler-type") return handlerType(completion, value, site);
     if (completion?.kind === "module-delete") {
       if (!value.items[0]) python("AttributeError", "module has no attribute " + completion.name);
