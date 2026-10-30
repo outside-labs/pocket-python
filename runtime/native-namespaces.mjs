@@ -34,6 +34,10 @@ export const NATIVE_NAMESPACES = Object.freeze({
     ["__cause__","getset_descriptor"],
     ["__doc__","value",{"type":"text","value":"Common base class for all exceptions"}],
   ],
+  "BufferError": [
+    ["__new__","builtin_function_or_method"],
+    ["__doc__","value",{"type":"text","value":"Buffer error."}],
+  ],
   "Exception": [
     ["__new__","builtin_function_or_method"],
     ["__doc__","value",{"type":"text","value":"Common base class for all non-exit exceptions."}],
@@ -1402,7 +1406,7 @@ export const NATIVE_NAMESPACES = Object.freeze({
     ["__text_signature__","getset_descriptor"],
   ],
 });
-export const NATIVE_DOC_COPIES = Object.freeze(["ArithmeticError", "AssertionError", "AttributeError", "BaseException", "Exception", "GeneratorExit", "ImportError", "IndexError", "KeyError", "LookupError", "ModuleNotFoundError", "NameError", "NoneType", "NotImplementedType", "OverflowError", "RecursionError", "RuntimeError", "StopIteration", "SystemError", "TypeError", "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError", "ValueError", "ZeroDivisionError", "bool", "bytearray", "bytes", "cell", "classmethod", "code", "complex", "dict", "float", "frozenset", "function", "int", "list", "mappingproxy", "memoryview", "method", "module", "object", "property", "range", "set", "slice", "staticmethod", "str", "super", "tuple", "type"]);
+export const NATIVE_DOC_COPIES = Object.freeze(["ArithmeticError", "AssertionError", "AttributeError", "BaseException", "BufferError", "Exception", "GeneratorExit", "ImportError", "IndexError", "KeyError", "LookupError", "ModuleNotFoundError", "NameError", "NoneType", "NotImplementedType", "OverflowError", "RecursionError", "RuntimeError", "StopIteration", "SystemError", "TypeError", "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError", "ValueError", "ZeroDivisionError", "bool", "bytearray", "bytes", "cell", "classmethod", "code", "complex", "dict", "float", "frozenset", "function", "int", "list", "mappingproxy", "memoryview", "method", "module", "object", "property", "range", "set", "slice", "staticmethod", "str", "super", "tuple", "type"]);
 export const NATIVE_CALLABLE_DOCS = Object.freeze({
   "ArithmeticError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
   "AssertionError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
@@ -1425,6 +1429,7 @@ export const NATIVE_CALLABLE_DOCS = Object.freeze({
   "BaseException.__traceback__": null,
   "BaseException.__context__": null,
   "BaseException.__cause__": null,
+  "BufferError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
   "Exception.__new__": "Create and return a new object.  See help(type) for accurate signature.",
   "FrameLocalsProxy.__new__": "Create and return a new object.  See help(type) for accurate signature.",
   "FrameLocalsProxy.__repr__": "Return repr(self).",

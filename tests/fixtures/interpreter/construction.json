@@ -14,7 +14,8 @@
     "O68",
     "O80",
     "O81",
-    "O83"
+    "O83",
+    "O86"
   ],
   "cases": [
     {
@@ -583,7 +584,7 @@
     },
     {
       "id": "future-builtin-subclass",
-      "stage": "Future",
+      "stage": "O86",
       "source": "class A(list): pass\nprint(len(A()))\n",
       "stdout": "0\n"
     },

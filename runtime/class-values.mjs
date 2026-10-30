@@ -5,7 +5,7 @@ import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS} from "./class-po
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
-export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset"]);
+export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray"]);
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "code", "frame", "FrameLocalsProxy", "cell",

@@ -291,7 +291,7 @@
     {
       "id": "instance-UnicodeEncodeError",
       "stage": "O78",
-      "source": "try: \"é\".encode(\"ascii\")\nexcept UnicodeEncodeError as error:\n print(*object.__dir__(error))\n print(*dir(error))\n",
+      "source": "try: \"\u00e9\".encode(\"ascii\")\nexcept UnicodeEncodeError as error:\n print(*object.__dir__(error))\n print(*dir(error))\n",
       "stdout": "__new__ __str__ __init__ encoding object start end reason __doc__ __repr__ __reduce__ __setstate__ with_traceback add_note __suppress_context__ __dict__ args __traceback__ __context__ __cause__ __hash__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__cause__ __class__ __context__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__ __suppress_context__ __traceback__ add_note args encoding end object reason start with_traceback\n"
     },
     {
@@ -979,13 +979,13 @@
     {
       "id": "type-str_iterator",
       "stage": "O78",
-      "source": "def outer():\n x=7\n def inner(): return x\n return inner\nf=outer()\ndef g():\n yield 7\ngen=g()\nframe=gen.gi_frame\ncode=f.__code__\nclass A:\n def method(self): return 7\nclass Indexed:\n def __getitem__(self,index): return index\nvalue=type(iter(\"😀\"))\nprint(value.__name__)\nprint(*type.__dir__(value))\nprint(*dir(value))\n",
+      "source": "def outer():\n x=7\n def inner(): return x\n return inner\nf=outer()\ndef g():\n yield 7\ngen=g()\nframe=gen.gi_frame\ncode=f.__code__\nclass A:\n def method(self): return 7\nclass Indexed:\n def __getitem__(self,index): return index\nvalue=type(iter(\"\ud83d\ude00\"))\nprint(value.__name__)\nprint(*type.__dir__(value))\nprint(*dir(value))\n",
       "stdout": "str_iterator\n__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
     },
     {
       "id": "instance-str_iterator",
       "stage": "O78",
-      "source": "def outer():\n x=7\n def inner(): return x\n return inner\nf=outer()\ndef g():\n yield 7\ngen=g()\nframe=gen.gi_frame\ncode=f.__code__\nclass A:\n def method(self): return 7\nclass Indexed:\n def __getitem__(self,index): return index\nvalue=iter(\"😀\")\nprint(*object.__dir__(value))\nprint(*dir(value))\n",
+      "source": "def outer():\n x=7\n def inner(): return x\n return inner\nf=outer()\ndef g():\n yield 7\ngen=g()\nframe=gen.gi_frame\ncode=f.__code__\nclass A:\n def method(self): return 7\nclass Indexed:\n def __getitem__(self,index): return index\nvalue=iter(\"\ud83d\ude00\")\nprint(*object.__dir__(value))\nprint(*dir(value))\n",
       "stdout": "__iter__ __next__ __length_hint__ __reduce__ __setstate__ __doc__ __new__ __repr__ __hash__ __str__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __init__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__class__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __length_hint__ __lt__ __ne__ __new__ __next__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__\n"
     },
     {
@@ -1257,6 +1257,18 @@
       "stage": "O78",
       "source": "def g(): yield 7\ngen=g()\nproxy=gen.gi_frame.f_locals\nproxy[\"extra\"]=7\nprint(\"extra\" in dir(proxy),\"keys\" in dir(proxy))\n",
       "stdout": "False True\n"
+    },
+    {
+      "id": "type-BufferError",
+      "stage": "O78",
+      "source": "def outer():\n x=7\n def inner(): return x\n return inner\nf=outer()\ndef g():\n yield 7\ngen=g()\nframe=gen.gi_frame\ncode=f.__code__\nclass A:\n def method(self): return 7\nclass Indexed:\n def __getitem__(self,index): return index\nvalue=type(BufferError(\"message\"))\nprint(value.__name__)\nprint(*type.__dir__(value))\nprint(*dir(value))\n",
+      "stdout": "BufferError\n__new__ __doc__ __repr__ __str__ __init__ __reduce__ __setstate__ with_traceback add_note __suppress_context__ __dict__ args __traceback__ __context__ __cause__ __hash__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__cause__ __class__ __context__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__ __suppress_context__ __traceback__ add_note args with_traceback\n"
+    },
+    {
+      "id": "instance-BufferError",
+      "stage": "O78",
+      "source": "def outer():\n x=7\n def inner(): return x\n return inner\nf=outer()\ndef g():\n yield 7\ngen=g()\nframe=gen.gi_frame\ncode=f.__code__\nclass A:\n def method(self): return 7\nclass Indexed:\n def __getitem__(self,index): return index\nvalue=BufferError(\"message\")\nprint(*object.__dir__(value))\nprint(*dir(value))\n",
+      "stdout": "__new__ __doc__ __repr__ __str__ __init__ __reduce__ __setstate__ with_traceback add_note __suppress_context__ __dict__ args __traceback__ __context__ __cause__ __hash__ __getattribute__ __setattr__ __delattr__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __reduce_ex__ __getstate__ __subclasshook__ __init_subclass__ __format__ __sizeof__ __dir__ __class__\n__cause__ __class__ __context__ __delattr__ __dict__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __le__ __lt__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __setstate__ __sizeof__ __str__ __subclasshook__ __suppress_context__ __traceback__ add_note args with_traceback\n"
     }
   ]
 }

@@ -391,3 +391,9 @@ edge on a source instance. That edge traces the existing native allocation;
 member and dictionary storage retain the same rules. Native constructor
 continuations retain the selected subtype through result publication. All eight
 existing composed observations remain unchanged.
+
+O86 uses the same payload edge for mutable native values. A memoryview backed
+by a native subclass adds eight bytes for its original source-object edge;
+subviews/read-only copies retain it, and release removes it. Live-export queries
+collect the existing arena records, charge their bounded traversal and retain
+no additional objects. The existing composed observations remain unchanged.

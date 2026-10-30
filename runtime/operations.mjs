@@ -89,6 +89,8 @@ export function completion(kind, fields = {}) {
       ...(fields.metaclass ? {metaclass: fields.metaclass} : {}), ...(fields.invalidMetaclass ? {invalidMetaclass: true} : {})}; break;
     case "class-created": record = {kind, cell: fields.cell, after}; break;
     case "init": record = {kind, instance: fields.instance, after}; break;
+    case "native-repeat": record = {kind, receiver: fields.receiver, inplace: fields.inplace, after}; break;
+    case "native-bytes-init": record = {kind, receiver: fields.receiver, after}; break;
     case "native-new": record = {kind, type: fields.type, after}; break;
     case "new-result":
       record = {kind, type: fields.type, args: operands(fields.args), keywords: operands(fields.keywords),
@@ -316,6 +318,8 @@ function visit(record) {
     case "module-entry": case "module-hook": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "class": case "condition": case "name-stored": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
+    case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
+    case "native-bytes-init": return [record.receiver, ...completionRoots(record.after)];
     case "native-new": return [record.type, ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];

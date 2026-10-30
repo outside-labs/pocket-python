@@ -498,3 +498,7 @@ Builtin payload subclasses and compatible type/base reassignment remain O85–O8
 [O85](interpreter-immutable-subclasses.md) adopts owned immutable builtin
 payload subclasses, native construction, state, dispatch and base-value results.
 The remaining storage stages are O86–O88.
+
+[O86](interpreter-mutable-subclasses.md) adopts list/dict/set/bytearray payloads,
+callback-visible initialization and mutation, subclass-owned buffer aliases and
+native dispatch. O87–O88 finish the remaining storage workstream.

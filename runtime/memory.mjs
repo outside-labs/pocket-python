@@ -169,6 +169,12 @@ export class MemoryArena {
     return lease;
   }
   owns(lease) { return this.#leases.has(lease); }
+  liveValues(Type) {
+    this.collect();
+    const result = [];
+    for (const value of this.#records.keys()) { this.#scopes.at(-1)?.charge(1); if (value instanceof Type) result.push(value); }
+    return result;
+  }
   identityHash(value) {
     this.active();
     if (!this.#records.has(value)) throw new TypeError("Identity hashes require a live arena object.");

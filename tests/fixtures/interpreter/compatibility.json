@@ -599,15 +599,14 @@
     {
       "id": "builtin-subclass",
       "source": "class A(list): pass\nprint(len(A()))\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "0\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "stdout": "0\n",
+        "error_type": null
       }
     },
     {
