@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O33",
     "O34",
-    "O49"
+    "O49",
+    "O71"
   ],
   "cases": [
     {
@@ -524,7 +525,7 @@
     },
     {
       "id": "future-property-documentation",
-      "stage": "Future",
+      "stage": "O71",
       "source": "print(property(len).__doc__ is not None)\n",
       "stdout": "True\n"
     },

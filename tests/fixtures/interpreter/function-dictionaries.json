@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O45",
-    "O46"
+    "O46",
+    "O71"
   ],
   "cases": [
     {
@@ -53,7 +54,7 @@
     {
       "id": "custom-name-2",
       "stage": "O45",
-      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'λ😀',v)\nprint(getattr(f,'λ😀') is v,d['λ😀'] is v)\ndelattr(f,'λ😀')\nprint('λ😀' in d)\n",
+      "source": "def f(): return 7\nd=f.__dict__\nv=[]\nsetattr(f,'\u03bb\ud83d\ude00',v)\nprint(getattr(f,'\u03bb\ud83d\ude00') is v,d['\u03bb\ud83d\ude00'] is v)\ndelattr(f,'\u03bb\ud83d\ude00')\nprint('\u03bb\ud83d\ude00' in d)\n",
       "stdout": "True True\nFalse\n"
     },
     {
@@ -495,7 +496,7 @@
     },
     {
       "id": "wrapper-dictionary-deferred",
-      "stage": "Future",
+      "stage": "O71",
       "source": "def f(): return 7\nd=f.__dict__\nstaticmethod(f).__dict__\n",
       "stdout": ""
     },

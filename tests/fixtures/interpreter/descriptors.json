@@ -6,7 +6,8 @@
   "implemented_stages": [
     "C2-descriptor",
     "C2-native",
-    "C2-decorator"
+    "C2-decorator",
+    "O71"
   ],
   "cases": [
     {
@@ -397,7 +398,7 @@
     },
     {
       "id": "property-doc-reflection",
-      "stage": "deferred",
+      "stage": "O71",
       "source": "print(property(len).__doc__ is not None)\n",
       "stdout": "True\n"
     },

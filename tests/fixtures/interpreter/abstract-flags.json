@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O39",
-    "O40"
+    "O40",
+    "O71"
   ],
   "cases": [
     {
@@ -868,7 +869,7 @@
     },
     {
       "id": "property-documentation",
-      "stage": "Future",
+      "stage": "O71",
       "source": "print(property(len).__doc__ is not None)\n",
       "stdout": "True\n"
     },
