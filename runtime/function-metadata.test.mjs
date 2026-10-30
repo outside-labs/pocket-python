@@ -88,10 +88,10 @@ test('renamed closures and cyclic module snapshots survive parked collection, ca
     'held\nrenamed path.renamed True 7 7\n', ['held\n']);
 });
 
-test('class metadata mutation retains its existing boundary', async () => {
+test('class metadata mutation updates subsequent reads', async () => {
   for (const name of ['__qualname__', '__module__']) {
-    const result = await run('class C: pass\nC.' + name + '="other"\n');
-    assert.equal(result.error.code, 'UNSUPPORTED'); closed(result.closed);
+    const result = await run('class C: pass\nC.' + name + '="other"\nprint(C.' + name + ')\n');
+    assert.ok(result.ok, JSON.stringify(result.error)); assert.equal(result.stdout, 'other\n'); closed(result.closed);
   }
 });
 

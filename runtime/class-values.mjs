@@ -1,6 +1,6 @@
 import {isVerifiedFunctionCode} from "./function-bytecode.mjs";
 import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS} from "./native-namespaces.mjs";
-import {ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
+import {ClassValue, HierarchyTransaction, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
@@ -12,11 +12,11 @@ const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", 
   "list_iterator", "tuple_iterator", "str_iterator", "str_ascii_iterator", "dict_keyiterator", "range_iterator", "longrange_iterator", "set_iterator", "bytes_iterator", "bytearray_iterator", "memory_iterator", "iterator", "callable_iterator", ...Object.keys(EXCEPTIONS)]);
 for (const name of Object.keys(NATIVE_NAMESPACES)) if (name !== "object") NATIVE_TYPES.add(name);
 const NAMESPACE_DESCRIPTOR_KINDS = new Set(["method_descriptor", "wrapper_descriptor", "classmethod_descriptor", "getset_descriptor", "member_descriptor"]);
-const META_SPECIALS = new Set([...METACLASS_PROTOCOLS, "__slots__", "__mro_entries__", "__orig_bases__", "__prepare__", "__classcell__", "__classdictcell__", "__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
+const META_SPECIALS = new Set([...METACLASS_PROTOCOLS, "__subclasses__", "__slots__", "__mro_entries__", "__orig_bases__", "__prepare__", "__classcell__", "__classdictcell__", "__bases__", "__firstlineno__", "__static_attributes__", "__weakref__", "__dict__", "__new__", "__init__", "__init_subclass__", "__call__", "__module__", "__qualname__", "__instancecheck__", "__subclasscheck__", "__dir__", "__getattribute__", "__getattr__", "__name__", "__isabstractmethod__", "__doc__", "__setattr__", "__delattr__"]);
 const NATIVE_CHECK_METHODS = new Set(["type.__instancecheck__", "type.__subclasscheck__"]);
 const NATIVE_COPY_METHODS = new Set(["property.getter", "property.setter", "property.deleter"]);
 const NATIVE_PROPERTY_METHODS = new Set([...NATIVE_COPY_METHODS, "property.__set_name__"]);
-const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro", "type.__dir__", "mappingproxy.get", "object.__dir__"]);
+const NATIVE_METHOD_DESCRIPTORS = new Set([...NATIVE_CHECK_METHODS, ...NATIVE_PROPERTY_METHODS, "type.mro", "type.__subclasses__", "type.__dir__", "mappingproxy.get", "object.__dir__"]);
 const NATIVE_TYPE_WRAPPERS = new Set(["type.__getattribute__", "type.__setattr__", "type.__delattr__"]);
 const NATIVE_DESCRIPTOR_WRAPPERS = new Set(["property.__get__", "property.__set__", "property.__delete__", "staticmethod.__get__", "classmethod.__get__", "function.__get__"]);
 const NATIVE_BINDING_WRAPPERS = new Set(["method_descriptor.__get__", "wrapper_descriptor.__get__", "getset_descriptor.__get__", "member_descriptor.__get__", "classmethod_descriptor.__get__", "getset_descriptor.__set__", "getset_descriptor.__delete__", "member_descriptor.__set__", "member_descriptor.__delete__"]);
@@ -369,7 +369,9 @@ export class ClassRuntime {
     type.firstLine = firstLine; type.staticAttributes = staticAttributes === null ? null : [...staticAttributes];
     type.namespaceEntries = namespaceEntries === null ? null : namespaceEntries.filter(entry => !["__qualname__", "__classcell__", "__classdictcell__"].includes(this.values.text(entry.key))).map(entry => ({key: entry.key, hash: entry.hash}));
     const layout = valueLayout(type);
-    return this.memory ? this.memory.allocate(layout.bytes, layout.children, () => type) : type;
+    const result = this.memory ? this.memory.allocate(layout.bytes, layout.children, () => type) : type;
+    type.creationOrder = this.memory ? this.memory.identityHash(type) : (this.nextClassOrder = (this.nextClassOrder ?? 0n) + 1n);
+    return result;
   }
   storageLayout(name, bases, namespace, slotNames) {
     let best = null;
@@ -466,7 +468,7 @@ export class ClassRuntime {
       const family = this.layoutFamily(item);
       const solid = item.storage?.solid;
       if (family !== "object" && family !== layout || item !== type && solid instanceof ClassValue && solid.storage?.ownNames.length &&
-          type.storage?.solid !== solid && !this.subclass(type.storage.solid, solid))
+          type.storage?.solid !== solid && !this.actualSubtype(type.storage.solid, solid))
         this.fail("TypeError", "mro() returned base with unsuitable layout");
     }
   }
@@ -478,7 +480,7 @@ export class ClassRuntime {
   hasSlot(type, name) {
     // The bounded MRO is also the native slot-presence index. Default calls keep
     // their original lookup/accounting path; only adopted overrides add phases.
-    return type.mro.some(base => base instanceof ClassValue && !base.root && (base.namespace.has(name) || base.protocolNames?.includes(name)));
+    return this.mro(type).some(base => base instanceof ClassValue && !base.root && (base.namespace.has(name) || base.protocolNames?.includes(name)));
   }
   isType(value) { return value instanceof ClassValue || value?.constructor === BuiltinValue && NATIVE_TYPES.has(value.name); }
   isPythonMethod(value) { return value instanceof BoundMethodValue && (value.pythonMethod || !(value.callable instanceof BuiltinValue)); }
@@ -506,7 +508,7 @@ export class ClassRuntime {
   }
   typeOf(value) {
     this.touch(value);
-    if (value instanceof InstanceValue) return value.type;
+    if (this.isInstance(value)) return value.type;
     if (value instanceof ClassValue) return value.metaclass || this.builtin("type");
     let name = this.values.typeName(value);
     if (name === null) {
@@ -537,9 +539,11 @@ export class ClassRuntime {
     return this.protocolObject(value) && this.hasSlot(this.checkingType(value), "__class__") ||
       ["__getattribute__", "__getattr__"].some(name => this.hasAttributeHook(value, name));
   }
-  protocolObject(value) { return value instanceof InstanceValue || value instanceof ClassValue && value.metaclass !== null; }
+  isInstance(value) { return value instanceof InstanceValue || value instanceof ModuleValue && value.type instanceof ClassValue; }
+  nativeModule(value) { return value instanceof ModuleValue ? value : value?.nativePayload instanceof ModuleValue ? value.nativePayload : null; }
+  protocolObject(value) { return this.isInstance(value) || value instanceof ClassValue && value.metaclass !== null; }
   checkingType(value) {
-    return value instanceof ClassValue ? value.metaclass : value instanceof InstanceValue ? value.type : null;
+    return value instanceof ClassValue ? value.metaclass : this.isInstance(value) ? value.type : null;
   }
   hasAttributeHook(value, name) {
     const type = this.checkingType(value);
@@ -554,7 +558,7 @@ export class ClassRuntime {
     return this.bindAttribute(item.value, value, type);
   }
   lookupMayCallback(receiver) {
-    const types = receiver instanceof ClassValue ? [receiver, receiver.metaclass] : receiver instanceof InstanceValue ? [receiver.type] : [];
+    const types = receiver instanceof ClassValue ? [receiver, receiver.metaclass] : this.isInstance(receiver) ? [receiver.type] : [];
     const seen = new Set();
     while (types.length) {
       const type = types.pop(); if (!type || seen.has(type)) continue; seen.add(type);
@@ -589,7 +593,7 @@ export class ClassRuntime {
       if (base instanceof BuiltinValue) {
         if (native && (NATIVE_DESCRIPTOR_WRAPPERS.has(base.name + "." + name) || NATIVE_PROPERTY_METHODS.has(base.name + "." + name) || base.name === "mappingproxy" && name === "get" || NATIVE_BINDING_WRAPPERS.has(base.name + "." + name)))
           return {found: true, value: this.builtin(base.name + "." + name)};
-        if (native && base.name === "type" && ["__prepare__", "__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro", "__dir__"].includes(name))
+        if (native && base.name === "type" && ["__prepare__", "__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro", "__subclasses__", "__dir__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
         if (native && NATIVE_SUBCLASS_BASES.includes(base.name)) {
           const item = this.nativeEntry(base, name); if (item.found) return item;
@@ -666,7 +670,7 @@ export class ClassRuntime {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
     if (["__dict__", "__bases__"].includes(name) && !this.isType(receiver) &&
-        !(receiver instanceof InstanceValue || receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || this.isPythonMethod(receiver)))
+        !(this.isInstance(receiver) || receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || this.isPythonMethod(receiver)))
       this.fail("AttributeError", "Object has no attribute " + name);
     if (this.values.typeName(receiver) !== null) {
       if (name === "__doc__") return value(this.nativeDocumentation(this.typeOf(receiver)));
@@ -694,6 +698,9 @@ export class ClassRuntime {
         if (name === "__class__") return value(this.builtin(receiver.nativeKind));
         if (name === "__objclass__" && NAMESPACE_DESCRIPTOR_KINDS.has(receiver.nativeKind)) return value(receiver.nativeOwner);
         if (name === "__self__" && receiver.nativeKind === "builtin_function_or_method") return value(receiver.nativeOwner ?? null);
+        if (name === "__qualname__" && receiver.nativeOwner instanceof ClassValue && !receiver.nativeOwner.root) {
+          return receiver.qualifiedName === undefined ? {kind: "call", callable: this.builtin("descriptor-qualification"), args: [receiver]} : value(receiver.qualifiedName);
+        }
         if (["__name__", "__qualname__"].includes(name)) return value(this.values.string(Array.from(name === "__name__" ? receiver.nativeKey : receiver.name, char => char.codePointAt(0))));
         if (["__get__", "__set__", "__delete__"].includes(name) && NAMESPACE_DESCRIPTOR_KINDS.has(receiver.nativeKind)) {
           if (name !== "__get__" && !["getset_descriptor", "member_descriptor"].includes(receiver.nativeKind)) this.fail("AttributeError", "Descriptor has no mutation protocol");
@@ -718,6 +725,7 @@ export class ClassRuntime {
         const metaField = NATIVE_NAMESPACES.type.find(entry => entry[0] === name && ["getset_descriptor", "member_descriptor"].includes(entry[1]));
         if (metaField && !["__dict__", "__name__", "__qualname__", "__module__", "__mro__", "__base__", "__bases__"].includes(name))
           return {kind: "call", callable: this.builtin("namespace-getset"), args: [this.namespaceDictionary(this.builtin("type")).entries.find(entry => this.values.text(entry.key) === name).value, receiver]};
+        if (name === "__subclasses__" && this.isType(receiver)) return value(receiver.name === "type" ? this.builtin("type.__subclasses__") : this.make(BoundMethodValue, this.builtin("type.__subclasses__"), receiver));
         if (receiver.name !== "type" && ["__instancecheck__", "__subclasscheck__", "mro"].includes(name))
           return this.bindAttribute(this.builtin("type." + name), receiver, this.builtin("type"));
         if (name === "__module__") return value(this.values.string(Array.from("builtins", char => char.codePointAt(0))));
@@ -895,18 +903,18 @@ export class ClassRuntime {
       if (entry.found) return this.bindAttribute(entry.value, receiver, this.typeOf(receiver));
       this.fail("AttributeError", "Dictionary view has no attribute " + name);
     }
-    if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
+    if (!(receiver instanceof ClassValue || this.isInstance(receiver)))
       this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
     if (name === "__doc__" && receiver instanceof ClassValue && receiver.root) return value(this.nativeDocumentation(receiver));
-    if (name === "__dict__" && receiver instanceof InstanceValue && this.instanceDictionarySlot(receiver.type))
+    if (name === "__dict__" && this.isInstance(receiver) && this.instanceDictionarySlot(receiver.type))
       return value(this.instanceDictionary(receiver));
-    if (receiver instanceof InstanceValue && name === "__class__") {
+    if (this.isInstance(receiver) && name === "__class__") {
       const item = this.lookup(receiver.type, name);
       return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : value(this.classAttribute(receiver));
     }
     if (!allowsClassSpecial(name, "attribute") && !["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__base__", "__mro__"].includes(name)) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
-    const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (["__instancecheck__", "__subclasscheck__", "mro"].includes(name) ? this.builtin("type") : null) : null;
+    const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (["__instancecheck__", "__subclasscheck__", "mro", "__subclasses__"].includes(name) ? this.builtin("type") : null) : null;
     const metaItem = metaclass ? this.lookup(metaclass, name) : null;
     const metaDescriptor = metaItem?.found ? this.descriptor(metaItem.value) : null;
     if (metaItem?.value instanceof PropertyValue || metaDescriptor?.get.found && (metaDescriptor.set.found || metaDescriptor.delete.found))
@@ -941,24 +949,24 @@ export class ClassRuntime {
         if (!own.found) this.fail("AttributeError", "Class has no __module__");
         return value(own.value);
       }
-      if (["__name__", "__qualname__"].includes(name) && !(name === "__name__" && metaItem?.found)) return value(this.values.string(Array.from(
+      if (["__name__", "__qualname__"].includes(name) && !(name === "__name__" && metaItem?.found)) return value(receiver[name === "__name__" ? "identityName" : "identityQualname"] ?? this.values.string(Array.from(
         receiver[{__name__: "name", __qualname__: "qualname", __module__: "module"}[name]], char => char.codePointAt(0))));
       if (["__bases__", "__mro__"].includes(name)) return value(name === "__mro__" && receiver.mroPending ? null : this.values.tuple(name === "__bases__" ? receiver.bases : receiver.mro));
       if (name === "__base__") return value(this.primaryBase(receiver));
     }
     let item = this.lookup(owner, name);
     if (!item.found) item = this.nativeEntry(owner, name);
-    if (!item.found && receiver instanceof InstanceValue && name === "__weakref__") {
+    if (!item.found && this.isInstance(receiver) && name === "__weakref__") {
       this.materializeInstanceStorage(receiver.type);
       item = this.lookup(owner, name);
     }
     const descriptor = item.found ? this.descriptor(item.value) : null;
     if (name === "__dir__" && !item.found && !metaItem?.found)
       this.fail("UnsupportedOperationError", "Default directories require their own namespace contract.", "UNSUPPORTED");
-    if (receiver instanceof InstanceValue && (item.value instanceof PropertyValue ||
+    if (this.isInstance(receiver) && (item.value instanceof PropertyValue ||
         descriptor?.get.found && (descriptor.set.found || descriptor.delete.found)))
       return this.bindAttribute(item.value, receiver, owner);
-    if (receiver instanceof InstanceValue) return this.instanceEntry(receiver, name, "get", null, key, {...item, skipNative: native});
+    if (this.isInstance(receiver)) return this.instanceEntry(receiver, name, "get", null, key, {...item, skipNative: native});
     if (!item.found) {
       if (metaItem?.found) return this.bindAttribute(metaItem.value, receiver, metaclass);
       this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
@@ -994,7 +1002,7 @@ export class ClassRuntime {
     if (value instanceof MethodWrapperValue) return {kind: "value", value: value.kind === "staticmethod" ?
       value.callable : this.make(BoundMethodValue, value.callable, owner, !NATIVE_CLASS_METHODS.has(value.callable?.name))};
     return {kind: "value", value: receiver !== null && (value instanceof FunctionValue ||
-      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["mappingproxy.get", "object.__dir__"].includes(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro", "type.__dir__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
+      value instanceof BuiltinValue && (NATIVE_PROPERTY_METHODS.has(value.name) || NATIVE_DESCRIPTOR_WRAPPERS.has(value.name) || NATIVE_BINDING_WRAPPERS.has(value.name) || ["mappingproxy.get", "object.__dir__"].includes(value.name) || ["object.__hash__", "object.__init__", "object.__getattribute__", "object.__setattr__", "object.__delattr__", "type.__init__", "type.__call__", "type.__getattribute__", "type.__setattr__", "type.__delattr__", "type.__instancecheck__", "type.__subclasscheck__", "type.mro", "type.__subclasses__", "type.__dir__"].includes(value.name))) ? this.make(BoundMethodValue, value, receiver) : value};
   }
   nativeDescriptorKind(value) {
     return value instanceof BuiltinValue && NAMESPACE_DESCRIPTOR_KINDS.has(value.nativeKind) ? value.nativeKind : value instanceof BuiltinValue ? NATIVE_METHOD_DESCRIPTORS.has(value.name) ? "method_descriptor" :
@@ -1034,6 +1042,7 @@ export class ClassRuntime {
     return result.value;
   }
   write(receiver, name, value, remove = false, key = null) {
+    if (name === "__class__" && !this.protocolObject(receiver) && !(receiver instanceof ClassValue)) return {kind: "value", value: this.reassignClass(receiver, value, remove)};
     if (receiver instanceof GeneratorValue && ["__name__", "__qualname__"].includes(name)) {
       if (remove || !this.values.isString(value)) this.fail("TypeError", name + " must be a string");
       return {kind: "value", value: this.functionMetadata(receiver, name === "__name__" ? "identityName" : "identityQualname", value)};
@@ -1076,13 +1085,13 @@ export class ClassRuntime {
           (nativeWrapper(receiver.callable.name) || NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name)))))
       this.fail("AttributeError", "Native descriptor owner metadata is read-only.");
     if (receiver instanceof SuperValue) this.fail("AttributeError", "super attributes are read-only");
-    if (receiver instanceof InstanceValue && receiver.type.root && name === "__dict__")
+    if (this.isInstance(receiver) && receiver.type.root && name === "__dict__")
       this.fail("AttributeError", "Object instance has no dictionary.");
-    if (receiver instanceof InstanceValue && name === "__dict__" && this.instanceDictionarySlot(receiver.type))
+    if (this.isInstance(receiver) && name === "__dict__" && this.instanceDictionarySlot(receiver.type))
       return {kind: "value", value: this.mutate(receiver, name, value, remove, key)};
-    if (receiver instanceof InstanceValue && name === "__weakref__") this.materializeInstanceStorage(receiver.type);
-    if (receiver instanceof InstanceValue || receiver instanceof ClassValue && receiver.metaclass) {
-      const item = this.lookup(receiver instanceof InstanceValue ? receiver.type : receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
+    if (this.isInstance(receiver) && name === "__weakref__") this.materializeInstanceStorage(receiver.type);
+    if (this.isInstance(receiver) || receiver instanceof ClassValue && receiver.metaclass) {
+      const item = this.lookup(this.isInstance(receiver) ? receiver.type : receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.value instanceof PropertyValue) {
         const callable = item.value[remove ? "fdel" : "fset"];
         if (callable === null) this.missingPropertyAccessor(item.value, remove ? "deleter" : "setter");
@@ -1094,8 +1103,10 @@ export class ClassRuntime {
         return this.boundHook(item.value, hook, remove ? [receiver] : [receiver, value]);
       }
     }
-    if (receiver instanceof InstanceValue && (!(receiver.attributes instanceof Map) || key !== null))
+    if (name === "__class__") return {kind: "value", value: this.reassignClass(receiver, value, remove)};
+    if (this.isInstance(receiver) && (!(receiver.attributes instanceof Map) || key !== null))
       return this.instanceEntry(receiver, name, remove ? "delete" : "set", value, key);
+    if (receiver instanceof ClassValue && name === "__bases__") return {kind: "call", callable: this.builtin("assign-bases"), args: [receiver, value, remove]};
     return {kind: "value", value: this.mutate(receiver, name, value, remove, key)};
   }
   nativeInvocationOwner(callable) {
@@ -1236,7 +1247,7 @@ export class ClassRuntime {
   namespaceGetset(descriptor, receiver, operation = "get", item = null) {
     this.namespaceDescriptorValid(descriptor, receiver);
     const owner = descriptor.nativeOwner, name = descriptor.nativeKey;
-    if (receiver instanceof InstanceValue && receiver.nativePayload !== undefined && owner instanceof BuiltinValue && ["property", "staticmethod", "classmethod", "module", "super"].includes(owner.name))
+    if (this.isInstance(receiver) && receiver.nativePayload !== undefined && owner instanceof BuiltinValue && ["property", "staticmethod", "classmethod", "module", "super"].includes(owner.name))
       return this.namespaceGetset(descriptor, receiver.nativePayload, operation, item);
     if (descriptor.slotIndex !== undefined) {
       const slots = receiver.slotValues;
@@ -1291,14 +1302,14 @@ export class ClassRuntime {
       return {kind: "value", value: null};
     }
     if (owner instanceof BuiltinValue && owner.name === "type" && receiver instanceof ClassValue && ["__name__", "__qualname__", "__module__", "__bases__", "__mro__", "__base__"].includes(name)) {
-      if (operation !== "get") this.fail("UnsupportedOperationError", "Native type metadata mutation is owned by O88.", "UNSUPPORTED");
+      if (operation !== "get") return name === "__bases__" ? {kind: "call", callable: this.builtin("assign-bases"), args: [receiver, item, operation === "delete"]} : {kind: "value", value: this.mutate(receiver, name, item, operation === "delete")};
       if (name === "__module__") { this.namespaceDictionary(receiver); const entry = this.ownNamespaceEntry(receiver, name); if (!entry.found) this.fail("AttributeError", "Class has no module"); return {kind: "value", value: entry.value}; }
-      return {kind: "value", value: name === "__bases__" ? this.values.tuple(receiver.bases) : name === "__mro__" ? receiver.mroPending ? null : this.values.tuple(receiver.mro) : name === "__base__" ? this.primaryBase(receiver) : this.values.string(Array.from(receiver[name === "__name__" ? "name" : "qualname"], char => char.codePointAt(0)))};
+      return {kind: "value", value: name === "__bases__" ? this.values.tuple(receiver.bases) : name === "__mro__" ? receiver.mroPending ? null : this.values.tuple(receiver.mro) : name === "__base__" ? this.primaryBase(receiver) : receiver[name === "__name__" ? "identityName" : "identityQualname"] ?? this.values.string(Array.from(receiver[name === "__name__" ? "name" : "qualname"], char => char.codePointAt(0)))};
     }
     if (receiver instanceof FrameValue || receiver instanceof GeneratorValue || receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof SuperValue || receiver instanceof BoundMethodValue || receiver instanceof MethodWrapperValue)
       return operation === "get" ? this.read(receiver, name, true) : this.write(receiver, name, item, operation === "delete");
     if (owner instanceof ClassValue && owner.root && name === "__class__") {
-      if (operation !== "get") { if (!this.isType(item)) this.fail("TypeError", "__class__ must be set to a class"); this.fail("UnsupportedOperationError", "Compatible class reassignment is O88.", "UNSUPPORTED"); }
+      if (operation !== "get") return {kind: "value", value: this.reassignClass(receiver, item, operation === "delete")};
       return {kind: "value", value: this.typeOf(receiver)};
     }
     if (operation !== "get") this.fail("AttributeError", "Native storage is read-only");
@@ -1347,7 +1358,7 @@ export class ClassRuntime {
   instanceMissing(receiver, name, fallback = {found: false}) {
     if (fallback.found) return this.bindAttribute(fallback.value, receiver, receiver.type);
     if (!fallback.skipNative && receiver.nativePayload instanceof SuperValue) return this.read(receiver.nativePayload, name);
-    if (!fallback.skipNative && receiver.nativePayload instanceof ModuleValue) return {kind: "call", callable: this.builtin("native-module-get"), args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
+    if (!fallback.skipNative && this.nativeModule(receiver)) return {kind: "call", callable: this.builtin("native-module-get"), args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
   }
   instanceEntry(receiver, name, operation = "get", item = null, key = null, fallback = {found: false}) {
@@ -1389,6 +1400,7 @@ export class ClassRuntime {
     return CONTAINER_DIRECTORY_KEYS[this.values.containerDirectoryType(receiver)] ?? null;
   }
   hasFixedDirectory(receiver) {
+    if (this.isInstance(receiver)) return false;
     return receiver instanceof ModuleValue || receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof FrameValue || receiver instanceof FrameLocalsValue || receiver instanceof ExceptionValue || receiver instanceof DictionaryViewValue ||
       receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || receiver instanceof ClassNamespaceValue || receiver instanceof PropertyValue || receiver instanceof GeneratorValue ||
       receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind) ||
@@ -1620,6 +1632,24 @@ export class ClassRuntime {
   }
   mutate(receiver, name, value, remove = false, key = null, namespaceShadow = false) {
     this.key(name); this.touch(receiver);
+    if (receiver instanceof ClassValue && receiver.root || receiver instanceof BuiltinValue && this.isType(receiver)) this.fail("TypeError", "Cannot mutate an immutable native type");
+    if (name === "__class__" && (this.isInstance(receiver) || receiver instanceof ClassValue)) return this.reassignClass(receiver, value, remove);
+    if (receiver instanceof ClassValue && !receiver.root && ["__name__", "__qualname__"].includes(name)) {
+      const label = this.values.text(this.payload(value));
+      if (remove || label === null) this.fail("TypeError", name + " must be set to a string");
+      if (name === "__name__" && label.includes("\0")) this.fail("ValueError", "type name must not contain null characters");
+      this.bounded(label.length <= CLASS_LIMITS.name, "Class identity budget exceeded");
+      const field = name === "__name__" ? "name" : "qualname", identity = name === "__name__" ? "identityName" : "identityQualname", before = receiver[field];
+      receiver[field] = label;
+      try { return this.functionMetadata(receiver, identity, value); }
+      catch (error) { receiver[field] = before; throw error; }
+    }
+    if (receiver instanceof ClassValue && name === "__module__") {
+      if (remove) this.fail("TypeError", "Cannot delete type __module__");
+      this.namespaceDictionary(receiver);
+      if (this.ownNamespaceEntry(receiver, "__firstlineno__").found) this.mutate(receiver, "__firstlineno__", null, true);
+      receiver.firstLine = null;
+    }
     if (this.isPythonMethod(receiver) && ["__name__", "__qualname__", "__module__"].includes(name))
       this.fail("AttributeError", "Method identity metadata is read-only.");
     if (receiver instanceof ClassValue && name === "__dict__" && receiver.metaclass && !namespaceShadow) {
@@ -1643,7 +1673,7 @@ export class ClassRuntime {
       return this.functionMetadata(receiver, "attributes", value);
     }
     if (receiver instanceof FunctionValue && name === "__class__") this.fail("TypeError", "Function type cannot be changed.");
-    if (receiver instanceof InstanceValue && name === "__dict__" && this.instanceDictionarySlot(receiver.type)) {
+    if (this.isInstance(receiver) && name === "__dict__" && this.instanceDictionarySlot(receiver.type)) {
       if (!remove && !this.values.isDict(value)) this.fail("TypeError", "Instance __dict__ must be set to a dictionary.");
       return this.functionMetadata(receiver, "attributes", remove ? new Map() : value);
     }
@@ -1663,7 +1693,7 @@ export class ClassRuntime {
     if (name === "__doc__" && receiver instanceof ClassValue && remove) this.fail("TypeError", "Class documentation cannot be deleted.");
     if (name === "__isabstractmethod__" && (receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue || receiver instanceof BoundMethodValue))
       this.fail("AttributeError", "Computed abstract-method flags are read-only.");
-    if (name === "__name__" && !(receiver instanceof InstanceValue)) {
+    if (name === "__name__" && !(this.isInstance(receiver))) {
       if (!(receiver instanceof PropertyValue))
         this.fail("UnsupportedOperationError", "Name mutation is adopted only for properties.", "UNSUPPORTED");
       const before = receiver.propertyName;
@@ -1673,20 +1703,20 @@ export class ClassRuntime {
       return null;
     }
     if (receiver instanceof BuiltinValue && this.isType(receiver)) this.fail("TypeError", "Cannot mutate an immutable native type.");
-    if (!(receiver instanceof ClassValue || receiver instanceof InstanceValue))
+    if (!(receiver instanceof ClassValue || this.isInstance(receiver)))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
     if (receiver instanceof ClassValue && name === "__dict__" && !namespaceShadow) this.fail("AttributeError", "Class namespace views cannot be replaced or deleted.");
     if (receiver instanceof ClassValue && name === "__base__") this.fail("AttributeError", "Primary base metadata is read-only.");
-    if (receiver instanceof ClassValue && name === "__bases__") this.fail("UnsupportedOperationError", "Type base reassignment remains O88.", "UNSUPPORTED");
+    if (receiver instanceof ClassValue && name === "__bases__") this.fail("UnsupportedOperationError", "Type base reassignment requires owned hierarchy execution.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && this.isMetaclass(receiver) && isSpecialName(name) && !META_SPECIALS.has(name))
       this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
-    if (!allowsClassSpecial(name, "mutate") && !namespaceShadow && !(receiver instanceof InstanceValue && name === "__dict__"))
+    if (!allowsClassSpecial(name, "mutate") && !namespaceShadow && !(this.isInstance(receiver) && name === "__dict__"))
       this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
-    if (receiver instanceof InstanceValue && receiver.type.root && name === "__dict__")
+    if (this.isInstance(receiver) && receiver.type.root && name === "__dict__")
       this.fail("AttributeError", "Object instance has no dictionary.");
-    if (receiver instanceof InstanceValue && receiver.type.storage && !receiver.type.storage.dict) this.instanceMissing(receiver, name);
-    if (receiver instanceof InstanceValue && !(receiver.attributes instanceof Map)) {
+    if (this.isInstance(receiver) && receiver.type.storage && !receiver.type.storage.dict) this.instanceMissing(receiver, name);
+    if (this.isInstance(receiver) && !(receiver.attributes instanceof Map)) {
       const plan = this.instanceEntry(receiver, name, remove ? "delete" : "set", value);
       if (plan.kind !== "value") this.fail("UnsupportedOperationError", "Dictionary callbacks require VM execution frames.", "UNSUPPORTED");
       return plan.value;
@@ -1727,6 +1757,106 @@ export class ClassRuntime {
       }
     } catch (error) { rollback(); throw error; }
     return null;
+  }
+  actualSubtype(type, parent) {
+    const pending = [type], seen = new Set();
+    while (pending.length) {
+      this.charge(1); const item = pending.pop(); if (item === parent) return true;
+      if (seen.has(item)) continue; seen.add(item); if (item instanceof ClassValue) pending.push(...item.bases);
+    }
+    return false;
+  }
+  layoutShape(type) {
+    if (type instanceof ClassValue && !type.root) return {...type.storage, gc: true};
+    const family = type.root ? "object" : type.name;
+    return {family, count: 0, ownNames: [], dict: ["type", "module", "staticmethod", "classmethod"].includes(family),
+      weak: ["type", "module", "set", "frozenset"].includes(family), gc: !["object", "int", "float", "complex", "str", "bytes", "bytearray"].includes(family)};
+  }
+  compatibleLayout(left, right) {
+    const equal = (a, b) => a.family === b.family && a.count === b.count && a.dict === b.dict && a.weak === b.weak && a.gc === b.gc;
+    if (!equal(this.layoutShape(left), this.layoutShape(right))) return false;
+    const reduce = type => {
+      while (type instanceof ClassValue && !type.root) {
+        const parent = this.primaryBase(type);
+        if (!equal(this.layoutShape(type), this.layoutShape(parent))) break;
+        type = parent;
+      }
+      return type;
+    };
+    const a = reduce(left), b = reduce(right);
+    if (a === b) return true;
+    if (!(a instanceof ClassValue && !a.root && b instanceof ClassValue && !b.root) || this.primaryBase(a) !== this.primaryBase(b)) return false;
+    const x = a.storage.ownNames, y = b.storage.ownNames;
+    return x.length === y.length && x.every((name, i) => name === y[i]);
+  }
+  reassignClass(receiver, type, remove = false) {
+    if (remove || !this.isType(type)) this.fail("TypeError", remove ? "can't delete __class__ attribute" : "__class__ must be set to a class");
+    const old = this.typeOf(receiver), modules = this.layoutFamily(old) === "module" && this.layoutFamily(type) === "module";
+    if (!modules && (!(old instanceof ClassValue) || old.root || !(type instanceof ClassValue) || type.root))
+      this.fail("TypeError", "__class__ assignment only supported for mutable types or ModuleType subclasses");
+    if (!this.compatibleLayout(old, type)) this.fail("TypeError", "__class__ assignment: object layout differs");
+    if (receiver instanceof ClassValue) return this.functionMetadata(receiver, "metaclass", type);
+    if (receiver instanceof InstanceValue) {
+      if (old.storage?.dict && old.storage.family === "object") this.instanceDictionary(receiver);
+      return this.functionMetadata(receiver, "type", type);
+    }
+    if (receiver instanceof ModuleValue && modules) {
+      const previous = [receiver.type, receiver.attributes];
+      const dictionary = this.values.environmentDictionary(receiver.environment);
+      if (type instanceof ClassValue) { receiver.type = type; receiver.attributes = dictionary; }
+      else { delete receiver.type; delete receiver.attributes; }
+      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+      catch (error) { if (previous[0] === undefined) delete receiver.type; else receiver.type = previous[0]; if (previous[1] === undefined) delete receiver.attributes; else receiver.attributes = previous[1]; throw error; }
+      return null;
+    }
+    this.fail("TypeError", "This value cannot change its native layout");
+  }
+  subclasses(type) {
+    if (!this.isType(type)) this.fail("TypeError", "__subclasses__ requires a type");
+    const live = this.memory?.liveValues(ClassValue) ?? [];
+    const source = live.filter(item => {
+      const transaction = this.transactions?.find(record => record.active && record.type === item && item.bases === record.bases);
+      const bases = transaction ? transaction.snapshots[0].bases : item.bases;
+      return !item.root && !item.mroPending && bases.includes(type);
+    });
+    source.sort((a, b) => a.creationOrder < b.creationOrder ? -1 : a.creationOrder > b.creationOrder ? 1 : 0);
+    const native = [];
+    for (const name of NATIVE_TYPES) {
+      const parent = name === "bool" ? "int" : EXCEPTIONS[name] ?? "object";
+      if ((type.root || type instanceof BuiltinValue) && (type.root ? "object" : type.name) === parent) native.push(this.builtin(name));
+    }
+    return [...native, ...source];
+  }
+  derivedStorage(type, bases) {
+    const inherited = this.storageLayout(type.name, bases, new Map(), []), old = type.storage;
+    return {...inherited, ownNames: old.ownNames, count: inherited.count + old.ownNames.length,
+      dict: inherited.dict || old.ownDict, weak: inherited.weak || old.ownWeak, ownDict: old.ownDict, ownWeak: old.ownWeak,
+      explicit: old.explicit, solid: old.ownNames.length ? type : inherited.solid};
+  }
+  beginBases(type, value, remove = false) {
+    if (!(type instanceof ClassValue) || type.root || remove) this.fail("TypeError", "Cannot change these type bases");
+    value = this.payload(value);
+    if (!this.values.isSequenceType(value, "tuple") || !value.items.length) this.fail("TypeError", "__bases__ requires a nonempty tuple");
+    const bases = Object.freeze([...value.items]);
+    this.bounded(bases.length <= CLASS_LIMITS.bases, "Class base budget exceeded");
+    if (new Set(bases).size !== bases.length) this.fail("TypeError", "duplicate base class");
+    for (const base of bases) {
+      if (!this.isType(base)) this.fail("TypeError", "__bases__ items must be classes");
+      const pending = [base], seen = new Set();
+      while (pending.length) {
+        this.charge(1); const item = pending.pop();
+        if (item === type) this.fail("TypeError", "a __bases__ item causes an inheritance cycle");
+        if (seen.has(item)) continue; seen.add(item);
+        if (item instanceof ClassValue) pending.push(...item.bases);
+      }
+    }
+    const storage = this.derivedStorage(type, bases), previous = type.storage;
+    const oldBases = type.bases; type.bases = bases; type.storage = storage;
+    let primary; try { primary = this.primaryBase(type); } finally { type.bases = oldBases; type.storage = previous; }
+    if (!this.compatibleLayout(this.primaryBase(type), primary)) this.fail("TypeError", "__bases__ assignment: incompatible base layout");
+    const entry = {type, bases: type.bases, mro: type.mro, storage: type.storage, typeLayout: type.typeLayout, installed: null};
+    const transaction = this.make(HierarchyTransaction, type, bases, [entry]);
+    return {transaction, storage};
   }
   subclass(type, parent, depth = 0) {
     if (this.values.isSequenceType(parent, "tuple")) {
