@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {GeneratorValue, Cell, Environment, environmentCell, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, FrameValue, FrameLocalsValue, Cell, Environment, environmentCell, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -289,15 +289,37 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (values.isDict(keywordDefaults)) bindings.pendingDefaults = p.kwonly.filter(key => !bindings.has(key));
     return bindings;
   };
+  const inlineFrame = frame => ["<listcomp>", "<dictcomp>", "<setcomp>"].includes(frame.fn.name);
+  const visibleFrame = frame => { while (frame?.parent && inlineFrame(frame)) frame = frame.parent; return frame; };
+  const invalidateFrame = frame => {
+    frame.inlineVersion = (frame.inlineVersion ?? 0) + 1;
+    if (frame.reflector) { frame.reflector.keys = null; frame.reflector.keyVersion = -1; }
+  };
+  const frameScope = (frame, roots) => {
+    const leave = memory.enter(roots, {charge, fail: hard});
+    return () => {
+      if (frame.inlineParent) {
+        const parent = frame.inlineParent;
+        parent.inlineFrames = parent.inlineFrames.filter(item => item !== frame); invalidateFrame(parent);
+      }
+      if (frame.reflector) frame.reflector.raw = {fn: frame.fn, pool: frame.pool, index: frame.index, callable: frame.callable,
+        locals: frame.locals, closure: frame.closure, namespaceOrder: frame.namespaceOrder, namespaceEnvironment: frame.namespaceEnvironment,
+        currentSite: frame.currentSite, inlineFrames: [], inlineVersion: frame.inlineVersion, active: false};
+      leave();
+    };
+  };
   const enter = (callable, bindings, callsite = null, completion = null, executable = callable) => {
     if (state.frames.length >= Math.min(maxDepth, memory.limits.maxFrames - 1) || memory.stats().frames >= memory.limits.maxFrames) python("RecursionError", "maximum recursion depth exceeded");
     const fn = executable.pool.code.functions[executable.index];
-    const frame = {fn, callable, pool: executable.pool, index: executable.index, closure: executable.closure, locals: executable.index === 0 ? callable.globals.cells : new Map(),
+    const saved = executable instanceof GeneratorValue ? executable.reflector : null;
+    const frame = {fn, callable, pool: executable.pool, index: executable.index, closure: executable.closure,
+      locals: saved?.locals ?? (executable.index === 0 ? callable.globals.cells : new Map()), reflector: saved, parent: state.frames.at(-1) ?? null,
+      inlineFrames: [], inlineVersion: 0, inlineParent: null, currentSite: null, active: true,
       tasks: [], activeException: state.frames.at(-1)?.activeException || inheritedException, callsite,
       completion, namespaceOrder: fn.kind === "class" ? new Set() : null, returnInstruction: state.current?.instruction ?? null};
-    frame.leave = memory.enter(() => [callable, ...(frame.pool === callable.pool ? [] : [frame.pool]),
+    frame.leave = frameScope(frame, () => [callable, ...(frame.pool === callable.pool ? [] : [frame.pool]),
       ...(frame.closure === callable.closure ? [] : frame.closure.values()), ...frame.locals.values(), ...(frame.activeException ? [frame.activeException] : []),
-      ...frame.tasks.flatMap(controlRoots), ...(frame.namespaceEnvironment ? [frame.namespaceEnvironment] : []), ...(frame.generator ? [frame.generator] : []), ...completionRoots(frame.completion, true)], {charge, fail: hard});
+      ...frame.tasks.flatMap(controlRoots), ...(frame.namespaceEnvironment ? [frame.namespaceEnvironment] : []), ...(frame.generator ? [frame.generator] : []), ...(frame.reflector ? [frame.reflector] : []), ...completionRoots(frame.completion, true)]);
     state.frames.push(frame);
     // Keep the established cell allocation/root order; source local order is
     // independently carried by the verified function for namespace snapshots.
@@ -308,13 +330,39 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         cell = allocate(Cell);
         if (frame.index === 0) addCell(callable.globals, key, cell); else frame.locals.set(key, cell);
       }
-      if (bindings.has(key)) setCell(cell, bindings.get(key));
+      if (!saved && bindings.has(key)) setCell(cell, bindings.get(key));
     }
+    if (inlineFrame(frame) && frame.parent) { frame.inlineParent = visibleFrame(frame.parent); frame.inlineParent.inlineFrames.push(frame); invalidateFrame(frame.inlineParent); }
+    if (saved) { saved.raw = frame; saved.back = frame.parent ? reflectFrame(frame.parent) : null; const layout = valueLayout(saved); memory.resize(saved, layout.bytes, layout.children); }
     block(frame, fn.body);
+  };
+  const reflectFrame = frame => {
+    frame = visibleFrame(frame);
+    if (frame.reflector) return frame.reflector;
+    const back = frame.parent ? reflectFrame(frame.parent) : null; state.temporaries.push(back);
+    const value = allocate(FrameValue, frame, back); state.temporaries.push(value); frame.reflector = value;
+    return value;
+  };
+  const generatorFrame = generator => {
+    if (generator.status === "closed") return null;
+    if (generator.reflector) return generator.reflector;
+    if (generator.frame) {
+      const value = reflectFrame(generator.frame); generator.reflector = value;
+      const layout = valueLayout(generator); memory.resize(generator, layout.bytes, layout.children); return value;
+    }
+    const fn = generator.pool.code.functions[generator.index], locals = new Map();
+    const roots = [generator], leave = memory.enter(() => roots, {charge, fail: hard});
+    try {
+      for (const name of fn.locals) { const cell = allocate(Cell); roots.push(cell); if (generator.bindings.has(name)) setCell(cell, generator.bindings.get(name)); locals.set(name, cell); }
+      const raw = {fn, pool: generator.pool, index: generator.index, callable: generator.callable, closure: generator.closure, locals, tasks: [], parent: null, active: false, currentSite: null};
+      const value = allocate(FrameValue, raw); roots.push(value);
+      mutate(generator, () => { const previous = generator.reflector; generator.reflector = value; return () => { generator.reflector = previous; }; });
+      generator.bindings.clear(); return value;
+    } finally { leave(); }
   };
   const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
-    setCell, load, loadName, builtinLookup, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
+    setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
     const generator = frame.generator, completion = frame.completion;
@@ -323,6 +371,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (!frame.ownsException) frame.activeException = null;
     for (const task of frame.tasks) if (task.type === "try" && !task.previousOwned) task.previous = null;
     generator.status = status; generator.frame = frame;
+    frame.active = false; frame.parent = null; if (frame.reflector) frame.reflector.back = null;
     frame.leave(); frame.leave = null; state.frames.pop();
     return completion;
   };
@@ -400,6 +449,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (fresh && mode === "send" && value !== null) python("TypeError", "can't send non-None value to a just-started generator");
     if (generator.status === "closed" || fresh && mode !== "send") {
       if (fresh && mode === "throw") addTrace(value, definitionSite(generator));
+      if (generator.reflector) { generator.reflector.raw.active = false; generator.reflector.back = null; generator.reflector = null; }
       generator.status = "closed"; generator.callable = null; generator.closure = null; generator.bindings.clear();
       if (mode === "close") { dispatch(deliver(null, completion, site)); return; }
       if (mode === "throw") { addTrace(value, site); throw new Raised(value); }
@@ -417,11 +467,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       if (!frame.ownsException) frame.activeException = inherited;
       for (const task of frame.tasks) if (task.type === "try" && !task.previousOwned) task.previous = inherited;
       frame.completion = completion; frame.callsite = site; frame.returnInstruction = state.current?.instruction ?? null;
-      frame.leave = memory.enter(() => [generator, frame.callable, ...frame.locals.values(), frame.activeException,
-        ...frame.tasks.flatMap(controlRoots), ...completionRoots(frame.completion, true)], {charge, fail: hard});
+      frame.leave = frameScope(frame, () => [generator, frame.callable, ...frame.locals.values(), frame.activeException,
+        ...frame.tasks.flatMap(controlRoots), ...(frame.reflector ? [frame.reflector] : []), ...completionRoots(frame.completion, true)]);
       state.frames.push(frame);
     }
     generator.status = "running";
+    generator.frame.active = true; generator.frame.parent = state.frames.at(-2) ?? null;
+    if (generator.reflector) { generator.reflector.raw = generator.frame; generator.reflector.back = generator.frame.parent ? reflectFrame(generator.frame.parent) : null; const layout = valueLayout(generator.reflector); memory.resize(generator.reflector, layout.bytes, layout.children); }
     const frame = generator.frame; frame.generatorMode = mode;
     if (frame.tasks.at(-1).type === "delegate") delegateAdvance(mode, value);
     else if (mode === "close") injectGenerator(allocate(ExceptionValue, "GeneratorExit", [], ""));
@@ -534,6 +586,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       let returned = signal.kind === "normal" ? null : signal.value;
       if (frame.generator) {
         const generator = frame.generator, mode = frame.generatorMode;
+        frame.active = false; if (frame.reflector) frame.reflector.back = null;
+        generator.reflector = null;
         generator.status = "closed"; generator.frame = null; generator.callable = null; generator.closure = null; generator.bindings.clear();
         if (signal.kind === "raise" && returned.name === "StopIteration") {
           const original = returned;
@@ -548,6 +602,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           returned = null; signal = {kind: "return", value: null};
         }
       }
+      frame.active = false;
       state.temporaries = [returned, frame.callable];
       const parent = state.frames.at(-2);
       if (!parent && frame.completion === null) {
@@ -662,6 +717,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const [op, arg, extra, fourth, fifth] = cursor.block.instructions[cursor.pc++];
     state.current = {...summary(frame, cursor), instruction: cursor.pc - 1};
     state.temporaries = stack.slice();
+    frame.currentSite = state.current.location;
     try {
       if (op === "const") stack.push(frame.pool.code.constants[arg]);
       else if (op === "load") {
@@ -691,12 +747,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const closure = new Map(owner.code.functions[arg].free.map(key => [key,
           frame.fn.kind === "class" ? key === "__class__" && frame.locals.has("@source:class") ? frame.locals.get("@source:class") : frame.closure.get(key) : frame.locals.get(key) || frame.closure.get(key)]));
         const defaults = op === "function-defaults" ? stack.splice(stack.length - extra - fourth.length) : null;
-        const builtinEntry = environmentCell(frame.callable.globals, "__builtins__");
-        const captured = builtinEntry?.bound ? builtinEntry.value instanceof ModuleValue ? builtinEntry.value.environment : builtinEntry.value : undefined;
+        const inlined = ["<listcomp>", "<dictcomp>", "<setcomp>"].includes(owner.code.functions[arg].name);
+        const builtinEntry = inlined ? null : environmentCell(frame.callable.globals, "__builtins__");
+        const captured = inlined ? frame.callable.builtins : builtinEntry?.bound ? builtinEntry.value instanceof ModuleValue ? builtinEntry.value.environment : builtinEntry.value : undefined;
         const callable = allocate(FunctionValue, owner, arg, frame.callable.globals, closure, defaults, captured);
         if (op !== "class" && op !== "class-meta" && op !== "class-keywords") {
           const dictionary = frame.callable.globals.dictionary;
-          if (dictionary?.ownedKeys) {
+          if (dictionary?.ownedKeys && !inlined) {
             state.temporaries.push(callable);
             const key = values.string(Array.from("__builtins__", char => char.codePointAt(0))); state.temporaries.push(key);
             dispatch(dictionaryTask(dictionary, key, summary(frame, cursor), continuation("function-capture", {receiver: callable}), 0, "probe"));
@@ -782,8 +839,11 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Native directories require classes-source/1.");
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           } else if (receiver instanceof GeneratorValue) {
-            if (!["send", "throw", "close", "__iter__", "__next__"].includes(arg)) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires a separate stage.");
-            stack.push(allocate(ValueMethod, receiver, arg));
+            if (["send", "throw", "close", "__iter__", "__next__"].includes(arg)) stack.push(allocate(ValueMethod, receiver, arg));
+            else {
+              if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires classes-source/1");
+              dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+            }
           } else if (receiver instanceof ExceptionValue && arg === "value" && receiver.name === "StopIteration") stack.push(receiver.args[0] ?? null);
           else if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
           else if (values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));
@@ -792,7 +852,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           else if (values.isBinary(receiver)) { values.binaryMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }
           else if (arg === "encode" && values.isString(receiver)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (op === "attribute-get" && values.isSlice(receiver)) stack.push(values.sliceAttribute(receiver, arg));
-          else if (op === "attribute-get" && (receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
+          else if (op === "attribute-get" && (receiver instanceof FrameValue || receiver instanceof FrameLocalsValue || receiver instanceof Cell || receiver instanceof CodeValue || receiver instanceof BuiltinValue || receiver instanceof SuperValue || receiver instanceof ClassValue || receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue || receiver instanceof InstanceValue || receiver instanceof BoundMethodValue || receiver instanceof FunctionValue || receiver instanceof PropertyValue || receiver instanceof MethodWrapperValue)) {
             if (arg === "__get__" && frame.pool.code.version !== 5 &&
                 (receiver instanceof FunctionValue || classes.nativeDescriptorKind(receiver) !== null))
               hard("UNSUPPORTED", "UnsupportedOperationError", "Explicit descriptor binding requires the class profile.");
@@ -868,27 +928,27 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         else { values.set(receiver, key, item); stack.push(receiver); }
       } else if (op === "setitem") {
         const item = stack.pop(), key = stack.pop(), receiver = stack.pop();
-        if (receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key) || (values.isBinary(receiver) || values.isView(receiver)) && item instanceof InstanceValue ||
+        if (receiver instanceof FrameLocalsValue || receiver instanceof InstanceValue || key instanceof InstanceValue || values.isSlice(key) || (values.isBinary(receiver) || values.isView(receiver)) && item instanceof InstanceValue ||
             frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(receiver, key))
           dispatch(itemTask(receiver, key, summary(frame, cursor), null, 0, "set", item));
         else stack.push(values.set(receiver, key, item));
-      } else if (op === "dict-delete" && (stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
+      } else if (op === "dict-delete" && (stack.at(-2) instanceof FrameLocalsValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
           frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor), null, 0, "delete"));
       }
       else if (op === "slice") {
         const step = stack.pop(), stop = stack.pop(), start = stack.pop(), receiver = stack.pop();
-        if ([receiver, start, stop, step].some(value => value instanceof InstanceValue))
+        if (receiver instanceof FrameLocalsValue || [receiver, start, stop, step].some(value => value instanceof InstanceValue))
           dispatch(sliceTask(receiver, [start, stop, step], summary(frame, cursor)));
         else stack.push(values.slice(receiver, start, stop, step));
-      } else if (op === "getitem" && (stack.at(-2) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
+      } else if (op === "getitem" && (stack.at(-2) instanceof FrameLocalsValue || stack.at(-2) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue || values.isSlice(stack.at(-1)) ||
           frame.pool.code.version === 5 && values.dictionaryNeedsProtocol(stack.at(-2), stack.at(-1)))) {
         const key = stack.pop(); dispatch(itemTask(stack.pop(), key, summary(frame, cursor)));
       }
       else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
       else if (op === "contains" && (frame.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
-          (stack.at(-1) instanceof DictionaryViewValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
+          (stack.at(-1) instanceof FrameLocalsValue || stack.at(-1) instanceof DictionaryViewValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof InstanceValue || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
            values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
         const receiver = stack.pop(); dispatch(containsTask(receiver, stack.pop(), summary(frame, cursor)));
@@ -899,7 +959,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const right = stack.pop(); dispatch(compareTask(op, stack.pop(), right, summary(frame, cursor)));
       }
       else if (Object.hasOwn(ARITHMETIC_SLOTS, op.startsWith("inplace-") ? op.slice(8) : op) &&
-          (stack.at(-2) instanceof ClassNamespaceValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
+          (stack.at(-2) instanceof FrameLocalsValue || stack.at(-1) instanceof FrameLocalsValue || stack.at(-2) instanceof ClassNamespaceValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-2) instanceof InstanceValue || stack.at(-1) instanceof InstanceValue)) {
         const right = stack.pop(), left = stack.pop(); dispatch(arithmeticTask(op, [left, right], summary(frame, cursor)));
       }
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
@@ -917,7 +977,11 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
   };
   const close = () => {
-    while (state.frames.length) state.frames.pop().leave();
+    while (state.frames.length) {
+      const frame = state.frames.pop(); frame.active = false;
+      if (frame.generator) { const generator = frame.generator; if (frame.reflector) frame.reflector.back = null; generator.status = "closed"; generator.frame = null; generator.reflector = null; generator.callable = null; generator.closure = null; generator.bindings.clear(); }
+      frame.tasks.length = 0; frame.leave();
+    }
     for (const release of state.outputLeases) release(false);
     state.outputLeases.length = 0;
     state.rootLeave?.(); state.rootLeave = null;

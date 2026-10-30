@@ -6,7 +6,8 @@
   "implemented_stages": [
     "G1",
     "G2",
-    "O68"
+    "O68",
+    "O74"
   ],
   "cases": [
     {
@@ -265,12 +266,11 @@
     },
     {
       "id": "generator-reflection",
-      "stage": "Future",
+      "stage": "O74",
       "source": "def g(): yield 1\na=g()\nprint(a.gi_running)\n",
       "stdout": "False\n",
       "profiles": [
-        "classes-source/1",
-        "core-source/1"
+        "classes-source/1"
       ]
     },
     {
@@ -412,6 +412,15 @@
       ],
       "profiles": [
         "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generator-reflection-core-boundary",
+      "stage": "Future",
+      "source": "def g(): yield 1\na=g()\nprint(a.gi_running)\n",
+      "stdout": "False\n",
+      "profiles": [
         "core-source/1"
       ]
     }

@@ -1,5 +1,5 @@
 // Independent Python values. Native Number is used only inside explicit floats.
-import {GeneratorValue, generatorRoots, Cell, Environment, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, FrameValue, FrameLocalsValue, generatorRoots, Cell, Environment, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {isPrintable} from "./string-printability.mjs";
 import {divideIntegers, powerIntegers, powerReals, modularPower, roundInteger, roundReal, parseInteger, parseReal, parseComplex, complexArithmetic, complexPower} from "./numeric.mjs";
 export const VALUE_LIMITS = Object.freeze({digits: 4096, text: 65536, items: 1024, depth: 32});
@@ -369,6 +369,7 @@ export class ValueRuntime {
     if (value instanceof StringValue) return "str";
     if (value instanceof ListValue) return "list";
     if (value instanceof TupleValue) return "tuple";
+    if (value instanceof FrameLocalsValue) return "FrameLocalsProxy";
     if (value instanceof ClassNamespaceValue) return "mappingproxy";
     if (value instanceof DictionaryViewValue) return ['dict_keys', 'dict_values', 'dict_items'][value.kind];
     if (value instanceof DictValue) return "dict";
@@ -465,7 +466,7 @@ export class ValueRuntime {
     const pending = [value], seen = new Set();
     while (pending.length) {
       const item = pending.pop();
-      if (item instanceof InstanceValue || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
+      if (item instanceof FrameLocalsValue || item instanceof InstanceValue || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
       if (item instanceof SetValue) { pending.push(...item.storage.entries.map(entry => entry.key)); continue; }
       if (item instanceof DictValue && item.ownedKeys) return true;
       if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;
@@ -612,7 +613,7 @@ export class ValueRuntime {
     if (value instanceof DictionaryViewValue) return value.dictionary.entries.length !== 0;
     if (value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue || value instanceof SliceValue) return true;
     if (value instanceof FunctionValue || value instanceof BuiltinValue || value instanceof ExceptionValue || value instanceof ModuleValue ||
-        value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof SuperValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue || value instanceof Cell || value instanceof CodeValue) return true;
+        value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof SuperValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue || value instanceof FrameValue || value instanceof FrameLocalsValue || value instanceof Cell || value instanceof CodeValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
   }
   equal(left, right, depth = 0) {
@@ -721,6 +722,7 @@ export class ValueRuntime {
   }
   hash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof FrameLocalsValue) this.fail("TypeError", "unhashable type: 'FrameLocalsProxy'");
     if (value instanceof ClassNamespaceValue) this.fail("TypeError", "unhashable type: 'mappingproxy'");
     if (value instanceof DictionaryViewValue) return 'p:' + this.pythonHash(value, depth);
     if (value instanceof MemoryViewValue) return 'p:' + this.pythonHash(value, depth);
@@ -797,6 +799,7 @@ export class ValueRuntime {
   }
   pythonHash(value, depth = 0) {
     this.depth(depth); this.charge(1);
+    if (value instanceof FrameLocalsValue) this.fail("TypeError", "unhashable type: 'FrameLocalsProxy'");
     if (value instanceof ClassNamespaceValue) this.fail("TypeError", "unhashable type: 'mappingproxy'");
     if (value instanceof DictionaryViewValue && value.kind !== 1) this.fail("TypeError", "unhashable dictionary view");
     if (value instanceof BoundMethodValue)
@@ -1511,7 +1514,10 @@ export function valueLayout(value) {
   if (value instanceof DictionaryViewValue) return {bytes: 56, children: [value.dictionary]};
   if (value instanceof IteratorValue && value.dictionaryKind !== undefined) return {bytes: 96, children: value.value === null ? [] : [value.value]};
   if (value instanceof IteratorValue) return value.value?.namespace ? {bytes: 80, children: [value.value]} : value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
-  if (value instanceof GeneratorValue) return {bytes: 152 + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};
+  if (value instanceof GeneratorValue) return {bytes: 152 + 8 * ([value.reflector, value.identityName, value.identityQualname].filter(item => item != null).length) + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};
+  if (value instanceof FrameValue) return {bytes: 128 + 8 * (value.locals.size + value.closure.size + (value.keys === null ? 0 : 1) + (value.extras === null ? 0 : 1)) + (value.nameKeys === null ? 0 : 8 + [...value.nameKeys.keys()].reduce((sum, name) => sum + 32 + 2 * name.length, 0)),
+    children: [value.pool, value.callable, value.back, ...value.locals.values(), ...value.closure.values(), value.keys, value.extras, ...(value.nameKeys?.values() ?? []), ...(value.raw.namespaceEnvironment ? [value.raw.namespaceEnvironment] : [])]};
+  if (value instanceof FrameLocalsValue) return {bytes: 48, children: [value.frame]};
   if (value instanceof ProtocolIteratorValue) return {bytes: 88, children: [value.source, value.sentinel, value.index]};
   if (value instanceof NotImplementedValue) return {bytes: 48, children: []};
   if (value instanceof SliceValue) return {bytes: 88, children: [value.start, value.stop, value.step]};

@@ -66,9 +66,18 @@ export function completion(kind, fields = {}) {
       record = {kind, type: fields.type, args: operands(fields.args), keywords: operands(fields.keywords),
         keywordValues: operands(fields.keywordValues), depth: fields.depth, after};
       depthCheck(record.depth); break;
+    case "frame-update-get": case "frame-update-map":
+      record = {kind, receiver: fields.receiver, source: fields.source, keys: fields.keys, position: fields.position, self: fields.self, after}; break;
+    case "frame-lookup":
+      record = {kind, receiver: fields.receiver, key: fields.key, item: fields.item, fallback: fields.fallback, hasFallback: fields.hasFallback,
+        operation: fields.operation, cell: fields.cell ?? null, phase: fields.phase, after}; break;
+    case "frame-snapshot": case "frame-copy-value": record = {kind, receiver: fields.receiver, result: fields.result, keys: fields.keys, position: fields.position, after}; break;
+    case "frame-result": record = {kind, action: fields.action, task: fields.task ?? null, receiver: fields.receiver ?? null, after}; break;
     case "function-defaults":
       record = {kind, receiver: fields.receiver, dictionary: fields.dictionary, names: operands(fields.names), keys: operands(fields.keys), items: operands(fields.items), position: fields.position, after};
       break;
+    case "frame-update-boundary": record = {kind, receiver: fields.receiver, inplace: fields.inplace, context: fields.context, after}; break;
+    case "frame-write":
     case "function-capture":
     case "relay": case "subclass-result": case "vars-result": case "property-name": record = {kind, receiver: fields.receiver, after}; break;
     case "function-entry":
@@ -268,7 +277,13 @@ function visit(record) {
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];
+    case "frame-update-get": case "frame-update-map": return [record.receiver, record.source, record.keys, ...completionRoots(record.after)];
+    case "frame-lookup": return [record.receiver, record.key, record.item, record.fallback, record.cell, ...completionRoots(record.after)];
+    case "frame-snapshot": case "frame-copy-value": return [record.receiver, record.result, record.keys, ...completionRoots(record.after)];
+    case "frame-result": return [record.receiver, ...(record.task ? operationRoots(record.task) : []), ...completionRoots(record.after)];
     case "function-defaults": return [record.receiver, record.dictionary, ...record.items, ...completionRoots(record.after)];
+    case "frame-update-boundary": return [record.receiver, record.context, ...completionRoots(record.after)];
+    case "frame-write":
     case "function-capture":
     case "relay": case "subclass-result": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "abstract-lookup": case "abstract-truth":

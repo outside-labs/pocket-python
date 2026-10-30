@@ -457,3 +457,5 @@ Native async/host adapters remain under #34.
 [O72](interpreter-function-state.md) adopts live function defaults, defining globals and captured builtins, including owned binding callbacks and persistent callback updates.
 
 [O73](interpreter-code-cells.md) adopts owned verified code metadata, actual closure cells and compatible code replacement while retaining active and generator executable snapshots.
+
+[O74](interpreter-generator-frames.md) adopts non-resuming generator/frame metadata and live optimized-frame local proxies, including cells, extras, inlined scopes and retained-frame teardown.

@@ -336,7 +336,7 @@ class Compiler {
       ...(scope.nonlocals.size ? {nonlocals: [...scope.nonlocals].sort()} : {})};
     const staticAttributes = isClass ? this.staticAttributes(node) : [];
     if (staticAttributes.length) fn.staticAttributes = staticAttributes;
-    if (isClass && node.decorators?.length) fn.firstLine = node.decorators[0].span[0];
+    if (isClass && this.classes) fn.firstLine = node.decorators?.[0]?.span[0] ?? node.span[0];
     if (this.classes && !isModule && !isClass) fn.firstLine = node.decorators?.[0]?.span[0] ?? node.span[0];
     if (node.kind === "Function" && document) fn.doc = this.constant(documentation, document);
     this.program.functions[scope.index] = fn;

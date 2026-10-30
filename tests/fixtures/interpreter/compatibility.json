@@ -5337,29 +5337,27 @@
     {
       "id": "generator-directories-unread-frame",
       "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(g.gi_frame is None)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "False\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "UnsupportedOperationError",
-        "code": "UNSUPPORTED"
+        "stdout": "False\n",
+        "error_type": null
       }
     },
     {
       "id": "generator-directories-unread-code",
       "source": "def produce():\n yield 7\n yield 9\ng=produce()\nprint(g.gi_code is None)\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "False\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "UnsupportedOperationError",
-        "code": "UNSUPPORTED"
+        "stdout": "False\n",
+        "error_type": null
       }
     },
     {
