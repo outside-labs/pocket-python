@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "O23",
-    "O24"
+    "O24",
+    "O79"
   ],
   "cases": [
     {
@@ -390,19 +391,19 @@
     },
     {
       "id": "deferred-mro-entries",
-      "stage": "Future",
+      "stage": "O79",
       "source": "class A:\n def __mro_entries__(self,bases): return ()\nclass B(A()): pass\n",
       "stdout": ""
     },
     {
       "id": "deferred-expanded-keywords",
-      "stage": "Future",
+      "stage": "O79",
       "source": "class A(**{}): pass\n",
       "stdout": ""
     },
     {
       "id": "deferred-expanded-bases",
-      "stage": "Future",
+      "stage": "O79",
       "source": "class A(*()): pass\n",
       "stdout": ""
     }

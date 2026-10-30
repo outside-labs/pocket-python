@@ -41,7 +41,7 @@ test('later class stages refuse before source effects',async()=>{
   for(const source of [
     'class A:\n def __matmul__(self,x): return 7\n',
     'class A: pass\na=A()\na.__class__=A\n',
-    'class A(metaclass=type,**{}): pass\n','class A[T]: pass\n','class A(*bases): pass\n',
+    'class A[T]: pass\n',
     'async def f(): pass\n'
   ]){
     const result=await run("print('never')\n"+source);

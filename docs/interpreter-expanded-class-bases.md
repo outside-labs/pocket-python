@@ -21,7 +21,7 @@ type parameters remain #125. Prepared mappings, factories and custom MRO are
 O80–O82. Every callback shares the caller's recursion/instruction/work/allocation
 limits, original source frames, parking, cancellation and close ownership.
 
-The [25-case source matrix](../tests/fixtures/interpreter/expanded-class-bases.json)
+The [26-case source matrix](../tests/fixtures/interpreter/expanded-class-bases.json)
 uses CPython 3.14.7 as its reference. Node units also collect at instruction
 boundaries and interrupt a suspended base-resolution callback. The common
 manifest includes Node/Chromium drain, stepped and parked execution; installed

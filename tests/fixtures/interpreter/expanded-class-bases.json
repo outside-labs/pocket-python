@@ -169,6 +169,13 @@
       "source": "class C(*7): print(\"never\")\n",
       "stdout": "",
       "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-primitive-base-after-body",
+      "stage": "O79",
+      "source": "class C(7): print(\"body\")\n",
+      "stdout": "body\n",
+      "error_type": "TypeError"
     }
   ]
 }

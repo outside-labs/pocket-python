@@ -17,7 +17,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     while (record.position < record.bases.length) {
       const base = record.bases[record.position];
-      if (!classes.isType(base)) return attributeTask(base, "__mro_entries__", site, continuation("class-base-lookup", record));
+      if (!classes.isType(base) && (base instanceof InstanceValue || base instanceof FunctionValue || base instanceof MethodWrapperValue))
+        return attributeTask(base, "__mro_entries__", site, continuation("class-base-lookup", record));
       record = {...record, resolved: [...record.resolved, base], position: record.position + 1};
     }
     if (record.resolved.length > 16) hard("BUDGET", "ExecutionLimitError", "Class base budget exceeded.");
