@@ -79,6 +79,17 @@ print(*dir(module))
 print(*type(module).__dir__(module))
 '''
 
+NATIVE_MODULE_SUBCLASS_SOURCE = '''import operator as module
+class M(type(module)):
+ __slots__=("slot",)
+m=M("local")
+m.slot=[7]
+m.extra=[9]
+d=vars(m)
+type(module).__init__(m,"renamed")
+print(m.__name__,m.slot[0],m.extra[0],d is vars(m),type(m) is M)
+'''
+
 
 def smoke(channel=None):
     checks, cases = [], []
@@ -281,6 +292,7 @@ def smoke(channel=None):
                     programs.extend(c['source'] for c in factories['cases'] if 'error_type' not in c)
                     native_object_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/native-object-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in native_object_subclasses['cases'] if 'error_type' not in c and not c.get('modules'))
+                    programs.append(NATIVE_MODULE_SUBCLASS_SOURCE)
                     mutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/mutable-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in mutable_subclasses['cases'] if 'error_type' not in c)
                     immutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/immutable-subclasses.json').read_bytes())

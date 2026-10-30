@@ -555,6 +555,8 @@ export class ClassRuntime {
   }
   lookupMayCallback(receiver) {
     const types = receiver instanceof ClassValue ? [receiver, receiver.metaclass] : receiver instanceof InstanceValue ? [receiver.type] : [];
+    const proxy = receiver instanceof SuperValue ? receiver : receiver?.nativePayload;
+    if (proxy instanceof SuperValue && proxy.selfClass !== null) types.push(proxy.selfClass);
     const seen = new Set();
     while (types.length) {
       const type = types.pop(); if (!type || seen.has(type)) continue; seen.add(type);
@@ -671,6 +673,13 @@ export class ClassRuntime {
     if (this.values.typeName(receiver) !== null) {
       if (name === "__doc__") return value(this.nativeDocumentation(this.typeOf(receiver)));
       if (["__module__", "__name__", "__qualname__"].includes(name)) this.fail("AttributeError", "Value has no callable metadata");
+    }
+    if (!native && receiver instanceof InstanceValue && receiver.nativePayload instanceof SuperValue && name !== "__class__") {
+      const payload = receiver.nativePayload;
+      if (payload.selfClass !== null) {
+        const item = this.lookup(payload.selfClass, name, true, this.mro(payload.selfClass).indexOf(payload.thisclass) + 1);
+        if (item.found) return this.bindAttribute(item.value, payload.self === payload.selfClass ? null : payload.self, payload.selfClass);
+      }
     }
     if (receiver instanceof SuperValue) {
       if (name === "__class__") return value(this.builtin("super"));
@@ -1347,7 +1356,7 @@ export class ClassRuntime {
   instanceMissing(receiver, name, fallback = {found: false}) {
     if (fallback.found) return this.bindAttribute(fallback.value, receiver, receiver.type);
     if (!fallback.skipNative && receiver.nativePayload instanceof SuperValue) return this.read(receiver.nativePayload, name);
-    if (!fallback.skipNative && receiver.nativePayload instanceof ModuleValue) return {kind: "call", callable: this.builtin("native-module-get"), args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
+    if (!fallback.skipNative && receiver.nativePayload instanceof ModuleValue) return {kind: "call", callable: this.builtin("native-module-missing"), args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
   }
   instanceEntry(receiver, name, operation = "get", item = null, key = null, fallback = {found: false}) {
@@ -1356,14 +1365,14 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver.attributes instanceof Map && operation === "get")
       return receiver.attributes.has(name) ? value(receiver.attributes.get(name)) : this.instanceMissing(receiver, name, fallback);
-    if (receiver.type.storage && !receiver.type.storage.dict) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);
+    if (receiver.type.storage && !receiver.type.storage.dict) return this.instanceMissing(receiver, name, operation === "get" ? fallback : {found: false, skipNative: true});
     const dictionary = this.instanceDictionary(receiver);
     key ??= this.values.string(Array.from(name, char => char.codePointAt(0)));
     if (this.values.dictionaryNeedsProtocol(dictionary, key)) return {kind: "call",
-      callable: this.builtin("instance-dictionary-" + operation), args: [receiver, dictionary, key, item, fallback.found, fallback.value ?? null]};
+      callable: this.builtin("instance-dictionary-" + operation), args: [receiver, dictionary, key, item, fallback.found, fallback.value ?? null, ...(fallback.skipNative ? [true] : [])]};
     if (operation === "set") return value(this.values.set(dictionary, key, item));
     const position = this.values.find(dictionary, key);
-    if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : undefined);
+    if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : {found: false, skipNative: true});
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
   nativeCallableDirectoryKind(receiver) {
@@ -1685,7 +1694,7 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver instanceof InstanceValue && receiver.type.root && name === "__dict__")
       this.fail("AttributeError", "Object instance has no dictionary.");
-    if (receiver instanceof InstanceValue && receiver.type.storage && !receiver.type.storage.dict) this.instanceMissing(receiver, name);
+    if (receiver instanceof InstanceValue && receiver.type.storage && !receiver.type.storage.dict) this.instanceMissing(receiver, name, {found: false, skipNative: true});
     if (receiver instanceof InstanceValue && !(receiver.attributes instanceof Map)) {
       const plan = this.instanceEntry(receiver, name, remove ? "delete" : "set", value);
       if (plan.kind !== "value") this.fail("UnsupportedOperationError", "Dictionary callbacks require VM execution frames.", "UNSUPPORTED");

@@ -117,7 +117,7 @@ export function completion(kind, fields = {}) {
     case "instance-entry":
       if (typeof fields.found !== "boolean") throw new TypeError("Invalid instance dictionary fallback.");
       record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation),
-        found: fields.found, fallback: fields.fallback, depth: fields.depth, after}; depthCheck(record.depth); break;
+        found: fields.found, fallback: fields.fallback, skipNative: fields.skipNative ?? false, depth: fields.depth, after}; depthCheck(record.depth); break;
     case "wrapper-metadata":
       record = {kind, receiver: fields.receiver, position: fields.position, depth: fields.depth, after};
       depthCheck(record.depth);

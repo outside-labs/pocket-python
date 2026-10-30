@@ -386,6 +386,75 @@
       "stage": "O87",
       "source": "class P(property): __slots__=()\np=P(lambda self:7)\n",
       "stdout": ""
+    },
+    {
+      "id": "super-slots-write",
+      "stage": "O87",
+      "source": "class A: foo=9\nclass B(A): pass\nclass S(super): __slots__=()\ns=S(B,B())\ntry: s.foo=7\nexcept AttributeError: print(\"blocked\")\nprint(s.foo)\n",
+      "stdout": "blocked\n9\n"
+    },
+    {
+      "id": "module-missing-delete",
+      "stage": "O87",
+      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\ndef missing(n):\n print(\"lookup\")\n return 7\nm.__dict__[\"__getattr__\"]=missing\ntry: del m.unknown\nexcept AttributeError: print(\"blocked\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "blocked\n"
+    },
+    {
+      "id": "super-native-priority",
+      "stage": "O87",
+      "source": "class A: foo=9\nclass B(A): pass\nclass S(super): pass\ns=S(B,B())\ns.foo=7\nprint(s.foo,object.__getattribute__(s,\"__dict__\")[\"foo\"])\n",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "module-owned-missing",
+      "stage": "O87",
+      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  print(\"eq\")\n  return False\nm.__dict__[K()]=7\ndef missing(n):\n print(\"missing\")\n return 9\nm.__dict__[\"__getattr__\"]=missing\nprint(m.x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "eq\nmissing\n9\n"
+    },
+    {
+      "id": "super-owned-target-key",
+      "stage": "O87",
+      "source": "class K:\n def __hash__(self): return hash(\"foo\")\n def __eq__(self,n):\n  print(\"eq\")\n  return n==\"foo\"\nA=type(\"A\",(),{K():9})\nclass B(A): pass\nclass S(super): pass\ns=S(B,B())\nprint(s.foo)\n",
+      "stdout": "eq\n9\n"
+    },
+    {
+      "id": "module-owned-native-bypass",
+      "stage": "O87",
+      "source": "import helper\nclass M(type(helper)): pass\nm=M(\"m\")\nclass K:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,n):\n  print(\"eq\")\n  return False\nm.__dict__[K()]=7\ndef missing(n):\n print(\"missing\")\n return 9\nm.__dict__[\"__getattr__\"]=missing\ntry: object.__getattribute__(m,\"x\")\nexcept AttributeError: print(\"blocked\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "eq\nblocked\n"
     }
   ]
 }
