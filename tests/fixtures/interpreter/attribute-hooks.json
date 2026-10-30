@@ -11,7 +11,8 @@
     "O17",
     "O23",
     "O25",
-    "O80"
+    "O80",
+    "O86"
   ],
   "cases": [
     {
@@ -480,7 +481,7 @@
     },
     {
       "id": "future-builtin-layout",
-      "stage": "Future",
+      "stage": "O86",
       "source": "class A(list): pass\nprint(len(A()))\n",
       "stdout": "0\n"
     },
