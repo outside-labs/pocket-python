@@ -1,4 +1,4 @@
-import {ARITHMETIC_SLOTS, ORDERING_SLOTS, allowsClassSpecial} from "./class-policy.mjs";
+import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
 import {ModuleValue, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
@@ -342,7 +342,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const expandArguments = (receiver, iterable, site) => {
     argumentOwner(receiver);
     const hintOwner = iterable instanceof ProtocolIteratorValue && iterable.kind === "indexed" ? iterable.source : iterable;
-    if (hintOwner instanceof InstanceValue && ["__len__", "__length_hint__"].some(slot => classes.lookup(hintOwner.type, slot).found))
+    if (hintOwner instanceof InstanceValue && ["__len__", "__length_hint__"].some(slot => classes.hasSlot(hintOwner.type, slot)))
       hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
     return unaryTask("iter", iterable, site, continuation("call-star-iter", {receiver}));
   };
@@ -422,13 +422,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return [keywords, items];
   };
   const duplicateKeyword = (receiver, key, site, after = null) => {
-    const formatted = key instanceof InstanceValue && ["__str__", "__repr__"].some(slot => classes.lookup(key.type, slot).found);
+    const formatted = key instanceof InstanceValue && ["__str__", "__repr__"].some(slot => classes.hasSlot(key.type, slot));
     return formatted ? unaryTask("str", key, site, continuation("call-duplicate-result", {receiver, key, after})) :
       unaryTask("call-keyword-duplicate", receiver, site, after);
   };
   const refuseHints = receiver => {
     const owner = receiver instanceof ProtocolIteratorValue && receiver.kind === "indexed" ? receiver.source : receiver;
-    if (owner instanceof InstanceValue && ["__len__", "__length_hint__"].some(slot => classes.lookup(owner.type, slot).found))
+    if (owner instanceof InstanceValue && ["__len__", "__length_hint__"].some(slot => classes.hasSlot(owner.type, slot)))
       hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
   };
   const expandDisplay = (receiver, iterable, site) => {
@@ -495,6 +495,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     for (let current = completion; current; current = current.after) {
       if (current.kind === "namespace-lookup" && current.phase < 0)
         return valueTask(values.tuple([false, null]), site, current);
+      if (current.kind === "namespace-build" && current.field === "protocol" &&
+          !["__slots__", "__new__", "__init_subclass__", "__class_getitem__", "__eq__", "__hash__"].includes(CLASS_PROTOCOL_NAMES[current.task.protocolIndex]))
+        return valueTask(values.tuple([false, null]), site, current);
       if (current.kind === "module-missing" && value.name === "AttributeError" && current.mode === "import") return moduleMissing(current, site);
       if (current.kind === "dir-length" && value.name === "TypeError") return directoryHint(current, site);
       if (current.kind === "dir-hint-call" && value.name === "TypeError") return directoryNext(current, site);
@@ -558,6 +561,23 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "namespace-build") {
       let task = completion.task;
       const field = completion.field;
+      if (field === "protocol") {
+        const [found, key] = values.comparisonSequence(value), name = CLASS_PROTOCOL_NAMES[task.protocolIndex];
+        let protocolNames = task.protocolNames || [];
+        if (found && values.needsOwnedHash(key)) {
+          const metaclass = task.bases.some(base => base instanceof BuiltinValue && base.name === "type" || classes.isMetaclass(base));
+          if (name === "__slots__" || metaclass && ["mro", "__prepare__"].includes(name))
+            hard("UNSUPPORTED", "UnsupportedOperationError", "Custom slots, MRO and prepared mappings retain their construction stages.");
+          protocolNames = [...protocolNames, name];
+          const position = task.dictionary.entries.findIndex(entry => entry.key === key), entry = task.dictionary.entries[position];
+          if (["__new__", "__init_subclass__", "__class_getitem__"].includes(name) && entry.value instanceof FunctionValue) {
+            const wrapper = allocate(MethodWrapperValue, name === "__new__" ? "staticmethod" : "classmethod", entry.value);
+            state.temporaries.push(wrapper);
+            values.commitDictionary(task.dictionary, key, wrapper, values.dictionaryEntryHash(entry), position);
+          }
+        }
+        return namespaceCreateTask({...task, protocolNames, protocolIndex: task.protocolIndex + 1}, site, task.completion, task.depth);
+      }
       if (["qualname", "cell", "dictcell", "module"].includes(field)) {
         const [found, item] = values.comparisonSequence(value);
         if (field === "qualname" && found) {
@@ -904,7 +924,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return compareTask("equal", value, completion.key, site, continuation("search-equal", completion), completion.depth);
     }
     if (completion?.kind === "iter-result") {
-      if (!(values.isIterator(value) || value instanceof InstanceValue && classes.lookup(value.type, "__next__").found))
+      if (!(values.isIterator(value) || value instanceof InstanceValue && classes.hasSlot(value.type, "__next__")))
         python("TypeError", "__iter__ returned a non-iterator");
       return valueTask(value, site, completion.after);
     }
@@ -997,6 +1017,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return deliver(type, after, site);
   };
   const initialize = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
+    if (classes.lookupMayCallback(instance)) return Object.freeze({...callTask(instance, args, keywords, keywordValues, site, after, depth), kind: "initialize", customNew});
+    return initializePlan(instance, args, keywords, keywordValues, site, after, depth, customNew);
+  };
+  const initializePlan = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
     const type = instance instanceof InstanceValue ? instance.type : classes.typeOf(instance);
     const initializer = classes.lookup(type, "__init__", instance instanceof ClassValue);
     if (!initializer.found) {
@@ -1157,10 +1181,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (phase === 3) { task = probe("__classcell__", "cell"); continue; }
           if (phase === 4) { task = probe("__classdictcell__", "dictcell"); continue; }
           if (phase === 5) {
+            let protocolIndex = task.protocolIndex ?? 0;
+            while (protocolIndex < CLASS_PROTOCOL_NAMES.length && !values.callbackKeyMayMatch(dictionary, CLASS_PROTOCOL_NAMES[protocolIndex])) protocolIndex++;
+            if (protocolIndex < CLASS_PROTOCOL_NAMES.length) {
+              const name = CLASS_PROTOCOL_NAMES[protocolIndex], key = values.string(Array.from(name, char => char.codePointAt(0)));
+              state.temporaries.push(key);
+              task = dictionaryTask(dictionary, key, site, continuation("namespace-build", {task: {...task, protocolIndex}, field: "protocol"}), depth, "probe-entry"); continue;
+            }
             const namespace = new Map(dictionary.entries.map(entry => [values.text(entry.key) ?? entry.key, entry.value]));
             const type = classes.create(task.name, task.qualname ?? task.name, values.text(task.moduleObject) ?? task.module, task.bases, namespace, classes.builtin("object"),
               {dynamic: task.dynamic, metaclass: task.metaclass ?? null, firstLine: task.firstLine ?? null,
-                staticAttributes: task.staticAttributes ?? null, namespaceEntries: dictionary.entries});
+                staticAttributes: task.staticAttributes ?? null, namespaceEntries: dictionary.entries, protocolNames: task.protocolNames});
             state.temporaries.push(type);
             // Wrap source __new__/__init_subclass__ once, preserving their stored keys.
             for (const entry of dictionary.entries) {
@@ -1183,6 +1214,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (task.kind === "notify") {
           task = notifyPlan(task.type, task.entries, task.index, site, completion, keywords, keywordValues); continue;
+        }
+        if (task.kind === "initialize") {
+          state.temporaries = operationRoots(task);
+          task = initializePlan(task.callable, args, keywords, keywordValues, site, completion, depth, task.customNew); continue;
         }
         if (task.kind === "unary" && task.operation === "super-invalid") {
           state.temporaries = operationRoots(task);
@@ -1259,8 +1294,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries.push(key);
           if (writing) completion = continuation("attribute-write", {receiver, after: completion});
           if (operation === "get" && classes.hasAttributeHook(receiver, "__getattr__")) {
-            const hook = classes.lookup(classes.checkingType(receiver), "__getattr__").value;
-            completion = continuation("attribute-fallback", {receiver, name, key, hook, depth, after: completion});
+            const hook = classes.lookup(classes.checkingType(receiver), "__getattr__");
+            if (hook.found) completion = continuation("attribute-fallback", {receiver, name, key, hook: hook.value, depth, after: completion});
           }
           state.temporaries.push(...completionRoots(completion));
           let plan;

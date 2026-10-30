@@ -32,6 +32,16 @@ receive the exact original key. Metaclass data descriptors take priority;
 nondata shadows and qualified `type.__dict__['__dict__'].__get__` retain their
 native behavior. Qualified native metadata getters bypass metaclass shadows.
 
+Type construction also recognizes non-string keys equal to adopted protocol
+names. It wraps Python `__new__` functions as static methods and
+`__init_subclass__` functions as class methods in the independent type copy,
+preserving the original key and body value. An effective `__eq__` without an
+explicit `__hash__` stores `__hash__ = None`. A charged per-type presence index
+keeps callable flags and inherited protocol mutations independent of subsequent
+key-equality effects. Runtime lookup still executes owned key callbacks.
+Opaque keys cannot bypass the separate slots, prepared-mapping or metaclass
+MRO construction boundaries.
+
 Listing a native entry does not adopt its library API. Every unsupported native
 invocation reports its owner; descriptor reads never substitute a placeholder.
 

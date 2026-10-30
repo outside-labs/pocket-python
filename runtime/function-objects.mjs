@@ -57,6 +57,7 @@ export class ClassValue {
     this.namespace = new Map(namespace);
     this.metaclass = metaclass; this.sourceDefined = sourceDefined; this.automaticHash = automaticHash;
     this.firstLine = 1; this.staticAttributes = []; this.namespaceEntries = null;
+    this.protocolNames = null;
     this.directoryInitialCount = namespace.size; this.defaultDoc = !namespace.has("__doc__");
   }
 }

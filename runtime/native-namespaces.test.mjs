@@ -88,3 +88,25 @@ for (const [options, limits, expected] of [
   const result = await runSourceRequest({modules: [unit('p=int.__dict__\nprint(p["__add__"].__objclass__ is int)\n')], compileOptions: profile, options, memoryLimits: limits});
   assert.equal(result.error?.code, expected, JSON.stringify(result.error)); closed(result.closed);
 });
+
+test('protocol discovery retains its private type copy while key callbacks are interrupted', async () => {
+  await lifecycle('active=True\nclass Key:\n def __hash__(self):return hash("__call__")\n def __eq__(self,other):\n  global active\n  if active:\n   active=False\n   print("entered")\n  return other=="__call__"\nC=type("C",(),{Key():lambda self:7})\nprint(C()())\n', 'entered\n7\n');
+});
+test('custom-new initialization retains the new instance across owned key lookup', async () => {
+  await lifecycle('active=False\nclass Key:\n def __hash__(self):return hash("__init__")\n def __eq__(self,other):\n  global active\n  if active:\n   active=False\n   print("entered")\n  return other=="__init__"\ndef make(cls,value):return object.__new__(cls)\ndef initialize(self,value):self.value=value\nC=type("C",(),{"__new__":make,Key():initialize})\nactive=True\nprint(C(7).value)\n', 'entered\n7\n');
+});
+test('opaque protocol presence is charged before publishing a type', () => {
+  const plain = new ClassRuntime(), base = plain.root();
+  const create = (classes, root, protocolNames) => classes.create('C', 'C', 'app', [], new Map(), root, {dynamic: true, protocolNames});
+  const normal = valueLayout(create(plain, base, null)), indexed = valueLayout(create(plain, base, ['__call__']));
+  assert.equal(indexed.bytes - normal.bytes, 16 + 2 * '__call__'.length);
+  const memory = new MemoryArena({maxBytes: 136 + valueLayout(base).bytes + indexed.bytes - 1}), roots = [], leave = memory.enter(() => roots);
+  try {
+    const classes = new ClassRuntime({memory}), root = classes.root(); roots.push(root);
+    assert.throws(() => create(classes, root, ['__call__']), {code: 'OOM'});
+    memory.collect([], {cleanup: true}); assert.equal(memory.stats().objects, 1);
+    const type = create(classes, root, null); roots.push(type);
+    assert.equal(type.protocolNames, null);
+  } finally { leave(); memory.close(); }
+  closed(memory.stats());
+});

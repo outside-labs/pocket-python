@@ -420,7 +420,7 @@ function taskRoots(task) {
     case "notify": return [task.type, ...task.entries.flatMap(entry => typeof entry[0] === "string" ? [entry[1]] : entry), ...task.keywordValues, ...completionRoots(task.completion)];
     case "instance": case "subclass": return [task.receiver, task.type, ...completionRoots(task.completion)];
     case "attribute": return [task.receiver, task.key, task.hook, ...(["set", "native-set"].includes(task.operation) ? [task.item] : []), ...completionRoots(task.completion)];
-    case "construct": case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
+    case "initialize": case "construct": case "call": return [task.callable, ...task.args, ...task.keywordValues, ...completionRoots(task.completion)];
     case "arithmetic":
     case "numeric": return [...task.args, ...completionRoots(task.completion)];
     case "consume": return [task.receiver, ...(task.result === null ? [] : [task.result]), ...completionRoots(task.completion)];

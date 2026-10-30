@@ -24,6 +24,12 @@ export const CLASS_SPECIAL_POLICY = Object.freeze(Object.fromEntries([
   ["__objclass__", Object.freeze({attribute: true, mutate: true})]
 ]));
 export const isSpecialName = name => typeof name === "string" && name.startsWith("__") && name.endsWith("__");
+// Names queried by type construction, including the explicitly deferred layouts.
+export const CLASS_PROTOCOL_NAMES = Object.freeze([
+  "__slots__", "__new__", "__init_subclass__", "__class_getitem__",
+  ...Object.keys(CLASS_SPECIAL_POLICY).filter(name => !["__new__", "__init_subclass__"].includes(name)),
+  "mro", "__prepare__"
+]);
 export function allowsClassSpecial(name, context) {
   if (typeof name !== "string" || !contexts.has(context)) throw new TypeError("Invalid special-method policy query.");
   return !isSpecialName(name) || Object.hasOwn(CLASS_SPECIAL_POLICY, name) && CLASS_SPECIAL_POLICY[name][context] === true;
