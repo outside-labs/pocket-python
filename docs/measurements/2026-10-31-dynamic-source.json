@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-dynamic-source/1",
+  "date": "2026-10-31",
+  "reference_version": "3.14.7",
+  "language_profile": "classes-source/1",
+  "stages": [
+    "O91",
+    "O92",
+    "O93",
+    "O94"
+  ],
+  "corpora": [
+    {
+      "path": "tests/fixtures/interpreter/dynamic-compile.json",
+      "stages": [
+        "O91"
+      ],
+      "cases": 43,
+      "sha256": "aac3c41ddda4c6fffb10edb9573f2853b72d4dc39886132cecc25558db012209"
+    },
+    {
+      "path": "tests/fixtures/interpreter/dynamic-eval.json",
+      "stages": [
+        "O92"
+      ],
+      "cases": 50,
+      "sha256": "0a3a03f2147d2801806bbf51eccc35a85630b91143fb0761ec2f45fa92980b64"
+    },
+    {
+      "path": "tests/fixtures/interpreter/dynamic-exec.json",
+      "stages": [
+        "O93"
+      ],
+      "cases": 54,
+      "sha256": "e237a72f78eadf400ebcf123ae833f4141c185dbe850169d756599c9a3a0302a"
+    },
+    {
+      "path": "tests/fixtures/interpreter/dynamic-imports.json",
+      "stages": [
+        "O94"
+      ],
+      "cases": 61,
+      "sha256": "18d4975e330ef1aebfe8baf0137a3fccbe03475b433895b62e8a31977a752c91"
+    }
+  ],
+  "drivers": [
+    "node-drain",
+    "node-stepped",
+    "node-parked",
+    "chromium-drain",
+    "chromium-stepped",
+    "chromium-parked"
+  ],
+  "source_cases": 208,
+  "source_observations": 1248,
+  "engine_fingerprint": "dc0286bba0d2284af2a4e87284a22038eee1b069cfcbd807f96acf02d7e4ce14",
+  "engine_files": 33,
+  "ci": {
+    "run": "https://github.com/outside-labs/pocket-python/actions/runs/41241336439",
+    "head": "d17d61cedf26f5eb67dfeca128f8c34e5874c133",
+    "relevant_jobs_passed": 16,
+    "offline_artifact": "https://github.com/outside-labs/pocket-python/actions/runs/41241336439/artifacts/13058190778",
+    "coverage": [
+      "three-platform package checks",
+      "four interpreter shards",
+      "six Chromium conformance shards",
+      "three browser integration shards",
+      "installed offline console",
+      "profile updates",
+      "Stop/Restart"
+    ]
+  },
+  "focused_evidence": {
+    "compatibility_probes": 753,
+    "affected_python_checks": 23,
+    "offline_composed_programs": 3,
+    "nested_exec_stop_restart": 1,
+    "ownership_foreign_code_and_verifier_rejection": true,
+    "shared_limits_cancellation_parked_collection_and_zero_teardown": true
+  },
+  "accounting": {
+    "current": "execution-accounting/18",
+    "prior_17_preserved": true,
+    "composed_cases": 8,
+    "instruction_counts_unchanged": true
+  },
+  "pull_requests": [
+    588,
+    589,
+    590,
+    591,
+    592,
+    593,
+    594
+  ],
+  "runtime_dependency_changes": false,
+  "host_grant_changes": false,
+  "remaining": [
+    "O95 scope/refusal reconciliation",
+    "O96 integrated O-series closure"
+  ]
+}
