@@ -35,7 +35,9 @@ function fields(value, expected) {
 }
 
 export function verifyFunctions(program) {
-  fields(program, ["format", "version", "constants", "functions"]);
+  const modeFields = Object.hasOwn(program, "mode") ? ["mode"] : [];
+  fields(program, ["format", "version", "constants", "functions", ...modeFields]);
+  if (modeFields.length && (program.version < 4 || !["exec", "eval", "single"].includes(program.mode))) fail("Invalid source execution mode.");
   if (program.format !== "pocket-python-bytecode" || ![3, 4, 5].includes(program.version) || !Array.isArray(program.functions) ||
       !integer(program.functions.length - 1, FUNCTION_LIMITS.functions - 1)) fail("Expected bounded pocket-python-bytecode version 3, 4 or 5 functions.");
   const constants = verify({format: program.format, version: 2, constants: program.constants,
@@ -98,7 +100,7 @@ export function verifyFunctions(program) {
           block.instructions.length < 1 || (count += block.instructions.length) > FUNCTION_LIMITS.instructions) fail("Block instruction budget exceeded.");
       let location = null;
       if (block.source !== null) {
-        if (!record(block.source) || typeof block.source.filename !== "string" || !block.source.filename ||
+        if (!record(block.source) || typeof block.source.filename !== "string" || !block.source.filename && !modeFields.length ||
             block.source.filename.length > 256 || !Array.isArray(block.source.spans) ||
             block.source.spans.length !== block.instructions.length) fail("Block source requires one span per instruction.");
         const spans = block.source.spans.map(sourceSpan);
@@ -181,7 +183,8 @@ export function verifyFunctions(program) {
           });
           if (instruction[3] !== null) blockRef(instruction[3], "statement");
           if (instruction[4] !== null) blockRef(instruction[4], "statement");
-        } else if (!(BINARY.has(op) || UNARY.has(op) || (classes && op === "build-slice") || ["pop", "dup", "swap", "setitem", "slice", "end", "return", "raise", "reraise", "break", "continue"].includes(op))) fail("Unknown function opcode.");
+        } else if (!(BINARY.has(op) || UNARY.has(op) || (classes && op === "build-slice") || ["display", "pop", "dup", "swap", "setitem", "slice", "end", "return", "raise", "reraise", "break", "continue"].includes(op))) fail("Unknown function opcode.");
+        if (op === "display" && (!modern || program.mode !== "single" || functionIndex !== 0)) fail("Display requires interactive source code.");
         if (instruction.length !== length || (kind === "class" && op === "return") ||
             (block.kind === "expression" && ["return", "break", "continue", "if", "while", "for", "for-iterator", "try"].includes(op))) fail("Invalid operands or expression control flow.");
         return Object.freeze(instruction.map((value, index) => op === "try" && index === 2 ?
@@ -193,7 +196,7 @@ export function verifyFunctions(program) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
         const needs = op === "dict-insert" ? 3 : ["list-push", "list-extend", "dict-merge", "set-insert", "set-extend"].includes(op) ? 2 : ["unpack", "list-to-tuple"].includes(op) ? 1 : op === "assertion-error" ? Number(arg) : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? 2 : ["call-start", "call-expanded", "class-expanded"].includes(op) ? 1 : ["function-defaults", "class-keywords"].includes(op) ? extra + instructions[at][3].length : ["class", "class-meta"].includes(op) ? extra + Number(op === "class-meta") : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
-          UNARY.has(op) || ["yield", "yield-from", "attribute-get", "attribute-delete", "module-get", "import-from", "store", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
+          UNARY.has(op) || ["yield", "yield-from", "attribute-get", "attribute-delete", "module-get", "import-from", "store", "display", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
         if (["end", "return", "raise", "reraise", "break", "continue"].includes(op)) {
           if (before !== (op === "end" ? Number(block.kind === "expression") : needs)) fail("Block completion requires an exact stack height.");
@@ -201,7 +204,7 @@ export function verifyFunctions(program) {
         }
         const after = before + (op === "dict-insert" ? -2 : ["list-push", "list-extend", "dict-merge", "set-insert", "set-extend"].includes(op) ? -1 : op === "assertion-error" ? 1 - needs : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? -1 : ["class", "class-meta", "class-keywords", "function-defaults"].includes(op) ? 1 - needs : op === "attribute-set" ? -1 : ["const", "load", "function", "dup", "import"].includes(op) ? 1 :
           BINARY.has(op) || CONSTRUCT.has(op) || ["call", "setitem", "slice", "build-slice"].includes(op) ? 1 - needs :
-          ["store", "pop", "if", "jump-if-false"].includes(op) ? -1 : 0);
+          ["store", "display", "pop", "if", "jump-if-false"].includes(op) ? -1 : 0);
         if (after > FUNCTION_LIMITS.stack) fail("Function stack exceeds 256 values.");
         const targets = op === "jump" ? [arg] : op === "jump-if-false" ? [arg, at + 1] : [at + 1];
         for (const target of targets) {
@@ -262,7 +265,7 @@ export function verifyFunctions(program) {
       !(fn.kind === "class" && key === "__class__" && fn.locals.includes("@source:class")) &&
       (fn.kind === "class" || !fn.locals.includes(key)) && !fn.free.includes(key))) fail("Function/class capture has no lexical cell.");
   }
-  const code = Object.freeze({format: program.format, version: program.version, constants, functions: Object.freeze(functions)});
+  const code = Object.freeze({format: program.format, version: program.version, constants, functions: Object.freeze(functions), ...(modeFields.length ? {mode: program.mode} : {})});
   verifiedCode.add(code);
   return Object.freeze({code, bytes: 64 + 2 * JSON.stringify({constants: program.constants, functions}).length});
 }

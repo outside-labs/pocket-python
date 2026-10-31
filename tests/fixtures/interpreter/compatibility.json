@@ -851,17 +851,15 @@
     },
     {
       "id": "builtin-compile",
-      "source": "print(callable(compile))\n",
-      "classification": "deferred",
+      "source": "c=compile(\"answer=7\",\"probe.py\",\"exec\")\nprint(type(c).__name__,c.co_filename,c.co_name)\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "code probe.py <module>\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "code probe.py <module>\n",
+        "error_type": null
       }
     },
     {

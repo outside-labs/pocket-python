@@ -86,6 +86,9 @@ export const NATIVE_NAMESPACES = Object.freeze({
     ["name_from","member_descriptor"],
     ["__doc__","value",{"type":"text","value":"Import can't find module, or can't find name in module."}],
   ],
+  "IndentationError": [
+    ["__doc__","value",{"type":"text","value":"Improper indentation."}],
+  ],
   "IndexError": [
     ["__new__","builtin_function_or_method"],
     ["__doc__","value",{"type":"text","value":"Sequence index out of range."}],
@@ -143,9 +146,26 @@ export const NATIVE_NAMESPACES = Object.freeze({
     ["value","member_descriptor"],
     ["__doc__","value",{"type":"text","value":"Signal the end from iterator.__next__()."}],
   ],
+  "SyntaxError": [
+    ["__str__","wrapper_descriptor"],
+    ["__init__","wrapper_descriptor"],
+    ["msg","member_descriptor"],
+    ["filename","member_descriptor"],
+    ["lineno","member_descriptor"],
+    ["offset","member_descriptor"],
+    ["text","member_descriptor"],
+    ["end_lineno","member_descriptor"],
+    ["end_offset","member_descriptor"],
+    ["print_file_and_line","member_descriptor"],
+    ["_metadata","member_descriptor"],
+    ["__doc__","value",{"type":"text","value":"Invalid syntax."}],
+  ],
   "SystemError": [
     ["__new__","builtin_function_or_method"],
     ["__doc__","value",{"type":"text","value":"Internal error in the Python interpreter.\n\nPlease report this to the Python maintainer, along with the traceback,\nthe Python version, and the hardware/OS platform and version."}],
+  ],
+  "TabError": [
+    ["__doc__","value",{"type":"text","value":"Improper mixture of spaces and tabs."}],
   ],
   "TypeError": [
     ["__new__","builtin_function_or_method"],
@@ -1406,7 +1426,7 @@ export const NATIVE_NAMESPACES = Object.freeze({
     ["__text_signature__","getset_descriptor"],
   ],
 });
-export const NATIVE_DOC_COPIES = Object.freeze(["ArithmeticError", "AssertionError", "AttributeError", "BaseException", "BufferError", "Exception", "GeneratorExit", "ImportError", "IndexError", "KeyError", "LookupError", "ModuleNotFoundError", "NameError", "NoneType", "NotImplementedType", "OverflowError", "RecursionError", "RuntimeError", "StopIteration", "SystemError", "TypeError", "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError", "ValueError", "ZeroDivisionError", "bool", "bytearray", "bytes", "cell", "classmethod", "code", "complex", "dict", "float", "frozenset", "function", "int", "list", "mappingproxy", "memoryview", "method", "module", "object", "property", "range", "set", "slice", "staticmethod", "str", "super", "tuple", "type"]);
+export const NATIVE_DOC_COPIES = Object.freeze(["ArithmeticError", "AssertionError", "AttributeError", "BaseException", "BufferError", "Exception", "GeneratorExit", "ImportError", "IndentationError", "IndexError", "KeyError", "LookupError", "ModuleNotFoundError", "NameError", "NoneType", "NotImplementedType", "OverflowError", "RecursionError", "RuntimeError", "StopIteration", "SyntaxError", "SystemError", "TabError", "TypeError", "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError", "ValueError", "ZeroDivisionError", "bool", "bytearray", "bytes", "cell", "classmethod", "code", "complex", "dict", "float", "frozenset", "function", "int", "list", "mappingproxy", "memoryview", "method", "module", "object", "property", "range", "set", "slice", "staticmethod", "str", "super", "tuple", "type"]);
 export const NATIVE_CALLABLE_DOCS = Object.freeze({
   "ArithmeticError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
   "AssertionError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
@@ -1489,6 +1509,17 @@ export const NATIVE_CALLABLE_DOCS = Object.freeze({
   "RuntimeError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
   "StopIteration.__init__": "Initialize self.  See help(type(self)) for accurate signature.",
   "StopIteration.value": "generator return value",
+  "SyntaxError.__str__": "Return str(self).",
+  "SyntaxError.__init__": "Initialize self.  See help(type(self)) for accurate signature.",
+  "SyntaxError.msg": "exception msg",
+  "SyntaxError.filename": "exception filename",
+  "SyntaxError.lineno": "exception lineno",
+  "SyntaxError.offset": "exception offset",
+  "SyntaxError.text": "exception text",
+  "SyntaxError.end_lineno": "exception end lineno",
+  "SyntaxError.end_offset": "exception end offset",
+  "SyntaxError.print_file_and_line": "exception print_file_and_line",
+  "SyntaxError._metadata": "exception private metadata",
   "SystemError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
   "TypeError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
   "UnicodeDecodeError.__new__": "Create and return a new object.  See help(type) for accurate signature.",
@@ -2671,6 +2702,8 @@ export const NATIVE_CALLABLE_SIGNATURES = Object.freeze({
   "RecursionError.__new__": "($type, *args, **kwargs)",
   "RuntimeError.__new__": "($type, *args, **kwargs)",
   "StopIteration.__init__": "($self, /, *args, **kwargs)",
+  "SyntaxError.__str__": "($self, /)",
+  "SyntaxError.__init__": "($self, /, *args, **kwargs)",
   "SystemError.__new__": "($type, *args, **kwargs)",
   "TypeError.__new__": "($type, *args, **kwargs)",
   "UnicodeDecodeError.__new__": "($type, *args, **kwargs)",

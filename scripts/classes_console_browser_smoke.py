@@ -319,6 +319,8 @@ def smoke(channel=None):
                     programs.extend(case['source'] for case in property_diagnostics['cases'] if case['id'] in {'getter-name-unset', 'getter-repr-bound', 'qualification-owned-after-name-mutation', 'copy-raw-factory-getter'})
                     native_attributes = json.loads((ROOT / 'tests/fixtures/interpreter/native-attributes.json').read_bytes())
                     programs.extend(case['source'] for case in native_attributes['cases'] if case['id'] in {'int-unbound', 'method-native-fallback', 'super-property-callback'})
+                    dynamic_compile = json.loads((ROOT / 'tests/fixtures/interpreter/dynamic-compile.json').read_bytes())
+                    programs.extend(case['source'] for case in dynamic_compile['cases'] if 'error_type' not in case)
                     programs.append(MODULE_REASSIGNMENT_SOURCE)
                     mutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/mutable-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in mutable_subclasses['cases'] if 'error_type' not in c)

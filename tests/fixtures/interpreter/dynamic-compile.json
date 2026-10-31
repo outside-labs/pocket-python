@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-dynamic-compile/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O91"
+  ],
+  "cases": [
+    {
+      "id": "mode-exec",
+      "stage": "O91",
+      "source": "c=compile('x=7\\ndef f(a,/,b=9,*,c=11): return a+b+c\\n',\"dynamic.py\",'exec')\nprint(type(c).__name__,c.co_name,c.co_qualname,c.co_filename,c.co_firstlineno,c.co_argcount,len(c.co_freevars))\nprint(c.co_names is c.co_names)\n",
+      "stdout": "code <module> <module> dynamic.py 1 0 0\nTrue\n"
+    },
+    {
+      "id": "mode-eval",
+      "stage": "O91",
+      "source": "c=compile('(lambda x=7: x+1)',\"dynamic.py\",'eval')\nprint(type(c).__name__,c.co_name,c.co_qualname,c.co_filename,c.co_firstlineno,c.co_argcount,len(c.co_freevars))\nprint(c.co_names is c.co_names)\n",
+      "stdout": "code <module> <module> dynamic.py 1 0 0\nTrue\n"
+    },
+    {
+      "id": "mode-single",
+      "stage": "O91",
+      "source": "c=compile('if True:\\n 7\\n',\"dynamic.py\",'single')\nprint(type(c).__name__,c.co_name,c.co_qualname,c.co_filename,c.co_firstlineno,c.co_argcount,len(c.co_freevars))\nprint(c.co_names is c.co_names)\n",
+      "stdout": "code <module> <module> dynamic.py 1 0 0\nTrue\n"
+    },
+    {
+      "id": "bytes",
+      "stage": "O91",
+      "source": "c=compile(b'answer=7','file.py',\"exec\")\nprint(c.co_filename,c.co_name)\n",
+      "stdout": "file.py <module>\n"
+    },
+    {
+      "id": "utf8",
+      "stage": "O91",
+      "source": "c=compile(b\"# coding: utf-8\\nname='caf\\xc3\\xa9'\\n\",'file.py',\"exec\")\nprint(c.co_filename,c.co_name)\n",
+      "stdout": "file.py <module>\n"
+    },
+    {
+      "id": "bytearray",
+      "stage": "O91",
+      "source": "c=compile(bytearray(b'x=7'),'file.py',\"exec\")\nprint(c.co_filename,c.co_name)\n",
+      "stdout": "file.py <module>\n"
+    },
+    {
+      "id": "view",
+      "stage": "O91",
+      "source": "c=compile(memoryview(b'x=7'),'file.py',\"exec\")\nprint(c.co_filename,c.co_name)\n",
+      "stdout": "file.py <module>\n"
+    },
+    {
+      "id": "crlf",
+      "stage": "O91",
+      "source": "c=compile('x=7\\r\\ny=9\\r','file.py',\"exec\")\nprint(c.co_filename,c.co_name)\n",
+      "stdout": "file.py <module>\n"
+    },
+    {
+      "id": "filename-bytes",
+      "stage": "O91",
+      "source": "c=compile('x=7',b'file.py',\"exec\")\nprint(c.co_filename,c.co_name)\n",
+      "stdout": "file.py <module>\n"
+    },
+    {
+      "id": "keywords",
+      "stage": "O91",
+      "source": "c=compile(mode=\"eval\",filename=\"keyword.py\",source=\"7+9\",optimize=0,dont_inherit=True,flags=0)\nprint(c.co_filename,len(c.co_varnames))\n",
+      "stdout": "keyword.py 0\n"
+    },
+    {
+      "id": "empty-exec",
+      "stage": "O91",
+      "source": "print(compile(\"\",\"empty.py\",\"exec\").co_name)\n",
+      "stdout": "<module>\n"
+    },
+    {
+      "id": "empty-filename",
+      "stage": "O91",
+      "source": "print(compile(\"7\",\"\",\"eval\").co_filename==\"\")\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "code-independent",
+      "stage": "O91",
+      "source": "a=compile(\"7\",\"same.py\",\"eval\")\nb=compile(\"7\",\"same.py\",\"eval\")\nprint(a is b)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "optimize--1",
+      "stage": "O91",
+      "source": "c=compile(\"def f():\\n 'document'\\n assert False\\n return __debug__\\n\",\"opt.py\",\"exec\",optimize=-1)\nfcode=c.co_consts[0]\n# Locate the nested function without relying on optimizer constant placement.\nfor item in c.co_consts:\n if type(item) is type(c): fcode=item\nprint(fcode.co_name,fcode.co_consts[0])\n",
+      "stdout": "f document\n"
+    },
+    {
+      "id": "optimize-0",
+      "stage": "O91",
+      "source": "c=compile(\"def f():\\n 'document'\\n assert False\\n return __debug__\\n\",\"opt.py\",\"exec\",optimize=0)\nfcode=c.co_consts[0]\n# Locate the nested function without relying on optimizer constant placement.\nfor item in c.co_consts:\n if type(item) is type(c): fcode=item\nprint(fcode.co_name,fcode.co_consts[0])\n",
+      "stdout": "f document\n"
+    },
+    {
+      "id": "optimize-1",
+      "stage": "O91",
+      "source": "c=compile(\"def f():\\n 'document'\\n assert False\\n return __debug__\\n\",\"opt.py\",\"exec\",optimize=1)\nfcode=c.co_consts[0]\n# Locate the nested function without relying on optimizer constant placement.\nfor item in c.co_consts:\n if type(item) is type(c): fcode=item\nprint(fcode.co_name,fcode.co_consts[0])\n",
+      "stdout": "f document\n"
+    },
+    {
+      "id": "optimize-2",
+      "stage": "O91",
+      "source": "c=compile(\"def f():\\n 'document'\\n assert False\\n return __debug__\\n\",\"opt.py\",\"exec\",optimize=2)\nfcode=c.co_consts[0]\n# Locate the nested function without relying on optimizer constant placement.\nfor item in c.co_consts:\n if type(item) is type(c): fcode=item\nprint(fcode.co_name,\"document\" in fcode.co_consts)\n",
+      "stdout": "f False\n"
+    },
+    {
+      "id": "conversion-order",
+      "stage": "O91",
+      "source": "class Index:\n def __index__(self):\n  print(\"index\")\n  return 0\nclass Truth:\n def __bool__(self):\n  print(\"truth\")\n  return True\nc=compile(\"7\",\"x\",\"eval\",Index(),Truth(),Index(),_feature_version=Index())\nprint(c.co_name)\n",
+      "stdout": "index\ntruth\nindex\nindex\n<module>\n"
+    },
+    {
+      "id": "conversion-failure",
+      "stage": "O91",
+      "source": "class Index:\n def __index__(self):\n  print(\"called\")\n  raise ValueError(\"index failed\")\ntry: compile(\"7\",\"x\",\"eval\",Index())\nexcept ValueError as e: print(str(e))\n",
+      "stdout": "called\nindex failed\n"
+    },
+    {
+      "id": "missing",
+      "stage": "O91",
+      "source": "try: compile(\"x\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "duplicate",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"a\",\"exec\",source=\"y\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "unknown-keyword",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"a\",\"exec\",other=1)\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "too-many",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"a\",\"exec\",0,False,0,1)\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "bad-mode",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"a\",\"other\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "ValueError\n"
+    },
+    {
+      "id": "mode-type",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"a\",7)\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "filename-type",
+      "stage": "O91",
+      "source": "try: compile(\"x\",7,\"exec\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "filename-null",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"a\\0b\",\"exec\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "ValueError\n"
+    },
+    {
+      "id": "source-type",
+      "stage": "O91",
+      "source": "try: compile(7,\"x\",\"exec\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "code-source",
+      "stage": "O91",
+      "source": "try: compile((lambda: 7).__code__,\"x\",\"exec\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "flag-type",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"x\",\"exec\",1.5)\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "flag-unknown",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"x\",\"exec\",1)\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "ValueError\n"
+    },
+    {
+      "id": "flag-overflow",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"x\",\"exec\",2**40)\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "optimize-low",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"x\",\"exec\",optimize=-2)\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "ValueError\n"
+    },
+    {
+      "id": "optimize-high",
+      "stage": "O91",
+      "source": "try: compile(\"x\",\"x\",\"exec\",optimize=3)\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "ValueError\n"
+    },
+    {
+      "id": "eval-statement",
+      "stage": "O91",
+      "source": "try: compile(\"x=7\",\"x\",\"eval\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "SyntaxError\n"
+    },
+    {
+      "id": "eval-two",
+      "stage": "O91",
+      "source": "try: compile(\"7;9\",\"x\",\"eval\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "SyntaxError\n"
+    },
+    {
+      "id": "empty-eval",
+      "stage": "O91",
+      "source": "try: compile(\"\",\"x\",\"eval\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "SyntaxError\n"
+    },
+    {
+      "id": "single-two",
+      "stage": "O91",
+      "source": "try: compile(\"x=7\\ny=9\\n\",\"x\",\"single\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "SyntaxError\n"
+    },
+    {
+      "id": "null-source",
+      "stage": "O91",
+      "source": "try: compile(\"a\\0b\",\"x\",\"exec\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "SyntaxError\n"
+    },
+    {
+      "id": "return-outside",
+      "stage": "O91",
+      "source": "try: compile(\"return 7\",\"x\",\"exec\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "SyntaxError\n"
+    },
+    {
+      "id": "syntax",
+      "stage": "O91",
+      "source": "try: compile(\"x=\",\"x\",\"exec\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "SyntaxError\n"
+    },
+    {
+      "id": "indentation",
+      "stage": "O91",
+      "source": "try: compile(\"if True:\\nx=7\",\"x\",\"exec\")\nexcept (TypeError,ValueError,OverflowError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "IndentationError\n"
+    },
+    {
+      "id": "syntax-catch",
+      "stage": "O91",
+      "source": "try: compile(\"x=\",\"original.py\",\"exec\")\nexcept SyntaxError: print(\"caught syntax\")\nprint(\"after\")\n",
+      "stdout": "caught syntax\nafter\n"
+    }
+  ]
+}

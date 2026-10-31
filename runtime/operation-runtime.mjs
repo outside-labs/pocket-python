@@ -1,3 +1,4 @@
+import {dynamicCompiler} from "./dynamic-source.mjs";
 import {NATIVE_SUBCLASS_BASES} from "./class-values.mjs";
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, NATIVE_PROTOCOL_KEYS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
@@ -21,6 +22,7 @@ const NATIVE_ARITIES = Object.freeze({
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  const compiler = dynamicCompiler({state, memory, values, classes, allocate, charge, python, hard});
   const userProtocol = value => classes.protocolObject(value);
   const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
   const methodCompare = (receiver, other, invert, site, after, depth) => {
@@ -1395,6 +1397,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const parts = [...completion.parts]; parts[[2, 0, 1][completion.position]] = value;
       return sliceNext(completion.receiver, parts, completion.position, site, completion.after, completion.depth, completion.operation, completion.item);
     }
+    if (completion?.kind === "single-display") { write(values.text(value) + "\n"); return valueTask(null, site, completion.after); }
+    if (completion?.kind === "compile-argument") return compiler.converted(completion, value, site);
     if (completion?.kind === "print-argument") return printNext(completion.args, completion.index + 1,
       site, completion.after, completion.depth, values.text(value));
     if (completion?.kind === "optional-truth") return unaryTask(completion.operation, value, site,
@@ -2372,6 +2376,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "compile") { task = compiler.start(args, keywords, keywordValues, site, completion); continue; }
           if (["getset_descriptor", "member_descriptor"].includes(callable.nativeKind)) python("TypeError", "Storage descriptor objects are not callable");
           const nativeKind = callable.nativeKind ?? classes.nativeDescriptorKind(callable);
           const descriptor = callable.nativeOwner ? callable : nativeKind === null ? null :

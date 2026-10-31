@@ -437,6 +437,21 @@
       "type": "wrapper_descriptor",
       "type_case": "type-wrapper_descriptor",
       "instance_case": "instance-wrapper_descriptor"
+    },
+    {
+      "type": "SyntaxError",
+      "type_case": "type-SyntaxError",
+      "instance_case": "instance-SyntaxError"
+    },
+    {
+      "type": "IndentationError",
+      "type_case": "type-IndentationError",
+      "instance_case": "instance-IndentationError"
+    },
+    {
+      "type": "TabError",
+      "type_case": "type-TabError",
+      "instance_case": "instance-TabError"
     }
   ],
   "source_layouts": {

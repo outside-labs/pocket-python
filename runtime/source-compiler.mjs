@@ -19,7 +19,7 @@ class Compiler {
   constructor(parsed, options) {
     this.parsed = parsed; this.options = options; this.work = parsed.stats.work;
     this.classes = parsed.languageProfile === "classes-source/1";
-    this.program = {format: "pocket-python-bytecode", version: this.classes ? 5 : 4, constants: [], functions: []};
+    this.program = {format: "pocket-python-bytecode", version: this.classes ? 5 : 4, constants: [], functions: [], ...(options.mode ? {mode: options.mode} : {})};
     this.constants = new Map(); this.scopes = []; this.scopeOf = new WeakMap(); this.imports = [];
     this.instructions = 0; this.blocks = 0; this.tempSerial = 0;
     this.namespaceEvents = new Map();
@@ -28,6 +28,7 @@ class Compiler {
     throw new SourceError(code, message, {filename: this.parsed.filename, span: node.span, phase});
   }
   charge(node, amount = 1) {
+    this.options.onWork?.(amount);
     if ((this.work += amount) > (this.options.maxWork ?? SOURCE_LIMITS.work)) this.fail("Source work budget exceeded.", node, "COMPILE_BUDGET");
     if (this.options.shouldCancel?.()) this.fail("Compilation cancelled.", node, "CANCELLED");
   }
@@ -318,7 +319,9 @@ class Compiler {
   }
   function(scope) {
     const node = scope.node, isModule = node.kind === "Module", isClass = node.kind === "Class";
-    const document = this.classes ? docstring(node) : null;
+    const document = this.classes ? docstring(node) || (isModule && this.options.mode === "exec" && node.body[0]?.kind === "Expr" && node.body[0].value.kind === "Literal" && node.body[0].value.literal.type === "str" ? node.body[0] : null) : null;
+    if (isModule && document && this.options.optimize !== 2 && !scope.globals.has("__doc__")) scope.locals.add("__doc__");
+    const stripDocument = document && this.options.optimize === 2;
     const documentation = document ? this.documentation(document) : null;
     if (scope.locals.size > FUNCTION_LIMITS.names || scope.free.size > FUNCTION_LIMITS.names) this.fail("Binding name budget exceeded.", node, "COMPILE_BUDGET", "bind");
     const params = {posonly: [], positional: [], kwonly: [], defaults: [], kwdefaults: {}};
@@ -338,7 +341,7 @@ class Compiler {
     if (staticAttributes.length) fn.staticAttributes = staticAttributes;
     if (isClass && this.classes) fn.firstLine = node.decorators?.[0]?.span[0] ?? node.span[0];
     if (this.classes && !isModule && !isClass) fn.firstLine = node.decorators?.[0]?.span[0] ?? node.span[0];
-    if (node.kind === "Function" && document) fn.doc = this.constant(documentation, document);
+    if (node.kind === "Function" && document && !stripDocument) fn.doc = this.constant(documentation, document);
     this.program.functions[scope.index] = fn;
     const makeBlock = (nodes, expression = false) => {
       this.charge(node);
@@ -381,7 +384,7 @@ class Compiler {
           }
           emit(value, "call", 1, []);
         }
-        else if (value.kind === "Name") value.name === "__debug__" ? emit(value, "const", this.constant({type: "bool", value: true}, value)) : emit(value, "load", value.name);
+        else if (value.kind === "Name") value.name === "__debug__" ? emit(value, "const", this.constant({type: "bool", value: !(this.options.optimize > 0)}, value)) : emit(value, "load", value.name);
         else if (["List", "Tuple"].includes(value.kind)) {
           if (value.items.length > 1024) this.fail("Container item budget exceeded.", value, "COMPILE_BUDGET");
           if (value.items.some(item => item.kind === "Starred")) {
@@ -496,12 +499,14 @@ class Compiler {
         this.charge(value);
         if (value.kind === "Pass" || value.kind === "Declaration") return;
         if (value.kind === "Expr") {
+          if (value === document && stripDocument) return;
           if (value === document) emit(value, "const", this.constant(documentation, value));
           else expr(value.value);
-          if (isClass && value === document) emit(value, "store", "__doc__");
-          else emit(value, "pop");
+          if ((isClass || isModule) && value === document) emit(value, "store", "__doc__");
+          else emit(value, isModule && this.options.mode === "single" ? "display" : "pop");
         }
         else if (value.kind === "Assert") {
+          if (this.options.optimize > 0) return;
           expr(value.test); const failure = emit(value.test, "jump-if-false", 0), done = emit(value, "jump", 0);
           instructions[failure][1] = instructions.length;
           if (value.message) expr(value.message);

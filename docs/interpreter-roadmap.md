@@ -523,3 +523,9 @@ adopts missing-accessor/name diagnostics and unqualified accessor copies.
 [Native attribute closure](interpreter-native-attributes.md) completes explicit
 primitive/method/module/super attribute calls and super descriptor rebinding.
 O89–O90 complete the arithmetic/native protocol block; O91–O96 remain.
+
+[O91 bounded compile](interpreter-dynamic-source.md) creates owned verified code
+from the admitted independent source grammar, with exec/eval/single modes,
+UTF-8 and adopted buffers, optimization and shared compilation limits. Eval,
+exec and dynamic import execution follow in O92–O94; O95–O96 retain final
+reconciliation and integrated acceptance.

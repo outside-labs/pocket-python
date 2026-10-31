@@ -146,7 +146,7 @@ export async function verifyRegistry(manifest, suppliedAssets) {
     try { program = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(assets.get(value.record.bytecode.path))); }
     catch { fail("Bytecode asset is not valid UTF-8 JSON: " + value.record.bytecode.path); }
     const checked = verifyFunctions(program).code;
-    value.program = freezeJSON({format: checked.format, version: checked.version, constants: program.constants,
+    value.program = freezeJSON({format: checked.format, version: checked.version, constants: program.constants, ...(checked.mode ? {mode: checked.mode} : {}),
       functions: checked.functions.map(fn => ({name: fn.name, qualname: fn.qualname, params: fn.params,
         locals: fn.locals, free: fn.free, body: fn.body, ...(checked.version === 5 ? {kind: fn.kind} : {}),
         ...(fn.namespace ? {namespace: fn.namespace} : {}),

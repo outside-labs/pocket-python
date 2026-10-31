@@ -34,6 +34,7 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
+    case "compile-argument": record = {kind, args: operands(fields.args), position: fields.position, after}; break;
     case "arithmetic-order":
       record = {kind, task: fields.task, phase: fields.phase, candidate: fields.candidate ?? null, after};
       if (!["right", "left", "compare", "truth"].includes(record.phase)) throw new TypeError("Invalid arithmetic priority phase.");
@@ -177,6 +178,7 @@ export function completion(kind, fields = {}) {
           record.lower < 0 || record.lower > record.upper || record.upper > record.index)
         throw new TypeError("Invalid directory ordering phase.");
       break;
+    case "single-display": record = {kind, after}; break;
     case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
     case "hash-result": record = {kind, receiver: fields.receiver, after}; break;
@@ -343,6 +345,8 @@ function visit(record) {
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "native-bytes-init": return [record.receiver, ...completionRoots(record.after)];
     case "native-new": return [record.type, ...completionRoots(record.after)];
+    case "single-display": return completionRoots(record.after);
+    case "compile-argument": return [...record.args.filter(item => typeof item !== "string"), ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];
     case "frame-update-get": case "frame-update-map": return [record.receiver, record.source, record.keys, ...completionRoots(record.after)];
