@@ -59,11 +59,11 @@ test('native view directory collection obeys real instruction, work and allocati
   }
 });
 
-test('native directory writes retain read-only errors without widening other native reads', async () => {
+test('native directory metadata preserves read-only and absent dictionary errors', async () => {
   for (const operation of ['object.__setattr__(p,"__dir__",7)', 'object.__delattr__(p,"__dir__")']) {
     const result = await run('class C: pass\np=C.__dict__\n' + operation + '\n');
     assert.equal(result.error?.type, 'AttributeError'); closed(result.closed);
   }
   const result = await run('class C: pass\np=C.__dict__\nobject.__getattribute__(p,"__dict__")\n');
-  assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+  assert.equal(result.error?.type, 'AttributeError'); closed(result.closed);
 });

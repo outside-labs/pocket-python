@@ -8,7 +8,8 @@
     "O48",
     "O49",
     "O67",
-    "O71"
+    "O71",
+    "O90"
   ],
   "cases": [
     {
@@ -353,7 +354,7 @@
     },
     {
       "id": "native-getset",
-      "stage": "Future",
+      "stage": "O90",
       "source": "class C: pass\nobject.__getattribute__(C,\"__dict__\")\n",
       "stdout": ""
     },

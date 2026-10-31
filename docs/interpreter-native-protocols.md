@@ -1,8 +1,9 @@
 # Explicit native protocol calls
 
 The native-call portion of O90 in #123 gives the already adopted implicit
-protocols explicit bound, unbound and rebound entry points. Property diagnostic
-and accessor-copy completion is the other O90 portion. The
+protocols explicit bound, unbound and rebound entry points. Property [diagnostic
+and accessor-copy completion](interpreter-property-diagnostics.md) and
+[native attribute closure](interpreter-native-attributes.md) complete O90. The
 [source matrix](../tests/fixtures/interpreter/native-protocols.json) records the
 pinned CPython 3.14.7 result for each admitted signature and retained boundary.
 All 597 adopted cases pass the six Node/Chromium drain, stepped and parked

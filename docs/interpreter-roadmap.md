@@ -519,5 +519,7 @@ Native protocol completion remains O90.
 [O90 native calls](interpreter-native-protocols.md) adopt explicit native protocol
 entry points, canonical receiver/operation identities, Python method get/call
 and native metadata/signature diagnostics. [Property completion](interpreter-property-diagnostics.md)
-adopts missing-accessor/name diagnostics and unqualified accessor copies. Explicit
-native attribute entry-point closure completes O90 separately.
+adopts missing-accessor/name diagnostics and unqualified accessor copies.
+[Native attribute closure](interpreter-native-attributes.md) completes explicit
+primitive/method/module/super attribute calls and super descriptor rebinding.
+O89–O90 complete the arithmetic/native protocol block; O91–O96 remain.

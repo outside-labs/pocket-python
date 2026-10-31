@@ -3838,15 +3838,14 @@
     {
       "id": "instance-dictionaries-native-getset",
       "source": "class C: pass\nobject.__getattribute__(C,\"__dict__\")\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "error_type": null
       }
     },
     {
