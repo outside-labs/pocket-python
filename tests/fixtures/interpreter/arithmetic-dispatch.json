@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-arithmetic-dispatch/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O89"
+  ],
+  "cases": [
+    {
+      "id": "matmul",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other): return [other, self]\na=A()@7\nprint(a[0],type(a[1]).__name__)\n",
+      "stdout": "7 A\n"
+    },
+    {
+      "id": "rmatmul",
+      "stage": "O89",
+      "source": "class A:\n def __rmatmul__(self,other): return [other, self]\na=7@A()\nprint(a[0],type(a[1]).__name__)\n",
+      "stdout": "7 A\n"
+    },
+    {
+      "id": "inplace-result",
+      "stage": "O89",
+      "source": "class A:\n def __imatmul__(self,other): return [other]\na=A()\nb=a\na @=7\nprint(a[0],type(b).__name__)\n",
+      "stdout": "7 A\n"
+    },
+    {
+      "id": "inplace-fallback-False",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other):\n  print(\"left\")\n  return NotImplemented\nclass R:\n def __rmatmul__(self,other): return [9]\na=A()\na @=R()\nprint(a[0])\n",
+      "stdout": "left\n9\n"
+    },
+    {
+      "id": "inplace-fallback-True",
+      "stage": "O89",
+      "source": "class A:\n def __imatmul__(self,other):\n  print(\"inplace\")\n  return NotImplemented\n def __matmul__(self,other):\n  print(\"left\")\n  return NotImplemented\nclass R:\n def __rmatmul__(self,other): return [9]\na=A()\na @=R()\nprint(a[0])\n",
+      "stdout": "inplace\nleft\n9\n"
+    },
+    {
+      "id": "none-result-matmul",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other): return None\na=A()\nprint(a@7 is None)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "none-result-imatmul",
+      "stage": "O89",
+      "source": "class A:\n def __imatmul__(self,other): return None\na=A()\na @=7\nprint(a is None)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "matrix-subtype-False",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other):\n  print(\"left\")\n  return [8]\n def __rmatmul__(self,other):\n  print(\"inherited\")\n  return [9]\nclass B(A):\n pass\nprint((A()@B())[0])\n",
+      "stdout": "left\n8\n"
+    },
+    {
+      "id": "matrix-subtype-True",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other):\n  print(\"left\")\n  return [8]\n def __rmatmul__(self,other):\n  print(\"inherited\")\n  return [9]\nclass B(A):\n def __rmatmul__(self,other):\n  print(\"right\")\n  return NotImplemented\nprint((A()@B())[0])\n",
+      "stdout": "right\nleft\n8\n"
+    },
+    {
+      "id": "matrix-same-type",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other):\n  print(\"left\")\n  return NotImplemented\n def __rmatmul__(self,other):\n  print(\"bad\")\n  return 7\nA()@A()\n",
+      "stdout": "left\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "power-subtype-False",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,other,mod=None):\n  print(\"left\")\n  return [8]\n def __rpow__(self,other,mod=None):\n  print(\"inherited\")\n  return [9]\nclass B(A):\n pass\nprint((pow(A(),B(),[7]))[0])\n",
+      "stdout": "left\n8\n"
+    },
+    {
+      "id": "power-subtype-True",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,other,mod=None):\n  print(\"left\")\n  return [8]\n def __rpow__(self,other,mod=None):\n  print(\"inherited\")\n  return [9]\nclass B(A):\n def __rpow__(self,other,mod=None):\n  print(\"right\")\n  return NotImplemented\nprint((pow(A(),B(),[7]))[0])\n",
+      "stdout": "right\nleft\n8\n"
+    },
+    {
+      "id": "power-same-type",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,other,mod=None):\n  print(\"left\")\n  return NotImplemented\n def __rpow__(self,other,mod=None):\n  print(\"bad\")\n  return 7\npow(A(),A(),7)\n",
+      "stdout": "left\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "matrix-binding-order",
+      "stage": "O89",
+      "source": "class D:\n def __get__(self,obj,owner):\n  print(\"bind\",owner.__name__)\n  return lambda other: [other]\nclass A:\n __matmul__=D()\n def __getattribute__(self,name): raise ValueError(\"bad\")\na=A()\nprint((a@7)[0])\n",
+      "stdout": "bind A\n7\n"
+    },
+    {
+      "id": "matrix-shadow",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other): return 7\na=A()\na.__matmul__=None\nprint(a@9)\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "matrix-mutation",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other):\n  B.__rmatmul__=lambda self,other: [9]\n  return NotImplemented\nclass B: pass\nprint((A()@B())[0])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "matrix-disabled-matmul",
+      "stage": "O89",
+      "source": "class A:\n __matmul__=None\na=A()\na@7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "matrix-binding-error-matmul",
+      "stage": "O89",
+      "source": "class A:\n @property\n def __matmul__(self):\n  print(\"bind\")\n  raise AttributeError(\"original\")\na=A()\na@7\n",
+      "stdout": "bind\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "matrix-disabled-rmatmul",
+      "stage": "O89",
+      "source": "class A:\n __rmatmul__=None\na=A()\n7@a\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "matrix-binding-error-rmatmul",
+      "stage": "O89",
+      "source": "class A:\n @property\n def __rmatmul__(self):\n  print(\"bind\")\n  raise AttributeError(\"original\")\na=A()\n7@a\n",
+      "stdout": "bind\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "matrix-disabled-imatmul",
+      "stage": "O89",
+      "source": "class A:\n __imatmul__=None\na=A()\na @=7\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "matrix-binding-error-imatmul",
+      "stage": "O89",
+      "source": "class A:\n @property\n def __imatmul__(self):\n  print(\"bind\")\n  raise AttributeError(\"original\")\na=A()\na @=7\n",
+      "stdout": "bind\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "matrix-primitive",
+      "stage": "O89",
+      "source": "print(\"before\")\n1@2\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "matrix-precedence",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other):\n  print(\"matrix\",other)\n  return self\n def __mul__(self,other):\n  print(\"multiply\",other)\n  return self\n def __add__(self,other):\n  print(\"add\",other)\n  return self\na=A()@2*3@4+5\n",
+      "stdout": "matrix 2\nmultiply 3\nmatrix 4\nadd 5\n"
+    },
+    {
+      "id": "matrix-operand-order",
+      "stage": "O89",
+      "source": "def make(name):\n print(name)\n return A()\nclass A:\n def __matmul__(self,other):\n  print(\"matrix\")\n  return self\nmake(\"left\")@make(\"right\")\n",
+      "stdout": "left\nright\nmatrix\n"
+    },
+    {
+      "id": "augmented-attribute",
+      "stage": "O89",
+      "source": "class A:\n def __imatmul__(self,other):\n  print(\"inplace\",other)\n  return [7]\nclass Box:\n pass\nb=Box()\nb.x=A()\nitems=[A()]\ndef receiver():\n print(\"receiver\")\n return b\ndef index():\n print(\"index\")\n return 0\ndef right():\n print(\"right\")\n return 3\nreceiver().x @=right()\nprint(b.x[0])\n",
+      "stdout": "receiver\nright\ninplace 3\n7\n"
+    },
+    {
+      "id": "augmented-item",
+      "stage": "O89",
+      "source": "class A:\n def __imatmul__(self,other):\n  print(\"inplace\",other)\n  return [7]\nclass Box:\n pass\nb=Box()\nb.x=A()\nitems=[A()]\ndef receiver():\n print(\"receiver\")\n return items\ndef index():\n print(\"index\")\n return 0\ndef right():\n print(\"right\")\n return 3\nreceiver()[index()] @=right()\nprint(items[0][0])\n",
+      "stdout": "receiver\nindex\nright\ninplace 3\n7\n"
+    },
+    {
+      "id": "matrix-metaclass",
+      "stage": "O89",
+      "source": "class M(type):\n def __matmul__(cls,other): return [other]\n def __rmatmul__(cls,other): return [other+1]\n def __imatmul__(cls,other): return [other+2]\nclass C(metaclass=M): pass\nprint((C@7)[0],(7@C)[0])\nx=C\nx @=7\nprint(x[0])\n",
+      "stdout": "7 8\n9\n"
+    },
+    {
+      "id": "matrix-native-subtype",
+      "stage": "O89",
+      "source": "class A(int):\n def __matmul__(self,other): return int(self)+other\n def __rmatmul__(self,other): return other-int(self)\nprint(A(7)@2,9@A(3))\n",
+      "stdout": "9 6\n"
+    },
+    {
+      "id": "power-user-modulus",
+      "stage": "O89",
+      "source": "class Mod: pass\nm=Mod()\nclass A:\n def __pow__(self,other,mod):\n  print(other,mod is m)\n  return mod\nprint(pow(A(),7,m) is m)\n",
+      "stdout": "7 True\nTrue\n"
+    },
+    {
+      "id": "power-reflected-user-modulus",
+      "stage": "O89",
+      "source": "class Mod: pass\nm=Mod()\nclass A:\n def __rpow__(self,other,mod):\n  print(other,mod is m)\n  return [mod]\nprint(pow(7,A(),m)[0] is m)\n",
+      "stdout": "7 True\nTrue\n"
+    },
+    {
+      "id": "power-notimplemented",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,other,mod):\n  print(\"left\")\n  return NotImplemented\nclass B:\n def __rpow__(self,other,mod):\n  print(\"right\",mod[0])\n  return mod\nprint(pow(A(),B(),[7])[0])\n",
+      "stdout": "left\nright 7\n7\n"
+    },
+    {
+      "id": "power-none-arity",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,*args):\n  print(len(args))\n  return 7\nprint(pow(A(),3),pow(A(),3,None),A()**3)\n",
+      "stdout": "1\n1\n1\n7 7 7\n"
+    },
+    {
+      "id": "power-keywords-order",
+      "stage": "O89",
+      "source": "def make(name):\n print(name)\n return A() if name==\"base\" else [name]\nclass A:\n def __pow__(self,exp,mod):\n  print(exp[0],mod[0])\n  return mod\nprint(pow(mod=make(\"mod\"),base=make(\"base\"),exp=make(\"exp\"))[0])\n",
+      "stdout": "mod\nbase\nexp\nexp mod\nmod\n"
+    },
+    {
+      "id": "power-descriptor",
+      "stage": "O89",
+      "source": "class A:\n @property\n def __pow__(self):\n  print(\"bind\")\n  return lambda other,mod: mod\nprint(pow(A(),7,[9])[0])\n",
+      "stdout": "bind\n9\n"
+    },
+    {
+      "id": "power-metaclass",
+      "stage": "O89",
+      "source": "class M(type):\n def __pow__(cls,other,mod): return [other,mod]\n def __rpow__(cls,other,mod): return [mod,other]\nclass C(metaclass=M): pass\nm=[]\nprint(pow(C,7,m)[1] is m,pow(7,C,m)[0] is m)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "power-modulus-not-called",
+      "stage": "O89",
+      "source": "class M:\n def __pow__(self,*args):\n  print(\"bad\")\n  return 7\n def __rpow__(self,*args):\n  print(\"bad\")\n  return 7\n def __index__(self):\n  print(\"bad\")\n  return 7\nprint(\"before\")\npow(2,3,M())\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "power-native-modulus-subtype",
+      "stage": "O89",
+      "source": "class M(int):\n def __index__(self): raise ValueError(\"bad\")\n def __pow__(self,*args): raise ValueError(\"bad\")\nprint(pow(2,7,M(5)))\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "power-native-exponent-subtype",
+      "stage": "O89",
+      "source": "class E(int):\n def __rpow__(self,base,mod):\n  print(\"right\",base,mod)\n  return NotImplemented\nprint(pow(2,E(3),5))\n",
+      "stdout": "right 2 5\n3\n"
+    },
+    {
+      "id": "power-native-base-subtype",
+      "stage": "O89",
+      "source": "class A(int): pass\nclass M(int): pass\nprint(pow(A(2),7,M(5)))\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "power-modulus-only-no-reflection",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,*args):\n  print(\"bad\")\n  return 7\nclass B:\n def __rpow__(self,*args):\n  print(\"bad\")\n  return 7\nprint(\"before\")\npow(2,3,A())\n",
+      "stdout": "before\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "power-binding-error",
+      "stage": "O89",
+      "source": "class A:\n @property\n def __rpow__(self):\n  print(\"bind\")\n  raise AttributeError(\"original\")\npow(2,A(),[])\n",
+      "stdout": "bind\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "power-arity-42",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,other): return 7\n def __rpow__(self,other): return 7\npow(A(),7,[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "power-arity-43",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,other): return 7\n def __rpow__(self,other): return 7\npow(7,A(),[])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "power-all-source-number-slots",
+      "stage": "O89",
+      "source": "class A(int):\n def __pow__(self,*args):\n  print(\"left\")\n  return NotImplemented\n def __rpow__(self,*args):\n  print(\"right\")\n  return NotImplemented\npow(A(2),A(3),A(5))\n",
+      "stdout": "left\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "power-distinct-native-modulus",
+      "stage": "O89",
+      "source": "class A(int):\n def __pow__(self,*args):\n  print(\"left\")\n  return NotImplemented\nprint(pow(A(2),A(3),5))\n",
+      "stdout": "left\n3\n"
+    },
+    {
+      "id": "matrix-existing-slot-mutation",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other):\n  B.__rmatmul__=lambda self,other: [9]\n  return NotImplemented\nclass B:\n def __rmatmul__(self,other): return [7]\nprint((A()@B())[0])\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "matrix-method-body-error",
+      "stage": "O89",
+      "source": "class A:\n def __matmul__(self,other):\n  print(\"body\")\n  raise AttributeError(\"original\")\nA()@7\n",
+      "stdout": "body\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "power-method-body-error",
+      "stage": "O89",
+      "source": "class A:\n def __pow__(self,other,mod):\n  print(\"body\")\n  raise AttributeError(\"original\")\npow(A(),3,[])\n",
+      "stdout": "body\n",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "matmul-owned-overload-lookup",
+      "stage": "O89",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__rmatmul__\": print(\"lookup\",type.__getattribute__(cls,\"__name__\"))\n  return type.__getattribute__(cls,name)\nclass A(metaclass=M):\n def __matmul__(self,other): return [7]\n def __rmatmul__(self,other): return [8]\nclass B(A):\n def __rmatmul__(self,other): return [9]\nprint((A()@B())[0])\n",
+      "stdout": "lookup B\nlookup A\n9\n"
+    },
+    {
+      "id": "pow-owned-overload-lookup",
+      "stage": "O89",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__rpow__\": print(\"lookup\",type.__getattribute__(cls,\"__name__\"))\n  return type.__getattribute__(cls,name)\nclass A(metaclass=M):\n def __pow__(self,other,mod): return [7]\n def __rpow__(self,other,mod): return [8]\nclass B(A):\n def __rpow__(self,other,mod): return [9]\nprint((pow(A(),B(),[]))[0])\n",
+      "stdout": "lookup B\nlookup A\n9\n"
+    }
+  ]
+}
