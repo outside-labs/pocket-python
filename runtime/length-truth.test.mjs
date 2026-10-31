@@ -106,6 +106,6 @@ test('memory exhaustion inside a truth binding unwinds pending operands and rece
 test('primitive core behavior and future protocol refusal remain explicit', async () => {
   const core = await runSourceRequest({modules: [unit('print(len("A😀"),bool([]),not 0)\ni=2\nwhile i: i-=1\nelse: print(i)\n')]});
   assert.equal(core.error, undefined); assert.equal(core.stdout, '2 False True\n0\n'); closed(core);
-  const future = await run('print("never")\nclass Index:\n def __matmul__(self,other): return 7\n');
+  const future = await run('print("never")\nclass Index:\n def __enter__(self,other): return 7\n');
   assert.equal(future.error.code, 'UNSUPPORTED'); assert.equal(future.stdout, ''); assert.equal(future.stats, null);
 });

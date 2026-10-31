@@ -58,7 +58,7 @@ test("explicit class identity selects v5, composes libraries and keeps each run 
     await app.run('import operator\nclass A:\n def __init__(self,n): self.n=n\n def add(self,x): return operator.add(self.n,x)\nprint(A(7).add(5))\n');
     assert.equal(output,'12\n');
     await assert.rejects(app.run('A()'),error=>error.name==='NameError');
-    await assert.rejects(app.run("print('never')\nclass A:\n def __matmul__(self,other): return 7\n"),error=>error.code==='UNSUPPORTED');
+    await assert.rejects(app.run("print('never')\nclass A:\n def __enter__(self,other): return 7\n"),error=>error.code==='UNSUPPORTED');
     assert.equal(output,'12\n');await app.run('class B: pass\nprint(type(B()) is B)\n');
     assert.equal(output,'12\nTrue\n');assert.equal(app.stats().pending,0);
   }finally{app.stop();}

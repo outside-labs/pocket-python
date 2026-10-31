@@ -1335,6 +1335,7 @@ export class ValueRuntime {
   }
   binary(operation, left, right) {
     this.charge(1);
+    if (operation === "matmul") this.fail("TypeError", "unsupported operand types for @");
     if (operation === "equal") return this.equal(left, right);
     if (operation === "not-equal") return !this.equal(left, right);
     if (operation === "less") return this.less(left, right);

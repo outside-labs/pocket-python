@@ -8,7 +8,7 @@ const profile = {languageProfile: 'classes-source/1'};
 test('shared policy is immutable and keeps metadata distinct from ordinary slot admission', () => {
   assert.ok(Object.isFrozen(CLASS_SPECIAL_POLICY)); assert.ok(Object.isFrozen(DESCRIPTOR_HOOKS));
   assert.throws(() => { CLASS_SPECIAL_POLICY.__init__.mutate = false; }, TypeError);
-  assert.throws(() => { CLASS_SPECIAL_POLICY.__matmul__ = {}; }, TypeError);
+  assert.throws(() => { CLASS_SPECIAL_POLICY.__enter__ = {}; }, TypeError);
   for (const name of ['__init__', '__call__', '__len__', '__bool__', '__repr__', '__str__', '__index__', '__getitem__', '__setitem__', '__delitem__', ...DESCRIPTOR_HOOKS])
     for (const context of ['define', 'attribute', 'mutate']) assert.equal(allowsClassSpecial(name, context), true);
   for (const name of ['__call__', '__len__', '__bool__', '__repr__', '__str__', '__index__', '__getitem__', '__setitem__', '__delitem__']) assert.equal(allowsClassSpecial(name, 'implicit'), true);
@@ -28,7 +28,7 @@ test('shared policy is immutable and keeps metadata distinct from ordinary slot 
 
 test('source and direct class records reject unadopted protocols through the same policy', () => {
   const runtime = new ClassRuntime(), root = runtime.root();
-  for (const name of ['__matmul__', '__format__']) {
+  for (const name of ['__enter__', '__format__']) {
     assert.equal(allowsClassSpecial(name, 'define'), false);
     assert.throws(() => compileSource('print("never")\nclass A:\n '+name+'=None\n', profile), {code: 'UNSUPPORTED'});
     assert.throws(() => runtime.create('A', 'A', 'app', [], new Map([[name, null]]), root), {code: 'UNSUPPORTED'});

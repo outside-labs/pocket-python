@@ -511,3 +511,7 @@ Compatible class/base reassignment is the remaining storage stage, O88.
 transactional descendant MRO recomputation, live weak subclass enumeration and
 type metadata mutation. O84–O88 complete slots and builtin subtype storage;
 protocol completion and dynamic source/import work remain O89–O96.
+
+[O89](interpreter-arithmetic-dispatch.md) adopts matrix multiplication and in-place
+fallback, user-valued ternary power and Python 3.14 reflected ternary dispatch.
+Native protocol completion remains O90.

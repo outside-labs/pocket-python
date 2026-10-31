@@ -12,6 +12,8 @@ export class Raised { constructor(value) { this.value = value; } }
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const userProtocol = value => classes.protocolObject(value);
+  const arithmeticOrder = (task, order, site) => arithmeticTask(task.operation, task.args, site, task.completion,
+    task.depth, task.position, order, task.nativeInplace, task.active);
   classes.transactions = state.transactions;
   const resolveClassBases = (record, site) => {
     if (!record.originalBases && record.bases.every(base => classes.isType(base))) return beginClass(record, site);
@@ -259,6 +261,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const {operation, receiver, after, depth, missing} = completion.fallback;
     if (operation === "iter-indexed") return unaryTask(operation, receiver, site, after, depth);
     if (operation === "hash-unhashable") return unaryTask(operation, receiver, site, after, depth);
+    if (operation === "arithmetic-next") return valueTask(moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, after);
     if (operation === "contains-search") return containsTask(receiver, completion.fallback.key, site, after, depth, true);
     if (operation === "compare-next") {
       const {left, right, comparison, position} = completion.fallback;
@@ -637,6 +640,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "arithmetic-order" && value.name === "AttributeError" && ["right", "left"].includes(current.phase))
+        return arithmeticOrder(current.task, current.phase === "left", site);
       if (current.kind === "namespace-lookup" && current.phase < 0)
         return valueTask(values.tuple([false, null]), site, current);
       if (current.kind === "namespace-build" && current.field === "protocol" &&
@@ -1022,11 +1027,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       return valueTask(value, site, completion.after);
     }
+    if (completion?.kind === "arithmetic-order") {
+      const record = completion, original = record.task;
+      if (record.phase === "right") return attributeTask(classes.checkingType(original.args[0]),
+        "__r" + ARITHMETIC_SLOTS[original.operation] + "__", site,
+        continuation("arithmetic-order", {...record, phase: "left", candidate: value}), original.depth);
+      if (record.phase === "left") return compareTask("not-equal", value, record.candidate, site,
+        continuation("arithmetic-order", {...record, phase: "compare"}), original.depth);
+      if (record.phase === "compare") return unaryTask("truth", value, site,
+        continuation("arithmetic-order", {...record, phase: "truth"}), original.depth);
+      return arithmeticOrder(original, value, site);
+    }
     if (completion?.kind === "arithmetic-result") {
       if (!(value instanceof NotImplementedValue)) return valueTask(value, site, completion.after);
       const inplace = completion.operation.startsWith("inplace-");
       return arithmeticTask(inplace ? completion.operation.slice(8) : completion.operation, completion.args, site, completion.after,
-        completion.depth, inplace ? 0 : completion.position, inplace ? null : completion.order, inplace || completion.nativeInplace);
+        completion.depth, inplace ? 0 : completion.position, inplace ? null : completion.order, inplace || completion.nativeInplace, inplace ? null : completion.active);
     }
     if (completion?.kind === "arithmetic-index") {
       const args = [...completion.args]; args[completion.position] = value;
@@ -1764,8 +1780,17 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = arithmeticTask("bit-or", [a, b], site, proxyRelay(left, right, completion), depth); continue;
             }
           }
-          if (userProtocol(modulus)) hard("UNSUPPORTED", "UnsupportedOperationError", "User modulus dispatch requires a separate power stage.");
           const stem = ARITHMETIC_SLOTS[operation], ordinary = "__" + stem + "__", reflected = "__r" + stem + "__";
+          const active = task.active ?? [left, right].reduce((mask, receiver, index) => mask | (userProtocol(receiver) &&
+            [ordinary, reflected].some(slot => classes.lookup(classes.checkingType(receiver), slot).found) ? 1 << index : 0), 0);
+          if (!inplace && task.order === null && userProtocol(left) && userProtocol(right) &&
+              classes.checkingType(left) !== classes.checkingType(right) && classes.checkingType(right).mro.includes(classes.checkingType(left)) &&
+              [left, right].every(receiver => [ordinary, reflected].some(slot => classes.hasSlot(classes.checkingType(receiver), slot)))) {
+            if (++depth > maxDepth) python("RecursionError", "maximum arithmetic priority depth exceeded");
+            const original = arithmeticTask(task.operation, args, site, completion, depth, task.position, null, task.nativeInplace, active);
+            task = attributeTask(classes.checkingType(right), reflected, site,
+              continuation("arithmetic-order", {task: original, phase: "right", after: completion}), depth); continue;
+          }
           const rightFirst = task.order ?? (userProtocol(left) && userProtocol(right) && classes.checkingType(left) !== classes.checkingType(right) &&
             classes.checkingType(right).mro.includes(classes.checkingType(left)) && classes.lookup(classes.checkingType(right), reflected).found &&
             (!classes.lookup(classes.checkingType(left), reflected).found || classes.lookup(classes.checkingType(right), reflected).value !== classes.lookup(classes.checkingType(left), reflected).value));
@@ -1775,18 +1800,28 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           for (; position < candidates.length; position++) {
             charge(1);
             const [receiver, slot] = candidates[position];
-            if (!userProtocol(receiver) || !inplace && slot === reflected && userProtocol(left) && userProtocol(right) && classes.checkingType(left) === classes.checkingType(right)) continue;
+            if (!userProtocol(receiver) || !inplace && !(active & (receiver === left && slot === ordinary ? 1 : 2)) ||
+                !inplace && slot === reflected && userProtocol(left) && userProtocol(right) && classes.checkingType(left) === classes.checkingType(right)) continue;
             plan = classes.special(receiver, slot); if (plan) break;
           }
           if (plan) {
             if (++depth > maxDepth) python("RecursionError", "maximum implicit arithmetic dispatch depth exceeded");
             const hookArgs = [candidates[position][2], ...(operation === "power" && modulus !== null ? [modulus] : [])];
-            const finish = continuation("arithmetic-result", {operation: task.operation, args, position: position + 1, order: rightFirst, nativeInplace: task.nativeInplace, depth, after: completion});
+            const finish = continuation("arithmetic-result", {operation: task.operation, args, position: position + 1, order: rightFirst, active, nativeInplace: task.nativeInplace, depth, after: completion});
             task = plan.kind === "value" ? callTask(plan.value, hookArgs, [], [], site, finish, depth) :
-              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: hookArgs, keywords: [], keywordValues: [], after: finish, depth}), depth);
+              callTask(plan.callable, plan.args, [], [], site, continuation("invoke", {args: hookArgs, keywords: [], keywordValues: [], after: finish, depth,
+                fallback: inplace ? null : {operation: "arithmetic-next", after: finish, depth}}), depth);
             continue;
           }
           if (inplace) { task = arithmeticTask(operation, args, site, completion, depth, 0, null, true); continue; }
+          // A native number slot can also be selected through the modulus. A
+          // source type with either power override uses the shared Python slot.
+          if (operation === "power" && modulus !== null) {
+            if (!args.some(value => ["int", "bool", "float", "complex"].includes(values.typeName(classes.payload(value))) &&
+                (!userProtocol(value) || ![ordinary, reflected].some(slot => classes.hasSlot(classes.checkingType(value), slot)))))
+              python("TypeError", "unsupported operands for ternary power");
+            task = valueTask(values.numericCall("pow", args.map(value => classes.payload(value))), site, completion); continue;
+          }
           if (task.nativeInplace && operation === "add" && values.isList(left) && userProtocol(right)) {
             const iterator = classes.lookup(classes.checkingType(right), "__iter__");
             if (iterator.found ? iterator.value !== null : classes.lookup(classes.checkingType(right), "__getitem__").found)

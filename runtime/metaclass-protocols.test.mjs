@@ -73,7 +73,7 @@ test('metaclass slot inventory is frozen and preserves named protocol boundaries
   assert.throws(() => compileSource('value.__class__=None\n'), {code: 'UNSUPPORTED'});
   assert.ok(Object.isFrozen(METACLASS_PROTOCOLS));
   assert.equal(new Set(METACLASS_PROTOCOLS).size, METACLASS_PROTOCOLS.length);
-  for (const slot of ['__class_getitem__','__matmul__','__format__','__enter__','__await__']) {
+  for (const slot of ['__class_getitem__','__format__','__enter__','__await__']) {
     assert.equal(METACLASS_PROTOCOLS.includes(slot), false);
     assert.throws(() => compileSource('class M(type):\n '+slot+'=None\n', profile), {code: 'UNSUPPORTED'});
   }

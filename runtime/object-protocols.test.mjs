@@ -94,10 +94,12 @@ test('optional power modulus distinguishes None without asserting integer intern
   assert.equal(result.error, undefined, JSON.stringify(result.error)); assert.equal(result.stdout, '3 7 7\n'); closed(result.closed);
 });
 
-test('arithmetic binding/body failures retain original frames and never treat AttributeError as a missing slot', async () => {
+test('arithmetic binding AttributeError falls back while body failures retain original frames', async () => {
   for (const binding of [false, true]) {
     const result = await run('class A:\n '+(binding ? '@property\n ' : '')+'def __add__(self'+(binding ? '' : ',other')+'):\n  raise AttributeError("original")\nclass B:\n def __radd__(self,other):\n  print("bad")\n  return 7\nA()+B()\n');
-    assert.equal(result.error.type, 'AttributeError'); assert.equal(result.error.traceback.at(-1).function, '__add__'); assert.equal(result.stdout, ''); closed(result.closed);
+    if (binding) { assert.equal(result.error, undefined); assert.equal(result.stdout, 'bad\n'); }
+    else { assert.equal(result.error.type, 'AttributeError'); assert.equal(result.error.traceback.at(-1).function, '__add__'); assert.equal(result.stdout, ''); }
+    closed(result.closed);
   }
 });
 

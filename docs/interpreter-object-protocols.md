@@ -13,7 +13,7 @@ classes-source/1; core-source/1 keeps primitive arithmetic and generator support
 | O3 | Allocation and initialization are adopted in the [construction contract](interpreter-construction.md), including __new__ and conditional initialization of its returned value. |
 | O4 | Explicit/zero-argument super and lexical class cells follow the [construction contract](interpreter-construction.md). |
 | O5 | Type relations and finite metaclass construction follow the [construction contract](interpreter-construction.md). |
-| Future | builtin instance subclasses, further metaclass protocols, dir/vars/globals/locals/id, and dynamic exec/eval/compile/import remain independently gated. Matrix multiplication and user-valued power modulus dispatch require separate slices. Ordinary list/tuple/text repetition follows R1–R3 below; existing bytes repetition and list in-place repetition retain their adopted index hook. |
+| Future | builtin instance subclasses, further metaclass protocols, dir/vars/globals/locals/id, and dynamic exec/eval/compile/import remain independently gated. Matrix multiplication and user-valued ternary power follow [O89](interpreter-arithmetic-dispatch.md). Ordinary list/tuple/text repetition follows R1–R3 below; existing bytes repetition and list in-place repetition retain their adopted index hook. |
 
 Implicit operations consult type/MRO slots and descriptor binding, ignoring
 instance shadow attributes. Signature and callback failures propagate; a method

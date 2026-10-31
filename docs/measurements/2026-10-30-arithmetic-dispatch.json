@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "scope": "O89 finite arithmetic dispatch acceptance; no performance or broader numeric claim.",
+  "baseline_commit": "e3d569e3c34c2f0609062337895408ad90f04d74",
+  "reference_version": "3.14.7",
+  "engine_fingerprint": "df628bb9f75d2a915ffe84936e6344059c7a23e0b96ada77453f574ee60f72f1",
+  "corpus": {
+    "path": "tests/fixtures/interpreter/arithmetic-dispatch.json",
+    "sha256": "675e2f98c2a130d7da8e7ae829c4c5c3b68f4bf84264113abae2be2a24206014",
+    "cases": 51,
+    "implemented_stages": [
+      "O89"
+    ]
+  },
+  "source_reports": [
+    {
+      "path": "build/arithmetic-dispatch-classes-drain-node-report.json",
+      "target": "node",
+      "driver": "drain",
+      "summary": {
+        "pass": 51,
+        "fail": 0
+      },
+      "zero_teardown_records": 51
+    },
+    {
+      "path": "build/arithmetic-dispatch-classes-stepped-node-report.json",
+      "target": "node",
+      "driver": "stepped",
+      "summary": {
+        "pass": 51,
+        "fail": 0
+      },
+      "zero_teardown_records": 51
+    },
+    {
+      "path": "build/arithmetic-dispatch-classes-parked-node-report.json",
+      "target": "node",
+      "driver": "parked",
+      "summary": {
+        "pass": 51,
+        "fail": 0
+      },
+      "zero_teardown_records": 51
+    },
+    {
+      "path": "build/arithmetic-dispatch-classes-drain-browser-report.json",
+      "target": "browser",
+      "driver": "drain",
+      "summary": {
+        "pass": 51,
+        "fail": 0
+      },
+      "zero_teardown_records": 51
+    },
+    {
+      "path": "build/arithmetic-dispatch-classes-stepped-browser-report.json",
+      "target": "browser",
+      "driver": "stepped",
+      "summary": {
+        "pass": 51,
+        "fail": 0
+      },
+      "zero_teardown_records": 51
+    },
+    {
+      "path": "build/arithmetic-dispatch-classes-parked-browser-report.json",
+      "target": "browser",
+      "driver": "parked",
+      "summary": {
+        "pass": 51,
+        "fail": 0
+      },
+      "zero_teardown_records": 51
+    }
+  ],
+  "summary": {
+    "pass": 306,
+    "fail": 0,
+    "zero_teardown_records": 306
+  }
+}
