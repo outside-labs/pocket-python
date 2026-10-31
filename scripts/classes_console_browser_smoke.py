@@ -313,6 +313,8 @@ def smoke(channel=None):
                     programs.extend(case['source'] for case in reassignment['cases'] if 'error_type' not in case and not case.get('modules'))
                     arithmetic = json.loads((ROOT / 'tests/fixtures/interpreter/arithmetic-dispatch.json').read_bytes())
                     programs.extend(case['source'] for case in arithmetic['cases'] if 'error_type' not in case)
+                    native_protocols = json.loads((ROOT / 'tests/fixtures/interpreter/native-protocols.json').read_bytes())
+                    programs.extend(case['source'] for case in native_protocols['cases'] if case['id'] in {'method-constructor', 'native-method-aliases', 'native-bypass-overrides', 'native-index-callback', 'native-dict-key-callback'})
                     programs.append(MODULE_REASSIGNMENT_SOURCE)
                     mutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/mutable-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in mutable_subclasses['cases'] if 'error_type' not in c)

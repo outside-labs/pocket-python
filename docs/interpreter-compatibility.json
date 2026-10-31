@@ -2476,6 +2476,26 @@
         "tests/fixtures/interpreter/native-directory-closure.json:source-layout-key-identity",
         "tests/fixtures/interpreter/native-directory-closure.json:frame-locals-extras-not-directory-members"
       ]
+    },
+    {
+      "id": "explicit-native-protocols",
+      "status": "partial",
+      "scope": "O90 explicit bound/unbound/rebound native protocol calls, Python method get/call and owned equality/hash, canonical native descriptors, native metadata and signature/receiver diagnostics over already admitted APIs.",
+      "gaps": "Property missing-accessor/name diagnostics and unqualified copies complete O90 separately. Unadopted display, numeric, container, iterator, generic, serialization, buffer, context and dynamic code APIs retain #127/#184/#116/#117/#120/#125/#126/#121/O91.",
+      "reference_version": "3.14.7",
+      "targets": [
+        "node",
+        "browser"
+      ],
+      "next_tasks": [
+        "INT-OBJECT-01"
+      ],
+      "probes": [],
+      "evidence": [
+        "tests/fixtures/interpreter/native-protocols.json:method-constructor",
+        "tests/fixtures/interpreter/native-protocols.json:native-hash-equality-families",
+        "tests/fixtures/interpreter/native-protocols.json:native-index-callback"
+      ]
     }
   ],
   "builtin_reference_names": [

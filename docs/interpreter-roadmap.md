@@ -515,3 +515,7 @@ protocol completion and dynamic source/import work remain O89–O96.
 [O89](interpreter-arithmetic-dispatch.md) adopts matrix multiplication and in-place
 fallback, user-valued ternary power and Python 3.14 reflected ternary dispatch.
 Native protocol completion remains O90.
+
+[O90 native calls](interpreter-native-protocols.md) adopt explicit native protocol
+entry points, canonical receiver/operation identities, Python method get/call
+and native metadata/signature diagnostics. Property completion shares O90.

@@ -1,7 +1,7 @@
 import {isVerifiedFunctionCode} from "./function-bytecode.mjs";
-import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS} from "./native-namespaces.mjs";
+import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS, NATIVE_CALLABLE_SIGNATURES} from "./native-namespaces.mjs";
 import {ClassValue, HierarchyTransaction, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
-import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS} from "./class-policy.mjs";
+import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS, NATIVE_PROTOCOL_KEYS} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
@@ -299,6 +299,7 @@ export class ClassRuntime {
     this.fail = fail || ((name, message, code = "PYTHON") => { throw Object.assign(new Error(message), {name, code}); });
     this.values = values || new ValueRuntime({memory, charge, fail: this.fail});
     this.builtin = builtin || (name => this.make(BuiltinValue, name));
+    this.values.nativeCallableDescriptor = name => this.builtin(name);
   }
   make(Type, ...args) {
     const value = new Type(...args), layout = valueLayout(value);
@@ -671,11 +672,24 @@ export class ClassRuntime {
   read(receiver, name, native = false, key = null) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
+    if (this.hasNativeProtocol(receiver, name)) {
+      const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
+      return receiver === null ? value(this.make(BoundMethodValue, entry.value, receiver)) : this.bindAttribute(entry.value, receiver, this.typeOf(receiver));
+    }
+    if (name === "__text_signature__" && this.nativeCallableDirectoryKind(receiver) !== null) {
+      const callable = receiver instanceof BoundMethodValue ? receiver.callable : receiver;
+      const qualified = callable instanceof AppendValue || callable instanceof ValueMethod ? this.typeOf(callable.receiver).name + "." + callable.name : callable.name;
+      const signature = NATIVE_CALLABLE_SIGNATURES[qualified] ?? null;
+      return value(signature === null ? null : this.values.string(Array.from(signature, char => char.codePointAt(0))));
+    }
     if (["__dict__", "__bases__"].includes(name) && !this.isType(receiver) &&
         !(this.isInstance(receiver) || receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || this.isPythonMethod(receiver)))
       this.fail("AttributeError", "Object has no attribute " + name);
     if (this.values.typeName(receiver) !== null) {
       if (name === "__doc__") return value(this.nativeDocumentation(this.typeOf(receiver)));
+      if (this.values.isComplex(receiver) && ["real", "imag"].includes(name)) return value(this.values.complexAttribute(receiver, name));
+      if (this.values.isRange(receiver) && ["start", "stop", "step"].includes(name)) return value(this.values.rangeAttribute(receiver, name));
+      if (this.values.isSlice(receiver) && ["start", "stop", "step"].includes(name)) return value(this.values.sliceAttribute(receiver, name));
       if (["__module__", "__name__", "__qualname__"].includes(name)) this.fail("AttributeError", "Value has no callable metadata");
     }
     if (!native && receiver instanceof InstanceValue && receiver.nativePayload instanceof SuperValue && name !== "__class__") {
@@ -700,6 +714,7 @@ export class ClassRuntime {
     if (name === "__dir__" && this.hasFixedDirectory(receiver))
       return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
     if (receiver instanceof BuiltinValue) {
+      if (name === "__self__" && (receiver instanceof AppendValue || receiver instanceof ValueMethod)) return value(receiver.receiver);
       if (name === "__qualname__" && (receiver instanceof AppendValue || receiver instanceof ValueMethod)) return value(this.values.string(Array.from(this.typeOf(receiver.receiver).name + "." + receiver.name, char => char.codePointAt(0))));
       if (name === "__module__" && !this.isType(receiver) && !this.nativeDescriptorKind(receiver)) return value(receiver instanceof AppendValue || receiver instanceof ValueMethod ? null : this.values.string(Array.from("builtins", char => char.codePointAt(0))));
       if (receiver.nativeKind) {
@@ -742,8 +757,8 @@ export class ClassRuntime {
         if (name === "__base__") return value(this.primaryBase(receiver));
         if (name === "__bases__") return value(this.values.tuple([this.mro(receiver)[1]]));
         if (receiver.name === "module" && name === "__dir__") return this.bindAttribute(this.namespaceDescriptor(receiver, name, "method_descriptor"), null, receiver);
-        let item = this.lookup(receiver, name);
-        if (!item.found) item = this.nativeEntry(receiver, name);
+        let item = this.nativeProtocolEntry(receiver, name);
+        if (!item.found) item = this.lookup(receiver, name);
         if (item.found) return this.bindAttribute(item.value, null, receiver);
       }
       this.fail("AttributeError", "Builtin has no adopted attribute '" + name + "'.");
@@ -1120,6 +1135,14 @@ export class ClassRuntime {
   }
   nativeInvocationOwner(callable) {
     const name = callable.name, owner = name.slice(0, name.indexOf(".")), key = name.slice(name.indexOf(".") + 1);
+    if (key === "__class_getitem__") return "#125";
+    if (["__buffer__", "__release_buffer__"].includes(key)) return "#117";
+    if (["__enter__", "__exit__"].includes(key)) return "#121";
+    if (["code", "function"].includes(owner) && ["__new__", "__replace__", "replace"].includes(key)) return "O91";
+    if (key === "__length_hint__") return "#120";
+    if (key === "__reversed__" || owner === "range" && key === "__hash__") return "#116";
+    if (["int", "float"].includes(owner) && ["__trunc__", "__floor__", "__ceil__"].includes(key)) return "#184";
+    if (["str", "bytes", "bytearray"].includes(owner) && ["__mod__", "__rmod__"].includes(key)) return "#127";
     if (["__repr__", "__str__", "__format__"].includes(key)) return "#127";
     if (["__reduce__", "__reduce_ex__", "__getstate__", "__sizeof__"].includes(key)) return "#126";
     if (Object.hasOwn(EXCEPTIONS, owner)) return "#124";
@@ -1230,10 +1253,26 @@ export class ClassRuntime {
     }
     return {found: false, value: null};
   }
-  namespaceDescriptorValid(descriptor, receiver, classReceiver = false) {
+  namespaceDescriptorValid(descriptor, receiver, classReceiver = false, binding = false) {
     if (!descriptor.nativeOwner) this.fail("TypeError", "A stored native descriptor is required");
     const type = classReceiver ? receiver : this.typeOf(receiver);
-    if (!this.isType(type) || !this.subclass(type, descriptor.nativeOwner)) this.fail("TypeError", "Descriptor does not apply to this receiver");
+    if (!this.isType(type) || !this.subclass(type, descriptor.nativeOwner)) {
+      const owner = descriptor.nativeOwner.root ? "object" : descriptor.nativeOwner.name, key = descriptor.nativeKey;
+      const actual = this.isType(type) ? type.name : this.typeOf(receiver).name;
+      this.fail("TypeError", descriptor.nativeKind === "wrapper_descriptor" && !binding ?
+        "descriptor '" + key + "' requires a '" + owner + "' object but received a '" + actual + "'" :
+        "descriptor '" + key + "' for '" + owner + "' objects doesn't apply to a '" + actual + "' object");
+    }
+  }
+  nativeProtocolEntry(type, name) {
+    for (const base of this.mro(type)) {
+      const label = base instanceof ClassValue && base.root ? "object" : base instanceof BuiltinValue ? base.name : null;
+      const entry = label && NATIVE_NAMESPACES[label]?.find(entry => entry[0] === name);
+      if (!entry) continue;
+      if (base.namespaceDictionary || ["value", "staticmethod"].includes(entry[1])) return this.nativeEntry(type, name);
+      return {found: true, value: this.namespaceDescriptor(base, name, entry[1])};
+    }
+    return {found: false, value: null};
   }
   bindNamespaceDescriptor(descriptor, receiver, owner = null) {
     const kind = descriptor.nativeKind;
@@ -1248,7 +1287,7 @@ export class ClassRuntime {
       if (owner === null) this.fail("TypeError", "__get__(None, None) is invalid");
       return {kind: "value", value: descriptor};
     }
-    this.namespaceDescriptorValid(descriptor, receiver);
+    this.namespaceDescriptorValid(descriptor, receiver, false, true);
     if (["getset_descriptor", "member_descriptor"].includes(kind))
       return {kind: "call", callable: this.builtin("namespace-getset"), args: [descriptor, receiver]};
     return {kind: "value", value: this.make(BoundMethodValue, descriptor, receiver)};
@@ -1394,6 +1433,11 @@ export class ClassRuntime {
       return this.typeOf(receiver).name;
     }
     return null;
+  }
+  hasNativeProtocol(receiver, name) {
+    return NATIVE_PROTOCOL_KEYS.includes(name) && !this.isType(receiver) && !this.protocolObject(receiver) &&
+      !(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue) && this.mro(this.typeOf(receiver)).some(base =>
+        NATIVE_NAMESPACES[base.root ? "object" : base.name]?.some(entry => entry[0] === name));
   }
   numericDirectoryNames(receiver) {
     if (receiver === null) return NONE_DIRECTORY_KEYS;
@@ -1609,6 +1653,10 @@ export class ClassRuntime {
     return receiver.attributes;
   }
   functionMissing(receiver, name, operation = "get") {
+    if (operation === "get" && NATIVE_PROTOCOL_KEYS.includes(name)) {
+      const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
+      if (entry.found) return this.make(BoundMethodValue, entry.value, receiver);
+    }
     if (operation === "get" && name === "__dir__")
       return this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver);
     if (receiver instanceof MethodWrapperValue) this.fail("AttributeError", "Wrapper has no attribute '" + name + "'.");
@@ -1640,6 +1688,8 @@ export class ClassRuntime {
   }
   mutate(receiver, name, value, remove = false, key = null, namespaceShadow = false) {
     this.key(name); this.touch(receiver);
+    if (receiver instanceof BoundMethodValue && !this.isPythonMethod(receiver))
+      this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Native callable metadata is read-only");
     if (receiver instanceof ClassValue && receiver.root || receiver instanceof BuiltinValue && this.isType(receiver)) this.fail("TypeError", "Cannot mutate an immutable native type");
     if (name === "__class__" && (this.isInstance(receiver) || receiver instanceof ClassValue)) return this.reassignClass(receiver, value, remove);
     if (receiver instanceof ClassValue && !receiver.root && ["__name__", "__qualname__"].includes(name)) {
