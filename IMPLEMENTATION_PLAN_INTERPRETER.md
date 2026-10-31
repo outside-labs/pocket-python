@@ -845,3 +845,12 @@ earlier object/reflection remaining-work statements. Source corpora, native
 layout/field/slot tables, explicit refusal sites and compatibility rows have
 exact scope owners. O96 integrated acceptance remains before #123 closure;
 #33, #34 and neighboring API milestones retain their own acceptance.
+
+## O96 integrated object acceptance
+
+The [finite object acceptance](docs/interpreter-object-integration.md) composes
+all delivered interfaces with source execution in six Node/Chromium drivers,
+parked collection/cancellation/close, shared limits and isolated installed-wheel
+offline Stop/Restart/profile updates. The [versioned record](docs/measurements/2026-10-31-object-closure.json)
+links positive stage evidence and CI; #123 records final-main verification. The
+remaining C3/library/async milestones keep their own scope and acceptance.

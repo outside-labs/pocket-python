@@ -1934,7 +1934,7 @@
       "id": "wrapper-descriptor-metadata",
       "status": "supported",
       "scope": "O71: copied wrapper metadata and live dictionaries, qualified native callable/descriptor documentation, origin-sensitive property copies and super dictionary/getset reflection.",
-      "gaps": "Annotation/type-parameter semantics remain #125; wrapper/super directories O77, subclasses O87 and other native invocations retain their owning contracts.",
+      "gaps": "Annotation/type-parameter semantics remain #125; serialization/library APIs #126 and expanded displays #127 retain their owners. Wrapper/super directories and native subtypes are delivered by O77/O87.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2178,7 +2178,7 @@
       "id": "advertised-directories",
       "status": "supported",
       "scope": "O76: type and custom-metaclass directory closure, raw native merging, owned advertised namespace/base graphs and type-checking fallbacks.",
-      "gaps": "Actual type base reassignment remains O88; generic aliases/unions remain #125.",
+      "gaps": "Compatible type/base reassignment is delivered by O88; generic aliases/unions retain #125.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2298,7 +2298,7 @@
       "id": "native-directory-closure",
       "status": "supported",
       "scope": "O78: audited directory closure over 85 actual native types and seven native callable/descriptor layouts; actual namespace key identities, module hooks, frames/code/cells, exception representations and view iterators.",
-      "gaps": "UnicodeTranslateError construction and exception payload/chaining APIs remain #124. O84\u2013O88 add layouts to the same inventory. Listed library APIs retain their existing owners.",
+      "gaps": "UnicodeTranslateError construction and exception payload/chaining APIs remain #124. Slot/native subtype layouts are included in the current audit. Listed library APIs retain #126 and their individual #116/#117/#120/#127 owners.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -3017,7 +3017,7 @@
       "id": "dir",
       "status": "supported",
       "scope": "Zero-argument optimized function and generator-expression names; actual-type/metaclass __dir__, owned iterable copying with custom length hints and stable rich less-than/truth ordering of adopted entries, preserving duplicates and identities. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. O50 adds default Python function directories and unsorted native object.__dir__ calls, combining exact live dictionary-key identities with pinned native names through owned merge/collision/truth and sorting phases. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O55 adds state-independent generator directories and exact native receiver binding without running or resuming generator bodies. O56 adds actual-layout native iterator directories for adopted container/indexed/callable forms, preserving positions and exact native source/sentinel ownership without invoking callbacks. O57 adds numeric/singleton default directories with bool-before-int native merging, retained native caller chains and no conversion or truth callbacks. O58 adds range/raw-slice default directories without range iteration or arbitrary field callbacks, retaining cyclic field graphs through detached native callers. O59 adds str/list/tuple/dict default directories, preserving native merge order, cyclic graphs, contents, iterator positions and exact native caller binding without contained callbacks. O60 adds set/frozenset/bytes/bytearray/memoryview directories with exact native binding, preserved hash/storage/iterator state and directories after view release without restoring data authority. O61 adds root/ordinary instance directories with owned optional dictionary/class reads, exact dictionary-key identities, source/dynamic class namespace names and live depth-first base merging. O62 adds ordinary class directories and native type.__dir__ calls, live depth-first source/dynamic namespace merging, native binding/metadata and exact retained class graphs. O63 adds numeric and sentinel type directories, including native raw order, canonical binding and ordinary advertised type namespaces. O64 adds sequence, container and buffer type directories with native binding, advertised namespaces and preserved instance data authority. O65 adds callable, descriptor, property and mappingproxy type directories with canonical native binding, raw namespace order and ordinary advertised namespaces; callable/accessor metadata and per-instance keys remain separate. O66 adds generator and adopted native iterator type directories, preserving generator state, iterator positions, sentinel isolation and released buffer authority through canonical native binding and owned namespace merging. O76 completes type and transparent/custom metaclass directories, object.__dir__ on actual classes, exact advertised namespace keys and sequence base graphs with owned optional reads; native qualification and advertised-base type-checking fallbacks execute on the same machine. O77 adds staticmethod/classmethod/super instance and type directories, live wrapper dictionaries, super namespace descriptor lookup and raw native callers. O78 completes modules, code/cell/frame/local-proxy objects, existing exceptions, builtin callables, primitive methods, descriptor layouts and dictionary view/iterator families; canonical namespace keys preserve identity before and after dictionary materialization.",
-      "gaps": "Finite closure over currently exposed layouts. O84\u2013O88 extend the existing layout audit; invocation of listed APIs retains its named owner.",
+      "gaps": "The current layout audit includes slot/native subtype extensions. Invocation of listed library APIs retains #116/#117/#120/#125/#126/#127 and the finite source-interface boundary.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -4358,7 +4358,7 @@
       "id": "list",
       "status": "partial",
       "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Lists are fresh shallow containers.",
-      "gaps": "User length hints, methods, builtin subclassing and broader reflection remain separate stages.",
+      "gaps": "General iterable length-hint consumers and additional sequence methods retain #116. Native list subtypes, namespaces and reflection are delivered by O69\u2013O90.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -4482,7 +4482,7 @@
       "id": "next",
       "status": "partial",
       "scope": "Primitive next(iterator); classes-source adds user __next__ and next(iterator, default).",
-      "gaps": "Generator/async protocols and iterator reflection remain separate.",
+      "gaps": "Further generator signatures retain #120, async protocols #34 and iterator serialization/state #126. The finite native iterator/reflection layouts are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -4490,7 +4490,8 @@
       ],
       "next_tasks": [
         "INT-GEN-01",
-        "INT-SEQ-01"
+        "INT-10",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-next"
@@ -4733,14 +4734,16 @@
       "id": "range",
       "status": "partial",
       "scope": "One to three positional integer/index arguments; bounded range values with attributes, truth, length, indexing, slicing, equality and iteration in both source profiles. Class index/equality callbacks use owned frames.",
-      "gaps": "Range methods, hashing, repr and broader reflection remain separately gated.",
+      "gaps": "Additional methods and range hashing retain #116; expanded display #127 and serialization #126. Finite native layout/attribute reflection is delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-SEQ-01"
+        "INT-SEQ-01",
+        "INT-TEXT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-range"
@@ -4881,14 +4884,16 @@
       "id": "slice",
       "status": "partial",
       "scope": "classes-source/1: slice(stop), slice(start,stop), slice(start,stop,step), positional only; immutable raw start/stop/step fields. Equality, inequality and ordering compare the raw fields through the owned lexicographic machine.",
-      "gaps": "Core constructor, slice.indices, repr, hash and broader descriptor APIs are deferred.",
+      "gaps": "The reduced core constructor remains an explicit profile boundary; indices retains #116, expanded display #127 and serialization #126. Owned slice comparisons/hashing and native descriptor calls are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-SEQ-01"
+        "INT-SEQ-01",
+        "INT-TEXT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-slice"
@@ -5028,7 +5033,7 @@
       "id": "tuple",
       "status": "partial",
       "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Existing tuple identity and shallow elements are preserved.",
-      "gaps": "User length hints, methods, builtin subclassing and broader reflection remain separate stages.",
+      "gaps": "General iterable length-hint consumers and additional sequence methods retain #116. Native tuple subtypes, namespaces and reflection are delivered by O69\u2013O90.",
       "reference_version": "3.14.7",
       "targets": [
         "node",

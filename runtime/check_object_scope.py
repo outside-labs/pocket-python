@@ -26,7 +26,7 @@ def audit(root=ROOT):
     manifest = json.loads((root / MANIFEST.relative_to(ROOT)).read_bytes())
     assert manifest['reference_version'] == '3.14.7'
     allowed = {'#' + str(n) for n in manifest['neighbor_issues']} | set(manifest['boundaries'])
-    corpora, boundaries, stages = {}, set(), set()
+    corpora, boundaries, stages, positive_stages = {}, set(), set(), set()
     for path in (root / 'tests/fixtures/interpreter').glob('*.json'):
         corpus = json.loads(path.read_bytes())
         if not any(re.fullmatch(r'O\d+', s) for s in corpus.get('implemented_stages', [])):
@@ -36,6 +36,8 @@ def audit(root=ROOT):
         stages.update(corpus['implemented_stages'])
         assert 'Future' not in corpus['implemented_stages'], relative
         for case in corpus['cases']:
+            if case['stage'] in corpus['implemented_stages'] and 'error_type' not in case:
+                positive_stages.add(case['stage'])
             if case['stage'] not in corpus['implemented_stages']:
                 assert case.get('owner') in allowed and case.get('boundary'), (relative, case['id'])
                 boundaries.add((relative, case['id'], case['owner'], case['boundary']))
@@ -43,6 +45,7 @@ def audit(root=ROOT):
     expected = {(row['corpus'], row['case'], row['owner'], row['boundary']) for row in manifest['boundary_cases']}
     assert boundaries == expected, 'Unreconciled O-corpus boundary'
     assert {f'O{n}' for n in range(1, 97)} <= stages, 'Missing delivered stage evidence'
+    assert {f'O{n}' for n in range(1, 97)} <= positive_stages, 'Missing positive source stage evidence'
     recorded = manifest['source_refusals']
     assert all(row['owner'] in allowed and row['boundary'] for row in recorded)
     assert refusal_sites(root) == {(r['path'], r['site']) for r in recorded}, 'Unreviewed source refusal'

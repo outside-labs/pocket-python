@@ -22,7 +22,8 @@ linked contracts, rather than reopening already delivered stages.
 Every O-corpus case outside its `implemented_stages` has an exact `owner` and
 `boundary`. The audit verifies this inventory against the actual corpora, source
 refusal sites, native layout tables, native field/invocation owners and class
-slot policy. It fails when a refusal is added without reconciliation or a
+slot policy. It requires an actual positive source case for every O1–O96 identifier, rather
+than a manifest entry alone. It fails when a refusal is added without reconciliation or a
 compatibility row still assigns unfinished work to INT-OBJECT-01. Existing
 source matrices execute all admitted behavior and require retained boundaries
 to refuse explicitly; the O95 composition also exercises the formerly stale
@@ -77,3 +78,7 @@ protocol/API work under #116/#117/#120/#121/#124/#125/#126/#127/#184 and any
 separately adopted interfaces. Completing O96 closes #123 only. It does not close
 #33, #34, #99's continuing compatibility program, or another milestone, and does
 not authorize a release, publication or deployment.
+
+O96 composes this scope through the [integrated acceptance](interpreter-object-integration.md)
+and its versioned evidence. The fixed denominator is 30 remaining stages / 96
+historical stages; neighboring library/API work does not extend that denominator.
