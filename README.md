@@ -332,3 +332,9 @@ type/custom-metaclass traversal and class-like advertised base checking.
 The [native directory audit](docs/interpreter-native-directory-closure.md) covers the
 currently exposed native type, wrapper, super, module, code, frame, cell, exception
 and callable layouts with exact namespace key identities.
+
+The `classes-source/1` profile also supports [bounded dynamic source](docs/interpreter-dynamic-source.md):
+`compile`, `eval`, `exec` and dynamic imports share the current execution limits
+and granted module registry. The [dynamic source example](examples/interpreter_dynamic_source.py)
+uses the selected `operator/1` library profile; compilation and namespace changes
+do not add loader or host capabilities.

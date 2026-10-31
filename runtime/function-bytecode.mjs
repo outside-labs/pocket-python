@@ -124,7 +124,8 @@ export function verifyFunctions(program) {
           if (!(storage ? storageName(arg) : validName(arg)) || (storage && privateName(arg) && !locals.includes(arg)) ||
               (["store", "delete"].includes(op) && !writable(arg))) fail("Store/delete requires a declared local.");
         } else if (modern && op === "import") {
-          length = 4;
+          length = classes && instruction.length === 5 ? 5 : 4;
+          if (length === 5 && instruction[4] !== null && (!Array.isArray(instruction[4]) || instruction[4].length > 128 || !instruction[4].every(validName))) fail("Invalid source import fromlist.");
           if (typeof arg !== "string" || arg.length > 192 || (!arg && !extra) ||
               (arg && !/^[A-Za-z_][A-Za-z_0-9]*(\.[A-Za-z_][A-Za-z_0-9]*)*$/.test(arg)) ||
               !integer(extra, 32) || typeof instruction[3] !== "boolean" || (extra && instruction[3])) fail("Invalid static import operands.");

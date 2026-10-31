@@ -36,6 +36,12 @@ export function completion(kind, fields = {}) {
   switch (kind) {
     case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored":
       record = {kind, source: fields.source, globals: fields.globals, locals: fields.locals, builtins: fields.builtins, key: fields.key, mode: fields.mode ?? "eval", closure: fields.closure ?? null, after}; break;
+    case "import-argument": case "import-package": case "import-spec": case "import-spec-parent": case "import-name": case "import-path":
+    case "import-fromlist-path": case "import-loaded": case "import-truth": case "import-iterator": case "import-next": case "import-member": case "import-all-probe": case "import-all": case "import-child-loaded":
+    case "import-statement-locals": case "import-statement-call":
+      record = {kind, name: fields.name, globals: fields.globals ?? null, locals: fields.locals ?? null, fromlist: fields.fromlist,
+        level: fields.level, package: fields.package ?? null, target: fields.target ?? null, module: fields.module ?? null,
+        iterator: fields.iterator ?? null, outer: fields.outer ?? null, recursive: fields.recursive ?? false, visits: fields.visits ?? 0, item: fields.item ?? null, after}; break;
     case "compile-argument": record = {kind, args: operands(fields.args), position: fields.position, after}; break;
     case "arithmetic-order":
       record = {kind, task: fields.task, phase: fields.phase, candidate: fields.candidate ?? null, after};
@@ -349,6 +355,9 @@ function visit(record) {
     case "native-new": return [record.type, ...completionRoots(record.after)];
     case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored": return [record.source, record.globals, record.locals, record.builtins, record.key, record.closure, ...completionRoots(record.after)];
     case "exec-return": case "single-display": return completionRoots(record.after);
+    case "import-argument": case "import-package": case "import-spec": case "import-spec-parent": case "import-name": case "import-path":
+    case "import-fromlist-path": case "import-loaded": case "import-truth": case "import-iterator": case "import-next": case "import-member": case "import-all-probe": case "import-all": case "import-child-loaded":
+    case "import-statement-locals": case "import-statement-call": return [record.name, record.globals, record.locals, record.fromlist, record.module, record.iterator, record.outer, record.item, ...completionRoots(record.after)];
     case "compile-argument": return [...record.args.filter(item => typeof item !== "string"), ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];

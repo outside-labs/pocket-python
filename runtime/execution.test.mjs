@@ -45,7 +45,7 @@ test('hard failures during nested binding and imported finally release all trans
       const options = {maxSteps: 100000, maxWork: 100000000};
       if (mode === 'steps') options.maxSteps = 150;
       if (mode === 'work') options.maxWork = 65000;
-      if (mode === 'cancel') options.shouldCancel = () => ++polls > 18000;
+      if (mode === 'cancel') options.shouldCancel = () => stdout === "entered\n" && ++polls > 18000;
       session = new ModuleSession(registry, {memoryLimits: mode === 'memory' ? {maxBytes: 40000} : {}});
       try {
         assert.throws(() => session.run(options, text => { stdout += text; }),

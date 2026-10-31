@@ -538,3 +538,9 @@ lookup, source diagnostics and total limits compose with O91.
 [O93 owned exec](interpreter-dynamic-source.md#o93-exec) executes admitted
 statements and verified code with exact namespaces and closure cells, retained
 definitions, ordered mutation/failure effects and shared machine limits.
+
+[O94 granted dynamic imports](interpreter-dynamic-source.md#o94-imports-within-registry-grants)
+adopts the exact import builtin interface and captured source import callable,
+with owned relative/package/fromlist callbacks, registry identity/retry and
+shared limits. Dynamic execution is O91–O94; final reconciliation and integrated
+O-series closure remain O95–O96. #123 and #33 remain open.

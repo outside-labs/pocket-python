@@ -356,7 +356,7 @@ class Compiler {
       };
       const pushNone = site => emit(site, "const", this.constant(NONE, site));
       const attribute = (value, write = false) => {
-        if (write && !allowsClassSpecial(value.name, "mutate") && !(this.classes && value.name === "__class__") && !["__qualname__", "__module__", "__dict__", "__func__", "__wrapped__", "__defaults__", "__kwdefaults__", "__globals__", "__builtins__", "__code__", "__closure__"].includes(value.name))
+        if (write && !allowsClassSpecial(value.name, "mutate") && !(this.classes && value.name === "__class__") && !["__qualname__", "__module__", "__dict__", "__func__", "__wrapped__", "__defaults__", "__kwdefaults__", "__globals__", "__builtins__", "__code__", "__closure__", "__path__"].includes(value.name))
           this.fail("Special attribute mutation is outside C1.", value);
         return value.name;
       };
@@ -613,11 +613,11 @@ class Compiler {
           if (value.level > 32 || (value.specifier && !valid(value.specifier)) || (value.specifier === null && value.aliases.some(alias => !valid(alias.name)))) this.fail("Module identities require the bounded ASCII registry profile.", value);
           this.imports.push({specifier: value.specifier, level: value.level, aliases: value.aliases.map(alias => ({...alias}))});
           if (value.specifier === null) for (const alias of value.aliases) {
-            emit(value, "import", alias.name, 0, true);
+            emit(value, "import", alias.name, 0, true, ...(this.classes ? [null] : []));
             if (alias.asname) for (const part of alias.name.split(".").slice(1)) emit(value, "import-from", part);
             emit(value, "store", alias.bindingName ?? alias.asname ?? alias.name.split(".")[0]);
           } else {
-            emit(value, "import", value.specifier, value.level, false);
+            emit(value, "import", value.specifier, value.level, false, ...(this.classes ? [value.aliases.map(alias => alias.name)] : []));
             value.aliases.forEach((alias, index) => {
               if (index < value.aliases.length - 1) emit(value, "dup");
               emit(value, "import-from", alias.name); emit(value, "store", alias.bindingName ?? alias.asname ?? alias.name);
