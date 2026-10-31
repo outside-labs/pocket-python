@@ -122,6 +122,12 @@ export function completion(kind, fields = {}) {
     case "native-method-compare":
       record = {kind, receiver: fields.receiver, other: fields.other, invert: fields.invert === true, truth: fields.truth === true, depth: fields.depth, after};
       depthCheck(record.depth); break;
+    case "property-diagnostic":
+      record = {kind, receiver: fields.receiver, target: fields.target, operation: fields.operation, phase: fields.phase,
+        name: fields.name ?? null, found: fields.found === true, qualification: fields.qualification ?? null, renderedName: fields.renderedName ?? null, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (!["getter", "setter", "deleter"].includes(record.operation) || !["lookup", "name", "qualification"].includes(record.phase)) throw new TypeError("Invalid property diagnostic phase.");
+      break;
     case "function-entry":
       record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation), after}; break;
     case "instance-entry":
@@ -351,6 +357,7 @@ function visit(record) {
     case "native-method-hash":
     case "relay": case "subclass-result": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
     case "native-method-compare": return [record.receiver, record.other, ...completionRoots(record.after)];
+    case "property-diagnostic": return [record.receiver, record.target, record.name, record.qualification, record.renderedName, ...completionRoots(record.after)];
     case "abstract-lookup": case "abstract-truth":
     case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":
     case "dir-compare": case "dir-truth": return [record.receiver, ...completionRoots(record.after)];
