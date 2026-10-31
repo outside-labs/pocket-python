@@ -323,6 +323,8 @@ def smoke(channel=None):
                     programs.extend(case['source'] for case in dynamic_compile['cases'] if 'error_type' not in case)
                     dynamic_eval = json.loads((ROOT / 'tests/fixtures/interpreter/dynamic-eval.json').read_bytes())
                     programs.extend(case['source'] for case in dynamic_eval['cases'] if 'error_type' not in case and not case.get('modules'))
+                    dynamic_exec = json.loads((ROOT / 'tests/fixtures/interpreter/dynamic-exec.json').read_bytes())
+                    programs.extend(case['source'] for case in dynamic_exec['cases'] if 'error_type' not in case)
                     programs.append(MODULE_REASSIGNMENT_SOURCE)
                     mutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/mutable-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in mutable_subclasses['cases'] if 'error_type' not in c)

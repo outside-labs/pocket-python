@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-dynamic-exec/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O93"
+  ],
+  "cases": [
+    {
+      "id": "source-statements",
+      "stage": "O93",
+      "source": "g={}\nprint(exec(\"x=7\\ny=x+9\",g),g[\"x\"],g[\"y\"])\n",
+      "stdout": "None 7 16\n"
+    },
+    {
+      "id": "compiled-statements",
+      "stage": "O93",
+      "source": "g={}\nc=compile(\"x=7\",\"file.py\",\"exec\")\nprint(exec(c,g),g[\"x\"])\n",
+      "stdout": "None 7\n"
+    },
+    {
+      "id": "compiled-expression",
+      "stage": "O93",
+      "source": "print(exec(compile(\"7+9\",\"file.py\",\"eval\")))\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "compiled-single",
+      "stage": "O93",
+      "source": "print(exec(compile(\"7; None; 'hello'\",\"file.py\",\"single\")))\n",
+      "stdout": "7\n'hello'\nNone\n"
+    },
+    {
+      "id": "bytes-buffers",
+      "stage": "O93",
+      "source": "g={}\nexec(b\"x=7\",g)\nexec(bytearray(b\"y=9\"),g)\nexec(memoryview(b\"z=11\"),g)\nprint(g[\"x\"],g[\"y\"],g[\"z\"])\n",
+      "stdout": "7 9 11\n"
+    },
+    {
+      "id": "default-module",
+      "stage": "O93",
+      "source": "x=7\nprint(exec(\"x=9\\ncreated=11\"),x,created)\nexec(\"del created\")\nprint(\"created\" in globals())\n",
+      "stdout": "None 9 11\nFalse\n"
+    },
+    {
+      "id": "default-function",
+      "stage": "O93",
+      "source": "x=3\ndef f(x):\n y=9\n print(exec(\"x=11\\ncreated=13\"),x,y)\n print(\"created\" in locals())\n exec(\"global x\\nx=17\")\nf(7)\nprint(x)\n",
+      "stdout": "None 7 9\nFalse\n17\n"
+    },
+    {
+      "id": "retained-snapshot",
+      "stage": "O93",
+      "source": "def f():\n x=7\n ns=locals()\n exec(\"x=9\\ncreated=11\",globals(),ns)\n print(x,ns[\"x\"],ns[\"created\"],\"created\" in locals())\nf()\n",
+      "stdout": "7 9 11 False\n"
+    },
+    {
+      "id": "default-class",
+      "stage": "O93",
+      "source": "class C:\n x=7\n exec(\"x=9\\ny=11\")\nprint(C.x,C.y)\n",
+      "stdout": "9 11\n"
+    },
+    {
+      "id": "separate-namespaces",
+      "stage": "O93",
+      "source": "g={\"x\":7}\nl={\"x\":9}\nexec(\"y=x+11\\ndef f(): return x\",g,l)\nprint(l[\"y\"],l[\"f\"](),l[\"f\"].__globals__ is g,\"y\" in g)\n",
+      "stdout": "20 7 True False\n"
+    },
+    {
+      "id": "keyword-namespaces",
+      "stage": "O93",
+      "source": "g={}\nl={}\nprint(exec(\"x=7\",globals=g,locals=l),l[\"x\"],\"x\" in g)\n",
+      "stdout": "None 7 False\n"
+    },
+    {
+      "id": "write-delete",
+      "stage": "O93",
+      "source": "g={\"x\":7}\nl={\"x\":9}\nexec(\"del x\\ny=11\",g,l)\nprint(g[\"x\"],\"x\" in l,l[\"y\"])\n",
+      "stdout": "7 False 11\n"
+    },
+    {
+      "id": "global-write-delete",
+      "stage": "O93",
+      "source": "g={\"x\":7}\nl={\"x\":9}\nexec(\"global x\\nx=11\\ndel x\",g,l)\nprint(\"x\" in g,l[\"x\"])\n",
+      "stdout": "False 9\n"
+    },
+    {
+      "id": "failure-effects",
+      "stage": "O93",
+      "source": "g={}\ntry: exec(\"x=7\\nraise ValueError('failed')\\nx=9\",g)\nexcept ValueError as e: print(str(e),g[\"x\"])\n",
+      "stdout": "failed 7\n"
+    },
+    {
+      "id": "finally-effects",
+      "stage": "O93",
+      "source": "g={\"events\":[]}\ntry: exec(\"try: raise ValueError('failed')\\nfinally: events.append(7)\",g)\nexcept ValueError: print(g[\"events\"][0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "retained-definitions",
+      "stage": "O93",
+      "source": "g={\"x\":[7]}\nexec(\"def f(): return x[0]\\nclass C:\\n def read(self): return x[0]\",g)\nf=g[\"f\"]\nc=g[\"C\"]()\ng[\"x\"][0]=9\nprint(f(),c.read(),f.__globals__ is g)\n",
+      "stdout": "9 9 True\n"
+    },
+    {
+      "id": "module-document",
+      "stage": "O93",
+      "source": "g={}\nexec(\"'module document'\\nx=7\",g)\nprint(g[\"__doc__\"],g[\"x\"])\n",
+      "stdout": "module document 7\n"
+    },
+    {
+      "id": "optimization-0",
+      "stage": "O93",
+      "source": "g={}\nc=compile(\"'module document'\\ndef f():\\n 'function document'\\n assert False\\n return __debug__\\n\",\"opt.py\",\"exec\",optimize=0)\nexec(c,g)\nprint(\"__doc__\" in g,g[\"f\"].__doc__)\ntry: print(g[\"f\"]())\nexcept AssertionError: print(\"assert\")\n",
+      "stdout": "True function document\nassert\n"
+    },
+    {
+      "id": "optimization-1",
+      "stage": "O93",
+      "source": "g={}\nc=compile(\"'module document'\\ndef f():\\n 'function document'\\n assert False\\n return __debug__\\n\",\"opt.py\",\"exec\",optimize=1)\nexec(c,g)\nprint(\"__doc__\" in g,g[\"f\"].__doc__)\ntry: print(g[\"f\"]())\nexcept AssertionError: print(\"assert\")\n",
+      "stdout": "True function document\nFalse\n"
+    },
+    {
+      "id": "optimization-2",
+      "stage": "O93",
+      "source": "g={}\nc=compile(\"'module document'\\ndef f():\\n 'function document'\\n assert False\\n return __debug__\\n\",\"opt.py\",\"exec\",optimize=2)\nexec(c,g)\nprint(\"__doc__\" in g,g[\"f\"].__doc__)\ntry: print(g[\"f\"]())\nexcept AssertionError: print(\"assert\")\n",
+      "stdout": "False None\nFalse\n"
+    },
+    {
+      "id": "mapping-locals",
+      "stage": "O93",
+      "source": "class Mapping:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value):\n  print(\"set\",key,value)\n  self.data[key]=value\n def __delitem__(self,key):\n  print(\"del\",key)\n  del self.data[key]\nm=Mapping()\nexec(\"x=7\\ny=x+9\\ndel x\",{},m)\nprint(m.data[\"y\"])\n",
+      "stdout": "set x 7\nset y 16\ndel x\n16\n"
+    },
+    {
+      "id": "mapping-error",
+      "stage": "O93",
+      "source": "class Mapping:\n def __getitem__(self,key): raise KeyError(key)\n def __setitem__(self,key,value):\n  print(\"set\",key)\n  raise ValueError(\"mapping\")\ntry: exec(\"x=7\",{},Mapping())\nexcept ValueError as e: print(str(e))\n",
+      "stdout": "set x\nmapping\n"
+    },
+    {
+      "id": "dict-subtype-writes",
+      "stage": "O93",
+      "source": "class D(dict):\n def __getitem__(self,key):\n  print(\"get\",key)\n  return dict.__getitem__(self,key)\n def __setitem__(self,key,value):\n  print(\"set\",key,value)\n  dict.__setitem__(self,key,value)\n def __delitem__(self,key):\n  print(\"del\",key)\n  dict.__delitem__(self,key)\ng=D()\nexec(\"x=7\\ny=x+9\\ndel x\",g)\nprint(dict.__getitem__(g,\"y\"))\n",
+      "stdout": "set x 7\nget x\nset y 16\ndel x\n16\n"
+    },
+    {
+      "id": "subtype-global-write",
+      "stage": "O93",
+      "source": "class D(dict):\n def __setitem__(self,key,value): raise ValueError(\"override\")\ng=D()\nexec(\"global x\\nx=7\",g,{})\nprint(dict.__getitem__(g,\"x\"))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "class-default-module",
+      "stage": "O93",
+      "source": "g={}\nexec(\"class C: pass\",g)\nprint(g[\"C\"].__module__)\n",
+      "stdout": "builtins\n"
+    },
+    {
+      "id": "closure-cells",
+      "stage": "O93",
+      "source": "def outer():\n x=7\n def f():\n  nonlocal x\n  x+=1\n return f\nf=outer()\nprint(exec(f.__code__,closure=f.__closure__),f.__closure__[0].cell_contents)\n",
+      "stdout": "None 8\n"
+    },
+    {
+      "id": "closure-reorder",
+      "stage": "O93",
+      "source": "def outer():\n a=7\n b=9\n def f():\n  nonlocal a,b\n  a,b=b,a\n return f\nf=outer()\nexec(f.__code__,{},closure=f.__closure__)\nprint(f.__closure__[0].cell_contents,f.__closure__[1].cell_contents)\n",
+      "stdout": "9 7\n"
+    },
+    {
+      "id": "closure-replacement",
+      "stage": "O93",
+      "source": "def outer():\n x=7\n def f():\n  nonlocal x\n  x+=1\n return f\nf=outer()\ng=outer()\ng.__closure__[0].cell_contents=13\nexec(f.__code__,closure=g.__closure__)\nprint(f.__closure__[0].cell_contents,g.__closure__[0].cell_contents)\n",
+      "stdout": "7 14\n"
+    },
+    {
+      "id": "empty-cell",
+      "stage": "O93",
+      "source": "def outer():\n if False: x=7\n def f(): return x\n return f\nf=outer()\ntry: exec(f.__code__,closure=f.__closure__)\nexcept NameError: print(\"empty\")\n",
+      "stdout": "empty\n"
+    },
+    {
+      "id": "function-code",
+      "stage": "O93",
+      "source": "def f():\n print(\"called\")\n return 7\nprint(exec(f.__code__))\n",
+      "stdout": "called\nNone\n"
+    },
+    {
+      "id": "generator-code",
+      "stage": "O93",
+      "source": "def f():\n print(\"body\")\n yield 7\nprint(exec(f.__code__))\n",
+      "stdout": "None\n"
+    },
+    {
+      "id": "class-code",
+      "stage": "O93",
+      "source": "g={\"__name__\":\"custom\"}\nl={}\nc=compile(\"class C:\\n x=7\\n def f(self): return __class__\",\"class-code.py\",\"exec\")\nfor item in c.co_consts:\n if type(item) is type(c): body=item\nprint(exec(body,g,l),l[\"__module__\"],l[\"__qualname__\"],l[\"x\"],\"__classcell__\" in l)\n",
+      "stdout": "None custom C 7 True\n"
+    },
+    {
+      "id": "nested-exec",
+      "stage": "O93",
+      "source": "g={}\nexec(\"exec('x=7')\",g)\nprint(g[\"x\"])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "non-string-keys",
+      "stage": "O93",
+      "source": "g={7:\"seven\"}\nexec(\"x=9\",g)\nprint(g[7],g[\"x\"])\n",
+      "stdout": "seven 9\n"
+    },
+    {
+      "id": "missing",
+      "stage": "O93",
+      "source": "try: exec()\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "keyword-source",
+      "stage": "O93",
+      "source": "try: exec(source=\"x=7\")\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "too-many",
+      "stage": "O93",
+      "source": "try: exec(\"x=7\",{},{},())\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "duplicate",
+      "stage": "O93",
+      "source": "try: exec(\"x=7\",{},globals={})\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "unknown",
+      "stage": "O93",
+      "source": "try: exec(\"x=7\",other=7)\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "invalid-locals",
+      "stage": "O93",
+      "source": "try: exec(\"x=7\",{},7)\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "invalid-globals",
+      "stage": "O93",
+      "source": "try: exec(\"x=7\",[])\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "closure-source",
+      "stage": "O93",
+      "source": "try: exec(\"x=7\",closure=())\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "closure-empty",
+      "stage": "O93",
+      "source": "try: exec(compile(\"pass\",\"x\",\"exec\"),closure=())\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "syntax",
+      "stage": "O93",
+      "source": "try: exec(\"x=\")\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "SyntaxError\n"
+    },
+    {
+      "id": "indentation",
+      "stage": "O93",
+      "source": "try: exec(\" x=7\")\nexcept (TypeError,SyntaxError) as e: print(type(e).__name__)\n",
+      "stdout": "IndentationError\n"
+    },
+    {
+      "id": "closure-missing",
+      "stage": "O93",
+      "source": "def outer():\n x=7\n def f(): return x\n return f\nf=outer()\ng={}\ntry: exec(f.__code__,g,closure=None)\nexcept TypeError: print(\"closure\",\"__builtins__\" in g)\n",
+      "stdout": "closure True\n"
+    },
+    {
+      "id": "closure-list",
+      "stage": "O93",
+      "source": "def outer():\n x=7\n def f(): return x\n return f\nf=outer()\ng={}\ntry: exec(f.__code__,g,closure=list(f.__closure__))\nexcept TypeError: print(\"closure\",\"__builtins__\" in g)\n",
+      "stdout": "closure True\n"
+    },
+    {
+      "id": "closure-length",
+      "stage": "O93",
+      "source": "def outer():\n x=7\n def f(): return x\n return f\nf=outer()\ng={}\ntry: exec(f.__code__,g,closure=())\nexcept TypeError: print(\"closure\",\"__builtins__\" in g)\n",
+      "stdout": "closure True\n"
+    },
+    {
+      "id": "closure-type",
+      "stage": "O93",
+      "source": "def outer():\n x=7\n def f(): return x\n return f\nf=outer()\ng={}\ntry: exec(f.__code__,g,closure=(7,))\nexcept TypeError: print(\"closure\",\"__builtins__\" in g)\n",
+      "stdout": "closure True\n"
+    },
+    {
+      "id": "frame-locals-proxy",
+      "stage": "O93",
+      "source": "def f():\n x=7\n yield x\n yield x\ng=f()\nprint(next(g))\nns=g.gi_frame.f_locals\nexec(\"x=9\",globals(),ns)\nprint(next(g),ns[\"x\"])\n",
+      "stdout": "7\n9 9\n"
+    },
+    {
+      "id": "closure-tuple-subtype",
+      "stage": "O93",
+      "source": "def outer():\n x=7\n def f(): return x\n return f\nclass T(tuple): pass\nf=outer()\ntry: exec(f.__code__,closure=T(f.__closure__))\nexcept TypeError: print(\"exact tuple\")\n",
+      "stdout": "exact tuple\n"
+    },
+    {
+      "id": "callback-key",
+      "stage": "O93",
+      "source": "events=[]\nclass Key:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,other):\n  events.append(1)\n  return other==\"x\"\nk=Key()\ng={k:7}\nexec(\"x=9\",g)\nprint(g[k],len(events)>0)\n",
+      "stdout": "9 True\n"
+    }
+  ]
+}

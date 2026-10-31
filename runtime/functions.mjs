@@ -111,7 +111,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
         (frame.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
-        (frame.pool.code.version === 5 && ["eval", "compile", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
+        (frame.pool.code.version === 5 && ["exec", "eval", "compile", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -719,6 +719,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             staticAttributes: routed("__static_attributes__") ? null : frame.fn.staticAttributes || [], namespaceEntries: bodyDictionary?.entries || null});
         if (classCell) { state.temporaries.push(type, classCell); if (!routed("__classcell__")) setCell(classCell, type); }
         dispatch(notifyNext(type, [...namespace], 0, frame.callsite, classCell ? continuation("class-created", {cell: classCell}) : null, completion.keywords, completion.keywordValues)); return;
+      }
+      if (frame.fn.kind === "class" && frame.dynamicNamespace && !frame.namespaceFinished) {
+        frame.namespaceFinished = true;
+        const names = (frame.fn.staticAttributes || []).map(name => { const value = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(value); return value; });
+        const tuple = values.tuple(names); state.temporaries.push(tuple);
+        const cell = frame.locals.get("@source:class");
+        const pending = classEnd({names: ["__static_attributes__", ...(cell ? ["__classcell__"] : [])], items: [tuple, ...(cell ? [cell] : [])], position: 0, signal: signal.kind, value: returned});
+        if (pending) dispatch(pending); return;
       }
       const completion = frame.completion;
       retainTransfer(state.temporaries, [], completion);

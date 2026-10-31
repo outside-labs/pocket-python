@@ -91,3 +91,40 @@ frames and mappings remain rooted while stepped or parked and unwind on
 exceptions, cancellation and close. `execution-accounting/17` adds an optional
 eight-byte identity edge only when a namespace's dict subtype differs from its
 native payload; ordinary environments and composed observations are unchanged.
+
+## O93: exec
+
+`exec(source, /, globals=None, locals=None, *, closure=None)` shares eval's
+namespace preparation and validation order. Strings and adopted buffers compile
+in exec mode without trimming initial indentation. Verified expression,
+statement, single, function, generator and class-body code values retain their
+source diagnostics. Exec always returns None; generator code is constructed
+without resuming its body. Function code has the normal empty-call binding
+requirements. Executing class-body code initializes its actual namespace and
+class-cell/static-attribute entries without publishing a new type.
+
+With one dictionary, normal reads/writes/deletes use that namespace; distinct
+globals/locals preserve class-like name resolution and defining-global behavior.
+Explicit global declarations write/delete the true globals dict. Locals mapping
+and dict subtype callbacks observe writes/deletes and exceptions in source order.
+New functions/classes retain their defining globals and captured builtin
+mapping. Optimized default locals are fresh PEP 667 snapshots; supplying a
+retained snapshot keeps its changes, and supplying an adopted frame-locals proxy
+writes through the frame/cells. Partial effects and finally suites survive an
+exception in the normal owned unwinder.
+
+Closure-bearing code requires an exact native tuple with the exact number of
+owned cells, matched to co_freevars order. Cell aliases, empty cells, nonlocal
+writes and later mutations are preserved. Missing, list/subtype, wrong-length
+or non-cell tuples raise TypeError. A non-None closure is invalid for source
+strings or code with no free cells. Namespace preparation/builtin insertion
+precedes these checks, matching the pinned reference.
+
+The adopted builtin namespace includes its literal `__name__ = 'builtins'` for
+class construction in explicit globals without a module name. It adds no
+capability. Nested exec uses the same machine, arena and total limits as eval;
+there is no separate evaluator or fresh budget. Existing frame/cell/environment
+accounting applies. The source corpus covers statements, code modes, distinct
+namespaces, snapshots/proxies, callbacks, documents/optimization, retained
+classes/functions, closure validation and failure effects across all six source
+drivers and the installed offline console.

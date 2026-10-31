@@ -1180,8 +1180,8 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned reflection and identity, live module/class/function/wrapper namespaces, function defaults/namespaces, verified code/cells, generator/source-frame metadata and optimized frame-local proxies in classes-source/1.",
-      "gaps": "Annotations #125, remaining directories O76\u2013O78, prepared mappings/metaclasses, builtin subclasses and dynamic source/import APIs retain their named roadmap owners.",
+      "scope": "Owned reflection and identity, live module/class/function/wrapper namespaces, function defaults/namespaces, verified code/cells, generator/source-frame metadata and optimized frame-local proxies in classes-source/1. O91\u2013O93 add bounded compile, owned eval/exec, exact namespaces, closure-cell execution and shared total limits.",
+      "gaps": "Dynamic import calls remain O94. AST/future/async, raw CPython/JavaScript executable interchange, frame tracing/jumping and grammar outside the admitted profile retain their explicit owners/boundaries.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1811,7 +1811,10 @@
         "tests/fixtures/interpreter/iterator-type-directories.json:generator-state",
         "tests/fixtures/interpreter/native-namespaces.json:source-metaclass-metadata",
         "tests/fixtures/interpreter/class-mapping-proxies.json:callback-equality-identity",
-        "tests/fixtures/interpreter/class-mapping-proxies.json:union-key-identities"
+        "tests/fixtures/interpreter/class-mapping-proxies.json:union-key-identities",
+        "tests/fixtures/interpreter/dynamic-compile.json:mode-exec",
+        "tests/fixtures/interpreter/dynamic-eval.json:explicit-namespaces",
+        "tests/fixtures/interpreter/dynamic-exec.json:closure-cells"
       ]
     },
     {
@@ -3896,9 +3899,9 @@
     },
     {
       "id": "exec",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "O93 owned statement/source and verified-code execution, exact globals/locals, PEP 667 default snapshots, closure cells, retained definitions and shared total limits.",
+      "gaps": "AST/future/async and unadopted source grammar remain explicit boundaries; ambient host evaluation and foreign executable code are unavailable.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -3910,7 +3913,11 @@
       "probes": [
         "builtin-exec"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/dynamic-exec.json:separate-namespaces",
+        "tests/fixtures/interpreter/dynamic-exec.json:closure-cells",
+        "tests/fixtures/interpreter/dynamic-exec.json:frame-locals-proxy"
+      ]
     },
     {
       "id": "filter",

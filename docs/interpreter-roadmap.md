@@ -534,3 +534,7 @@ reconciliation and integrated acceptance.
 or verified code on the current machine, using live module/class namespaces,
 optimized-local snapshots or exact supplied globals/locals/builtins. Callback
 lookup, source diagnostics and total limits compose with O91.
+
+[O93 owned exec](interpreter-dynamic-source.md#o93-exec) executes admitted
+statements and verified code with exact namespaces and closure cells, retained
+definitions, ordered mutation/failure effects and shared machine limits.
