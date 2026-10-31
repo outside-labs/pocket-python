@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "scope": "O90 property diagnostic and accessor-copy portion. Refusal observations do not count as adopted behavior.",
+  "baseline_commit": "570c7d1",
+  "reference_version": "3.14.7",
+  "engine_fingerprint": "636ec9a393d1e732035e170902465e5cc3b17ad641a1af00b3c60469df690fd0",
+  "corpus": {
+    "path": "tests/fixtures/interpreter/property-diagnostics.json",
+    "sha256": "aa11b643e23e3ecfca1c86d75229768843fdc76cf4fffd5f39f525b4a59dece9",
+    "adopted_cases": 101,
+    "retained_boundaries": 1
+  },
+  "source_reports": [
+    {
+      "path": "build/property-diagnostics-classes-drain-node-report.json",
+      "target": "node",
+      "driver": "drain",
+      "adopted_pass": 101,
+      "retained_boundaries": 1,
+      "zero_adopted_teardown_records": 101
+    },
+    {
+      "path": "build/property-diagnostics-classes-stepped-node-report.json",
+      "target": "node",
+      "driver": "stepped",
+      "adopted_pass": 101,
+      "retained_boundaries": 1,
+      "zero_adopted_teardown_records": 101
+    },
+    {
+      "path": "build/property-diagnostics-classes-parked-node-report.json",
+      "target": "node",
+      "driver": "parked",
+      "adopted_pass": 101,
+      "retained_boundaries": 1,
+      "zero_adopted_teardown_records": 101
+    },
+    {
+      "path": "build/property-diagnostics-classes-drain-browser-report.json",
+      "target": "browser",
+      "driver": "drain",
+      "adopted_pass": 101,
+      "retained_boundaries": 1,
+      "zero_adopted_teardown_records": 101
+    },
+    {
+      "path": "build/property-diagnostics-classes-stepped-browser-report.json",
+      "target": "browser",
+      "driver": "stepped",
+      "adopted_pass": 101,
+      "retained_boundaries": 1,
+      "zero_adopted_teardown_records": 101
+    },
+    {
+      "path": "build/property-diagnostics-classes-parked-browser-report.json",
+      "target": "browser",
+      "driver": "parked",
+      "adopted_pass": 101,
+      "retained_boundaries": 1,
+      "zero_adopted_teardown_records": 101
+    }
+  ],
+  "summary": {
+    "adopted_pass": 606,
+    "retained_boundary_observations": 6,
+    "fail": 0,
+    "zero_adopted_teardown_records": 606
+  }
+}

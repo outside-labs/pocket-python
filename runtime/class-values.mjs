@@ -779,7 +779,9 @@ export class ClassRuntime {
         return value(this.make(BoundMethodValue, this.builtin("property." + name), receiver));
       if (["fget", "fset", "fdel"].includes(name)) return value(receiver[name]);
       if (NATIVE_PROPERTY_METHODS.has("property." + name)) return value(this.make(BoundMethodValue, this.builtin("property." + name), receiver));
-      this.fail("UnsupportedOperationError", "Property reflection is outside the adopted profile.", "UNSUPPORTED");
+      const entry = this.nativeProtocolEntry(this.builtin("property"), name);
+      if (entry.found) return this.bindAttribute(entry.value, receiver, this.builtin("property"));
+      this.fail("AttributeError", "'property' object has no attribute '" + name + "'");
     }
     if (receiver instanceof MethodWrapperValue) {
       if (name === "__class__") return value(this.builtin(receiver.kind));
@@ -1018,7 +1020,7 @@ export class ClassRuntime {
       return {kind: "value", value: this.superProxy(value.thisclass, receiver)};
     }
     if (receiver !== null && value instanceof PropertyValue) {
-      if (value.fget === null) this.missingPropertyAccessor(value, "getter");
+      if (value.fget === null) return this.missingPropertyAccessor(value, "getter", receiver);
       return {kind: "call", callable: value.fget, args: [receiver]};
     }
     const descriptor = this.descriptor(value);
@@ -1118,7 +1120,7 @@ export class ClassRuntime {
       const item = this.lookup(this.isInstance(receiver) ? receiver.type : receiver.metaclass, name), descriptor = item.found ? this.descriptor(item.value) : null;
       if (item.value instanceof PropertyValue) {
         const callable = item.value[remove ? "fdel" : "fset"];
-        if (callable === null) this.missingPropertyAccessor(item.value, remove ? "deleter" : "setter");
+        if (callable === null) return this.missingPropertyAccessor(item.value, remove ? "deleter" : "setter", receiver);
         return {kind: "call", callable, args: remove ? [receiver] : [receiver, value]};
       }
       if (descriptor && (descriptor.set.found || descriptor.delete.found)) {
@@ -1761,6 +1763,7 @@ export class ClassRuntime {
       return null;
     }
     if (receiver instanceof BuiltinValue && this.isType(receiver)) this.fail("TypeError", "Cannot mutate an immutable native type.");
+    if (receiver instanceof PropertyValue) this.fail("AttributeError", "'property' object has no writable attribute '" + name + "'");
     if (!(receiver instanceof ClassValue || this.isInstance(receiver)))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
@@ -1955,14 +1958,8 @@ export class ClassRuntime {
     });
     return fields.map(name => assigned.has(name) ? assigned.get(name) : null);
   }
-  missingPropertyAccessor(property, operation) {
-    const name = property.propertyName;
-    let getter = property.fget;
-    while (getter instanceof BoundMethodValue) { this.charge(1); getter = getter.callable; }
-    if (name !== undefined ? !(name === null || typeof name === "boolean" || typeof name === "bigint" || this.values.isString(name)) :
-        getter instanceof InstanceValue || getter instanceof PropertyValue || getter instanceof ClassValue && getter.metaclass !== null)
-      this.fail("UnsupportedOperationError", "Property name diagnostic callbacks require a separate stage.", "UNSUPPORTED");
-    this.fail("AttributeError", "Property has no " + operation + ".");
+  missingPropertyAccessor(property, operation, receiver) {
+    return {kind: "call", callable: this.builtin("property-no-" + operation), args: [property, receiver]};
   }
   propertyCopyArguments(property, method, replacement) {
     const fields = [property.fget, property.fset, property.fdel];

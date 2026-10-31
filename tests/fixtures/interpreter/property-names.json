@@ -8,7 +8,8 @@
     "O38",
     "O39",
     "O43",
-    "O71"
+    "O71",
+    "O90"
   ],
   "cases": [
     {
@@ -479,7 +480,7 @@
     },
     {
       "id": "diagnostic-get",
-      "stage": "Future",
+      "stage": "O90",
       "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property()\np.__name__=Name()\np.__get__(object())\n",
       "stdout": "entered\n",
       "error_type": "AttributeError",
@@ -492,7 +493,7 @@
     },
     {
       "id": "diagnostic-set",
-      "stage": "Future",
+      "stage": "O90",
       "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property(lambda obj:0)\np.__name__=Name()\np.__set__(object(),7)\n",
       "stdout": "entered\n",
       "error_type": "AttributeError",
@@ -505,7 +506,7 @@
     },
     {
       "id": "diagnostic-delete",
-      "stage": "Future",
+      "stage": "O90",
       "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property(lambda obj:0)\np.__name__=Name()\np.__delete__(object())\n",
       "stdout": "entered\n",
       "error_type": "AttributeError",
@@ -518,7 +519,7 @@
     },
     {
       "id": "diagnostic-implicit",
-      "stage": "Future",
+      "stage": "O90",
       "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"name\"\np=property()\nclass C: field=p\np.__name__=Name()\nC().field\n",
       "stdout": "entered\n",
       "error_type": "AttributeError",
@@ -540,7 +541,8 @@
           "function": "<module>",
           "line": 7
         }
-      ]
+      ],
+      "owner": "#127"
     }
   ]
 }

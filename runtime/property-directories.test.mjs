@@ -59,9 +59,9 @@ test('property directories obey real instruction, work and allocation limits', a
   }
 });
 
-test('native directory access does not widen other property reflection', async () => {
-  for (const source of ['p=property()\nobject.__getattribute__(p,"__dict__")\n', 'p=property()\np.__reduce__()\n']) {
+test('native property attributes distinguish missing storage from serialization boundaries', async () => {
+  for (const [source, code, type] of [['p=property()\nobject.__getattribute__(p,"__dict__")\n', 'PYTHON', 'AttributeError'], ['p=property()\np.__reduce__()\n', 'UNSUPPORTED', 'UnsupportedOperationError']]) {
     const result = await run(source);
-    assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+    assert.equal(result.error?.code, code); assert.equal(result.error?.type, type); closed(result.closed);
   }
 });

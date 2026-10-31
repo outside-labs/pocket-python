@@ -1,0 +1,625 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-property-diagnostics/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O90"
+  ],
+  "cases": [
+    {
+      "id": "getter-name-unset",
+      "stage": "O90",
+      "source": "p=property()\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property of 'Outer.Inner' object has no getter\n"
+    },
+    {
+      "id": "getter-name-text",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=\"field\"\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'field' of 'Outer.Inner' object has no getter\n"
+    },
+    {
+      "id": "getter-name-none",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=None\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property None of 'Outer.Inner' object has no getter\n"
+    },
+    {
+      "id": "getter-name-bool",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=True\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property True of 'Outer.Inner' object has no getter\n"
+    },
+    {
+      "id": "getter-name-int",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=7\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 7 of 'Outer.Inner' object has no getter\n"
+    },
+    {
+      "id": "getter-name-bytes",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=b\"field\"\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property b'field' of 'Outer.Inner' object has no getter\n"
+    },
+    {
+      "id": "getter-repr-bound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: p.__get__(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no getter\n"
+    },
+    {
+      "id": "getter-repr-unbound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: property.__get__(p,obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no getter\n"
+    },
+    {
+      "id": "getter-repr-rebound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: property.__get__.__get__(p)(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no getter\n"
+    },
+    {
+      "id": "getter-repr-success",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no getter\n"
+    },
+    {
+      "id": "getter-repr-error",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  raise ValueError(\"original\")\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\noriginal\n"
+    },
+    {
+      "id": "getter-repr-wrong",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return 7\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\n__repr__ returned non-string (type int)\n"
+    },
+    {
+      "id": "getter-repr-attribute-error",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  raise AttributeError(\"original\")\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\noriginal\n"
+    },
+    {
+      "id": "getter-actual-type",
+      "stage": "O90",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__qualname__\": raise ValueError(\"bad\")\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M):\n @property\n def __class__(self): raise ValueError(\"bad\")\np=property()\np.__name__=\"field\"\ntarget=C()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'field' of 'C' object has no getter\n"
+    },
+    {
+      "id": "getter-qualification-snapshot",
+      "stage": "O90",
+      "source": "class A: pass\nclass B: pass\ntarget=A()\nclass Name:\n def __repr__(self):\n  target.__class__=B\n  A.__qualname__=\"changed\"\n  p.__name__=\"changed\"\n  return \"field\"\np=property()\np.__name__=Name()\ntry: p.__get__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\nprint(type(target).__name__,p.__name__)\n",
+      "stdout": "property field of 'A' object has no getter\nB changed\n"
+    },
+    {
+      "id": "setter-name-unset",
+      "stage": "O90",
+      "source": "p=property()\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property of 'Outer.Inner' object has no setter\n"
+    },
+    {
+      "id": "setter-name-text",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=\"field\"\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'field' of 'Outer.Inner' object has no setter\n"
+    },
+    {
+      "id": "setter-name-none",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=None\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property None of 'Outer.Inner' object has no setter\n"
+    },
+    {
+      "id": "setter-name-bool",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=True\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property True of 'Outer.Inner' object has no setter\n"
+    },
+    {
+      "id": "setter-name-int",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=7\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 7 of 'Outer.Inner' object has no setter\n"
+    },
+    {
+      "id": "setter-name-bytes",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=b\"field\"\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property b'field' of 'Outer.Inner' object has no setter\n"
+    },
+    {
+      "id": "setter-repr-bound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: p.__set__(obj,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no setter\n"
+    },
+    {
+      "id": "setter-repr-unbound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: property.__set__(p,obj,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no setter\n"
+    },
+    {
+      "id": "setter-repr-rebound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: property.__set__.__get__(p)(obj,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no setter\n"
+    },
+    {
+      "id": "setter-repr-success",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no setter\n"
+    },
+    {
+      "id": "setter-repr-error",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  raise ValueError(\"original\")\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\noriginal\n"
+    },
+    {
+      "id": "setter-repr-wrong",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return 7\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\n__repr__ returned non-string (type int)\n"
+    },
+    {
+      "id": "setter-repr-attribute-error",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  raise AttributeError(\"original\")\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\noriginal\n"
+    },
+    {
+      "id": "setter-actual-type",
+      "stage": "O90",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__qualname__\": raise ValueError(\"bad\")\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M):\n @property\n def __class__(self): raise ValueError(\"bad\")\np=property()\np.__name__=\"field\"\ntarget=C()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'field' of 'C' object has no setter\n"
+    },
+    {
+      "id": "setter-qualification-snapshot",
+      "stage": "O90",
+      "source": "class A: pass\nclass B: pass\ntarget=A()\nclass Name:\n def __repr__(self):\n  target.__class__=B\n  A.__qualname__=\"changed\"\n  p.__name__=\"changed\"\n  return \"field\"\np=property()\np.__name__=Name()\ntry: p.__set__(target,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\nprint(type(target).__name__,p.__name__)\n",
+      "stdout": "property field of 'A' object has no setter\nB changed\n"
+    },
+    {
+      "id": "deleter-name-unset",
+      "stage": "O90",
+      "source": "p=property()\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property of 'Outer.Inner' object has no deleter\n"
+    },
+    {
+      "id": "deleter-name-text",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=\"field\"\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'field' of 'Outer.Inner' object has no deleter\n"
+    },
+    {
+      "id": "deleter-name-none",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=None\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property None of 'Outer.Inner' object has no deleter\n"
+    },
+    {
+      "id": "deleter-name-bool",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=True\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property True of 'Outer.Inner' object has no deleter\n"
+    },
+    {
+      "id": "deleter-name-int",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=7\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 7 of 'Outer.Inner' object has no deleter\n"
+    },
+    {
+      "id": "deleter-name-bytes",
+      "stage": "O90",
+      "source": "p=property()\np.__name__=b\"field\"\nclass Outer:\n class Inner: pass\ntarget=Outer.Inner()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property b'field' of 'Outer.Inner' object has no deleter\n"
+    },
+    {
+      "id": "deleter-repr-bound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: p.__delete__(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no deleter\n"
+    },
+    {
+      "id": "deleter-repr-unbound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: property.__delete__(p,obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no deleter\n"
+    },
+    {
+      "id": "deleter-repr-rebound",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\nobj=object()\ntry: property.__delete__.__get__(p)(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no deleter\n"
+    },
+    {
+      "id": "deleter-repr-success",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'object' object has no deleter\n"
+    },
+    {
+      "id": "deleter-repr-error",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  raise ValueError(\"original\")\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\noriginal\n"
+    },
+    {
+      "id": "deleter-repr-wrong",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return 7\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\n__repr__ returned non-string (type int)\n"
+    },
+    {
+      "id": "deleter-repr-attribute-error",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  raise AttributeError(\"original\")\np=property()\np.__name__=Name()\ntarget=object()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\noriginal\n"
+    },
+    {
+      "id": "deleter-actual-type",
+      "stage": "O90",
+      "source": "class M(type):\n def __getattribute__(cls,name):\n  if name==\"__qualname__\": raise ValueError(\"bad\")\n  return type.__getattribute__(cls,name)\nclass C(metaclass=M):\n @property\n def __class__(self): raise ValueError(\"bad\")\np=property()\np.__name__=\"field\"\ntarget=C()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'field' of 'C' object has no deleter\n"
+    },
+    {
+      "id": "deleter-qualification-snapshot",
+      "stage": "O90",
+      "source": "class A: pass\nclass B: pass\ntarget=A()\nclass Name:\n def __repr__(self):\n  target.__class__=B\n  A.__qualname__=\"changed\"\n  p.__name__=\"changed\"\n  return \"field\"\np=property()\np.__name__=Name()\ntry: p.__delete__(target)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\nprint(type(target).__name__,p.__name__)\n",
+      "stdout": "property field of 'A' object has no deleter\nB changed\n"
+    },
+    {
+      "id": "implicit-getter",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\nclass C: field=p\np.__name__=Name()\nobj=C()\ntry:\n obj.field\nexcept AttributeError as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'C' object has no getter\n"
+    },
+    {
+      "id": "implicit-setter",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\nclass C: field=p\np.__name__=Name()\nobj=C()\ntry:\n obj.field=7\nexcept AttributeError as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'C' object has no setter\n"
+    },
+    {
+      "id": "implicit-deleter",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\nclass C: field=p\np.__name__=Name()\nobj=C()\ntry:\n del obj.field\nexcept AttributeError as e: print(str(e))\n",
+      "stdout": "entered\nproperty field of 'C' object has no deleter\n"
+    },
+    {
+      "id": "setter-getter-name-success",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  return \"dynamic\"\np=property(Getter())\nobj=object()\ntry: p.__set__(obj,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty 'dynamic' of 'object' object has no setter\n"
+    },
+    {
+      "id": "deleter-getter-name-success",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  return \"dynamic\"\np=property(Getter())\nobj=object()\ntry: p.__delete__(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty 'dynamic' of 'object' object has no deleter\n"
+    },
+    {
+      "id": "setter-getter-name-missing",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  raise AttributeError(\"missing\")\np=property(Getter())\nobj=object()\ntry: p.__set__(obj,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty of 'object' object has no setter\n"
+    },
+    {
+      "id": "deleter-getter-name-missing",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  raise AttributeError(\"missing\")\np=property(Getter())\nobj=object()\ntry: p.__delete__(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty of 'object' object has no deleter\n"
+    },
+    {
+      "id": "setter-getter-name-error",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  raise ValueError(\"original\")\np=property(Getter())\nobj=object()\ntry: p.__set__(obj,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\noriginal\n"
+    },
+    {
+      "id": "deleter-getter-name-error",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  raise ValueError(\"original\")\np=property(Getter())\nobj=object()\ntry: p.__delete__(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\noriginal\n"
+    },
+    {
+      "id": "setter-getter-name-none",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  return None\np=property(Getter())\nobj=object()\ntry: p.__set__(obj,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty None of 'object' object has no setter\n"
+    },
+    {
+      "id": "deleter-getter-name-none",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  return None\np=property(Getter())\nobj=object()\ntry: p.__delete__(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty None of 'object' object has no deleter\n"
+    },
+    {
+      "id": "setter-getter-name-number",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  return 7\np=property(Getter())\nobj=object()\ntry: p.__set__(obj,7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty 7 of 'object' object has no setter\n"
+    },
+    {
+      "id": "deleter-getter-name-number",
+      "stage": "O90",
+      "source": "class Getter:\n def __call__(self,obj): return 7\n @property\n def __name__(self):\n  print(\"entered\")\n  return 7\np=property(Getter())\nobj=object()\ntry: p.__delete__(obj)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty 7 of 'object' object has no deleter\n"
+    },
+    {
+      "id": "getter-name-effect-before-qualification",
+      "stage": "O90",
+      "source": "class C: pass\nclass Getter:\n @property\n def __name__(self):\n  C.__qualname__=\"changed\"\n  p.__name__=\"later\"\n  return \"dynamic\"\np=property(Getter())\ntry: p.__set__(C(),7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'dynamic' of 'changed' object has no setter\n"
+    },
+    {
+      "id": "native-getter-name",
+      "stage": "O90",
+      "source": "p=property(len)\ntry: p.__set__([],7)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'len' of 'list' object has no setter\n"
+    },
+    {
+      "id": "string-subclass-name",
+      "stage": "O90",
+      "source": "class S(str):\n def __repr__(self):\n  print(\"entered\")\n  return \"custom\"\np=property()\np.__name__=S(\"field\")\ntry: p.__get__(object())\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty custom of 'object' object has no getter\n"
+    },
+    {
+      "id": "string-subclass-qualification",
+      "stage": "O90",
+      "source": "class S(str):\n def __repr__(self):\n  print(\"entered\")\n  return \"qualified\"\nclass C: pass\nC.__qualname__=S(\"C\")\np=property()\np.__name__=\"field\"\ntry: p.__get__(C())\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "entered\nproperty 'field' of qualified object has no getter\n"
+    },
+    {
+      "id": "property-subtype-name-hook-bypassed",
+      "stage": "O90",
+      "source": "class P(property):\n @property\n def __name__(self): raise ValueError(\"bad\")\np=P()\nproperty.__set_name__(p,None,\"field\")\ntry: property.__get__(p,object())\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property 'field' of 'object' object has no getter\n"
+    },
+    {
+      "id": "diagnostic-display-boundary",
+      "stage": "Future",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=[Name()]\np.__get__(object())\n",
+      "stdout": "entered\n",
+      "error_type": "AttributeError",
+      "owner": "#127"
+    },
+    {
+      "id": "copy-getter-bound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=p.getter(None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-getter-unbound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=property.getter(p,None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-getter-rebound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=property.getter.__get__(p)(None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-subtype-name-getter-False",
+      "stage": "O90",
+      "source": "class P(property):\n def __init__(self,*args):\n  property.__init__(self,*args)\n  property.__set_name__(self,None,\"constructor\")\np=P()\ndel p.__name__\nq=property.getter(p,None)\nprint(type(q) is P,hasattr(q,\"__name__\"),getattr(q,\"__name__\",\"missing\"))\n",
+      "stdout": "True False missing\n"
+    },
+    {
+      "id": "copy-subtype-name-getter-True",
+      "stage": "O90",
+      "source": "class P(property):\n def __init__(self,*args):\n  property.__init__(self,*args)\n  property.__set_name__(self,None,\"constructor\")\np=P()\nproperty.__set_name__(p,None,\"old\")\nq=property.getter(p,None)\nprint(type(q) is P,hasattr(q,\"__name__\"),getattr(q,\"__name__\",\"missing\"))\n",
+      "stdout": "True True old\n"
+    },
+    {
+      "id": "copy-raw-factory-getter",
+      "stage": "O90",
+      "source": "ready=False\nclass M(type):\n def __call__(cls,*args):\n  if ready:\n   print(\"entered\")\n   return property()\n  return type.__call__(cls,*args)\nclass P(property,metaclass=M): pass\np=P()\np.__name__=\"old\"\nready=True\nq=property.getter(p,None)\nprint(type(q) is property,q.__name__)\n",
+      "stdout": "entered\nTrue old\n"
+    },
+    {
+      "id": "copy-arbitrary-factory-getter",
+      "stage": "O90",
+      "source": "ready=False\nresult=[]\nclass M(type):\n def __call__(cls,*args):\n  if ready: return result\n  return type.__call__(cls,*args)\nclass P(property,metaclass=M): pass\np=P()\nready=True\nprint(property.getter(p,None) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "copy-signature-getter-missing",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.getter()\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.getter() takes exactly one argument (0 given)\n"
+    },
+    {
+      "id": "copy-signature-getter-extra",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.getter(None,None)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.getter() takes exactly one argument (2 given)\n"
+    },
+    {
+      "id": "copy-signature-getter-keyword",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.getter(fget=None)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.getter() takes no keyword arguments\n"
+    },
+    {
+      "id": "copy-setter-bound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=p.setter(None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-setter-unbound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=property.setter(p,None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-setter-rebound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=property.setter.__get__(p)(None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-subtype-name-setter-False",
+      "stage": "O90",
+      "source": "class P(property):\n def __init__(self,*args):\n  property.__init__(self,*args)\n  property.__set_name__(self,None,\"constructor\")\np=P()\ndel p.__name__\nq=property.setter(p,None)\nprint(type(q) is P,hasattr(q,\"__name__\"),getattr(q,\"__name__\",\"missing\"))\n",
+      "stdout": "True False missing\n"
+    },
+    {
+      "id": "copy-subtype-name-setter-True",
+      "stage": "O90",
+      "source": "class P(property):\n def __init__(self,*args):\n  property.__init__(self,*args)\n  property.__set_name__(self,None,\"constructor\")\np=P()\nproperty.__set_name__(p,None,\"old\")\nq=property.setter(p,None)\nprint(type(q) is P,hasattr(q,\"__name__\"),getattr(q,\"__name__\",\"missing\"))\n",
+      "stdout": "True True old\n"
+    },
+    {
+      "id": "copy-raw-factory-setter",
+      "stage": "O90",
+      "source": "ready=False\nclass M(type):\n def __call__(cls,*args):\n  if ready: return property()\n  return type.__call__(cls,*args)\nclass P(property,metaclass=M): pass\np=P()\np.__name__=\"old\"\nready=True\nq=property.setter(p,None)\nprint(type(q) is property,q.__name__)\n",
+      "stdout": "True old\n"
+    },
+    {
+      "id": "copy-arbitrary-factory-setter",
+      "stage": "O90",
+      "source": "ready=False\nresult=[]\nclass M(type):\n def __call__(cls,*args):\n  if ready: return result\n  return type.__call__(cls,*args)\nclass P(property,metaclass=M): pass\np=P()\nready=True\nprint(property.setter(p,None) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "copy-signature-setter-missing",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.setter()\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.setter() takes exactly one argument (0 given)\n"
+    },
+    {
+      "id": "copy-signature-setter-extra",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.setter(None,None)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.setter() takes exactly one argument (2 given)\n"
+    },
+    {
+      "id": "copy-signature-setter-keyword",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.setter(fget=None)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.setter() takes no keyword arguments\n"
+    },
+    {
+      "id": "copy-deleter-bound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=p.deleter(None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-deleter-unbound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=property.deleter(p,None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-deleter-rebound",
+      "stage": "O90",
+      "source": "def f(obj,*args):\n \"document\"\n return 7\np=property(f,f,f)\np.__name__=\"field\"\nq=property.deleter.__get__(p)(None)\nprint(q is p,q.fget is f,q.fset is f,q.fdel is f,q.__name__,q.__doc__)\n",
+      "stdout": "False True True True field document\n"
+    },
+    {
+      "id": "copy-subtype-name-deleter-False",
+      "stage": "O90",
+      "source": "class P(property):\n def __init__(self,*args):\n  property.__init__(self,*args)\n  property.__set_name__(self,None,\"constructor\")\np=P()\ndel p.__name__\nq=property.deleter(p,None)\nprint(type(q) is P,hasattr(q,\"__name__\"),getattr(q,\"__name__\",\"missing\"))\n",
+      "stdout": "True False missing\n"
+    },
+    {
+      "id": "copy-subtype-name-deleter-True",
+      "stage": "O90",
+      "source": "class P(property):\n def __init__(self,*args):\n  property.__init__(self,*args)\n  property.__set_name__(self,None,\"constructor\")\np=P()\nproperty.__set_name__(p,None,\"old\")\nq=property.deleter(p,None)\nprint(type(q) is P,hasattr(q,\"__name__\"),getattr(q,\"__name__\",\"missing\"))\n",
+      "stdout": "True True old\n"
+    },
+    {
+      "id": "copy-raw-factory-deleter",
+      "stage": "O90",
+      "source": "ready=False\nclass M(type):\n def __call__(cls,*args):\n  if ready: return property()\n  return type.__call__(cls,*args)\nclass P(property,metaclass=M): pass\np=P()\np.__name__=\"old\"\nready=True\nq=property.deleter(p,None)\nprint(type(q) is property,q.__name__)\n",
+      "stdout": "True old\n"
+    },
+    {
+      "id": "copy-arbitrary-factory-deleter",
+      "stage": "O90",
+      "source": "ready=False\nresult=[]\nclass M(type):\n def __call__(cls,*args):\n  if ready: return result\n  return type.__call__(cls,*args)\nclass P(property,metaclass=M): pass\np=P()\nready=True\nprint(property.deleter(p,None) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "copy-signature-deleter-missing",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.deleter()\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.deleter() takes exactly one argument (0 given)\n"
+    },
+    {
+      "id": "copy-signature-deleter-extra",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.deleter(None,None)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.deleter() takes exactly one argument (2 given)\n"
+    },
+    {
+      "id": "copy-signature-deleter-keyword",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.deleter(fget=None)\nexcept (AttributeError,TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "property.deleter() takes no keyword arguments\n"
+    },
+    {
+      "id": "copy-doc-name-mutation",
+      "stage": "O90",
+      "source": "class Getter:\n @property\n def __doc__(self):\n  if ready:\n   print(\"entered\")\n   p.__name__=\"late\"\n  return \"document\"\nready=False\np=property(Getter())\np.__name__=\"old\"\nready=True\nq=property.setter(p,None)\nprint(q.__name__,q.__doc__)\n",
+      "stdout": "entered\nlate document\n"
+    },
+    {
+      "id": "repr-string-subclass-result",
+      "stage": "O90",
+      "source": "class S(str): pass\nresult=S(\"rendered\")\nclass Name:\n def __repr__(self): return result\np=property()\np.__name__=Name()\ntry: p.__get__(object())\nexcept AttributeError as e: print(str(e))\nprint(repr(Name()) is result)\n",
+      "stdout": "property rendered of 'object' object has no getter\nTrue\n"
+    },
+    {
+      "id": "implicit-getattr-fallback",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\nclass C:\n field=p\n def __getattr__(self,name):\n  print(\"fallback\",name)\n  return [7]\np.__name__=Name()\nprint(C().field[0])\n",
+      "stdout": "entered\nfallback field\n7\n"
+    },
+    {
+      "id": "getattr-default",
+      "stage": "O90",
+      "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\nclass C: field=p\np.__name__=Name()\nprint(getattr(C(),\"field\",7))\n",
+      "stdout": "entered\n7\n"
+    },
+    {
+      "id": "qualification-owned-after-name-mutation",
+      "stage": "O90",
+      "source": "class S(str):\n def __repr__(self):\n  print(\"entered\")\n  return \"qualified\"\nclass C: pass\nC.__qualname__=S(\"C\")\nclass Name:\n def __repr__(self):\n  p.__name__=None\n  C.__qualname__=\"changed\"\n  return \"field\"\np=property()\np.__name__=Name()\ntry: p.__get__(C())\nexcept AttributeError as e: print(str(e))\nprint(C.__qualname__)\n",
+      "stdout": "entered\nproperty field of qualified object has no getter\nchanged\n"
+    },
+    {
+      "id": "property-ordinary-missing-attribute",
+      "stage": "O90",
+      "source": "p=property()\nprint(hasattr(p,\"missing\"),getattr(p,\"missing\",7))\ntry: object.__getattribute__(p,\"missing\")\nexcept AttributeError as e: print(str(e))\n",
+      "stdout": "False 7\n'property' object has no attribute 'missing'\n"
+    },
+    {
+      "id": "none-target-setter",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.__set__(None,7)\nexcept AttributeError as e: print(str(e))\n",
+      "stdout": "property of 'NoneType' object has no setter\n"
+    },
+    {
+      "id": "none-target-deleter",
+      "stage": "O90",
+      "source": "p=property()\ntry: p.__delete__(None)\nexcept AttributeError as e: print(str(e))\n",
+      "stdout": "property of 'NoneType' object has no deleter\n"
+    }
+  ]
+}

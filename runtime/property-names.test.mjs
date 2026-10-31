@@ -26,8 +26,8 @@ for (const item of corpus.cases.filter(item => corpus.implemented_stages.include
     closed(result.closed);
   });
 }
-for (const item of corpus.cases.filter(item => item.id.startsWith('diagnostic-'))) {
-  test('property diagnostic refusal: ' + item.id, async () => {
+for (const item of corpus.cases.filter(item => item.stage === 'Future' && item.id.startsWith('diagnostic-'))) {
+  test('property diagnostic display boundary: ' + item.id, async () => {
     const result = await run(item.source);
     assert.equal(result.error?.code, 'UNSUPPORTED', JSON.stringify(result.error));
     assert.equal(result.stdout, ''); closed(result.closed);

@@ -652,10 +652,23 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (++depth > maxDepth) python("RecursionError", "maximum property documentation lookup depth exceeded");
     return attributeTask(getter, "__doc__", site, continuation("property-documentation", record), depth);
   };
+  const propertyDiagnostic = (record, site) => {
+    const type = classes.typeOf(record.target);
+    const qualification = type.identityQualname ?? values.string(Array.from(type.qualname ?? type.name, char => char.codePointAt(0)));
+    state.temporaries.push(qualification);
+    const next = {...record, qualification, phase: record.found ? "name" : "qualification"};
+    return unaryTask("repr", record.found ? record.name : qualification, site, continuation("property-diagnostic", next), record.depth);
+  };
   const recover = (value, completion, site) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "property-diagnostic" && current.phase === "lookup" && value.name === "AttributeError")
+        return propertyDiagnostic({...current, found: false, name: null}, site);
+      if (current.kind === "property-diagnostic") {
+        const binding = bindingRecovery(value, current.after, site);
+        if (binding) return binding;
+      }
       if (current.kind === "arithmetic-order" && value.name === "AttributeError" && ["right", "left"].includes(current.phase))
         return arithmeticOrder(current.task, current.phase === "left", site);
       if (current.kind === "namespace-lookup" && current.phase < 0)
@@ -744,7 +757,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (typeof value !== "bigint" && typeof value !== "boolean") python("TypeError", "__index__ returned a non-integer value");
         if (typeof value === "boolean") value = values.int(BigInt(value));
       } else if (completion.kind === "format-result") {
-        if (!values.isString(value)) python("TypeError", completion.slot + " returned a non-string value");
+        if (!values.isString(classes.payload(value))) python("TypeError", completion.slot + " returned non-string (type " + classes.typeOf(value).name + ")");
       } else if (completion.kind === "protocol-result") {
         if (completion.slot === "__bool__") {
           if (typeof value !== "boolean") python("TypeError", "__bool__() should return bool");
@@ -1020,9 +1033,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return valueTask(null, site, completion.after);
     }
     if (completion?.kind === "native-property-copy") {
-      if (value instanceof InstanceValue && value.nativePayload instanceof PropertyValue && completion.receiver.nativePayload.propertyName !== undefined)
-        classes.mutate(value.nativePayload, "__name__", completion.receiver.nativePayload.propertyName);
+      const copy = classes.payload(value), original = classes.payload(completion.receiver);
+      if (copy instanceof PropertyValue) classes.mutate(copy, "__name__", original.propertyName, original.propertyName === undefined);
       return valueTask(value, site, completion.after);
+    }
+    if (completion?.kind === "property-diagnostic") {
+      if (completion.phase === "lookup") return propertyDiagnostic({...completion, name: value, found: true}, site);
+      const rendered = classes.payload(value);
+      if (completion.phase === "name") return unaryTask("repr", completion.qualification, site,
+        continuation("property-diagnostic", {...completion, phase: "qualification", renderedName: rendered}), completion.depth);
+      const message = "property " + (completion.found ? values.text(completion.renderedName) + " " : "") +
+        "of " + values.text(rendered) + " object has no " + completion.operation;
+      const owned = values.string(Array.from(message, char => char.codePointAt(0))); state.temporaries.push(owned);
+      python("AttributeError", values.text(owned));
     }
     if (completion?.kind === "native-new") {
       if (!(completion.type instanceof ClassValue)) return valueTask(value, site, completion.after);
@@ -2351,6 +2374,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           const nativeOwner = callable.nativeOwner instanceof BuiltinValue ? callable.nativeOwner.name : callable.name.split(".")[0];
           const nativeName = callable.nativeKey ?? callable.name.slice(callable.name.indexOf(".") + 1);
+          if (["property-no-getter", "property-no-setter", "property-no-deleter"].includes(callable.name)) {
+            if (++depth > maxDepth) python("RecursionError", "maximum property diagnostic depth exceeded");
+            const receiver = args[0], record = {receiver, target: args[1], operation: callable.name.slice("property-no-".length), phase: "lookup", depth, after: completion};
+            if (receiver.propertyName !== undefined || receiver.fget === null) {
+              task = propertyDiagnostic({...record, found: receiver.propertyName !== undefined, name: receiver.propertyName ?? null}, site); continue;
+            }
+            task = attributeTask(receiver.fget, "__name__", site, continuation("property-diagnostic", record), depth); continue;
+          }
           if (callable.name === "method" && !callable.nativeKind || nativeOwner === "method" && nativeName === "__new__") {
             const operands = nativeName === "__new__" ? args.slice(1) : args;
             if (nativeName === "__new__" && args[0] !== classes.builtin("method")) python("TypeError", "method.__new__ requires the method type");
@@ -2370,10 +2401,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 " argument" + (expected === 1 ? "" : "s") + ", got " + count);
             }
           }
-          if (nativeKind === "method_descriptor" && ["__getitem__", "__round__", "__dir__", "__set_name__"].includes(nativeName)) {
+          if (nativeKind === "method_descriptor" && (["__getitem__", "__round__", "__dir__", "__set_name__"].includes(nativeName) || nativeOwner === "property" && ["getter", "setter", "deleter"].includes(nativeName))) {
             const count = args.length - 1;
             if (keywords.length) python("TypeError", (nativeName === "__set_name__" ? nativeName : nativeOwner + "." + nativeName) + "() takes no keyword arguments");
             if (nativeName === "__getitem__" && count !== 1) python("TypeError", nativeOwner + ".__getitem__() takes exactly one argument (" + count + " given)");
+            if (nativeOwner === "property" && ["getter", "setter", "deleter"].includes(nativeName) && count !== 1)
+              python("TypeError", "property." + nativeName + "() takes exactly one argument (" + count + " given)");
             if (nativeName === "__dir__" && count !== 0) python("TypeError", nativeOwner + ".__dir__() takes no arguments (" + count + " given)");
             if (nativeName === "__round__" && count > 1) python("TypeError", "__round__ expected at most 1 argument, got " + count);
             if (nativeName === "__set_name__" && count !== 2) python("TypeError", "__set_name__() takes 2 positional arguments but " + count + " were given");
@@ -2937,7 +2970,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               task = valueTask(receiver, site, completion); continue;
             }
             const accessor = receiver[reading ? "fget" : setting ? "fset" : "fdel"];
-            if (accessor === null) classes.missingPropertyAccessor(receiver, reading ? "getter" : setting ? "setter" : "deleter");
+            if (accessor === null) {
+              task = callTask(classes.builtin("property-no-" + (reading ? "getter" : setting ? "setter" : "deleter")), [receiver, target], [], [], site, completion, depth); continue;
+            }
             const after = reading ? continuation("relay", {receiver, after: completion}) :
               continuation("attribute-write", {receiver, after: completion});
             task = callTask(accessor, setting ? [target, args[2]] : [target], [], [], site, after, depth); continue;
@@ -2965,7 +3000,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
             const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && (args[0] instanceof FunctionValue || classes.isPythonMethod(args[0]));
             const directoryLayout = classes.hasFixedDirectory(args[0]) && name === "__dir__";
-            if (!(args[0] instanceof FrameValue || args[0] instanceof FrameLocalsValue || args[0] instanceof GeneratorValue || args[0] instanceof Cell || args[0] instanceof CodeValue || args[0] instanceof InstanceValue || args[0] instanceof MethodWrapperValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
+            if (!(args[0] instanceof FrameValue || args[0] instanceof FrameLocalsValue || args[0] instanceof GeneratorValue || args[0] instanceof Cell || args[0] instanceof CodeValue || args[0] instanceof InstanceValue || args[0] instanceof PropertyValue || args[0] instanceof MethodWrapperValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             if (identityLayout && !writing && classes.isPythonMethod(args[0])) python("AttributeError", "Method identity metadata requires ordinary callable fallback.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
