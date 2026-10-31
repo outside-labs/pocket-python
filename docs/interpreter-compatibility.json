@@ -2869,9 +2869,9 @@
     },
     {
       "id": "compile",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "O91 bounded independent compilation in exec/eval/single modes, owned verified code metadata, UTF-8 source/buffers, optimization and total caller limits; see docs/interpreter-dynamic-source.md.",
+      "gaps": "AST, future/async/incomplete flags, filesystem path adapters, foreign executable data and grammar outside the admitted source profile retain explicit boundaries.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2883,7 +2883,11 @@
       "probes": [
         "builtin-compile"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/dynamic-compile.json:mode-exec",
+        "tests/fixtures/interpreter/dynamic-compile.json:conversion-order",
+        "tests/fixtures/interpreter/dynamic-compile.json:syntax-catch"
+      ]
     },
     {
       "id": "complex",
