@@ -665,6 +665,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     for (let current = completion; current; current = current.after) {
       if (current.kind === "property-diagnostic" && current.phase === "lookup" && value.name === "AttributeError")
         return propertyDiagnostic({...current, found: false, name: null}, site);
+      if (current.kind === "property-diagnostic") {
+        const binding = bindingRecovery(value, current.after, site);
+        if (binding) return binding;
+      }
       if (current.kind === "arithmetic-order" && value.name === "AttributeError" && ["right", "left"].includes(current.phase))
         return arithmeticOrder(current.task, current.phase === "left", site);
       if (current.kind === "namespace-lookup" && current.phase < 0)
