@@ -42,7 +42,7 @@ def audit(root=ROOT):
     assert set(corpora) == set(manifest['source_corpora']), 'O-corpus inventory drift'
     expected = {(row['corpus'], row['case'], row['owner'], row['boundary']) for row in manifest['boundary_cases']}
     assert boundaries == expected, 'Unreconciled O-corpus boundary'
-    assert {f'O{n}' for n in range(1, 96)} <= stages, 'Missing delivered stage evidence'
+    assert {f'O{n}' for n in range(1, 97)} <= stages, 'Missing delivered stage evidence'
     recorded = manifest['source_refusals']
     assert all(row['owner'] in allowed and row['boundary'] for row in recorded)
     assert refusal_sites(root) == {(r['path'], r['site']) for r in recorded}, 'Unreviewed source refusal'

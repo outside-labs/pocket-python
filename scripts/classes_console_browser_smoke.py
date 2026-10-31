@@ -330,6 +330,9 @@ def smoke(channel=None):
                     dynamic_imports = json.loads((ROOT / 'tests/fixtures/interpreter/dynamic-imports.json').read_bytes())
                     programs.extend(case['source'] for case in dynamic_imports['cases'] if 'error_type' not in case and not case.get('modules'))
                     programs.append(MODULE_REASSIGNMENT_SOURCE)
+                    object_integration = json.loads((ROOT / 'tests/fixtures/interpreter/object-integration.json').read_bytes())
+                    programs.extend(case['source'] for case in object_integration['cases'] if 'error_type' not in case and not case.get('modules'))
+                    programs.append((ROOT / 'examples/interpreter_object_integration.py').read_text(encoding='utf-8'))
                     mutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/mutable-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in mutable_subclasses['cases'] if 'error_type' not in c)
                     immutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/immutable-subclasses.json').read_bytes())
@@ -375,6 +378,13 @@ def smoke(channel=None):
                                 except Exception as error:
                                     raise AssertionError('Native namespace error case: ' + case['id']) from error
                     checks.append('native-namespace-and-live-proxy-errors-after-offline-reload')
+                    for case in object_integration['cases']:
+                        if 'error_type' in case and not case.get('modules'):
+                            refused(case['source'], case['error_type'] + ':')
+                            assert page.locator('#result').inner_text() == case['stdout']
+                            if case['id'] == 'dynamic-original-source-failure':
+                                assert 'fail at composed-original.py:4' in page.locator('#diagnostic').inner_text()
+                    checks.append('composed-object-dynamic-code-and-original-errors-after-offline-reload')
                     refused('class A:\n def fail(self): return 1//0\nA().fail()\n', 'ZeroDivisionError:')
                     assert 'sources/app.py:2' in page.locator('#status').inner_text()
                     assert 'fail at sources/app.py:2' in page.locator('#diagnostic').inner_text()
@@ -1257,11 +1267,13 @@ def smoke(channel=None):
                         'class D:\n def __get__(self,obj,owner):\n  print("entered")\n  while True: pass\nclass Entry: __lt__=D()\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n',
                         'class Truth:\n def __bool__(self):\n  print("entered")\n  while True: pass\nclass Entry:\n def __lt__(self,other): return Truth()\nclass A:\n def __dir__(self): return [Entry(),Entry()]\ndir(A())\n',
                     ])
+                    composed_busy = 'import operator\nnamespace={"add":operator.add}\nexec("class Box:\\n __slots__=(\'value\',)\\n def __init__(self): self.value=[7]\\n @property\\n def field(self):\\n  print(\'entered\')\\n  while True: self.value[0]=add(self.value[0],1)\\nbox=Box()\\nbox.field",namespace)\n'
+                    busy.append(composed_busy)
                     for cycle in range(len(busy)):
                         page.fill('#input', busy[cycle % len(busy)])
                         page.click('#run')
                         page.wait_for_function("()=>document.querySelector('#status').textContent==='Running…'")
-                        if 'print("entered")' in busy[cycle]:
+                        if 'print("entered")' in busy[cycle] or busy[cycle] == composed_busy:
                             page.wait_for_function("()=>document.querySelector('#result').textContent.includes('entered\\n')")
                         page.wait_for_timeout(25)
                         before = time.perf_counter()
@@ -1277,6 +1289,7 @@ def smoke(channel=None):
                         ready()
                         run(SOURCE, cases[0]['stdout'])
                     checks.append('call-truth-format-index-iteration-containment-equality-hash-and-pending-bindings-stop-with-fresh-restarts')
+                    checks.append('composed-dynamic-slotted-descriptor-stops-after-entry-and-restarts-fresh')
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/nested/classes')
                     shutil.copytree(root / 'reduced', root / 'site/nested/classes')
