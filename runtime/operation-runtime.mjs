@@ -1,3 +1,4 @@
+import {dynamicEvaluator} from "./dynamic-evaluation.mjs";
 import {dynamicCompiler} from "./dynamic-source.mjs";
 import {NATIVE_SUBCLASS_BASES} from "./class-values.mjs";
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, NATIVE_PROTOCOL_KEYS, allowsClassSpecial} from "./class-policy.mjs";
@@ -23,6 +24,7 @@ const NATIVE_ARITIES = Object.freeze({
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const compiler = dynamicCompiler({state, memory, values, classes, allocate, charge, python, hard});
+  const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, compiler, python});
   const userProtocol = value => classes.protocolObject(value);
   const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
   const methodCompare = (receiver, other, invert, site, after, depth) => {
@@ -708,6 +710,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         return valueTask(null, site, continuation("class-base-missing", current));
       if (current.kind === "bases-walk" && value.name === "AttributeError") return basesNext(current, site);
       if (current.kind === "method-dir-dictionary" && value.name === "AttributeError") return methodDirectory(current, null, site);
+      if (current.kind === "global-mapping-name" && value.name === "KeyError") {
+        const result = builtinLookup(state.frames.at(-1), current.name, site, current.after); return result.task || valueTask(result.value, site, current.after);
+      }
+      if (current.kind === "builtin-mapping-name" && value.name === "KeyError") python("NameError", "name '" + current.name + "' is not defined");
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
@@ -855,6 +861,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (value.items[0]) { keys.push(completion.names[completion.position]); items.push(value.items[1]); }
       return functionDefaultsNext({...completion, keys, items, position: completion.position + 1}, site);
     }
+    if (["global-mapping-name", "builtin-mapping-name"].includes(completion?.kind)) return valueTask(value, site, completion.after);
     if (completion?.kind === "builtin-name") {
       if (!value.items[0]) python("NameError", "name '" + completion.name + "' is not defined");
       return valueTask(value.items[1], site, completion.after);
@@ -874,7 +881,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const frame = state.frames.at(-1);
       if (frame.closure.has(completion.name) && !frame.fn.locals.includes(completion.name) && !frame.fn.globals?.includes(completion.name)) return valueTask(load(frame, completion.name), site, completion.after);
       const dictionary = frame.callable.globals.dictionary;
-      if (dictionary === null) {
+      if (dictionary === null || frame.callable.globals.dictionaryIdentity) {
         const result = loadName(frame, completion.name, site, completion.after, true);
         return result.task ?? valueTask(result.value, site, completion.after);
       }
@@ -1397,6 +1404,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const parts = [...completion.parts]; parts[[2, 0, 1][completion.position]] = value;
       return sliceNext(completion.receiver, parts, completion.position, site, completion.after, completion.depth, completion.operation, completion.item);
     }
+    if (["eval-locals", "eval-builtins-probe", "eval-builtins-default", "eval-builtins-stored"].includes(completion?.kind)) return evaluator.resume(completion, value, site);
     if (completion?.kind === "single-display") { write(values.text(value) + "\n"); return valueTask(null, site, completion.after); }
     if (completion?.kind === "compile-argument") return compiler.converted(completion, value, site);
     if (completion?.kind === "print-argument") return printNext(completion.args, completion.index + 1,
@@ -2376,6 +2384,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
+          if (callable.name === "eval") { task = evaluator.start(args, keywords, keywordValues, site, completion); continue; }
           if (callable.name === "compile") { task = compiler.start(args, keywords, keywordValues, site, completion); continue; }
           if (["getset_descriptor", "member_descriptor"].includes(callable.nativeKind)) python("TypeError", "Storage descriptor objects are not callable");
           const nativeKind = callable.nativeKind ?? classes.nativeDescriptorKind(callable);
@@ -3313,8 +3322,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               continue;
             }
             const frame = state.frames.at(-1);
-            if (frame.index === 0 || frame.fn.kind === "class") {
-              const dictionary = frame.fn.kind === "class" ? classNamespace(frame) : values.environmentDictionary(frame.callable.globals);
+            if (frame.dynamicNamespace || frame.index === 0 || frame.fn.kind === "class") {
+              const dictionary = frame.fn.kind === "class" || frame.dynamicNamespace ? classNamespace(frame) : values.environmentDictionary(frame.callable.globals);
               if (callable.name === "dir" && !values.isDict(dictionary)) {
                 task = attributeTask(dictionary, "keys", site, continuation("class-mapping-dir-call", {receiver: dictionary, depth, after: completion})); continue;
               }

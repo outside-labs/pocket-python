@@ -529,3 +529,8 @@ from the admitted independent source grammar, with exec/eval/single modes,
 UTF-8 and adopted buffers, optimization and shared compilation limits. Eval,
 exec and dynamic import execution follow in O92–O94; O95–O96 retain final
 reconciliation and integrated acceptance.
+
+[O92 owned eval](interpreter-dynamic-source.md#o92-eval) enters admitted source
+or verified code on the current machine, using live module/class namespaces,
+optimized-local snapshots or exact supplied globals/locals/builtins. Callback
+lookup, source diagnostics and total limits compose with O91.

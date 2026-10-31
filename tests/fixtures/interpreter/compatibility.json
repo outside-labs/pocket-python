@@ -944,17 +944,15 @@
     },
     {
       "id": "builtin-eval",
-      "source": "print(callable(eval))\n",
-      "classification": "deferred",
+      "source": "print(eval(\"7+9\",{\"__builtins__\":{}}))\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "16\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "16\n",
+        "error_type": null
       }
     },
     {

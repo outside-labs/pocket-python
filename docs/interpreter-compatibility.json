@@ -3874,9 +3874,9 @@
     },
     {
       "id": "eval",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "O92 owned expression/source and verified-code evaluation with exact namespaces, mapping callbacks, captured builtins, original diagnostics and shared limits.",
+      "gaps": "Code with free cells is rejected by eval; exec closure cells are O93. AST/future/async, foreign executable code and grammar outside the admitted source profile remain explicit boundaries.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -3888,7 +3888,11 @@
       "probes": [
         "builtin-eval"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/dynamic-eval.json:explicit-namespaces",
+        "tests/fixtures/interpreter/dynamic-eval.json:custom-locals",
+        "tests/fixtures/interpreter/dynamic-eval.json:default-function"
+      ]
     },
     {
       "id": "exec",

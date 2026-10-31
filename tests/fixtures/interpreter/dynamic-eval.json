@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-dynamic-eval/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O92"
+  ],
+  "cases": [
+    {
+      "id": "expression",
+      "stage": "O92",
+      "source": "print(eval(\"7+9*2\"),eval(b\"7+9\"),eval(\" \\t7+9 \\t\"))\n",
+      "stdout": "25 16 16\n"
+    },
+    {
+      "id": "compiled-expression",
+      "stage": "O92",
+      "source": "c=compile(\"7+9\",\"value.py\",\"eval\")\nprint(eval(c),c.co_filename)\n",
+      "stdout": "16 value.py\n"
+    },
+    {
+      "id": "compiled-statements",
+      "stage": "O92",
+      "source": "g={}\nprint(eval(compile(\"x=7\",\"value.py\",\"exec\"),g),g[\"x\"])\n",
+      "stdout": "None 7\n"
+    },
+    {
+      "id": "single-code",
+      "stage": "O92",
+      "source": "print(eval(compile(\"7; None; 'hello'\",\"value.py\",\"single\")))\n",
+      "stdout": "7\n'hello'\nNone\n"
+    },
+    {
+      "id": "default-module",
+      "stage": "O92",
+      "source": "x=7\nprint(eval(\"x\"),eval(\"globals() is locals()\"))\nprint(eval(\"globals()\") is globals())\n",
+      "stdout": "7 True\nTrue\n"
+    },
+    {
+      "id": "default-function",
+      "stage": "O92",
+      "source": "x=3\ndef f(x):\n y=9\n print(eval(\"x+y\"))\n print(eval(\"(x:=11)\"),x)\n print(eval(\"(created:=13)\"),\"created\" in locals())\nf(7)\nprint(x)\n",
+      "stdout": "16\n11 7\n13 False\n3\n"
+    },
+    {
+      "id": "default-closure",
+      "stage": "O92",
+      "source": "def outer():\n x=7\n def inner():\n  if False: print(x)\n  return eval(\"x\")\n return inner\nprint(outer()())\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "uncaptured-closure",
+      "stage": "O92",
+      "source": "def outer():\n x=7\n def inner(): return eval(\"x\")\n return inner\ntry: outer()()\nexcept NameError: print(\"not captured\")\n",
+      "stdout": "not captured\n"
+    },
+    {
+      "id": "default-class",
+      "stage": "O92",
+      "source": "class C:\n x=7\n y=eval(\"x+9\")\n same=eval(\"locals()\") is locals()\nprint(C.y,C.same)\n",
+      "stdout": "16 True\n"
+    },
+    {
+      "id": "explicit-namespaces",
+      "stage": "O92",
+      "source": "g={\"x\":7}\nl={\"x\":9}\nprint(eval(\"x\",g,l),eval(\"globals()\",g,l) is g,eval(\"locals()\",g,l) is l)\nprint(eval(\"x\",g),eval(\"locals()\",g) is g)\n",
+      "stdout": "9 True True\n7 True\n"
+    },
+    {
+      "id": "keyword-namespaces",
+      "stage": "O92",
+      "source": "g={\"x\":7}\nl={\"x\":9}\nprint(eval(\"x\",globals=g,locals=l),eval(\"x\",g,locals=l))\n",
+      "stdout": "9 9\n"
+    },
+    {
+      "id": "locals-only",
+      "stage": "O92",
+      "source": "x=7\nprint(eval(\"x+y\",locals={\"y\":9}))\n",
+      "stdout": "16\n"
+    },
+    {
+      "id": "walrus-locals",
+      "stage": "O92",
+      "source": "g={\"x\":7}\nl={}\nprint(eval(\"(x:=9)\",g,l),g[\"x\"],l[\"x\"])\n",
+      "stdout": "9 7 9\n"
+    },
+    {
+      "id": "walrus-same",
+      "stage": "O92",
+      "source": "g={}\nprint(eval(\"(x:=7)\",g),g[\"x\"])\n",
+      "stdout": "7 7\n"
+    },
+    {
+      "id": "defining-globals",
+      "stage": "O92",
+      "source": "g={\"x\":7}\nl={\"x\":9}\nf=eval(\"lambda: x\",g,l)\nprint(f(),f.__globals__ is g)\ng[\"x\"]=11\nprint(f())\n",
+      "stdout": "7 True\n11\n"
+    },
+    {
+      "id": "closure-lambda",
+      "stage": "O92",
+      "source": "g={\"x\":7}\nf=eval(\"lambda a: (lambda: a+x)\",g)(9)\nprint(f(),f.__closure__[0].cell_contents)\n",
+      "stdout": "16 9\n"
+    },
+    {
+      "id": "builtins-insertion",
+      "stage": "O92",
+      "source": "def f(): pass\ng={}\nprint(eval(\"7\",g),g[\"__builtins__\"] is f.__builtins__)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "limited-builtins",
+      "stage": "O92",
+      "source": "b={\"len\":len}\ng={\"__builtins__\":b}\nprint(eval(\"len([7,9])\",g),g[\"__builtins__\"] is b)\ntry: eval(\"open('file')\",g)\nexcept NameError: print(\"unavailable\")\n",
+      "stdout": "2 True\nunavailable\n"
+    },
+    {
+      "id": "builtins-function-capture",
+      "stage": "O92",
+      "source": "g={\"__builtins__\":{\"len\":len}}\nf=eval(\"lambda: len([7,9])\",g)\ng[\"__builtins__\"]={}\nprint(f())\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "invalid-source-effect",
+      "stage": "O92",
+      "source": "g={}\ntry: eval(\"broken=\",g)\nexcept SyntaxError: print(\"syntax\",\"__builtins__\" in g)\n",
+      "stdout": "syntax True\n"
+    },
+    {
+      "id": "type-source-effect",
+      "stage": "O92",
+      "source": "g={}\ntry: eval(7,g)\nexcept TypeError: print(\"type\",\"__builtins__\" in g)\n",
+      "stdout": "type True\n"
+    },
+    {
+      "id": "custom-locals",
+      "stage": "O92",
+      "source": "class Mapping:\n def __getitem__(self,key):\n  print(\"get\",key)\n  if key==\"x\": return 7\n  raise KeyError(key)\nprint(eval(\"x+y\",{\"y\":9},Mapping()))\n",
+      "stdout": "get x\nget y\n16\n"
+    },
+    {
+      "id": "mapping-error",
+      "stage": "O92",
+      "source": "class Mapping:\n def __getitem__(self,key):\n  print(\"get\",key)\n  raise ValueError(\"mapping\")\ntry: eval(\"x\",{},Mapping())\nexcept ValueError as e: print(str(e))\n",
+      "stdout": "get x\nmapping\n"
+    },
+    {
+      "id": "mapping-write",
+      "stage": "O92",
+      "source": "class Mapping:\n def __init__(self): self.data={}\n def __getitem__(self,key): return self.data[key]\n def __setitem__(self,key,value):\n  print(\"set\",key,value)\n  self.data[key]=value\nm=Mapping()\nprint(eval(\"(x:=7)\",{},m),m.data[\"x\"])\n",
+      "stdout": "set x 7\n7 7\n"
+    },
+    {
+      "id": "dict-subclass-locals",
+      "stage": "O92",
+      "source": "class D(dict):\n def __getitem__(self,key):\n  print(\"get\",key)\n  return dict.__getitem__(self,key)\ng=D()\ndict.__setitem__(g,\"x\",7)\nprint(eval(\"x\",g),eval(\"globals()\",g) is g)\n",
+      "stdout": "get x\nget globals\n7 True\n"
+    },
+    {
+      "id": "dict-subclass-globals",
+      "stage": "O92",
+      "source": "class D(dict):\n def __getitem__(self,key): raise ValueError(\"override\")\n def __setitem__(self,key,value): raise ValueError(\"override\")\ng=D()\ndict.__setitem__(g,\"x\",7)\nf=eval(\"lambda: x\",g,{})\nprint(f(),f.__globals__ is g,\"__builtins__\" in g)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "builtin-mapping",
+      "stage": "O92",
+      "source": "class Mapping:\n def __getitem__(self,key):\n  if key==\"x\": return 7\n  raise KeyError(key)\ng={\"__builtins__\":Mapping()}\nprint(eval(\"x\",g))\ntry: eval(\"missing\",g)\nexcept NameError: print(\"missing\")\n",
+      "stdout": "7\nmissing\n"
+    },
+    {
+      "id": "module-builtins",
+      "stage": "O92",
+      "source": "import helper\nprint(eval(\"x\",{\"__builtins__\":helper}))\n",
+      "stdout": "7\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "package": false,
+          "imports": []
+        }
+      ]
+    },
+    {
+      "id": "code-function",
+      "stage": "O92",
+      "source": "def f(): return 7\nprint(eval(f.__code__))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "code-fast-locals",
+      "stage": "O92",
+      "source": "def f(x): return x\ntry: eval(f.__code__,{}, {\"x\":7})\nexcept UnboundLocalError: print(\"unbound\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "code-free-refusal",
+      "stage": "O92",
+      "source": "def outer():\n x=7\n def f(): return x\n return f\ng={}\ntry: eval(outer().__code__,g)\nexcept TypeError: print(\"free\",\"__builtins__\" in g)\n",
+      "stdout": "free True\n"
+    },
+    {
+      "id": "code-error",
+      "stage": "O92",
+      "source": "print(\"before\")\neval(compile(\"1/0\",\"broken.py\",\"eval\"))\n",
+      "stdout": "before\n",
+      "error_type": "ZeroDivisionError"
+    },
+    {
+      "id": "nested-eval",
+      "stage": "O92",
+      "source": "g={\"eval\":eval}\nprint(eval(\"eval('7+9')\",g))\n",
+      "stdout": "16\n"
+    },
+    {
+      "id": "non-string-keys",
+      "stage": "O92",
+      "source": "g={7:\"seven\",\"x\":9}\nprint(eval(\"x\",g),g[7])\n",
+      "stdout": "9 seven\n"
+    },
+    {
+      "id": "missing",
+      "stage": "O92",
+      "source": "try: eval()\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "source-keyword",
+      "stage": "O92",
+      "source": "try: eval(source=\"7\")\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "too-many",
+      "stage": "O92",
+      "source": "try: eval(\"7\",{},{},{})\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "duplicate",
+      "stage": "O92",
+      "source": "try: eval(\"7\",{},globals={})\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "unknown",
+      "stage": "O92",
+      "source": "try: eval(\"7\",other=7)\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "locals-invalid",
+      "stage": "O92",
+      "source": "try: eval(\"7\",{},7)\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "globals-invalid",
+      "stage": "O92",
+      "source": "try: eval(\"7\",[])\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "sequence-locals",
+      "stage": "O92",
+      "source": "try: eval(\"x\",{},[])\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "builtins-invalid",
+      "stage": "O92",
+      "source": "try: eval(\"x\",{\"__builtins__\":None})\nexcept (TypeError,NameError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "generator-code",
+      "stage": "O92",
+      "source": "def f():\n yield 7\n yield 9\ng=eval(f.__code__)\nprint(next(g),next(g))\n",
+      "stdout": "7 9\n"
+    },
+    {
+      "id": "variadic-code",
+      "stage": "O92",
+      "source": "def f(*args,**kwargs): return len(args)+len(kwargs)\nprint(eval(f.__code__))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "builtin-dict-subclass",
+      "stage": "O92",
+      "source": "class D(dict):\n def __getitem__(self,key):\n  print(\"builtin\",key)\n  return 7\nprint(eval(\"x\",{\"__builtins__\":D()}))\n",
+      "stdout": "builtin x\n7\n"
+    },
+    {
+      "id": "prepared-locals",
+      "stage": "O92",
+      "source": "class Mapping:\n def __init__(self): self.data={}\n def __getitem__(self,k): return self.data[k]\n def __setitem__(self,k,v): self.data[k]=v\nclass Meta(type):\n @classmethod\n def __prepare__(meta,name,bases): return Mapping()\n def __new__(meta,name,bases,ns): return ns\nclass Result(metaclass=Meta):\n x=7\n y=eval(\"x+9\")\nprint(Result.data[\"y\"])\n",
+      "stdout": "16\n"
+    },
+    {
+      "id": "mapping-identity",
+      "stage": "O92",
+      "source": "class Mapping:\n def __getitem__(self,k): raise KeyError(k)\nm=Mapping()\nprint(eval(\"locals()\",{},m) is m)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "builtin-default-inheritance",
+      "stage": "O92",
+      "source": "def f(): return eval(\"len([7,9])\",{})\nf.__globals__[\"__builtins__\"]={\"eval\":eval,\"len\":lambda x: 13}\n# Defining builtins are captured when a function is created.\ng=eval(\"lambda: eval('len([7,9])',{})\", {\"__builtins__\":{\"eval\":eval,\"len\":lambda x: 13}})\nprint(g())\n",
+      "stdout": "13\n"
+    }
+  ]
+}

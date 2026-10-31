@@ -1,7 +1,8 @@
 # Bounded dynamic source and imports
 
 O91–O94 of #123 use the independent source compiler, verifier and owned
-execution machine. The CPython oracle remains 3.14.7. Registry grants and host
+execution machine in classes-source/1, following the namespace/code prerequisites
+of that profile. The CPython oracle remains 3.14.7. Registry grants and host
 capabilities are unchanged by compilation or by a supplied builtin mapping.
 
 ## O91: compile
@@ -56,3 +57,37 @@ Pinned references: [builtin implementation](https://github.com/python/cpython/bl
 [builtin signatures](https://github.com/python/cpython/blob/v3.14.7/Doc/library/functions.rst),
 [namespace rules](https://peps.python.org/pep-0667/). AST/future/annotation semantics
 remain #125; ambient loaders and broader import APIs remain #126/#128.
+
+## O92: eval
+
+`eval(source, /, globals=None, locals=None)` accepts keyword namespace arguments.
+Locals are validated before globals, globals must be an actual dict (including
+its adopted subtypes), and locals may use an adopted mapping/subscript protocol.
+Source strings and buffers strip initial spaces/tabs; independently verified
+code values preserve their original filenames and spans. Statement and single
+code values return their normal result; function code uses ordinary empty-call
+argument validation, and generator code creates an owned generator. Code with
+free cells raises TypeError before execution; source expressions see only
+lexically captured caller cells in the default locals snapshot.
+
+At module/class scope the default locals mapping is live. Optimized function
+locals use the existing PEP 667 snapshot, so assignment expressions cannot
+modify the caller's fast locals or add persistent extras. Explicit mappings
+retain exact identity. Name lookup uses locals, globals and captured builtins
+in order, with owned mapping callbacks and KeyError fallback. Dict subtype
+locals and slow global/builtin reads preserve their overridden lookup;
+namespace insertion bypasses overridden dictionary mutation. New lambdas retain
+the actual defining globals and builtin mapping, independent of supplied locals.
+
+A missing `__builtins__` key is inserted before source validation/compilation,
+using the calling frame's captured adopted builtin namespace. Existing supplied
+builtin dicts, modules and mappings participate in owned lookups, including
+callback failures and mutation. Omitting a host capability from the granted
+registry or source builtin catalog cannot be reversed by a supplied mapping.
+
+Evaluation enters the current owned machine. Instructions, work, memory,
+recursion, output and cancellation limits are shared with its caller. Dynamic
+frames and mappings remain rooted while stepped or parked and unwind on
+exceptions, cancellation and close. `execution-accounting/17` adds an optional
+eight-byte identity edge only when a namespace's dict subtype differs from its
+native payload; ordinary environments and composed observations are unchanged.

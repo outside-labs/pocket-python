@@ -34,6 +34,8 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
+    case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored":
+      record = {kind, source: fields.source, globals: fields.globals, locals: fields.locals, builtins: fields.builtins, key: fields.key, after}; break;
     case "compile-argument": record = {kind, args: operands(fields.args), position: fields.position, after}; break;
     case "arithmetic-order":
       record = {kind, task: fields.task, phase: fields.phase, candidate: fields.candidate ?? null, after};
@@ -81,7 +83,7 @@ export function completion(kind, fields = {}) {
     case "handler-type": record = {kind, position: fields.position, names: operands(fields.names), after}; break;
     case "class-mapping-dir-call": case "class-mapping-dir-result":
       record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
-    case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name":
+    case "global-mapping-name": case "builtin-mapping-name": case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name":
       record = {kind, receiver: fields.receiver, name: fields.name, after}; break;
     case "store-body": record = {kind, body: fields.body, after}; break;
     case "resume-control": record = {kind, signal: fields.signal, value: fields.value, after}; break;
@@ -327,7 +329,7 @@ function visit(record) {
     case "namespace-build": return operationRoots(record.task);
     case "namespace-lookup": return [record.cache, record.owner, record.dictionary, ...operationRoots(record.task)];
     case "class-mapping-dir-call": case "class-mapping-dir-result":
-    case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-native-dir": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
+    case "global-mapping-name": case "builtin-mapping-name": case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-native-dir": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
     case "class-end": return [...record.items, record.value];
     case "class-body-module": case "class-firstline": case "class-qualname": return [];
     case "class-prepare-lookup": case "class-prepare-result": return [record.callable, ...record.bases, record.originalBases ?? null, record.metaclass, ...record.keywordValues, record.rawModule, record.nameValue, record.basesTuple];
@@ -345,6 +347,7 @@ function visit(record) {
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "native-bytes-init": return [record.receiver, ...completionRoots(record.after)];
     case "native-new": return [record.type, ...completionRoots(record.after)];
+    case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored": return [record.source, record.globals, record.locals, record.builtins, record.key, ...completionRoots(record.after)];
     case "single-display": return completionRoots(record.after);
     case "compile-argument": return [...record.args.filter(item => typeof item !== "string"), ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
