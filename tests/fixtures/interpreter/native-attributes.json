@@ -1008,6 +1008,12 @@
       "source": "super.__get__(7,None)\n",
       "error_type": "TypeError",
       "stdout": ""
+    },
+    {
+      "id": "primitive-namespace-absence",
+      "stage": "O90",
+      "source": "for value in (None,True,7,1.25,2j,\"text\",b\"bytes\",bytearray(b\"x\"),[],(),{},set(),frozenset(),range(3),slice(3),memoryview(b\"x\")):\n for name in (\"__dict__\",\"__bases__\"):\n  try:\n   if name==\"__dict__\": value.__dict__\n   else: value.__bases__\n  except AttributeError: pass\n  else: raise ValueError(\"unexpected namespace\")\n  print(hasattr(value,name),getattr(value,name,42))\n",
+      "stdout": "False 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\nFalse 42\n"
     }
   ]
 }

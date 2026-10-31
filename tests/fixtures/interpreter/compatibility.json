@@ -6002,15 +6002,15 @@
     {
       "id": "numeric-directories-unread-dictionary",
       "source": "value=7\nvalue.__dict__\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": "AttributeError"
       },
       "engine": {
         "stdout": "",
-        "error_type": "UnsupportedOperationError",
-        "code": "UNSUPPORTED"
+        "error_type": "AttributeError",
+        "code": "PYTHON"
       }
     },
     {

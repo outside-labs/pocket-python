@@ -878,6 +878,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || userProtocol(receiver) && arg === "__class__" && classes.hasSlot(classes.checkingType(receiver), "__class__")))
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
+          else if (op === "attribute-get" && frame.pool.code.version === 5 && ["__dict__", "__bases__"].includes(arg) && values.typeName(receiver) !== null)
+            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (["attribute-get", "module-get"].includes(op) && arg === "__dir__" && classes.hasFixedDirectory(receiver)) {
             if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Native directories require classes-source/1.");
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));

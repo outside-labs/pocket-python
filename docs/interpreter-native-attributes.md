@@ -40,3 +40,8 @@ No dependency, host grant or accounting revision changes are required.
 References: [pinned super and type implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c),
 [pinned method attribute lookup](https://github.com/python/cpython/blob/v3.14.7/Objects/classobject.c),
 [pinned module attribute lookup](https://github.com/python/cpython/blob/v3.14.7/Objects/moduleobject.c).
+
+Direct `__dict__` and `__bases__` reads on primitive values use the same native
+attribute path as explicit lookup. Missing storage raises `AttributeError`,
+including through `getattr` defaults and `hasattr`, rather than a source-profile
+refusal. The finite matrix covers sixteen primitive layouts.
