@@ -145,7 +145,8 @@ def smoke(channel=None):
                         # Repeated corpus runs need the normal click handler,
                         # without waiting two animation frames for a stable box.
                         page.locator('#run').dispatch_event('click')
-                        page.wait_for_function("()=>document.querySelector('#status').textContent==='Completed'")
+                        page.wait_for_function("()=>document.querySelector('#status').textContent==='Completed' || document.querySelector('#status').textContent.includes('Error:')")
+                        assert page.locator('#status').inner_text() == 'Completed', (page.locator('#status').inner_text(), source)
                         assert page.locator('#result').inner_text() == expected
 
                     def refused(source, prefix):

@@ -169,7 +169,7 @@ Plain imports pass a None fromlist and from-imports pass their exact name tuple.
 Callbacks, arbitrary callback results, missing/noncallable entries and errors
 use the ordinary machine. Version-5 source import records carry a verifier-checked
 fromlist; legacy records without this operand retain their previous native
-interface, as do the frozen version-3/4 bytecode contracts.
+interface, as do the legacy version-3/4 import records.
 
 `execution-accounting/18` records source import operands, owned namespace
 preparation and rooted module-load continuations. All eight composed instruction
@@ -187,3 +187,16 @@ already selected operator/1 registry; it adds no library grant. Stop/Restart and
 profile reduction retain the existing application contract. The example
 [interpreter_dynamic_source.py](../examples/interpreter_dynamic_source.py) uses
 classes-source/1 with operator/1.
+
+
+## Acceptance — 2026-10-31
+
+O91–O94 have 208 pinned source cases across all six Node/Chromium drivers
+(1,248 observations). All 16 relevant jobs pass in the
+[corrected batch CI](https://github.com/outside-labs/pocket-python/actions/runs/41241336439),
+including installed offline console execution, profile updates and Stop/Restart.
+The [versioned acceptance record](measurements/2026-10-31-dynamic-source.json)
+links the seven focused feature/correction PRs, source manifests, exact engine
+identity, resource revision and offline artifact. No runtime dependency or host
+grant changes. O95 scope/refusal reconciliation and O96 integrated closure remain
+open under #123.

@@ -2251,6 +2251,57 @@
         "pkg.child"
       ],
       "stdout": "9\n"
+    },
+    {
+      "id": "subtype-module-import-hook",
+      "stage": "O94",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   print(\"lookup\")\n   return 9\n  return super().__getattribute__(n)\nhelper.__class__=M\nfrom helper import x\nprint(x)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "lookup\n9\n"
+    },
+    {
+      "id": "subtype-module-import-missing",
+      "stage": "O94",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   print(\"lookup\")\n   return 9\n  return super().__getattribute__(n)\nhelper.__class__=M\ntry:\n from helper import missing\nexcept ImportError: print(\"missing\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "missing\n"
+    },
+    {
+      "id": "subtype-module-import-hidden",
+      "stage": "O94",
+      "source": "import helper\nclass M(type(helper)):\n def __getattribute__(self,n):\n  if n==\"x\":\n   raise AttributeError(\"hidden\")\n  return super().__getattribute__(n)\nhelper.__class__=M\ntry:\n from helper import x\nexcept ImportError: print(\"hidden\")\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stdout": "hidden\n"
     }
   ]
 }
