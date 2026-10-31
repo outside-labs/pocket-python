@@ -24,7 +24,7 @@ const NATIVE_ARITIES = Object.freeze({
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const compiler = dynamicCompiler({state, memory, values, classes, allocate, charge, python, hard});
-  const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, compiler, python});
+  const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const userProtocol = value => classes.protocolObject(value);
   const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
   const methodCompare = (receiver, other, invert, site, after, depth) => {
@@ -1404,6 +1404,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const parts = [...completion.parts]; parts[[2, 0, 1][completion.position]] = value;
       return sliceNext(completion.receiver, parts, completion.position, site, completion.after, completion.depth, completion.operation, completion.item);
     }
+    if (completion?.kind === "exec-return") return valueTask(null, site, completion.after);
     if (["eval-locals", "eval-builtins-probe", "eval-builtins-default", "eval-builtins-stored"].includes(completion?.kind)) return evaluator.resume(completion, value, site);
     if (completion?.kind === "single-display") { write(values.text(value) + "\n"); return valueTask(null, site, completion.after); }
     if (completion?.kind === "compile-argument") return compiler.converted(completion, value, site);
@@ -2384,7 +2385,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           enter(callable, bindings, site, completion); return;
         }
         if (callable instanceof BuiltinValue) {
-          if (callable.name === "eval") { task = evaluator.start(args, keywords, keywordValues, site, completion); continue; }
+          if (["eval", "exec"].includes(callable.name)) { task = evaluator.start(callable.name, args, keywords, keywordValues, site, completion); continue; }
           if (callable.name === "compile") { task = compiler.start(args, keywords, keywordValues, site, completion); continue; }
           if (["getset_descriptor", "member_descriptor"].includes(callable.nativeKind)) python("TypeError", "Storage descriptor objects are not callable");
           const nativeKind = callable.nativeKind ?? classes.nativeDescriptorKind(callable);
@@ -2873,7 +2874,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "generator-frame") { task = valueTask(generatorFrame(args[0]), site, completion); continue; }
           if (callable.name === "frame-locals") {
             const frame = args[0];
-            task = valueTask(frame.raw.inlineFrames?.length ? allocate(FrameLocalsValue, frame) : frame.raw.fn.kind === "module" ? values.environmentDictionary(frame.callable.globals) : frame.raw.fn.kind === "class" ? classNamespace(frame.raw) : allocate(FrameLocalsValue, frame), site, completion); continue;
+            task = valueTask(frame.raw.inlineFrames?.length ? allocate(FrameLocalsValue, frame) : frame.raw.dynamicNamespace ? classNamespace(frame.raw) : frame.raw.fn.kind === "module" ? values.environmentDictionary(frame.callable.globals) : frame.raw.fn.kind === "class" ? classNamespace(frame.raw) : allocate(FrameLocalsValue, frame), site, completion); continue;
           }
           if (callable.name.startsWith("FrameLocalsProxy.")) {
             const receiver = args[0], name = callable.name.slice("FrameLocalsProxy.".length);
@@ -2924,7 +2925,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (namespace === moduleContext.defaultBuiltins && namespace.dictionary === null) {
                 for (const name of SOURCE_BUILTINS) {
                   charge(1);
-                  const item = name === "object" ? moduleContext.builtin(name, () => classes.root()) :
+                  const item = name === "__name__" ? values.string(Array.from("builtins", char => char.codePointAt(0))) : name === "object" ? moduleContext.builtin(name, () => classes.root()) :
                     name === "NotImplemented" ? moduleContext.builtin(name, () => allocate(NotImplementedValue)) : classes.builtin(name);
                   state.temporaries.push(item); moduleContext.binding(namespace, name, item);
                 }

@@ -35,7 +35,7 @@ export function completion(kind, fields = {}) {
   let record;
   switch (kind) {
     case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored":
-      record = {kind, source: fields.source, globals: fields.globals, locals: fields.locals, builtins: fields.builtins, key: fields.key, after}; break;
+      record = {kind, source: fields.source, globals: fields.globals, locals: fields.locals, builtins: fields.builtins, key: fields.key, mode: fields.mode ?? "eval", closure: fields.closure ?? null, after}; break;
     case "compile-argument": record = {kind, args: operands(fields.args), position: fields.position, after}; break;
     case "arithmetic-order":
       record = {kind, task: fields.task, phase: fields.phase, candidate: fields.candidate ?? null, after};
@@ -180,7 +180,7 @@ export function completion(kind, fields = {}) {
           record.lower < 0 || record.lower > record.upper || record.upper > record.index)
         throw new TypeError("Invalid directory ordering phase.");
       break;
-    case "single-display": record = {kind, after}; break;
+    case "exec-return": case "single-display": record = {kind, after}; break;
     case "item-result": record = {kind, receiver: fields.receiver, after}; break;
     case "index-result": record = {kind, receiver: fields.receiver, after}; break;
     case "hash-result": record = {kind, receiver: fields.receiver, after}; break;
@@ -347,8 +347,8 @@ function visit(record) {
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "native-bytes-init": return [record.receiver, ...completionRoots(record.after)];
     case "native-new": return [record.type, ...completionRoots(record.after)];
-    case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored": return [record.source, record.globals, record.locals, record.builtins, record.key, ...completionRoots(record.after)];
-    case "single-display": return completionRoots(record.after);
+    case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored": return [record.source, record.globals, record.locals, record.builtins, record.key, record.closure, ...completionRoots(record.after)];
+    case "exec-return": case "single-display": return completionRoots(record.after);
     case "compile-argument": return [...record.args.filter(item => typeof item !== "string"), ...completionRoots(record.after)];
     case "new-result": return [record.type, ...record.args, ...record.keywordValues, ...completionRoots(record.after)];
     case "class-created": return [record.cell, ...completionRoots(record.after)];

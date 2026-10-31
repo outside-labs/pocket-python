@@ -957,17 +957,15 @@
     },
     {
       "id": "builtin-exec",
-      "source": "print(callable(exec))\n",
-      "classification": "deferred",
+      "source": "g={}\nprint(exec(\"x=7\",g),g[\"x\"])\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "None 7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
+        "stdout": "None 7\n",
+        "error_type": null
       }
     },
     {
