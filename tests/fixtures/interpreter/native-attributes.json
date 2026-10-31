@@ -1,0 +1,1013 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-native-attributes/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O90"
+  ],
+  "cases": [
+    {
+      "id": "none-bound",
+      "stage": "O90",
+      "source": "value=None\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "none-unbound",
+      "stage": "O90",
+      "source": "value=None\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "none-object",
+      "stage": "O90",
+      "source": "value=None\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bool-bound",
+      "stage": "O90",
+      "source": "value=True\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bool-unbound",
+      "stage": "O90",
+      "source": "value=True\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bool-object",
+      "stage": "O90",
+      "source": "value=True\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bool-rebound",
+      "stage": "O90",
+      "source": "value=True\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-bound",
+      "stage": "O90",
+      "source": "value=7\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-unbound",
+      "stage": "O90",
+      "source": "value=7\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-object",
+      "stage": "O90",
+      "source": "value=7\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rebound",
+      "stage": "O90",
+      "source": "value=7\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-bound",
+      "stage": "O90",
+      "source": "value=1.5\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-unbound",
+      "stage": "O90",
+      "source": "value=1.5\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-object",
+      "stage": "O90",
+      "source": "value=1.5\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rebound",
+      "stage": "O90",
+      "source": "value=1.5\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-bound",
+      "stage": "O90",
+      "source": "value=2j\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-unbound",
+      "stage": "O90",
+      "source": "value=2j\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-object",
+      "stage": "O90",
+      "source": "value=2j\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rebound",
+      "stage": "O90",
+      "source": "value=2j\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "str-bound",
+      "stage": "O90",
+      "source": "value=\"a\"\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "str-unbound",
+      "stage": "O90",
+      "source": "value=\"a\"\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "str-object",
+      "stage": "O90",
+      "source": "value=\"a\"\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "str-rebound",
+      "stage": "O90",
+      "source": "value=\"a\"\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "list-bound",
+      "stage": "O90",
+      "source": "value=[7]\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "list-unbound",
+      "stage": "O90",
+      "source": "value=[7]\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "list-object",
+      "stage": "O90",
+      "source": "value=[7]\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "list-rebound",
+      "stage": "O90",
+      "source": "value=[7]\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "tuple-bound",
+      "stage": "O90",
+      "source": "value=(7,)\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "tuple-unbound",
+      "stage": "O90",
+      "source": "value=(7,)\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "tuple-object",
+      "stage": "O90",
+      "source": "value=(7,)\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "tuple-rebound",
+      "stage": "O90",
+      "source": "value=(7,)\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dict-bound",
+      "stage": "O90",
+      "source": "value={}\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dict-unbound",
+      "stage": "O90",
+      "source": "value={}\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dict-object",
+      "stage": "O90",
+      "source": "value={}\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dict-rebound",
+      "stage": "O90",
+      "source": "value={}\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "set-bound",
+      "stage": "O90",
+      "source": "value=set()\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "set-unbound",
+      "stage": "O90",
+      "source": "value=set()\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "set-object",
+      "stage": "O90",
+      "source": "value=set()\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "set-rebound",
+      "stage": "O90",
+      "source": "value=set()\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "frozenset-bound",
+      "stage": "O90",
+      "source": "value=frozenset()\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "frozenset-unbound",
+      "stage": "O90",
+      "source": "value=frozenset()\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "frozenset-object",
+      "stage": "O90",
+      "source": "value=frozenset()\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "frozenset-rebound",
+      "stage": "O90",
+      "source": "value=frozenset()\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-bound",
+      "stage": "O90",
+      "source": "value=b\"x\"\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-unbound",
+      "stage": "O90",
+      "source": "value=b\"x\"\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-object",
+      "stage": "O90",
+      "source": "value=b\"x\"\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytes-rebound",
+      "stage": "O90",
+      "source": "value=b\"x\"\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytearray-bound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"x\")\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytearray-unbound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"x\")\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytearray-object",
+      "stage": "O90",
+      "source": "value=bytearray(b\"x\")\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "bytearray-rebound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"x\")\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "memoryview-bound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"x\")\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "memoryview-unbound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"x\")\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "memoryview-object",
+      "stage": "O90",
+      "source": "value=memoryview(b\"x\")\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "memoryview-rebound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"x\")\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "range-bound",
+      "stage": "O90",
+      "source": "value=range(2)\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "range-unbound",
+      "stage": "O90",
+      "source": "value=range(2)\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "range-object",
+      "stage": "O90",
+      "source": "value=range(2)\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "range-rebound",
+      "stage": "O90",
+      "source": "value=range(2)\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-bound",
+      "stage": "O90",
+      "source": "value=slice(1)\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-unbound",
+      "stage": "O90",
+      "source": "value=slice(1)\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-object",
+      "stage": "O90",
+      "source": "value=slice(1)\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "slice-rebound",
+      "stage": "O90",
+      "source": "value=slice(1)\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "property-bound",
+      "stage": "O90",
+      "source": "value=property()\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "property-unbound",
+      "stage": "O90",
+      "source": "value=property()\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "property-object",
+      "stage": "O90",
+      "source": "value=property()\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "property-rebound",
+      "stage": "O90",
+      "source": "value=property()\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-bound",
+      "stage": "O90",
+      "source": "value=staticmethod(lambda:7)\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-unbound",
+      "stage": "O90",
+      "source": "value=staticmethod(lambda:7)\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-object",
+      "stage": "O90",
+      "source": "value=staticmethod(lambda:7)\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "staticmethod-rebound",
+      "stage": "O90",
+      "source": "value=staticmethod(lambda:7)\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "classmethod-bound",
+      "stage": "O90",
+      "source": "value=classmethod(lambda cls:7)\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "classmethod-unbound",
+      "stage": "O90",
+      "source": "value=classmethod(lambda cls:7)\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "classmethod-object",
+      "stage": "O90",
+      "source": "value=classmethod(lambda cls:7)\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "classmethod-rebound",
+      "stage": "O90",
+      "source": "value=classmethod(lambda cls:7)\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iterator-bound",
+      "stage": "O90",
+      "source": "value=iter([7])\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iterator-unbound",
+      "stage": "O90",
+      "source": "value=iter([7])\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iterator-object",
+      "stage": "O90",
+      "source": "value=iter([7])\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iterator-rebound",
+      "stage": "O90",
+      "source": "value=iter([7])\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "generator-bound",
+      "stage": "O90",
+      "source": "value=(x for x in [7])\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "generator-unbound",
+      "stage": "O90",
+      "source": "value=(x for x in [7])\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "generator-object",
+      "stage": "O90",
+      "source": "value=(x for x in [7])\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "generator-rebound",
+      "stage": "O90",
+      "source": "value=(x for x in [7])\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-bound",
+      "stage": "O90",
+      "source": "def value(): pass\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-unbound",
+      "stage": "O90",
+      "source": "def value(): pass\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-object",
+      "stage": "O90",
+      "source": "def value(): pass\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "function-rebound",
+      "stage": "O90",
+      "source": "def value(): pass\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-bound",
+      "stage": "O90",
+      "source": "class C:\n def f(self): pass\nvalue=C().f\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-unbound",
+      "stage": "O90",
+      "source": "class C:\n def f(self): pass\nvalue=C().f\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-object",
+      "stage": "O90",
+      "source": "class C:\n def f(self): pass\nvalue=C().f\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-rebound",
+      "stage": "O90",
+      "source": "class C:\n def f(self): pass\nvalue=C().f\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "builtin-method-bound",
+      "stage": "O90",
+      "source": "value=[].append\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "builtin-method-unbound",
+      "stage": "O90",
+      "source": "value=[].append\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "builtin-method-object",
+      "stage": "O90",
+      "source": "value=[].append\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "builtin-method-rebound",
+      "stage": "O90",
+      "source": "value=[].append\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-bound",
+      "stage": "O90",
+      "source": "value=(7).__add__\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-unbound",
+      "stage": "O90",
+      "source": "value=(7).__add__\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-object",
+      "stage": "O90",
+      "source": "value=(7).__add__\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "wrapper-rebound",
+      "stage": "O90",
+      "source": "value=(7).__add__\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "descriptor-bound",
+      "stage": "O90",
+      "source": "value=int.__add__\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "descriptor-unbound",
+      "stage": "O90",
+      "source": "value=int.__add__\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "descriptor-object",
+      "stage": "O90",
+      "source": "value=int.__add__\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "descriptor-rebound",
+      "stage": "O90",
+      "source": "value=int.__add__\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "code-bound",
+      "stage": "O90",
+      "source": "def f(): pass\nvalue=f.__code__\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "code-unbound",
+      "stage": "O90",
+      "source": "def f(): pass\nvalue=f.__code__\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "code-object",
+      "stage": "O90",
+      "source": "def f(): pass\nvalue=f.__code__\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "code-rebound",
+      "stage": "O90",
+      "source": "def f(): pass\nvalue=f.__code__\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "cell-bound",
+      "stage": "O90",
+      "source": "def outer():\n x=7\n def inner(): return x\n return inner.__closure__[0]\nvalue=outer()\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "cell-unbound",
+      "stage": "O90",
+      "source": "def outer():\n x=7\n def inner(): return x\n return inner.__closure__[0]\nvalue=outer()\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "cell-object",
+      "stage": "O90",
+      "source": "def outer():\n x=7\n def inner(): return x\n return inner.__closure__[0]\nvalue=outer()\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "cell-rebound",
+      "stage": "O90",
+      "source": "def outer():\n x=7\n def inner(): return x\n return inner.__closure__[0]\nvalue=outer()\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dict-view-bound",
+      "stage": "O90",
+      "source": "class C: pass\nvalue=C.__dict__.keys()\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dict-view-unbound",
+      "stage": "O90",
+      "source": "class C: pass\nvalue=C.__dict__.keys()\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dict-view-object",
+      "stage": "O90",
+      "source": "class C: pass\nvalue=C.__dict__.keys()\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "dict-view-rebound",
+      "stage": "O90",
+      "source": "class C: pass\nvalue=C.__dict__.keys()\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "module-bound",
+      "stage": "O90",
+      "source": "import helper\nvalue=helper\nprint(value.__getattribute__(\"__class__\") is type(value))\n",
+      "stdout": "True\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "module-unbound",
+      "stage": "O90",
+      "source": "import helper\nvalue=helper\nprint(type(value).__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "module-object",
+      "stage": "O90",
+      "source": "import helper\nvalue=helper\nprint(object.__getattribute__(value,\"__class__\") is type(value))\n",
+      "stdout": "True\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "module-rebound",
+      "stage": "O90",
+      "source": "import helper\nvalue=helper\nmethod=type(value).__getattribute__.__get__(value,type(value))\nprint(method(\"__class__\") is type(value))\n",
+      "stdout": "True\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "none-missing",
+      "stage": "O90",
+      "source": "value=None\ntry: object.__getattribute__(value,\"missing\")\nexcept AttributeError: print(\"missing\")\n",
+      "stdout": "missing\n"
+    },
+    {
+      "id": "none-readonly",
+      "stage": "O90",
+      "source": "value=None\ntry: object.__setattr__(value,\"missing\",7)\nexcept AttributeError: print(\"set\")\ntry: object.__delattr__(value,\"missing\")\nexcept AttributeError: print(\"delete\")\n",
+      "stdout": "set\ndelete\n"
+    },
+    {
+      "id": "int-missing",
+      "stage": "O90",
+      "source": "value=7\ntry: object.__getattribute__(value,\"missing\")\nexcept AttributeError: print(\"missing\")\n",
+      "stdout": "missing\n"
+    },
+    {
+      "id": "int-readonly",
+      "stage": "O90",
+      "source": "value=7\ntry: object.__setattr__(value,\"missing\",7)\nexcept AttributeError: print(\"set\")\ntry: object.__delattr__(value,\"missing\")\nexcept AttributeError: print(\"delete\")\n",
+      "stdout": "set\ndelete\n"
+    },
+    {
+      "id": "list-missing",
+      "stage": "O90",
+      "source": "value=[7]\ntry: object.__getattribute__(value,\"missing\")\nexcept AttributeError: print(\"missing\")\n",
+      "stdout": "missing\n"
+    },
+    {
+      "id": "list-readonly",
+      "stage": "O90",
+      "source": "value=[7]\ntry: object.__setattr__(value,\"missing\",7)\nexcept AttributeError: print(\"set\")\ntry: object.__delattr__(value,\"missing\")\nexcept AttributeError: print(\"delete\")\n",
+      "stdout": "set\ndelete\n"
+    },
+    {
+      "id": "range-missing",
+      "stage": "O90",
+      "source": "value=range(2)\ntry: object.__getattribute__(value,\"missing\")\nexcept AttributeError: print(\"missing\")\n",
+      "stdout": "missing\n"
+    },
+    {
+      "id": "range-readonly",
+      "stage": "O90",
+      "source": "value=range(2)\ntry: object.__setattr__(value,\"missing\",7)\nexcept AttributeError: print(\"set\")\ntry: object.__delattr__(value,\"missing\")\nexcept AttributeError: print(\"delete\")\n",
+      "stdout": "set\ndelete\n"
+    },
+    {
+      "id": "slice-missing",
+      "stage": "O90",
+      "source": "value=slice(1)\ntry: object.__getattribute__(value,\"missing\")\nexcept AttributeError: print(\"missing\")\n",
+      "stdout": "missing\n"
+    },
+    {
+      "id": "slice-readonly",
+      "stage": "O90",
+      "source": "value=slice(1)\ntry: object.__setattr__(value,\"missing\",7)\nexcept AttributeError: print(\"set\")\ntry: object.__delattr__(value,\"missing\")\nexcept AttributeError: print(\"delete\")\n",
+      "stdout": "set\ndelete\n"
+    },
+    {
+      "id": "memoryview-missing",
+      "stage": "O90",
+      "source": "value=memoryview(b\"x\")\ntry: object.__getattribute__(value,\"missing\")\nexcept AttributeError: print(\"missing\")\n",
+      "stdout": "missing\n"
+    },
+    {
+      "id": "memoryview-readonly",
+      "stage": "O90",
+      "source": "value=memoryview(b\"x\")\ntry: object.__setattr__(value,\"missing\",7)\nexcept AttributeError: print(\"set\")\ntry: object.__delattr__(value,\"missing\")\nexcept AttributeError: print(\"delete\")\n",
+      "stdout": "set\ndelete\n"
+    },
+    {
+      "id": "module-namespace",
+      "stage": "O90",
+      "source": "import helper\nT=type(helper)\nT.__setattr__(helper,\"y\",8)\nprint(T.__getattribute__(helper,\"x\"),T.__getattribute__(helper,\"y\"))\nT.__delattr__(helper,\"y\")\nprint(hasattr(helper,\"y\"))\n",
+      "stdout": "7 8\nFalse\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "super-proxy-forward",
+      "stage": "O90",
+      "source": "class A:\n x=7\nclass B(A): x=8\nb=B()\ns=super(B,b)\nprint(s.x,super.__getattribute__(s,\"x\"),object.__getattribute__(s,\"__class__\") is super)\ntry: object.__getattribute__(s,\"x\")\nexcept AttributeError: print(\"own\")\n",
+      "stdout": "7 7 True\nown\n"
+    },
+    {
+      "id": "super-proxy-own",
+      "stage": "O90",
+      "source": "class A: pass\ns=super(A)\nprint(s.__getattribute__(\"__class__\") is super,s.__get__(None,A) is s)\nprint(super.__getattribute__(s,\"__thisclass__\") is A)\n",
+      "stdout": "True True\nTrue\n"
+    },
+    {
+      "id": "super-subtype-fallback",
+      "stage": "O90",
+      "source": "class A: pass\nclass S(super):\n x=7\n def __getattribute__(self,n): return \"override\"\ns=S(A)\nprint(super.__getattribute__(s,\"x\"),super.__getattribute__(s,\"__class__\") is S)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "super-get-bind",
+      "stage": "O90",
+      "source": "class A: pass\nclass B(A): pass\ns=super(B)\nb=B()\nt=super.__get__(s,b,B)\nprint(t.__self__ is b,t.__thisclass__ is B,super.__get__(t,b,B) is t)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "super-subtype-bind",
+      "stage": "O90",
+      "source": "class A: pass\nclass B(A): pass\nclass S(super):\n def __init__(self,*args):\n  print(\"entered\")\n  super().__init__(*args)\ns=S(B)\nb=B()\nt=super.__get__(s,b,B)\nprint(type(t) is S,t.__self__ is b)\n",
+      "stdout": "entered\nentered\nTrue True\n"
+    },
+    {
+      "id": "super-property-callback",
+      "stage": "O90",
+      "source": "class A:\n @property\n def x(self):\n  print(\"entered\")\n  return [7]\nclass B(A): pass\ns=super(B,B())\nprint(super.__getattribute__(s,\"x\")[0])\n",
+      "stdout": "entered\n7\n"
+    },
+    {
+      "id": "native-object-bypass",
+      "stage": "O90",
+      "source": "class I(int):\n def __getattribute__(self,n): return \"override\"\nvalue=I(7)\nprint(object.__getattribute__(value,\"__class__\") is I)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hidden-layout-public-validation",
+      "stage": "O90",
+      "source": "class N(type):\n def mro(cls): return [cls,object]\nclass M(type,metaclass=N):\n def mro(cls): return [cls,object]\nclass C(metaclass=M): pass\ntry: type.__init__(C,\"C\",(),{})\nexcept TypeError as error: print(str(error))\n",
+      "stdout": "descriptor '__init__' requires a 'type' object but received a 'M'\n"
+    },
+    {
+      "id": "module-source-hooks",
+      "stage": "O90",
+      "source": "import helper\nModule=type(helper)\nclass M(Module):\n @property\n def y(self):\n  print(\"entered\")\n  return 9\n def __getattribute__(self,n):\n  if n==\"x\": return 88\n  return super().__getattribute__(n)\nhelper.__class__=M\nprint(helper.x,Module.__getattribute__(helper,\"x\"),Module.__getattribute__(helper,\"y\"))\n",
+      "stdout": "entered\n88 7 9\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "module-shadow-native",
+      "stage": "O90",
+      "source": "import helper\nModule=type(helper)\nhelper.__getattribute__=lambda n: \"shadow\"\nprint(helper.__getattribute__(\"x\"),Module.__getattribute__(helper,\"x\"))\n",
+      "stdout": "shadow 7\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "module-native-missing-hook",
+      "stage": "O90",
+      "source": "import helper\nModule=type(helper)\nhelper.__getattr__=lambda n: \"missing\"\nprint(Module.__getattribute__(helper,\"other\"),type(helper.__getattribute__).__name__)\n",
+      "stdout": "missing method-wrapper\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "module-object-bypass-hook",
+      "stage": "O90",
+      "source": "import helper\nModule=type(helper)\nhelper.__getattr__=lambda n: \"missing\"\nprint(Module.__getattribute__(helper,\"other\"))\ntry: object.__getattribute__(helper,\"other\")\nexcept AttributeError: print(\"generic\")\n",
+      "stdout": "missing\ngeneric\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "x=7\n",
+          "imports": [],
+          "package": false
+        }
+      ]
+    },
+    {
+      "id": "method-native-fallback",
+      "stage": "O90",
+      "source": "class C:\n def f(self): pass\nC.f.saved=7\nm=C().f\nG=type(m).__getattribute__\nprint(G(m,\"__name__\"),G(m,\"saved\"))\ntry: object.__getattribute__(m,\"saved\")\nexcept AttributeError: print(\"generic\")\n",
+      "stdout": "f 7\ngeneric\n"
+    },
+    {
+      "id": "object-class-namespace",
+      "stage": "O90",
+      "source": "class C: x=7\nd=object.__getattribute__(C,\"__dict__\")\nprint(d[\"x\"],type(d).__name__)\n",
+      "stdout": "7 mappingproxy\n"
+    },
+    {
+      "id": "wrong-receiver",
+      "stage": "O90",
+      "source": "super.__getattribute__(7,\"x\")\n",
+      "error_type": "TypeError",
+      "stdout": ""
+    },
+    {
+      "id": "wrong-name",
+      "stage": "O90",
+      "source": "try: super.__getattribute__(super(object),7)\nexcept TypeError as error: print(str(error))\n",
+      "stdout": "attribute name must be string, not 'int'\n"
+    },
+    {
+      "id": "wrong-arity",
+      "stage": "O90",
+      "source": "super.__getattribute__(super(object))\n",
+      "error_type": "TypeError",
+      "stdout": ""
+    },
+    {
+      "id": "get-wrong-receiver",
+      "stage": "O90",
+      "source": "super.__get__(7,None)\n",
+      "error_type": "TypeError",
+      "stdout": ""
+    }
+  ]
+}

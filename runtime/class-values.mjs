@@ -703,11 +703,15 @@ export class ClassRuntime {
       if (name === "__class__") return value(this.builtin("super"));
       if (["__thisclass__", "__self__", "__self_class__"].includes(name))
         return value(receiver[{__thisclass__: "thisclass", __self__: "self", __self_class__: "selfClass"}[name]]);
-      if (receiver.selfClass !== null) {
+      if (!native && receiver.selfClass !== null) {
         const item = this.lookup(receiver.selfClass, name, true, this.mro(receiver.selfClass).indexOf(receiver.thisclass) + 1);
         if (item.found) return this.bindAttribute(item.value, receiver.self === receiver.selfClass ? null : receiver.self, receiver.selfClass);
       }
       if (name === "__dir__") return value(this.make(BoundMethodValue, this.builtin("object.__dir__"), receiver));
+      if (NATIVE_PROTOCOL_KEYS.includes(name)) {
+        const entry = this.nativeProtocolEntry(this.builtin("super"), name);
+        if (entry.found) return this.bindAttribute(entry.value, receiver, this.builtin("super"));
+      }
       this.fail("AttributeError", "super has no attribute '" + name + "'.");
     }
     if (name === "__dir__" && receiver instanceof MethodWrapperValue) return this.functionEntry(receiver, name, "get", null, key);
@@ -929,8 +933,12 @@ export class ClassRuntime {
       if (entry.found) return this.bindAttribute(entry.value, receiver, this.typeOf(receiver));
       this.fail("AttributeError", "Dictionary view has no attribute " + name);
     }
-    if (!(receiver instanceof ClassValue || this.isInstance(receiver)))
-      this.fail("UnsupportedOperationError", "Attribute receiver is outside the class profile.", "UNSUPPORTED");
+    if (!(receiver instanceof ClassValue || this.isInstance(receiver))) {
+      if (name === "__class__") return value(this.typeOf(receiver));
+      const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
+      if (entry.found) return this.bindAttribute(entry.value, receiver, this.typeOf(receiver));
+      this.fail("AttributeError", "'" + this.typeOf(receiver).name + "' object has no attribute '" + name + "'");
+    }
     if (name === "__doc__" && receiver instanceof ClassValue && receiver.root) return value(this.nativeDocumentation(receiver));
     if (name === "__dict__" && this.isInstance(receiver) && this.instanceDictionarySlot(receiver.type))
       return value(this.instanceDictionary(receiver));
@@ -1441,6 +1449,14 @@ export class ClassRuntime {
       !(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue) && this.mro(this.typeOf(receiver)).some(base =>
         NATIVE_NAMESPACES[base.root ? "object" : base.name]?.some(entry => entry[0] === name));
   }
+  superAttribute(receiver, name) {
+    const proxy = this.payload(receiver);
+    if (name !== "__class__" && proxy.selfClass !== null) {
+      const item = this.lookup(proxy.selfClass, name, true, this.mro(proxy.selfClass).indexOf(proxy.thisclass) + 1);
+      if (item.found) return this.bindAttribute(item.value, proxy.self === proxy.selfClass ? null : proxy.self, proxy.selfClass);
+    }
+    return this.read(receiver, name, true);
+  }
   numericDirectoryNames(receiver) {
     if (receiver === null) return NONE_DIRECTORY_KEYS;
     if (receiver instanceof NotImplementedValue) return NOT_IMPLEMENTED_DIRECTORY_KEYS;
@@ -1764,6 +1780,8 @@ export class ClassRuntime {
     }
     if (receiver instanceof BuiltinValue && this.isType(receiver)) this.fail("TypeError", "Cannot mutate an immutable native type.");
     if (receiver instanceof PropertyValue) this.fail("AttributeError", "'property' object has no writable attribute '" + name + "'");
+    if (!(receiver instanceof ClassValue || this.isInstance(receiver)) && this.values.typeName(receiver) !== null)
+      this.fail(name === "__class__" ? "TypeError" : "AttributeError", "'" + this.typeOf(receiver).name + "' object has no attribute '" + name + "'");
     if (!(receiver instanceof ClassValue || this.isInstance(receiver)))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");

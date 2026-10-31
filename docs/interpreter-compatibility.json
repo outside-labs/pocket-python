@@ -2479,9 +2479,9 @@
     },
     {
       "id": "explicit-native-protocols",
-      "status": "partial",
-      "scope": "O90 explicit bound/unbound/rebound native protocol calls, Python method get/call and owned equality/hash, canonical native descriptors, native metadata and signature/receiver diagnostics over already admitted APIs. Property missing-accessor diagnostics preserve actual qualified type names, owned name rendering, callback order and native copy names.",
-      "gaps": "Explicit native attribute entry-point closure completes O90 separately. Unadopted display, numeric, container, iterator, generic, serialization, buffer, context and dynamic code APIs retain #127/#184/#116/#117/#120/#125/#126/#121/O91.",
+      "status": "supported",
+      "scope": "O90 explicit bound/unbound/rebound native protocol calls, Python method get/call and owned equality/hash, canonical native descriptors, native metadata and signature/receiver diagnostics over already admitted APIs. Property missing-accessor diagnostics preserve actual qualified type names, owned name rendering, callback order and native copy names. Explicit native attribute access covers primitive, method, module and super layouts, including source hook bypass, module namespace hooks, and super descriptor rebinding.",
+      "gaps": "Unadopted display, numeric, container, iterator, generic, serialization, buffer, context and dynamic code APIs retain #127/#184/#116/#117/#120/#125/#126/#121/O91.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2497,7 +2497,10 @@
         "tests/fixtures/interpreter/native-protocols.json:native-index-callback",
         "tests/fixtures/interpreter/property-diagnostics.json:getter-name-unset",
         "tests/fixtures/interpreter/property-diagnostics.json:qualification-owned-after-name-mutation",
-        "tests/fixtures/interpreter/property-diagnostics.json:copy-raw-factory-getter"
+        "tests/fixtures/interpreter/property-diagnostics.json:copy-raw-factory-getter",
+        "tests/fixtures/interpreter/native-attributes.json:super-proxy-forward",
+        "tests/fixtures/interpreter/native-attributes.json:module-source-hooks",
+        "tests/fixtures/interpreter/native-attributes.json:method-native-fallback"
       ]
     }
   ],

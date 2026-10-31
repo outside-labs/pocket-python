@@ -1,4 +1,4 @@
-import {ARITHMETIC_SLOTS, ORDERING_SLOTS} from "./class-policy.mjs";
+import {ARITHMETIC_SLOTS, NATIVE_PROTOCOL_KEYS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
 import {GeneratorValue, FrameValue, FrameLocalsValue, Cell, Environment, environmentCell, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime} from "./class-values.mjs";
@@ -853,8 +853,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
               if (result.kind === "value") stack.push(result.value);
               else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};
-            } else if (environment.dictionary === null && cell?.bound && !["__dict__", "__class__"].includes(arg)) stack.push(cell.value);
-            else if (environment.dictionary === null && !environment.cells.get("__getattr__")?.bound && !["__dict__", "__class__", "__dir__"].includes(arg)) {
+            } else if (!receiver.type && environment.dictionary === null && cell?.bound && !["__dict__", "__class__"].includes(arg)) stack.push(cell.value);
+            else if (!receiver.type && environment.dictionary === null && !environment.cells.get("__getattr__")?.bound && !["__dict__", "__class__", "__dir__"].includes(arg) && !NATIVE_PROTOCOL_KEYS.includes(arg)) {
               const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
               if (result.kind === "value") stack.push(result.value);
               else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};

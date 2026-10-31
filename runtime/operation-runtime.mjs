@@ -133,6 +133,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const moduleEntry = (record, site, found, value) => {
     if (found) return valueTask(value, site, record.after);
+    if (record.name === "__class__") return valueTask(classes.typeOf(record.receiver), site, record.after);
+    if (NATIVE_PROTOCOL_KEYS.includes(record.name)) {
+      const entry = classes.nativeProtocolEntry(classes.builtin("module"), record.name);
+      if (entry.found) return valueTask(classes.bindAttribute(entry.value, record.receiver, classes.typeOf(record.receiver)).value, site, record.after);
+    }
+    if (record.mode === "native-get") return moduleMissing(record, site);
     if (record.name === "__dir__") return valueTask(allocate(ValueMethod, record.receiver, "module.__dir__"), site, record.after);
     const environment = record.receiver.environment;
     if (environment.dictionary !== null) {
@@ -270,6 +276,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (value < 0n) python("ValueError", "__len__() should return >= 0");
     if (value > 9223372036854775807n) python("OverflowError", "length exceeds the signed-64-bit maximum");
     return value;
+  };
+  const nativeAttributeName = value => {
+    const name = values.text(value);
+    if (name === null) python("TypeError", "attribute name must be string, not '" + classes.typeOf(value).name + "'");
+    if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
+    return name;
   };
   const bindingRecovery = (value, completion, site) => {
     while (["init", "relay"].includes(completion?.kind)) completion = completion.after;
@@ -1734,7 +1746,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = attributeTask(task.receiver, task.name, site, continuation("module-missing", {receiver: task.receiver, name: task.name, mode: "import", skipNamespace: true, after: completion}), depth);
             continue;
           }
-          if (task.receiver instanceof ModuleValue && (!task.receiver.type || ["native-get", "native-set", "native-delete"].includes(task.operation))) {
+          if (task.receiver instanceof ModuleValue && !task.receiver.type) {
             state.temporaries = operationRoots(task);
             const {receiver, name, operation} = task, environment = receiver.environment;
             const writing = ["set", "delete", "native-set", "native-delete"].includes(operation);
@@ -1760,7 +1772,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               } else moduleContext.binding(environment, name, task.item);
               task = valueTask(null, site, completion); continue;
             }
-            const record = {receiver, key, name, mode: operation === "import" ? "import" : "get", depth, after: completion};
+            const record = {receiver, key, name, mode: operation === "import" ? "import" : operation === "native-get" ? "native-get" : "get", depth, after: completion};
             if (environment.dictionary !== null) { task = dictionaryTask(environment.dictionary, key, site, continuation("module-entry", record), depth, "probe"); continue; }
             const cell = environment.cells.get(name);
             task = moduleEntry(record, site, !!cell?.bound, cell?.value); continue;
@@ -2466,6 +2478,32 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length !== 1) python("TypeError", nativeName + " takes no arguments");
             task = unaryTask(nativeName === "__iter__" ? "iter" : "next", args[0], site, completion, depth); continue;
           }
+          if (nativeOwner === "method" && nativeName === "__getattribute__") {
+            const name = nativeAttributeName(args[1]);
+            const plan = classes.read(args[0], name, false, args[1]);
+            task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site,
+              plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after: completion, depth}) : completion, depth); continue;
+          }
+          if (nativeOwner === "super" && nativeName === "__getattribute__") {
+            const name = nativeAttributeName(args[1]);
+            const plan = classes.superAttribute(args[0], name);
+            task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site,
+              plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after: completion, depth}) : completion, depth); continue;
+          }
+          if (nativeOwner === "super" && nativeName === "__get__") {
+            const receiver = classes.payload(args[0]);
+            task = args[1] === null || receiver.self !== null ? valueTask(args[0], site, completion) :
+              callTask(classes.typeOf(args[0]), [receiver.thisclass, args[1]], [], [], site, completion, depth); continue;
+          }
+          if (nativeOwner === "module" && ["__getattribute__", "__setattr__", "__delattr__"].includes(nativeName) && classes.nativeModule(args[0])) {
+            const name = nativeAttributeName(args[1]);
+            if (classes.isInstance(args[0])) {
+              const plan = nativeName === "__getattribute__" ? classes.read(args[0], name, false, args[1]) : classes.write(args[0], name, args[2] ?? null, nativeName === "__delattr__", args[1]);
+              task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site,
+                plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after: completion, depth}) : completion, depth); continue;
+            }
+            task = attributeTask(args[0], name, site, completion, depth, nativeName === "__getattribute__" ? "get" : nativeName === "__setattr__" ? "native-set" : "native-delete", args[1], null, args[2] ?? null); continue;
+          }
           if (["property", "staticmethod", "classmethod", "module", "super"].includes(nativeOwner) && callable.name.includes(".")) {
             const original = args[0], raw = classes.payload(original), rest = args.slice(1);
             if (nativeName === "__new__") {
@@ -2981,26 +3019,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const writing = callable.name !== "type.__getattribute__", setting = callable.name === "type.__setattr__";
             if (keywords.length || args.length !== (setting ? 3 : 2)) python("TypeError", "Native type attribute operation received invalid arguments");
             if (!classes.isType(args[0])) python("TypeError", "Native type attribute operation requires a type receiver");
-            const name = values.text(args[1]);
-            if (name === null) python("TypeError", "attribute name must be string");
-            if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
+            const name = nativeAttributeName(args[1]);
             if (writing && args[0] instanceof BuiltinValue) python("TypeError", "Cannot mutate an immutable native type");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }
           if (["object.__getattribute__", "object.__setattr__", "object.__delattr__"].includes(callable.name)) {
             const writing = callable.name !== "object.__getattribute__", setting = callable.name === "object.__setattr__";
             if (keywords.length || args.length !== (setting ? 3 : 2)) python("TypeError", "Native attribute operation received invalid arguments");
-            const name = values.text(args[1]);
-            if (name === null) python("TypeError", "attribute name must be string");
-            if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
+            const name = nativeAttributeName(args[1]);
             if (writing && args[0] instanceof ClassValue) python("TypeError", "object attribute mutation requires an ordinary instance");
-            const markerLayout = name === "__isabstractmethod__" && (args[0] instanceof FunctionValue ||
-              args[0] instanceof BoundMethodValue || args[0] instanceof PropertyValue || args[0] instanceof MethodWrapperValue) ||
-              name === "__doc__" && (args[0] instanceof FunctionValue || args[0] instanceof BoundMethodValue);
-            const documentLayout = name === "__doc__" && args[0] instanceof PropertyValue;
             const identityLayout = ["__name__", "__qualname__", "__module__"].includes(name) && (args[0] instanceof FunctionValue || classes.isPythonMethod(args[0]));
-            const directoryLayout = classes.hasFixedDirectory(args[0]) && name === "__dir__";
-            if (!(args[0] instanceof FrameValue || args[0] instanceof FrameLocalsValue || args[0] instanceof GeneratorValue || args[0] instanceof Cell || args[0] instanceof CodeValue || args[0] instanceof InstanceValue || args[0] instanceof PropertyValue || args[0] instanceof MethodWrapperValue || args[0] instanceof FunctionValue || classes.isPythonMethod(args[0])) && !markerLayout && !documentLayout && !identityLayout && !directoryLayout) hard("UNSUPPORTED", "UnsupportedOperationError", "Native attribute access on further layouts requires a separate stage.");
             if (identityLayout && !writing && classes.isPythonMethod(args[0])) python("AttributeError", "Method identity metadata requires ordinary callable fallback.");
             task = attributeTask(args[0], name, site, completion, depth, setting ? "native-set" : writing ? "native-delete" : "native-get", args[1], null, args[2] ?? null); continue;
           }

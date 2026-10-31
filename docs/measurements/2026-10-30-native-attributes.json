@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "scope": "O90 explicit native attribute protocol closure over adopted layouts and the implicit attribute API name-argument surface.",
+  "baseline_commit": "ef9095011109101d0da0a7c76414df7cd10a48ae",
+  "reference_version": "3.14.7",
+  "engine_fingerprint": "56a39011d57e8c8ff4e622c238ebe121df20db3582e4c462ecd697c40088139e",
+  "corpus": {
+    "path": "tests/fixtures/interpreter/native-attributes.json",
+    "sha256": "d7a8cf13240302160ee8af12948376e10d4a0af5eb94f9831c3c364f2741e34d",
+    "adopted_cases": 150
+  },
+  "source_reports": [
+    {
+      "path": "build/native-attributes-classes-drain-node-report.json",
+      "target": "node",
+      "driver": "drain",
+      "adopted_pass": 150,
+      "zero_teardown_records": 150
+    },
+    {
+      "path": "build/native-attributes-classes-stepped-node-report.json",
+      "target": "node",
+      "driver": "stepped",
+      "adopted_pass": 150,
+      "zero_teardown_records": 150
+    },
+    {
+      "path": "build/native-attributes-classes-parked-node-report.json",
+      "target": "node",
+      "driver": "parked",
+      "adopted_pass": 150,
+      "zero_teardown_records": 150
+    },
+    {
+      "path": "build/native-attributes-classes-drain-browser-report.json",
+      "target": "browser",
+      "driver": "drain",
+      "adopted_pass": 150,
+      "zero_teardown_records": 150
+    },
+    {
+      "path": "build/native-attributes-classes-stepped-browser-report.json",
+      "target": "browser",
+      "driver": "stepped",
+      "adopted_pass": 150,
+      "zero_teardown_records": 150
+    },
+    {
+      "path": "build/native-attributes-classes-parked-browser-report.json",
+      "target": "browser",
+      "driver": "parked",
+      "adopted_pass": 150,
+      "zero_teardown_records": 150
+    }
+  ],
+  "summary": {
+    "adopted_pass": 900,
+    "fail": 0,
+    "zero_teardown_records": 900
+  }
+}
