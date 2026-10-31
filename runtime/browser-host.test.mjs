@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {mountInterpreter} from "./interpreter-host.mjs";
 import {attachInterpreterWorker} from "./interpreter-worker.mjs";
-import {ENGINE, LANGUAGE_ENGINES, CONSOLE_LIMITS, Peer, checkMessage, sourceValue, limits, diagnostic} from "./browser-protocol.mjs";
+import {ENGINE, LANGUAGE_ENGINES, CONSOLE_LIMITS, Peer, checkMessage, checkError, sourceValue, limits, diagnostic} from "./browser-protocol.mjs";
 
 const identity = () => ({manifest_sha256: "0".repeat(64), profile: "in-house-interpreter", profile_version: 1,
   entrypoint: "sources/app.py", engine: {...ENGINE}});
@@ -318,4 +318,33 @@ test('cooperative instruction limits remain total across quanta and output ackno
     await assert.rejects(app.run('print("entered")\nwhile True: pass\n'), {code: 'BUDGET'});
     assert.equal(output, 'entered\n'); assert.equal(last().controller.stats().active, false);
   } finally { app.stop(); }
+});
+
+test('dynamic runtime diagnostics retain bounded caller-supplied logical filenames', async () => {
+  const app = create({application: {...identity(), engine: {...LANGUAGE_ENGINES['classes-source/1']}}});
+  try {
+    await app.ready;
+    for (const filename of ['composed-original.py', 'nested/é model.py', '/private/logical-name.py', '<string>', '']) {
+      const source = 'def fail():\n raise ValueError("original")\nfail()';
+      await assert.rejects(app.run('exec(compile(' + JSON.stringify(source) + ',' + JSON.stringify(filename) + ',"exec"))'), error => {
+        assert.equal(error.name, 'ValueError');
+        assert.deepEqual(error.detail.location, {filename, line: 2, column: 2, end_line: 2, end_column: 30, dynamic_source: true});
+        assert.equal(error.detail.frames.at(-1).function, 'fail');
+        assert.deepEqual(error.detail.frames.at(-1).location, error.detail.location);
+        assert.equal(error.detail.frames[0].location.filename, 'sources/app.py');
+        assert.equal(error.detail.frames[0].location.dynamic_source, undefined);
+        return true;
+      });
+    }
+    await app.run('print("recovered")');
+  } finally { app.stop(); }
+});
+
+test('logical diagnostic locations retain the filename and wire-shape limits', () => {
+  const location = {filename: 'x'.repeat(256), line: 1, column: 1, end_line: 1, end_column: 2, dynamic_source: true};
+  const error = {domain: 'runtime', code: 'PYTHON', type: 'ValueError', message: 'body', location, frames: []};
+  assert.equal(checkError(error), error);
+  for (const patch of [{filename: 'x'.repeat(257)}, {filename: 'a\0b'}, {filename: 7}, {dynamic_source: false}, {extra: true}])
+    assert.throws(() => checkError({...error, location: {...location, ...patch}}), item => item.code === 'PROTOCOL');
+  assert.equal(diagnostic({location: {filename: '/private/path', span: [1, 1, 1, 2]}}).location, null);
 });

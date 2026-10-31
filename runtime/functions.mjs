@@ -14,6 +14,7 @@ class Unhandled { constructor(value) { this.value = value; } }
 const builtinNames = new Set(["print", "str", "repr", "len", ...Object.keys(EXCEPTIONS)]);
 const summary = (frame, cursor) => Object.freeze({function: frame.fn.name,
   location: cursor.block.source ? Object.freeze({filename: cursor.block.source.filename,
+    ...(frame.pool.source ? {dynamic_source: true} : {}),
     span: cursor.block.source.spans[Math.max(0, cursor.pc - 1)]}) : null});
 
 function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth = 48,

@@ -101,12 +101,15 @@ export function sourceValue(source, bounds) {
   if (typeof source !== "string" || source.length > bounds.source_bytes || encoder.encode(source).byteLength > bounds.source_bytes) throw exception(failure("BAD_VALUE", "Source byte budget exceeded.", "host", "HostError"));
   return textValue(source, bounds.source_bytes);
 }
+const logicalFilename = filename => typeof filename === "string" && filename.length <= 256 && !filename.includes("\0");
+const diagnosticLocation = input => input?.dynamic_source === true ? logicalFilename(input.filename) : isSourceLocation(input?.filename);
 export function diagnostic(error) {
   const location = input => {
-    if (!input || !isSourceLocation(input.filename)) return null;
+    if (!input || !diagnosticLocation(input)) return null;
     const span = input.span || [input.line, input.column, input.end_line, input.end_column];
     return span.length === 4 && span.every(value => integer(value, 262145)) ?
-      {filename: input.filename, line: span[0], column: span[1], end_line: span[2], end_column: span[3]} : null;
+      {filename: input.filename, line: span[0], column: span[1], end_line: span[2], end_column: span[3],
+        ...(input.dynamic_source === true ? {dynamic_source: true} : {})} : null;
   };
   return {...failure(String(error.code || "RUNTIME").slice(0, 64), String(error.message || "Execution failed.").slice(0, 1024), "runtime", String(error.name || "RuntimeError").slice(0, 64)),
     location: location(error.location), frames: (error.traceback || []).slice(-16).map(frame =>
@@ -118,7 +121,7 @@ export function checkError(value) {
       typeof value.message !== "string" || value.message.length > 1024 ||
       Object.keys(value).some(key => !["domain", "code", "type", "message", "location", "frames"].includes(key))) throw exception(failure("PROTOCOL", "Invalid error record."));
   for (const at of [value.location, ...(value.frames || []).map(frame => frame.location)].filter(Boolean)) {
-    if (!exact(at, ["filename", "line", "column", "end_line", "end_column"]) || !isSourceLocation(at.filename) ||
+    if (!exact(at, ["filename", "line", "column", "end_line", "end_column", ...(at.dynamic_source === true ? ["dynamic_source"] : [])]) || !diagnosticLocation(at) ||
         ![at.line, at.column, at.end_line, at.end_column].every(n => integer(n, 262145))) throw exception(failure("PROTOCOL", "Invalid source location."));
   }
   if (value.frames !== undefined && (!Array.isArray(value.frames) || value.frames.length > 16 || value.frames.some(frame =>
