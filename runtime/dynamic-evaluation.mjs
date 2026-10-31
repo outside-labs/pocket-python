@@ -38,6 +38,8 @@ export function dynamicEvaluator({state, values, classes, allocate, enter, bind,
     }
     const globals = allocate(Environment, rawDictionary(task.globals), task.globals); state.temporaries.push(globals);
     const callable = allocate(FunctionValue, code.pool, code.index, globals, closure, [], task.builtins); state.temporaries.push(callable);
+    // Executing a code object supplies no defining function defaults.
+    if (callable.keywordDefaults.size) classes.functionMetadata(callable, "keywordDefaults", new Map());
     const namespace = allocate(Environment, task.locals); state.temporaries.push(namespace);
     const after = mode === "exec" ? completion("exec-return", {after: task.after}) : task.after;
     const bindings = bind(callable, [], [], []);

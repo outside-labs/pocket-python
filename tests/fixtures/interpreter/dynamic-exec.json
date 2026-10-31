@@ -324,6 +324,12 @@
       "stage": "O93",
       "source": "def probe():\n yield gen.gi_frame.f_back\ngen=probe()\ng={\"gen\":gen,\"next\":next}\nl={}\nexec(\"saved=next(gen)\",g,l)\nframe=l[\"saved\"]\nprint(frame.f_locals is l,frame.f_globals is g)\n",
       "stdout": "True True\n"
+    },
+    {
+      "id": "code-keyword-defaults-not-inherited",
+      "stage": "O93",
+      "source": "def f(*,x=7): return x\ntry: exec(f.__code__)\nexcept TypeError: print(\"missing keyword\")\n",
+      "stdout": "missing keyword\n"
     }
   ]
 }
