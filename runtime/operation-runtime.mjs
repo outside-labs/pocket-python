@@ -1443,6 +1443,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (!customNew && (args.length || keywords.length)) python("TypeError", instance.type.name + "() takes no arguments");
       return valueTask(instance, site, after);
     }
+    // The native type-call slot invokes its initializer directly, even when
+    // a custom MRO hides the type required by the public wrapper descriptor.
+    if (instance instanceof ClassValue && initializer.value instanceof BuiltinValue && initializer.value.name === "type.__init__")
+      return callTask(classes.builtin("native-type-init"), [instance, ...args], keywords, keywordValues, site,
+        continuation("init", {instance, after}), depth);
     const plan = customNew ? classes.bindAttribute(initializer.value, instance, type) : classes.read(instance, "__init__");
     const target = continuation("init", {instance, after});
     return plan.kind === "value" ? callTask(plan.value, args, keywords, keywordValues, site, target, depth) :
@@ -2650,7 +2655,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (!args.length || !classes.isType(args[0])) python("TypeError", "type.__call__ requires a type");
             task = constructTask(args[0], args.slice(1), keywords, keywordValues, site, completion, depth); continue;
           }
-          if (callable.name === "type.__init__") {
+          if (callable.name === "type.__init__" || callable.name === "native-type-init") {
             if (!args.length || !classes.isType(args[0]) || args.length === 2 && keywords.length || ![2, 4].includes(args.length))
               python("TypeError", "type.__init__ requires one or three arguments after its receiver");
             task = valueTask(null, site, completion); continue;

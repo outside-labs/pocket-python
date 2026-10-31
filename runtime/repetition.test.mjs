@@ -147,12 +147,12 @@ test('index binding and callback loops share recursion, instruction, work and ar
   }
 });
 
-test('native repetition descriptors expose their entries while explicit invocation retains its owner', async () => {
+test('native repetition descriptors support explicit invocation', async () => {
   for (const type of ['list', 'tuple', 'str']) {
     const result = await run('print(type('+type+'.__mul__).__name__)\n');
     assert.equal(result.stdout, 'wrapper_descriptor\n'); assert.equal(result.error, undefined); closed(result.closed);
-    const invocation = await run(type+'.__mul__('+({list:'[]',tuple:'()',str:'""'}[type])+',2)\n');
-    assert.equal(invocation.error?.code, 'UNSUPPORTED'); assert.match(invocation.error.message, /O90/); closed(invocation.closed);
+    const invocation = await run('print(len('+type+'.__mul__('+({list:'[7]',tuple:'(7,)',str:'"x"'}[type])+',2)))\n');
+    assert.equal(invocation.stdout, '2\n'); assert.equal(invocation.error, undefined); closed(invocation.closed);
   }
 });
 

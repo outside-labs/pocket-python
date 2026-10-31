@@ -1436,7 +1436,7 @@ export class ClassRuntime {
   }
   hasNativeProtocol(receiver, name) {
     return NATIVE_PROTOCOL_KEYS.includes(name) && !this.isType(receiver) && !this.protocolObject(receiver) &&
-      !(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue) && this.mro(this.typeOf(receiver)).some(base =>
+      !(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue) && this.mro(this.typeOf(receiver)).some(base =>
         NATIVE_NAMESPACES[base.root ? "object" : base.name]?.some(entry => entry[0] === name));
   }
   numericDirectoryNames(receiver) {
