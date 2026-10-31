@@ -1,9 +1,10 @@
 # Pocket-python
 
-The current finite object, construction and reflection scope is consolidated in
-the [O95 reconciliation](docs/interpreter-object-scope.md), including exact owners
-for retained boundaries. Earlier delivery notes below retain their checkpoint
-context; broad Python and package compatibility continue separately.
+The finite O1–O96 object, construction and reflection contract has
+[reconciled scope](docs/interpreter-object-scope.md) and
+[integrated acceptance](docs/interpreter-object-integration.md), including exact
+owners for retained boundaries. Earlier delivery notes below retain their
+checkpoint context; broad Python and package compatibility continue separately.
 
 Pocket-python builds offline browser applications from explicit verified client
 sources. The compiled profile runs emitted JavaScript and selected helpers in a

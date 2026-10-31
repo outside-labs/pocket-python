@@ -1,5 +1,11 @@
 # Execution consolidation and broad Python compatibility
 
+The current finite object/construction/reflection scope is recorded in the
+[O95 reconciliation](interpreter-object-scope.md) and
+[O96 integrated acceptance](interpreter-object-integration.md). Earlier object
+delivery sections retain their checkpoint context. Broader language, API,
+package and async work continue under their named issues.
+
 Adopted direction: 2026-10-21. Runtime baseline:
 [`56b99ff08b469eae38d023d8bee9b9f8bbd9877a`](https://github.com/outside-labs/pocket-python/commit/56b99ff08b469eae38d023d8bee9b9f8bbd9877a).
 Issues and Project fields record current delivery state. The execution
@@ -552,5 +558,7 @@ engine refusal sites, native layout/attribute/slot tables and the #99 inventory.
 Completed object work is removed from remaining-task lists. Retained boundaries
 have exact neighboring owners; intentional refusals are separate from positive
 support evidence. #123 supplies #124/#125 with its delivered prerequisites; #33
-retains its remaining C3 APIs and protocols. O96 integrated acceptance and final
-main verification remain the closure gates.
+retains its remaining C3 APIs and protocols. O96 adds the composed source,
+lifecycle, offline and reduced-profile acceptance. The versioned record links
+positive evidence for all 96 identifiers and the broad batch CI; #123 records
+final-main verification before closure.

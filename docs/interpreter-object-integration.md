@@ -40,3 +40,9 @@ object-integration` selection. Broad PR CI supplies regression and offline-conso
 coverage. The final acceptance record links those runs and the final-main
 wheel/installed-CLI/source-profile startup smoke. Only then may #123 and its
 Project item close; #33, #34 and the named neighboring API owners remain separate.
+
+The [versioned acceptance record](measurements/2026-10-31-object-closure.json)
+links one positive source case for every O1–O96 stage, the six composed reports,
+114 zero-teardown observations, isolated-wheel offline acceptance and the broad
+batch CI run. Final-main evidence is recorded in #123 after the accepted squash
+merges; retained neighboring API milestones keep their separate scope.
