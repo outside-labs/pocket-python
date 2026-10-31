@@ -38,6 +38,7 @@ class Parser {
   unsupported(message, token) { this.fail(message, token, "UNSUPPORTED"); }
   defer(message, node) { this.refusal ??= {message, node}; return node; }
   charge() {
+    this.options.onWork?.(1);
     if (++this.work > (this.options.maxWork ?? SOURCE_LIMITS.work)) this.fail("Source work budget exceeded.", this.peek(), "COMPILE_BUDGET");
     if (this.options.shouldCancel?.()) this.fail("Compilation cancelled.", this.peek(), "CANCELLED");
   }
@@ -86,11 +87,22 @@ class Parser {
     this.fail("Invalid assignment/deletion target.", value);
   }
   file() {
-    const start = this.peek(), body = [];
+    const start = this.peek(), body = [], mode = this.options.mode ?? "exec";
+    if (!["exec", "eval", "single"].includes(mode)) throw new TypeError("Invalid source mode.");
+    if (mode === "eval") {
+      while (this.kind("newline")) this.take();
+      const value = this.expressionList();
+      while (this.kind("newline")) this.take();
+      if (!this.kind("eof")) this.fail("Expected a single expression.");
+      body.push(this.node("Return", start, {value}));
+    }
+    let statements = 0;
     while (!this.kind("eof")) {
       if (this.kind("newline")) { this.take(); continue; }
+      if (mode === "single" && statements++) this.fail("multiple statements found while compiling a single statement");
       body.push(...this.statement());
     }
+    if (mode === "single" && !body.length) this.fail("invalid syntax");
     if (this.refusal) this.unsupported(this.refusal.message, this.refusal.node);
     const module = this.node("Module", start, {body});
     return freezeSourceTree({module, source: this.lexed.source, filename: this.filename, languageProfile: this.languageProfile,
@@ -113,7 +125,9 @@ class Parser {
   suite() {
     this.expect(":");
     if (!this.kind("newline")) return this.simpleLine();
-    this.take(); this.expectKind("indent", "Expected an indented suite.");
+    this.take();
+    if (!this.kind("indent")) this.fail("Expected an indented suite.", this.peek(), "SYNTAX", "IndentationError");
+    this.take();
     const body = [];
     while (!this.kind("dedent") && !this.kind("eof")) {
       if (this.kind("newline")) this.take(); else body.push(...this.statement());

@@ -16,7 +16,7 @@ export function environmentCell(environment, name) {
   return entry ? {bound: true, value: entry.value} : undefined;
 }
 export class CodePool {
-  constructor(code, bytes, module = null) { this.code = code; this.bytes = bytes; this.module = module; this.codeObjects = null; }
+  constructor(code, bytes, module = null, source = null) { this.code = code; this.bytes = bytes; this.module = module; this.source = source; this.codeObjects = null; }
 }
 export class CodeValue {
   constructor(pool, index) { this.pool = pool; this.index = index; this.metadata = new Map(); Object.freeze(this); }
@@ -170,6 +170,7 @@ export const EXCEPTIONS = Object.freeze({
   ZeroDivisionError: "ArithmeticError", OverflowError: "ArithmeticError", LookupError: "Exception", IndexError: "LookupError",
   KeyError: "LookupError", ValueError: "Exception", BufferError: "Exception", TypeError: "Exception", UnicodeError: "ValueError",
   UnicodeEncodeError: "UnicodeError", UnicodeDecodeError: "UnicodeError", UnicodeTranslateError: "UnicodeError",
+  SyntaxError: "Exception", IndentationError: "SyntaxError", TabError: "IndentationError",
   NameError: "Exception", UnboundLocalError: "NameError", RuntimeError: "Exception", SystemError: "Exception",
   RecursionError: "RuntimeError", StopIteration: "Exception", AttributeError: "Exception",
   ImportError: "Exception", ModuleNotFoundError: "ImportError"
@@ -180,4 +181,4 @@ export function matchesException(name, expected) {
 }
 
 // The source-visible builtin namespace contains only adopted capabilities.
-export const SOURCE_BUILTINS = Object.freeze(["print", "str", "repr", "len", "isinstance", "bool", "iter", "next", "memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed", "object", "NotImplemented", ...Object.keys(EXCEPTIONS)]);
+export const SOURCE_BUILTINS = Object.freeze(["compile", "print", "str", "repr", "len", "isinstance", "bool", "iter", "next", "memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed", "object", "NotImplemented", ...Object.keys(EXCEPTIONS)]);

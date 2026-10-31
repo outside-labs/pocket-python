@@ -26,7 +26,7 @@ class Scanner {
   constructor(input, options) {
     if (options === null || typeof options !== "object" || Array.isArray(options)) throw new TypeError("Expected source options.");
     this.filename = options.filename ?? "<input>";
-    if (typeof this.filename !== "string" || !this.filename || this.filename.length > 256 || this.filename.includes("\0")) throw new TypeError("Expected a bounded logical filename.");
+    if (typeof this.filename !== "string" || !this.filename && !options.mode || this.filename.length > 256 || this.filename.includes("\0")) throw new TypeError("Expected a bounded logical filename.");
     this.limits = {};
     for (const [key, cap] of [["maxBytes", SOURCE_LIMITS.bytes], ["maxTokens", SOURCE_LIMITS.tokens],
       ["maxDepth", SOURCE_LIMITS.depth], ["maxIndent", SOURCE_LIMITS.indents], ["maxWork", SOURCE_LIMITS.work]]) {
@@ -34,6 +34,7 @@ class Scanner {
       if (!Number.isSafeInteger(value) || value < 1 || value > cap) throw new TypeError("Invalid source limit: " + key);
       this.limits[key] = value;
     }
+    this.onWork = options.onWork;
     this.shouldCancel = options.shouldCancel ?? null;
     if (this.shouldCancel !== null && typeof this.shouldCancel !== "function") throw new TypeError("Invalid compilation cancellation callback.");
     this.offset = 0; this.line = 1; this.column = 1; this.work = 0;
@@ -42,6 +43,11 @@ class Scanner {
       try { this.source = new TextDecoder("utf-8", {fatal: true}).decode(input); }
       catch { this.fail("SYNTAX", "Source is not valid UTF-8."); }
       this.bytes = input.byteLength;
+      if (options.mode) {
+        const cookie = this.source.split("\n", 2).map(line => /^\s*#.*?coding[:=]\s*([-\w.]+)/.exec(line)?.[1]).find(Boolean);
+        if (cookie && !/^utf[-_]?8$/i.test(cookie)) this.fail("UNSUPPORTED", "Dynamic source bytes require the adopted UTF-8 encoding");
+      }
+      if (this.onWork) this.charge(input.byteLength);
     } else if (typeof input === "string") {
       if (input.length > this.limits.maxBytes) this.fail("COMPILE_BUDGET", "Source byte budget exceeded.");
       this.bytes = 0;
@@ -63,6 +69,7 @@ class Scanner {
     throw new SourceError(code, message, {filename: this.filename, span: [...start, this.line, this.column], name});
   }
   charge(amount = 1) {
+    this.onWork?.(amount);
     if ((this.work += amount) > this.limits.maxWork) this.fail("COMPILE_BUDGET", "Source work budget exceeded.");
     if (this.shouldCancel?.()) this.fail("CANCELLED", "Compilation cancelled.");
   }
