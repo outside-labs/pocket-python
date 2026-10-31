@@ -192,6 +192,7 @@ def checks():
         ('interpreter-console', 'interpreter_browser_smoke', 45),
         ('library-console', 'library_profiles_browser_smoke', 30),
         ('classes-console', 'classes_console_browser_smoke', 300),
+        ('object-console', 'object_integration_browser_smoke', 15),
     ):
         add(name + '-browser', 'browser-integration', 'python', f'scripts/{script}.py',
             '--report', f'build/{name}-browser-report.json', seconds=weight)

@@ -1,0 +1,132 @@
+"""Accept fresh composed object source through an offline installed console."""
+
+import argparse
+from functools import partial
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+from threading import Thread
+
+from playwright.sync_api import sync_playwright
+import pocket_python
+from pocket_python.interpreter import build_interpreter, read_interpreter
+from interpreter_browser_smoke import EXAMPLE, Handler, Server
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def smoke(require_installed=False):
+    package = Path(pocket_python.__file__).resolve()
+    if require_installed:
+        assert not package.is_relative_to(ROOT), 'This check requires an isolated installed distribution.'
+    corpus_path = ROOT / 'tests/fixtures/interpreter/object-integration.json'
+    corpus = json.loads(corpus_path.read_bytes())
+    example = (ROOT / 'examples/interpreter_object_integration.py').read_text(encoding='utf-8')
+    records = []
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        selected = build_interpreter(EXAMPLE.write_source(root / 'source', source=example),
+                                     read_interpreter(ROOT / 'runtime', library_profile='operator/1'),
+                                     root / 'site/console', language_profile='classes-source/1')
+        reduced = build_interpreter(EXAMPLE.write_source(root / 'reduced-source', source='print(42)\n'),
+                                    read_interpreter(ROOT / 'runtime'), root / 'reduced')
+        server = Server(('127.0.0.1', 0), partial(Handler, directory=str(root / 'site')))
+        server.paths = []
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        url = f'http://127.0.0.1:{server.server_port}/console/'
+        try:
+            with sync_playwright() as playwright:
+                browser = playwright.chromium.launch()
+                try:
+                    context = browser.new_context()
+                    page = context.new_page()
+                    errors = []
+                    page.on('pageerror', lambda error: errors.append(str(error)))
+                    def ready():
+                        page.wait_for_function("()=>document.querySelector('#status').textContent==='Ready'")
+                    def run(source, expected, error=None):
+                        page.fill('#input', source)
+                        page.click('#run')
+                        page.wait_for_function("()=>document.querySelector('#status').textContent==='Completed' || document.querySelector('#status').textContent.includes('Error:')")
+                        status = page.locator('#status').inner_text()
+                        assert status.startswith(error + ':') if error else status == 'Completed', (status, source)
+                        assert page.locator('#result').inner_text() == expected, source
+                    page.goto(url)
+                    ready()
+                    page.wait_for_function("()=>document.querySelector('#offline').textContent==='Offline ready on this device'")
+                    context.set_offline(True)
+                    page.reload()
+                    ready()
+                    for case in corpus['cases']:
+                        if case.get('modules'):
+                            continue
+                        run(case['source'], case['stdout'], case.get('error_type'))
+                        if case['id'] == 'dynamic-original-source-failure':
+                            assert 'fail at composed-original.py:4' in page.locator('#diagnostic').inner_text(), page.locator('#diagnostic').inner_text()
+                        records.append({'id': case['id'], 'status': 'pass'})
+                    expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
+                    run(example, expected)
+                    busy = 'import operator\nnamespace={"add":operator.add}\nexec("class Box:\\n __slots__=(\'value\',)\\n def __init__(self): self.value=7\\n @property\\n def field(self):\\n  print(\'entered\')\\n  while True: self.value=add(self.value,1)\\nbox=Box()\\nbox.field",namespace)\n'
+                    page.fill('#input', busy)
+                    page.click('#run')
+                    page.wait_for_function("()=>document.querySelector('#result').textContent==='entered\\n'")
+                    page.click('#stop')
+                    page.wait_for_function("()=>document.querySelector('#status').textContent==='Stopped'")
+                    output = page.locator('#result').inner_text()
+                    page.wait_for_timeout(50)
+                    assert page.locator('#result').inner_text() == output
+                    page.click('#restart')
+                    ready()
+                    run(example, expected)
+                    context.set_offline(False)
+                    shutil.rmtree(root / 'site/console')
+                    shutil.copytree(root / 'reduced', root / 'site/console')
+                    page.evaluate('async()=>{await(await navigator.serviceWorker.getRegistration()).update()}')
+                    page.wait_for_function("()=>document.querySelector('#offline').textContent.startsWith('Update ready.')")
+                    run(example, expected)
+                    page.close()
+                    probe = context.new_page()
+                    old = 'pocket-python:' + url + ':' + selected['cache_version']
+                    new = 'pocket-python:' + url + ':' + reduced['cache_version']
+                    probe.goto(url.replace('/console/', '/missing'))
+                    probe.wait_for_function('async({old,next})=>{const keys=await caches.keys();return !keys.includes(old)&&keys.includes(next)}', arg={'old': old, 'next': new})
+                    probe.close()
+                    context.set_offline(True)
+                    page = context.new_page()
+                    page.goto(url)
+                    ready()
+                    run('print(42)\n', '42\n')
+                    run('compile("class C: pass","removed.py","exec")\n', '', 'NameError')
+                    assert not errors, errors
+                    context.close()
+                finally:
+                    browser.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+    return {'schema_version': 1, 'suite': 'interpreter-object-offline/1',
+            'installed_distribution_required': require_installed, 'package_origin': str(package),
+            'corpus_sha256': hashlib.sha256(corpus_path.read_bytes()).hexdigest(),
+            'engine_fingerprint': selected['engine']['fingerprint'], 'cases': records,
+            'checks': ['fresh-offline-composed-source', 'original-dynamic-diagnostics', 'runnable-example',
+                       'stop-after-dynamic-descriptor-entry', 'restart-fresh-owner',
+                       'reduced-profile-update', 'old-cache-removed', 'core-source-boundary'],
+            'summary': {'pass': len(records) + 8, 'fail': 0}}
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--require-installed', action='store_true')
+    parser.add_argument('--report', type=Path)
+    args = parser.parse_args()
+    report = smoke(args.require_installed)
+    if args.report:
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    print(json.dumps(report['summary']))

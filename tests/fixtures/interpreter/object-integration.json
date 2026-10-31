@@ -4,7 +4,8 @@
   "profile": "classes-source/1",
   "reference_version": "3.14.7",
   "implemented_stages": [
-    "O95"
+    "O95",
+    "O96"
   ],
   "cases": [
     {
@@ -12,6 +13,179 @@
       "stage": "O95",
       "source": "namespace=globals()\nnamespace[\"seed\"]=7\ndef f(x=1): return seed+x\nf.__defaults__=(3,)\nclass Number(int): pass\nclass Values(list): pass\nclass Model:\n __slots__=(\"value\",\"__dict__\")\n def __init__(self,value): self.value=value\n @property\n def doubled(self): return self.value*2\nm=Model(Number(f()))\nm.extra=Values([m.value])\nprint(f(),f.__globals__ is namespace,locals() is namespace)\nprint(type(m.value) is Number,m.doubled,m.extra[0],vars(m)[\"extra\"] is m.extra)\nwrapped=staticmethod(f)\nprint(wrapped.__wrapped__ is f,wrapped.__name__==f.__name__)\nexec(compile(\"class Dynamic(Model): pass\\nresult=Dynamic(f()).doubled\", \"reconciled.py\", \"exec\"),namespace)\nprint(result,\"co_name\" in dir(f.__code__),\"__slots__\" in Model.__dict__)\n",
       "stdout": "10 True True\nTrue 20 10 True\nTrue True\n20 True True\n"
+    },
+    {
+      "id": "prepared-slotted-dynamic-descriptors",
+      "stage": "O96",
+      "source": "events=[]\nclass Meta(type):\n @classmethod\n def __prepare__(m,name,bases):\n  events.append(\"prepare\")\n  return {\"initial\":7}\n def __new__(m,name,bases,namespace):\n  events.append(\"new\")\n  return type.__new__(m,name,bases,namespace)\nclass Field:\n def __set_name__(self,owner,name): self.name=name\n def __get__(self,obj,owner): return obj.value+owner.initial\nnamespace={\"Meta\":Meta,\"Field\":Field}\nexec(compile(\"class Model(metaclass=Meta):\\n __slots__=('value',)\\n field=Field()\\n def __init__(self,value): self.value=value\", \"model.py\", \"exec\"),namespace)\nModel=namespace[\"Model\"]\nprint(Model(9).field,len(events),events[0],events[1],Model.__dict__[\"field\"].name)\n",
+      "stdout": "16 2 prepare new field\n"
+    },
+    {
+      "id": "registry-modules-classes-and-dynamic-code",
+      "stage": "O96",
+      "source": "module=__import__(\"models\")\nnamespace=module.__dict__\nexec(compile(\"instance=Point(7)\\nresult=instance.doubled\", \"extension.py\", \"exec\"),namespace)\nprint(namespace is vars(module),module.result,module.instance.value)\nmodule.seed=11\nprint(module.read(),module.read.__globals__ is namespace)\nprint(eval(\"Point(seed).doubled\",namespace))\n",
+      "imports": [
+        "models"
+      ],
+      "modules": [
+        {
+          "name": "models",
+          "package": false,
+          "imports": [],
+          "source": "seed=3\nclass Point:\n __slots__=(\"value\",)\n def __init__(self,value): self.value=value\n @property\n def doubled(self): return self.value*2\ndef read(): return seed\n"
+        }
+      ],
+      "stdout": "True 14 7\n11 True\n22\n"
+    },
+    {
+      "id": "package-relative-import-from-dynamic-function",
+      "stage": "O96",
+      "source": "package=__import__(\"package.child\",fromlist=(\"child\",))\nprint(package.result,package.make().__class__.__name__)\n",
+      "imports": [
+        "package",
+        "package.child",
+        "package.value"
+      ],
+      "modules": [
+        {
+          "name": "package",
+          "package": true,
+          "imports": [
+            "package.child",
+            "package.value"
+          ],
+          "source": ""
+        },
+        {
+          "name": "package.value",
+          "package": false,
+          "imports": [],
+          "source": "class Value(int): pass\nvalue=Value(7)\n"
+        },
+        {
+          "name": "package.child",
+          "package": false,
+          "imports": [
+            "package",
+            "package.value"
+          ],
+          "source": "namespace=globals()\nexec(\"from .value import value, Value\\ndef make(): return Value(value+2)\",namespace)\nresult=make()+1\n"
+        }
+      ],
+      "stdout": "10 Value\n"
+    },
+    {
+      "id": "closure-exec-frame-and-slotted-alias",
+      "stage": "O96",
+      "source": "class Box:\n __slots__=(\"value\",)\n def __init__(self,value): self.value=value\ndef outer():\n box=Box(7)\n def update():\n  nonlocal box\n  box.value+=2\n  print(\"updated\",box.value)\n return update\nf=outer()\ncell=f.__closure__[0]\nexec(f.__code__,f.__globals__,closure=f.__closure__)\nprint(cell is f.__closure__[0],cell.cell_contents.value,f.__code__.co_freevars[0])\n",
+      "stdout": "updated 9\nTrue 9 box\n"
+    },
+    {
+      "id": "replaced-code-and-live-module-globals",
+      "stage": "O96",
+      "source": "namespace=globals()\nnamespace[\"number\"]=7\ndef first(value=1): return value+number\ndef second(value=1): return value*number\nfirst.__code__=second.__code__\nfirst.__defaults__=(3,)\nnamespace[\"number\"]=9\nmethod=staticmethod(first)\nprint(first(),method.__wrapped__ is first,first.__globals__ is namespace)\nprint(eval(compile(\"first(2)\",\"expression.py\",\"eval\"),namespace))\n",
+      "stdout": "27 True True\n18\n"
+    },
+    {
+      "id": "base-reassignment-retained-proxy-super",
+      "stage": "O96",
+      "source": "class A:\n def value(self): return 7\nclass B:\n def value(self): return 9\nclass C(A): pass\nclass D(C): pass\ninstance=D()\nview=C.__dict__\nhandle=super(D,instance)\nC.__bases__=(B,)\nprint(handle.value(),instance.value(),C.__bases__[0] is B,\"__module__\" in view)\nprint(D.__mro__[2] is B,C in B.__subclasses__())\n",
+      "stdout": "9 9 True True\nTrue True\n"
+    },
+    {
+      "id": "module-subtype-hooks-and-imported-descriptor",
+      "stage": "O96",
+      "source": "module=__import__(\"model\")\nclass Custom(type(module)):\n @property\n def answer(self): return 11\n def __getattribute__(self,name):\n  if name==\"value\": return 9\n  return super().__getattribute__(name)\nmodule.__class__=Custom\nnamespace=module.__dict__\nexec(\"def read(): return value\",namespace)\nfrom model import value,answer\nprint(value,answer,module.read(),namespace is vars(module))\n",
+      "imports": [
+        "model"
+      ],
+      "modules": [
+        {
+          "name": "model",
+          "package": false,
+          "imports": [],
+          "source": "value=7\n"
+        }
+      ],
+      "stdout": "9 11 7 True\n"
+    },
+    {
+      "id": "native-payloads-slot-state-and-base-bypass",
+      "stage": "O96",
+      "source": "class Amount(int):\n def __add__(self,other): return 99\nclass Bag(list):\n __slots__=(\"label\",)\n def __len__(self): return 99\namount=Amount(7)\nbag=Bag([amount])\nbag.label=\"values\"\nnamespace={\"bag\":bag,\"amount\":amount}\nexec(\"bag.append(amount)\",namespace)\nprint(type(amount) is Amount,amount+1,int.__add__(amount,1))\nprint(len(bag),list.__len__(bag),bag[0] is bag[1],bag.label)\n",
+      "stdout": "True 99 8\n99 2 True values\n"
+    },
+    {
+      "id": "suspended-frame-cell-updates-and-eval",
+      "stage": "O96",
+      "source": "class Box:\n __slots__=(\"value\",)\n def __init__(self,value): self.value=value\ndef make():\n box=Box(7)\n yield box.value\n yield box.value\nstream=make()\nprint(next(stream))\nframe=stream.gi_frame\nproxy=frame.f_locals\nnamespace={\"box\":proxy[\"box\"]}\nexec(\"box.value=11\",namespace)\nprint(next(stream),frame.f_code is stream.gi_code,eval(\"box.value+2\",namespace))\nstream.close()\nprint(stream.gi_frame is None,proxy[\"box\"].value)\n",
+      "stdout": "7\n11 True 13\nTrue 11\n"
+    },
+    {
+      "id": "property-subtype-copy-and-wrapper-metadata",
+      "stage": "O96",
+      "source": "class P(property): pass\ndef read(self): return self.value\np=P(read)\np.tag=[7]\nq=p.setter(None)\nclass Model:\n value=9\n field=q\nmethod=classmethod(read)\nprint(type(q) is P,q.__name__,Model().field,p.tag[0])\nprint(method.__wrapped__ is read,method.__dict__[\"__name__\"]==read.__name__)\n",
+      "stdout": "True field 9 7\nTrue True\n"
+    },
+    {
+      "id": "metaclass-matrix-and-reflected-ternary-power",
+      "stage": "O96",
+      "source": "class Meta(type):\n def __matmul__(cls,other): return other.value+7\nclass Model(metaclass=Meta): pass\nclass Right:\n __slots__=(\"value\",)\n def __init__(self,value): self.value=value\n def __rpow__(self,base,modulus=None): return self.value+modulus\nnamespace={\"Model\":Model,\"right\":Right(9),\"pow\":pow}\nprint(eval(\"Model @ right\",namespace),eval(\"pow(2,right,5)\",namespace))\n",
+      "stdout": "16 14\n"
+    },
+    {
+      "id": "custom-mro-and-native-namespace-proxy",
+      "stage": "O96",
+      "source": "class A:\n def value(self): return 7\nclass B:\n def value(self): return 9\nclass Meta(type):\n def mro(cls): return [cls,B,A,object]\nclass Model(A,B,metaclass=Meta): pass\nview=Model.__dict__\nexec(\"Model.extra=11\",{\"Model\":Model})\nprint(Model().value(),Model.__mro__[1] is B,view[\"extra\"],\"__new__\" in vars(object))\n",
+      "stdout": "9 True 11 True\n"
+    },
+    {
+      "id": "dynamic-failure-keeps-stored-instance",
+      "stage": "O96",
+      "source": "class Box:\n __slots__=(\"value\",)\n def __init__(self,value): self.value=value\nnamespace={\"Box\":Box}\ntry: exec(compile(\"box=Box(7)\\nbox.value=9\\nraise ValueError('body')\",\"failure.py\",\"exec\"),namespace)\nexcept ValueError: print(namespace[\"box\"].value)\nprint(eval(\"box.value\",namespace))\n",
+      "stdout": "9\n9\n"
+    },
+    {
+      "id": "failed-descriptor-class-not-published",
+      "stage": "O96",
+      "source": "events=[]\nclass Descriptor:\n def __set_name__(self,owner,name):\n  events.append(name)\n  raise ValueError(\"notification\")\nnamespace={\"Descriptor\":Descriptor}\ntry: exec(\"class Broken:\\n field=Descriptor()\",namespace)\nexcept ValueError: print(\"Broken\" in namespace,len(events))\nclass Good: pass\nprint(isinstance(Good(),Good))\n",
+      "stdout": "False 1\nTrue\n"
+    },
+    {
+      "id": "dynamic-original-source-failure",
+      "stage": "O96",
+      "source": "class Model:\n __slots__=(\"value\",)\n def __init__(self): self.value=7\nnamespace={\"Model\":Model}\nexec(compile(\"instance=Model()\\ndef fail():\\n print(instance.value)\\n raise ValueError('original')\\nfail()\",\"composed-original.py\",\"exec\"),namespace)\n",
+      "stdout": "7\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dynamic-denied-import-preserves-prior-effects",
+      "stage": "O96",
+      "source": "class Box: pass\nnamespace={\"Box\":Box}\ntry: exec(\"box=Box()\\nbox.value=7\\nprint(box.value)\\n__import__('outside')\",namespace)\nexcept ImportError: print(\"denied\",namespace[\"box\"].value)\n",
+      "stdout": "7\ndenied 7\n"
+    },
+    {
+      "id": "class-reassignment-cell-and-native-descriptor",
+      "stage": "O96",
+      "source": "class A:\n __slots__=(\"value\",)\n def read(self): return self.value+1\nclass B:\n __slots__=(\"value\",)\n def read(self): return self.value+2\ninstance=A()\ninstance.value=7\ndef outer(value):\n def get(): return value\n return get\nf=outer(instance)\ninstance.__class__=B\nprint(f() is instance,f().read(),B.value.__get__(instance,B),f.__closure__[0].cell_contents is instance)\n",
+      "stdout": "True 9 7 True\n"
+    },
+    {
+      "id": "operator-library-with-dynamic-slotted-class",
+      "stage": "O96",
+      "source": "import operator\nnamespace={\"add\":operator.add}\nexec(\"class Total:\\n __slots__=('value',)\\n def __init__(self,value): self.value=value\\n def advance(self,other): self.value=add(self.value,other)\\ntotal=Total(7)\",namespace)\ntotal=namespace[\"total\"]\ntotal.advance(9)\nprint(total.value,eval(\"total.value+1\",namespace),namespace[\"Total\"].__dict__[\"advance\"].__globals__ is namespace)\n",
+      "imports": [
+        "operator"
+      ],
+      "modules": [
+        {
+          "name": "operator",
+          "package": false,
+          "imports": [],
+          "source": "def add(a,b,/): return a+b\n"
+        }
+      ],
+      "stdout": "16 17 True\n"
     }
   ]
 }
