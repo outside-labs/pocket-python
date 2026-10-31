@@ -946,7 +946,7 @@ export class ClassRuntime {
       const item = this.lookup(receiver.type, name);
       return item.found ? this.bindAttribute(item.value, receiver, receiver.type) : value(this.classAttribute(receiver));
     }
-    if (!allowsClassSpecial(name, "attribute") && !["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__base__", "__mro__"].includes(name)) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
+    if (!allowsClassSpecial(name, "attribute") && !(receiver instanceof ModuleValue && name === "__path__") && !["__class__", "__name__", "__qualname__", "__module__", "__bases__", "__base__", "__mro__"].includes(name)) this.fail("UnsupportedOperationError", "This special attribute is outside classes-source/1.", "UNSUPPORTED");
     const owner = receiver instanceof ClassValue ? receiver : receiver.type;
     const metaclass = receiver instanceof ClassValue ? receiver.metaclass || (["__instancecheck__", "__subclasscheck__", "mro", "__subclasses__"].includes(name) ? this.builtin("type") : null) : null;
     const metaItem = metaclass ? this.lookup(metaclass, name) : null;
