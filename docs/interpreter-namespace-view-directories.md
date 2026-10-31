@@ -1,5 +1,9 @@
 # Class namespace view directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O52 continues #123 and #33 against pinned CPython 3.14.7. The independently
 authored `namespace-view-directories.json` matrix distinguishes reference
 observations from engine adoption. O52 is implemented through the charged

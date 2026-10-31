@@ -1,5 +1,9 @@
 # Explicit native descriptor operations
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O29/O30 continue #123 and #33 with a finite CPython 3.14.7 contract.
 `tests/fixtures/interpreter/native-descriptors.json` is the pinned executable
 matrix. Reference-only evidence does not establish independent execution.

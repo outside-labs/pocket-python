@@ -1,5 +1,9 @@
 # Native callable directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O54 continues #123 and #33 against pinned CPython 3.14.7. The independently
 authored `native-callable-directories.json` matrix separates reference cases
 from engine adoption. O54 is implemented through charged native collection

@@ -1,5 +1,9 @@
 # Native descriptor owners and type hierarchy reflection
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 The [O79–O83 construction contracts](interpreter-expanded-class-bases.md),
 [prepared namespaces](interpreter-prepared-class-namespaces.md),
 [callable factories](interpreter-metaclass-factories.md),

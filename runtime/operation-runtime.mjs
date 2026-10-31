@@ -2454,7 +2454,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             task = callTask(classes.builtin("cell"), args.slice(1), keywords, keywordValues, site, completion, depth); continue;
           }
           if (callable.name === "function" && !callable.nativeKind)
-            hard("UNSUPPORTED", "UnsupportedOperationError", "Function construction from code retains the verified dynamic-code contract in O91.");
+            hard("UNSUPPORTED", "UnsupportedOperationError", "Backend function construction is outside the finite verified source-code interface.");
           if (nativeName === "__call__" && ["function", "method", "builtin_function_or_method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "classmethod_descriptor"].includes(nativeOwner)) {
             if (!args.length) python("TypeError", "Native call wrapper requires a receiver");
             task = callTask(args[0], args.slice(1), keywords, keywordValues, site, completion, depth); continue;
@@ -3242,7 +3242,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             else if (keywords.length) python("TypeError", "mappingproxy received invalid arguments");
             if (operands.length !== 1 || callable.name.endsWith(".__new__") && args[0] !== classes.builtin("mappingproxy")) python("TypeError", "mappingproxy requires one mapping");
             if (!(values.isDict(operands[0]) || operands[0] instanceof ClassNamespaceValue)) {
-              if (operands[0] instanceof InstanceValue) hard("UNSUPPORTED", "UnsupportedOperationError", "User mapping proxy construction is owned by O80/#116.");
+              if (operands[0] instanceof InstanceValue) hard("UNSUPPORTED", "UnsupportedOperationError", "General user mapping proxy construction is owned by #116.");
               python("TypeError", "mappingproxy requires a mapping");
             }
             if (values.isDict(operands[0])) values.enableNamespace(operands[0]);

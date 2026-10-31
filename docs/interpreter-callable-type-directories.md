@@ -1,5 +1,9 @@
 # Callable, descriptor, property and namespace view type directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O65 continues #123 and #33 with finite native type namespaces. Pinned
 CPython 3.14.7 is the semantic oracle. `callable-type-directories.json` records
 independently authored source/reference cases before engine adoption.

@@ -1118,7 +1118,9 @@
       "id": "bytearray-inplace-deferred",
       "stage": "Future",
       "source": "a=bytearray(b\"x\")\na*=2\nprint(len(a))\n",
-      "stdout": "2\n"
+      "stdout": "2\n",
+      "owner": "#117",
+      "boundary": "Bytearray resizing through in-place repetition."
     }
   ]
 }

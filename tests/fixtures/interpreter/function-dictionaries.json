@@ -403,13 +403,17 @@
       "id": "deferred-__annotations__",
       "stage": "Future",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__annotations__')\n",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#125",
+      "boundary": "Annotation and type-parameter metadata/evaluation."
     },
     {
       "id": "deferred-__annotate__",
       "stage": "Future",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__annotate__')\n",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#125",
+      "boundary": "Annotation and type-parameter metadata/evaluation."
     },
     {
       "id": "deferred-__closure__",
@@ -427,7 +431,9 @@
       "id": "deferred-__type_params__",
       "stage": "Future",
       "source": "def f(): return 7\nd=f.__dict__\ngetattr(f,'__type_params__')\n",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#125",
+      "boundary": "Annotation and type-parameter metadata/evaluation."
     },
     {
       "id": "collision-set-replacement-snapshot",
@@ -507,7 +513,9 @@
       "id": "dictionary-structural-collision-deferred",
       "stage": "Future",
       "source": "def f(): return 7\nd=f.__dict__\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del f.__dict__[self]\n  return True\nf.__dict__={Key():7}\ngetattr(f,\"tag\",99)\n",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#116",
+      "boundary": "Structural mutation during general dictionary-key comparison requires restart semantics."
     },
     {
       "id": "explicit-name-identity-ordinary",

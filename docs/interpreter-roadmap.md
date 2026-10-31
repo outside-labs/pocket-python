@@ -544,3 +544,13 @@ adopts the exact import builtin interface and captured source import callable,
 with owned relative/package/fromlist callbacks, registry identity/retry and
 shared limits. Dynamic execution is O91–O94; final reconciliation and integrated
 O-series closure remain O95–O96. #123 and #33 remain open.
+
+## Object scope reconciliation
+
+[O95](interpreter-object-scope.md) reconciles the O-series corpora, all explicit
+engine refusal sites, native layout/attribute/slot tables and the #99 inventory.
+Completed object work is removed from remaining-task lists. Retained boundaries
+have exact neighboring owners; intentional refusals are separate from positive
+support evidence. #123 supplies #124/#125 with its delivered prerequisites; #33
+retains its remaining C3 APIs and protocols. O96 integrated acceptance and final
+main verification remain the closure gates.

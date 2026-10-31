@@ -1,0 +1,1170 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-object-scope/1",
+  "reference_version": "3.14.7",
+  "stage": "O95",
+  "source_corpora": [
+    "tests/fixtures/interpreter/abstract-flags.json",
+    "tests/fixtures/interpreter/advertised-directories.json",
+    "tests/fixtures/interpreter/arithmetic-dispatch.json",
+    "tests/fixtures/interpreter/attribute-hooks.json",
+    "tests/fixtures/interpreter/buffer-directories.json",
+    "tests/fixtures/interpreter/callable-type-directories.json",
+    "tests/fixtures/interpreter/class-body-namespaces.json",
+    "tests/fixtures/interpreter/class-directories.json",
+    "tests/fixtures/interpreter/class-mapping-proxies.json",
+    "tests/fixtures/interpreter/class-namespaces.json",
+    "tests/fixtures/interpreter/classes.json",
+    "tests/fixtures/interpreter/code-cells.json",
+    "tests/fixtures/interpreter/construction.json",
+    "tests/fixtures/interpreter/container-directories.json",
+    "tests/fixtures/interpreter/container-type-directories.json",
+    "tests/fixtures/interpreter/custom-mro.json",
+    "tests/fixtures/interpreter/descriptor-binding.json",
+    "tests/fixtures/interpreter/descriptors.json",
+    "tests/fixtures/interpreter/documentation.json",
+    "tests/fixtures/interpreter/dynamic-compile.json",
+    "tests/fixtures/interpreter/dynamic-eval.json",
+    "tests/fixtures/interpreter/dynamic-exec.json",
+    "tests/fixtures/interpreter/dynamic-imports.json",
+    "tests/fixtures/interpreter/expanded-class-bases.json",
+    "tests/fixtures/interpreter/function-dictionaries.json",
+    "tests/fixtures/interpreter/function-directories.json",
+    "tests/fixtures/interpreter/function-metadata.json",
+    "tests/fixtures/interpreter/function-state.json",
+    "tests/fixtures/interpreter/generator-directories.json",
+    "tests/fixtures/interpreter/generator-frames.json",
+    "tests/fixtures/interpreter/generators.json",
+    "tests/fixtures/interpreter/immutable-subclasses.json",
+    "tests/fixtures/interpreter/instance-dictionaries.json",
+    "tests/fixtures/interpreter/instance-directories.json",
+    "tests/fixtures/interpreter/integer-identity.json",
+    "tests/fixtures/interpreter/iterator-directories.json",
+    "tests/fixtures/interpreter/iterator-type-directories.json",
+    "tests/fixtures/interpreter/metaclass-attributes.json",
+    "tests/fixtures/interpreter/metaclass-factories.json",
+    "tests/fixtures/interpreter/metaclass-protocols.json",
+    "tests/fixtures/interpreter/method-directories.json",
+    "tests/fixtures/interpreter/module-namespaces.json",
+    "tests/fixtures/interpreter/mutable-subclasses.json",
+    "tests/fixtures/interpreter/namespace-view-directories.json",
+    "tests/fixtures/interpreter/native-attributes.json",
+    "tests/fixtures/interpreter/native-callable-directories.json",
+    "tests/fixtures/interpreter/native-descriptors.json",
+    "tests/fixtures/interpreter/native-directory-closure.json",
+    "tests/fixtures/interpreter/native-namespaces.json",
+    "tests/fixtures/interpreter/native-object-subclasses.json",
+    "tests/fixtures/interpreter/native-protocols.json",
+    "tests/fixtures/interpreter/native-rebinding.json",
+    "tests/fixtures/interpreter/nested-descriptors.json",
+    "tests/fixtures/interpreter/numeric-directories.json",
+    "tests/fixtures/interpreter/numeric-type-directories.json",
+    "tests/fixtures/interpreter/object-integration.json",
+    "tests/fixtures/interpreter/object-protocols.json",
+    "tests/fixtures/interpreter/ordering.json",
+    "tests/fixtures/interpreter/ordinary-syntax.json",
+    "tests/fixtures/interpreter/prepared-class-namespaces.json",
+    "tests/fixtures/interpreter/property-diagnostics.json",
+    "tests/fixtures/interpreter/property-directories.json",
+    "tests/fixtures/interpreter/property-names.json",
+    "tests/fixtures/interpreter/reassignment.json",
+    "tests/fixtures/interpreter/reflection.json",
+    "tests/fixtures/interpreter/repetition.json",
+    "tests/fixtures/interpreter/sequence-directories.json",
+    "tests/fixtures/interpreter/slots.json",
+    "tests/fixtures/interpreter/subclass-initialization.json",
+    "tests/fixtures/interpreter/type-checks.json",
+    "tests/fixtures/interpreter/type-reflection.json",
+    "tests/fixtures/interpreter/wrapper-metadata.json",
+    "tests/fixtures/interpreter/wrapper-super-directories.json"
+  ],
+  "boundary_cases": [
+    {
+      "corpus": "tests/fixtures/interpreter/buffer-directories.json",
+      "case": "unread-bytes-hex",
+      "owner": "#117",
+      "boundary": "Unadopted binary/buffer library APIs."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/buffer-directories.json",
+      "case": "unread-view-cast",
+      "owner": "#117",
+      "boundary": "Unadopted binary/buffer library APIs."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/container-directories.json",
+      "case": "unread-text-reduction",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/container-directories.json",
+      "case": "unread-list-reduction",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/documentation.json",
+      "case": "function-fstring-is-not-document",
+      "owner": "#127",
+      "boundary": "Formatted/template string grammar and evaluation."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/function-dictionaries.json",
+      "case": "deferred-__annotations__",
+      "owner": "#125",
+      "boundary": "Annotation and type-parameter metadata/evaluation."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/function-dictionaries.json",
+      "case": "deferred-__annotate__",
+      "owner": "#125",
+      "boundary": "Annotation and type-parameter metadata/evaluation."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/function-dictionaries.json",
+      "case": "deferred-__type_params__",
+      "owner": "#125",
+      "boundary": "Annotation and type-parameter metadata/evaluation."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/function-dictionaries.json",
+      "case": "dictionary-structural-collision-deferred",
+      "owner": "#116",
+      "boundary": "Structural mutation during general dictionary-key comparison requires restart semantics."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/generators.json",
+      "case": "async-generator",
+      "owner": "#34",
+      "boundary": "Async generators."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/generators.json",
+      "case": "generator-reflection-core-boundary",
+      "owner": "profile:core-source/1",
+      "boundary": "Generator/code/frame reflection is admitted only by classes-source/1; core remains explicitly reduced."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/instance-dictionaries.json",
+      "case": "structural-collision-deferred",
+      "owner": "#116",
+      "boundary": "Structural mutation during general dictionary-key comparison requires restart semantics."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/iterator-directories.json",
+      "case": "deferred-reduction",
+      "owner": "#126",
+      "boundary": "Iterator serialization/reduction/state library protocol."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/iterator-directories.json",
+      "case": "deferred-state",
+      "owner": "#126",
+      "boundary": "Iterator serialization/reduction/state library protocol."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-directory-closure.json",
+      "case": "unicode-translate-construction-boundary",
+      "owner": "#124",
+      "boundary": "Multiple-argument exception payload construction, including UnicodeTranslateError."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "hash-range-bound",
+      "owner": "#116",
+      "boundary": "Range hashing remains a separate sequence API."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "hash-range-unbound",
+      "owner": "#116",
+      "boundary": "Range hashing remains a separate sequence API."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "hash-range-rebound",
+      "owner": "#116",
+      "boundary": "Range hashing remains a separate sequence API."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-float__repr__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-float__str__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-complex__repr__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-complex__str__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-list__repr__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-list__str__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-tuple__repr__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-tuple__str__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-dict__repr__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-dict__str__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-set__repr__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/native-protocols.json",
+      "case": "display-set__str__",
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/ordering.json",
+      "case": "future-user-set-ordering",
+      "owner": "#117",
+      "boundary": "User-key set algebra and ordering."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/ordinary-syntax.json",
+      "case": "assert-container-message-deferred",
+      "owner": "#127",
+      "boundary": "Assertion message display."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/ordinary-syntax.json",
+      "case": "assert-float-message-deferred",
+      "owner": "#127",
+      "boundary": "Assertion message display."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/ordinary-syntax.json",
+      "case": "star-unpack-user-hints-deferred",
+      "owner": "#116",
+      "boundary": "General iterable length-hint consumers remain a separate sequence API."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/ordinary-syntax.json",
+      "case": "star-display-user-hints-deferred",
+      "owner": "#116",
+      "boundary": "General iterable length-hint consumers remain a separate sequence API."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/property-diagnostics.json",
+      "case": "diagnostic-display-boundary",
+      "owner": "#127",
+      "boundary": "Recursive display of callback-bearing containers in property diagnostics."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/property-directories.json",
+      "case": "listed-method-not-adopted",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/property-names.json",
+      "case": "diagnostic-nested",
+      "owner": "#127",
+      "boundary": "Recursive display of callback-bearing containers in property diagnostics."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/repetition.json",
+      "case": "bytearray-inplace-deferred",
+      "owner": "#117",
+      "boundary": "Bytearray resizing through in-place repetition."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/sequence-directories.json",
+      "case": "unread-range-reduction",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
+    },
+    {
+      "corpus": "tests/fixtures/interpreter/sequence-directories.json",
+      "case": "unread-slice-reduction",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
+    }
+  ],
+  "source_refusals": [
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Further metaclass special protocols require a separate stage\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This native subclass layout retains its owning stage\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Custom special methods require a later class stage.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Class metadata overrides are outside C1.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (name === null || name === undefined) this.fail(\"UnsupportedOperationError\", \"This reflective value type requires a separate stage\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Native type dictionaries require their own layout contract.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Native getter documentation requires its own metadata contract.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Native method reflection requires its own contract.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Annotation data is #125; native library/display APIs use the native entry owner table."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Frame field \" + name + \" is outside the finite source-frame interface; tracing, jumping and bytecode positions are separate\", \"UNSUPPORTED\");",
+      "owner": "boundary:source-interface",
+      "boundary": "Finite source code/frame interface excludes raw backend code constructors, native layouts and frame debugging."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Additional cell library protocols are owned by #126\", \"UNSUPPORTED\");",
+      "owner": "#126",
+      "boundary": "Additional cell library/serialization APIs."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (!allowsClassSpecial(name, \"attribute\") && !(receiver instanceof ModuleValue && name === \"__path__\") && ![\"__class__\", \"__name__\", \"__qualname__\", \"__module__\", \"__bases__\", \"__base__\", \"__mro__\"].includes(name)) this.fail(\"UnsupportedOperationError\", \"This special attribute is outside classes-source/1.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Default directories require their own namespace contract.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This implicit special protocol is outside classes-source/1.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (result.kind !== \"value\") this.fail(\"UnsupportedOperationError\", \"Descriptor calls require VM execution frames.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(receiver instanceof FrameValue && [\"f_lineno\", \"f_trace\"].includes(name) ? \"UnsupportedOperationError\" : \"AttributeError\", \"Frame/generator metadata is read-only; tracing and jumping are separate\", receiver instanceof FrameValue && [\"f_lineno\", \"f_trace\"].includes(name) ? \"UNSUPPORTED\" : \"PYTHON\");",
+      "owner": "boundary:source-interface",
+      "boundary": "Finite source code/frame interface excludes raw backend code constructors, native layouts and frame debugging."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (!entries) this.fail(\"UnsupportedOperationError\", \"This native namespace is owned by O78.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (fieldOwner && !(receiver instanceof FunctionValue && [\"O72\", \"O73\"].includes(fieldOwner) || receiver instanceof Cell && fieldOwner === \"O73\" || (receiver instanceof FrameValue || receiver instanceof GeneratorValue) && fieldOwner === \"O74\")) this.fail(\"UnsupportedOperationError\", \"Native field \" + descriptor.name + \" is owned by \" + fieldOwner + \".\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Native field \" + descriptor.name + \" is owned by \" + fieldOwnerLabel + \".\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Special attribute mutation is outside classes-source/1.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Further class namespace reflection requires a separate directory contract.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "} else this.fail(\"UnsupportedOperationError\", \"Code field \" + name + \" is outside the source-code metadata interface; CPython bytecode and C layouts are not executable here\", \"UNSUPPORTED\");",
+      "owner": "boundary:source-interface",
+      "boundary": "Finite source code/frame interface excludes raw backend code constructors, native layouts and frame debugging."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Native function methods require their own contract.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Annotation data is #125; native library/display APIs use the native entry owner table."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Native function metadata requires its own contract.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Annotation data is #125; native library/display APIs use the native entry owner table."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Name mutation is adopted only for properties.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Attribute mutation requires a class or instance.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (receiver instanceof ClassValue && name === \"__bases__\") this.fail(\"UnsupportedOperationError\", \"Type base reassignment requires owned hierarchy execution.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (plan.kind !== \"value\") this.fail(\"UnsupportedOperationError\", \"Dictionary callbacks require VM execution frames.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Advertised class lookup requires owned execution\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/dynamic-source.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"AST, future, incomplete-input and async compiler flags require their own contracts\");",
+      "owner": "boundary:source-profile",
+      "boundary": "Compiler flags remain finite; AST/future/async modes retain #125/#119/#34."
+    },
+    {
+      "path": "runtime/functions.mjs",
+      "site": "if (frame.pool.code.version !== 5) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Native directories require classes-source/1.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/functions.mjs",
+      "site": "if (frame.pool.code.version !== 5) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Generator reflection requires classes-source/1\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/functions.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Explicit descriptor binding requires the class profile.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/functions.mjs",
+      "site": "else if (error instanceof RegistryError && error.code === \"UNSUPPORTED\") hard(error.code, error.name, error.message);",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/module-context.mjs",
+      "site": "if (!(module instanceof ModuleValue)) throw new RegistryError(\"Only module attributes are adopted in this profile.\", \"UnsupportedOperationError\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/numeric.mjs",
+      "site": "if (base < 0 && !Number.isInteger(exponent)) fail(\"UnsupportedOperationError\", \"Non-real powers require the complex numeric stage.\", \"UNSUPPORTED\");",
+      "owner": "#184",
+      "boundary": "Expanded numeric API/non-finite and power families."
+    },
+    {
+      "path": "runtime/numeric.mjs",
+      "site": "if (![a,b,c,d].every(Number.isFinite)) fail('UnsupportedOperationError','Non-finite complex arithmetic requires a later numeric stage.','UNSUPPORTED');",
+      "owner": "#184",
+      "boundary": "Expanded numeric API/non-finite and power families."
+    },
+    {
+      "path": "runtime/numeric.mjs",
+      "site": "controls.fail('UnsupportedOperationError','Complex power currently requires an integer exponent from -100 to 100.','UNSUPPORTED');",
+      "owner": "#184",
+      "boundary": "Expanded numeric API/non-finite and power families."
+    },
+    {
+      "path": "runtime/numeric.mjs",
+      "site": "if (!base.every(Number.isFinite)) controls.fail('UnsupportedOperationError','Non-finite complex power requires a later numeric stage.','UNSUPPORTED');",
+      "owner": "#184",
+      "boundary": "Expanded numeric API/non-finite and power families."
+    },
+    {
+      "path": "runtime/numeric.mjs",
+      "site": "if (exponent < 0) controls.fail('UnsupportedOperationError','Negative complex powers with non-finite intermediates require a later numeric stage.','UNSUPPORTED');",
+      "owner": "#184",
+      "boundary": "Expanded numeric API/non-finite and power families."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Formatting this value is outside the function stage.\");",
+      "owner": "#127",
+      "boundary": "Expanded text/default/container display and formatting."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"This scope requires its own live or comprehension namespace contract.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (!values.isString(item)) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Non-string directory entries require a separate ordering contract.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (args.length !== 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"This builtin call form is outside the source profile.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (args.length > 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Multiple exception arguments require the later repr profile.\");",
+      "owner": "#124",
+      "boundary": "Exception payload, clause, chaining and group semantics."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"isinstance supports str and the adopted exception classes in this profile.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"User length hints require a separate construction stage.\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Structural source dictionary mutation during keyword expansion requires its restart stage.\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Buffer slice mutation requires a later value stage.\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Bytearray resizing and slice mutation require a later value stage.\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Structural dictionary mutation during key comparison requires its restart stage.\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Structural mutation during dictionary equality requires its restart stage.\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"This special attribute is outside classes-source/1.\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"List += with a user iterable requires its own sequence stage.\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (task.kind === \"slice\") hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Slice namespace keys require their own stage.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (operation === \"repr-default\") hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Default object representations require a later formatting stage.\");",
+      "owner": "#127",
+      "boundary": "Expanded text/default/container display and formatting."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Backend function construction is outside the finite verified source-code interface.\");",
+      "owner": "boundary:source-interface",
+      "boundary": "Finite source code/frame interface excludes raw backend code constructors, native layouts and frame debugging."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (rest.length || keywords.length) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Populated dictionary constructors remain #116\");",
+      "owner": "#116",
+      "boundary": "Populated/general dictionary constructor signatures."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (args.length !== 1 || keywords.length) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Expanded dict construction remains #116\");",
+      "owner": "#116",
+      "boundary": "Populated/general dictionary constructor signatures."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (args.length || keywords.length) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Populated dictionary constructors require their separate sequence stage.\");",
+      "owner": "#116",
+      "boundary": "Populated/general dictionary constructor signatures."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Construction of reflected implementation types requires a separate stage.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Frame locals native invocation \" + name + \" retains its finite namespace operation contract\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (callable.name === \"code\" && !callable.nativeKind) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Code creation requires independent verified source; CPython bytecode and raw code layouts are outside this interface\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (callable.name === \"throw\" && args.length > 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Multi-argument generator.throw requires a separate stage.\");",
+      "owner": "#120",
+      "boundary": "Further generator execution signatures."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Buffer byte-order options require a later value stage.\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (!(receiver instanceof FunctionValue)) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Default directories for this layout require their own stage.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (operands[0] instanceof InstanceValue) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"General user mapping proxy construction is owned by #116.\");",
+      "owner": "#116",
+      "boundary": "General mapping-proxy constructors beyond native namespace views."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (name !== \"get\") hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Native dictionary view API \" + callable.name + \" is owned by #116/#117.\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (dictionary === null) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"General reversed protocols are owned by #116.\");",
+      "owner": "#116",
+      "boundary": "General reversed sequence consumers."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"This object's namespace requires a separate dictionary contract.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Default directories require their own namespace contract.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"This two-argument primitive iteration form requires classes-source/1.\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (callable.nativeKind) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Native invocation \" + callable.name + \" is owned by \" + classes.nativeInvocationOwner(callable) + \".\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/source-compiler.mjs",
+      "site": "fail(message, node, code = \"UNSUPPORTED\", phase = \"compile\") {",
+      "owner": "boundary:source-profile",
+      "boundary": "Finite profile/UTF-8/identifier/registry/verifier admission, with generic parser forwarding to the exact refusal site."
+    },
+    {
+      "path": "runtime/source-compiler.mjs",
+      "site": "this.fail(\"A normalized identifier cannot name a reserved constant.\", scope.node, \"UNSUPPORTED\", \"bind\");",
+      "owner": "boundary:source-profile",
+      "boundary": "Finite profile/UTF-8/identifier/registry/verifier admission, with generic parser forwarding to the exact refusal site."
+    },
+    {
+      "path": "runtime/source-compiler.mjs",
+      "site": "this.fail(\"Custom special methods require a later class stage.\", scope.node, \"UNSUPPORTED\", \"bind\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/source-compiler.mjs",
+      "site": "this.fail(\"Defaults require immutable literals or literal tuples.\", node, \"UNSUPPORTED\", \"bind\");",
+      "owner": "#118",
+      "boundary": "Function default expression grammar beyond the admitted source profile."
+    },
+    {
+      "path": "runtime/source-modules.mjs",
+      "site": "const failure = (message, code = \"UNSUPPORTED\") => { throw new SourceError(code, message, {filename: \"<registry>\", phase: \"registry\"}); };",
+      "owner": "boundary:source-profile",
+      "boundary": "Finite profile/UTF-8/identifier/registry/verifier admission, with generic parser forwarding to the exact refusal site."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "throw new SourceError(\"UNSUPPORTED\", \"Unknown source language profile.\", {filename: this.lexed.filename, phase: \"parse\"});",
+      "owner": "boundary:source-profile",
+      "boundary": "Finite profile/UTF-8/identifier/registry/verifier admission, with generic parser forwarding to the exact refusal site."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "unsupported(message, token) { this.fail(message, token, \"UNSUPPORTED\"); }",
+      "owner": "boundary:source-profile",
+      "boundary": "Finite profile/UTF-8/identifier/registry/verifier admission, with generic parser forwarding to the exact refusal site."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if ([\"Attribute\", \"Subscript\"].includes(value.kind)) this.unsupported(\"This attribute or slice target is not adopted.\", value);",
+      "owner": "#119",
+      "boundary": "Grammar beyond the admitted independent source profile."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.refusal) this.unsupported(this.refusal.message, this.refusal.node);",
+      "owner": "boundary:source-profile",
+      "boundary": "Finite profile/UTF-8/identifier/registry/verifier admission, with generic parser forwarding to the exact refusal site."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if ([\"class\", \"async\", \"with\", \"@\"].some(value => this.at(value))) this.unsupported(this.classes ?",
+      "owner": "#34",
+      "boundary": "Async syntax/protocols; mixed context forms also retain #121."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\"from\")) this.unsupported(\"Explicit exception causes are not adopted.\");",
+      "owner": "#124",
+      "boundary": "Exception payload, clause, chaining and group semantics."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\":\")) this.unsupported(\"Annotations and pattern statements are not adopted.\", start);",
+      "owner": "#125",
+      "boundary": "Annotation/type-parameter/generic semantics."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (!operator) this.unsupported(\"Augmented operator is not adopted.\", token);",
+      "owner": "#119",
+      "boundary": "Grammar beyond the admitted independent source profile."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "this.unsupported(\"Wildcard imports are not adopted.\");",
+      "owner": "#126",
+      "boundary": "Broader import/library semantics outside registry imports."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\"async\")) this.unsupported(\"Async definitions require a later stage.\");",
+      "owner": "#34",
+      "boundary": "Async syntax/protocols; mixed context forms also retain #121."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\"[\")) this.unsupported(\"Generic functions are not adopted.\");",
+      "owner": "#125",
+      "boundary": "Annotation/type-parameter/generic semantics."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\"->\")) this.unsupported(\"Return annotations are not adopted.\");",
+      "owner": "#125",
+      "boundary": "Annotation/type-parameter/generic semantics."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (end !== \":\" && this.at(\":\")) this.unsupported(\"Parameter annotations are not adopted.\");",
+      "owner": "#125",
+      "boundary": "Annotation/type-parameter/generic semantics."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\"[\")) this.unsupported(\"Generic classes are not adopted.\");",
+      "owner": "#125",
+      "boundary": "Annotation/type-parameter/generic semantics."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\"*\")) this.unsupported(\"Exception groups are not adopted.\");",
+      "owner": "#124",
+      "boundary": "Exception payload, clause, chaining and group semantics."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if ((type !== null && !types.length) || types.some(value => value.kind !== \"Name\")) this.unsupported(\"Only nonempty named builtin exception clauses are adopted.\", type || clause);",
+      "owner": "#124",
+      "boundary": "Exception payload, clause, chaining and group semantics."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if ([\"await\", \"yield\"].some(value => this.at(value))) this.unsupported(\"This generator/async expression is not adopted.\");",
+      "owner": "#34",
+      "boundary": "Async syntax/protocols; mixed context forms also retain #121."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\"async\")) this.unsupported(\"Async comprehensions require a separate stage.\");",
+      "owner": "#34",
+      "boundary": "Async syntax/protocols; mixed context forms also retain #121."
+    },
+    {
+      "path": "runtime/source-parser.mjs",
+      "site": "if (this.at(\"...\")) this.unsupported(\"Ellipsis is not adopted.\");",
+      "owner": "#119",
+      "boundary": "Grammar beyond the admitted independent source profile."
+    },
+    {
+      "path": "runtime/source-tokens.mjs",
+      "site": "this.name = name || ({SYNTAX: \"SyntaxError\", UNSUPPORTED: \"UnsupportedSyntaxError\",",
+      "owner": "boundary:source-profile",
+      "boundary": "Finite profile/UTF-8/identifier/registry/verifier admission, with generic parser forwarding to the exact refusal site."
+    },
+    {
+      "path": "runtime/source-tokens.mjs",
+      "site": "if (cookie && !/^utf[-_]?8$/i.test(cookie)) this.fail(\"UNSUPPORTED\", \"Dynamic source bytes require the adopted UTF-8 encoding\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/source-tokens.mjs",
+      "site": "if (/[^rub]/i.test(prefix)) this.fail(\"UNSUPPORTED\", \"Formatted and template strings are outside this source profile.\", start);",
+      "owner": "#127",
+      "boundary": "Expanded text/default/container display and formatting."
+    },
+    {
+      "path": "runtime/source-tokens.mjs",
+      "site": "else if (next === \"N\" && !bytes) this.fail(\"UNSUPPORTED\", \"Named Unicode escapes require a separately adopted name database.\", start);",
+      "owner": "#126",
+      "boundary": "Named Unicode database/library selection."
+    },
+    {
+      "path": "runtime/source-tokens.mjs",
+      "site": "if (!isIdentifier(value)) this.fail(\"UNSUPPORTED\", \"Identifier is outside the normalized 64-code-point source profile.\", start);",
+      "owner": "boundary:source-profile",
+      "boundary": "Finite profile/UTF-8/identifier/registry/verifier admission, with generic parser forwarding to the exact refusal site."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This range attribute requires a later sequence stage.\", \"UNSUPPORTED\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This complex attribute requires a later numeric stage.\", \"UNSUPPORTED\");",
+      "owner": "#184",
+      "boundary": "Expanded numeric API/non-finite and power families."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This buffer-view API requires a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This binary method requires a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (policy !== \"strict\") this.fail(\"UnsupportedOperationError\", \"This codec error policy requires a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This encoding requires a later codec profile.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (text === null) this.fail(\"UnsupportedOperationError\", \"Representation of this value is outside the adopted profile.\", \"UNSUPPORTED\");",
+      "owner": "#127",
+      "boundary": "Expanded text/default/container display and formatting."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This slice attribute requires a later sequence stage.\", \"UNSUPPORTED\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This set method requires a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (this.hasUserEquality(value)) this.fail(\"UnsupportedOperationError\", \"Set algebra and frozen hashing with user keys require a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Bytearray resizing requires a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "} else if (right instanceof IteratorValue || right instanceof ProtocolIteratorValue) this.fail(\"UnsupportedOperationError\", \"List += with an iterator is outside the source profile.\", \"UNSUPPORTED\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "else { this.iterator(right); this.fail(\"UnsupportedOperationError\", \"This iterable extension is outside the source profile.\", \"UNSUPPORTED\"); }",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Dictionary view set comparison is owned by #116/#117.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Slice comparisons require the later equality/sequence profile.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Object dictionary keys require the later identity-hash profile.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Hashing this value is deferred.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (value instanceof RangeValue) this.fail(\"UnsupportedOperationError\", \"Range hashing requires a later sequence stage.\", \"UNSUPPORTED\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This hash value family requires its separate protocol stage.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Callback-bearing namespace keys require their own stage.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Native namespace entries require their own layout contract.\", \"UNSUPPORTED\");",
+      "owner": "table:native-apis",
+      "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (value instanceof BinaryValue && value.mutable) this.fail(\"UnsupportedOperationError\", \"Bytearray deletion requires a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Bytearray resizing and slice mutation require a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"This slice-assignment iterable requires a later iteration stage.\", \"UNSUPPORTED\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Nested buffer strides outside the signed-size range require a later value stage.\", \"UNSUPPORTED\");",
+      "owner": "#117",
+      "boundary": "Expanded binary/buffer/set/codec value APIs."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (iterator.version !== storage.version) this.fail(\"UnsupportedOperationError\", \"Equal-size key mutation during iteration is deferred.\", \"UNSUPPORTED\");",
+      "owner": "#116",
+      "boundary": "Expanded sequence APIs, length-hint consumers and dictionary restart semantics."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (![\"negative\", \"positive\"].includes(operation)) this.fail(\"UnsupportedOperationError\", \"Unknown unary operation.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Integer identity requires the current source value profile.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (b[1] !== 0) this.fail(\"UnsupportedOperationError\", \"Non-real complex exponents require a later numeric stage.\", \"UNSUPPORTED\");",
+      "owner": "#184",
+      "boundary": "Expanded numeric API/non-finite and power families."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (![...a,...b].every(Number.isFinite)) this.fail(\"UnsupportedOperationError\", \"Non-finite complex arithmetic requires a later numeric stage.\", \"UNSUPPORTED\");",
+      "owner": "#184",
+      "boundary": "Expanded numeric API/non-finite and power families."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (![\"add\", \"subtract\", \"multiply\", \"floor-divide\", \"modulo\", \"divide\"].includes(operation)) this.fail(\"UnsupportedOperationError\", \"Unknown binary operation.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (!this.numeric) this.fail(\"UnsupportedOperationError\", \"Sequence repetition requires the source value profile.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (!this.numeric) this.fail(\"UnsupportedOperationError\", \"Integer true division is outside this bytecode profile.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/values.mjs",
+      "site": "if (!base) this.fail(\"UnsupportedOperationError\", \"Unknown numeric builtin.\", \"UNSUPPORTED\");",
+      "owner": "boundary:execution-interface",
+      "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    }
+  ],
+  "native_tables": {
+    "namespaces": "runtime/native-namespaces.mjs",
+    "layouts": "docs/interpreter-directory-layouts.json",
+    "slots": "runtime/class-policy.mjs",
+    "field_and_invocation_owners": "runtime/class-values.mjs"
+  },
+  "neighbor_issues": [
+    34,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    124,
+    125,
+    126,
+    127,
+    128,
+    184
+  ],
+  "boundaries": [
+    "profile:core-source/1",
+    "boundary:source-interface",
+    "boundary:source-profile",
+    "boundary:execution-interface",
+    "table:native-apis"
+  ],
+  "support_credit": "Only admitted independently executed positive behavior or exact native errors earns support credit; availability and intentional refusals do not."
+}

@@ -1,5 +1,9 @@
 # Property diagnostics and accessor copies
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 The O90 property portion adopts missing getter/setter/deleter diagnostics and
 native accessor-copy behavior against CPython 3.14.7. The
 [source matrix](../tests/fixtures/interpreter/property-diagnostics.json) contains

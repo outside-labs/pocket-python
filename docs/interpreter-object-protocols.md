@@ -1,5 +1,9 @@
 # Object reflection and arithmetic
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 INT-OBJECT-01 adopts finite slices against CPython 3.14.7. The authored
 `object-protocols.json` reference must also execute independently in Node and
 Chromium, draining and instruction-boundary drivers. O1 and O2 are implemented. Attribute names can be arbitrary strings

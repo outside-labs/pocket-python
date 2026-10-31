@@ -1,5 +1,9 @@
 # Materialized native namespaces
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O69 of #123 gives source classes and all adopted actual types complete own
 dictionaries. The pinned CPython 3.14.7 inventory contains 81 layouts and 1,148
 entries, including the dictionary views introduced by O70. The generated table

@@ -1,5 +1,9 @@
 # Function identity metadata
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O43/O44 continue the object/reflection work in #123 and #33. The executable
 reference is CPython 3.14.7; the finite matrix is
 `tests/fixtures/interpreter/function-metadata.json`. Reference results alone do

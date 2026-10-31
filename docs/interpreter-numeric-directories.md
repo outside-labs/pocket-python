@@ -1,5 +1,9 @@
 # Numeric and singleton directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O57 continues #123 and #33 with finite default directories for `None`,
 `NotImplemented`, booleans, integers, floats and complex values. Pinned CPython
 3.14.7 is the semantic oracle; the independently authored

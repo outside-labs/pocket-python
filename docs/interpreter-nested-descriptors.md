@@ -1,5 +1,9 @@
 # Nested descriptor hooks
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O27/O28 refine the remaining descriptor binding work under #123 and #33.
 The pinned CPython 3.14.7 matrix is
 `tests/fixtures/interpreter/nested-descriptors.json`. Reference-only validation

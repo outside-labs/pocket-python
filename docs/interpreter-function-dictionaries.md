@@ -1,5 +1,9 @@
 # Live function dictionaries
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O45/O46 continue #123 and #33. CPython 3.14.7 is the executable reference;
 `tests/fixtures/interpreter/function-dictionaries.json` records the finite
 contract. Reference execution alone does not establish independent execution.

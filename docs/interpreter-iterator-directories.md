@@ -1,5 +1,9 @@
 # Native iterator directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O56 continues #123, #33, #116 and #120 against pinned CPython 3.14.7. The
 independently authored `iterator-directories.json` matrix separates reference
 behavior from engine adoption. O56 uses charged native collection and owned

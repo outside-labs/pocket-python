@@ -1,5 +1,9 @@
 # Slots and native storage descriptors
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O84 of #123 adopts `__slots__` on source and dynamic classes. The
 [53-case matrix](../tests/fixtures/interpreter/slots.json) uses CPython 3.14.7
 as its oracle and runs on Node and Chromium through drain, stepped and parked

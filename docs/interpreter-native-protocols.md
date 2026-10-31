@@ -1,5 +1,9 @@
 # Explicit native protocol calls
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 The native-call portion of O90 in #123 gives the already adopted implicit
 protocols explicit bound, unbound and rebound entry points. Property [diagnostic
 and accessor-copy completion](interpreter-property-diagnostics.md) and

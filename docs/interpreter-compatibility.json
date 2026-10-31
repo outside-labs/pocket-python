@@ -60,7 +60,7 @@
       "id": "numeric-operations",
       "status": "partial",
       "scope": "Arbitrary integers, binary64 real and owned complex values; exact integer true division, bounded powers, bitwise/shifts and primitive helpers; real/complex construction and selected numeric/index callbacks. Both source profiles admit primitive APIs; callbacks require classes-source/1.",
-      "gaps": "General complex powers, non-finite complex arithmetic/intermediate recovery and numeric methods remain INT-NUM-02. Broader class arithmetic and formatting remain separate.",
+      "gaps": "General complex powers, non-finite recovery and extra numeric methods remain #184; expanded formatting remains #127.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -68,7 +68,6 @@
       ],
       "next_tasks": [
         "INT-NUM-02",
-        "INT-OBJECT-01",
         "INT-TEXT-01"
       ],
       "probes": [
@@ -282,12 +281,14 @@
         "tests/fixtures/interpreter/function-dictionaries.json:nested-method-custom-dictionary",
         "tests/fixtures/interpreter/function-dictionaries.json:method-live-marker-native-bypass",
         "tests/fixtures/interpreter/function-dictionaries.json:method-native-get-deferred",
-        "tests/fixtures/interpreter/function-dictionaries.json:dictionary-structural-collision-deferred",
         "tests/fixtures/interpreter/function-dictionaries.json:explicit-name-identity-ordinary",
         "tests/fixtures/interpreter/function-dictionaries.json:explicit-name-identity-native",
         "tests/fixtures/interpreter/function-dictionaries.json:equal-name-retains-first-key",
         "tests/fixtures/interpreter/function-dictionaries.json:collision-retains-supplied-lookup-key",
         "tests/fixtures/interpreter/function-dictionaries.json:method-retains-supplied-lookup-key"
+      ],
+      "boundary_evidence": [
+        "tests/fixtures/interpreter/function-dictionaries.json:dictionary-structural-collision-deferred"
       ]
     },
     {
@@ -325,15 +326,20 @@
     {
       "id": "class-construction",
       "status": "partial",
-      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Ordinary class docstrings, default None documentation and instance shadowing are adopted. Expanded class headers, owned MRO entry resolution/original bases, prepared mapping bodies, callable factories and custom metaclass MRO construction are adopted by O79\u2013O82. O83 applies the finite 72-name actual-metaclass slot inventory with owned reflected dispatch, descriptors, hashing and mutation.",
-      "gaps": "Builtin storage/layouts and compatible class/base reassignment remain O84\u2013O88. Additional arithmetic, native diagnostics, generics, context, formatting, buffer and async protocols retain their named milestones.",
+      "scope": "Explicit classes-source/1: user classes, bounded C3 MRO, owned __new__/__init__, conditional runtime-type initialization, descriptors, bound methods, lexical __class__ cells and explicit/zero-argument super. Finite metaclasses adopt type-derived inheritance, selection/conflicts, __new__/__init__/__call__, descriptor binding and class-cell propagation with ordinary dictionary namespaces. Inherited __init_subclass__ runs after descriptor notifications with owned C3/descriptor binding, automatic definition-time classmethod wrapping and explicit named class keyword forwarding through type/metaclass construction. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Ordinary class docstrings, default None documentation and instance shadowing are adopted. Expanded class headers, owned MRO entry resolution/original bases, prepared mapping bodies, callable factories and custom metaclass MRO construction are adopted by O79\u2013O82. O83 applies the finite 72-name actual-metaclass slot inventory with owned reflected dispatch, descriptors, hashing and mutation. O84\u2013O88 add slots, native payload subtypes, property/wrapper/module/super subtypes, compatible class/base reassignment and live weak subclass enumeration.",
+      "gaps": "Generic/annotation, context, buffer, formatting, exception and async protocols remain #125/#121/#117/#127/#124/#34. Native ABI/layout interchange is outside the source interface.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-WITH-01",
+        "INT-VALUES-01",
+        "INT-TEXT-01",
+        "INT-ERROR-01",
+        "INT-10"
       ],
       "probes": [
         "class-protocols",
@@ -425,15 +431,17 @@
     {
       "id": "descriptors-decorators",
       "status": "partial",
-      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Function abstract markers and computed read-only property/static/class method flags use owned optional lookup and truth conversion, preserving lookup-only AttributeError suppression, order, live changes and callback failures. Eager optional getter documentation, explicit documents, exact owned mutation/deletion and origin-sensitive accessor copies preserve lookup-only AttributeError suppression and post-callback notification names. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46).",
-      "gaps": "Native/wrapper documentation, property subclass layouts, live namespaces and further descriptor metadata remain separate. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals. Builtin layouts, custom metaclass MRO construction and hooked native MRO method qualification retain their separate boundaries.",
+      "scope": "Functions, properties, static/class methods, custom get/set/delete/name-notification descriptors and decorators in classes-source/1. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. Explicit native property get/set/delete and static/class method __get__ have bound/unbound wrapper identities, positional validation and owned callback/receiver lifetimes. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Native property accessor copies retain None accessors and shallow identities; explicit Python function binding preserves receiver/function identity, ignored owners and lazy invocation. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Finite native descriptor __objclass__ metadata, type.mro() fresh C3 lists and primary-base reflection preserve actual types and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Function abstract markers and computed read-only property/static/class method flags use owned optional lookup and truth conversion, preserving lookup-only AttributeError suppression, order, live changes and callback failures. Eager optional getter documentation, explicit documents, exact owned mutation/deletion and origin-sensitive accessor copies preserve lookup-only AttributeError suppression and post-callback notification names. Live function dictionaries and bound-method custom attribute fallback retain exact identities, replacement snapshots and owned collision/read/descriptor callbacks (O45/O46). O69\u2013O90 add materialized native dictionaries, wrapper metadata, native documentation, property copies/subtypes, owned name diagnostics and explicit native protocols.",
+      "gaps": "Recursive container/default displays remain #127; annotations/type parameters #125; serialization and weakref libraries #126.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-TEXT-01",
+        "INT-ANNOT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "nested-descriptor-set-property",
@@ -586,7 +594,6 @@
         "tests/fixtures/interpreter/property-names.json:notification-rebound-native",
         "tests/fixtures/interpreter/property-names.json:automatic-alias-order",
         "tests/fixtures/interpreter/property-names.json:automatic-notification-snapshot",
-        "tests/fixtures/interpreter/property-names.json:diagnostic-nested",
         "tests/fixtures/interpreter/abstract-flags.json:function-decorator-marker",
         "tests/fixtures/interpreter/abstract-flags.json:function-marker-identity",
         "tests/fixtures/interpreter/abstract-flags.json:accessor-order",
@@ -627,12 +634,15 @@
         "tests/fixtures/interpreter/function-dictionaries.json:nested-method-custom-dictionary",
         "tests/fixtures/interpreter/function-dictionaries.json:method-live-marker-native-bypass",
         "tests/fixtures/interpreter/function-dictionaries.json:method-native-get-deferred",
-        "tests/fixtures/interpreter/function-dictionaries.json:dictionary-structural-collision-deferred",
         "tests/fixtures/interpreter/function-dictionaries.json:explicit-name-identity-ordinary",
         "tests/fixtures/interpreter/function-dictionaries.json:explicit-name-identity-native",
         "tests/fixtures/interpreter/function-dictionaries.json:equal-name-retains-first-key",
         "tests/fixtures/interpreter/function-dictionaries.json:collision-retains-supplied-lookup-key",
         "tests/fixtures/interpreter/function-dictionaries.json:method-retains-supplied-lookup-key"
+      ],
+      "boundary_evidence": [
+        "tests/fixtures/interpreter/property-names.json:diagnostic-nested",
+        "tests/fixtures/interpreter/function-dictionaries.json:dictionary-structural-collision-deferred"
       ]
     },
     {
@@ -685,18 +695,16 @@
       "id": "indexed-user-objects",
       "status": "partial",
       "scope": "__index__/__getitem__/__setitem__/__delitem__ through current type lookup and owned callbacks; raw scalar/tuple/slice keys, builtin sequence conversion, __len__ index results and bounded list/tuple RHS slice mutation.",
-      "gaps": "Other iterable RHS slice assignment, slice repr/hash/indices, builtin subclasses and broader numeric/sequence APIs remain deferred.",
+      "gaps": "Other iterable RHS slice assignment and broader sequence APIs remain #116; slice display #127 and expanded buffer APIs #117.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-ITER-01",
         "INT-SEQ-01",
         "INT-TEXT-01",
-        "INT-EQ-01",
-        "INT-OBJECT-01"
+        "INT-VALUES-01"
       ],
       "probes": [
         "getitem-hook"
@@ -738,7 +746,7 @@
       "id": "user-equality-hash",
       "status": "partial",
       "scope": "Owned __eq__/__ne__/__hash__, NotImplemented, reflected priority, bounded container equality and user dictionary keys. Four rich ordering methods and bounded list/tuple/slice comparisons use the owned machine. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes.",
-      "gaps": "Structural dictionary mutation during comparison, broader descriptor hash families and user-key set ordering remain separately gated.",
+      "gaps": "Structural dictionary mutation during comparison and range hashing remain #116; user-key set ordering/algebra remains #117.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -746,7 +754,7 @@
       ],
       "next_tasks": [
         "INT-SEQ-01",
-        "INT-OBJECT-01"
+        "INT-VALUES-01"
       ],
       "probes": [
         "equality-hook",
@@ -768,15 +776,23 @@
     {
       "id": "further-object-protocols",
       "status": "partial",
-      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary list/tuple/text repetition preserves shallow aliases, Unicode code points and owned index fallback after arithmetic candidates. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O65 adds callable, descriptor, property and mappingproxy type directories with canonical native binding, raw namespace order and ordinary advertised namespaces; callable/accessor metadata and per-instance keys remain separate. O66 adds generator and adopted native iterator type directories, preserving generator state, iterator positions, sentinel isolation and released buffer authority through canonical native binding and owned namespace merging. O89 completes matrix and in-place matrix dispatch, user-valued ternary power and Python 3.14 reflected ternary power with owned operands and optional binding semantics.",
-      "gaps": "Builtin instance layouts, further metaclass construction/ordering protocols, live namespace mappings and default directories and dynamic source admission remain separate contracts.",
+      "scope": "Owned binary/reflected/in-place arithmetic, unary slots, divmod and power; construction, super, finite metaclasses, instance attribute hooks and custom type checks. Four rich ordering methods and bounded list/tuple/slice comparisons preserve descriptor binding, raw results and callback-visible mutation. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes. Stable adopted object IDs, optimized function namespace snapshots and custom vars/dir hooks are implemented. Generator-expression snapshots and custom directory length hints and stable owned rich ordering are adopted. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary list/tuple/text repetition preserves shallow aliases, Unicode code points and owned index fallback after arithmetic candidates. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Property/custom-descriptor-valued mutation and name-notification hooks bind and invoke through owned frames, preserving original failures and notification snapshots. O53 adds fresh default property directories and raw native directory binding without reading lazy names, accessor metadata or abstract flags. O54 adds actual-layout directories for the adopted native method/wrapper descriptors and bound callables, retaining recursive native binding, hook isolation and receiver chains. O65 adds callable, descriptor, property and mappingproxy type directories with canonical native binding, raw namespace order and ordinary advertised namespaces; callable/accessor metadata and per-instance keys remain separate. O66 adds generator and adopted native iterator type directories, preserving generator state, iterator positions, sentinel isolation and released buffer authority through canonical native binding and owned namespace merging. O89 completes matrix and in-place matrix dispatch, user-valued ternary power and Python 3.14 reflected ternary power with owned operands and optional binding semantics. O67\u2013O94 complete live namespaces, native dictionaries/proxies, metadata/code/cells/frames/identity, all finite directory layouts, metaclass construction/slots, builtin storage/subtypes/reassignment and owned compile/eval/exec/granted imports.",
+      "gaps": "Remaining sequence, value, generator, context, exception, annotation, text, library and async APIs retain #116/#117/#120/#121/#124/#125/#127/#126/#34; raw backend/ABI/frame-debug interfaces remain excluded.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-SEQ-01",
+        "INT-VALUES-01",
+        "INT-GEN-01",
+        "INT-WITH-01",
+        "INT-ERROR-01",
+        "INT-ANNOT-01",
+        "INT-TEXT-01",
+        "INT-LIB-01",
+        "INT-10"
       ],
       "probes": [
         "metaclass",
@@ -1057,7 +1073,7 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01",
+        "INT-LIB-01",
         "INT-PKG-01"
       ],
       "probes": [],
@@ -1191,7 +1207,10 @@
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-SYNTAX-01",
+        "INT-10",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-eval",
@@ -1574,7 +1593,6 @@
         "tests/fixtures/interpreter/function-dictionaries.json:nested-method-custom-dictionary",
         "tests/fixtures/interpreter/function-dictionaries.json:method-live-marker-native-bypass",
         "tests/fixtures/interpreter/function-dictionaries.json:method-native-get-deferred",
-        "tests/fixtures/interpreter/function-dictionaries.json:dictionary-structural-collision-deferred",
         "tests/fixtures/interpreter/function-dictionaries.json:explicit-name-identity-ordinary",
         "tests/fixtures/interpreter/function-dictionaries.json:explicit-name-identity-native",
         "tests/fixtures/interpreter/function-dictionaries.json:equal-name-retains-first-key",
@@ -1819,6 +1837,9 @@
         "tests/fixtures/interpreter/dynamic-eval.json:explicit-namespaces",
         "tests/fixtures/interpreter/dynamic-exec.json:closure-cells",
         "tests/fixtures/interpreter/dynamic-imports.json:dynamic-exec"
+      ],
+      "boundary_evidence": [
+        "tests/fixtures/interpreter/function-dictionaries.json:dictionary-structural-collision-deferred"
       ]
     },
     {
@@ -1971,7 +1992,7 @@
       "id": "function-defaults-defining-namespaces",
       "status": "supported",
       "scope": "O72: live positional/keyword defaults, actual defining globals and captured builtin dictionaries, owned default-key/name callbacks, native validation and persistent callback updates.",
-      "gaps": "Annotations #125 and dynamic source/import APIs O91\u2013O94 retain their owners.",
+      "gaps": "Annotation and type-parameter semantics remain #125. Owned dynamic source/import APIs are delivered by O91\u2013O94.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2013,7 +2034,7 @@
       "id": "owned-code-closures-cells",
       "status": "supported",
       "scope": "O73: verified owned source-code metadata, stable code and closure identities, writable/empty cells, native cell construction and compatible function-code replacement with active/generator executable snapshots.",
-      "gaps": "CPython bytecode/C-layout interchange and backend code constructors remain outside the source interface. Directory completion O78, native API completion O90 and dynamic compilation O91 remain separately owned.",
+      "gaps": "Raw CPython bytecode, native ABI/layout interchange and backend constructors/replacement remain outside the finite source-code interface; compile/eval/exec are delivered by O91\u2013O93.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2052,7 +2073,7 @@
       "id": "generator-frame-locals-reflection",
       "status": "supported",
       "scope": "O74: non-resuming generator state/code/frame metadata, source-frame identity/back/namespaces/lines, PEP 667 local/cell/extra proxies, native proxy operations and retained-frame teardown including inlined comprehensions.",
-      "gaps": "Frame tracing/jumping/backend positions/clearing and traceback construction remain outside the finite interface or with #124. Remaining generator execution #120 and native directory closure O78 remain separately owned.",
+      "gaps": "Frame tracing/jumping/backend positions/clearing remain outside the finite source interface; traceback semantics #124 and further generator execution #120 retain their owners.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2217,7 +2238,7 @@
       "id": "wrapper-super-directories",
       "status": "supported",
       "scope": "O77: actual wrapper/super instance and type directories; live wrapper dictionaries, raw native order, fresh sorted results and retained detached callers.",
-      "gaps": "Wrapper/super subclass layouts remain O87; invocation of listed native APIs retains O90 and named library owners.",
+      "gaps": "Directory enumeration does not adopt annotation/type-parameter evaluation #125, serialization #126 or unadopted displays #127; wrapper/super subclasses are delivered by O87.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2488,15 +2509,13 @@
       "id": "explicit-native-protocols",
       "status": "supported",
       "scope": "O90 explicit bound/unbound/rebound native protocol calls, Python method get/call and owned equality/hash, canonical native descriptors, native metadata and signature/receiver diagnostics over already admitted APIs. Property missing-accessor diagnostics preserve actual qualified type names, owned name rendering, callback order and native copy names. Explicit native attribute access covers primitive, method, module and super layouts, including source hook bypass, module namespace hooks, and super descriptor rebinding.",
-      "gaps": "Unadopted display, numeric, container, iterator, generic, serialization, buffer, context and dynamic code APIs retain #127/#184/#116/#117/#120/#125/#126/#121/O91.",
+      "gaps": "Unadopted display, numeric, container, iterator, generic, serialization, buffer and context APIs retain #127/#184/#116/#117/#120/#125/#126/#121. Owned dynamic source is delivered by O91\u2013O94.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
-      "next_tasks": [
-        "INT-OBJECT-01"
-      ],
+      "next_tasks": [],
       "probes": [],
       "evidence": [
         "tests/fixtures/interpreter/native-protocols.json:method-constructor",
@@ -2793,14 +2812,16 @@
       "id": "callable",
       "status": "partial",
       "scope": "callable(x), exactly one positional argument, classes-source/1.",
-      "gaps": "Availability does not imply support for every Python callable kind.",
+      "gaps": "Availability does not imply every callable signature or library API; annotations #125, async #34 and library selection #126 remain separate.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-10",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-callable"
@@ -2827,14 +2848,15 @@
       "id": "classmethod",
       "status": "partial",
       "scope": "classmethod(callable), classes-source/1 and accessed-owner binding. Explicit bound/unbound __get__, actual-type/explicit-owner binding and finite native wrapper metadata/receiver validation are adopted. Class methods wrapping native callables preserve Python method identity, callable metadata and equality distinction from native wrappers. Computed read-only __isabstractmethod__ uses owned optional lookup/truth conversion over current accessors or wrapped values (O39/O40). O71 adds copied names/module/documentation, live writable dictionaries and read-only __wrapped__/__func__ storage.",
-      "gaps": "Annotation/type-parameter evaluation (#125), directories (O77), subclasses and explicit reinitialization (O87) retain their named owners.",
+      "gaps": "Annotation/type-parameter evaluation #125 and library/serialization APIs #126 retain their owners; metadata, directories and subclasses are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-classmethod",
@@ -2871,21 +2893,25 @@
         "tests/fixtures/interpreter/abstract-flags.json:staticmethod-native-read",
         "tests/fixtures/interpreter/abstract-flags.json:classmethod-hooked-lookup",
         "tests/fixtures/interpreter/abstract-flags.json:staticmethod-nested-attribute-error",
-        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook"
+        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook",
+        "tests/fixtures/interpreter/wrapper-metadata.json:staticmethod-copied-metadata"
       ]
     },
     {
       "id": "compile",
       "status": "partial",
       "scope": "O91 bounded independent compilation in exec/eval/single modes, owned verified code metadata, UTF-8 source/buffers, optimization and total caller limits; see docs/interpreter-dynamic-source.md.",
-      "gaps": "AST, future/async/incomplete flags, filesystem path adapters, foreign executable data and grammar outside the admitted source profile retain explicit boundaries.",
+      "gaps": "AST/future/incomplete/async modes, path adapters and unadopted grammar retain #125/#119/#34/#126; foreign executable data remains outside the source interface.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-SYNTAX-01",
+        "INT-10",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-compile"
@@ -2900,7 +2926,7 @@
       "id": "complex",
       "status": "partial",
       "scope": "Owned immutable Cartesian values, literal/text/real/complex construction, real/imag keywords and attributes, finite basic arithmetic, equality/truth/hash and bounded integer powers. Owned conversion and index fallback callbacks run in ordinary VM frames under classes-source/1.",
-      "gaps": "General powers, non-finite arithmetic/recovery families, numeric methods, formatting and builtin subclasses remain later boundaries.",
+      "gaps": "General powers/non-finite recovery and extra methods remain #184; expanded display/formatting #127. Native subclasses are delivered by O85.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -2908,7 +2934,7 @@
       ],
       "next_tasks": [
         "INT-NUM-02",
-        "INT-OBJECT-01"
+        "INT-TEXT-01"
       ],
       "probes": [
         "builtin-complex"
@@ -2919,14 +2945,18 @@
       "id": "delattr",
       "status": "partial",
       "scope": "Positional reflection on adopted class/instance attributes and owned instance/metaclass hooks, including property/custom-descriptor-valued delete hooks. Native object/type mutation defaults preserve original arguments, failures and ignored results.",
-      "gaps": "Live namespaces, default directories, layout mutation and further metaclass protocols remain separate.",
+      "gaps": "Unadopted special names retain #125/#121/#117/#127/#34; live namespaces, type reassignment and native descriptor operations are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-WITH-01",
+        "INT-VALUES-01",
+        "INT-TEXT-01",
+        "INT-10"
       ],
       "probes": [
         "builtin-delattr",
@@ -2959,7 +2989,8 @@
         "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
         "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
         "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
-        "tests/fixtures/interpreter/documentation.json:native-documentation"
+        "tests/fixtures/interpreter/documentation.json:native-documentation",
+        "tests/fixtures/interpreter/attribute-hooks.json:write-intercept"
       ]
     },
     {
@@ -3503,8 +3534,6 @@
         "tests/fixtures/interpreter/iterator-directories.json:sentinel-not-compared",
         "tests/fixtures/interpreter/iterator-directories.json:cyclic-indexed-retention",
         "tests/fixtures/interpreter/iterator-directories.json:cyclic-callable-retention",
-        "tests/fixtures/interpreter/iterator-directories.json:deferred-reduction",
-        "tests/fixtures/interpreter/iterator-directories.json:deferred-state",
         "tests/fixtures/interpreter/iterator-directories.json:user-iterator-directory",
         "tests/fixtures/interpreter/numeric-directories.json:none-sorted-directory",
         "tests/fixtures/interpreter/numeric-directories.json:none-raw-directory",
@@ -3548,8 +3577,6 @@
         "tests/fixtures/interpreter/sequence-directories.json:slice-field-mutation",
         "tests/fixtures/interpreter/sequence-directories.json:cross-layout-native-rebinding",
         "tests/fixtures/interpreter/sequence-directories.json:lazy-generators",
-        "tests/fixtures/interpreter/sequence-directories.json:unread-range-reduction",
-        "tests/fixtures/interpreter/sequence-directories.json:unread-slice-reduction",
         "tests/fixtures/interpreter/container-directories.json:str-sorted-directory",
         "tests/fixtures/interpreter/buffer-directories.json:set-sorted-directory",
         "tests/fixtures/interpreter/instance-directories.json:root-sorted",
@@ -3839,20 +3866,26 @@
         "tests/fixtures/interpreter/callable-type-directories.json:advertised-collision-error",
         "tests/fixtures/interpreter/iterator-type-directories.json:retained-native-chain",
         "tests/fixtures/interpreter/iterator-type-directories.json:generator-state"
+      ],
+      "boundary_evidence": [
+        "tests/fixtures/interpreter/iterator-directories.json:deferred-reduction",
+        "tests/fixtures/interpreter/iterator-directories.json:deferred-state",
+        "tests/fixtures/interpreter/sequence-directories.json:unread-range-reduction",
+        "tests/fixtures/interpreter/sequence-directories.json:unread-slice-reduction"
       ]
     },
     {
       "id": "divmod",
       "status": "partial",
       "scope": "Positional-only primitive int/float quotient and remainder with owned tuple results and Python sign/zero rules. Adopted user forward/reflected slots use owned descriptor dispatch.",
-      "gaps": "Further object construction/reflection remain separately gated.",
+      "gaps": "Expanded complex/numeric families remain #184; owned object and metaclass dispatch is delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-NUM-02"
       ],
       "probes": [
         "builtin-divmod"
@@ -3883,14 +3916,16 @@
       "id": "eval",
       "status": "partial",
       "scope": "O92 owned expression/source and verified-code evaluation with exact namespaces, mapping callbacks, captured builtins, original diagnostics and shared limits.",
-      "gaps": "Code with free cells is rejected by eval; exec closure cells are O93. AST/future/async, foreign executable code and grammar outside the admitted source profile remain explicit boundaries.",
+      "gaps": "Code with free cells raises the native TypeError; exec adopts closure cells. Unadopted grammar/AST/future/async forms retain #119/#125/#34; foreign executable data remains outside the source interface.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-SYNTAX-01",
+        "INT-ANNOT-01",
+        "INT-10"
       ],
       "probes": [
         "builtin-eval"
@@ -3898,21 +3933,24 @@
       "evidence": [
         "tests/fixtures/interpreter/dynamic-eval.json:explicit-namespaces",
         "tests/fixtures/interpreter/dynamic-eval.json:custom-locals",
-        "tests/fixtures/interpreter/dynamic-eval.json:default-function"
+        "tests/fixtures/interpreter/dynamic-eval.json:default-function",
+        "tests/fixtures/interpreter/dynamic-eval.json:expression"
       ]
     },
     {
       "id": "exec",
       "status": "partial",
       "scope": "O93 owned statement/source and verified-code execution, exact globals/locals, PEP 667 default snapshots, closure cells, retained definitions and shared total limits.",
-      "gaps": "AST/future/async and unadopted source grammar remain explicit boundaries; ambient host evaluation and foreign executable code are unavailable.",
+      "gaps": "Unadopted grammar/AST/future/async forms retain #119/#125/#34; foreign executable data and ambient host evaluation remain outside the source interface.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-SYNTAX-01",
+        "INT-ANNOT-01",
+        "INT-10"
       ],
       "probes": [
         "builtin-exec"
@@ -3920,7 +3958,8 @@
       "evidence": [
         "tests/fixtures/interpreter/dynamic-exec.json:separate-namespaces",
         "tests/fixtures/interpreter/dynamic-exec.json:closure-cells",
-        "tests/fixtures/interpreter/dynamic-exec.json:frame-locals-proxy"
+        "tests/fixtures/interpreter/dynamic-exec.json:frame-locals-proxy",
+        "tests/fixtures/interpreter/dynamic-exec.json:source-statements"
       ]
     },
     {
@@ -3945,15 +3984,15 @@
       "id": "float",
       "status": "partial",
       "scope": "Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles. Owned conversion and index fallback callbacks run in ordinary VM frames under classes-source/1.",
-      "gaps": "Bytes (int/float), builtin subclasses, numeric methods and formatting remain later value/object stages.",
+      "gaps": "Extra numeric methods remain #184 and expanded display/formatting #127; builtin payload subclasses are delivered by O85.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-VALUES-01",
-        "INT-OBJECT-01"
+        "INT-NUM-02",
+        "INT-TEXT-01"
       ],
       "probes": [
         "builtin-float"
@@ -4003,14 +4042,15 @@
       "id": "getattr",
       "status": "partial",
       "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
-      "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
+      "gaps": "Unadopted library APIs, annotation/type-parameter metadata and frame tracing/layout fields retain #126/#125 or the finite source-interface boundary.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-LIB-01",
+        "INT-ANNOT-01"
       ],
       "probes": [
         "builtin-getattr",
@@ -4041,39 +4081,44 @@
         "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
         "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
         "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
-        "tests/fixtures/interpreter/documentation.json:native-documentation"
+        "tests/fixtures/interpreter/documentation.json:native-documentation",
+        "tests/fixtures/interpreter/attribute-hooks.json:read-intercept"
       ]
     },
     {
       "id": "globals",
-      "status": "deferred",
-      "scope": "The builtin name resolves; module namespace invocation explicitly refuses pending its live namespace contract.",
-      "gaps": "Availability alone earns no API support credit; optimized snapshots and custom hooks have separate implementation tasks.",
+      "status": "partial",
+      "scope": "O67 live defining module dictionary, shared with module locals/vars/__dict__, owned writes/deletes and retained function/callback aliases.",
+      "gaps": "Host/foreign namespaces are unavailable; annotations and library APIs retain #125/#126.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-globals"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/module-namespaces.json:exact-global-aliases"
+      ]
     },
     {
       "id": "hasattr",
       "status": "partial",
       "scope": "Positional attribute reflection on adopted class/instance attributes, preserving descriptor precedence, arbitrary bounded string names and AttributeError-only suppression. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities.",
-      "gaps": "Custom attribute hooks, reflective namespaces and unadopted receivers/metadata remain separately gated.",
+      "gaps": "Unadopted library APIs, annotation/type-parameter metadata and frame tracing/layout fields retain #126/#125 or the finite source-interface boundary.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-LIB-01",
+        "INT-ANNOT-01"
       ],
       "probes": [
         "builtin-hasattr",
@@ -4104,14 +4149,15 @@
         "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
         "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
         "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
-        "tests/fixtures/interpreter/documentation.json:native-documentation"
+        "tests/fixtures/interpreter/documentation.json:native-documentation",
+        "tests/fixtures/interpreter/attribute-hooks.json:advertised-property"
       ]
     },
     {
       "id": "hash",
       "status": "partial",
       "scope": "hash(value), positional-only in classes-source/1; numeric/string/primitive tuple hashes, user __hash__ and owned default identities. Ordinary Python bound methods and finite native methods have stable receiver/operation hashes. Raw slice fields and callback-bearing tuple keys use owned sequential hashes.",
-      "gaps": "Property accessor and further reflective hash families remain deferred; exact string/object hash numbers are not a cross-process guarantee.",
+      "gaps": "Range hashing remains #116 and user-key frozen-set hashing #117; owned descriptor/method/slice hashing is delivered. Exact numeric hash values are not cross-process guarantees.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -4119,7 +4165,7 @@
       ],
       "next_tasks": [
         "INT-SEQ-01",
-        "INT-OBJECT-01"
+        "INT-VALUES-01"
       ],
       "probes": [
         "builtin-hash"
@@ -4207,15 +4253,15 @@
       "id": "int",
       "status": "partial",
       "scope": "Real primitive and Unicode text construction with exact signatures, base/underscore rules and bounded input/result work in both source profiles. Owned conversion and index fallback callbacks run in ordinary VM frames under classes-source/1.",
-      "gaps": "Bytes (int/float), builtin subclasses, numeric methods and formatting remain later value/object stages.",
+      "gaps": "Extra numeric methods remain #184 and expanded display/formatting #127; builtin payload subclasses are delivered by O85.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-VALUES-01",
-        "INT-OBJECT-01"
+        "INT-NUM-02",
+        "INT-TEXT-01"
       ],
       "probes": [
         "builtin-int"
@@ -4226,42 +4272,44 @@
       "id": "isinstance",
       "status": "partial",
       "scope": "Adopted type relationships, canonical native identities, bool/int and exception ancestry, nested class-info tuples with short-circuit/error order in classes-source/1.",
-      "gaps": "Unions and custom instance/subclass checks remain deferred; tuple nesting is bounded.",
+      "gaps": "Generic aliases and union/type-parameter forms remain #125; custom checks and advertised-class fallbacks are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01"
       ],
       "probes": [
         "builtin-isinstance"
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:relation-builtin-ancestry",
-        "tests/fixtures/interpreter/construction.json:relation-nested-tuples"
+        "tests/fixtures/interpreter/construction.json:relation-nested-tuples",
+        "tests/fixtures/interpreter/type-checks.json:instance-exact-type-skips-hook"
       ]
     },
     {
       "id": "issubclass",
       "status": "partial",
       "scope": "Adopted type relationships, canonical native identities, bool/int and exception ancestry, nested class-info tuples with short-circuit/error order in classes-source/1.",
-      "gaps": "Unions and custom instance/subclass checks remain deferred; tuple nesting is bounded.",
+      "gaps": "Generic aliases and union/type-parameter forms remain #125; custom checks and advertised-base fallbacks are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01"
       ],
       "probes": [
         "builtin-issubclass"
       ],
       "evidence": [
         "tests/fixtures/interpreter/construction.json:relation-builtin-ancestry",
-        "tests/fixtures/interpreter/construction.json:relation-nested-tuples"
+        "tests/fixtures/interpreter/construction.json:relation-nested-tuples",
+        "tests/fixtures/interpreter/type-checks.json:instance-native-no-virtual-subclasses"
       ]
     },
     {
@@ -4289,7 +4337,7 @@
       "id": "len",
       "status": "partial",
       "scope": "len(admitted containers/str or classes-profile __len__).",
-      "gaps": "Unadopted value families and builtin subclasses remain deferred; user index results are validated through owned conversion.",
+      "gaps": "Unadopted value/library API families remain #117/#126; builtin subclasses and owned user index validation are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -4297,7 +4345,7 @@
       ],
       "next_tasks": [
         "INT-VALUES-01",
-        "INT-OBJECT-01"
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-len"
@@ -4331,14 +4379,14 @@
       "id": "locals",
       "status": "partial",
       "scope": "Fresh shallow snapshots of bound parameters, locals and free cells in optimized functions, lambdas and generators including inlined comprehension snapshots, plus generator-expression .0/target/free-cell namespaces; classes-source/1. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order.",
-      "gaps": "Live mappings, frame objects remain separate.",
+      "gaps": "Optimized locals are fresh PEP 667 snapshots; live module/class namespaces and frame proxies are delivered. Annotation evaluation remains #125.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01"
       ],
       "probes": [
         "builtin-locals-snapshot",
@@ -4351,7 +4399,8 @@
         "tests/fixtures/interpreter/reflection.json:locals-fresh-shallow",
         "tests/fixtures/interpreter/reflection.json:genexpr-implicit-iterator",
         "tests/fixtures/interpreter/reflection.json:comprehension-function-list",
-        "tests/fixtures/interpreter/reflection.json:comprehension-class-private"
+        "tests/fixtures/interpreter/reflection.json:comprehension-class-private",
+        "tests/fixtures/interpreter/function-state.json:defaults-alias"
       ]
     },
     {
@@ -4454,15 +4503,15 @@
       "id": "object",
       "status": "partial",
       "scope": "Root object identity, no-argument construction and finite object.__new__/__init__ for ordinary user instances in classes-source/1.",
-      "gaps": "Default displays, builtin instance allocation and broader reflection remain separately gated.",
+      "gaps": "Expanded default display/formatting #127 and serialization/weakref/gc libraries #126 retain their owners; source object allocation and reflection are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01",
-        "INT-TEXT-01"
+        "INT-TEXT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-object"
@@ -4526,21 +4575,21 @@
       "id": "pow",
       "status": "partial",
       "scope": "Two-argument real/integer power, modular integer power/inverse, and complex integer powers from -100 to 100 with finite intermediates; named base/exp/mod keywords. Adopted user forward/reflected slots use owned descriptor dispatch.",
-      "gaps": "Remaining complex power/recovery families are INT-NUM-02; User-valued power modulus and remaining construction/reflection remain separately gated.",
+      "gaps": "General complex powers/non-finite recovery remain #184; user-valued modulus and reflected ternary dispatch are delivered by O89.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-NUM-02",
-        "INT-OBJECT-01"
+        "INT-NUM-02"
       ],
       "probes": [
         "builtin-pow"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/object-protocols.json:power-divmod"
+        "tests/fixtures/interpreter/object-protocols.json:power-divmod",
+        "tests/fixtures/interpreter/arithmetic-dispatch.json:matmul"
       ]
     },
     {
@@ -4565,14 +4614,14 @@
       "id": "property",
       "status": "partial",
       "scope": "property(fget=None,fset=None,fdel=None,doc=None), accessor decorators and owned binding when used for mutation/name-notification hooks; classes-source/1. Explicit bound/unbound __get__/__set__/__delete__ and finite native wrapper metadata/receiver validation are adopted. Bound/unbound getter/setter/deleter copies preserve None accessors and native method identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. Property __name__ preserves arbitrary assigned values, lazy owned getter lookup, deletion and accessor-copy independence. Native __set_name__ supports bound/unbound/rebound calls and automatic namespace snapshot notification. Computed read-only __isabstractmethod__ uses owned optional lookup/truth conversion over current accessors or wrapped values (O39/O40). Eager optional getter documentation, explicit documents, exact owned mutation/deletion and origin-sensitive accessor copies preserve lookup-only AttributeError suppression and post-callback notification names.",
-      "gaps": "Native/wrapper documentation, property subclass layouts, live namespaces and further descriptor metadata remain separate. Missing-accessor diagnostics requiring user-name lookup or non-primitive name formatting retain explicit refusals.",
+      "gaps": "Recursive container/default diagnostic displays remain #127; native documentation, names, accessor copies and subtype storage are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-TEXT-01"
       ],
       "probes": [
         "builtin-property",
@@ -4651,7 +4700,6 @@
         "tests/fixtures/interpreter/property-names.json:notification-rebound-native",
         "tests/fixtures/interpreter/property-names.json:automatic-alias-order",
         "tests/fixtures/interpreter/property-names.json:automatic-notification-snapshot",
-        "tests/fixtures/interpreter/property-names.json:diagnostic-nested",
         "tests/fixtures/interpreter/abstract-flags.json:function-decorator-marker",
         "tests/fixtures/interpreter/abstract-flags.json:function-marker-identity",
         "tests/fixtures/interpreter/abstract-flags.json:accessor-order",
@@ -4674,7 +4722,11 @@
         "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
         "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
         "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
-        "tests/fixtures/interpreter/documentation.json:native-documentation"
+        "tests/fixtures/interpreter/documentation.json:native-documentation",
+        "tests/fixtures/interpreter/property-diagnostics.json:getter-name-unset"
+      ],
+      "boundary_evidence": [
+        "tests/fixtures/interpreter/property-names.json:diagnostic-nested"
       ]
     },
     {
@@ -4777,14 +4829,18 @@
       "id": "setattr",
       "status": "partial",
       "scope": "Positional reflection on adopted class/instance attributes and owned instance/metaclass hooks, including property/custom-descriptor-valued setter hooks. Native object/type mutation defaults preserve original arguments, failures and ignored results.",
-      "gaps": "Live namespaces, default directories, layout mutation and further metaclass protocols remain separate.",
+      "gaps": "Unadopted special names retain #125/#121/#117/#127/#34; live namespaces, type reassignment and native descriptor operations are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-WITH-01",
+        "INT-VALUES-01",
+        "INT-TEXT-01",
+        "INT-10"
       ],
       "probes": [
         "builtin-setattr",
@@ -4817,7 +4873,8 @@
         "tests/fixtures/interpreter/documentation.json:copy-callback-mutates-name",
         "tests/fixtures/interpreter/documentation.json:bound-custom-callable-document",
         "tests/fixtures/interpreter/documentation.json:native-rebound-property-copy",
-        "tests/fixtures/interpreter/documentation.json:native-documentation"
+        "tests/fixtures/interpreter/documentation.json:native-documentation",
+        "tests/fixtures/interpreter/attribute-hooks.json:write-intercept"
       ]
     },
     {
@@ -4863,14 +4920,15 @@
       "id": "staticmethod",
       "status": "partial",
       "scope": "staticmethod(value) and existing wrapper binding/direct-call rules; classes-source/1. Explicit bound/unbound __get__, actual-type/explicit-owner binding and finite native wrapper metadata/receiver validation are adopted. Computed read-only __isabstractmethod__ uses owned optional lookup/truth conversion over current accessors or wrapped values (O39/O40). O71 adds copied names/module/documentation, live writable dictionaries and read-only __wrapped__/__func__ storage.",
-      "gaps": "Annotation/type-parameter evaluation (#125), directories (O77), subclasses and explicit reinitialization (O87) retain their named owners.",
+      "gaps": "Annotation/type-parameter evaluation #125 and library/serialization APIs #126 retain their owners; metadata, directories and subclasses are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-staticmethod",
@@ -4901,7 +4959,8 @@
         "tests/fixtures/interpreter/abstract-flags.json:staticmethod-native-read",
         "tests/fixtures/interpreter/abstract-flags.json:classmethod-hooked-lookup",
         "tests/fixtures/interpreter/abstract-flags.json:staticmethod-nested-attribute-error",
-        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook"
+        "tests/fixtures/interpreter/abstract-flags.json:method-custom-callable-hook",
+        "tests/fixtures/interpreter/wrapper-metadata.json:staticmethod-copied-metadata"
       ]
     },
     {
@@ -4945,14 +5004,15 @@
       "id": "super",
       "status": "partial",
       "scope": "Explicit bound/unbound and zero-argument super with lexical class cells, current C3 lookup, descriptors and proxy metadata in classes-source/1.",
-      "gaps": "Builtin instance layouts, custom __class__ hooks and proxy reinitialization remain separate.",
+      "gaps": "Generic/annotation and library APIs retain #125/#126; hooked class attributes, proxy reinitialization, storage and subclasses are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-super"
@@ -4960,7 +5020,8 @@
       "evidence": [
         "tests/fixtures/interpreter/construction.json:super-diamond",
         "tests/fixtures/interpreter/construction.json:super-unbound",
-        "tests/fixtures/interpreter/construction.json:super-generator"
+        "tests/fixtures/interpreter/construction.json:super-generator",
+        "tests/fixtures/interpreter/native-object-subclasses.json:property-binding"
       ]
     },
     {
@@ -4988,14 +5049,15 @@
       "id": "type",
       "status": "partial",
       "scope": "Canonical type identities for adopted values and three-argument type construction with tuple bases and a bounded string-key dictionary namespace; finite type.__new__/__init__/__call__ and metaclass selection. Finite actual-metaclass attribute reads/mutations and native type defaults use owned descriptor binding, original fallback snapshots, metadata precedence and reflected native wrapper identities. Explicit native method/wrapper descriptor rebinding covers the finite O33/O34 allowlist, with actual-layout validation, ignored owners, native callable identities and owned receiver lifetimes. O65 adds callable, descriptor, property and mappingproxy type directories with canonical native binding, raw namespace order and ordinary advertised namespaces; callable/accessor metadata and per-instance keys remain separate. O66 adds generator and adopted native iterator type directories, preserving generator state, iterator positions, sentinel isolation and released buffer authority through canonical native binding and owned namespace merging.",
-      "gaps": "Custom namespace mappings, callable factories, builtin instance subclasses and further metaclass special slots remain gated.",
+      "gaps": "Generic aliases/union and annotation semantics #125, weakref/gc/library selection #126 and native ABI/layout fields remain separate. Prepared mappings, factories, custom MRO, slots and builtin subclasses are delivered.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-ANNOT-01",
+        "INT-LIB-01"
       ],
       "probes": [
         "builtin-type",
@@ -5123,21 +5185,23 @@
         "tests/fixtures/interpreter/callable-type-directories.json:function-custom-keys-excluded",
         "tests/fixtures/interpreter/callable-type-directories.json:advertised-collision-error",
         "tests/fixtures/interpreter/iterator-type-directories.json:retained-native-chain",
-        "tests/fixtures/interpreter/iterator-type-directories.json:generator-state"
+        "tests/fixtures/interpreter/iterator-type-directories.json:generator-state",
+        "tests/fixtures/interpreter/prepared-class-namespaces.json:prepared-dictionary"
       ]
     },
     {
       "id": "vars",
       "status": "partial",
       "scope": "Zero-argument optimized function and generator-expression snapshots; one positional user instance reads custom __dict__ through owned descriptors and read hooks, returning its result unchanged. Inlined list/dict/set comprehensions expose enclosing optimized snapshots or isolated module/class comprehension namespaces, including nested targets and captured-cell order. Ordinary functions and bound methods return the callable's live dictionary; replacement detaches old aliases. Ordinary instance dictionaries are live with exact replacement/deletion aliases and owned collision callbacks (O47/O48). O49 adds fresh read-only keyed class namespace views, live mutations and unbound stored descriptors with metaclass priority.",
-      "gaps": "Module/class-body live namespaces, class mapping enumeration/native layout entries, default directories, integer identity and dynamic source retain their separate contracts.",
+      "gaps": "Module/class-body live dictionaries, live class mapping proxies, native entries, wrapper/function/instance dictionaries and owned lookup are delivered; library/annotation APIs retain #126/#125.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-LIB-01",
+        "INT-ANNOT-01"
       ],
       "probes": [
         "builtin-vars-snapshot",
@@ -5182,7 +5246,8 @@
         "tests/fixtures/interpreter/class-namespaces.json:class-enumeration",
         "tests/fixtures/interpreter/class-namespaces.json:callback-query",
         "tests/fixtures/interpreter/class-namespaces.json:native-get-metadata",
-        "tests/fixtures/interpreter/class-namespaces.json:metaclass-write-hook"
+        "tests/fixtures/interpreter/class-namespaces.json:metaclass-write-hook",
+        "tests/fixtures/interpreter/module-namespaces.json:exact-global-aliases"
       ]
     },
     {
@@ -5207,14 +5272,15 @@
       "id": "__import__",
       "status": "partial",
       "scope": "O94 exact dynamic import signature and captured import-callable lookup within the caller code pool registry grants, package/relative resolution, lazy fromlists, cache/identity and failed-initialization retry.",
-      "gaps": "Ambient filesystem/network/sys.path loaders and broader importlib hooks remain unavailable. Registry module names are bounded ASCII, relative levels are bounded to 32, and the existing direct initialization-cycle refusal remains explicit.",
+      "gaps": "Registry names remain bounded ASCII, relative levels at most 32 and direct initialization cycles explicit; ambient loaders and broader importlib/package APIs retain #126/#128.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
         "browser"
       ],
       "next_tasks": [
-        "INT-OBJECT-01"
+        "INT-LIB-01",
+        "INT-PKG-01"
       ],
       "probes": [
         "builtin-__import__"

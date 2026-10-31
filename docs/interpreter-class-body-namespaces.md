@@ -1,5 +1,9 @@
 # Live class-body namespaces
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O68 of #123 uses the same owned namespace interface as O67 for ordinary class
 body dictionaries. `locals()` and zero-argument `vars()` return the actual body
 mapping; `dir()` copies and sorts its current keys. Repeated calls and escaped

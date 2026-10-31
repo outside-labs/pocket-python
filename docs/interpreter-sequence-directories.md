@@ -1,5 +1,9 @@
 # Range and slice directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O58 continues #123, #33 and #116 with default directories for the existing native
 range and raw slice layouts. Pinned CPython 3.14.7 is the semantic oracle; the
 independently authored `sequence-directories.json` matrix records the reference

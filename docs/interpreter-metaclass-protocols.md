@@ -1,5 +1,9 @@
 # Actual-metaclass special protocols
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O83 of #123 applies the already adopted object protocols to class objects through
 their actual metaclass. `METACLASS_PROTOCOLS` is the frozen 75-name inventory in
 `runtime/class-policy.mjs`; attribute hooks, checking hooks and directories retain

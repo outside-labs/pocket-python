@@ -1,5 +1,9 @@
 # Matrix multiplication and ternary power
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O89 of #123 completes the arithmetic dispatch inventory over the already adopted
 values. The [source matrix](../tests/fixtures/interpreter/arithmetic-dispatch.json)
 uses CPython 3.14.7 as its reference. All 51 cases pass Node/Chromium drain,

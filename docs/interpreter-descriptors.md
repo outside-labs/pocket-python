@@ -1,5 +1,9 @@
 # Descriptors and decorators
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 The [nested hook contract](interpreter-nested-descriptors.md) extends this
 original checkpoint with property/custom-descriptor-valued mutation and name
 notification binding.

@@ -1,5 +1,9 @@
 # Explicit native descriptor rebinding
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O33/O34 continue #123 and #33 with a finite CPython 3.14.7 contract.
 `tests/fixtures/interpreter/native-rebinding.json` pins the reference behavior.
 Reference-only results do not establish independent execution.

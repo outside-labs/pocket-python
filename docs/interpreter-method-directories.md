@@ -1,5 +1,9 @@
 # Bound Python method directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O51 continues #123 and #33 against pinned CPython 3.14.7. The authored
 `method-directories.json` matrix separates reference observations from engine
 adoption. O51 is implemented through owned dictionary lookup, native merging

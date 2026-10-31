@@ -1,5 +1,9 @@
 # Owned code objects and closure cells
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O73 of #123 exposes `function.__code__` and `function.__closure__` in
 classes-source/1. Code identity is stable per verified pool/function index,
 including functions created repeatedly by one definition. Closure tuples retain

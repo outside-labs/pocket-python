@@ -837,3 +837,11 @@ callable metaclass factories, additional metaclass special slots, broader
 reflection, dynamic source and async remain separately tracked in #123/#34.
 The parent milestones remain open. No publication, dependency, service or host
 capability is selected by this construction checkpoint.
+
+## O95 scope reconciliation
+
+The [current object scope audit](docs/interpreter-object-scope.md) supersedes
+earlier object/reflection remaining-work statements. Source corpora, native
+layout/field/slot tables, explicit refusal sites and compatibility rows have
+exact scope owners. O96 integrated acceptance remains before #123 closure;
+#33, #34 and neighboring API milestones retain their own acceptance.

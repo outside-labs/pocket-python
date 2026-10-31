@@ -620,13 +620,17 @@
       "id": "unread-bytes-hex",
       "source": "b\"abc\".hex()\n",
       "stage": "Future",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#117",
+      "boundary": "Unadopted binary/buffer library APIs."
     },
     {
       "id": "unread-view-cast",
       "source": "memoryview(b\"abc\").cast(\"B\")\n",
       "stage": "Future",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#117",
+      "boundary": "Unadopted binary/buffer library APIs."
     },
     {
       "id": "other-default-directory",

@@ -1,5 +1,9 @@
 # Default function directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O50 continues #123 and #33 against pinned CPython 3.14.7. The authored
 `function-directories.json` matrix distinguishes independently adopted behavior
 from explicit future layout and metadata boundaries.

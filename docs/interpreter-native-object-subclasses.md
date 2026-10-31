@@ -1,5 +1,9 @@
 # Descriptor, wrapper, module and super subclasses
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O87 of #123 adopts property, staticmethod, classmethod, module and super
 subclasses. The [54-case matrix](../tests/fixtures/interpreter/native-object-subclasses.json)
 uses the pinned CPython 3.14.7 oracle and all six Node/Chromium source drivers.

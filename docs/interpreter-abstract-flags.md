@@ -1,5 +1,9 @@
 # Descriptor abstract-method flags
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O39/O40 continue #123 and #33 with a finite CPython 3.14.7 contract.
 `tests/fixtures/interpreter/abstract-flags.json` records the executable reference.
 Reference observations alone do not establish independent execution.

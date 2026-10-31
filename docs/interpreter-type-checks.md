@@ -1,5 +1,9 @@
 # Custom instance and subclass checking
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 The [O76 contract](interpreter-advertised-directories.md) supersedes the earlier
 type/custom-metaclass and advertised namespace/base refusals in this checkpoint.
 

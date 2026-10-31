@@ -1,5 +1,9 @@
 # Native directory closure
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O78 closes the finite directory matrix for the actual layouts exposed after O77.
 The [machine-readable layout audit](interpreter-directory-layouts.json) accounts
 for all 85 pinned native types, source class/instance layouts, seven native

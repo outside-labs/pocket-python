@@ -1,5 +1,9 @@
 # Ordinary container directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O59 continues #123, #33 and #116 with default directories for the existing
 native str, list, tuple and dict layouts. Pinned CPython 3.14.7 is the semantic
 oracle; the independently authored `container-directories.json` matrix records

@@ -1,5 +1,9 @@
 # Native attribute protocol closure
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 This O90 portion completes explicit native attribute calls over adopted primitive,
 method, module and super layouts. The [CPython 3.14.7 source matrix](../tests/fixtures/interpreter/native-attributes.json)
 contains 150 adopted cases, covering ordinary bound, unbound, explicitly rebound

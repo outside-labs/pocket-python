@@ -1,5 +1,9 @@
 # Prepared class namespaces
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O80 of #123 adopts optional metaclass `__prepare__` lookup and custom mapping
 class bodies in `classes-source/1`. Preparation runs after base resolution and
 metaclass selection, before body initialization. Its name, resolved bases tuple

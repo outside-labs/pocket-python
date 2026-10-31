@@ -1,5 +1,9 @@
 # Immutable builtin subclass layouts
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O85 of #123 adopts `int`, `float`, `complex`, `str`, `bytes`, `tuple` and
 `frozenset` subclasses. The [74-case pinned matrix](../tests/fixtures/interpreter/immutable-subclasses.json)
 compares CPython 3.14.7 with Node/Chromium drain, stepped and parked execution.

@@ -1,5 +1,9 @@
 # Integer identity
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O75 of #123 adopts integer identity alongside the existing arena object and
 None/bool identities. `id(value, /)` in classes-source/1 returns an opaque positive
 integer. Integer `is` and `is not` work in both existing source profiles; the core

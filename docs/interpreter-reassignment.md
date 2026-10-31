@@ -1,5 +1,9 @@
 # Compatible type and hierarchy reassignment
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O88 of #123 completes the storage workstream. The
 [85-case matrix](../tests/fixtures/interpreter/reassignment.json) uses the pinned
 CPython 3.14.7 oracle in Node and Chromium drain, stepped and parked execution.

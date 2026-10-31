@@ -1,5 +1,9 @@
 # Type and advertised namespace directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O76 completes type/custom-metaclass directory traversal and advertised class-like
 namespace graphs under #123. CPython 3.14.7 is the pinned oracle; executable cases
 are in `advertised-directories.json`.

@@ -1,5 +1,9 @@
 # Keyed class namespace views
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O49 continues #123 and #33 against pinned CPython 3.14.7. The authored
 `class-namespaces.json` matrix separates adopted keyed operations from explicit
 future boundaries. Reference execution alone does not establish engine support.
