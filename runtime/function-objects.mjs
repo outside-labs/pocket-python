@@ -5,7 +5,7 @@ export class Cell {
   constructor() { this.bound = false; this.value = null; }
 }
 export class Environment {
-  constructor() { this.cells = new Map(); this.order = new Set(); this.dictionary = null; }
+  constructor(dictionary = null, identity = null) { this.cells = new Map(); this.order = new Set(); this.dictionary = dictionary; if (identity !== null && identity !== dictionary) this.dictionaryIdentity = identity; }
 }
 // Host export/metadata reads use exact string entries. Source name resolution
 // uses the owned dictionary operation, including callback-bearing collisions.
@@ -181,4 +181,4 @@ export function matchesException(name, expected) {
 }
 
 // The source-visible builtin namespace contains only adopted capabilities.
-export const SOURCE_BUILTINS = Object.freeze(["compile", "print", "str", "repr", "len", "isinstance", "bool", "iter", "next", "memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed", "object", "NotImplemented", ...Object.keys(EXCEPTIONS)]);
+export const SOURCE_BUILTINS = Object.freeze(["eval", "compile", "print", "str", "repr", "len", "isinstance", "bool", "iter", "next", "memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed", "object", "NotImplemented", ...Object.keys(EXCEPTIONS)]);

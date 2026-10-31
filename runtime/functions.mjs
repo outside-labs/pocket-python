@@ -110,8 +110,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.pool.code.version === 5 && key === "object") return objectType();
     if (frame.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
-        (frame.pool.code.version >= 4 && ["compile", "memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
-        (frame.pool.code.version === 5 && ["compile", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
+        (frame.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
+        (frame.pool.code.version === 5 && ["eval", "compile", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -138,9 +138,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     const dictionary = values.environmentDictionary(environment);
     frame.namespaceEnvironment = environment; return dictionary;
   };
-  const className = (frame, key) => frame.fn.kind === "class" && !frame.fn.globals?.includes(key) && !key.startsWith("@source:");
+  const className = (frame, key) => (frame.fn.kind === "class" || frame.dynamicNamespace) && !frame.fn.globals?.includes(key) && !key.startsWith("@source:");
   const nameDictionary = (frame, key) => className(frame, key) && !frame.namespaceEnvironment && key === "__firstlineno__" && frame.namespaceOrder.has(key) ? null : className(frame, key) && frame.namespaceEnvironment ? frame.namespaceEnvironment.dictionary : !key.startsWith("@source:") && (frame.index === 0 || frame.fn.globals?.includes(key) ||
-    !frame.locals.has(key) && !frame.closure.has(key)) ? frame.callable.globals.dictionary : null;
+    !frame.locals.has(key) && !frame.closure.has(key)) ? frame.callable.globals.dictionaryIdentity ?? frame.callable.globals.dictionary : null;
   const store = (frame, key, value, bound = true, after = null) => {
     const environment = frame.callable.globals;
     if (className(frame, key) && !frame.fn.nonlocals?.includes(key) && frame.namespaceEnvironment) {
@@ -164,31 +164,35 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const builtinLookup = (frame, name, site, after = null) => {
     const namespace = frame.callable.builtins === undefined ? moduleContext?.defaultBuiltins : frame.callable.builtins;
-    const dictionary = namespace instanceof Environment ? namespace.dictionary : namespace;
+    let dictionary = namespace instanceof Environment ? namespace.dictionary : namespace;
+    if (namespace instanceof Environment && namespace !== moduleContext?.defaultBuiltins && dictionary === null) dictionary = values.environmentDictionary(namespace);
     if ((namespace === null || namespace === undefined) && frame.callable.builtins === undefined || dictionary === null && namespace instanceof Environment || frame.pool.code.version < 5)
       return {value: load(frame, name, true)};
-    if (!values.isDict(dictionary)) python("TypeError", "Function builtins must support dictionary lookup");
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
-    return {task: dictionaryTask(dictionary, key, site, continuation("builtin-name", {receiver: dictionary, name, after}), 0, "probe")};
+    return {task: values.isDict(dictionary) ? dictionaryTask(dictionary, key, site, continuation("builtin-name", {receiver: dictionary, name, after}), 0, "probe") : itemTask(dictionary, key, site, continuation("builtin-mapping-name", {receiver: dictionary, name, after}))};
   };
   const loadName = (frame, name, site, after = null, globalOnly = false) => {
-    const dictionary = globalOnly ? frame.callable.globals.dictionary : nameDictionary(frame, name);
+    const localNamespace = !globalOnly && className(frame, name);
+    const dictionary = globalOnly ? frame.dynamicNamespace ? frame.callable.globals.dictionary : frame.callable.globals.dictionaryIdentity ?? frame.callable.globals.dictionary : nameDictionary(frame, name);
     if (dictionary === null || globalOnly && !frame.callable.globals.dictionary) {
       let result;
       const value = load(frame, name, globalOnly, () => { result = builtinLookup(frame, name, site, after); return null; });
       return result || (after ? {value, after} : {value});
     }
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
-    if (className(frame, name) && !values.isDict(dictionary))
+    if (!localNamespace && dictionary instanceof InstanceValue && values.isDict(dictionary.nativePayload))
+      return {task: itemTask(dictionary, key, site, continuation("global-mapping-name", {name, receiver: dictionary, after}))};
+    if (localNamespace && !values.isDict(dictionary))
       return {task: itemTask(dictionary, key, site, continuation("class-mapping-name", {name, receiver: dictionary, after}))};
-    if (className(frame, name) && !dictionary.ownedKeys) {
+    if (localNamespace && !dictionary.ownedKeys) {
       const index = values.find(dictionary, key);
       if (index >= 0) return after ? {value: dictionary.entries[index].value, after} : {value: dictionary.entries[index].value};
     }
-    return {task: dictionaryTask(dictionary, key, site, continuation(className(frame, name) && frame.namespaceEnvironment ? "class-name" : "global-name", {name, receiver: dictionary, after}), 0, "probe")};
+    return {task: dictionaryTask(dictionary, key, site, continuation(localNamespace && frame.namespaceEnvironment ? "class-name" : "global-name", {name, receiver: dictionary, after}), 0, "probe")};
   };
   const classFallback = (name, site, after = null) => {
     const frame = state.frames.at(-1); let fallback;
+    if (frame.dynamicNamespace) { const result = loadName(frame, name, site, after, true); return result.task || valueTask(result.value, site, after); }
     const value = load(frame, name, false, () => { fallback = builtinLookup(frame, name, site, after); return null; });
     return fallback?.task || valueTask(fallback ? fallback.value : value, site, after);
   };
@@ -756,7 +760,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       else if (op === "store") { const task = store(frame, arg, stack.pop()); if (task) dispatch(task); }
       else if (op === "delete") {
         const dictionary = className(frame, arg) && !frame.fn.nonlocals?.includes(arg) && frame.namespaceEnvironment ? frame.namespaceEnvironment.dictionary :
-          !arg.startsWith("@source:") && (frame.index === 0 || frame.fn.globals?.includes(arg)) ? frame.callable.globals.dictionary : null;
+          !arg.startsWith("@source:") && (frame.index === 0 || frame.fn.globals?.includes(arg)) ? frame.callable.globals.dictionaryIdentity ?? frame.callable.globals.dictionary : null;
         if (dictionary !== null) {
           const key = values.string(Array.from(arg, char => char.codePointAt(0))); state.temporaries.push(key);
           dispatch(values.isDict(dictionary) ? dictionaryTask(dictionary, key, summary(frame, cursor), continuation("global-delete", {name: arg, receiver: dictionary}), 0, "remove-probe") :
