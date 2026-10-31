@@ -1,5 +1,9 @@
 # Subclass initialization and class keywords
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O23/O24 continue #123 against pinned CPython 3.14.7. The executable reference
 matrix is `tests/fixtures/interpreter/subclass-initialization.json`. Reference
 observations alone do not establish independent execution.

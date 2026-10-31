@@ -1,5 +1,9 @@
 # Custom MRO construction
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O82 of #123 executes inherited and descriptor-backed metaclass `mro` callbacks
 on the existing owned machine. Source definitions, dynamic type creation and
 later mutation/deletion of the metaclass method use the same construction path.

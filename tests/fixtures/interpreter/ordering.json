@@ -764,7 +764,9 @@
       "id": "future-user-set-ordering",
       "stage": "Future",
       "source": "class A: pass\na=A()\nprint({a}<={a})\n",
-      "stdout": "True\n"
+      "stdout": "True\n",
+      "owner": "#117",
+      "boundary": "User-key set algebra and ordering."
     },
     {
       "id": "slice-reflected-native-peer",

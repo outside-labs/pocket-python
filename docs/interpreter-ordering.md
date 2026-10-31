@@ -1,5 +1,9 @@
 # Rich ordering and slice comparisons
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 The oracle is **CPython 3.14.7**. The finite
 [source matrix](../tests/fixtures/interpreter/ordering.json) records primitive
 regressions (Base), user ordering slots (O12), list/tuple ordering (O13), slice

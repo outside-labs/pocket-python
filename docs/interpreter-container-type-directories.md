@@ -1,5 +1,9 @@
 # Sequence, container and buffer type directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O64 continues #123 and #33 over O63's numeric type directory contract. Pinned
 CPython 3.14.7 is the semantic oracle. `container-type-directories.json` records
 independently authored source/reference cases before engine adoption.

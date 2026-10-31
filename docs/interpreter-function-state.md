@@ -1,5 +1,9 @@
 # Function defaults and defining namespaces
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O72 of #123 exposes function `__defaults__`, `__kwdefaults__`, `__globals__`
 and `__builtins__` in classes-source/1, including bound-method forwarding and
 qualified native getsets. Positional defaults are the actual tuple, keyword

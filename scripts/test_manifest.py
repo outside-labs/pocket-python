@@ -36,6 +36,7 @@ SUITES = {
 }
 
 CORPORA = (
+    'object-integration',
     'dynamic-imports', 'dynamic-exec', 'dynamic-eval', 'dynamic-compile',
     'property-diagnostics',
     'native-attributes', 'native-protocols',
@@ -75,9 +76,10 @@ CORPORA = (
 )
 CORE_CORPORA = {'sequences', 'function-binding', 'ordinary-syntax', 'value-families',
                 'generators', 'repetition', 'ordering'}
-PARKED_CORPORA = {'dynamic-imports', 'dynamic-exec', 'dynamic-eval', 'dynamic-compile','property-diagnostics','native-attributes', 'native-protocols','arithmetic-dispatch','reassignment','native-object-subclasses','mutable-subclasses','immutable-subclasses','slots','metaclass-protocols','custom-mro','metaclass-factories','prepared-class-namespaces','expanded-class-bases','native-directory-closure','wrapper-super-directories','advertised-directories','integer-identity','generator-frames','code-cells','function-state','wrapper-metadata','class-mapping-proxies', 'native-namespaces', 'class-body-namespaces', 'module-namespaces', 'iterator-type-directories', 'callable-type-directories', 'container-type-directories', 'numeric-type-directories', 'instance-directories', 'class-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'method-directories', 'function-directories', 'class-namespaces', 'instance-dictionaries', 'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
+PARKED_CORPORA = {'object-integration','dynamic-imports', 'dynamic-exec', 'dynamic-eval', 'dynamic-compile','property-diagnostics','native-attributes', 'native-protocols','arithmetic-dispatch','reassignment','native-object-subclasses','mutable-subclasses','immutable-subclasses','slots','metaclass-protocols','custom-mro','metaclass-factories','prepared-class-namespaces','expanded-class-bases','native-directory-closure','wrapper-super-directories','advertised-directories','integer-identity','generator-frames','code-cells','function-state','wrapper-metadata','class-mapping-proxies', 'native-namespaces', 'class-body-namespaces', 'module-namespaces', 'iterator-type-directories', 'callable-type-directories', 'container-type-directories', 'numeric-type-directories', 'instance-directories', 'class-directories', 'namespace-view-directories', 'property-directories', 'native-callable-directories', 'generator-directories', 'iterator-directories', 'numeric-directories', 'sequence-directories', 'container-directories', 'buffer-directories', 'instance-directories', 'class-directories', 'method-directories', 'function-directories', 'class-namespaces', 'instance-dictionaries', 'function-dictionaries', 'metaclass-attributes', 'nested-descriptors', 'native-descriptors', 'descriptor-binding', 'native-rebinding', 'property-names', 'abstract-flags', 'documentation', 'function-metadata', 'type-reflection',
                   'execution', 'object-hashing'}
 REFERENCE_CORPORA = {
+    'object-integration',
     'dynamic-imports', 'dynamic-exec', 'dynamic-eval', 'dynamic-compile',
     'property-diagnostics',
     'native-attributes', 'native-protocols',
@@ -139,6 +141,8 @@ def checks():
     for path in sorted((ROOT / 'runtime').glob('*.test.mjs')):
         add('node-unit-' + path.name.removesuffix('.test.mjs'), 'node-unit',
             'node', '--test', path.relative_to(ROOT).as_posix())
+    add('object-scope-inventory', 'node-conformance', 'python', 'runtime/check_object_scope.py',
+        '--report', 'build/object-scope-report.json')
     add('generate-native-namespaces', 'node-conformance', 'python', 'scripts/generate_native_namespaces.py')
     for name in ('identifiers', 'printability'):
         add('generate-' + name, 'node-conformance', 'python',

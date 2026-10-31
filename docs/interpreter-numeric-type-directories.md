@@ -1,5 +1,9 @@
 # Numeric and sentinel type directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O63 continues #123 and #33 over the O62 ordinary class directory contract.
 Pinned CPython 3.14.7 is the semantic oracle. The independently authored
 `numeric-type-directories.json` records reference cases before engine adoption.

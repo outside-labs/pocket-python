@@ -10,102 +10,102 @@
   "cases": [
     {
       "id": "str-sorted-directory",
-      "source": "value=\"a😀a\"\nprint(*dir(value))\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(*dir(value))\n",
       "stage": "O59",
       "stdout": "__add__ __class__ __contains__ __delattr__ __dir__ __doc__ __eq__ __format__ __ge__ __getattribute__ __getitem__ __getnewargs__ __getstate__ __gt__ __hash__ __init__ __init_subclass__ __iter__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__ __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __sizeof__ __str__ __subclasshook__ capitalize casefold center count encode endswith expandtabs find format format_map index isalnum isalpha isascii isdecimal isdigit isidentifier islower isnumeric isprintable isspace istitle isupper join ljust lower lstrip maketrans partition removeprefix removesuffix replace rfind rindex rjust rpartition rsplit rstrip split splitlines startswith strip swapcase title translate upper zfill\n"
     },
     {
       "id": "str-raw-directory",
-      "source": "value=\"a😀a\"\nprint(*object.__dir__(value))\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(*object.__dir__(value))\n",
       "stage": "O59",
       "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ encode replace split rsplit join capitalize casefold title center count expandtabs find partition index ljust lower lstrip rfind rindex rjust rstrip rpartition splitlines strip swapcase translate upper startswith endswith removeprefix removesuffix isascii islower isupper istitle isspace isdecimal isdigit isnumeric isalpha isalnum isidentifier isprintable zfill format format_map __format__ maketrans __sizeof__ __getnewargs__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n"
     },
     {
       "id": "str-bound-directory",
-      "source": "value=\"a😀a\"\nprint(*value.__dir__())\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(*value.__dir__())\n",
       "stage": "O59",
       "stdout": "__new__ __repr__ __hash__ __str__ __lt__ __le__ __eq__ __ne__ __gt__ __ge__ __iter__ __mod__ __rmod__ __len__ __getitem__ __add__ __mul__ __rmul__ __contains__ encode replace split rsplit join capitalize casefold title center count expandtabs find partition index ljust lower lstrip rfind rindex rjust rstrip rpartition splitlines strip swapcase translate upper startswith endswith removeprefix removesuffix isascii islower isupper istitle isspace isdecimal isdigit isnumeric isalpha isalnum isidentifier isprintable zfill format format_map __format__ maketrans __sizeof__ __getnewargs__ __doc__ __getattribute__ __setattr__ __delattr__ __init__ __reduce_ex__ __reduce__ __getstate__ __subclasshook__ __init_subclass__ __dir__ __class__\n"
     },
     {
       "id": "str-fresh-lists",
-      "source": "value=\"a😀a\"\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
+      "source": "value=\"a\ud83d\ude00a\"\na=dir(value)\nb=dir(value)\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b),len(set(b))==len(b))\n",
       "stage": "O59",
       "stdout": "False False 81 True\n"
     },
     {
       "id": "str-fresh-raw-lists",
-      "source": "value=\"a😀a\"\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
+      "source": "value=\"a\ud83d\ude00a\"\na=object.__dir__(value)\nb=value.__dir__()\na[0]=\"changed\"\nprint(a is b,\"changed\" in b,len(b))\n",
       "stage": "O59",
       "stdout": "False False 81\n"
     },
     {
       "id": "str-native-binding",
-      "source": "value=\"a😀a\"\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
+      "source": "value=\"a\ud83d\ude00a\"\nd=object.__dir__.__get__(value)\nprint(d.__self__ is value,d.__name__,d.__qualname__,d()==value.__dir__())\n",
       "stage": "O59",
       "stdout": "True __dir__ str.__dir__ True\n"
     },
     {
       "id": "str-native-getattribute",
-      "source": "value=\"a😀a\"\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
+      "source": "value=\"a\ud83d\ude00a\"\nd=object.__getattribute__(value,\"__dir__\")\nprint(d.__self__ is value,len(d()))\n",
       "stage": "O59",
       "stdout": "True 81\n"
     },
     {
       "id": "str-builtin-getattr",
-      "source": "value=\"a😀a\"\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
+      "source": "value=\"a\ud83d\ude00a\"\nd=getattr(value,\"__dir__\")\nprint(hasattr(value,\"__dir__\"),d.__self__ is value,len(d()))\n",
       "stage": "O59",
       "stdout": "True True 81\n"
     },
     {
       "id": "str-retained-caller",
-      "source": "value=\"a😀a\"\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
+      "source": "value=\"a\ud83d\ude00a\"\nd=value.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__)))\n",
       "stage": "O59",
       "stdout": "81 81\n"
     },
     {
       "id": "str-nested-callers",
-      "source": "value=\"a😀a\"\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
+      "source": "value=\"a\ud83d\ude00a\"\nd=value.__dir__.__dir__\ndel value\nprint(len(d()),len(dir(d.__self__.__self__)))\n",
       "stage": "O59",
       "stdout": "30 81\n"
     },
     {
       "id": "str-write",
-      "source": "value=\"a😀a\"\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(\"before\")\nsetattr(value,\"__dir__\",7)\n",
       "stage": "O59",
       "stdout": "before\n",
       "error_type": "AttributeError"
     },
     {
       "id": "str-native-write",
-      "source": "value=\"a😀a\"\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(\"before\")\nobject.__setattr__(value,\"__dir__\",7)\n",
       "stage": "O59",
       "stdout": "before\n",
       "error_type": "AttributeError"
     },
     {
       "id": "str-delete",
-      "source": "value=\"a😀a\"\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(\"before\")\ndelattr(value,\"__dir__\")\n",
       "stage": "O59",
       "stdout": "before\n",
       "error_type": "AttributeError"
     },
     {
       "id": "str-native-delete",
-      "source": "value=\"a😀a\"\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(\"before\")\nobject.__delattr__(value,\"__dir__\")\n",
       "stage": "O59",
       "stdout": "before\n",
       "error_type": "AttributeError"
     },
     {
       "id": "str-extra-argument",
-      "source": "value=\"a😀a\"\nprint(\"before\")\nvalue.__dir__(7)\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(\"before\")\nvalue.__dir__(7)\n",
       "stage": "O59",
       "stdout": "before\n",
       "error_type": "TypeError"
     },
     {
       "id": "str-keyword",
-      "source": "value=\"a😀a\"\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
+      "source": "value=\"a\ud83d\ude00a\"\nprint(\"before\")\nvalue.__dir__(extra=7)\n",
       "stage": "O59",
       "stdout": "before\n",
       "error_type": "TypeError"
@@ -418,7 +418,7 @@
     },
     {
       "id": "empty-and-unicode-layouts",
-      "source": "print(*(len(dir(value)) for value in (\"\",\"😀中\",[],(),{})))\n",
+      "source": "print(*(len(dir(value)) for value in (\"\",\"\ud83d\ude00\u4e2d\",[],(),{})))\n",
       "stage": "O59",
       "stdout": "81 81 48 35 46\n"
     },
@@ -461,9 +461,9 @@
     },
     {
       "id": "text-iterator-position",
-      "source": "value=\"a😀中\"\nit=iter(value)\nprint(next(it))\nprint(len(dir(value)),len(value.__dir__()),next(it),next(it))\n",
+      "source": "value=\"a\ud83d\ude00\u4e2d\"\nit=iter(value)\nprint(next(it))\nprint(len(dir(value)),len(value.__dir__()),next(it),next(it))\n",
       "stage": "O59",
-      "stdout": "a\n81 81 😀 中\n"
+      "stdout": "a\n81 81 \ud83d\ude00 \u4e2d\n"
     },
     {
       "id": "tuple-iterator-position",
@@ -494,14 +494,18 @@
       "source": "\"abc\".__reduce__()\n",
       "stage": "Future",
       "stdout": "",
-      "error_type": "TypeError"
+      "error_type": "TypeError",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
     },
     {
       "id": "unread-list-reduction",
       "source": "[].__reduce__()\n",
       "stage": "Future",
       "stdout": "",
-      "error_type": "TypeError"
+      "error_type": "TypeError",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
     },
     {
       "id": "other-default-directory",

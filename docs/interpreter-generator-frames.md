@@ -1,5 +1,9 @@
 # Generator and frame reflection
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O74 of #123 adopts generator state and a finite owned source-frame interface in
 classes-source/1. Reading metadata never resumes a generator. Existing generator
 execution protocols remain with #120.

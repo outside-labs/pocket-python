@@ -316,7 +316,9 @@
       "id": "unicode-translate-construction-boundary",
       "stage": "ExceptionConstruction",
       "source": "UnicodeTranslateError(\"x\",0,1,\"reason\")\n",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#124",
+      "boundary": "Multiple-argument exception payload construction, including UnicodeTranslateError."
     },
     {
       "id": "type-ValueError",

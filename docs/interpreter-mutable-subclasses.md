@@ -1,5 +1,9 @@
 # Mutable builtin subclass layouts
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O86 of #123 adopts list, dict, set and bytearray subclasses over their existing
 constructor and value-operation signatures. The [51-case source matrix](../tests/fixtures/interpreter/mutable-subclasses.json)
 uses CPython 3.14.7 and all six Node/Chromium execution drivers.

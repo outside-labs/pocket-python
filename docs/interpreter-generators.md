@@ -1,5 +1,9 @@
 # Generators and comprehensions
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 INT-GEN-01 uses the pinned CPython 3.14.7 executable reference. The authored
 `generators.json` corpus separates reference-only evidence from independently
 compiled source. G1 and G2 are implemented. Both require Node and Chromium, both profiles and both

@@ -262,7 +262,9 @@
       "profiles": [
         "classes-source/1",
         "core-source/1"
-      ]
+      ],
+      "owner": "#34",
+      "boundary": "Async generators."
     },
     {
       "id": "generator-reflection",
@@ -422,7 +424,9 @@
       "stdout": "False\n",
       "profiles": [
         "core-source/1"
-      ]
+      ],
+      "owner": "profile:core-source/1",
+      "boundary": "Generator/code/frame reflection is admitted only by classes-source/1; core remains explicitly reduced."
     }
   ]
 }

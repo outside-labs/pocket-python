@@ -892,7 +892,7 @@ export class ClassRuntime {
         return value(receiver.value);
       }
       if (name === "__doc__") return value(this.nativeDocumentation(this.builtin("cell")));
-      this.fail("UnsupportedOperationError", "Additional cell protocols retain O78/O90", "UNSUPPORTED");
+      this.fail("UnsupportedOperationError", "Additional cell library protocols are owned by #126", "UNSUPPORTED");
     }
     if (receiver instanceof CodeValue) {
       if (name === "__class__") return value(this.builtin("code"));
@@ -1148,7 +1148,10 @@ export class ClassRuntime {
     if (key === "__class_getitem__") return "#125";
     if (["__buffer__", "__release_buffer__"].includes(key)) return "#117";
     if (["__enter__", "__exit__"].includes(key)) return "#121";
-    if (["code", "function"].includes(owner) && ["__new__", "__replace__", "replace"].includes(key)) return "O91";
+    if (["code", "function"].includes(owner) && ["__new__", "__replace__", "replace"].includes(key)) return "the source-code interface boundary (backend construction/replacement)";
+    if (["__getnewargs__", "__getnewargs_ex__", "__setstate__"].includes(key)) return "#126";
+    if (owner === "type" && ["__or__", "__ror__"].includes(key)) return "#125";
+    if (owner === "bytearray" && key === "__alloc__") return "#117";
     if (key === "__length_hint__") return "#120";
     if (key === "__reversed__" || owner === "range" && key === "__hash__") return "#116";
     if (["int", "float"].includes(owner) && ["__trunc__", "__floor__", "__ceil__"].includes(key)) return "#184";

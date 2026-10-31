@@ -1,5 +1,9 @@
 # Accessor copies and explicit function binding
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O31/O32 continue #123 and #33 with a finite CPython 3.14.7 contract.
 `tests/fixtures/interpreter/descriptor-binding.json` is the executable reference
 matrix. A reference-only result does not establish independent execution.

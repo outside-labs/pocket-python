@@ -1,5 +1,9 @@
 # Live module and global namespaces
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O67 of #123 adopts live namespaces in `classes-source/1`. Pinned CPython
 3.14.7 is the oracle for the independently authored
 [module namespace corpus](../tests/fixtures/interpreter/module-namespaces.json).

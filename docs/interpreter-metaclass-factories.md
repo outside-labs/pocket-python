@@ -1,5 +1,9 @@
 # Callable metaclass factories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O81 of #123 admits function, callable-object, wrapper and class factories in a
 class statement's `metaclass` argument. Arbitrary factory results become the
 statement's bound value and are passed to decorators. The body namespace remains

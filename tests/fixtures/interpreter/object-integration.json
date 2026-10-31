@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-object-integration/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O95"
+  ],
+  "cases": [
+    {
+      "id": "reconciled-current-object-contract",
+      "stage": "O95",
+      "source": "namespace=globals()\nnamespace[\"seed\"]=7\ndef f(x=1): return seed+x\nf.__defaults__=(3,)\nclass Number(int): pass\nclass Values(list): pass\nclass Model:\n __slots__=(\"value\",\"__dict__\")\n def __init__(self,value): self.value=value\n @property\n def doubled(self): return self.value*2\nm=Model(Number(f()))\nm.extra=Values([m.value])\nprint(f(),f.__globals__ is namespace,locals() is namespace)\nprint(type(m.value) is Number,m.doubled,m.extra[0],vars(m)[\"extra\"] is m.extra)\nwrapped=staticmethod(f)\nprint(wrapped.__wrapped__ is f,wrapped.__name__==f.__name__)\nexec(compile(\"class Dynamic(Model): pass\\nresult=Dynamic(f()).doubled\", \"reconciled.py\", \"exec\"),namespace)\nprint(result,\"co_name\" in dir(f.__code__),\"__slots__\" in Model.__dict__)\n",
+      "stdout": "10 True True\nTrue 20 10 True\nTrue True\n20 True True\n"
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 # Expanded class bases and keyword mappings
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O79 of #123 extends `classes-source/1` class headers over the ordinary owned
 argument assembly and callback machine. The source grammar accepts repeated
 `*bases` and `**keywords`, named keywords and explicit `metaclass`. Positional

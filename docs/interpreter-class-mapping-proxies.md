@@ -1,5 +1,9 @@
 # Complete live class mapping proxies
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O70 of #123 completes the class namespace interface from O49/O69. Source and
 native classes expose complete own dictionaries through fresh read-only views.
 Qualified native type access also works when a metaclass shadows `__dict__`.

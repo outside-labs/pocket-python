@@ -242,7 +242,9 @@
       "source": "p=property()\np.__reduce__()\n",
       "stage": "Future",
       "stdout": "",
-      "error_type": "TypeError"
+      "error_type": "TypeError",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
     }
   ]
 }

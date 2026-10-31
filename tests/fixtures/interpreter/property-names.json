@@ -542,7 +542,8 @@
           "line": 7
         }
       ],
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Recursive display of callback-bearing containers in property diagnostics."
     }
   ]
 }

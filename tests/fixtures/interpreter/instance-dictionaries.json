@@ -444,7 +444,9 @@
       "id": "structural-collision-deferred",
       "stage": "Future",
       "source": "class C: pass\nc=C()\nclass Key:\n def __hash__(self): return hash(\"tag\")\n def __eq__(self,other):\n  del c.__dict__[self]\n  return True\nc.__dict__={Key():7}\nprint(getattr(c,\"tag\",99))\n",
-      "stdout": "99\n"
+      "stdout": "99\n",
+      "owner": "#116",
+      "boundary": "Structural mutation during general dictionary-key comparison requires restart semantics."
     },
     {
       "id": "custom-super-dictionary-preserved",

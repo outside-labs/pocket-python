@@ -1,5 +1,9 @@
 # Wrapper and descriptor metadata
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O71 of #123 adopts `staticmethod(value)` and `classmethod(value)` metadata in
 classes-source/1. Construction reads `__module__`, `__name__`, `__qualname__`,
 then `__doc__` through ordinary owned attribute operations. Only AttributeError

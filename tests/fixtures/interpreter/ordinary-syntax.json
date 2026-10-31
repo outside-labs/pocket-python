@@ -589,7 +589,9 @@
         "core-source/1",
         "classes-source/1"
       ],
-      "error_type": "AssertionError"
+      "error_type": "AssertionError",
+      "owner": "#127",
+      "boundary": "Assertion message display."
     },
     {
       "id": "assert-float-message-deferred",
@@ -600,7 +602,9 @@
         "core-source/1",
         "classes-source/1"
       ],
-      "error_type": "AssertionError"
+      "error_type": "AssertionError",
+      "owner": "#127",
+      "boundary": "Assertion message display."
     },
     {
       "id": "comprehension-deferred",
@@ -977,7 +981,9 @@
       "stdout": "1 1\n",
       "profiles": [
         "classes-source/1"
-      ]
+      ],
+      "owner": "#116",
+      "boundary": "General iterable length-hint consumers remain a separate sequence API."
     },
     {
       "id": "star-display-user-hints-deferred",
@@ -986,7 +992,9 @@
       "stdout": "2\n",
       "profiles": [
         "classes-source/1"
-      ]
+      ],
+      "owner": "#116",
+      "boundary": "General iterable length-hint consumers remain a separate sequence API."
     },
     {
       "id": "star-set-display",

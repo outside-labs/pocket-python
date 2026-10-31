@@ -270,13 +270,17 @@
       "id": "unread-range-reduction",
       "source": "value=range(7)\nvalue.__reduce__()\n",
       "stage": "Future",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
     },
     {
       "id": "unread-slice-reduction",
       "source": "value=slice(7)\nvalue.__reduce__()\n",
       "stage": "Future",
-      "stdout": ""
+      "stdout": "",
+      "owner": "#126",
+      "boundary": "Serialization/reduction library protocol."
     },
     {
       "id": "other-default-directory",

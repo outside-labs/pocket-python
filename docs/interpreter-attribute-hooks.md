@@ -1,5 +1,9 @@
 # Instance attribute hooks and advertised classes
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 The later [O25/O26 metaclass attribute contract](interpreter-metaclass-attributes.md)
 supersedes the earlier metaclass read/mutation refusals below. Live namespace,
 layout and further construction protocols retain their separate boundaries.

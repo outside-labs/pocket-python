@@ -1795,21 +1795,24 @@
       "stage": "Future",
       "source": "value=range(3)\nresult=value.__hash__()\nprint(result==hash(value))\n",
       "stdout": "True\n",
-      "owner": "#116"
+      "owner": "#116",
+      "boundary": "Range hashing remains a separate sequence API."
     },
     {
       "id": "hash-range-unbound",
       "stage": "Future",
       "source": "value=range(3)\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
       "stdout": "True\n",
-      "owner": "#116"
+      "owner": "#116",
+      "boundary": "Range hashing remains a separate sequence API."
     },
     {
       "id": "hash-range-rebound",
       "stage": "Future",
       "source": "value=range(3)\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
       "stdout": "True\n",
-      "owner": "#116"
+      "owner": "#116",
+      "boundary": "Range hashing remains a separate sequence API."
     },
     {
       "id": "hash-slice-bound",
@@ -3457,28 +3460,32 @@
       "stage": "Future",
       "source": "value=7.0\nprint(type(value).__repr__(value)==repr(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-float__str__",
       "stage": "Future",
       "source": "value=7.0\nprint(type(value).__str__(value)==str(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-complex__repr__",
       "stage": "Future",
       "source": "value=7+0j\nprint(type(value).__repr__(value)==repr(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-complex__str__",
       "stage": "Future",
       "source": "value=7+0j\nprint(type(value).__str__(value)==str(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-str__repr__",
@@ -3497,56 +3504,64 @@
       "stage": "Future",
       "source": "value=[7]\nprint(type(value).__repr__(value)==repr(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-list__str__",
       "stage": "Future",
       "source": "value=[7]\nprint(type(value).__str__(value)==str(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-tuple__repr__",
       "stage": "Future",
       "source": "value=(7,)\nprint(type(value).__repr__(value)==repr(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-tuple__str__",
       "stage": "Future",
       "source": "value=(7,)\nprint(type(value).__str__(value)==str(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-dict__repr__",
       "stage": "Future",
       "source": "value={7:8}\nprint(type(value).__repr__(value)==repr(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-dict__str__",
       "stage": "Future",
       "source": "value={7:8}\nprint(type(value).__str__(value)==str(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-set__repr__",
       "stage": "Future",
       "source": "value={7}\nprint(type(value).__repr__(value)==repr(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-set__str__",
       "stage": "Future",
       "source": "value={7}\nprint(type(value).__str__(value)==str(value))\n",
       "stdout": "True\n",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Unadopted native float/complex/container display signatures."
     },
     {
       "id": "display-bytes__repr__",

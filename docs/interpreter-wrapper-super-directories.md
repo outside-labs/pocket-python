@@ -1,5 +1,9 @@
 # Wrapper and super directories
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O77 completes the instance and type directory families for `staticmethod`,
 `classmethod` and `super` under #123. The pinned CPython 3.14.7 namespace inventory
 supplies their own native keys; inherited object keys merge in raw native order.

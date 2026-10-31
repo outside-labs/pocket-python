@@ -391,7 +391,8 @@
       "source": "class Name:\n def __repr__(self):\n  print(\"entered\")\n  return \"field\"\np=property()\np.__name__=[Name()]\np.__get__(object())\n",
       "stdout": "entered\n",
       "error_type": "AttributeError",
-      "owner": "#127"
+      "owner": "#127",
+      "boundary": "Recursive display of callback-bearing containers in property diagnostics."
     },
     {
       "id": "copy-getter-bound",

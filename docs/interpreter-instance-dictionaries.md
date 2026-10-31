@@ -1,5 +1,9 @@
 # Live instance dictionaries
 
+Current scope and boundary owners are consolidated in the
+[O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
+remaining-work statements below describe their recorded checkpoint.
+
 O47/O48 continue #123 and #33. The executable reference is CPython 3.14.7;
 `tests/fixtures/interpreter/instance-dictionaries.json` records the finite
 contract. Reference execution alone does not establish independent execution.
