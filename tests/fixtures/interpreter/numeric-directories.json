@@ -6,7 +6,8 @@
   "implemented_stages": [
     "O57",
     "O75",
-    "O77"
+    "O77",
+    "O90"
   ],
   "cases": [
     {
@@ -600,7 +601,7 @@
     {
       "id": "unread-dictionary",
       "source": "value=7\nvalue.__dict__\n",
-      "stage": "Future",
+      "stage": "O90",
       "stdout": "",
       "error_type": "AttributeError"
     },
