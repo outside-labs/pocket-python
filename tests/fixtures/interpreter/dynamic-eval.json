@@ -314,6 +314,12 @@
       "stage": "O92",
       "source": "def f(): return eval(\"len([7,9])\",{})\nf.__globals__[\"__builtins__\"]={\"eval\":eval,\"len\":lambda x: 13}\n# Defining builtins are captured when a function is created.\ng=eval(\"lambda: eval('len([7,9])',{})\", {\"__builtins__\":{\"eval\":eval,\"len\":lambda x: 13}})\nprint(g())\n",
       "stdout": "13\n"
+    },
+    {
+      "id": "code-keyword-defaults-not-inherited",
+      "stage": "O92",
+      "source": "def f(*,x=7): return x\ntry: eval(f.__code__)\nexcept TypeError: print(\"missing keyword\")\n",
+      "stdout": "missing keyword\n"
     }
   ]
 }
