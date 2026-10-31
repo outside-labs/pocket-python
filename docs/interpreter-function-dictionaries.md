@@ -56,8 +56,9 @@ cancellation, close and shared recursion/work/instruction limits.
 O46 is implemented with owned wrapped-callable lookup, preserving native bypass
 and method data-field priority. The 78-case matrix includes callback dictionary
 replacement during reads/writes/deletions, nested methods, live markers and
-explicit structural-collision/native-wrapper refusals. Native method `__get__`
-and `__call__` reflection retain separate contracts. Focused lifecycle tests
+explicit structural-collision/native-wrapper boundaries. O90 adopts native method
+`__get__` and `__call__` in the [native-call contract](interpreter-native-protocols.md).
+Focused lifecycle tests
 retain detached callables and results through descriptor callbacks and parking.
 
 Explicit `setattr` and native object attribute operations preserve a supplied

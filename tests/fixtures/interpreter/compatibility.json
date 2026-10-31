@@ -3448,15 +3448,14 @@
     {
       "id": "function-dictionaries-method-native-get-deferred",
       "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): pass\nC().read.__get__\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "",
         "error_type": null
       },
       "engine": {
         "stdout": "",
-        "code": "UNSUPPORTED",
-        "phase": "execute"
+        "error_type": null
       }
     },
     {

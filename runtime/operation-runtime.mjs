@@ -1,5 +1,5 @@
 import {NATIVE_SUBCLASS_BASES} from "./class-values.mjs";
-import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, allowsClassSpecial} from "./class-policy.mjs";
+import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, NATIVE_PROTOCOL_KEYS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
 import {RegistryError} from "./module-registry.mjs";
 import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
@@ -7,11 +7,27 @@ import {completion as continuation, completionRoots, callTask, constructTask, un
 
 export class Raised { constructor(value) { this.value = value; } }
 
+const NATIVE_COMPARISONS = Object.freeze({__eq__: "equal", __ne__: "not-equal",
+  ...Object.fromEntries(Object.entries(ORDERING_SLOTS).map(([op, slots]) => [slots[0], op]))});
+const NATIVE_ARITIES = Object.freeze({
+  ...Object.fromEntries(["__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__getattribute__", "__delattr__", "__getitem__", "__delitem__", "__contains__", "__delete__"].map(key => [key, [1, 1]])),
+  ...Object.fromEntries(["__hash__", "__len__", "__bool__", "__iter__", "__next__", "__neg__", "__pos__", "__invert__", "__int__", "__float__", "__complex__", "__index__", "__abs__", "__bytes__", "__repr__", "__str__"].map(key => [key, [0, 0]])),
+  ...Object.fromEntries(Object.values(ARITHMETIC_SLOTS).flatMap(stem => ["", "r", ...(stem === "divmod" ? [] : ["i"])].map(prefix => ["__" + prefix + stem + "__", stem === "pow" ? [1, 2] : [1, 1]]))),
+  __get__: [1, 2], __set__: [2, 2], __setattr__: [2, 2], __setitem__: [2, 2],
+  __round__: [0, 1], __dir__: [0, 0],
+});
+
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const userProtocol = value => classes.protocolObject(value);
+  const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
+  const methodCompare = (receiver, other, invert, site, after, depth) => {
+    if (receiver.callable === other.callable) return valueTask(invert !== (receiver.receiver === other.receiver), site, after);
+    return compareTask("equal", receiver.callable, other.callable, site,
+      continuation("native-method-compare", {receiver, other, invert, depth, after}), depth);
+  };
   const arithmeticOrder = (task, order, site) => arithmeticTask(task.operation, task.args, site, task.completion,
     task.depth, task.position, order, task.nativeInplace, task.active);
   classes.transactions = state.transactions;
@@ -1038,6 +1054,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         continuation("arithmetic-order", {...record, phase: "truth"}), original.depth);
       return arithmeticOrder(original, value, site);
     }
+    if (completion?.kind === "native-not-equal") return value instanceof NotImplementedValue ? valueTask(value, site, completion.after) :
+      unaryTask("not", value, site, completion.after);
+    if (completion?.kind === "native-method-hash") return valueTask(values.hashResult(value ^ genericHash(completion.receiver.receiver)), site, completion.after);
+    if (completion?.kind === "native-method-compare") return completion.truth ?
+      valueTask(completion.invert !== (value && completion.receiver.receiver === completion.other.receiver), site, completion.after) :
+      unaryTask("truth", value, site, continuation("native-method-compare", {...completion, truth: true}), completion.depth);
     if (completion?.kind === "arithmetic-result") {
       if (!(value instanceof NotImplementedValue)) return valueTask(value, site, completion.after);
       const inplace = completion.operation.startsWith("inplace-");
@@ -1421,6 +1443,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (!customNew && (args.length || keywords.length)) python("TypeError", instance.type.name + "() takes no arguments");
       return valueTask(instance, site, after);
     }
+    // The native type-call slot invokes its initializer directly, even when
+    // a custom MRO hides the type required by the public wrapper descriptor.
+    if (instance instanceof ClassValue && initializer.value instanceof BuiltinValue && initializer.value.name === "type.__init__")
+      return callTask(classes.builtin("native-type-init"), [instance, ...args], keywords, keywordValues, site,
+        continuation("init", {instance, after}), depth);
     const plan = customNew ? classes.bindAttribute(initializer.value, instance, type) : classes.read(instance, "__init__");
     const target = continuation("init", {instance, after});
     return plan.kind === "value" ? callTask(plan.value, args, keywords, keywordValues, site, target, depth) :
@@ -1940,6 +1967,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           state.temporaries.push(...operationRoots(task));
           let {left, right} = task;
           const {operation, position} = task;
+          if (classes.isPythonMethod(left) && classes.isPythonMethod(right) && ["equal", "not-equal"].includes(operation)) {
+            task = methodCompare(left, right, operation === "not-equal", site, completion, depth); continue;
+          }
           if (left instanceof FrameLocalsValue && right instanceof FrameLocalsValue && ["equal", "not-equal"].includes(operation)) {
             task = valueTask(operation === "equal" ? left.frame === right.frame : left.frame !== right.frame, site, completion); continue;
           }
@@ -2111,6 +2141,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (operation === "property-name-missing") python("AttributeError", "'property' object has no attribute '__name__'");
           if (["hash", "hash-unhashable"].includes(operation)) {
             if (operation === "hash-unhashable") python("TypeError", "unhashable type");
+            if (classes.isPythonMethod(value)) {
+              if (depth >= maxDepth) python("RecursionError", "maximum method hash depth exceeded");
+              task = unaryTask("hash", value.callable, site, continuation("native-method-hash", {receiver: value, after: completion}), depth + 1); continue;
+            }
             if (values.hashParts(value) !== null && values.needsOwnedHash(value)) {
               if (depth >= maxDepth) python("RecursionError", "maximum sequence hash depth exceeded");
               task = hashNext(value, 0, 14695981039346656037n, site, completion, depth); continue;
@@ -2304,12 +2338,101 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof BuiltinValue) {
           if (["getset_descriptor", "member_descriptor"].includes(callable.nativeKind)) python("TypeError", "Storage descriptor objects are not callable");
-          if (["method_descriptor", "wrapper_descriptor", "classmethod_descriptor"].includes(callable.nativeKind)) {
-            if (!args.length) python("TypeError", "Unbound native descriptor requires a receiver");
-            classes.namespaceDescriptorValid(callable, args[0], callable.nativeKind === "classmethod_descriptor");
+          const nativeKind = callable.nativeKind ?? classes.nativeDescriptorKind(callable);
+          const descriptor = callable.nativeOwner ? callable : nativeKind === null ? null :
+            {nativeOwner: classes.builtin(callable.name.split(".")[0]), nativeKey: callable.name.slice(callable.name.indexOf(".") + 1), nativeKind};
+          if (["method_descriptor", "wrapper_descriptor", "classmethod_descriptor"].includes(nativeKind)) {
+            if (!args.length) {
+              const owner = descriptor.nativeOwner.root ? "object" : descriptor.nativeOwner.name;
+              python("TypeError", nativeKind === "wrapper_descriptor" ? "descriptor '" + descriptor.nativeKey + "' of '" + owner + "' object needs an argument" :
+                "unbound method " + owner + "." + descriptor.nativeKey + "() needs an argument");
+            }
+            classes.namespaceDescriptorValid(descriptor, args[0], nativeKind === "classmethod_descriptor");
           }
           const nativeOwner = callable.nativeOwner instanceof BuiltinValue ? callable.nativeOwner.name : callable.name.split(".")[0];
           const nativeName = callable.nativeKey ?? callable.name.slice(callable.name.indexOf(".") + 1);
+          if (callable.name === "method" && !callable.nativeKind || nativeOwner === "method" && nativeName === "__new__") {
+            const operands = nativeName === "__new__" ? args.slice(1) : args;
+            if (nativeName === "__new__" && args[0] !== classes.builtin("method")) python("TypeError", "method.__new__ requires the method type");
+            if (keywords.length) python("TypeError", "method() takes no keyword arguments");
+            if (operands.length !== 2) python("TypeError", "method expected 2 arguments, got " + operands.length);
+            if (!classes.callable(operands[0])) python("TypeError", "first argument must be callable");
+            if (operands[1] === null) python("TypeError", "instance must not be None");
+            task = valueTask(allocate(BoundMethodValue, operands[0], operands[1], true), site, completion); continue;
+          }
+          if (nativeKind === "wrapper_descriptor" && NATIVE_ARITIES[nativeName]) {
+            const [minimum, maximum] = NATIVE_ARITIES[nativeName], count = args.length - 1;
+            if (keywords.length) python("TypeError", "wrapper " + nativeName + "() takes no keyword arguments");
+            if (count < minimum || count > maximum) {
+              const bound = minimum === maximum ? "" : count < minimum ? "at least " : "at most ";
+              const expected = count < minimum ? minimum : maximum;
+              python("TypeError", (minimum === maximum ? "expected " : nativeName + " expected ") + bound + expected +
+                " argument" + (expected === 1 ? "" : "s") + ", got " + count);
+            }
+          }
+          if (nativeKind === "method_descriptor" && ["__getitem__", "__round__", "__dir__", "__set_name__"].includes(nativeName)) {
+            const count = args.length - 1;
+            if (keywords.length) python("TypeError", (nativeName === "__set_name__" ? nativeName : nativeOwner + "." + nativeName) + "() takes no keyword arguments");
+            if (nativeName === "__getitem__" && count !== 1) python("TypeError", nativeOwner + ".__getitem__() takes exactly one argument (" + count + " given)");
+            if (nativeName === "__dir__" && count !== 0) python("TypeError", nativeOwner + ".__dir__() takes no arguments (" + count + " given)");
+            if (nativeName === "__round__" && count > 1) python("TypeError", "__round__ expected at most 1 argument, got " + count);
+            if (nativeName === "__set_name__" && count !== 2) python("TypeError", "__set_name__() takes 2 positional arguments but " + count + " were given");
+          }
+          if (nativeOwner === "object" && nativeName === "__str__") {
+            task = unaryTask("repr", args[0], site, completion, depth); continue;
+          }
+          if (nativeOwner === "cell" && nativeName === "__new__") {
+            if (args[0] !== classes.builtin("cell")) python("TypeError", "cell.__new__ requires the cell type");
+            task = callTask(classes.builtin("cell"), args.slice(1), keywords, keywordValues, site, completion, depth); continue;
+          }
+          if (callable.name === "function" && !callable.nativeKind)
+            hard("UNSUPPORTED", "UnsupportedOperationError", "Function construction from code retains the verified dynamic-code contract in O91.");
+          if (nativeName === "__call__" && ["function", "method", "builtin_function_or_method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "classmethod_descriptor"].includes(nativeOwner)) {
+            if (!args.length) python("TypeError", "Native call wrapper requires a receiver");
+            task = callTask(args[0], args.slice(1), keywords, keywordValues, site, completion, depth); continue;
+          }
+          if (nativeOwner === "method" && nativeName === "__get__") {
+            if (keywords.length || args.length < 2 || args.length > 3) python("TypeError", "__get__ received invalid arguments");
+            if (args[1] === null && (args[2] ?? null) === null) python("TypeError", "__get__(None, None) is invalid");
+            task = valueTask(args[0], site, completion); continue;
+          }
+          const nativeComparison = NATIVE_COMPARISONS[nativeName];
+          if (nativeComparison && ["object", "method", "builtin_function_or_method", "method-wrapper", "cell", "code"].includes(nativeOwner)) {
+            if (keywords.length || args.length !== 2) python("TypeError", nativeName + " takes one argument");
+            const [receiver, other] = args, equality = ["equal", "not-equal"].includes(nativeComparison);
+            const notImplemented = () => valueTask(moduleContext.builtin("NotImplemented", () => allocate(NotImplementedValue)), site, completion);
+            if (nativeOwner === "object") {
+              if (nativeName === "__eq__") task = receiver === other ? valueTask(true, site, completion) : notImplemented();
+              else if (nativeName === "__ne__") {
+                if (userProtocol(receiver)) {
+                  const plan = classes.special(receiver, "__eq__");
+                  const after = continuation("native-not-equal", {receiver, after: completion});
+                  task = !plan ? receiver === other ? valueTask(false, site, completion) : notImplemented() : plan.kind === "value" ?
+                    callTask(plan.value, [other], [], [], site, after, depth) : callTask(plan.callable, plan.args, [], [], site,
+                      continuation("invoke", {args: [other], keywords: [], keywordValues: [], after, depth}), depth);
+                } else {
+                  const entry = classes.nativeEntry(classes.typeOf(receiver), "__eq__");
+                  task = entry.found && entry.value.name !== "object.__eq__" ? callTask(entry.value, args, [], [], site,
+                    continuation("native-not-equal", {receiver, after: completion}), depth) : receiver === other ? valueTask(false, site, completion) : notImplemented();
+                }
+              } else task = notImplemented();
+            } else if (!equality || classes.typeOf(receiver) !== classes.typeOf(other)) task = notImplemented();
+            else if (nativeOwner === "method") task = methodCompare(receiver, other, nativeComparison === "not-equal", site, completion, depth);
+            else if (nativeOwner === "cell") {
+              task = receiver.bound && other.bound ? compareTask(nativeComparison, receiver.value, other.value, site, completion, depth) :
+                valueTask(nativeComparison === "equal" ? receiver.bound === other.bound : receiver.bound !== other.bound, site, completion);
+            } else task = valueTask(nativeComparison === "equal" ? values.equal(receiver, other) : !values.equal(receiver, other), site, completion);
+            continue;
+          }
+          if (nativeName === "__hash__" && ["method", "builtin_function_or_method", "method-wrapper", "code", "NoneType"].includes(nativeOwner)) {
+            if (keywords.length || args.length !== 1) python("TypeError", "__hash__ takes no arguments");
+            task = nativeOwner === "method" ? unaryTask("hash", args[0].callable, site,
+              continuation("native-method-hash", {receiver: args[0], after: completion}), depth) : valueTask(values.pythonHash(args[0]), site, completion); continue;
+          }
+          if (["__iter__", "__next__"].includes(nativeName) && (nativeOwner === "generator" || nativeOwner.endsWith("iterator"))) {
+            if (keywords.length || args.length !== 1) python("TypeError", nativeName + " takes no arguments");
+            task = unaryTask(nativeName === "__iter__" ? "iter" : "next", args[0], site, completion, depth); continue;
+          }
           if (["property", "staticmethod", "classmethod", "module", "super"].includes(nativeOwner) && callable.name.includes(".")) {
             const original = args[0], raw = classes.payload(original), rest = args.slice(1);
             if (nativeName === "__new__") {
@@ -2376,7 +2499,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = classes.nativeModule(args[0]);
             task = moduleEntry({receiver, key: args[1], name: values.text(args[1]), mode: "get", depth, after: continuation("relay", {receiver: args[0], after: completion})}, site, false, null); continue;
           }
-          if (NATIVE_SUBCLASS_BASES.includes(nativeOwner) && callable.name.includes(".") && (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined)) {
+          if ((NATIVE_SUBCLASS_BASES.includes(nativeOwner) || ["bool", "range", "slice", "memoryview", "NoneType", "NotImplementedType"].includes(nativeOwner)) && callable.name.includes(".") &&
+              (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined || NATIVE_PROTOCOL_KEYS.includes(nativeName) || nativeOwner === "list" && nativeName === "append")) {
             if (nativeName === "__new__") {
               if (!args.length || !classes.isType(args[0]) || !classes.subclass(args[0], classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
               task = callTask(classes.builtin(nativeOwner), ["list", "dict", "set", "bytearray"].includes(nativeOwner) ? [] : args.slice(1), ["list", "dict", "set", "bytearray"].includes(nativeOwner) ? [] : keywords, ["list", "dict", "set", "bytearray"].includes(nativeOwner) ? [] : keywordValues, site,
@@ -2444,8 +2568,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (comparison) {
               if (keywords.length || rest.length !== 1) python("TypeError", nativeName + " takes one argument");
               const leftType = values.typeName(receiver), rightType = values.typeName(operands[0]);
-              const numericTypes = ["bool", "int", "float", "complex"];
-              if (!(numericTypes.includes(leftType) && numericTypes.includes(rightType) || leftType === rightType || ["set", "frozenset"].includes(leftType) && ["set", "frozenset"].includes(rightType))) { task = notImplemented(); continue; }
+              const compatible = ["int", "bool"].includes(leftType) ? ["bool", "int"].includes(rightType) : leftType === "float" ? ["bool", "int", "float"].includes(rightType) : leftType === "complex" ? ["bool", "int", "float", "complex"].includes(rightType) :
+                leftType === rightType || ["set", "frozenset"].includes(leftType) && ["set", "frozenset"].includes(rightType) || ["bytes", "bytearray", "memoryview"].includes(leftType) && ["bytes", "bytearray", "memoryview"].includes(rightType);
+              if (!compatible) { task = notImplemented(); continue; }
               task = compareTask(comparison, receiver, operands[0], site, finish, depth); continue;
             }
             let arithmetic = null, reflected = false;
@@ -2456,6 +2581,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (keywords.length || rest.length < 1 || rest.length > (arithmetic === "power" ? 2 : 1)) python("TypeError", nativeName + " received invalid arguments");
               if (arithmetic === "multiply" && !["int", "float", "complex"].includes(nativeOwner) && userProtocol(operands[0])) { task = unaryTask("index", operands[0], site, continuation("native-repeat", {receiver: original, inplace: false, after: completion}), depth); continue; }
               const otherType = values.typeName(operands[0]);
+              if (arithmetic === "power" && operands.length === 2 && operands[1] !== null) {
+                if (nativeOwner === "int" && !["int", "bool"].includes(values.typeName(operands[1]))) { task = notImplemented(); continue; }
+                if (nativeOwner === "float") python("TypeError", "pow() 3rd argument not allowed unless all arguments are integers");
+                if (nativeOwner === "complex") python("ValueError", "complex modulo");
+              }
               if (["int", "float", "complex"].includes(nativeOwner) && !(nativeOwner === "int" ? ["int", "bool"] : nativeOwner === "float" ? ["int", "bool", "float"] : ["int", "bool", "float", "complex"]).includes(otherType)) { task = notImplemented(); continue; }
               const inputs = reflected ? [operands[0], receiver, ...operands.slice(1)] : [receiver, ...operands];
               task = arithmetic === "divmod" || arithmetic === "power" && inputs.length === 3 ? numericTask(arithmetic === "power" ? "pow" : "divmod", inputs, site, finish, depth) : valueTask(values.binary(arithmetic, inputs[0], inputs[1]), site, finish); continue;
@@ -2525,7 +2655,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (!args.length || !classes.isType(args[0])) python("TypeError", "type.__call__ requires a type");
             task = constructTask(args[0], args.slice(1), keywords, keywordValues, site, completion, depth); continue;
           }
-          if (callable.name === "type.__init__") {
+          if (callable.name === "type.__init__" || callable.name === "native-type-init") {
             if (!args.length || !classes.isType(args[0]) || args.length === 2 && keywords.length || ![2, 4].includes(args.length))
               python("TypeError", "type.__init__ requires one or three arguments after its receiver");
             task = valueTask(null, site, completion); continue;
@@ -3146,8 +3276,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             count("builtin:" + callable.name);
             if (args.length !== 1 || keywords.length) python("TypeError", "hash requires one positional value");
             if (callable.name === "object.__hash__") {
-              if (!(classes.isInstance(args[0]) || args[0] instanceof ClassValue)) hard("UNSUPPORTED", "UnsupportedOperationError", "The object hash descriptor supports source objects in this stage.");
-              task = deliver(values.identityHash(args[0]), completion, site);
+              task = deliver(genericHash(args[0]), completion, site);
             } else task = unaryTask("hash", args[0], site, completion, depth);
             continue;
           }

@@ -1,0 +1,3703 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-native-protocols/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O90"
+  ],
+  "cases": [
+    {
+      "id": "int-add-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__add__(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-add-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__add__(value,2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-add-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__add__.__get__(value,type(value))(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-radd-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__radd__(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-radd-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__radd__(value,2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-radd-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__radd__.__get__(value,type(value))(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-sub-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__sub__(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-sub-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__sub__(value,2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-sub-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__sub__.__get__(value,type(value))(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rsub-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rsub__(2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rsub-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rsub__(value,2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rsub-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rsub__.__get__(value,type(value))(2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-mul-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__mul__(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-mul-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__mul__(value,2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-mul-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__mul__.__get__(value,type(value))(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rmul-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rmul__(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rmul-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rmul__(value,2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rmul-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rmul__.__get__(value,type(value))(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-truediv-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__truediv__(2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-truediv-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__truediv__(value,2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-truediv-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__truediv__.__get__(value,type(value))(2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rtruediv-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rtruediv__(2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rtruediv-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rtruediv__(value,2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rtruediv-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rtruediv__.__get__(value,type(value))(2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-pow-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__pow__(2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-pow-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__pow__(value,2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-pow-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__pow__.__get__(value,type(value))(2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rpow-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rpow__(2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rpow-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rpow__(value,2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rpow-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rpow__.__get__(value,type(value))(2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-floordiv-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__floordiv__(2)\nprint(result==3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-floordiv-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__floordiv__(value,2)\nprint(result==3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-floordiv-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__floordiv__.__get__(value,type(value))(2)\nprint(result==3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rfloordiv-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rfloordiv__(2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rfloordiv-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rfloordiv__(value,2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rfloordiv-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rfloordiv__.__get__(value,type(value))(2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-mod-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__mod__(2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-mod-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__mod__(value,2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-mod-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__mod__.__get__(value,type(value))(2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rmod-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rmod__(2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rmod-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rmod__(value,2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rmod-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rmod__.__get__(value,type(value))(2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-lshift-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__lshift__(2)\nprint(result==28)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-lshift-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__lshift__(value,2)\nprint(result==28)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-lshift-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__lshift__.__get__(value,type(value))(2)\nprint(result==28)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rlshift-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rlshift__(2)\nprint(result==256)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rlshift-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rlshift__(value,2)\nprint(result==256)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rlshift-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rlshift__.__get__(value,type(value))(2)\nprint(result==256)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rshift-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rshift__(2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rshift-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rshift__(value,2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rshift-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rshift__.__get__(value,type(value))(2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rrshift-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rrshift__(2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rrshift-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rrshift__(value,2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rrshift-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rrshift__.__get__(value,type(value))(2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-and-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__and__(2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-and-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__and__(value,2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-and-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__and__.__get__(value,type(value))(2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rand-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rand__(2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rand-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rand__(value,2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rand-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rand__.__get__(value,type(value))(2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-or-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__or__(2)\nprint(result==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-or-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__or__(value,2)\nprint(result==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-or-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__or__.__get__(value,type(value))(2)\nprint(result==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-ror-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__ror__(2)\nprint(result==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-ror-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__ror__(value,2)\nprint(result==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-ror-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__ror__.__get__(value,type(value))(2)\nprint(result==7)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-xor-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__xor__(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-xor-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__xor__(value,2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-xor-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__xor__.__get__(value,type(value))(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rxor-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rxor__(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rxor-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rxor__(value,2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rxor-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rxor__.__get__(value,type(value))(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-divmod-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__divmod__(2)\nprint(result==(3, 1))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-divmod-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__divmod__(value,2)\nprint(result==(3, 1))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-divmod-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__divmod__.__get__(value,type(value))(2)\nprint(result==(3, 1))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rdivmod-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rdivmod__(2)\nprint(result==(0, 2))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rdivmod-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rdivmod__(value,2)\nprint(result==(0, 2))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-rdivmod-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rdivmod__.__get__(value,type(value))(2)\nprint(result==(0, 2))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__neg__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__neg__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__neg__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__neg__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__neg__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__neg__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__pos__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__pos__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__pos__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__pos__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__pos__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__pos__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__abs__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__abs__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__abs__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__abs__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__abs__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__abs__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__bool__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__bool__()\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "int-__bool__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__bool__(value)\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "int-__bool__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__bool__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "int-__eq__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__eq__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__eq__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__ne__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__ne__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__ne__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__ne__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__ne__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__ne__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__lt__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__lt__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__lt__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__lt__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__lt__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__lt__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__le__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__le__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__le__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__le__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__le__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__le__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__gt__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__gt__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__gt__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__gt__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__gt__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__gt__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__ge__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__ge__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__ge__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__ge__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__ge__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__ge__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "int-__int__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__int__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__int__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__int__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__int__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__int__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__float__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__float__()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "int-__float__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__float__(value)\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "int-__float__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__float__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "int-__index__-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__index__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__index__-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__index__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "int-__index__-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__index__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "float-add-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__add__(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-add-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__add__(value,2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-add-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__add__.__get__(value,type(value))(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-radd-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__radd__(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-radd-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__radd__(value,2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-radd-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__radd__.__get__(value,type(value))(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-sub-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__sub__(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-sub-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__sub__(value,2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-sub-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__sub__.__get__(value,type(value))(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rsub-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__rsub__(2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rsub-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rsub__(value,2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rsub-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rsub__.__get__(value,type(value))(2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-mul-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__mul__(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-mul-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__mul__(value,2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-mul-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__mul__.__get__(value,type(value))(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rmul-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__rmul__(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rmul-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rmul__(value,2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rmul-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rmul__.__get__(value,type(value))(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-truediv-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__truediv__(2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-truediv-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__truediv__(value,2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-truediv-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__truediv__.__get__(value,type(value))(2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rtruediv-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__rtruediv__(2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rtruediv-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rtruediv__(value,2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rtruediv-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rtruediv__.__get__(value,type(value))(2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-pow-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__pow__(2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-pow-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__pow__(value,2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-pow-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__pow__.__get__(value,type(value))(2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rpow-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__rpow__(2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rpow-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rpow__(value,2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rpow-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rpow__.__get__(value,type(value))(2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-floordiv-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__floordiv__(2)\nprint(result==3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-floordiv-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__floordiv__(value,2)\nprint(result==3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-floordiv-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__floordiv__.__get__(value,type(value))(2)\nprint(result==3)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rfloordiv-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__rfloordiv__(2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rfloordiv-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rfloordiv__(value,2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rfloordiv-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rfloordiv__.__get__(value,type(value))(2)\nprint(result==0)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-mod-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__mod__(2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-mod-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__mod__(value,2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-mod-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__mod__.__get__(value,type(value))(2)\nprint(result==1)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rmod-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__rmod__(2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rmod-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rmod__(value,2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rmod-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rmod__.__get__(value,type(value))(2)\nprint(result==2)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-divmod-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__divmod__(2)\nprint(result==(3, 1))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-divmod-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__divmod__(value,2)\nprint(result==(3, 1))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-divmod-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__divmod__.__get__(value,type(value))(2)\nprint(result==(3, 1))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rdivmod-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__rdivmod__(2)\nprint(result==(0, 2))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rdivmod-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rdivmod__(value,2)\nprint(result==(0, 2))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-rdivmod-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__rdivmod__.__get__(value,type(value))(2)\nprint(result==(0, 2))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__neg__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__neg__()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__neg__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__neg__(value)\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__neg__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__neg__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__pos__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__pos__()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__pos__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__pos__(value)\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__pos__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__pos__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__abs__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__abs__()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__abs__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__abs__(value)\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__abs__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__abs__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__bool__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__bool__()\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "float-__bool__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__bool__(value)\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "float-__bool__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__bool__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "float-__eq__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__eq__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__eq__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__ne__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__ne__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__ne__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__ne__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__ne__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__ne__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__lt__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__lt__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__lt__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__lt__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__lt__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__lt__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__le__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__le__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__le__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__le__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__le__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__le__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__gt__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__gt__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__gt__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__gt__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__gt__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__gt__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__ge__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__ge__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__ge__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__ge__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__ge__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__ge__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "float-__int__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__int__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "float-__int__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__int__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "float-__int__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__int__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "float-__float__-bound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=value.__float__()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__float__-unbound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__float__(value)\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "float-__float__-rebound",
+      "stage": "O90",
+      "source": "value=7.0\nresult=type(value).__float__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "complex-add-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__add__(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-add-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__add__(value,2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-add-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__add__.__get__(value,type(value))(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-radd-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__radd__(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-radd-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__radd__(value,2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-radd-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__radd__.__get__(value,type(value))(2)\nprint(result==9)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-sub-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__sub__(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-sub-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__sub__(value,2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-sub-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__sub__.__get__(value,type(value))(2)\nprint(result==5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rsub-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__rsub__(2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rsub-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__rsub__(value,2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rsub-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__rsub__.__get__(value,type(value))(2)\nprint(result==-5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-mul-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__mul__(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-mul-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__mul__(value,2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-mul-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__mul__.__get__(value,type(value))(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rmul-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__rmul__(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rmul-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__rmul__(value,2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rmul-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__rmul__.__get__(value,type(value))(2)\nprint(result==14)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-truediv-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__truediv__(2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-truediv-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__truediv__(value,2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-truediv-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__truediv__.__get__(value,type(value))(2)\nprint(result==3.5)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rtruediv-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__rtruediv__(2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rtruediv-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__rtruediv__(value,2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rtruediv-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__rtruediv__.__get__(value,type(value))(2)\nprint(result==0.2857142857142857)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-pow-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__pow__(2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-pow-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__pow__(value,2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-pow-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__pow__.__get__(value,type(value))(2)\nprint(result==49)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rpow-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__rpow__(2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rpow-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__rpow__(value,2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-rpow-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__rpow__.__get__(value,type(value))(2)\nprint(result==128)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__neg__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__neg__()\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "complex-__neg__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__neg__(value)\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "complex-__neg__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__neg__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "complex-__pos__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__pos__()\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "complex-__pos__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__pos__(value)\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "complex-__pos__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__pos__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "complex-__abs__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__abs__()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "complex-__abs__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__abs__(value)\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "complex-__abs__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__abs__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "float\n"
+    },
+    {
+      "id": "complex-__bool__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__bool__()\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "complex-__bool__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__bool__(value)\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "complex-__bool__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__bool__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "bool\n"
+    },
+    {
+      "id": "complex-__eq__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__eq__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__eq__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__ne__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__ne__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__ne__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__ne__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__ne__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__ne__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__lt__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__lt__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__lt__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__lt__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__lt__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__lt__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__le__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__le__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__le__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__le__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__le__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__le__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__gt__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__gt__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__gt__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__gt__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__gt__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__gt__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__ge__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__ge__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__ge__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__ge__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__ge__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__ge__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "complex-__complex__-bound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=value.__complex__()\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "complex-__complex__-unbound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__complex__(value)\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "complex-__complex__-rebound",
+      "stage": "O90",
+      "source": "value=7+0j\nresult=type(value).__complex__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "complex\n"
+    },
+    {
+      "id": "modular-int-power-bound",
+      "stage": "O90",
+      "source": "value=2\nresult=value.__pow__(7,5)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "modular-int-power-unbound",
+      "stage": "O90",
+      "source": "value=2\nresult=type(value).__pow__(value,7,5)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "modular-int-power-rebound",
+      "stage": "O90",
+      "source": "value=2\nresult=type(value).__pow__.__get__(value,type(value))(7,5)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "modular-reflected-int-power-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__rpow__(2,5)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "modular-reflected-int-power-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rpow__(value,2,5)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "modular-reflected-int-power-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__rpow__.__get__(value,type(value))(2,5)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "bool-bitwise-bound",
+      "stage": "O90",
+      "source": "value=True\nresult=value.__and__(True)\nprint(type(result).__name__,result)\n",
+      "stdout": "bool True\n"
+    },
+    {
+      "id": "bool-bitwise-unbound",
+      "stage": "O90",
+      "source": "value=True\nresult=type(value).__and__(value,True)\nprint(type(result).__name__,result)\n",
+      "stdout": "bool True\n"
+    },
+    {
+      "id": "bool-bitwise-rebound",
+      "stage": "O90",
+      "source": "value=True\nresult=type(value).__and__.__get__(value,type(value))(True)\nprint(type(result).__name__,result)\n",
+      "stdout": "bool True\n"
+    },
+    {
+      "id": "hash-none-bound",
+      "stage": "O90",
+      "source": "value=None\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-none-unbound",
+      "stage": "O90",
+      "source": "value=None\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-none-rebound",
+      "stage": "O90",
+      "source": "value=None\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "hash-int-bound",
+      "stage": "O90",
+      "source": "value=7\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-int-unbound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-int-rebound",
+      "stage": "O90",
+      "source": "value=7\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-float-bound",
+      "stage": "O90",
+      "source": "value=7.5\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-float-unbound",
+      "stage": "O90",
+      "source": "value=7.5\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-float-rebound",
+      "stage": "O90",
+      "source": "value=7.5\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-complex-bound",
+      "stage": "O90",
+      "source": "value=2j\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-complex-unbound",
+      "stage": "O90",
+      "source": "value=2j\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-complex-rebound",
+      "stage": "O90",
+      "source": "value=2j\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-str-bound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-str-unbound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-str-rebound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-bytes-bound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-bytes-unbound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-bytes-rebound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-tuple-bound",
+      "stage": "O90",
+      "source": "value=(1,2)\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-tuple-unbound",
+      "stage": "O90",
+      "source": "value=(1,2)\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-tuple-rebound",
+      "stage": "O90",
+      "source": "value=(1,2)\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-frozenset-bound",
+      "stage": "O90",
+      "source": "value=frozenset([1])\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-frozenset-unbound",
+      "stage": "O90",
+      "source": "value=frozenset([1])\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-frozenset-rebound",
+      "stage": "O90",
+      "source": "value=frozenset([1])\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-range-bound",
+      "stage": "Future",
+      "source": "value=range(3)\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n",
+      "owner": "#116"
+    },
+    {
+      "id": "hash-range-unbound",
+      "stage": "Future",
+      "source": "value=range(3)\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n",
+      "owner": "#116"
+    },
+    {
+      "id": "hash-range-rebound",
+      "stage": "Future",
+      "source": "value=range(3)\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n",
+      "owner": "#116"
+    },
+    {
+      "id": "hash-slice-bound",
+      "stage": "O90",
+      "source": "value=slice(1,2)\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-slice-unbound",
+      "stage": "O90",
+      "source": "value=slice(1,2)\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-slice-rebound",
+      "stage": "O90",
+      "source": "value=slice(1,2)\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "len-str-bound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-str-unbound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-str-rebound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-str-bound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-str-unbound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-str-rebound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-str-bound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=value.__contains__(\"b\")\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-str-unbound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__contains__(value,\"b\")\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-str-rebound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__contains__.__get__(value,type(value))(\"b\")\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "getitem-str-bound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=value.__getitem__(1)\nprint(type(result).__name__)\n",
+      "stdout": "str\n"
+    },
+    {
+      "id": "getitem-str-unbound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__getitem__(value,1)\nprint(type(result).__name__)\n",
+      "stdout": "str\n"
+    },
+    {
+      "id": "getitem-str-rebound",
+      "stage": "O90",
+      "source": "value=\"abc\"\nresult=type(value).__getitem__.__get__(value,type(value))(1)\nprint(type(result).__name__)\n",
+      "stdout": "str\n"
+    },
+    {
+      "id": "len-list-bound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-list-unbound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-list-rebound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-list-bound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-list-unbound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-list-rebound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-list-bound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-list-unbound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-list-rebound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "getitem-list-bound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=value.__getitem__(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-list-unbound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=type(value).__getitem__(value,1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-list-rebound",
+      "stage": "O90",
+      "source": "value=[1,2,3]\nresult=type(value).__getitem__.__get__(value,type(value))(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "len-tuple-bound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-tuple-unbound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-tuple-rebound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-tuple-bound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-tuple-unbound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-tuple-rebound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-tuple-bound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-tuple-unbound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-tuple-rebound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "getitem-tuple-bound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=value.__getitem__(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-tuple-unbound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=type(value).__getitem__(value,1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-tuple-rebound",
+      "stage": "O90",
+      "source": "value=(1,2,3)\nresult=type(value).__getitem__.__get__(value,type(value))(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "len-dict-bound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "len-dict-unbound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "len-dict-rebound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "iter-dict-bound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-dict-unbound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-dict-rebound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-dict-bound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-dict-unbound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-dict-rebound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "getitem-dict-bound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=value.__getitem__(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-dict-unbound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=type(value).__getitem__(value,1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-dict-rebound",
+      "stage": "O90",
+      "source": "value={1:2,3:4}\nresult=type(value).__getitem__.__get__(value,type(value))(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "len-set-bound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-set-unbound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-set-rebound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-set-bound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-set-unbound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-set-rebound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-set-bound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-set-unbound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-set-rebound",
+      "stage": "O90",
+      "source": "value={1,2,3}\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "len-frozenset-bound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-frozenset-unbound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-frozenset-rebound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-frozenset-bound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-frozenset-unbound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-frozenset-rebound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-frozenset-bound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-frozenset-unbound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-frozenset-rebound",
+      "stage": "O90",
+      "source": "value=frozenset([1,2,3])\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "len-bytes-bound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-bytes-unbound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-bytes-rebound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-bytes-bound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-bytes-unbound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-bytes-rebound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-bytes-bound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "contains-bytes-unbound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "contains-bytes-rebound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "getitem-bytes-bound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=value.__getitem__(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-bytes-unbound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__getitem__(value,1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-bytes-rebound",
+      "stage": "O90",
+      "source": "value=b\"abc\"\nresult=type(value).__getitem__.__get__(value,type(value))(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "len-bytearray-bound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-bytearray-unbound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-bytearray-rebound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-bytearray-bound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-bytearray-unbound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-bytearray-rebound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-bytearray-bound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "contains-bytearray-unbound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "contains-bytearray-rebound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "getitem-bytearray-bound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=value.__getitem__(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-bytearray-unbound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=type(value).__getitem__(value,1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-bytearray-rebound",
+      "stage": "O90",
+      "source": "value=bytearray(b\"abc\")\nresult=type(value).__getitem__.__get__(value,type(value))(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "len-memoryview-bound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-memoryview-unbound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-memoryview-rebound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-memoryview-bound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-memoryview-unbound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-memoryview-rebound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-memoryview-bound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "contains-memoryview-unbound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "contains-memoryview-rebound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "getitem-memoryview-bound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=value.__getitem__(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-memoryview-unbound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=type(value).__getitem__(value,1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-memoryview-rebound",
+      "stage": "O90",
+      "source": "value=memoryview(b\"abc\")\nresult=type(value).__getitem__.__get__(value,type(value))(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "len-range-bound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=value.__len__()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-range-unbound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=type(value).__len__(value)\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "len-range-rebound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=type(value).__len__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "3\n"
+    },
+    {
+      "id": "iter-range-bound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=value.__iter__()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-range-unbound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=type(value).__iter__(value)\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "iter-range-rebound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=type(value).__iter__.__get__(value,type(value))()\nprint(iter(result) is result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-range-bound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=value.__contains__(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-range-unbound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=type(value).__contains__(value,1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "contains-range-rebound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=type(value).__contains__.__get__(value,type(value))(1)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "getitem-range-bound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=value.__getitem__(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-range-unbound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=type(value).__getitem__(value,1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "getitem-range-rebound",
+      "stage": "O90",
+      "source": "value=range(3)\nresult=type(value).__getitem__.__get__(value,type(value))(1)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "call-function-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=value.__call__(x=9)\nprint(result)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "call-function-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=type(value).__call__(value,x=9)\nprint(result)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "call-function-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=type(value).__call__.__get__(value,type(value))(x=9)\nprint(result)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "hash-function-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-function-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-function-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-function-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=value.__eq__(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-function-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=type(value).__eq__(value,value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-function-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=type(value).__eq__.__get__(value,type(value))(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-function-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-function-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-function-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=f\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "call-method-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=value.__call__(x=9)\nprint(result)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "call-method-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=type(value).__call__(value,x=9)\nprint(result)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "call-method-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=type(value).__call__.__get__(value,type(value))(x=9)\nprint(result)\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "hash-method-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-method-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-method-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-method-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=value.__eq__(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-method-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=type(value).__eq__(value,value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-method-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=type(value).__eq__.__get__(value,type(value))(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-method-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-method-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-method-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=a.f\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "call-builtin-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=value.__call__([1,2])\nprint(result)\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "call-builtin-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=type(value).__call__(value,[1,2])\nprint(result)\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "call-builtin-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=type(value).__call__.__get__(value,type(value))([1,2])\nprint(result)\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "hash-builtin-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-builtin-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-builtin-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-builtin-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=value.__eq__(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-builtin-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=type(value).__eq__(value,value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-builtin-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=type(value).__eq__.__get__(value,type(value))(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-builtin-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-builtin-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-builtin-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=len\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "call-native-method-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=value.__call__(7)\nprint(len(items))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "call-native-method-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=type(value).__call__(value,7)\nprint(len(items))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "call-native-method-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=type(value).__call__.__get__(value,type(value))(7)\nprint(len(items))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "hash-native-method-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-native-method-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-native-method-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-native-method-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=value.__eq__(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-native-method-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=type(value).__eq__(value,value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-native-method-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=type(value).__eq__.__get__(value,type(value))(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-native-method-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-native-method-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-native-method-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.append\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "call-native-wrapper-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=value.__call__()\nprint(result)\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "call-native-wrapper-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=type(value).__call__(value)\nprint(result)\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "call-native-wrapper-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=type(value).__call__.__get__(value,type(value))()\nprint(result)\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "hash-native-wrapper-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-native-wrapper-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-native-wrapper-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-native-wrapper-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=value.__eq__(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-native-wrapper-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=type(value).__eq__(value,value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-native-wrapper-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=type(value).__eq__.__get__(value,type(value))(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-native-wrapper-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-native-wrapper-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-native-wrapper-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=items.__len__\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "call-method-descriptor-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=value.__call__(items,7)\nprint(len(items))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "call-method-descriptor-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=type(value).__call__(value,items,7)\nprint(len(items))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "call-method-descriptor-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=type(value).__call__.__get__(value,type(value))(items,7)\nprint(len(items))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "hash-method-descriptor-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-method-descriptor-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-method-descriptor-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-method-descriptor-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=value.__eq__(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-method-descriptor-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=type(value).__eq__(value,value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-method-descriptor-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=type(value).__eq__.__get__(value,type(value))(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-method-descriptor-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-method-descriptor-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-method-descriptor-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.append\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "call-wrapper-descriptor-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=value.__call__(items)\nprint(result)\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "call-wrapper-descriptor-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=type(value).__call__(value,items)\nprint(result)\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "call-wrapper-descriptor-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=type(value).__call__.__get__(value,type(value))(items)\nprint(result)\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "hash-wrapper-descriptor-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=value.__hash__()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-wrapper-descriptor-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=type(value).__hash__(value)\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "hash-wrapper-descriptor-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=type(value).__hash__.__get__(value,type(value))()\nprint(result==hash(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-wrapper-descriptor-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=value.__eq__(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-wrapper-descriptor-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=type(value).__eq__(value,value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-wrapper-descriptor-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=type(value).__eq__.__get__(value,type(value))(value)\nprint(result)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-wrapper-descriptor-bound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=value.__eq__([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-wrapper-descriptor-unbound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=type(value).__eq__(value,[])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "eq-other-wrapper-descriptor-rebound",
+      "stage": "O90",
+      "source": "def f(self=None,x=7): return x\nclass A:\n f=f\na=A()\nitems=[]\nvalue=list.__len__\nresult=type(value).__eq__.__get__(value,type(value))([])\nprint(result is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-function-bound",
+      "stage": "O90",
+      "source": "def f(self): return 7\nvalue=f\nresult=value.__get__(None,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-function-unbound",
+      "stage": "O90",
+      "source": "def f(self): return 7\nvalue=f\nresult=type(value).__get__(value,None,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-function-rebound",
+      "stage": "O90",
+      "source": "def f(self): return 7\nvalue=f\nresult=type(value).__get__.__get__(value,type(value))(None,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-other-function-bound",
+      "stage": "O90",
+      "source": "def f(self): return 7\nvalue=f\nresult=value.__get__(7,int)\nprint(result is value)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "get-other-function-unbound",
+      "stage": "O90",
+      "source": "def f(self): return 7\nvalue=f\nresult=type(value).__get__(value,7,int)\nprint(result is value)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "get-other-function-rebound",
+      "stage": "O90",
+      "source": "def f(self): return 7\nvalue=f\nresult=type(value).__get__.__get__(value,type(value))(7,int)\nprint(result is value)\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "get-method-bound",
+      "stage": "O90",
+      "source": "class A:\n def f(self): return 7\na=A()\nvalue=a.f\nresult=value.__get__(None,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-method-unbound",
+      "stage": "O90",
+      "source": "class A:\n def f(self): return 7\na=A()\nvalue=a.f\nresult=type(value).__get__(value,None,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-method-rebound",
+      "stage": "O90",
+      "source": "class A:\n def f(self): return 7\na=A()\nvalue=a.f\nresult=type(value).__get__.__get__(value,type(value))(None,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-other-method-bound",
+      "stage": "O90",
+      "source": "class A:\n def f(self): return 7\na=A()\nvalue=a.f\nresult=value.__get__(7,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-other-method-unbound",
+      "stage": "O90",
+      "source": "class A:\n def f(self): return 7\na=A()\nvalue=a.f\nresult=type(value).__get__(value,7,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "get-other-method-rebound",
+      "stage": "O90",
+      "source": "class A:\n def f(self): return 7\na=A()\nvalue=a.f\nresult=type(value).__get__.__get__(value,type(value))(7,int)\nprint(result is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "next-list-bound",
+      "stage": "O90",
+      "source": "value=iter([7])\nresult=value.__next__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-list-unbound",
+      "stage": "O90",
+      "source": "value=iter([7])\nresult=type(value).__next__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-list-rebound",
+      "stage": "O90",
+      "source": "value=iter([7])\nresult=type(value).__next__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-tuple-bound",
+      "stage": "O90",
+      "source": "value=iter((7,))\nresult=value.__next__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-tuple-unbound",
+      "stage": "O90",
+      "source": "value=iter((7,))\nresult=type(value).__next__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-tuple-rebound",
+      "stage": "O90",
+      "source": "value=iter((7,))\nresult=type(value).__next__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-str-bound",
+      "stage": "O90",
+      "source": "value=iter(\"a\")\nresult=value.__next__()\nprint(type(result).__name__)\n",
+      "stdout": "str\n"
+    },
+    {
+      "id": "next-str-unbound",
+      "stage": "O90",
+      "source": "value=iter(\"a\")\nresult=type(value).__next__(value)\nprint(type(result).__name__)\n",
+      "stdout": "str\n"
+    },
+    {
+      "id": "next-str-rebound",
+      "stage": "O90",
+      "source": "value=iter(\"a\")\nresult=type(value).__next__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "str\n"
+    },
+    {
+      "id": "next-range-bound",
+      "stage": "O90",
+      "source": "value=iter(range(1))\nresult=value.__next__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-range-unbound",
+      "stage": "O90",
+      "source": "value=iter(range(1))\nresult=type(value).__next__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-range-rebound",
+      "stage": "O90",
+      "source": "value=iter(range(1))\nresult=type(value).__next__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-dict-bound",
+      "stage": "O90",
+      "source": "value=iter({7:1})\nresult=value.__next__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-dict-unbound",
+      "stage": "O90",
+      "source": "value=iter({7:1})\nresult=type(value).__next__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-dict-rebound",
+      "stage": "O90",
+      "source": "value=iter({7:1})\nresult=type(value).__next__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-set-bound",
+      "stage": "O90",
+      "source": "value=iter({7})\nresult=value.__next__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-set-unbound",
+      "stage": "O90",
+      "source": "value=iter({7})\nresult=type(value).__next__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-set-rebound",
+      "stage": "O90",
+      "source": "value=iter({7})\nresult=type(value).__next__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-bytes-bound",
+      "stage": "O90",
+      "source": "value=iter(b\"a\")\nresult=value.__next__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-bytes-unbound",
+      "stage": "O90",
+      "source": "value=iter(b\"a\")\nresult=type(value).__next__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-bytes-rebound",
+      "stage": "O90",
+      "source": "value=iter(b\"a\")\nresult=type(value).__next__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-generator-bound",
+      "stage": "O90",
+      "source": "def f():\n yield 7\nvalue=f()\nresult=value.__next__()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-generator-unbound",
+      "stage": "O90",
+      "source": "def f():\n yield 7\nvalue=f()\nresult=type(value).__next__(value)\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "next-generator-rebound",
+      "stage": "O90",
+      "source": "def f():\n yield 7\nvalue=f()\nresult=type(value).__next__.__get__(value,type(value))()\nprint(type(result).__name__)\n",
+      "stdout": "int\n"
+    },
+    {
+      "id": "composed-537",
+      "stage": "O90",
+      "source": "class A: pass\na=A()\nprint(object.__eq__(a,a),object.__eq__(a,[]) is NotImplemented,object.__lt__(a,a) is NotImplemented)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "composed-538",
+      "stage": "O90",
+      "source": "class A:\n def __eq__(self,other):\n  print(\"equal\")\n  return [7]\na=A()\nprint(object.__ne__(a,[]))\n",
+      "stdout": "equal\nFalse\n"
+    },
+    {
+      "id": "composed-539",
+      "stage": "O90",
+      "source": "def f(): return 7\nprint(type(f).__call__.__objclass__ is type(f),type(f).__get__.__objclass__ is type(f))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "composed-540",
+      "stage": "O90",
+      "source": "def f(): return 7\nprint(f.__call__.__self__ is f,f.__call__.__objclass__ is type(f))\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "composed-541",
+      "stage": "O90",
+      "source": "def f(): return 7\nclass A: x=type(f).__call__\ntry: A().x\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__call__' for 'function' objects doesn't apply to a 'A' object\n"
+    },
+    {
+      "id": "composed-542",
+      "stage": "O90",
+      "source": "def f(): return 7\nprint(f.__call__.__text_signature__,type(f).__get__.__text_signature__)\n",
+      "stdout": "($self, /, *args, **kwargs) ($self, instance, owner=None, /)\n"
+    },
+    {
+      "id": "composed-543",
+      "stage": "O90",
+      "source": "def f(): return 7\nfor name in [\"__doc__\",\"__name__\",\"__qualname__\",\"__objclass__\",\"__text_signature__\"]:\n try: setattr(f.__call__,name,7)\n except AttributeError: print(name)\n",
+      "stdout": "__doc__\n__name__\n__qualname__\n__objclass__\n__text_signature__\n"
+    },
+    {
+      "id": "diagnostic-544",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: int.__add__()\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__add__' of 'int' object needs an argument\n"
+    },
+    {
+      "id": "diagnostic-545",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: int.__add__([])\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__add__' requires a 'int' object but received a 'list'\n"
+    },
+    {
+      "id": "diagnostic-546",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: int.__add__(7)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "expected 1 argument, got 0\n"
+    },
+    {
+      "id": "diagnostic-547",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: int.__add__(7,2,3)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "expected 1 argument, got 2\n"
+    },
+    {
+      "id": "diagnostic-548",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: int.__add__(7,value=2)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "wrapper __add__() takes no keyword arguments\n"
+    },
+    {
+      "id": "diagnostic-549",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: list.__len__([],1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "expected 0 arguments, got 1\n"
+    },
+    {
+      "id": "diagnostic-550",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: list.__len__([],x=1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "wrapper __len__() takes no keyword arguments\n"
+    },
+    {
+      "id": "diagnostic-551",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: list.__getitem__()\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "unbound method list.__getitem__() needs an argument\n"
+    },
+    {
+      "id": "diagnostic-552",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: list.__getitem__(7,1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__getitem__' for 'list' objects doesn't apply to a 'int' object\n"
+    },
+    {
+      "id": "diagnostic-553",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: property.__get__()\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__get__' of 'property' object needs an argument\n"
+    },
+    {
+      "id": "diagnostic-554",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: property.__get__(7,None,int)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__get__' requires a 'property' object but received a 'int'\n"
+    },
+    {
+      "id": "diagnostic-555",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: type(len).__call__()\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__call__' of 'builtin_function_or_method' object needs an argument\n"
+    },
+    {
+      "id": "diagnostic-556",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: type(len).__call__(7)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__call__' requires a 'builtin_function_or_method' object but received a 'int'\n"
+    },
+    {
+      "id": "diagnostic-557",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: type(list.__len__).__call__(7)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__call__' requires a 'wrapper_descriptor' object but received a 'int'\n"
+    },
+    {
+      "id": "diagnostic-558",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: type(list.append).__call__(7)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "descriptor '__call__' requires a 'method_descriptor' object but received a 'int'\n"
+    },
+    {
+      "id": "diagnostic-559",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: type(f).__get__(f)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "__get__ expected at least 1 argument, got 0\n"
+    },
+    {
+      "id": "diagnostic-560",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: type(f).__get__(f,None)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "__get__(None, None) is invalid\n"
+    },
+    {
+      "id": "diagnostic-561",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: type(f).__get__(f,None,None)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "__get__(None, None) is invalid\n"
+    },
+    {
+      "id": "diagnostic-562",
+      "stage": "O90",
+      "source": "def f(): pass\ntry: type(f).__get__(f,7,8,9)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "__get__ expected at most 2 arguments, got 3\n"
+    },
+    {
+      "id": "method-constructor",
+      "stage": "O90",
+      "source": "class A:\n def f(self,x=7): return x\na=A()\nM=type(a.f)\nm=M(A.f,a)\nprint(m(9),m.__func__ is A.f,m.__self__ is a,m==a.f,hash(m)==hash(a.f))\nprint(M.__new__(M,A.f,a)(8))\n",
+      "stdout": "9 True True True True\n8\n"
+    },
+    {
+      "id": "method-custom-callable",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\nclass Call:\n def __call__(self,receiver,x=7): return receiver[0]+x\n def __eq__(self,other):\n  print(\"compare\")\n  return [7]\n def __hash__(self):\n  print(\"hash\")\n  return 99\nM=type(A().f)\na=[]\nm=M(Call(),a)\nn=M(Call(),a)\nprint(m==n,m.__eq__(n),m.__ne__(n))\nprint(hash(m)==m.__hash__())\n",
+      "stdout": "compare\ncompare\ncompare\nTrue True False\nhash\nhash\nTrue\n"
+    },
+    {
+      "id": "method-primitive-receiver",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\nM=type(A().f)\na=M(len,7)\nprint(hash(a)==a.__hash__(),a.__self__)\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "native-method-aliases",
+      "stage": "O90",
+      "source": "a=[]\nm=a.append\nn=list.append.__get__(a,list)\nprint(m==n,m.__eq__(n),hash(m)==hash(n),m.__self__ is a,n.__self__ is a)\nm(7)\nprint(a[0])\n",
+      "stdout": "True True True True True\n7\n"
+    },
+    {
+      "id": "native-hash-equality-families",
+      "stage": "O90",
+      "source": "class A:\n __slots__=(\"x\",\"__dict__\")\n def f(self): pass\na=A()\nfor value in [A.x,A.__dict__[\"__dict__\"],list.append,list.__len__,dict.__dict__[\"fromkeys\"],a.f,a.__dir__,[].append]:\n print(type(value).__name__,value.__eq__(value),value.__ne__(value),hash(value)==value.__hash__(),value.__eq__([]) is NotImplemented)\n",
+      "stdout": "member_descriptor True False True True\ngetset_descriptor True False True True\nmethod_descriptor True False True True\nwrapper_descriptor True False True True\nclassmethod_descriptor True False True True\nmethod True False True True\nbuiltin_function_or_method True False True True\nbuiltin_function_or_method True False True True\n"
+    },
+    {
+      "id": "object-ne-notimplemented",
+      "stage": "O90",
+      "source": "print(object.__ne__(7,[]) is NotImplemented,object.__ne__(7,7),object.__ne__(7,8))\n",
+      "stdout": "True False True\n"
+    },
+    {
+      "id": "display-int__repr__",
+      "stage": "O90",
+      "source": "value=7\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "display-int__str__",
+      "stage": "O90",
+      "source": "value=7\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "display-bool__repr__",
+      "stage": "O90",
+      "source": "value=True\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "display-bool__str__",
+      "stage": "O90",
+      "source": "value=True\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "display-float__repr__",
+      "stage": "Future",
+      "source": "value=7.0\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-float__str__",
+      "stage": "Future",
+      "source": "value=7.0\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-complex__repr__",
+      "stage": "Future",
+      "source": "value=7+0j\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-complex__str__",
+      "stage": "Future",
+      "source": "value=7+0j\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-str__repr__",
+      "stage": "O90",
+      "source": "value=\"abc\"\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "display-str__str__",
+      "stage": "O90",
+      "source": "value=\"abc\"\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "display-list__repr__",
+      "stage": "Future",
+      "source": "value=[7]\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-list__str__",
+      "stage": "Future",
+      "source": "value=[7]\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-tuple__repr__",
+      "stage": "Future",
+      "source": "value=(7,)\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-tuple__str__",
+      "stage": "Future",
+      "source": "value=(7,)\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-dict__repr__",
+      "stage": "Future",
+      "source": "value={7:8}\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-dict__str__",
+      "stage": "Future",
+      "source": "value={7:8}\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-set__repr__",
+      "stage": "Future",
+      "source": "value={7}\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-set__str__",
+      "stage": "Future",
+      "source": "value={7}\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n",
+      "owner": "#127"
+    },
+    {
+      "id": "display-bytes__repr__",
+      "stage": "O90",
+      "source": "value=b\"a\"\nprint(type(value).__repr__(value)==repr(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "display-bytes__str__",
+      "stage": "O90",
+      "source": "value=b\"a\"\nprint(type(value).__str__(value)==str(value))\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "method-diagnostic-26",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\nM=type(A().f)\ntry: M()\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "method expected 2 arguments, got 0\n"
+    },
+    {
+      "id": "method-diagnostic-27",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\nM=type(A().f)\ntry: M(len)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "method expected 2 arguments, got 1\n"
+    },
+    {
+      "id": "method-diagnostic-28",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\nM=type(A().f)\ntry: M(len,[])\nexcept TypeError as e: print(str(e))\n",
+      "stdout": ""
+    },
+    {
+      "id": "method-diagnostic-29",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\nM=type(A().f)\ntry: M(7,[])\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "first argument must be callable\n"
+    },
+    {
+      "id": "method-diagnostic-30",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\nM=type(A().f)\ntry: M(len,None)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "instance must not be None\n"
+    },
+    {
+      "id": "method-diagnostic-31",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\nM=type(A().f)\ntry: M(function=len,instance=[])\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "method() takes no keyword arguments\n"
+    },
+    {
+      "id": "primitive-power-modulus-return",
+      "stage": "O90",
+      "source": "print(int.__pow__(2,3,[]) is NotImplemented)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "primitive-power-modulus-errors",
+      "stage": "O90",
+      "source": "for value in [2.0,2j]:\n try: type(value).__pow__(value,3,5)\n except (TypeError,ValueError) as e: print(str(e))\n",
+      "stdout": "pow() 3rd argument not allowed unless all arguments are integers\ncomplex modulo\n"
+    },
+    {
+      "id": "native-bypass-overrides",
+      "stage": "O90",
+      "source": "class L(list):\n def __len__(self): raise ValueError(\"bad\")\n def __getitem__(self,key): raise ValueError(\"bad\")\n def __setitem__(self,key,value): raise ValueError(\"bad\")\na=L([7])\nprint(list.__len__(a),list.__getitem__(a,0))\nlist.__setitem__(a,0,9)\nprint(list.__getitem__(a,0))\n",
+      "stdout": "1 7\n9\n"
+    },
+    {
+      "id": "native-index-callback",
+      "stage": "O90",
+      "source": "class I:\n def __index__(self):\n  print(\"entered\")\n  return 0\nprint(list.__getitem__([7],I()))\n",
+      "stdout": "entered\n7\n"
+    },
+    {
+      "id": "native-dict-key-callback",
+      "stage": "O90",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  return 7\n def __eq__(self,other):\n  print(\"equal\")\n  return True\na={}\nx=K()\ndict.__setitem__(a,x,9)\nprint(dict.__getitem__(a,K()),dict.__contains__(a,K()))\ndict.__delitem__(a,K())\nprint(len(a))\n",
+      "stdout": "hash\nhash\nequal\nhash\nequal\n9 True\nhash\nequal\n0\n"
+    },
+    {
+      "id": "native-method-nested-hash",
+      "stage": "O90",
+      "source": "class A:\n def f(self): pass\na=A()\nM=type(a.f)\nleft=M(a.f,a)\nright=M(a.f,a)\nprint(left==right,hash(left)==hash(right),left.__hash__()==hash(left))\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "native-list-inplace",
+      "stage": "O90",
+      "source": "a=[7]\nb=list.__iadd__(a,[8])\nc=list.__imul__(a,2)\nprint(a is b,a is c,len(a),a[0],a[2])\n",
+      "stdout": "True True 4 7 7\n"
+    },
+    {
+      "id": "native-set-inplace",
+      "stage": "O90",
+      "source": "a={7}\nb=set.__ior__(a,{8})\nc=set.__iand__(a,{7})\nprint(a is b,a is c,len(a),7 in a)\n",
+      "stdout": "True True 1 True\n"
+    },
+    {
+      "id": "native-method-signature-0",
+      "stage": "O90",
+      "source": "try: list.__getitem__([])\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "list.__getitem__() takes exactly one argument (0 given)\n"
+    },
+    {
+      "id": "native-method-signature-1",
+      "stage": "O90",
+      "source": "try: list.__getitem__([],1,2)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "list.__getitem__() takes exactly one argument (2 given)\n"
+    },
+    {
+      "id": "native-method-signature-2",
+      "stage": "O90",
+      "source": "try: list.__getitem__([],key=1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "list.__getitem__() takes no keyword arguments\n"
+    },
+    {
+      "id": "native-method-signature-3",
+      "stage": "O90",
+      "source": "try: int.__round__(7,2,3)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "__round__ expected at most 1 argument, got 2\n"
+    },
+    {
+      "id": "native-method-signature-4",
+      "stage": "O90",
+      "source": "try: float.__round__(7.,ndigits=1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "float.__round__() takes no keyword arguments\n"
+    },
+    {
+      "id": "native-method-signature-5",
+      "stage": "O90",
+      "source": "try: property.__set_name__(property(),object)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "__set_name__() takes 2 positional arguments but 1 were given\n"
+    },
+    {
+      "id": "native-method-signature-6",
+      "stage": "O90",
+      "source": "try: object.__dir__(7,1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "object.__dir__() takes no arguments (1 given)\n"
+    },
+    {
+      "id": "native-cell-constructor",
+      "stage": "O90",
+      "source": "def outer():\n x=7\n return lambda:x\nC=type(outer().__closure__[0])\na=C.__new__(C,9)\nprint(a.cell_contents)\nb=C.__new__(C)\nprint(hasattr(b,\"cell_contents\"))\n",
+      "stdout": "9\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "native-getset-aliases",
+      "stage": "O90",
+      "source": "for owner,name,value in [(complex,\"real\",2+3j),(range,\"start\",range(3)),(slice,\"start\",slice(1,2))]:\n descriptor=owner.__dict__[name]\n print(descriptor.__get__(value,owner)==getattr(value,name))\n print(type(descriptor).__get__(descriptor,value,owner)==getattr(value,name))\n print(type(descriptor).__get__.__get__(descriptor)(value,owner)==getattr(value,name))\n",
+      "stdout": "True\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\n"
+    }
+  ]
+}

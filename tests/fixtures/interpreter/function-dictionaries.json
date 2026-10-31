@@ -8,7 +8,8 @@
     "O46",
     "O71",
     "O72",
-    "O73"
+    "O73",
+    "O90"
   ],
   "cases": [
     {
@@ -492,7 +493,7 @@
     },
     {
       "id": "method-native-get-deferred",
-      "stage": "Future",
+      "stage": "O90",
       "source": "def f(): return 7\nd=f.__dict__\nclass C:\n def read(self): pass\nC().read.__get__\n",
       "stdout": ""
     },

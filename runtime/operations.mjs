@@ -116,7 +116,12 @@ export function completion(kind, fields = {}) {
     case "frame-update-boundary": record = {kind, receiver: fields.receiver, inplace: fields.inplace, context: fields.context, after}; break;
     case "frame-write":
     case "function-capture":
+    case "native-not-equal":
+    case "native-method-hash":
     case "relay": case "subclass-result": case "vars-result": case "property-name": record = {kind, receiver: fields.receiver, after}; break;
+    case "native-method-compare":
+      record = {kind, receiver: fields.receiver, other: fields.other, invert: fields.invert === true, truth: fields.truth === true, depth: fields.depth, after};
+      depthCheck(record.depth); break;
     case "function-entry":
       record = {kind, receiver: fields.receiver, key: fields.key, operation: itemOperation(fields.operation), after}; break;
     case "instance-entry":
@@ -342,7 +347,10 @@ function visit(record) {
     case "frame-update-boundary": return [record.receiver, record.context, ...completionRoots(record.after)];
     case "frame-write":
     case "function-capture":
+    case "native-not-equal":
+    case "native-method-hash":
     case "relay": case "subclass-result": case "protocol-result": case "optional-truth": case "format-result": case "index-result": case "item-result": return [record.receiver, ...completionRoots(record.after)];
+    case "native-method-compare": return [record.receiver, record.other, ...completionRoots(record.after)];
     case "abstract-lookup": case "abstract-truth":
     case "hash-result": case "vars-result": case "property-name": case "dir-result": case "dir-iter": case "dir-sort":
     case "dir-compare": case "dir-truth": return [record.receiver, ...completionRoots(record.after)];

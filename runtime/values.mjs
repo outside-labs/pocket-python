@@ -479,6 +479,10 @@ export class ValueRuntime {
       if (item instanceof FrameLocalsValue || item instanceof InstanceValue || item instanceof ModuleValue && item.type instanceof ClassValue || item instanceof ClassValue && item.metaclass !== null || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
       if (item instanceof SetValue) { pending.push(...item.storage.entries.map(entry => entry.key)); continue; }
       if (item instanceof DictValue && item.ownedKeys) return true;
+      if (item instanceof BoundMethodValue && item.pythonMethod && !seen.has(item)) {
+        if (item.callable instanceof BoundMethodValue || item.callable instanceof AppendValue || item.callable instanceof ValueMethod) return true;
+        seen.add(item); pending.push(item.callable); continue;
+      }
       if (!(item instanceof ListValue || item instanceof TupleValue || item instanceof DictValue) || seen.has(item)) continue;
       seen.add(item); this.charge(1);
       pending.push(...(item instanceof DictValue ? item.entries.flatMap(entry => [entry.key, entry.value]) : item.items));
@@ -626,8 +630,19 @@ export class ValueRuntime {
         value instanceof ClassValue || value instanceof InstanceValue || value instanceof BoundMethodValue || value instanceof SuperValue || value instanceof PropertyValue || value instanceof MethodWrapperValue || value instanceof PropertyAccessorValue || value instanceof FrameValue || value instanceof FrameLocalsValue || value instanceof Cell || value instanceof CodeValue) return true;
     this.fail("TypeError", "Truthiness is outside the adopted values.");
   }
+  nativeMethodIdentity(value) {
+    if (value instanceof BoundMethodValue && !value.pythonMethod && value.callable instanceof BuiltinValue)
+      return [value.receiver, value.callable.name];
+    if (value instanceof AppendValue || value instanceof ValueMethod) {
+      const owner = value.receiver instanceof GeneratorValue ? "generator" : this.typeName(value.receiver);
+      return [value.receiver, owner + "." + value.name];
+    }
+    return null;
+  }
   equal(left, right, depth = 0) {
     this.depth(depth); this.charge(1);
+    const nativeLeft = this.nativeMethodIdentity(left), nativeRight = this.nativeMethodIdentity(right);
+    if (nativeLeft && nativeRight) return nativeLeft[0] === nativeRight[0] && nativeLeft[1] === nativeRight[1];
     if (left instanceof ClassNamespaceValue || right instanceof ClassNamespaceValue)
       return this.equal(left instanceof ClassNamespaceValue ? this.classNamespaceDictionary(left) : left,
         right instanceof ClassNamespaceValue ? this.classNamespaceDictionary(right) : right, depth + 1);
@@ -820,10 +835,12 @@ export class ValueRuntime {
     if (value instanceof FrameLocalsValue) this.fail("TypeError", "unhashable type: 'FrameLocalsProxy'");
     if (value instanceof ClassNamespaceValue) this.fail("TypeError", "unhashable type: 'mappingproxy'");
     if (value instanceof DictionaryViewValue && value.kind !== 1) this.fail("TypeError", "unhashable dictionary view");
+    const receiverHash = receiver => receiver === null ? this.pythonHash(null) : typeof receiver === "boolean" || typeof receiver === "bigint" ? this.objectId(receiver) : this.identityHash(receiver);
+    const native = this.nativeMethodIdentity(value);
+    if (native) return this.hashResult(receiverHash(native[0]) ^ (this.nativeCallableDescriptor ? this.identityHash(this.nativeCallableDescriptor(native[1])) :
+      BigInt('0x' + hashUnits(Array.from(native[1], char => char.codePointAt(0))))));
     if (value instanceof BoundMethodValue)
-      return this.hashResult(this.identityHash(value.callable) ^ this.identityHash(value.receiver));
-    if (value instanceof AppendValue || value instanceof ValueMethod)
-      return this.hashResult(this.identityHash(value.receiver) ^ BigInt('0x' + hashUnits(Array.from(value.name, char => char.codePointAt(0)))));
+      return this.hashResult(this.identityHash(value.callable) ^ receiverHash(value.receiver));
     if (value instanceof MemoryViewValue) {
       if (value.cachedHash !== null) return value.cachedHash;
       this.liveView(value);

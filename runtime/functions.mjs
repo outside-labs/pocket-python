@@ -866,7 +866,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           else if (["attribute-get", "module-get"].includes(op) && arg === "__dir__" && classes.hasFixedDirectory(receiver)) {
             if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Native directories require classes-source/1.");
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
-          } else if (receiver instanceof GeneratorValue) {
+          } else if (op === "attribute-get" && frame.pool.code.version === 5 && classes.hasNativeProtocol(receiver, arg))
+            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+          else if (receiver instanceof GeneratorValue) {
             if (["send", "throw", "close", "__iter__", "__next__"].includes(arg)) stack.push(allocate(ValueMethod, receiver, arg));
             else {
               if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires classes-source/1");
