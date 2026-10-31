@@ -8,7 +8,7 @@ import platform
 import subprocess
 
 from check_conformance import run_browser
-from check_functions import reference
+from check_classes import reference_case
 
 ROOT = Path(__file__).resolve().parent
 INVENTORY = ROOT.parent / 'docs/interpreter-compatibility.json'
@@ -49,8 +49,8 @@ def read_inventory():
 def check(target, channel=None):
     inventory, corpus = read_inventory()
     assert platform.python_version() == corpus['reference_version'], 'Oracle changes require an explicit version decision.'
-    requests = [{'id': case['id'], 'modules': [{'name': 'app', 'package': False, 'imports': [],
-        'notice': 'Synthetic coverage probe notice\n', 'source': case['source']}],
+    requests = [{'id': case['id'], 'modules': [{'name': 'app', 'package': False, 'imports': case.get('imports', []),
+        'notice': 'Synthetic coverage probe notice\n', 'source': case['source']}, *[{**module, 'notice': 'Synthetic compatibility helper\n'} for module in case.get('modules', [])]],
         'compileOptions': {'languageProfile': corpus['language_profile']},
         'options': {'maxSteps': 50000, 'maxWork': 20000000}} for case in corpus['cases']]
     if target == 'node':
@@ -64,7 +64,7 @@ def check(target, channel=None):
     records = []
     for case in corpus['cases']:
         expected, result = case['reference'], actual[case['id']]
-        oracle = reference(case['source'], 'sources/app.py')
+        oracle = reference_case(case)
         reference_ok = oracle['stdout'] == expected['stdout'] and oracle['ok'] == (expected['error_type'] is None)
         if expected['error_type']:
             reference_ok = reference_ok and oracle['error']['type'] == expected['error_type']

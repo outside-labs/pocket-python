@@ -1049,8 +1049,8 @@
     {
       "id": "imports",
       "status": "partial",
-      "scope": "Static absolute/relative imports from a finite granted source registry, packages, identity/cache, initialization order, cycles and failed-init retry.",
-      "gaps": "No ambient filesystem/sys.path/PyPI loader, dynamic __import__ or import hooks. Missing grants raise IMPORT/ImportError; that is an authority boundary, not proof of a missing language API.",
+      "scope": "Static absolute/relative imports from a finite granted source registry, packages, identity/cache, initialization order, cycles and failed-init retry. O94 adds dynamically selected granted names, the exact __import__ interface, captured import-callable lookup and package/fromlist callbacks.",
+      "gaps": "Registry-only imports retain the existing direct initialization-cycle boundary. Ambient filesystem/network/sys.path loaders, wildcard import statements and broader importlib hooks remain separate library/authority contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1064,7 +1064,10 @@
       "evidence": [
         "tests/fixtures/interpreter/modules.json:relative-imports",
         "tests/fixtures/interpreter/modules.json:failed-init-retry",
-        "tests/fixtures/interpreter/modules.json:dotted-alias-package-shadow"
+        "tests/fixtures/interpreter/modules.json:dotted-alias-package-shadow",
+        "tests/fixtures/interpreter/dynamic-imports.json:dotted-root",
+        "tests/fixtures/interpreter/dynamic-imports.json:fromlist-order",
+        "tests/fixtures/interpreter/dynamic-imports.json:implicit-custom-callable"
       ]
     },
     {
@@ -1180,8 +1183,8 @@
     {
       "id": "dynamic-code-reflection",
       "status": "partial",
-      "scope": "Owned reflection and identity, live module/class/function/wrapper namespaces, function defaults/namespaces, verified code/cells, generator/source-frame metadata and optimized frame-local proxies in classes-source/1. O91\u2013O93 add bounded compile, owned eval/exec, exact namespaces, closure-cell execution and shared total limits.",
-      "gaps": "Dynamic import calls remain O94. AST/future/async, raw CPython/JavaScript executable interchange, frame tracing/jumping and grammar outside the admitted profile retain their explicit owners/boundaries.",
+      "scope": "Owned reflection and identity, live module/class/function/wrapper namespaces, function defaults/namespaces, verified code/cells, generator/source-frame metadata and optimized frame-local proxies in classes-source/1. O91\u2013O93 add bounded compile, owned eval/exec, exact namespaces, closure-cell execution and shared total limits. O94 admits dynamic names within exact registry grants and captured import callables.",
+      "gaps": "AST/future/annotation/async modes, raw CPython/JavaScript executable interchange, frame tracing/jumping, ambient loaders and source grammar outside the admitted profile retain their explicit owners/boundaries.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1814,7 +1817,8 @@
         "tests/fixtures/interpreter/class-mapping-proxies.json:union-key-identities",
         "tests/fixtures/interpreter/dynamic-compile.json:mode-exec",
         "tests/fixtures/interpreter/dynamic-eval.json:explicit-namespaces",
-        "tests/fixtures/interpreter/dynamic-exec.json:closure-cells"
+        "tests/fixtures/interpreter/dynamic-exec.json:closure-cells",
+        "tests/fixtures/interpreter/dynamic-imports.json:dynamic-exec"
       ]
     },
     {
@@ -5201,9 +5205,9 @@
     },
     {
       "id": "__import__",
-      "status": "deferred",
-      "scope": "Not installed; resolving this builtin name raises Python NameError.",
-      "gaps": "No implementation/API support credit from the negative availability probe.",
+      "status": "partial",
+      "scope": "O94 exact dynamic import signature and captured import-callable lookup within the caller code pool registry grants, package/relative resolution, lazy fromlists, cache/identity and failed-initialization retry.",
+      "gaps": "Ambient filesystem/network/sys.path loaders and broader importlib hooks remain unavailable. Registry module names are bounded ASCII, relative levels are bounded to 32, and the existing direct initialization-cycle refusal remains explicit.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -5215,7 +5219,11 @@
       "probes": [
         "builtin-__import__"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/interpreter/dynamic-imports.json:absolute",
+        "tests/fixtures/interpreter/dynamic-imports.json:relative-package",
+        "tests/fixtures/interpreter/dynamic-imports.json:failed-init-retry"
+      ]
     }
   ],
   "work_packages": [

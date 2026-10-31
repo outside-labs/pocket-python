@@ -1,3 +1,4 @@
+import {dynamicImporter} from "./dynamic-imports.mjs";
 import {dynamicEvaluator} from "./dynamic-evaluation.mjs";
 import {dynamicCompiler} from "./dynamic-source.mjs";
 import {NATIVE_SUBCLASS_BASES} from "./class-values.mjs";
@@ -25,6 +26,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const compiler = dynamicCompiler({state, memory, values, classes, allocate, charge, python, hard});
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
+  const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
   const userProtocol = value => classes.protocolObject(value);
   const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
   const methodCompare = (receiver, other, invert, site, after, depth) => {
@@ -704,6 +706,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         python("TypeError", "type checking requires a class or an object with tuple __bases__");
       if (current.kind === "bases-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
       if (current.kind === "class-prepare-lookup" && value.name === "AttributeError") return valueTask(values.dict([]), site, continuation("class-prepare-result", current));
+      if (current.kind === "import-fromlist-path" && value.name === "AttributeError") return importer.done(current, site);
+      if (current.kind === "import-next" && value.name === "StopIteration") return importer.exhausted(current, site);
+      if (current.kind === "import-member" && value.name === "AttributeError") return importer.missing(current, site);
+      if (current.kind === "import-all-probe" && value.name === "AttributeError") return importer.next(current, site);
       if (current.kind === "class-mapping-name" && value.name === "KeyError") return valueTask(null, site, continuation("class-mapping-fallback", current));
       if (current.kind === "class-mapping-delete" && value.name === "KeyError") return unaryTask("class-delete-missing", current.receiver, site, current.after);
       if (current.kind === "class-base-lookup" && value.name === "AttributeError")
@@ -713,7 +719,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "global-mapping-name" && value.name === "KeyError") {
         const result = builtinLookup(state.frames.at(-1), current.name, site, current.after); return result.task || valueTask(result.value, site, current.after);
       }
-      if (current.kind === "builtin-mapping-name" && value.name === "KeyError") python("NameError", "name '" + current.name + "' is not defined");
+      if (current.kind === "builtin-mapping-name" && value.name === "KeyError") python(current.name === "__import__" && current.after?.kind === "import-statement-call" ? "ImportError" : "NameError", "name '" + current.name + "' is not defined");
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
@@ -863,7 +869,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (["global-mapping-name", "builtin-mapping-name"].includes(completion?.kind)) return valueTask(value, site, completion.after);
     if (completion?.kind === "builtin-name") {
-      if (!value.items[0]) python("NameError", "name '" + completion.name + "' is not defined");
+      if (!value.items[0]) python(completion.name === "__import__" && completion.after?.kind === "import-statement-call" ? "ImportError" : "NameError", "name '" + completion.name + "' is not defined");
       return valueTask(value.items[1], site, completion.after);
     }
     if (completion?.kind === "name-stored") return null;
@@ -1404,6 +1410,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const parts = [...completion.parts]; parts[[2, 0, 1][completion.position]] = value;
       return sliceNext(completion.receiver, parts, completion.position, site, completion.after, completion.depth, completion.operation, completion.item);
     }
+    if (completion?.kind?.startsWith("import-")) return importer.resume(completion, value, site);
     if (completion?.kind === "exec-return") return valueTask(null, site, completion.after);
     if (["eval-locals", "eval-builtins-probe", "eval-builtins-default", "eval-builtins-stored"].includes(completion?.kind)) return evaluator.resume(completion, value, site);
     if (completion?.kind === "single-display") { write(values.text(value) + "\n"); return valueTask(null, site, completion.after); }
@@ -2386,6 +2393,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (callable instanceof BuiltinValue) {
           if (["eval", "exec"].includes(callable.name)) { task = evaluator.start(callable.name, args, keywords, keywordValues, site, completion); continue; }
+          if (callable.name === "__import__") { task = importer.start(args, keywords, keywordValues, site, completion); continue; }
           if (callable.name === "compile") { task = compiler.start(args, keywords, keywordValues, site, completion); continue; }
           if (["getset_descriptor", "member_descriptor"].includes(callable.nativeKind)) python("TypeError", "Storage descriptor objects are not callable");
           const nativeKind = callable.nativeKind ?? classes.nativeDescriptorKind(callable);
@@ -3424,5 +3432,5 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
-  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass});
+  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement: importer.statement});
 }

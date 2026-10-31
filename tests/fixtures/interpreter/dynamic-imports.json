@@ -1,0 +1,2256 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-dynamic-imports/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "O94"
+  ],
+  "cases": [
+    {
+      "id": "absolute",
+      "stage": "O94",
+      "source": "name=\"hel\"+\"per\"\na=__import__(name)\nb=__import__(\"helper\")\nprint(a is b,a.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "helper\nTrue 7\n"
+    },
+    {
+      "id": "keyword-signature",
+      "stage": "O94",
+      "source": "print(__import__(name=\"helper\",globals=7,locals=9,fromlist=(),level=0).x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "helper\n7\n"
+    },
+    {
+      "id": "positional-signature",
+      "stage": "O94",
+      "source": "print(__import__(\"helper\",7,9,[\"x\"],0).x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "helper\n7\n"
+    },
+    {
+      "id": "dotted-root",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg.sub.worker\")\nprint(m.__name__,m.sub.worker.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nsub\nworker\npkg 11\n"
+    },
+    {
+      "id": "dotted-fromlist",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg.sub.worker\",fromlist=[\"x\"])\nprint(m.__name__,m.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nsub\nworker\npkg.sub.worker 11\n"
+    },
+    {
+      "id": "fromlist-child",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg\",fromlist=[\"child\"])\nprint(m.__name__,m.child.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\npkg 9\n"
+    },
+    {
+      "id": "fromlist-existing",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg\",fromlist=[\"x\"])\nprint(m.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\n7\n"
+    },
+    {
+      "id": "fromlist-missing",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg\",fromlist=[\"missing\"])\nprint(m.__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\npkg\n"
+    },
+    {
+      "id": "nonpackage-fromlist",
+      "stage": "O94",
+      "source": "print(__import__(\"helper\",fromlist=7).x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "helper\n7\n"
+    },
+    {
+      "id": "false-fromlist",
+      "stage": "O94",
+      "source": "class FalseList:\n def __bool__(self):\n  print(\"truth\")\n  return False\nprint(__import__(\"pkg.child\",fromlist=FalseList()).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\ntruth\npkg\n"
+    },
+    {
+      "id": "fromlist-order",
+      "stage": "O94",
+      "source": "class Names:\n def __iter__(self):\n  print(\"first\")\n  yield \"child\"\n  print(\"second\")\n  yield \"x\"\nprint(__import__(\"pkg\",fromlist=Names()).child.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nfirst\nchild\nsecond\n9\n"
+    },
+    {
+      "id": "fromlist-invalid",
+      "stage": "O94",
+      "source": "try: __import__(\"pkg\",fromlist=[7])\nexcept TypeError: print(\"type\")\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\ntype\n"
+    },
+    {
+      "id": "fromlist-generator-error",
+      "stage": "O94",
+      "source": "def names():\n yield \"child\"\n raise ValueError(\"names\")\ntry: __import__(\"pkg\",fromlist=names())\nexcept ValueError as e: print(str(e))\nprint(__import__(\"pkg\").child.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\nnames\n9\n"
+    },
+    {
+      "id": "fromlist-star",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg\",fromlist=[\"*\"])\nprint(m.child.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n__all__=[\"child\"]\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\n9\n"
+    },
+    {
+      "id": "star-no-all",
+      "stage": "O94",
+      "source": "print(__import__(\"pkg\",fromlist=[\"*\"]).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\npkg\n"
+    },
+    {
+      "id": "all-recursive-star",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg\",fromlist=[\"*\"])\nprint(m.child.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n__all__=[\"*\",\"child\"]\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\n9\n"
+    },
+    {
+      "id": "module-getattr-fromlist",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg\",fromlist=[\"virtual\"])\nprint(m.virtual)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\ndef __getattr__(name):\n print(\"getattr\",name)\n if name==\"virtual\": return 13\n raise AttributeError(name)\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\ngetattr virtual\ngetattr virtual\n13\n"
+    },
+    {
+      "id": "relative-package",
+      "stage": "O94",
+      "source": "g={\"__package__\":\"pkg\"}\nm=__import__(\"child\",g,None,[\"x\"],1)\nprint(m.__name__,m.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\npkg.child 9\n"
+    },
+    {
+      "id": "relative-empty-name",
+      "stage": "O94",
+      "source": "g={\"__package__\":\"pkg\"}\nm=__import__(\"\",g,None,[\"child\"],1)\nprint(m.__name__,m.child.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\npkg 9\n"
+    },
+    {
+      "id": "relative-dotted-root",
+      "stage": "O94",
+      "source": "m=__import__(\"sub.worker\",{\"__package__\":\"pkg\"},None,(),1)\nprint(m.__name__,m.worker.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nsub\nworker\npkg.sub 11\n"
+    },
+    {
+      "id": "relative-parent",
+      "stage": "O94",
+      "source": "m=__import__(\"child\",{\"__package__\":\"pkg.sub\"},None,[\"x\"],2)\nprint(m.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\n9\n"
+    },
+    {
+      "id": "relative-name-fallback",
+      "stage": "O94",
+      "source": "m=__import__(\"child\",{\"__name__\":\"pkg.app\"},None,[\"x\"],1)\nprint(m.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\n9\n"
+    },
+    {
+      "id": "relative-path-fallback",
+      "stage": "O94",
+      "source": "m=__import__(\"child\",{\"__name__\":\"pkg\",\"__path__\":[]},None,[\"x\"],1)\nprint(m.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\n9\n"
+    },
+    {
+      "id": "relative-spec",
+      "stage": "O94",
+      "source": "class Spec:\n @property\n def parent(self):\n  print(\"parent\")\n  return \"pkg\"\nprint(__import__(\"child\",{\"__spec__\":Spec()},None,[\"x\"],1).x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "parent\npkg\nchild\n9\n"
+    },
+    {
+      "id": "relative-package-and-spec",
+      "stage": "O94",
+      "source": "class Spec:\n @property\n def parent(self):\n  print(\"parent\")\n  return \"pkg\"\nprint(__import__(\"child\",{\"__package__\":\"pkg\",\"__spec__\":Spec()},None,[\"x\"],1).x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "parent\npkg\nchild\n9\n"
+    },
+    {
+      "id": "level-callback",
+      "stage": "O94",
+      "source": "class Level:\n def __index__(self):\n  print(\"level\")\n  return 0\nprint(__import__(\"helper\",level=Level()).x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "level\nhelper\n7\n"
+    },
+    {
+      "id": "cache-implicit-explicit",
+      "stage": "O94",
+      "source": "a=__import__(\"pkg.child\",fromlist=[\"x\"])\nfrom pkg import child\nprint(a is child)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\nTrue\n"
+    },
+    {
+      "id": "dynamic-eval",
+      "stage": "O94",
+      "source": "print(eval(\"__import__('helper').x\"))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "helper\n7\n"
+    },
+    {
+      "id": "dynamic-exec",
+      "stage": "O94",
+      "source": "g={}\nexec(\"import helper\\nresult=helper.x\",g)\nprint(g[\"result\"])\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "helper\n7\n"
+    },
+    {
+      "id": "compiled-relative-import",
+      "stage": "O94",
+      "source": "g={\"__package__\":\"pkg\"}\nexec(compile(\"from .child import x\",\"relative.py\",\"exec\"),g)\nprint(g[\"x\"])\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "pkg\nchild\n9\n"
+    },
+    {
+      "id": "implicit-global-shadow",
+      "stage": "O94",
+      "source": "def wrong(*args): raise ValueError(\"wrong\")\n__import__=wrong\nimport helper\nprint(helper.x)\ntry: __import__(\"helper\")\nexcept ValueError: print(\"explicit shadow\")\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "helper\n7\nexplicit shadow\n"
+    },
+    {
+      "id": "implicit-custom-callable",
+      "stage": "O94",
+      "source": "class Result:\n x=7\ndef custom(name,g,l,fromlist,level):\n print(name,g is ns,l is local,*fromlist,level)\n return Result\nns={\"__builtins__\":{\"__import__\":custom}}\nlocal={}\nexec(\"from chosen import x\",ns,local)\nprint(local[\"x\"])\n",
+      "modules": [],
+      "imports": [],
+      "stdout": "chosen True True x 0\n7\n"
+    },
+    {
+      "id": "implicit-function-locals",
+      "stage": "O94",
+      "source": "def custom(name,g,l,fromlist,level):\n print(name,g is ns,l is None,fromlist is None,level)\n return 9\nns={\"__builtins__\":{\"__import__\":custom}}\nexec(\"def f(x):\\n import chosen\\n return chosen\",ns)\nprint(ns[\"f\"](7))\n",
+      "modules": [],
+      "imports": [],
+      "stdout": "chosen True True True 0\n9\n"
+    },
+    {
+      "id": "implicit-captured-builtins",
+      "stage": "O94",
+      "source": "def custom(*args):\n print(\"captured\")\n return 7\nns={\"__builtins__\":{\"__import__\":custom}}\nexec(\"def f():\\n import chosen\\n return chosen\",ns)\nns[\"__builtins__\"]={}\nprint(ns[\"f\"]())\n",
+      "modules": [],
+      "imports": [],
+      "stdout": "captured\n7\n"
+    },
+    {
+      "id": "implicit-missing-builtin",
+      "stage": "O94",
+      "source": "try: exec(\"import chosen\",{\"__builtins__\":{}})\nexcept ImportError: print(\"missing import callable\")\n",
+      "modules": [],
+      "imports": [],
+      "stdout": "missing import callable\n"
+    },
+    {
+      "id": "implicit-callback-error",
+      "stage": "O94",
+      "source": "def custom(*args):\n print(\"callback\")\n raise ValueError(\"failed\")\ntry: exec(\"import chosen\",{\"__builtins__\":{\"__import__\":custom}})\nexcept ValueError as e: print(str(e))\n",
+      "modules": [],
+      "imports": [],
+      "stdout": "callback\nfailed\n"
+    },
+    {
+      "id": "failed-init-retry",
+      "stage": "O94",
+      "source": "import state\nfor i in [7,9]:\n try: __import__(\"bad\")\n except ValueError as e: print(str(e),len(state.calls))\n",
+      "modules": [
+        {
+          "name": "state",
+          "package": false,
+          "imports": [],
+          "source": "calls=[]\n"
+        },
+        {
+          "name": "bad",
+          "package": false,
+          "imports": [
+            "state"
+          ],
+          "source": "import state\nstate.calls.append(7)\nraise ValueError(\"bad\")\n"
+        }
+      ],
+      "imports": [
+        "state",
+        "bad"
+      ],
+      "stdout": "bad 1\nbad 2\n"
+    },
+    {
+      "id": "relative-package-initializing",
+      "stage": "O94",
+      "source": "m=__import__(\"pkg\",fromlist=[\"child\"])\nprint(m.child.x)\n",
+      "modules": [
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [
+            "pkg.child"
+          ],
+          "source": "child=__import__(\"child\",globals(),None,[\"x\"],1)\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "x=9\n"
+        }
+      ],
+      "imports": [
+        "pkg",
+        "pkg.child"
+      ],
+      "stdout": "9\n"
+    },
+    {
+      "id": "missing",
+      "stage": "O94",
+      "source": "try: __import__()\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "duplicate",
+      "stage": "O94",
+      "source": "try: __import__(\"helper\",name=\"helper\")\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "too-many",
+      "stage": "O94",
+      "source": "try: __import__(\"helper\",None,None,(),0,7)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "unknown",
+      "stage": "O94",
+      "source": "try: __import__(\"helper\",other=7)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "name-type",
+      "stage": "O94",
+      "source": "try: __import__(7)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "empty-name",
+      "stage": "O94",
+      "source": "try: __import__(\"\")\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "ValueError\n"
+    },
+    {
+      "id": "level-negative",
+      "stage": "O94",
+      "source": "try: __import__(\"helper\",level=-1)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "ValueError\n"
+    },
+    {
+      "id": "level-type",
+      "stage": "O94",
+      "source": "try: __import__(\"helper\",level=1.5)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "level-overflow",
+      "stage": "O94",
+      "source": "try: __import__(\"helper\",level=2**40)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "relative-globals",
+      "stage": "O94",
+      "source": "try: __import__(\"child\",level=1)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "KeyError\n"
+    },
+    {
+      "id": "relative-package-type",
+      "stage": "O94",
+      "source": "try: __import__(\"child\",{\"__package__\":7},level=1)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "relative-no-name",
+      "stage": "O94",
+      "source": "try: __import__(\"child\",{},level=1)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "KeyError\n"
+    },
+    {
+      "id": "relative-name-type",
+      "stage": "O94",
+      "source": "try: __import__(\"child\",{\"__name__\":7},level=1)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "relative-empty-package",
+      "stage": "O94",
+      "source": "try: __import__(\"child\",{\"__package__\":\"\"},level=1)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "ImportError\n"
+    },
+    {
+      "id": "relative-too-far",
+      "stage": "O94",
+      "source": "try: __import__(\"child\",{\"__package__\":\"pkg\"},level=2)\nexcept (TypeError,ValueError,OverflowError,ImportError,KeyError) as e: print(type(e).__name__)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        },
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "print(\"pkg\")\nx=7\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "print(\"child\")\nx=9\n"
+        },
+        {
+          "name": "pkg.sub",
+          "package": true,
+          "imports": [],
+          "source": "print(\"sub\")\n"
+        },
+        {
+          "name": "pkg.sub.worker",
+          "package": false,
+          "imports": [],
+          "source": "print(\"worker\")\nx=11\n"
+        }
+      ],
+      "imports": [
+        "helper",
+        "pkg",
+        "pkg.child",
+        "pkg.sub",
+        "pkg.sub.worker"
+      ],
+      "stdout": "ImportError\n"
+    },
+    {
+      "id": "implicit-none-builtins",
+      "stage": "O94",
+      "source": "try: exec(\"import chosen\",{\"__builtins__\":None})\nexcept TypeError: print(\"invalid builtins\")\n",
+      "modules": [],
+      "imports": [],
+      "stdout": "invalid builtins\n"
+    },
+    {
+      "id": "level-none",
+      "stage": "O94",
+      "source": "try: __import__(\"helper\",level=None)\nexcept TypeError: print(\"invalid level\")\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "invalid level\n"
+    },
+    {
+      "id": "nonpackage-path-hook",
+      "stage": "O94",
+      "source": "m=__import__(\"helper\",fromlist=[\"x\"])\nprint(m.x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\ndef __getattr__(name):\n print(\"getattr\",name)\n raise AttributeError(name)\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "helper\ngetattr __path__\n7\n"
+    },
+    {
+      "id": "fromlist-string-subtype",
+      "stage": "O94",
+      "source": "class Name(str): pass\nname=Name(\"virtual\")\nm=__import__(\"helper\")\nm.query=name\nprint(__import__(\"helper\",fromlist=[name]).x)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "print(\"helper\")\nx=7\n__path__=[]\ndef __getattr__(name):\n if name==\"virtual\":\n  print(name is query)\n  return 13\n raise AttributeError(name)\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "helper\nTrue\n7\n"
+    },
+    {
+      "id": "relative-live-namespace",
+      "stage": "O94",
+      "source": "g={\"__package__\":\"pkg\"}\nexec(\"from .child import x\",g)\nprint(g[\"x\"])\n",
+      "modules": [
+        {
+          "name": "pkg",
+          "package": true,
+          "imports": [],
+          "source": "pass\n"
+        },
+        {
+          "name": "pkg.child",
+          "package": false,
+          "imports": [],
+          "source": "x=9\n"
+        }
+      ],
+      "imports": [
+        "pkg",
+        "pkg.child"
+      ],
+      "stdout": "9\n"
+    }
+  ]
+}

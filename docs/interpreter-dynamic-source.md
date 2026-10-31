@@ -128,3 +128,62 @@ accounting applies. The source corpus covers statements, code modes, distinct
 namespaces, snapshots/proxies, callbacks, documents/optimization, retained
 classes/functions, closure validation and failure effects across all six source
 drivers and the installed offline console.
+
+## O94: imports within registry grants
+
+`__import__(name, globals=None, locals=None, fromlist=(), level=0)` accepts its
+five positional/keyword arguments, rejecting duplicates, unknown keywords and
+surplus/missing arguments. Name accepts str and its admitted native payload
+subtypes. Level uses owned __index__ with signed 32-bit validation, rejects
+negative values, and retains the registry's maximum relative depth of 32.
+Absolute imports ignore globals/locals. Relative imports read the supplied dict
+through owned key probes: __package__, __spec__.parent, or __name__/__path__
+fallbacks. None uses an empty namespace, with the pinned missing-name error;
+other non-dicts raise TypeError. Locals is passed through and ignored by the
+native importer. ImportWarning emission belongs to the unadopted warnings API
+under #126; specification parent lookups still execute their owned callbacks.
+
+Names resolve only through the calling executable pool's original module grant.
+Changing globals, borrowing another module dictionary or passing a captured
+builtin cannot widen that grant, even if the target is already cached. Names
+retain the registry's bounded ASCII/dotted format and exact module edges.
+Package parents initialize in order, cache aliases retain identity, initialized
+parents can participate in child initialization, and failed initializations can
+retry. The existing direct initialization-cycle refusal remains explicit.
+Ambient filesystem, network, sys.path searches and importlib hooks are absent.
+
+A false fromlist returns the correct absolute root or relative prefix; a true
+fromlist returns the requested module. Owned __path__ lookup determines whether
+to process a package fromlist, including module __getattr__ effects. Package
+namespaces include a logical __path__ list; its strings never authorize a loader.
+Fromlists are consumed lazily, preserving iteration/mutation, callback errors,
+child-load order, optional missing children and bounded __all__ expansion for
+'*'. Supplied children require their exact caller grant. At most 1,024 fromlist
+items are visited. Nonpackage fromlists retain their native validation timing.
+
+Source import statements resolve the captured builtin __import__ callable and
+pass the actual name, globals, locals, fromlist and level. Global shadowing does
+not replace that captured callable. Module/class/dynamic locals retain exact
+identity; optimized function imports pass None, as in the pinned reference.
+Plain imports pass a None fromlist and from-imports pass their exact name tuple.
+Callbacks, arbitrary callback results, missing/noncallable entries and errors
+use the ordinary machine. Version-5 source import records carry a verifier-checked
+fromlist; legacy records without this operand retain their previous native
+interface, as do the frozen version-3/4 bytecode contracts.
+
+`execution-accounting/18` records source import operands, owned namespace
+preparation and rooted module-load continuations. All eight composed instruction
+counts remain unchanged. Four import observations add 4,403 / 62,514 / 11,254 /
+6,375 work units and 677 / 803 / 515 / 330 retained bytes respectively; the other
+four observations are unchanged. Revision 17 remains in accounting_17_cases.
+Cancellation checks target an observable entered-module state rather than a
+fixed number of earlier preparation polls. No teardown runs Python callbacks.
+
+The dynamic-imports corpus runs through all six source drivers. Units separately
+verify grant denial, borrowed-global/cache isolation, the direct-cycle boundary,
+parked child initialization, cancellation/close and shared instruction/work
+limits. Installed offline acceptance composes dynamic compile/eval/exec with the
+already selected operator/1 registry; it adds no library grant. Stop/Restart and
+profile reduction retain the existing application contract. The example
+[interpreter_dynamic_source.py](../examples/interpreter_dynamic_source.py) uses
+classes-source/1 with operator/1.

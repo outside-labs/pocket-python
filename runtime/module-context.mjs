@@ -117,6 +117,10 @@ export class ModuleContext {
       const values = new ValueRuntime({memory: this.memory, charge: amount => this.charge(amount)});
       for (const [key, text] of Object.entries({__name__: name, __package__: record.package ? name : name.split(".").slice(0, -1).join("."),
         __file__: (record.source || record.bytecode).path})) this.binding(environment, key, values.string(Array.from(text, char => char.codePointAt(0))));
+      if (record.package) {
+        const path = values.string(Array.from("sources/" + name.replaceAll(".", "/"), char => char.codePointAt(0))); roots.push(path);
+        const paths = values.list([path]); roots.push(paths); this.binding(environment, "__path__", paths);
+      }
       return {module, ready: false, program: this.registry.program(name), abort,
         complete: () => {
           if (closed) throw new TypeError("Module initialization already settled.");

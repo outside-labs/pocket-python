@@ -1600,18 +1600,27 @@
     },
     {
       "id": "builtin-__import__",
-      "source": "print(callable(__import__))\n",
-      "classification": "deferred",
+      "source": "print(__import__(\"helper\").value)\n",
+      "classification": "supported",
       "reference": {
-        "stdout": "True\n",
+        "stdout": "7\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": "NameError",
-        "code": "PYTHON",
-        "phase": "execute"
-      }
+        "stdout": "7\n",
+        "error_type": null
+      },
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "source": "value=7\n",
+          "package": false,
+          "imports": []
+        }
+      ]
     },
     {
       "id": "contains-hook",

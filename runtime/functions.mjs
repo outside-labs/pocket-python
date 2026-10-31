@@ -36,7 +36,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       entryCall.callable.pool.module !== module || !Array.isArray(entryCall.arguments) || entryCall.arguments.length > 128))
     throw new TypeError("Invalid module callback entry.");
   const state = {frames: [], outputLeases: [], builtins: new Map(), pool: null, globals: null,
-    transactions: [], temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null, pendingImport: null,
+    transactions: [], temporaries: [], steps: 0, work: 0, outputLength: 0, current: null, result: null, rootLeave: null, pendingImport: null, importCompletion: null, importSite: null,
     transitions: moduleContext?.transitions || Object.create(null)};
   const hard = (code, name, message) => {
     const error = new ExecutionError(code, name, message, state.current?.instruction ?? null, null);
@@ -111,7 +111,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (frame.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
     if (builtinNames.has(key) || (moduleContext && ["isinstance", "bool", "iter", "next"].includes(key)) ||
         (frame.pool.code.version >= 4 && ["memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord"].includes(key)) ||
-        (frame.pool.code.version === 5 && ["exec", "eval", "compile", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
+        (frame.pool.code.version === 5 && ["__import__", "exec", "eval", "compile", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed"].includes(key))) {
       if (moduleContext) return moduleContext.builtin(key, () => allocate(BuiltinValue, key));
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
@@ -167,7 +167,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     let dictionary = namespace instanceof Environment ? namespace.dictionary : namespace;
     if (namespace instanceof Environment && namespace !== moduleContext?.defaultBuiltins && dictionary === null) dictionary = values.environmentDictionary(namespace);
     if ((namespace === null || namespace === undefined) && frame.callable.builtins === undefined || dictionary === null && namespace instanceof Environment || frame.pool.code.version < 5)
-      return {value: load(frame, name, true)};
+      return {value: name === "__import__" && frame.pool.code.version === 5 ? nativeBuiltin(name) : load(frame, name, true)};
     const key = values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
     return {task: values.isDict(dictionary) ? dictionaryTask(dictionary, key, site, continuation("builtin-name", {receiver: dictionary, name, after}), 0, "probe") : itemTask(dictionary, key, site, continuation("builtin-mapping-name", {receiver: dictionary, name, after}))};
   };
@@ -392,7 +392,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       generator.bindings.clear(); return value;
     } finally { leave(); }
   };
-  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass} = operationRuntime({state, memory, values, classes,
+  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
     setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
@@ -736,7 +736,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const start = () => {
     if (entryCall) state.temporaries.push(entryCall.callable);
-    state.rootLeave = memory.enter(() => [state.pool, state.globals, inheritedException, ...state.builtins.values(), ...state.temporaries, ...state.transactions], {charge, fail: hard});
+    state.rootLeave = memory.enter(() => [state.pool, state.globals, inheritedException, ...state.builtins.values(), ...state.temporaries, ...state.transactions, ...completionRoots(state.importCompletion)], {charge, fail: hard});
     if (entryCall) {
       state.pool = entryCall.callable.pool; state.globals = module.environment;
       const args = entryCall.arguments.map(record => values.decode(record, {retain: value => state.temporaries.push(value)}));
@@ -855,10 +855,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
         const owner = frame.pool.module;
         if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
-        if (op === "import") state.pendingImport = {plan: moduleContext.planLoad(owner.name, arg, extra, fourth),
-          inheritedException: frame.activeException};
+        if (op === "import") {
+          if (frame.pool.code.version === 5 && fifth !== undefined) dispatch(importStatement(arg, extra, fifth, summary(frame, cursor)));
+          else state.pendingImport = {plan: moduleContext.planLoad(owner.name, arg, extra, fourth), inheritedException: frame.activeException};
+        }
         else {
           const receiver = stack.pop();
+          if (op === "import-from" && frame.pool.code.version === 5 && !(receiver instanceof ModuleValue)) { dispatch(attributeTask(receiver, arg, summary(frame, cursor))); return; }
           if (receiver instanceof ModuleValue) {
             const environment = receiver.environment, cell = environment.cells.get(arg);
             if (frame.pool.code.version !== 5) {
@@ -1032,7 +1035,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     for (const release of state.outputLeases) release(false);
     state.outputLeases.length = 0;
     state.rootLeave?.(); state.rootLeave = null;
-    state.pool = null; state.globals = null; state.temporaries = []; state.builtins.clear(); state.pendingImport = null;
+    state.pool = null; state.globals = null; state.temporaries = []; state.builtins.clear(); state.pendingImport = null; state.importCompletion = null; state.importSite = null;
     if (arena === null) memory.close();
   };
   const snapshot = () => Object.freeze({
@@ -1055,8 +1058,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   return {memory, start, step, close, snapshot, diagnostic, context: moduleContext,
     done: () => state.frames.length === 0, result: () => state.result,
     pending: () => { const pending = state.pendingImport; state.pendingImport = null; return pending; },
-    resume: value => state.frames.at(-1).tasks.at(-1).stack.push(value),
+    resume: value => {
+      if (state.importCompletion === null) { state.frames.at(-1).tasks.at(-1).stack.push(value); return; }
+      const after = state.importCompletion, site = state.importSite;
+      state.temporaries.push(value, ...completionRoots(after)); state.importCompletion = null; state.importSite = null;
+      try { dispatch(deliver(value, after, site)); } catch (error) { handle(error); }
+    },
     resumeError: (error, lease = null) => {
+      state.importCompletion = null; state.importSite = null;
       if (error instanceof Unhandled) {
         state.temporaries.push(error.value); lease?.release(false);
         addTrace(error.value, {function: state.current.function, location: state.current.location});
