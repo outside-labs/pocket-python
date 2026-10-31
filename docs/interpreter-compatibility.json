@@ -1020,7 +1020,7 @@
         "tests/fixtures/interpreter/callable-type-directories.json:advertised-collision-error",
         "tests/fixtures/interpreter/iterator-type-directories.json:retained-native-chain",
         "tests/fixtures/interpreter/iterator-type-directories.json:generator-state",
-        "tests/fixtures/interpreter/arithmetic-dispatch.json"
+        "tests/fixtures/interpreter/arithmetic-dispatch.json:matmul"
       ]
     },
     {
