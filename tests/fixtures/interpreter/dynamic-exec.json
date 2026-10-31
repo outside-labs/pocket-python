@@ -318,6 +318,12 @@
       "stage": "O93",
       "source": "events=[]\nclass Key:\n def __hash__(self): return hash(\"x\")\n def __eq__(self,other):\n  events.append(1)\n  return other==\"x\"\nk=Key()\ng={k:7}\nexec(\"x=9\",g)\nprint(g[k],len(events)>0)\n",
       "stdout": "9 True\n"
+    },
+    {
+      "id": "retained-dynamic-frame",
+      "stage": "O93",
+      "source": "def probe():\n yield gen.gi_frame.f_back\ngen=probe()\ng={\"gen\":gen,\"next\":next}\nl={}\nexec(\"saved=next(gen)\",g,l)\nframe=l[\"saved\"]\nprint(frame.f_locals is l,frame.f_globals is g)\n",
+      "stdout": "True True\n"
     }
   ]
 }

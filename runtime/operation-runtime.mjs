@@ -2874,7 +2874,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "generator-frame") { task = valueTask(generatorFrame(args[0]), site, completion); continue; }
           if (callable.name === "frame-locals") {
             const frame = args[0];
-            task = valueTask(frame.raw.inlineFrames?.length ? allocate(FrameLocalsValue, frame) : frame.raw.fn.kind === "module" ? values.environmentDictionary(frame.callable.globals) : frame.raw.fn.kind === "class" ? classNamespace(frame.raw) : allocate(FrameLocalsValue, frame), site, completion); continue;
+            task = valueTask(frame.raw.inlineFrames?.length ? allocate(FrameLocalsValue, frame) : frame.raw.dynamicNamespace ? classNamespace(frame.raw) : frame.raw.fn.kind === "module" ? values.environmentDictionary(frame.callable.globals) : frame.raw.fn.kind === "class" ? classNamespace(frame.raw) : allocate(FrameLocalsValue, frame), site, completion); continue;
           }
           if (callable.name.startsWith("FrameLocalsProxy.")) {
             const receiver = args[0], name = callable.name.slice("FrameLocalsProxy.".length);

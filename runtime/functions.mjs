@@ -335,7 +335,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         parent.inlineFrames = parent.inlineFrames.filter(item => item !== frame); invalidateFrame(parent);
       }
       if (frame.reflector) frame.reflector.raw = {fn: frame.fn, pool: frame.pool, index: frame.index, callable: frame.callable,
-        locals: frame.locals, closure: frame.closure, namespaceOrder: frame.namespaceOrder, namespaceEnvironment: frame.namespaceEnvironment,
+        locals: frame.locals, closure: frame.closure, namespaceOrder: frame.namespaceOrder, namespaceEnvironment: frame.namespaceEnvironment, dynamicNamespace: frame.dynamicNamespace,
         currentSite: frame.currentSite, inlineFrames: [], inlineVersion: frame.inlineVersion, active: false};
       leave();
     };
