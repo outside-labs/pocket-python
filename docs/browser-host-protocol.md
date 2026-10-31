@@ -147,6 +147,13 @@ Runtime types retain the engine's Python exception name and original source
 location. Stacks expose only recorded application source identities, never host
 credentials or adapter internals. Engines do not reconstruct exceptions by eval.
 
+Verified dynamic source frames add `dynamic_source: true` to their locations.
+Their filenames are the caller's logical compile/eval/exec labels: at most 256
+UTF-16 code units without NUL, including empty labels and path-like strings.
+They identify source text, convey no file authority, and are rendered as text.
+Unmarked locations still require the application/selected-library allowlist;
+internal host paths are filtered. The marker adds no owned value/storage edges.
+
 The text_metrics host defines controls `input` (textarea), `run` (button),
 `result` (text output) and `stop` (button). After ready, worker initialization
 registers one run callback. A click supplies the input's text snapshot. Shared
