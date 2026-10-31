@@ -2,7 +2,7 @@ import {tokenize, SourceError, SOURCE_LIMITS} from "./source-tokens.mjs";
 
 export const PARSER_LIMITS = Object.freeze({nodes: 8192, depth: 64, decorators: 16});
 const BINARY = new Map([["+", "add"], ["-", "subtract"], ["*", "multiply"], ["/", "divide"], ["//", "floor-divide"], ["%", "modulo"],
-  ["**", "power"], ["&", "bit-and"], ["|", "bit-or"], ["^", "bit-xor"], ["<<", "left-shift"], [">>", "right-shift"]]);
+  ["**", "power"], ["@", "matmul"], ["&", "bit-and"], ["|", "bit-or"], ["^", "bit-xor"], ["<<", "left-shift"], [">>", "right-shift"]]);
 const COMPARISONS = new Map([["==", "equal"], ["!=", "not-equal"], ["<", "less"], ["<=", "less-equal"], [">", "greater"], [">=", "greater-equal"], ["is", "is"], ["in", "contains"]]);
 const AUGMENT = new Set(["+=", "-=", "*=", "/=", "//=", "%=", "**=", "@=", "&=", "|=", "^=", "<<=", ">>="]);
 
@@ -478,10 +478,9 @@ class Parser {
   }
   product() {
     let value = this.unary();
-    while (["*", "/", "//", "%"].some(value => this.at(value))) {
+    while (["*", "@", "/", "//", "%"].some(value => this.at(value))) {
       const operator = BINARY.get(this.take().value), right = this.unary(); value = this.node("Binary", value, {operator, left: value, right}, right);
     }
-    if (this.at("@")) this.unsupported("Matrix multiplication is not adopted.");
     return value;
   }
   unary() {

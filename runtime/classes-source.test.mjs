@@ -39,7 +39,7 @@ test('class imports share object identity while inherited methods retain their d
 
 test('later class stages refuse before source effects',async()=>{
   for(const source of [
-    'class A:\n def __matmul__(self,x): return 7\n',
+    'class A:\n def __enter__(self,x): return 7\n',
     'class A[T]: pass\n',
     'async def f(): pass\n'
   ]){

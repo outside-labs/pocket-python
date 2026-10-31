@@ -34,6 +34,10 @@ export function completion(kind, fields = {}) {
   if (height > 1024) throw new TypeError("Operation continuation bound exceeded.");
   let record;
   switch (kind) {
+    case "arithmetic-order":
+      record = {kind, task: fields.task, phase: fields.phase, candidate: fields.candidate ?? null, after};
+      if (!["right", "left", "compare", "truth"].includes(record.phase)) throw new TypeError("Invalid arithmetic priority phase.");
+      break;
     case "graph-dir-dict": case "graph-dir-ready": case "graph-dir-keys": case "graph-dir-call": case "graph-dir-copy":
     case "graph-dir-value": case "graph-dir-store":
     case "graph-dir-bases": case "graph-dir-length": case "graph-dir-child":
@@ -256,8 +260,8 @@ export function completion(kind, fields = {}) {
     case "protocol-result": record = {kind, receiver: fields.receiver, operation: fields.operation, slot: fields.slot, depth: fields.depth ?? 0, after}; break;
     case "optional-truth": record = {kind, receiver: fields.receiver, operation: fields.operation, depth: fields.depth, after}; break;
     case "arithmetic-result": case "arithmetic-index":
-      record = {kind, operation: fields.operation, args: operands(fields.args), position: fields.position, order: fields.order, nativeInplace: fields.nativeInplace === true, depth: fields.depth, after};
-      arithmeticCheck(record.operation, record.args, record.position, record.order); depthCheck(record.depth); break;
+      record = {kind, operation: fields.operation, args: operands(fields.args), position: fields.position, order: fields.order, active: fields.active ?? null, nativeInplace: fields.nativeInplace === true, depth: fields.depth, after};
+      arithmeticCheck(record.operation, record.args, record.position, record.order, record.active); depthCheck(record.depth); break;
     case "attribute-write": record = {kind, receiver: fields.receiver, after}; break;
     case "advertised-instance": case "advertised-super": record = {kind, receiver: fields.receiver, type: fields.type, after}; break;
     case "check-result": case "check-truth":
@@ -306,6 +310,7 @@ function visit(record) {
     case "view-item": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "proxy-get": return [record.receiver, record.fallback, ...completionRoots(record.after)];
     case "dict-union": return [record.left, record.right, record.result, ...completionRoots(record.after)];
+    case "arithmetic-order": return [record.candidate, ...operationRoots(record.task)];
     case "namespace-build": return operationRoots(record.task);
     case "namespace-lookup": return [record.cache, record.owner, record.dictionary, ...operationRoots(record.task)];
     case "class-mapping-dir-call": case "class-mapping-dir-result":
@@ -423,14 +428,15 @@ export function unaryTask(operation, value, site, after = null, depth = 0, optio
   depthCheck(depth); completionRoots(after);
   return Object.freeze({kind: "unary", operation, value, site, completion: after, depth, optionalLength});
 }
-const arithmeticCheck = (operation, args, position, order) => {
+const arithmeticCheck = (operation, args, position, order, active) => {
   const name = operation.startsWith("inplace-") ? operation.slice(8) : operation;
   if (!Object.hasOwn(ARITHMETIC_SLOTS, name) || args.length < 2 || args.length > (name === "power" ? 3 : 2) ||
-      !Number.isSafeInteger(position) || position < 0 || position > 2 || ![null, false, true].includes(order)) throw new TypeError("Invalid arithmetic operation.");
+      !Number.isSafeInteger(position) || position < 0 || position > 2 || ![null, false, true].includes(order) ||
+      active !== null && (!Number.isSafeInteger(active) || active < 0 || active > 3)) throw new TypeError("Invalid arithmetic operation.");
 };
-export function arithmeticTask(operation, args, site, after = null, depth = 0, position = 0, order = null, nativeInplace = false) {
-  arithmeticCheck(operation, args, position, order); depthCheck(depth); completionRoots(after);
-  return Object.freeze({kind: "arithmetic", operation, args: operands(args), site, completion: after, depth, position, order, nativeInplace});
+export function arithmeticTask(operation, args, site, after = null, depth = 0, position = 0, order = null, nativeInplace = false, active = null) {
+  arithmeticCheck(operation, args, position, order, active); depthCheck(depth); completionRoots(after);
+  return Object.freeze({kind: "arithmetic", operation, args: operands(args), site, completion: after, depth, position, order, nativeInplace, active});
 }
 export function numericTask(name, args, site, after = null, depth = 0, position = 0) {
   depthCheck(depth); completionRoots(after); numericPosition(position);

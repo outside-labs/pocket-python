@@ -1,7 +1,7 @@
 // Admission is separate from descriptor binding and scoped metadata validation.
 export const DESCRIPTOR_HOOKS = Object.freeze(["__get__", "__set__", "__delete__", "__set_name__"]);
 export const ARITHMETIC_SLOTS = Object.freeze({add: "add", subtract: "sub", multiply: "mul", divide: "truediv", "floor-divide": "floordiv",
-  modulo: "mod", power: "pow", "bit-and": "and", "bit-or": "or", "bit-xor": "xor", "left-shift": "lshift", "right-shift": "rshift", divmod: "divmod"});
+  modulo: "mod", power: "pow", matmul: "matmul", "bit-and": "and", "bit-or": "or", "bit-xor": "xor", "left-shift": "lshift", "right-shift": "rshift", divmod: "divmod"});
 export const ORDERING_SLOTS = Object.freeze({less: Object.freeze(["__lt__", "__gt__"]),
   "less-equal": Object.freeze(["__le__", "__ge__"]), greater: Object.freeze(["__gt__", "__lt__"]),
   "greater-equal": Object.freeze(["__ge__", "__le__"])});

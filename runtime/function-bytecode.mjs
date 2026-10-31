@@ -6,12 +6,12 @@ import {ValueRuntime} from "./values.mjs";
 export const FUNCTION_LIMITS = Object.freeze({functions: 128, blocks: 512, instructions: 4096,
   names: 128, depth: 32, stack: 256});
 const BINARY = new Set(["add", "subtract", "multiply", "floor-divide", "modulo", "divide",
-  "power", "bit-and", "bit-or", "bit-xor", "left-shift", "right-shift",
+  "power", "matmul", "inplace-matmul", "bit-and", "bit-or", "bit-xor", "left-shift", "right-shift",
   "inplace-power", "inplace-bit-and", "inplace-bit-or", "inplace-bit-xor", "inplace-left-shift", "inplace-right-shift",
   "inplace-add", "inplace-subtract", "inplace-multiply", "inplace-floor-divide", "inplace-modulo", "inplace-divide",
   "equal", "not-equal", "less", "less-equal", "greater", "greater-equal", "is", "contains", "getitem", "append", "dict-delete"]);
 const UNARY = new Set(["truth", "not", "len", "negative", "positive", "invert", "iter", "next"]);
-const NUMERIC = new Set(["power", "bit-and", "bit-or", "bit-xor", "left-shift", "right-shift", "invert"]);
+const NUMERIC = new Set(["power", "matmul", "bit-and", "bit-or", "bit-xor", "left-shift", "right-shift", "invert"]);
 const CONSTRUCT = new Set(["build-list", "build-tuple", "build-dict", "build-set"]);
 const fail = message => { throw new BytecodeError(message); };
 const verifiedCode = new WeakSet();

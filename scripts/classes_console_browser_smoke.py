@@ -311,6 +311,8 @@ def smoke(channel=None):
                     programs.append(NATIVE_MODULE_SUBCLASS_SOURCE)
                     reassignment = json.loads((ROOT / 'tests/fixtures/interpreter/reassignment.json').read_bytes())
                     programs.extend(case['source'] for case in reassignment['cases'] if 'error_type' not in case and not case.get('modules'))
+                    arithmetic = json.loads((ROOT / 'tests/fixtures/interpreter/arithmetic-dispatch.json').read_bytes())
+                    programs.extend(case['source'] for case in arithmetic['cases'] if 'error_type' not in case)
                     programs.append(MODULE_REASSIGNMENT_SOURCE)
                     mutable_subclasses = json.loads((ROOT / 'tests/fixtures/interpreter/mutable-subclasses.json').read_bytes())
                     programs.extend(c['source'] for c in mutable_subclasses['cases'] if 'error_type' not in c)
@@ -360,7 +362,7 @@ def smoke(channel=None):
                     refused('class A:\n def fail(self): return 1//0\nA().fail()\n', 'ZeroDivisionError:')
                     assert 'sources/app.py:2' in page.locator('#status').inner_text()
                     assert 'fail at sources/app.py:2' in page.locator('#diagnostic').inner_text()
-                    refused("print('never')\nclass A:\n def __matmul__(self,other): return 7\n", 'UnsupportedSyntaxError:')
+                    refused("print('never')\nclass A:\n def __enter__(self,other): return 7\n", 'UnsupportedSyntaxError:')
                     assert page.locator('#result').inner_text() == ''
                     refused('A()\n', 'NameError:')
                     refused('import browser\n', 'ImportError:')
