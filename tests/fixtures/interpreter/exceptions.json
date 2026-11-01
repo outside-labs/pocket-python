@@ -9,7 +9,8 @@
     "LA10",
     "LA11",
     "LA12",
-    "LA12A"
+    "LA12A",
+    "LA13"
   ],
   "cases": [
     {
@@ -816,6 +817,124 @@
       "stage": "LA12A",
       "source": "class K:\n def __hash__(self): return 7\n def __repr__(self):\n  print(\"repr\")\n  return \"key\"\nkey=K()\ntry: {}[key]\nexcept KeyError as e:\n print(\"caught\",e.args[0] is key)\n print(str(e))\n",
       "stdout": "caught True\nrepr\nkey\n"
+    },
+    {
+      "id": "exception-record-loader",
+      "stage": "LA13",
+      "source": "\"\"\"Load records with reusable errors that preserve their original causes.\"\"\"\n\n\nclass RecordError(ValueError):\n    def __init__(self, key, reason):\n        super().__init__(reason)\n        self.key = key\n\n\ndef load(records, key):\n    try:\n        return records[key]\n    except KeyError as cause:\n        raise RecordError(key, \"record missing\") from cause\n\n\nrecords = {\"ready\": [7, 8]}\nprint(len(load(records, \"ready\")))\nkey = \"absent\"\ntry:\n    load(records, key)\nexcept RecordError as error:\n    print(str(error))\n    print(error.key is key, error.__cause__.args[0] is key)\n    print(error.__suppress_context__, error.__context__ is error.__cause__)\nfinally:\n    print(\"finished\")\n",
+      "stdout": "2\nrecord missing\nTrue True\nTrue True\nfinished\n"
+    },
+    {
+      "id": "exception-module-identity",
+      "stage": "LA13",
+      "source": "from errors import DomainError,read\nkey=\"missing\"\ntry: read({},key)\nexcept DomainError as e: print(type(e) is DomainError,e.args[0] is key,e.__cause__.args[0] is key)\n",
+      "stdout": "True True True\n",
+      "imports": [
+        "errors"
+      ],
+      "modules": [
+        {
+          "name": "errors",
+          "package": false,
+          "imports": [],
+          "source": "class DomainError(Exception): pass\ndef read(data,key):\n try: return data[key]\n except KeyError as cause: raise DomainError(key) from cause\n"
+        }
+      ]
+    },
+    {
+      "id": "exception-dynamic-source",
+      "stage": "LA13",
+      "source": "ns={}\nexec(compile(\"class DomainError(ValueError): pass\\ndef run(): raise DomainError(7) from None\\n\",\"exception-original.py\",\"exec\"),ns)\ntry: ns[\"run\"]()\nexcept ValueError as e: print(type(e) is ns[\"DomainError\"],e.args[0],e.__suppress_context__)\n",
+      "stdout": "True 7 True\n"
+    },
+    {
+      "id": "exception-dynamic-source-failure",
+      "stage": "LA13",
+      "source": "ns={}\nexec(compile(\"class DomainError(ValueError): pass\\ndef fail():\\n print(7)\\n raise DomainError(8) from None\\nfail()\\n\",\"exception-original.py\",\"exec\"),ns)\n",
+      "stdout": "7\n",
+      "error_type": "DomainError"
+    },
+    {
+      "id": "exception-chain-callback-failure",
+      "stage": "LA13",
+      "source": "class Message:\n def __str__(self):\n  print(\"format\")\n  raise LookupError(\"format failed\")\nclass DomainError(ValueError): pass\ntry:\n try: raise DomainError(Message()) from None\n except DomainError as original:\n  try: str(original)\n  except LookupError as failure: print(failure.__context__ is original,original.__suppress_context__)\nfinally: print(\"finished\")\n",
+      "stdout": "format\nTrue True\nfinished\n"
+    },
+    {
+      "id": "exception-suspended-finally",
+      "stage": "LA13",
+      "source": "class DomainError(ValueError): pass\ndef work():\n try:\n  yield 7\n  raise DomainError(8) from KeyError(\"missing\")\n finally: print(\"closed\")\ni=work()\nprint(next(i))\ntry: next(i)\nexcept ValueError as e: print(e.args[0],e.__cause__.args[0])\n",
+      "stdout": "7\nclosed\n8 missing\n"
+    },
+    {
+      "id": "exception-groups-deferred",
+      "stage": "Future",
+      "source": "try:\n raise ExceptionGroup(\"group\",[ValueError(7)])\nexcept* ValueError: print(\"caught\")\n",
+      "stdout": "caught\n",
+      "owner": "#124",
+      "boundary": "Exception groups and except* require a separate splitting/merging reference contract"
+    },
+    {
+      "id": "exception-traceback-object-deferred",
+      "stage": "Future",
+      "source": "e=ValueError()\nprint(e.__traceback__ is None)\n",
+      "stdout": "True\n",
+      "owner": "#124",
+      "boundary": "Source traceback objects and mutation retain their metadata/ownership gate"
+    },
+    {
+      "id": "exception-structured-constructor-deferred",
+      "stage": "Future",
+      "source": "e=SyntaxError(\"bad\",(\"original.py\",1,1,\"bad\"))\nprint(e.args[0])\n",
+      "stdout": "bad\n",
+      "owner": "#124",
+      "boundary": "Structured native exception constructors/fields retain their exact signature gate"
+    },
+    {
+      "id": "exception-multiple-display-deferred",
+      "stage": "Future",
+      "source": "print(str(ValueError(1,2)))\n",
+      "stdout": "(1, 2)\n",
+      "owner": "#127",
+      "boundary": "Recursive/multiple-argument exception displays require the formatting profile"
+    },
+    {
+      "id": "exception-native-repr-deferred",
+      "stage": "Future",
+      "source": "print(repr(ValueError(7)))\n",
+      "stdout": "ValueError(7)\n",
+      "owner": "#127",
+      "boundary": "Native exception repr requires the formatting profile"
+    },
+    {
+      "id": "exception-generator-throw-class-deferred",
+      "stage": "Future",
+      "source": "class DomainError(ValueError): pass\ndef work():\n try: yield 7\n except DomainError: print(\"caught\")\ni=work()\nprint(next(i))\ntry: i.throw(DomainError)\nexcept StopIteration: pass\n",
+      "stdout": "7\ncaught\n",
+      "owner": "#120",
+      "boundary": "Generator throw of a user class requires its separate normalization continuation"
+    },
+    {
+      "id": "exception-generic-base-matrix",
+      "stage": "LA13",
+      "source": "for base in [BaseException,GeneratorExit,Exception,AssertionError,ArithmeticError,ZeroDivisionError,OverflowError,LookupError,IndexError,KeyError,ValueError,BufferError,TypeError,UnicodeError,RuntimeError,SystemError,RecursionError]:\n class E(base): pass\n e=E(\"message\")\n print(base.__name__,str(e),isinstance(e,base),e.args[0])\n",
+      "stdout": "BaseException message True message\nGeneratorExit message True message\nException message True message\nAssertionError message True message\nArithmeticError message True message\nZeroDivisionError message True message\nOverflowError message True message\nLookupError message True message\nIndexError message True message\nKeyError 'message' True message\nValueError message True message\nBufferError message True message\nTypeError message True message\nUnicodeError message True message\nRuntimeError message True message\nSystemError message True message\nRecursionError message True message\n"
+    },
+    {
+      "id": "exception-exhaustion-empty-arguments",
+      "stage": "LA13",
+      "source": "try: next(iter([]))\nexcept StopIteration as e: print(len(e.args),e.value is None)\n",
+      "stdout": "0 True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "exception-generator-stopiteration-cause",
+      "stage": "LA13",
+      "source": "def work():\n yield 1\n raise StopIteration(7)\ni=work()\nnext(i)\ntry: next(i)\nexcept RuntimeError as e: print(e.__cause__.args[0],e.__context__ is e.__cause__,e.__suppress_context__)\n",
+      "stdout": "7 True True\n"
     }
   ]
 }

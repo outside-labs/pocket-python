@@ -19,19 +19,19 @@ from interpreter_browser_smoke import EXAMPLE, Handler, Server
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def smoke(require_installed=False, containers=False):
+def smoke(require_installed=False, containers=False, exceptions=False):
     package = Path(pocket_python.__file__).resolve()
     if require_installed:
         assert not package.is_relative_to(ROOT), 'This check requires an isolated installed distribution.'
-    feature = 'practical-containers' if containers else 'object-integration'
+    feature = 'exceptions' if exceptions else 'practical-containers' if containers else 'object-integration'
     corpus_path = ROOT / f'tests/fixtures/interpreter/{feature}.json'
     corpus = json.loads(corpus_path.read_bytes())
-    example = (ROOT / ('examples/interpreter_containers.py' if containers else 'examples/interpreter_object_integration.py')).read_text(encoding='utf-8')
+    example = (ROOT / ('examples/interpreter_exceptions.py' if exceptions else 'examples/interpreter_containers.py' if containers else 'examples/interpreter_object_integration.py')).read_text(encoding='utf-8')
     records = []
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         selected = build_interpreter(EXAMPLE.write_source(root / 'source', source=example),
-                                     read_interpreter(ROOT / 'runtime', **({} if containers else {'library_profile': 'operator/1'})),
+                                     read_interpreter(ROOT / 'runtime', **({} if containers or exceptions else {'library_profile': 'operator/1'})),
                                      root / 'site/console', language_profile='classes-source/1')
         reduced = build_interpreter(EXAMPLE.write_source(root / 'reduced-source', source='print(42)\n'),
                                     read_interpreter(ROOT / 'runtime'), root / 'reduced')
@@ -64,17 +64,23 @@ def smoke(require_installed=False, containers=False):
                     page.reload()
                     ready()
                     for case in corpus['cases']:
-                        if case.get('modules') or containers and case['stage'] not in {'LA-7', 'LA-6A'}:
+                        if (case.get('modules') or
+                            containers and case['stage'] not in {'LA-7', 'LA-6A'} or
+                            exceptions and case['stage'] != 'LA13'):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
                             assert 'fail at composed-original.py:4' in page.locator('#diagnostic').inner_text(), page.locator('#diagnostic').inner_text()
+                        if case['id'] == 'exception-dynamic-source-failure':
+                            assert 'fail at exception-original.py:4' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
                     run(example, expected)
                     busy = 'import operator\nnamespace={"add":operator.add}\nexec("class Box:\\n __slots__=(\'value\',)\\n def __init__(self): self.value=7\\n @property\\n def field(self):\\n  print(\'entered\')\\n  while True: self.value=add(self.value,1)\\nbox=Box()\\nbox.field",namespace)\n'
                     if containers:
                         busy = 'class Key:\n def __hash__(self):\n  print("entered")\n  while True: pass\n{}.setdefault(Key(),[])\n'
+                    if exceptions:
+                        busy = 'class BusyError(Exception):\n def __init__(self):\n  print("entered")\n  while True: pass\nraise BusyError from None\n'
                     page.fill('#input', busy)
                     page.click('#run')
                     page.wait_for_function("()=>document.querySelector('#result').textContent==='entered\\n'")
@@ -106,6 +112,8 @@ def smoke(require_installed=False, containers=False):
                     run('print(42)\n', '42\n')
                     if containers:
                         run('d={}\nd.setdefault(1,[]).extend([7])\nprint(list(d.values())[0].pop())\n', '7\n')
+                    if exceptions:
+                        run('key="missing"\ntry: {}[key]\nexcept KeyError as e: print(e.args[0] is key)\n', 'True\n')
                     run('compile("class C: pass","removed.py","exec")\n', '', 'NameError')
                     assert not errors, errors
                     context.close()
@@ -122,7 +130,11 @@ def smoke(require_installed=False, containers=False):
         checks = ['fresh-offline-container-source', 'container-callback-errors', 'runnable-example',
                   'stop-after-container-hash-entry', 'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-container-apis', 'core-source-boundary']
-    return {'schema_version': 1, 'suite': 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',
+    if exceptions:
+        checks = ['fresh-offline-exception-source', 'original-dynamic-diagnostics', 'runnable-example',
+                  'stop-during-exception-normalization', 'restart-fresh-owner', 'reduced-profile-update',
+                  'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
+    return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',
             'installed_distribution_required': require_installed, 'package_origin': str(package),
             'corpus_sha256': hashlib.sha256(corpus_path.read_bytes()).hexdigest(),
             'engine_fingerprint': selected['engine']['fingerprint'], 'cases': records,
@@ -132,10 +144,12 @@ def smoke(require_installed=False, containers=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--require-installed', action='store_true')
-    parser.add_argument('--containers', action='store_true', help='Accept the LA-7 practical-container composition slice.')
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--containers', action='store_true', help='Accept the LA-7 practical-container composition slice.')
+    selection.add_argument('--exceptions', action='store_true', help='Accept the LA-13 ordinary-exception composition slice.')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
-    report = smoke(args.require_installed, args.containers)
+    report = smoke(args.require_installed, args.containers, args.exceptions)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

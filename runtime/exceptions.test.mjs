@@ -13,7 +13,9 @@ const unit = source => ({name: 'app', source, imports: [], package: false, notic
 const closed = stats => { for (const key of ['bytes', 'objects', 'roots', 'frames', 'external']) assert.equal(stats[key], 0, key); };
 for (const item of corpus.cases.filter(item => corpus.implemented_stages.includes(item.stage))) {
   for (const languageProfile of item.profiles ?? [corpus.profile]) test(languageProfile + ': ' + item.id, async () => {
-    const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile},
+    const modules = [{...unit(item.source), imports: item.imports ?? []},
+      ...(item.modules ?? []).map(module => ({...module, notice: 'Synthetic exception helper'}))];
+    const result = await runSourceRequest({modules, compileOptions: {languageProfile},
       options: {maxSteps: 50000, maxWork: 20000000}});
     assert.equal(result.stdout, item.stdout, JSON.stringify(result.error));
     assert.equal(result.error?.type, item.error_type, JSON.stringify(result.error));
