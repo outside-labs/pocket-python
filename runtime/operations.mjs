@@ -106,6 +106,7 @@ export function completion(kind, fields = {}) {
     case "native-doc-result": record = {kind, receiver: fields.receiver, ignoreAttribute: fields.ignoreAttribute, after}; break;
     case "native-reinit": case "native-property-copy": record = {kind, receiver: fields.receiver, after}; break;
     case "native-repeat": record = {kind, receiver: fields.receiver, inplace: fields.inplace, after}; break;
+    case "list-index": record = {kind, receiver: fields.receiver, name: fields.name, item: fields.item, after}; break;
     case "native-bytes-init": record = {kind, receiver: fields.receiver, after}; break;
     case "native-new": record = {kind, type: fields.type, after}; break;
     case "new-result":
@@ -351,6 +352,7 @@ function visit(record) {
     case "native-doc-result":
     case "native-reinit": case "native-property-copy": return [record.receiver, ...completionRoots(record.after)];
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
+    case "list-index": return [record.receiver, record.item, ...completionRoots(record.after)];
     case "native-bytes-init": return [record.receiver, ...completionRoots(record.after)];
     case "native-new": return [record.type, ...completionRoots(record.after)];
     case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored": return [record.source, record.globals, record.locals, record.builtins, record.key, record.closure, ...completionRoots(record.after)];

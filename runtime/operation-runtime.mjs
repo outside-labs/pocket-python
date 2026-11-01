@@ -1021,6 +1021,24 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const result = completion.inplace ? values.inplace("multiply", payload, value) : values.binary("multiply", payload, value);
       return valueTask(result === payload && completion.inplace ? completion.receiver : result, site, completion.after);
     }
+    if (completion?.kind === "list-index") {
+      const {receiver: original, name, item, after} = completion, receiver = classes.payload(original);
+      const maximum = (1n << 63n) - 1n;
+      if (value < -maximum - 1n || value > maximum)
+        python("OverflowError", "Python int too large to convert to an index");
+      const length = BigInt(receiver.items.length);
+      let index = value < 0n ? value + length : value;
+      if (name === "insert") {
+        if (receiver.items.length >= VALUE_LIMITS.items) hard("BUDGET", "ExecutionLimitError", "Container length budget exceeded");
+        index = index < 0n ? 0n : index > length ? length : index;
+      } else if (index < 0n || index >= length) python("IndexError", "pop index out of range");
+      charge(receiver.items.length + 1);
+      const items = [...receiver.items], result = name === "insert" ? null : items[Number(index)];
+      state.temporaries.push(result);
+      if (name === "insert") items.splice(Number(index), 0, item); else items.splice(Number(index), 1);
+      mutate(receiver, () => { const before = receiver.items; receiver.items = items; return () => { receiver.items = before; }; });
+      return valueTask(result, site, after);
+    }
     if (completion?.kind === "native-bytes-init") {
       const receiver = completion.receiver.nativePayload;
       values.checkBufferResize(receiver);
@@ -2413,6 +2431,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (CONTAINER_METHODS[containerOwner]?.includes(nativeName)) {
             const original = callable instanceof ValueMethod ? callable.receiver : args[0];
             const receiver = classes.payload(original), rest = callable instanceof ValueMethod ? args : args.slice(1);
+            if (["insert", "pop"].includes(nativeName)) {
+              if (keywords.length || (nativeName === "insert" ? rest.length !== 2 : rest.length > 1))
+                python("TypeError", "Invalid " + nativeName + " arguments");
+              task = unaryTask("index", rest.length ? rest[0] : -1n, site,
+                continuation("list-index", {receiver: original, name: nativeName, item: rest[1] ?? null, after: completion}), depth); continue;
+            }
             if (keywords.length || rest.length) python("TypeError", nativeName + "() takes no arguments");
             const finish = continuation("relay", {receiver: original, after: completion});
             charge(receiver.items.length);

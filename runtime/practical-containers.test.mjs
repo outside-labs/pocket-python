@@ -48,3 +48,32 @@ test('list copies share ordinary work and allocation limits', async () => {
     assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, expected, JSON.stringify(result.error)); closed(result.closed);
   }
 });
+
+async function callbackLifetime(source, expected) {
+  const {registry} = await compileSourceModules([unit(source)], {languageProfile: corpus.profile});
+  try { for (const mode of ['finish', 'cancel', 'close']) {
+    const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
+    session.context.begin({maxWork: 20000000, shouldCancel: () => cancel}, text => { output += text; });
+    const execution = Execution.modules(session.context);
+    try {
+      while (execution.state !== 'completed') {
+        execution.advance(); if (execution.state === 'paused') execution.park();
+        session.memory.collect([], {cleanup: true});
+        if (!reached && output === 'entered\n' && execution.state === 'parked') {
+          reached = true;
+          if (mode === 'cancel') { cancel = true; assert.throws(() => execution.advance(), {code: 'CANCELLED'}); break; }
+          if (mode === 'close') break;
+        }
+      }
+      assert.ok(reached); if (mode === 'finish') assert.equal(output, expected);
+    } finally { execution.close(); execution.close(); session.context.finish(); session.close(); }
+    closed(session.stats());
+  } } finally { registry.close(); }
+}
+
+for (const [name, tail, expected] of [
+  ['insert', 'a.insert(I(),a)\nprint(a[0] is a)\n', 'entered\nTrue\n'],
+  ['pop', 'b=a.pop(I())\ndel a\nb.append(7)\nprint(b[0])\n', 'entered\n7\n'],
+]) test('owned list ' + name + ' index callback survives parking, cancellation and close', async () => {
+  await callbackLifetime('a=[[]]\nclass I:\n def __index__(self):\n  print("entered")\n  return 0\n' + tail, expected);
+});
