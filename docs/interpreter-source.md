@@ -124,7 +124,7 @@ not imply full Python builtin/stdlib coverage.
 
 Classes/descriptors/decorators, async/await, generators/comprehensions,
 annotations, future directives, pattern matching, context managers,
-exception groups/explicit causes, formatted/template strings, named Unicode escapes, dynamic imports and implicit host
+exception groups, formatted/template strings, named Unicode escapes, dynamic imports and implicit host
 capabilities remain outside this profile. Function/module reflection and
 unlisted implicit metadata are not adopted. Assertions, assignment expressions, lambda functions and finite unpacking/display forms
 are adopted through the [ordinary syntax contract](interpreter-ordinary-syntax.md).

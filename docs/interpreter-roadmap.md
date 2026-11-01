@@ -12,7 +12,12 @@ can progress independently. The later C/Rust/Wasm backend is not a prerequisite.
 
 The first two language batches, LA-1–LA-7 (#602–#608), adopt
 [practical list/dictionary APIs](interpreter-practical-containers.md) under #116.
-Remaining text/sequence APIs, exceptions, formatting, language gaps and library/
+The next two batches, LA-8–LA-13 and the LA-12A argument follow-up, adopt
+[ordinary exception semantics](interpreter-exceptions.md) under #124. Generic
+arguments/chaining and named generic exception subclasses have composed
+Node/Chromium/offline acceptance; groups, general handler expressions, traceback
+objects, notes and structured layouts retain their gates.
+Remaining text/sequence APIs, formatting, language gaps and library/
 package qualification retain their separate issue gates. The track issues and
 Project fields record current delivery status; accepted stages do not measure
 an overall compatibility percentage. Candidate #36 and publication/deployment

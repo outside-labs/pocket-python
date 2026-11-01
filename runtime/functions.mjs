@@ -68,6 +68,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     });
   };
   const exception = (name, message, args = null) => {
+    if (args === null && message === "" && ["StopIteration", "GeneratorExit"].includes(name)) args = [];
     const error = allocate(ExceptionValue, name, args, message);
     const active = state.frames.at(-1)?.activeException;
     mutate(error, () => {
@@ -522,6 +523,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   const resumeGenerator = (generator, mode, value, site, completion) => {
     if (generator.status === "running") python("ValueError", "generator already executing");
     if (mode === "throw") {
+      if (value instanceof ClassValue && exceptionClass(value)) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator throw class normalization remains under #120");
       if (value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name)) value = allocate(ExceptionValue, value.name, [], "");
       if (!(value instanceof ExceptionValue)) python("TypeError", "exceptions must derive from BaseException");
     }
@@ -669,7 +671,11 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         if (signal.kind === "raise" && returned.name === "StopIteration") {
           const original = returned;
           returned = exception("RuntimeError", "generator raised StopIteration");
-          returned.context = original;
+          mutate(returned, () => {
+            const before = [returned.context, returned.cause, returned.suppressContext];
+            returned.context = original; returned.cause = original; returned.suppressContext = true;
+            return () => { [returned.context, returned.cause, returned.suppressContext] = before; };
+          });
           signal = {kind: "raise", value: returned};
         }
         if (signal.kind !== "raise" && mode !== "close") {

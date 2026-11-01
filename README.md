@@ -255,6 +255,12 @@ fresh enclosing function snapshots inside list/dict/set comprehensions, and
 isolated snapshots for module/class comprehensions. Nested targets, captured
 cells and escaped values retain Python namespace order and owned lifetimes.
 
+The [ordinary exception slices](docs/interpreter-exceptions.md) adopt generic
+argument identity/replacement, lazy runtime message and failed-key arguments,
+chaining, named generic subclasses and owned raising/catching. Composed source
+and offline cases cover callback failures, original frames and interruption.
+Groups, structured exception layouts and remaining formatting retain their gates.
+
 [Sequence repetition](docs/interpreter-repetition.md) adopts shallow list/tuple
 copies and Unicode text multiplication, including owned index callbacks after
 arithmetic fallback. Run `python -m examples.interpreter_repetition` for a console

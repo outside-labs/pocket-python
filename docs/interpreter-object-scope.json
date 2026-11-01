@@ -1148,6 +1148,12 @@
       "site": "if (values.isSequenceType(type, \"tuple\")) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Named tuple handler values require the #124 handler-expression contract\");",
       "owner": "#124",
       "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
+    },
+    {
+      "path": "runtime/functions.mjs",
+      "site": "if (value instanceof ClassValue && exceptionClass(value)) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Generator throw class normalization remains under #120\");",
+      "owner": "#120",
+      "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
     }
   ],
   "native_tables": {

@@ -13,7 +13,7 @@ explicit #116 source boundary; these methods bypass admitted item overrides.
 | LA-2 | `list.insert(index, object, /)`, `list.pop(index=-1, /)` | Implemented. Signed-64-bit index conversion precedes current-length bounds/clipping; owned callbacks may mutate the receiver. Pop returns the original element. |
 | LA-3 | `list.count(value, /)`, `tuple.count(value, /)`, list/tuple `index(value, start=0, stop=sys.maxsize, /)` | Implemented. Identity fast paths and owned equality/truth callbacks scan current contents; positional index bounds convert in order and saturate to signed-size limits. |
 | LA-4 | `list.extend(iterable, /)` | Implemented for adopted iterables without user length hints. Self-extension snapshots the native payload, including subclasses; iterator failures retain the appended prefix. User hints refuse before binding or consumption and remain under #116. |
-| LA-5 | `dict.get(key, default=None, /)`, `dict.setdefault(key, default=None, /)`, `dict.pop(key[, default], /)` | Implemented. Owned hash/equality uses one hash per lookup, retains exact stored keys/defaults/values and restarts after key mutation. Empty pop bypasses hashing. General KeyError argument introspection remains #124. |
+| LA-5 | `dict.get(key, default=None, /)`, `dict.setdefault(key, default=None, /)`, `dict.pop(key[, default], /)` | Implemented. Owned hash/equality uses one hash per lookup, retains exact stored keys/defaults/values and restarts after key mutation. Empty pop bypasses hashing. LA-12A preserves original failed-key arguments; see the ordinary exception contract. |
 | LA-6 | `dict.keys()`, `dict.values()`, `dict.items()` | Implemented. Fresh live ordered views support len/truth, iteration and owned membership; native subtype owners stay rooted. Exact-dict view.mapping returns a fresh live read-only proxy. Subtype proxies and view set operations remain #116/#117. |
 | LA-7 | Composed source/offline acceptance | Composed record queues, native subclasses, callbacks, suspended views, modules and dynamic source have reference cases. The offline console covers fresh source, callback errors, interruption/restart and profile updates. Integration does not imply the remaining #116 APIs. |
 
@@ -41,7 +41,8 @@ python scripts/object_integration_browser_smoke.py --containers
 The differential matrix includes explicit refusals for user length hints,
 `__missing__` definitions, dictionary-subclass view proxies and view set
 operations. Positive cases and negative boundaries are counted separately.
-General exception argument introspection remains #124. No library, package,
+Ordinary exception argument/chaining and generic subclass semantics are specified
+in the [exception contract](interpreter-exceptions.md). No library, package,
 host capability or release promise follows from this container slice.
 
 The LA-6A ownership follow-up (#616) retains dictionary-subclass owners through
