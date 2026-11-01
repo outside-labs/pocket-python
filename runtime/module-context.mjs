@@ -116,7 +116,14 @@ export class ModuleContext {
       this.binding(this.cache, name, module); this.chain.push(name);
       const values = new ValueRuntime({memory: this.memory, charge: amount => this.charge(amount)});
       for (const [key, text] of Object.entries({__name__: name, __package__: record.package ? name : name.split(".").slice(0, -1).join("."),
-        __file__: (record.source || record.bytecode).path})) this.binding(environment, key, values.string(Array.from(text, char => char.codePointAt(0))));
+        __file__: (record.source || record.bytecode).path})) {
+        const value = values.string(Array.from(text, char => char.codePointAt(0)));
+        this.binding(environment, key, value);
+        if (key === "__file__") {
+          module.origin = value;
+          const layout = valueLayout(module); this.memory.resize(module, layout.bytes, layout.children);
+        }
+      }
       if (record.package) {
         const path = values.string(Array.from("sources/" + name.replaceAll(".", "/"), char => char.codePointAt(0))); roots.push(path);
         const paths = values.list([path]); roots.push(paths); this.binding(environment, "__path__", paths);
@@ -150,7 +157,7 @@ export class ModuleContext {
       if (this.registry.names.includes(child)) return {kind: "load", plan: this.planLoad(importer, child, 0, false)};
     }
     throw new RegistryError(fromImport ? "cannot import name '" + name + "' from '" + module.name + "'" :
-      "module '" + module.name + "' has no attribute '" + name + "'", fromImport ? "ImportError" : "AttributeError", "IMPORT");
+      "module '" + module.name + "' has no attribute '" + name + "'", fromImport ? "ImportError" : "AttributeError", "IMPORT", fromImport ? {module, member: name} : null);
   }
   close() {
     if (this.closed) return;

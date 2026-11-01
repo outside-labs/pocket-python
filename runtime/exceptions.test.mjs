@@ -23,8 +23,9 @@ for (const item of corpus.cases.filter(item => corpus.implemented_stages.include
   });
 }
 
-async function lifetime(source, expected) {
-  const {registry} = await compileSourceModules([unit(source)], {languageProfile: corpus.profile});
+async function lifetime(source, expected, helpers = []) {
+  const {registry} = await compileSourceModules([{...unit(source), imports: helpers.map(helper => helper.name)},
+    ...helpers.map(helper => ({...unit(helper.source), ...helper}))], {languageProfile: corpus.profile});
   try { for (const mode of ['finish', 'cancel', 'close']) {
     const session = new ModuleSession(registry); let output = '', cancel = false, reached = false;
     session.context.begin({maxWork: 20000000, shouldCancel: () => cancel}, text => { output += text; });
@@ -57,6 +58,17 @@ test('retained runtime attribute errors share the allocation limit', async () =>
   const result = await runSourceRequest({modules: [unit('class A: pass\nheld=[]\nprint("ready")\nwhile True:\n try: A().missing\n except AttributeError as e: held.append(e)\n')],
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
+test('runtime import provenance survives suspended generators and interruption', async () => {
+  await lifetime('import helper\ndef work():\n try: from helper import missing\n except ImportError as e: yield e\ni=work()\ne=next(i)\nprint("entered")\nprint(e.name,e.path is helper.__file__,e.name_from,e.msg is e.args[0])\ni.close()\n',
+    'entered\nhelper True missing True\n', [{name: 'helper', source: 'pass\n'}]);
+});
+
+test('registry denial keeps finite import metadata without granting host imports', async () => {
+  const result = await runSourceRequest({modules: [unit('try: __import__("undeclared_host_module")\nexcept ImportError as e: print(e.name is None,e.path is None,e.name_from is None,e.msg is e.args[0])\n')],
+    compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.stdout, 'True True True True\n'); assert.equal(result.ok, true); closed(result.closed);
 });
 
 test('lazy exception messages retain their arguments through park/cancel/close', async () => {

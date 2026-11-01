@@ -10,8 +10,8 @@ const states = new WeakMap();
 const token = {};
 
 export class RegistryError extends Error {
-  constructor(message, name = "RegistryError", code = "REGISTRY") {
-    super(message); this.name = name; this.code = code;
+  constructor(message, name = "RegistryError", code = "REGISTRY", importContext = null) {
+    super(message); this.name = name; this.code = code; this.importContext = importContext;
   }
 }
 const fail = message => { throw new RegistryError(message); };
@@ -58,7 +58,7 @@ export class VerifiedRegistry {
   get sizeBytes() { return state(this).sizeBytes; }
   record(name) {
     const entry = state(this).records.get(name);
-    if (!entry) importError("Module is outside the verified registry: " + name, "ModuleNotFoundError");
+    if (!entry) throw new RegistryError("Module is outside the verified registry: " + name, "ModuleNotFoundError", "IMPORT", {name});
     return entry.record;
   }
   program(name) { this.record(name); return state(this).records.get(name).program; }

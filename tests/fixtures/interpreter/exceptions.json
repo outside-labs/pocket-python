@@ -22,7 +22,8 @@
     "LA21",
     "LA21A",
     "LA22",
-    "LA23"
+    "LA23",
+    "LA24"
   ],
   "cases": [
     {
@@ -1965,7 +1966,7 @@
     },
     {
       "id": "import-error-automatic-metadata-deferred",
-      "stage": "Future",
+      "stage": "LA24",
       "source": "try:\n from helper import missing\nexcept ImportError as e: print(e.name)\n",
       "stdout": "helper\n",
       "imports": [
@@ -1978,9 +1979,7 @@
           "imports": [],
           "source": "pass\n"
         }
-      ],
-      "owner": "#124",
-      "boundary": "Automatic import failure metadata enrichment remains separate from explicit ImportError construction/storage"
+      ]
     },
     {
       "id": "import-error-multiple-display-deferred",
@@ -2456,6 +2455,269 @@
       "id": "attribute-context-direct-native-value",
       "source": "a=7\ntry: a.missing\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
       "stdout": "missing True\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-native-fields",
+      "source": "import helper\ntry: from helper import missing\nexcept ImportError as e: print(e.name,e.name is helper.__name__,e.path is helper.__file__,e.name_from,e.msg is e.args[0],str(e) is e.msg)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "helper True True missing True True\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-hook-attribute-error",
+      "source": "import helper\ntry: from helper import missing\nexcept ImportError as e: print(e.name,e.path is helper.__file__,e.name_from)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def __getattr__(name):\n print(\"lookup\",name)\n raise AttributeError()\n"
+        }
+      ],
+      "stdout": "lookup __path__\nlookup missing\nhelper True missing\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-hook-import-error",
+      "source": "import helper\ntry: from helper import missing\nexcept ImportError as e: print(e is helper.error,e.name,e.path,e.name_from,str(e))\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "error=ImportError(\"custom\",name=\"chosen\",path=\"route\",name_from=\"member\")\ndef __getattr__(name):\n if name==\"__path__\": raise AttributeError()\n raise error\n"
+        }
+      ],
+      "stdout": "True chosen route member custom\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-hook-other-error",
+      "source": "try: from helper import missing\nexcept ValueError as e: print(str(e))\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def __getattr__(name):\n if name==\"__path__\": raise AttributeError()\n raise ValueError(\"custom\")\n"
+        }
+      ],
+      "stdout": "custom\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-changed-file",
+      "source": "import helper\noriginal=helper.__file__\nhelper.__dict__[\"__file__\"]=\"changed\"\ntry: from helper import missing\nexcept ImportError as e: print(e.path is original,e.path is helper.__file__,e.name_from)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "True False missing\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-removed-file",
+      "source": "import helper\noriginal=helper.__file__\ndel helper.__dict__[\"__file__\"]\ntry: from helper import missing\nexcept ImportError as e: print(e.path is original,e.name_from)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "True missing\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-name-string",
+      "source": "import helper\nhelper.__name__=\"renamed\"\ntry: from helper import missing\nexcept ImportError as e: print(e.name,e.path is helper.__file__,e.name_from)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "renamed True missing\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-name-none",
+      "source": "import helper\nhelper.__name__=None\ntry: from helper import missing\nexcept ImportError as e: print(e.name,e.path is helper.__file__,e.name_from)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "None True missing\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-name-int",
+      "source": "import helper\nhelper.__name__=7\ntry: from helper import missing\nexcept ImportError as e: print(e.name,e.path is helper.__file__,e.name_from)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "None True missing\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-deleted-name",
+      "source": "import helper\ndel helper.__name__\ntry: from helper import missing\nexcept ImportError as e: print(e.name is None,e.path is helper.__file__,e.name_from)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "True True missing\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-subclass-name",
+      "source": "class S(str): pass\nimport helper\nname=S(\"alias\")\nhelper.__name__=name\ntry: from helper import missing\nexcept ImportError as e: print(e.name is name,e.name_from,e.path is helper.__file__)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "True missing True\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-caught-and-reinitialized",
+      "source": "import helper\ntry: from helper import missing\nexcept ImportError as e:\n e.args=(7,)\n print(e.name,e.name_from,e.msg is str(e),e.path is helper.__file__)\n ImportError.__init__(e,\"explicit\")\n print(e.name is None,e.path is None,e.name_from is None,e.msg)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "helper missing True True\nTrue True True explicit\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-initialization-error",
+      "source": "try: import helper\nexcept ImportError as e: print(str(e),e.name,e.path,e.name_from)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "raise ImportError(\"body\",name=\"owned\",path=\"selected\",name_from=\"field\")\n"
+        }
+      ],
+      "stdout": "body owned selected field\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-partial-cause",
+      "source": "try:\n try: from helper import missing\n except ImportError as e: raise ValueError(\"outer\") from e\nexcept ValueError as e: print(e.__cause__.name,e.__cause__.name_from,e.__cause__.path is not None)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "helper missing True\n"
+    },
+    {
+      "stage": "LA24",
+      "id": "import-metadata-relative-failure",
+      "source": "try: __import__(\"child\",{\"__package__\":\"\"},None,(),1)\nexcept ImportError as e: print(e.msg is e.args[0],e.name is None,e.path is None,e.name_from is None)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "stage": "Future",
+      "id": "import-metadata-custom-provenance-deferred",
+      "source": "import helper\nhelper.__dict__[\"__spec__\"]=None\ntry: from helper import missing\nexcept ImportError as e: print(e.name)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "owner": "#124",
+      "boundary": "Custom module provenance and metadata callbacks require a separate reference-backed contract",
+      "stdout": "helper\n"
     }
   ],
   "reference_boundaries": [

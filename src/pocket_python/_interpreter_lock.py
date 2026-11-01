@@ -1,17 +1,17 @@
 """Known source-console assets, canonical LF bytes; refresh with scripts/lock_interpreter.py."""
 
-ENGINE_FINGERPRINT = 'a2fb80f421ce458e6e35d02af3811e40f248bc21034ec1e213f35a9ed5c6ad2e'
+ENGINE_FINGERPRINT = '2b2d187525282a3681d52f8176e7295465adb861bd008538bafeba2fc0422828'
 ENGINE_FILES = (
     ('browser-protocol.mjs', 10966, '85f50d640eaa5324cf62e75f5dc6050186bf167201208d26e84a49efd74bf499'),
     ('bytecode.mjs', 6836, 'e76fabeea879bc1da8016283f7e74df5974479666b100199c2d3c31a53b8ecf4'),
     ('class-policy.mjs', 5539, 'eb4fb02aba4f6c4fb237c4fd0bf5633d2b7e3d0de176d6cf8581690d8b1eceb4'),
-    ('class-values.mjs', 155589, '86c4cdfe8c2d0f3e7fd7171ad2be9e5ece79137867146dc95015500c9668c0b8'),
+    ('class-values.mjs', 155626, '2c54cb178c5f43bb475afc15943da42ccd9855a41eb30290855c6e7a899ce362'),
     ('dynamic-evaluation.mjs', 6820, '44ad82dae7fa185c524e163440a96db953e800e96baa372249dd5e9d613b9eca'),
     ('dynamic-imports.mjs', 9307, '9996c3f3f7e82cd440cf16244176d37e9456c8dd9bbac2e5ac675cf22497c951'),
     ('dynamic-source.mjs', 5723, '9040a40e8906723f01f496f30aafd329816f823ecad158dd29db8e21b844bf2c'),
     ('function-bytecode.mjs', 25120, '75e7646ba7d001eedc0f365032eb0344705f3291ada9c0a44a0b471fb4d3d496'),
     ('function-objects.mjs', 12697, '07b6589f9bb4cda971b4af15f22c920737f49d1dac1981570d9bbc5eda122bd8'),
-    ('functions.mjs', 99140, '779ad79c6e9a84344610cca121d31e443fc2a9ca677a6ec796e1b0d6550cffb8'),
+    ('functions.mjs', 101206, 'f76e3461a3b9aa8a477f88ba189cd5d2ddd978eb428161f7483c41da36da9527'),
     ('interpreter-host.mjs', 7318, '4afadfd987000afa6221ee73dcd64e9c00a2d13c4324718248d396302a39296d'),
     ('interpreter-worker.mjs', 8855, '324cc23100eb40ef04f2909b805d7abc0c8651b4608b3a61a95470ec7e74e19e'),
     ('library-catalog.mjs', 907, '0adcaae0f6f07b4e1acb22e46493ec99f7247a5828b426c703530d8b2736032c'),
@@ -20,12 +20,12 @@ ENGINE_FILES = (
     ('licenses/POCKET-PYTHON.txt', 1066, '30989a02b7e73aa97c349440d9323d2486033a88a2b37461f3142bbb30515e85'),
     ('licenses/UNICODE.txt', 1995, 'e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96'),
     ('memory.mjs', 9742, 'e934db7a46b9c7dd52ad2d848f7bc9d24eb124150ee7dd1fe8d96cdb4227b249'),
-    ('module-context.mjs', 9330, 'aeb2cf7ea726501695a123f0b9e5f90abcced383fac08ba11db0d706c5820dcc'),
-    ('module-registry.mjs', 10486, 'd5de019a653bf7a95a27d6f1aaeabc9b922b947c46f57e36b74844f0ff044625'),
+    ('module-context.mjs', 9603, 'ca068688e932a6f88d063e3e120223b8ef18925191cdb2e190aecf64c99cb654'),
+    ('module-registry.mjs', 10574, '41704e8c0a53c2bd604509b09f640f9c152d9cc00be0d73c58ebe8288c1a92df'),
     ('module-session.mjs', 12883, 'b7b7859d18ecfee53cc79fbb3eb92820eabe0ad67ea97f5d317d5c59bd0619f1'),
     ('native-namespaces.mjs', 216748, '5ffc4487c1a62cd693b34beddfe67bf548308fcd7a08e12ab49573b83e042104'),
     ('numeric.mjs', 13954, '2431f099a7d40aa38d6b3c68b556207752e4191211e01005acde94325bd91bad'),
-    ('operation-runtime.mjs', 295957, '9dac44595b27c54fafe3bdd59a6c642b419558891a6309ec1120ecef98bbd003'),
+    ('operation-runtime.mjs', 296102, '28415d92d7dd87a2189985e59466390edbc30200a798dc90e42e6a1fb5155468'),
     ('operations.mjs', 53810, '78615414753c0955609257cc49dc2ff2a40244b705feba5baa4b48f4cdd84b18'),
     ('source-compiler.mjs', 49020, 'e43844ec5aa46f162ae2a0721effcacce816697d4823ee508e081109488a713e'),
     ('source-identifiers.mjs', 25949, '1e4e6a90728a2d9393eb4b2055d4bd759542f4768d1870b508d629c6888e8914'),
@@ -33,7 +33,7 @@ ENGINE_FILES = (
     ('source-parser.mjs', 34826, '2140b3918cb9a13a8bac2e5d5ba98b8517dad0ec75e9b11126647309d19e2c5d'),
     ('source-tokens.mjs', 15491, 'fb9584d296988910b97bf4ed31149f84040ad2a6c29a6dc3b27dc11593e731f5'),
     ('string-printability.mjs', 13287, '355a086a142e06822eff821dd0ac6a2ca70c4e06f4ec659236dc3cea1ddd639f'),
-    ('values.mjs', 113893, '22fa5fcfe45271738b404b44502775d3ea32efa079512b8264b36134adc01f24'),
+    ('values.mjs', 113959, '2643af52015be37c866a4fe02bc561ad553f7984923b1768a22ebdf0a7a7ae8b'),
     ('vm.mjs', 6080, '796eaac2848ee7aa2d740797eb2afbdb3e577918866a88a9f25e5adbc55e985d'),
 )
 ENGINE_IMPORTS = (

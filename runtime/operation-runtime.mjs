@@ -23,7 +23,7 @@ const NATIVE_ARITIES = Object.freeze({
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, nameError, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, nameError, registryException, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const compiler = dynamicCompiler({state, memory, values, classes, allocate, charge, python, hard});
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
@@ -174,7 +174,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const frame = state.frames.at(-1);
       let result;
       try { result = moduleContext.planAttribute(record.receiver, record.name, true, frame.pool.module.name, record.skipNamespace); }
-      catch (error) { if (error instanceof RegistryError && error.code === "IMPORT") python(error.name, error.message); throw error; }
+      catch (error) { if (error instanceof RegistryError && error.code === "IMPORT") throw new Raised(registryException(error)); throw error; }
       if (result.kind === "load") { state.pendingImport = {plan: result.plan, inheritedException: frame.activeException}; return null; }
       return valueTask(result.value, site, record.after);
     }
@@ -3685,6 +3685,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             continuation("namespace-lookup", {cache, task, owner: error.owner, name: error.name, dictionary: error.dictionary, phase: error.phase}), depth, "probe-entry");
           continue;
         }
+        if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(registryException(error));
         const nativeFailure = error instanceof Raised && task.kind === "attribute" && task.operation === "native-get" &&
           attributeFailure(error.value, task.receiver, task.key ?? task.name, site, completion);
         const recovery = nativeFailure || error instanceof Raised && recover(error.value, completion, site);
