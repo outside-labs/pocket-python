@@ -7,7 +7,7 @@ import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"]);
 export const CONTAINER_METHODS = Object.freeze({
-  list: Object.freeze(["copy", "clear", "reverse", "insert", "pop", "count", "index"]),
+  list: Object.freeze(["copy", "clear", "reverse", "insert", "pop", "count", "index", "extend"]),
   tuple: Object.freeze(["count", "index"]),
 });
 export const CONTAINER_METHOD_NAMES = new Set(Object.values(CONTAINER_METHODS).flat());

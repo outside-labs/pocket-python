@@ -2458,6 +2458,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (CONTAINER_METHODS[containerOwner]?.includes(nativeName)) {
             const original = callable instanceof ValueMethod ? callable.receiver : args[0];
             const receiver = classes.payload(original), rest = callable instanceof ValueMethod ? args : args.slice(1);
+            if (nativeName === "extend") {
+              if (keywords.length || rest.length !== 1) python("TypeError", "extend() takes one positional iterable");
+              const source = classes.payload(rest[0]) === receiver ? values.list(receiver.items) : rest[0];
+              state.temporaries.push(source);
+              values.checkConstructionHint(source);
+              task = consumeTask("list", source, site,
+                continuation("item-result", {receiver: original, after: completion}), depth, receiver); continue;
+            }
             if (["count", "index"].includes(nativeName)) {
               if (keywords.length || rest.length < 1 || rest.length > (nativeName === "index" ? 3 : 1))
                 python("TypeError", "Invalid " + nativeName + " arguments");
