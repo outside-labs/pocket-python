@@ -35,6 +35,19 @@ native message initialization retain their adopted field semantics.
 | LA-27 | Native SyntaxError message/location rendering, basename selection, exact-int line selection and owned message callbacks | Filename/line values are read before message callbacks; native fields bypass owned getters. String-subclass filenames render their native content, while bool/int-subclass line numbers are ignored. The deterministic profile uses POSIX separators and signed 64-bit C long overflow behavior; Windows differences are separately recorded. |
 | LA-28 | Composed structured syntax failures across modules, dynamic source, causes/notes and suspended cleanup; installed offline detail/message cancellation and core-profile updates | The corpus has 438 cases: 430 semantic/error comparisons, eight explicit refusals and 76 shared core cases. Node/Chromium pass every driver, with 71 installed-wheel offline checks. Two pinned-reference crash and two host qualifications remain separate from these counts. |
 
+LA-32 adds `UnicodeEncodeError(encoding, object, start, end, reason, /)`,
+native allocation/initialization, independent fields and compatible subclasses.
+Encoding, object and reason require strings and retain subtype identity. Native
+index conversion runs between object and reason validation; failed initialization
+keeps old fields and callback mutations after replacing args. Numeric members
+accept native integers without index callbacks. Explicit native allocation leaves
+object fields absent and numeric fields zero. Runtime codec metadata and native
+message rendering retain separate contracts. Scalar construction/read cases are
+explicitly shared with core-source/1; native descriptors and callbacks require
+classes-source/1. The pinned
+[initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3640-L3670)
+defines the validation/publication order.
+
 LA-29 adds `UnicodeTranslateError(object, start, end, reason, /)`, five native
 fields, native initializers/descriptors and subclasses. Object/reason require
 strings and retain subtype identity. Construction converts start/end in order

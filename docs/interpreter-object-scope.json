@@ -1142,6 +1142,12 @@
       "site": "if (receiver.nativeFieldBoundaries?.has(name)) this.fail(\"UnsupportedOperationError\", \"Automatic native exception metadata remains under #124\", \"UNSUPPORTED\");",
       "owner": "#124",
       "boundary": "Automatic lookup/import metadata enrichment remains separate from explicit native exception construction/storage"
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Unicode encoding messages remain under #124\");",
+      "owner": "#124",
+      "boundary": "Native UnicodeEncodeError rendering follows construction in LA-33."
     }
   ],
   "native_tables": {

@@ -30,7 +30,8 @@
     "LA28",
     "LA29",
     "LA30",
-    "LA31"
+    "LA31",
+    "LA32"
   ],
   "cases": [
     {
@@ -4169,6 +4170,342 @@
         "classes-source/1",
         "core-source/1"
       ]
+    },
+    {
+      "id": "encode-native-fields",
+      "stage": "LA32",
+      "source": "s=\"\u96ea\"\ne=UnicodeEncodeError(\"ascii\",s,0,1,\"bad\")\nprint(e.encoding,e.object is s,e.start,e.end,e.reason,len(e.args),e.args[1] is s,e.args is e.args)\n",
+      "stdout": "ascii True 0 1 bad 5 True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-arity-0",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError()\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (0 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-arity-1",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (1 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-arity-2",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (2 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-arity-3",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (3 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-arity-4",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (4 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-arity-6",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,1,\"bad\",None)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (6 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-0-None",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(None,\"abc\",0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 1 must be str, not None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-0-7",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(7,\"abc\",0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 1 must be str, not int\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-0-b\"x\"",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(b\"x\",\"abc\",0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 1 must be str, not bytes\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-1-None",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",None,0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 2 must be str, not None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-1-7",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",7,0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 2 must be str, not int\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-1-b\"x\"",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",b\"x\",0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 2 must be str, not bytes\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-4-None",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,1,None)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 5 must be str, not None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-4-7",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,1,7)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 5 must be str, not int\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-string-validation-4-b\"x\"",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,1,b\"x\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 5 must be str, not bytes\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-index-error-2-0",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",None,1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "encode-index-error-2-1",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",1.5,1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "encode-index-error-2-2",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",1 << 63,1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "encode-index-error-2-3",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",-(1 << 63)-1,1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "encode-index-error-3-0",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,None,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "encode-index-error-3-1",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,1.5,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "encode-index-error-3-2",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,1 << 63,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "encode-index-error-3-3",
+      "stage": "LA32",
+      "source": "try: UnicodeEncodeError(\"ascii\",\"abc\",0,-(1 << 63)-1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "encode-native-new",
+      "stage": "LA32",
+      "source": "e=UnicodeEncodeError.__new__(UnicodeEncodeError,\"ignored\",anything=1)\nprint(len(e.args),e.args[0],e.object is None,e.encoding is None,e.reason is None,e.start,e.end)\n",
+      "stdout": "1 ignored True True True 0 0\n"
+    },
+    {
+      "id": "encode-raise-class",
+      "stage": "LA32",
+      "source": "try: raise UnicodeEncodeError\nexcept TypeError: print(\"constructor\")\n",
+      "stdout": "constructor\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-cause-class",
+      "stage": "LA32",
+      "source": "try: raise ValueError() from UnicodeEncodeError\nexcept TypeError: print(\"cause\")\n",
+      "stdout": "cause\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-keyword-before-args",
+      "stage": "LA32",
+      "source": "e=UnicodeEncodeError(\"old\",\"abc\",0,1,\"bad\")\ntry: UnicodeEncodeError.__init__(e,\"new\",\"x\",1,2,\"next\",reason=\"no\")\nexcept TypeError: print(e.args[0],e.encoding,e.object)\n",
+      "stdout": "old old abc\n"
+    },
+    {
+      "id": "encode-failed-init-args",
+      "stage": "LA32",
+      "source": "e=UnicodeEncodeError(\"old\",\"abc\",0,1,\"bad\")\ntry: UnicodeEncodeError.__init__(e,\"new\",\"x\",2,3,None)\nexcept TypeError: print(e.args[0],e.args[1],e.encoding,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "new x old abc 0 1 bad\n"
+    },
+    {
+      "id": "encode-independent-fields",
+      "stage": "LA32",
+      "source": "e=UnicodeEncodeError(\"old\",\"abc\",0,1,\"bad\")\ne.args=()\ne.__dict__[\"encoding\"]=\"shadow\"\ne.object=e\ne.reason=[e]\ne.encoding=e\nprint(len(e.args),e.object is e,e.reason[0] is e,e.encoding is e)\ndel e.encoding\ndel e.object\ndel e.reason\nprint(e.encoding is None,e.object is None,e.reason is None)\n",
+      "stdout": "0 True True True\nTrue True True\n"
+    },
+    {
+      "id": "encode-numeric-members",
+      "stage": "LA32",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",False,True,\"r\")\nprint(type(e.start) is int,e.start,e.end)\ne.start=True\nprint(type(e.start) is int,e.start)\ntry: del e.end\nexcept TypeError: print(\"delete\")\ntry: e.start=1 << 63\nexcept OverflowError: print(\"overflow\")\nprint(e.start)\n",
+      "stdout": "True 0 1\nTrue 1\ndelete\noverflow\n1\n"
+    },
+    {
+      "id": "encode-index-order",
+      "stage": "LA32",
+      "source": "class I:\n def __init__(self,n): self.n=n\n def __index__(self):\n  print(self.n)\n  return self.n\ne=UnicodeEncodeError(\"x\",\"abc\",I(1),I(2),\"r\")\nprint(e.start,e.end)\n",
+      "stdout": "1\n2\n1 2\n"
+    },
+    {
+      "id": "encode-reason-after-index",
+      "stage": "LA32",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 0\ntry: UnicodeEncodeError(\"x\",\"abc\",I(),I(),None)\nexcept TypeError: print(\"reason\")\n",
+      "stdout": "index\nindex\nreason\n"
+    },
+    {
+      "id": "encode-string-before-index",
+      "stage": "LA32",
+      "source": "class I:\n def __index__(self):\n  print(\"unexpected\")\n  return 0\ntry: UnicodeEncodeError(\"x\",None,I(),I(),\"r\")\nexcept TypeError: print(\"object\")\n",
+      "stdout": "object\n"
+    },
+    {
+      "id": "encode-callback-mutation-failure",
+      "stage": "LA32",
+      "source": "e=UnicodeEncodeError(\"old\",\"abc\",0,1,\"r\")\nclass I:\n def __index__(self):\n  e.args=()\n  e.encoding=\"changed\"\n  return 2\ntry: UnicodeEncodeError.__init__(e,\"new\",\"xyz\",I(),3,None)\nexcept TypeError: print(len(e.args),e.encoding,e.object,e.start)\n",
+      "stdout": "0 changed abc 0\n"
+    },
+    {
+      "id": "encode-string-subtype-identity",
+      "stage": "LA32",
+      "source": "class S(str): pass\na=S(\"a\")\ns=S(\"snow\")\nr=S(\"r\")\ne=UnicodeEncodeError(a,s,0,1,r)\nprint(e.encoding is a,e.object is s,e.reason is r)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "encode-int-subtype-native-conversion",
+      "stage": "LA32",
+      "source": "class I(int):\n def __index__(self): raise ValueError()\ne=UnicodeEncodeError(\"x\",\"abc\",I(1),I(2),\"r\")\ne.start=I(2)\nprint(e.start,e.end,type(e.start) is int)\n",
+      "stdout": "2 2 True\n"
+    },
+    {
+      "id": "encode-member-no-index",
+      "stage": "LA32",
+      "source": "class I:\n def __index__(self):\n  print(\"unexpected\")\n  return 0\ne=UnicodeEncodeError(\"x\",\"abc\",0,1,\"r\")\ntry: e.start=I()\nexcept TypeError: print(\"native\")\n",
+      "stdout": "native\n"
+    },
+    {
+      "id": "encode-subclass-slots",
+      "stage": "LA32",
+      "source": "class E(UnicodeEncodeError):\n __slots__=(\"record\",)\ne=E(\"a\",\"\u96ea\",0,1,\"r\")\ne.record=[e]\ne.extra=e.record\ntry: raise e\nexcept UnicodeError as caught: print(caught is e,caught.record[0] is e,caught.extra is e.record,type(e) is E)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "encode-subclass-custom-init",
+      "stage": "LA32",
+      "source": "class E(UnicodeEncodeError):\n def __init__(self,text):\n  super().__init__(\"ascii\",text,0,1,\"bad\")\n  self.saved=text\ne=E(\"\u96ea\")\nprint(e.object is e.saved,e.encoding,e.reason)\n",
+      "stdout": "True ascii bad\n"
+    },
+    {
+      "id": "encode-mixed-generic-base",
+      "stage": "LA32",
+      "source": "class E(RuntimeError,UnicodeEncodeError): pass\ne=E(\"a\",\"x\",0,1,\"r\")\nprint(e.encoding,e.object,isinstance(e,UnicodeEncodeError),isinstance(e,RuntimeError))\n",
+      "stdout": "a x True True\n"
+    },
+    {
+      "id": "encode-layout-conflict",
+      "stage": "LA32",
+      "source": "try:\n class E(UnicodeEncodeError,UnicodeTranslateError): pass\nexcept TypeError: print(\"layout\")\n",
+      "stdout": "layout\n"
+    },
+    {
+      "id": "encode-native-descriptor",
+      "stage": "LA32",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\nUnicodeEncodeError.object.__set__(e,\"new\")\nprint(UnicodeEncodeError.object.__get__(e,UnicodeEncodeError))\ntry: UnicodeEncodeError.object.__get__(ValueError(),ValueError)\nexcept TypeError: print(\"receiver\")\n",
+      "stdout": "new\nreceiver\n"
+    },
+    {
+      "id": "encode-base-init-preserves-fields",
+      "stage": "LA32",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\nBaseException.__init__(e,7)\nprint(e.args[0],e.encoding,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "7 a x 0 1 r\n"
     }
   ],
   "reference_boundaries": [
