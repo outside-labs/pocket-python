@@ -11,7 +11,8 @@
     "LA12",
     "LA12A",
     "LA13",
-    "LA14"
+    "LA14",
+    "LA15"
   ],
   "cases": [
     {
@@ -1136,6 +1137,149 @@
         "classes-source/1",
         "core-source/1"
       ]
+    },
+    {
+      "id": "notes-lazy-identity",
+      "stage": "LA15",
+      "source": "e=ValueError(\"message\")\nprint(hasattr(e,\"__notes__\"))\nn=\"detail\"\nprint(e.add_note(n) is None)\na=e.__notes__\ne.add_note(n)\nprint(e.__notes__ is a,len(a),a[0] is n,a[1] is n,str(e),len(e.args))\n",
+      "stdout": "False\nTrue\nTrue 2 True True message 1\n"
+    },
+    {
+      "id": "notes-native-unbound",
+      "stage": "LA15",
+      "source": "e=ValueError()\nprint(BaseException.add_note(e,\"one\") is None)\nException.add_note(e,\"two\")\nValueError.add_note(e,\"three\")\nprint(e.__notes__[0],e.__notes__[1],e.__notes__[2])\n",
+      "stdout": "True\none two three\n"
+    },
+    {
+      "id": "notes-dictionary-replacement-deletion",
+      "stage": "LA15",
+      "source": "e=Exception()\ne.add_note(\"one\")\na=e.__notes__\nprint(vars(e)[\"__notes__\"] is a)\nb=[]\ne.__notes__=b\ne.add_note(\"two\")\nprint(len(a),len(b),b[0])\ndel e.__notes__\nprint(hasattr(e,\"__notes__\"))\ne.add_note(\"three\")\nprint(e.__notes__ is b,e.__notes__[0])\n",
+      "stdout": "True\n1 1 two\nFalse\nFalse three\n"
+    },
+    {
+      "id": "notes-shared-list",
+      "stage": "LA15",
+      "source": "a=ValueError()\nb=TypeError()\nnotes=[]\na.__notes__=notes\nb.__notes__=notes\na.add_note(\"one\")\nb.add_note(\"two\")\nprint(len(notes),notes[0],notes[1])\n",
+      "stdout": "2 one two\n"
+    },
+    {
+      "id": "notes-manual-nonstrings-retained",
+      "stage": "LA15",
+      "source": "e=Exception()\nitem=[]\ne.__notes__=[item]\ne.add_note(\"two\")\nprint(e.__notes__[0] is item,e.__notes__[1])\n",
+      "stdout": "True two\n"
+    },
+    {
+      "id": "notes-invalid-note-no-attribute",
+      "stage": "LA15",
+      "source": "e=Exception()\ntry: e.add_note(7)\nexcept TypeError: print(hasattr(e,\"__notes__\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "notes-invalid-existing-list",
+      "stage": "LA15",
+      "source": "e=Exception()\ne.__notes__=None\ntry: e.add_note(\"one\")\nexcept TypeError as failure: print(str(failure),e.__notes__ is None)\n",
+      "stdout": "Cannot add note: __notes__ is not a list True\n"
+    },
+    {
+      "id": "notes-invalid-existing-tuple",
+      "stage": "LA15",
+      "source": "e=Exception()\ne.__notes__=()\ne.add_note(\"one\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notes-missing-argument",
+      "stage": "LA15",
+      "source": "Exception().add_note()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notes-extra-argument",
+      "stage": "LA15",
+      "source": "Exception().add_note(\"one\",\"two\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notes-keyword-rejected",
+      "stage": "LA15",
+      "source": "Exception().add_note(note=\"one\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notes-unbound-receiver-rejected",
+      "stage": "LA15",
+      "source": "BaseException.add_note(7,\"one\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "notes-no-format-callback",
+      "stage": "LA15",
+      "source": "class N:\n def __str__(self):\n  print(\"bad\")\n  return \"one\"\ne=Exception()\ntry: e.add_note(N())\nexcept TypeError: print(hasattr(e,\"__notes__\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "notes-string-subclass-identity",
+      "stage": "LA15",
+      "source": "class S(str):\n def __str__(self):\n  print(\"bad\")\n  return \"other\"\nn=S(\"one\")\ne=Exception()\ne.add_note(n)\nprint(e.__notes__[0] is n)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "notes-list-subclass-native-append",
+      "stage": "LA15",
+      "source": "class L(list):\n def append(self,value): print(\"bad\")\nnotes=L()\ne=Exception()\ne.__notes__=notes\ne.add_note(\"one\")\nprint(e.__notes__ is notes,len(notes),notes[0])\n",
+      "stdout": "True 1 one\n"
+    },
+    {
+      "id": "notes-owned-attribute-hooks",
+      "stage": "LA15",
+      "source": "class E(Exception):\n def __getattribute__(self,name):\n  if name==\"__notes__\": print(\"get\")\n  return super().__getattribute__(name)\n def __setattr__(self,name,value):\n  print(\"set\",name)\n  super().__setattr__(name,value)\ne=E()\ne.add_note(\"one\")\ne.add_note(\"two\")\nprint(e.__notes__[0],e.__notes__[1])\n",
+      "stdout": "get\nset __notes__\nget\nget\nget\none two\n"
+    },
+    {
+      "id": "notes-rejected-before-getter",
+      "stage": "LA15",
+      "source": "class E(Exception):\n @property\n def __notes__(self):\n  print(\"bad\")\n  return []\ne=E()\ntry: e.add_note(7)\nexcept TypeError: print(\"rejected\")\n",
+      "stdout": "rejected\n"
+    },
+    {
+      "id": "notes-getattr-existing-list",
+      "stage": "LA15",
+      "source": "notes=[]\nclass E(Exception):\n def __getattr__(self,name):\n  print(\"fallback\",name)\n  return notes\ne=E()\ne.add_note(\"one\")\nprint(notes[0],len(vars(e)))\n",
+      "stdout": "fallback __notes__\none 0\n"
+    },
+    {
+      "id": "notes-property-storage",
+      "stage": "LA15",
+      "source": "class E(Exception):\n @property\n def __notes__(self):\n  print(\"get\")\n  raise AttributeError()\n @__notes__.setter\n def __notes__(self,value):\n  print(\"set\")\n  self.saved=value\ne=E()\ne.add_note(\"one\")\nprint(e.saved[0])\n",
+      "stdout": "get\nset\none\n"
+    },
+    {
+      "id": "notes-setter-ignores-write",
+      "stage": "LA15",
+      "source": "class E(Exception):\n def __setattr__(self,name,value): print(\"ignored\",name)\ne=E()\nprint(e.add_note(\"one\") is None,hasattr(e,\"__notes__\"))\n",
+      "stdout": "ignored __notes__\nTrue False\n"
+    },
+    {
+      "id": "notes-getter-failure-context",
+      "stage": "LA15",
+      "source": "class E(Exception):\n @property\n def __notes__(self): raise LookupError(8)\ne=E(7)\ntry:\n try: raise e\n except E: e.add_note(\"one\")\nexcept LookupError as failure: print(failure.__context__ is e,failure.args[0])\n",
+      "stdout": "True 8\n"
+    },
+    {
+      "id": "notes-setter-failure",
+      "stage": "LA15",
+      "source": "class E(Exception):\n def __setattr__(self,name,value):\n  print(\"set\")\n  raise LookupError(8)\ne=E()\ntry: e.add_note(\"one\")\nexcept LookupError as failure: print(failure.args[0],hasattr(e,\"__notes__\"))\n",
+      "stdout": "set\n8 False\n"
+    },
+    {
+      "id": "notes-getter-mutates-error",
+      "stage": "LA15",
+      "source": "class E(Exception):\n @property\n def __notes__(self):\n  self.args=(8,)\n  return self.saved\ne=E(7)\ne.saved=[]\ne.add_note(\"one\")\nprint(e.args[0],e.saved[0])\n",
+      "stdout": "8 one\n"
     }
   ]
 }

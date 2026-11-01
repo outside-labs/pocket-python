@@ -772,6 +772,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "attribute-fallback" && value.name === "AttributeError")
         return attributeTask(current.receiver, current.name, site, current.after, current.depth, "fallback", current.key, current.hook);
       if (current.kind === "attribute-result" && value.name === "AttributeError") return valueTask(current.mode === "hasattr" ? false : current.default, site, current.after);
+      if (current.kind === "exception-note-get" && value.name === "AttributeError") {
+        const result = values.list([]); state.temporaries.push(result);
+        return attributeTask(current.receiver, "__notes__", site, continuation("exception-note-store", {...current, result}), current.depth, "set", null, null, result);
+      }
       if (current.kind === "delegate-bind" && value.name === "AttributeError") return unaryTask("delegate-raise", current.receiver, site);
       if (current.kind.startsWith("call-map-") && (value.name === "AttributeError" || value.name === "KeyError" && current.mode !== "display"))
         return value.name === "KeyError" ? duplicateKeyword(current.receiver, value.args[0] ?? current.key, site, current.after) :
@@ -975,6 +979,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "raise-value") return raiseException(value, completion.cause, completion.explicit, site, true);
     if (completion?.kind === "raise-cause") return raiseException(completion.receiver, value, true, site, true, true);
+    if (completion?.kind === "exception-note-get" || completion?.kind === "exception-note-store") {
+      const result = completion.kind === "exception-note-store" ? completion.result : classes.payload(value);
+      if (!values.isList(result)) python("TypeError", "Cannot add note: __notes__ is not a list");
+      values.append(result, completion.note);
+      return valueTask(null, site, completion.after);
+    }
     if (completion?.kind === "exception-args") {
       const receiver = completion.receiver;
       mutate(receiver, () => {
@@ -2497,6 +2507,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const nativeOwner = callable.nativeOwner instanceof BuiltinValue ? callable.nativeOwner.name : callable.name.split(".")[0];
           const nativeName = callable.nativeKey ?? callable.name.slice(callable.name.indexOf(".") + 1);
           if (GENERIC_EXCEPTION_BASES.includes(nativeOwner)) {
+            if (nativeName === "add_note") {
+              if (args.length !== 2 || keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "add_note() takes one positional note argument");
+              if (!(classes.payload(args[1]) instanceof StringValue)) python("TypeError", "note must be a str");
+              task = attributeTask(args[0], "__notes__", site, continuation("exception-note-get", {receiver: args[0], note: args[1], depth, after: completion}), depth); continue;
+            }
             if (nativeName === "__new__") {
               const type = args[0];
               if (!classes.isType(type) || !classes.subclass(type, classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
