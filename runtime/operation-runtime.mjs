@@ -88,7 +88,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return allocate(ExceptionValue, name, args, scalar ? display(args[0]) : "", type);
   };
   const initializeException = (receiver, args, keywords, keywordValues, owner) => {
-    const fields = ["NameError", "UnboundLocalError"].includes(owner) ? ["name"] : null;
+    const fields = ["NameError", "UnboundLocalError"].includes(owner) ? ["name"] : owner === "AttributeError" ? ["name", "obj"] : null;
     if (!fields && keywords.length) python("TypeError", "Exception initialization does not accept keywords");
     mutate(receiver, () => {
       const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs];
@@ -102,8 +102,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (keywords.some(key => !fields.includes(key))) python("TypeError", "Invalid " + owner + " keyword argument");
       mutate(receiver, () => {
         const before = new Map(receiver.nativeFields);
+        const boundaries = receiver.nativeFieldBoundaries;
         for (const key of fields) receiver.nativeFields.set(key, keywords.includes(key) ? keywordValues[keywords.indexOf(key)] : null);
-        return () => { receiver.nativeFields = before; };
+        receiver.nativeFieldBoundaries = undefined;
+        return () => { receiver.nativeFields = before; receiver.nativeFieldBoundaries = boundaries; };
       });
     }
   };
@@ -270,7 +272,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
-    if (["NameError", "UnboundLocalError"].includes(callable.name) && state.frames.at(-1).pool.code.version >= 4) {
+    if (["NameError", "UnboundLocalError", "AttributeError"].includes(callable.name) && state.frames.at(-1).pool.code.version >= 4) {
       const positional = args.slice(0, args.length - keywords.length), keywordValues = args.slice(positional.length);
       const value = makeException(callable.name, positional); state.temporaries.push(value);
       initializeException(value, positional, keywords, keywordValues, callable.name);

@@ -170,6 +170,7 @@ export class ExceptionValue {
     this.traceback = []; this.context = null;
     this.attributes = null;
     if (EXCEPTION_FIELDS[name]) this.nativeFields = new Map(EXCEPTION_FIELDS[name].map(key => [key, null]));
+    if (name === "AttributeError" && args === null) this.nativeFieldBoundaries = new Set(["name", "obj"]);
     if (type !== null) {
       this.type = type; this.attributes = new Map();
       if (type.storage?.count) this.slotValues = new Map();
@@ -194,9 +195,10 @@ export function matchesException(name, expected) {
 // constructors/fields and StopIteration's extra storage retain their own gate.
 export const GENERIC_EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTIONS).filter(name =>
   !["StopIteration", "AttributeError", "ImportError", "ModuleNotFoundError", "NameError", "UnboundLocalError", "SyntaxError", "IndentationError", "TabError", "UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError"].includes(name)));
-export const EXCEPTION_FIELDS = Object.freeze({NameError: Object.freeze(["name"]), UnboundLocalError: Object.freeze(["name"])});
+export const EXCEPTION_FIELDS = Object.freeze({NameError: Object.freeze(["name"]), UnboundLocalError: Object.freeze(["name"]),
+  AttributeError: Object.freeze(["name", "obj"])});
 export const EXCEPTION_LAYOUTS = Object.freeze({...Object.fromEntries(GENERIC_EXCEPTION_BASES.map(name => [name, "BaseException"])),
-  NameError: "NameError", UnboundLocalError: "NameError"});
+  NameError: "NameError", UnboundLocalError: "NameError", AttributeError: "AttributeError"});
 export const EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTION_LAYOUTS));
 
 // The source-visible builtin namespace contains only adopted capabilities.
