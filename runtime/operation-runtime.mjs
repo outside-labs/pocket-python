@@ -265,6 +265,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return values.unary({bool: "truth", iter: "iter", next: "next"}[callable.name], args[0]);
     }
     if (Object.hasOwn(EXCEPTIONS, callable.name)) {
+      if (state.frames.at(-1).pool.code.version < 4) {
+        if (args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception arguments require the modern source profile under #124");
+        return allocate(ExceptionValue, callable.name, args, args.length ? display(args[0]) : "");
+      }
       if (["UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError", "SyntaxError", "IndentationError", "TabError"].includes(callable.name) && args.length > 1)
         hard("UNSUPPORTED", "UnsupportedOperationError", "Structured exception constructors remain under #124");
       // Preserve the safe scalar diagnostic without running a user protocol.

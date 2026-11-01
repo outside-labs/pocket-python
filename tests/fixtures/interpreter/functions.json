@@ -439,7 +439,11 @@
     {
       "id": "unsupported-exception-args",
       "source": "raise ValueError(1,2)",
-      "code": "UNSUPPORTED"
+      "code": "UNSUPPORTED",
+      "source_expectation": {
+        "code": "PYTHON",
+        "error_type": "ValueError"
+      }
     },
     {
       "id": "unsupported-function-format",
