@@ -277,9 +277,9 @@ on CPython or in the offline console. Installed acceptance adds fresh source,
 original dynamic diagnostics, Stop/Restart in index/reason/encoding callbacks
 and a reduced-profile bytes program.
 
-The combined exception corpus records 941 cases: 930 semantic/error comparisons
+The combined exception corpus records 940 cases: 929 semantic/error comparisons
 and 11 explicit refusals, with 267 cases explicitly shared by core-source/1.
-Five host/crash/cache qualifications remain separate. These finite
+Six host/crash/cache qualifications remain separate. These finite
 observations do not measure overall Python completion. The eight deterministic
 resource cases retain accounting revision 22. Explicit Encode/Decode
 construction, native fields, subclasses and rendering are adopted. Runtime
@@ -380,11 +380,12 @@ notes and suspended generator cleanup. Run
 offline console. Installed acceptance checks original dynamic write/delete
 frames, fresh source and receivers, Stop/Restart in a setter and dictionary
 comparison callback, and the reduced profile's mutation-builtin boundary.
-The 89 new corpus observations contain 86 supported comparisons and three
-explicit refusals; these finite results do not measure overall Python
-completion. Core admission and the five prior host/crash/cache qualifications
-are unchanged. A2, groups/except*, tracebacks, note export, remaining native
-metadata and library/package/candidate gates remain open.
+The 88 new corpus cases contain 85 supported comparisons and three explicit
+refusals, with one additional reference crash qualified separately. These
+finite results do not measure overall Python completion. Core admission is
+unchanged; six host/crash/cache qualifications remain separate. A2, groups/except*,
+tracebacks, note export, remaining native metadata and library/package/candidate
+gates remain open.
 
 LA-43 accepts runtime decoding failures across modules, dynamic source, notes,
 causes and suspended generator cleanup. Run
@@ -396,3 +397,14 @@ decoder metadata. The eight deterministic execution resource observations
 retain revision 22. Groups/except*, traceback objects/mutation, note export and
 remaining attribute/import/parser metadata retain #124; wider codec/error-policy
 APIs and bytes-cache identity retain #117; general formatting remains #127.
+
+LA-46A qualifies `delete-metadata-callback-mutates-dictionary`: replacing the
+original instance dictionary from inside its key comparison produced SIGSEGV
+(-11) in three of sixteen isolated pinned CPython 3.14.7 macOS arm64 probes.
+Two Linux CI reference invocations also crashed before case diagnostics were
+available. The input remains checked for safe interpreter results and logical
+teardown in Node and the installed offline console; automated differential
+runs exclude it. The pinned [borrowed dictionary path](https://github.com/python/cpython/blob/v3.14.7/Objects/dictobject.c#L6505-L6558)
+is consistent with a lifetime problem across that callback, but does not by
+itself establish the root cause. Failed reference subprocesses now identify
+the corpus input and exit code or timeout, preserving the original failure.
