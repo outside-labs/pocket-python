@@ -607,7 +607,7 @@ export class ClassRuntime {
         if (native && base.name === "type" && ["__prepare__", "__new__", "__init__", "__call__", "__instancecheck__", "__subclasscheck__", "__getattribute__", "__setattr__", "__delattr__", "mro", "__subclasses__", "__dir__"].includes(name))
           return {found: true, value: this.builtin("type." + name)};
         if (native && NATIVE_SUBCLASS_BASES.includes(base.name)) {
-          const item = this.nativeEntry(base, name); if (item.found) return item;
+          const item = this.nativeEntry(base, name, EXCEPTION_BASES.includes(base.name)); if (item.found) return item;
         }
         continue;
       }
@@ -1275,8 +1275,8 @@ export class ClassRuntime {
     try { const layout = valueLayout(owner); this.memory?.resize(owner, layout.bytes, layout.children); }
     catch (error) { delete owner.namespaceDictionary; if (keys) owner.namespaceKeys = keys; if (owner instanceof ClassValue) owner.namespaceEntries = entries; throw error; }
   }
-  nativeEntry(type, name) {
-    for (const base of this.mro(type)) {
+  nativeEntry(type, name, own = false) {
+    for (const base of own ? [type] : this.mro(type)) {
       const label = base instanceof ClassValue && base.root ? "object" : base instanceof BuiltinValue ? base.name : null;
       if (label && NATIVE_NAMESPACES[label]?.some(entry => entry[0] === name)) {
         const dictionary = this.namespaceDictionary(base);
