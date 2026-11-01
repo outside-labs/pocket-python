@@ -140,7 +140,8 @@
         "tests/fixtures/interpreter/practical-containers.json:composed-record-queue",
         "tests/fixtures/interpreter/practical-containers.json:composed-subclass-callbacks",
         "tests/fixtures/interpreter/practical-containers.json:composed-generator-view-lifetime",
-        "tests/fixtures/interpreter/practical-containers.json:dict-view-mapping"
+        "tests/fixtures/interpreter/practical-containers.json:dict-view-mapping",
+        "tests/fixtures/interpreter/practical-containers.json:subtype-view-iterator-forward"
       ]
     },
     {
@@ -3021,7 +3022,9 @@
         "tests/fixtures/interpreter/practical-containers.json:dict-setdefault-hash-once",
         "tests/fixtures/interpreter/practical-containers.json:dict-equality-mutation",
         "tests/fixtures/interpreter/practical-containers.json:dict-items-live",
-        "tests/fixtures/interpreter/practical-containers.json:dict-view-subclass"
+        "tests/fixtures/interpreter/practical-containers.json:dict-view-subclass",
+        "tests/fixtures/interpreter/practical-containers.json:subtype-view-iterator-forward",
+        "tests/fixtures/interpreter/practical-containers.json:subtype-view-iterator-reverse"
       ]
     },
     {
@@ -5525,6 +5528,10 @@
         {
           "id": "LA-7",
           "issue": "https://github.com/outside-labs/pocket-python/issues/608"
+        },
+        {
+          "id": "LA-6A",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/616"
         }
       ]
     },

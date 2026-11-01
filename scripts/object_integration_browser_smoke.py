@@ -64,7 +64,7 @@ def smoke(require_installed=False, containers=False):
                     page.reload()
                     ready()
                     for case in corpus['cases']:
-                        if case.get('modules') or containers and case['stage'] != 'LA-7':
+                        if case.get('modules') or containers and case['stage'] not in {'LA-7', 'LA-6A'}:
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':

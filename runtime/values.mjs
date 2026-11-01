@@ -50,8 +50,9 @@ class RangeValue {
   }
 }
 export class IteratorValue {
-  constructor(value, dictionaryKind = null, reverse = false) {
+  constructor(value, dictionaryKind = null, reverse = false, owner = value) {
     this.value = value; this.index = value instanceof RangeValue ? 0n : reverse ? value.slots - 1 : 0;
+    if (owner !== value) this.owner = owner;
     if (dictionaryKind !== null) { this.dictionaryKind = dictionaryKind; this.reverse = reverse; }
     if (value instanceof DictValue || value instanceof SetValue) {
       const storage = value instanceof SetValue ? value.storage : value;
@@ -1224,9 +1225,10 @@ export class ValueRuntime {
     }
     return reverse ? lower - 1 : lower < dictionary.entries.length ? lower : -1;
   }
-  dictionaryIterator(dictionary, kind = 0, reverse = false) {
+  dictionaryIterator(dictionary, kind = 0, reverse = false, owner = dictionary) {
     this.enableNamespace(dictionary); this.charge(1);
-    return this.make(96, [dictionary], () => new IteratorValue(dictionary, kind, reverse));
+    return this.make(owner === dictionary ? 96 : 104, owner === dictionary ? [dictionary] : [dictionary, owner],
+      () => new IteratorValue(dictionary, kind, reverse, owner));
   }
   dictionaryView(dictionary, kind, owner = dictionary) {
     return this.make(owner === dictionary ? 56 : 64, owner === dictionary ? [dictionary] : [dictionary, owner],
@@ -1234,7 +1236,7 @@ export class ValueRuntime {
   }
   iterator(value) {
     if (value instanceof ClassNamespaceValue) return this.dictionaryIterator(this.classNamespaceDictionary(value));
-    if (value instanceof DictionaryViewValue) return this.dictionaryIterator(value.dictionary, value.kind);
+    if (value instanceof DictionaryViewValue) return this.dictionaryIterator(value.dictionary, value.kind, false, value.owner ?? value.dictionary);
     if (value instanceof DictValue && value.namespace) return this.dictionaryIterator(value);
     if (value instanceof IteratorValue) return value;
     if (value instanceof RangeValue) { this.charge(1); return this.make(80, [value, 0n], () => new IteratorValue(value)); }
@@ -1244,7 +1246,7 @@ export class ValueRuntime {
   }
   isIterator(value) { this.charge(1); return value instanceof GeneratorValue || value instanceof IteratorValue || value instanceof ProtocolIteratorValue; }
   finishDictionaryIterator(iterator, name = "StopIteration", message = "") {
-    if (iterator.dictionaryKind !== undefined) { this.resize(iterator, 96, []); iterator.value = null; }
+    if (iterator.dictionaryKind !== undefined) { this.resize(iterator, 96, []); iterator.value = null; delete iterator.owner; }
     iterator.exhausted = true; this.fail(name, message);
   }
   next(iterator) {
@@ -1555,7 +1557,8 @@ export function valueLayout(value) {
   if (value instanceof SetValue) return {bytes: 64, children: [value.storage]};
   if (value instanceof DictionaryViewValue) return {bytes: value.owner === undefined ? 56 : 64,
     children: value.owner === undefined ? [value.dictionary] : [value.dictionary, value.owner]};
-  if (value instanceof IteratorValue && value.dictionaryKind !== undefined) return {bytes: 96, children: value.value === null ? [] : [value.value]};
+  if (value instanceof IteratorValue && value.dictionaryKind !== undefined) return {bytes: value.owner === undefined ? 96 : 104,
+    children: value.value === null ? [] : value.owner === undefined ? [value.value] : [value.value, value.owner]};
   if (value instanceof IteratorValue) return value.value?.namespace ? {bytes: 80, children: [value.value]} : value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
   if (value instanceof GeneratorValue) return {bytes: 152 + 8 * ([value.reflector, value.identityName, value.identityQualname].filter(item => item != null).length) + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};
   if (value instanceof FrameValue) return {bytes: 128 + 8 * (value.locals.size + value.closure.size + (value.keys === null ? 0 : 1) + (value.extras === null ? 0 : 1)) + (value.nameKeys === null ? 0 : 8 + [...value.nameKeys.keys()].reduce((sum, name) => sum + 32 + 2 * name.length, 0)),

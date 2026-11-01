@@ -3380,7 +3380,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (name === "__hash__") python("TypeError", "unhashable type: 'dict'");
               const value = name === "copy" ? values.copyDictionary(dictionary) : name === "__len__" ? values.int(BigInt(dictionary.entries.length)) :
                 ["keys", "values", "items"].includes(name) ? values.dictionaryView(dictionary, ["keys", "values", "items"].indexOf(name)) :
-                values.dictionaryIterator(dictionary, proxy ? 0 : receiver.kind, name === "__reversed__");
+                values.dictionaryIterator(dictionary, proxy ? 0 : receiver.kind, name === "__reversed__", view ? receiver.owner ?? dictionary : dictionary);
               task = valueTask(value, site, completion); continue;
             }
             if (name !== "get") hard("UNSUPPORTED", "UnsupportedOperationError", "Native dictionary view API " + callable.name + " is owned by #116/#117.");
@@ -3390,7 +3390,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = args[0];
             const dictionary = receiver instanceof ClassNamespaceValue ? values.classNamespaceDictionary(receiver) : receiver instanceof DictionaryViewValue ? receiver.dictionary : values.isDict(receiver) ? receiver : null;
             if (dictionary === null) hard("UNSUPPORTED", "UnsupportedOperationError", "General reversed protocols are owned by #116.");
-            task = valueTask(values.dictionaryIterator(dictionary, receiver instanceof DictionaryViewValue ? receiver.kind : 0, true), site, completion); continue;
+            task = valueTask(values.dictionaryIterator(dictionary, receiver instanceof DictionaryViewValue ? receiver.kind : 0, true,
+              receiver instanceof DictionaryViewValue ? receiver.owner ?? dictionary : dictionary), site, completion); continue;
           }
           if (callable.name === "mappingproxy.get") {
             const [receiver, key, fallback = null] = args;

@@ -43,3 +43,8 @@ The differential matrix includes explicit refusals for user length hints,
 operations. Positive cases and negative boundaries are counted separately.
 General exception argument introspection remains #124. No library, package,
 host capability or release promise follows from this container slice.
+
+The LA-6A ownership follow-up (#616) retains dictionary-subclass owners through
+forward, reversed and explicit native view iterators after temporary views are
+discarded. Exhaustion releases the extra owner edge. Exact-dictionary iterators
+retain their existing layout and accounting.
