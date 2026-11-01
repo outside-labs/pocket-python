@@ -81,6 +81,17 @@ test('runtime encoding failure range scans share the work limit', async () => {
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
 });
 
+test('runtime UTF-8 errors retain temporary subtype owners through parked collection', async () => {
+  await lifetime('class S(str): pass\ntry: S(chr(0xd800)).encode()\nexcept UnicodeEncodeError as error: saved=error\nsaved.args=()\nprint("entered")\nprint(type(saved.object) is S,saved.encoding,saved.start,saved.end,saved.reason)\n',
+    'entered\nTrue utf-8 0 1 surrogates not allowed\n');
+});
+
+test('runtime UTF-8 surrogate runs share work and cancellation limits', async () => {
+  const result = await runSourceRequest({modules: [unit('s=chr(0xd800)*1000\nprint("ready")\nwhile True:\n try: s.encode()\n except UnicodeEncodeError: pass\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 50000, maxWork: 150000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+});
+
 test('encoding messages retain reason results through interrupted encoding callbacks', async () => {
   await lifetime('class R:\n def __str__(self):\n  e.reason=None\n  return "kept"\nclass C:\n def __str__(self):\n  e.object="雪"\n  e.encoding=None\n  print("entered")\n  return "codec"\ne=UnicodeEncodeError("a","x",0,1,"r")\ne.reason=R()\ne.encoding=C()\nprint(str(e))\n', "entered\n'codec' codec can't encode character '\\u96ea' in position 0: kept\n");
 });
