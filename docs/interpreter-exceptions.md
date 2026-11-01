@@ -41,12 +41,22 @@ Encoding, object and reason require strings and retain subtype identity. Native
 index conversion runs between object and reason validation; failed initialization
 keeps old fields and callback mutations after replacing args. Numeric members
 accept native integers without index callbacks. Explicit native allocation leaves
-object fields absent and numeric fields zero. Runtime codec metadata and native
-message rendering retain separate contracts. Scalar construction/read cases are
+object fields absent and numeric fields zero. Runtime codec metadata retains a
+separate contract. Scalar construction/read cases are
 explicitly shared with core-source/1; native descriptors and callbacks require
 classes-source/1. The pinned
 [initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3640-L3670)
 defines the validation/publication order.
+
+LA-33 adopts native encoding messages. Reason formatting precedes encoding
+formatting; both callbacks finish before native object/start/end are read.
+An absent object renders an empty string before callbacks. Deleted reason or
+encoding renders `<NULL>`, independently of explicit None. Valid single-character
+ranges use lowercase two-, four- or eight-digit escapes; other ranges retain
+their native positions and signed 64-bit end-minus-one. Native reads bypass
+subclass properties, while ordinary `str` honors subclass overrides. Copied host
+diagnostics do not execute these callbacks. See the pinned
+[renderer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3673-L3734).
 
 LA-29 adds `UnicodeTranslateError(object, start, end, reason, /)`, five native
 fields, native initializers/descriptors and subclasses. Object/reason require

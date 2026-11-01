@@ -31,7 +31,8 @@
     "LA29",
     "LA30",
     "LA31",
-    "LA32"
+    "LA32",
+    "LA33"
   ],
   "cases": [
     {
@@ -4506,6 +4507,246 @@
       "stage": "LA32",
       "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\nBaseException.__init__(e,7)\nprint(e.args[0],e.encoding,e.object,e.start,e.end,e.reason)\n",
       "stdout": "7 a x 0 1 r\n"
+    },
+    {
+      "id": "encode-message-character-0",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"ascii\",'a',0,1,\"bad\")\nprint(str(e))\nprint(e)\n",
+      "stdout": "'ascii' codec can't encode character '\\x61' in position 0: bad\n'ascii' codec can't encode character '\\x61' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-character-1",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"ascii\",'\\xe9',0,1,\"bad\")\nprint(str(e))\nprint(e)\n",
+      "stdout": "'ascii' codec can't encode character '\\xe9' in position 0: bad\n'ascii' codec can't encode character '\\xe9' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-character-2",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"ascii\",'\\u96ea',0,1,\"bad\")\nprint(str(e))\nprint(e)\n",
+      "stdout": "'ascii' codec can't encode character '\\u96ea' in position 0: bad\n'ascii' codec can't encode character '\\u96ea' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-character-3",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"ascii\",'\\U0001f600',0,1,\"bad\")\nprint(str(e))\nprint(e)\n",
+      "stdout": "'ascii' codec can't encode character '\\U0001f600' in position 0: bad\n'ascii' codec can't encode character '\\U0001f600' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-character-4",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"ascii\",'\\ud800',0,1,\"bad\")\nprint(str(e))\nprint(e)\n",
+      "stdout": "'ascii' codec can't encode character '\\ud800' in position 0: bad\n'ascii' codec can't encode character '\\ud800' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-range-0",
+      "stage": "LA33",
+      "source": "print(str(UnicodeEncodeError(\"x\",\"abc\",-1,1,\"r\")))\n",
+      "stdout": "'x' codec can't encode characters in position -1-0: r\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-range-1",
+      "stage": "LA33",
+      "source": "print(str(UnicodeEncodeError(\"x\",\"abc\",0,0,\"r\")))\n",
+      "stdout": "'x' codec can't encode characters in position 0--1: r\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-range-2",
+      "stage": "LA33",
+      "source": "print(str(UnicodeEncodeError(\"x\",\"abc\",0,2,\"r\")))\n",
+      "stdout": "'x' codec can't encode characters in position 0-1: r\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-range-3",
+      "stage": "LA33",
+      "source": "print(str(UnicodeEncodeError(\"x\",\"abc\",3,4,\"r\")))\n",
+      "stdout": "'x' codec can't encode characters in position 3-3: r\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-range-4",
+      "stage": "LA33",
+      "source": "print(str(UnicodeEncodeError(\"x\",\"abc\",1,0,\"r\")))\n",
+      "stdout": "'x' codec can't encode characters in position 1--1: r\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-range-5",
+      "stage": "LA33",
+      "source": "print(str(UnicodeEncodeError(\"x\",\"abc\",0,-9223372036854775808,\"r\")))\n",
+      "stdout": "'x' codec can't encode characters in position 0-9223372036854775807: r\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-range-6",
+      "stage": "LA33",
+      "source": "print(str(UnicodeEncodeError(\"x\",\"abc\",-9223372036854775808,9223372036854775807,\"r\")))\n",
+      "stdout": "'x' codec can't encode characters in position -9223372036854775808-9223372036854775806: r\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-message-new",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError.__new__(UnicodeEncodeError)\nprint(len(str(e)))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "encode-message-args-independent",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.args=()\nprint(str(e))\n",
+      "stdout": "'a' codec can't encode character '\\x78' in position 0: r\n"
+    },
+    {
+      "id": "encode-message-reason-delete",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ndel e.reason\nprint(str(e))\n",
+      "stdout": "'a' codec can't encode character '\\x78' in position 0: <NULL>\n"
+    },
+    {
+      "id": "encode-message-reason-none",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=None\nprint(str(e))\n",
+      "stdout": "'a' codec can't encode character '\\x78' in position 0: None\n"
+    },
+    {
+      "id": "encode-message-encoding-delete",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ndel e.encoding\nprint(str(e))\n",
+      "stdout": "'<NULL>' codec can't encode character '\\x78' in position 0: r\n"
+    },
+    {
+      "id": "encode-message-encoding-none",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.encoding=None\nprint(str(e))\n",
+      "stdout": "'None' codec can't encode character '\\x78' in position 0: r\n"
+    },
+    {
+      "id": "encode-message-absent-object",
+      "stage": "LA33",
+      "source": "class R:\n def __str__(self):\n  print(\"unexpected\")\n  return \"bad\"\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\ne.encoding=R()\ndel e.object\nprint(len(str(e)))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "encode-message-reason-encoding-order",
+      "stage": "LA33",
+      "source": "class R:\n def __str__(self):\n  print(\"reason\")\n  e.encoding=E()\n  return \"bad\"\nclass E:\n def __str__(self):\n  print(\"encoding\")\n  e.object=\"\u96ea\"\n  return \"codec\"\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\nprint(str(e))\n",
+      "stdout": "reason\nencoding\n'codec' codec can't encode character '\\u96ea' in position 0: bad\n"
+    },
+    {
+      "id": "encode-message-encoding-mutates-native-fields",
+      "stage": "LA33",
+      "source": "class E:\n def __str__(self):\n  e.object=\"new\"\n  e.start=1\n  e.end=2\n  e.reason=\"later\"\n  return \"codec\"\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"first\")\ne.encoding=E()\nprint(str(e))\nprint(e.reason)\n",
+      "stdout": "'codec' codec can't encode character '\\x65' in position 1: first\nlater\n"
+    },
+    {
+      "id": "encode-message-reason-retained",
+      "stage": "LA33",
+      "source": "class R:\n def __str__(self):\n  e.reason=None\n  return \"kept\"\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\nprint(str(e))\n",
+      "stdout": "'a' codec can't encode character '\\x78' in position 0: kept\n"
+    },
+    {
+      "id": "encode-message-reason-failure",
+      "stage": "LA33",
+      "source": "class R:\n def __str__(self): raise ValueError(\"callback\")\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\ntry: print(str(e))\nexcept ValueError as caught: print(str(caught))\n",
+      "stdout": "callback\n"
+    },
+    {
+      "id": "encode-message-encoding-failure",
+      "stage": "LA33",
+      "source": "class R:\n def __str__(self): raise ValueError(\"callback\")\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.encoding=R()\ntry: print(str(e))\nexcept ValueError as caught: print(str(caught))\n",
+      "stdout": "callback\n"
+    },
+    {
+      "id": "encode-message-bad-object-None",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.object=None\ntry: print(str(e))\nexcept TypeError as caught: print(str(caught))\n",
+      "stdout": "UnicodeError 'object' attribute must be a string\n"
+    },
+    {
+      "id": "encode-message-bad-object-b\"x\"",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.object=b\"x\"\ntry: print(str(e))\nexcept TypeError as caught: print(str(caught))\n",
+      "stdout": "UnicodeError 'object' attribute must be a string\n"
+    },
+    {
+      "id": "encode-message-bad-object-7",
+      "stage": "LA33",
+      "source": "e=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.object=7\ntry: print(str(e))\nexcept TypeError as caught: print(str(caught))\n",
+      "stdout": "UnicodeError 'object' attribute must be a string\n"
+    },
+    {
+      "id": "encode-message-callback-deletes-object",
+      "stage": "LA33",
+      "source": "class R:\n def __str__(self):\n  del e.object\n  return \"r\"\nclass E:\n def __str__(self):\n  print(\"encoding\")\n  return \"codec\"\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\ne.encoding=E()\ntry: print(str(e))\nexcept TypeError as caught: print(str(caught))\n",
+      "stdout": "encoding\nUnicodeError 'object' attribute is not set\n"
+    },
+    {
+      "id": "encode-message-native-bypasses-properties",
+      "stage": "LA33",
+      "source": "class E(UnicodeEncodeError):\n @property\n def object(self): raise ValueError()\n @property\n def start(self): raise ValueError()\ne=E(\"a\",\"\u96ea\",0,1,\"r\")\nprint(str(e),UnicodeEncodeError.__str__(e))\n",
+      "stdout": "'a' codec can't encode character '\\u96ea' in position 0: r 'a' codec can't encode character '\\u96ea' in position 0: r\n"
+    },
+    {
+      "id": "encode-message-custom-display",
+      "stage": "LA33",
+      "source": "class E(UnicodeEncodeError):\n def __str__(self): return \"custom\"\ne=E(\"a\",\"x\",0,1,\"r\")\nprint(str(e),UnicodeEncodeError.__str__(e))\n",
+      "stdout": "custom 'a' codec can't encode character '\\x78' in position 0: r\n"
+    },
+    {
+      "id": "encode-message-string-subtype-callbacks",
+      "stage": "LA33",
+      "source": "class S(str):\n def __str__(self):\n  print(\"called\")\n  return \"visible\"\ne=UnicodeEncodeError(S(\"codec\"),S(\"\u96ea\"),0,1,S(\"bad\"))\nprint(str(e))\n",
+      "stdout": "called\ncalled\n'visible' codec can't encode character '\\u96ea' in position 0: visible\n"
+    },
+    {
+      "id": "encode-message-recursive-reason",
+      "stage": "LA33",
+      "source": "class R:\n def __str__(self): return str(e)\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\ntry: str(e)\nexcept RecursionError: print(\"recursive\")\n",
+      "stdout": "recursive\n"
     }
   ],
   "reference_boundaries": [

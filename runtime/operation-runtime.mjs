@@ -28,7 +28,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
   const userProtocol = value => classes.protocolObject(value);
-  const exceptionDisplay = value => value instanceof ExceptionValue && (value.name === "KeyError" || value.name === "UnicodeTranslateError" || value.nativeFields?.has("msg") || value.args.length > 1 ||
+  const exceptionDisplay = value => value instanceof ExceptionValue && (value.name === "KeyError" || ["UnicodeTranslateError", "UnicodeEncodeError"].includes(value.name) || value.nativeFields?.has("msg") || value.args.length > 1 ||
     value.args.length === 1 && !(value.args[0] === null || ["bigint", "boolean"].includes(typeof value.args[0]) || value.args[0] instanceof StringValue));
   const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
   const methodCompare = (receiver, other, invert, site, after, depth) => {
@@ -158,8 +158,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const codecMessage = (value, site, after, depth) => {
     if (value.legacyUnicodeMessage || value.nativeFieldBoundaries?.has("object")) return exceptionString(value, site, after, depth);
-    hard("UNSUPPORTED", "UnsupportedOperationError", "Unicode encoding messages remain under #124");
+    if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
+    if (!(value.unicodeFields & 1)) return valueTask(values.string([]), site, after);
+    return codecFieldString(value, "reason", 2, site, continuation("unicode-codec-reason", {receiver: value, depth, after}), depth);
   };
+  const codecFieldString = (receiver, name, bit, site, after, depth) => receiver.unicodeFields & bit ?
+    unaryTask("str", receiver.nativeFields.get(name), site, after, depth) :
+    valueTask(values.string(Array.from("<NULL>", char => char.codePointAt(0))), site, after);
   const syntaxMessage = (value, site, after, depth) => {
     if (value.legacySyntaxMessage || value.nativeFieldBoundaries?.has("msg")) return exceptionString(value, site, after, depth);
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
@@ -999,7 +1004,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       });
       return valueTask(completion.result, site, completion.after);
     }
-    if (completion?.kind === "unicode-translate-message") {
+    if (completion?.kind === "unicode-codec-reason")
+      return codecFieldString(completion.receiver, "encoding", 4, site,
+        continuation("unicode-codec-message", {receiver: completion.receiver, reason: value, after: completion.after}), completion.depth);
+    if (completion?.kind === "unicode-translate-message" || completion?.kind === "unicode-codec-message") {
       const receiver = completion.receiver, object = classes.payload(receiver.nativeFields.get("object"));
       if (!(receiver.unicodeFields & 1)) python("TypeError", "UnicodeError 'object' attribute is not set");
       if (!(object instanceof StringValue)) python("TypeError", "UnicodeError 'object' attribute must be a string");
@@ -1009,11 +1017,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (start >= 0n && start < size && end >= 0n && end <= size && end === start + 1n) {
         const point = object.points[Number(start)], width = point <= 0xff ? 2 : point <= 0xffff ? 4 : 8;
         const escape = "\\" + (width === 2 ? "x" : width === 4 ? "u" : "U") + point.toString(16).padStart(width, "0");
-        prefix = "can't translate character '" + escape + "' in position " + start.toString() + ": ";
-      } else prefix = "can't translate characters in position " + start.toString() + "-" + BigInt.asIntN(64, end - 1n).toString() + ": ";
-      const reason = classes.payload(value);
-      charge(reason.points.length + prefix.length);
-      return valueTask(values.string([...Array.from(prefix, char => char.codePointAt(0)), ...reason.points]), site, completion.after);
+        prefix = "character '" + escape + "' in position " + start.toString() + ": ";
+      } else prefix = "characters in position " + start.toString() + "-" + BigInt.asIntN(64, end - 1n).toString() + ": ";
+      const codec = completion.kind === "unicode-codec-message", reason = classes.payload(codec ? completion.reason : value);
+      const encoding = codec ? classes.payload(value).points : [];
+      prefix = (codec ? " codec can't encode " : "can't translate ") + prefix;
+      charge(reason.points.length + encoding.length + prefix.length);
+      return valueTask(values.string([...(codec ? [39, ...encoding, 39] : []), ...Array.from(prefix, char => char.codePointAt(0)), ...reason.points]), site, completion.after);
     }
     if (completion?.kind === "syntax-message")
       return valueTask(values.binary("add", classes.payload(value), completion.suffix), site, completion.after);
