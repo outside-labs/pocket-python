@@ -77,3 +77,13 @@ for (const [name, tail, expected] of [
 ]) test('owned list ' + name + ' index callback survives parking, cancellation and close', async () => {
   await callbackLifetime('a=[[]]\nclass I:\n def __index__(self):\n  print("entered")\n  return 0\n' + tail, expected);
 });
+
+for (const marker of ['equal', 'truth']) test('sequence scan owns ' + marker + ' callback state through park/cancel/close', async () => {
+  const source = 'class T:\n def __bool__(self):\n  ' + (marker === 'truth' ? 'print("entered")\n  ' : '') + 'return True\n' +
+    'class A:\n def __eq__(self,other):\n  ' + (marker === 'equal' ? 'print("entered")\n  ' : '') + 'a.clear()\n  return T()\na=[A()]\nprint(a.count(7),len(a))\n';
+  await callbackLifetime(source, 'entered\n1 0\n');
+});
+
+test('sequence index owns the search value and bounds during conversion callbacks', async () => {
+  await callbackLifetime('key=[]\na=[key]\nclass I:\n def __index__(self):\n  print("entered")\n  return 0\nprint(a.index(key,I()))\n', 'entered\n0\n');
+});

@@ -6,7 +6,10 @@ import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"]);
-export const CONTAINER_METHODS = Object.freeze({list: Object.freeze(["copy", "clear", "reverse", "insert", "pop"])});
+export const CONTAINER_METHODS = Object.freeze({
+  list: Object.freeze(["copy", "clear", "reverse", "insert", "pop", "count", "index"]),
+  tuple: Object.freeze(["count", "index"]),
+});
 export const CONTAINER_METHOD_NAMES = new Set(Object.values(CONTAINER_METHODS).flat());
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
