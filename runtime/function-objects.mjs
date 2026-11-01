@@ -169,6 +169,7 @@ export class ExceptionValue {
     this.messageArgs = args === null;
     this.traceback = []; this.context = null;
     this.attributes = null;
+    if (EXCEPTION_FIELDS[name]) this.nativeFields = new Map(EXCEPTION_FIELDS[name].map(key => [key, null]));
     if (type !== null) {
       this.type = type; this.attributes = new Map();
       if (type.storage?.count) this.slotValues = new Map();
@@ -193,6 +194,10 @@ export function matchesException(name, expected) {
 // constructors/fields and StopIteration's extra storage retain their own gate.
 export const GENERIC_EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTIONS).filter(name =>
   !["StopIteration", "AttributeError", "ImportError", "ModuleNotFoundError", "NameError", "UnboundLocalError", "SyntaxError", "IndentationError", "TabError", "UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError"].includes(name)));
+export const EXCEPTION_FIELDS = Object.freeze({NameError: Object.freeze(["name"]), UnboundLocalError: Object.freeze(["name"])});
+export const EXCEPTION_LAYOUTS = Object.freeze({...Object.fromEntries(GENERIC_EXCEPTION_BASES.map(name => [name, "BaseException"])),
+  NameError: "NameError", UnboundLocalError: "NameError"});
+export const EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTION_LAYOUTS));
 
 // The source-visible builtin namespace contains only adopted capabilities.
 export const SOURCE_BUILTINS = Object.freeze(["__import__", "exec", "__name__", "eval", "compile", "print", "str", "repr", "len", "isinstance", "bool", "iter", "next", "memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed", "object", "NotImplemented", ...Object.keys(EXCEPTIONS)]);

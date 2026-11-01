@@ -13,7 +13,8 @@
     "LA13",
     "LA14",
     "LA15",
-    "LA16"
+    "LA16",
+    "LA17"
   ],
   "cases": [
     {
@@ -1341,6 +1342,181 @@
       "source": "class E(Exception): pass\ndef handlers(): return (E,)\ne=E(7)\ntry:\n try: raise e\n except handlers() as caught:\n  caught.add_note(\"retry failed\")\n  raise\n finally: print(\"finally\")\nexcept handlers() as caught: print(caught is e,caught.__notes__[0],caught.__context__ is None)\n",
       "stage": "LA16",
       "stdout": "finally\nTrue retry failed True\n"
+    },
+    {
+      "id": "name-error-constructor-identity",
+      "stage": "LA17",
+      "source": "n=[]\nm=[]\ne=NameError(m,name=n)\nprint(e.name is n,e.args[0] is m,e.name is e.name)\nn.append(7)\nprint(e.name[0])\n",
+      "stdout": "True True True\n7\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "unbound-error-constructor",
+      "stage": "LA17",
+      "source": "n={}\ne=UnboundLocalError(7,8,name=n)\nprint(e.name is n,len(e.args),isinstance(e,NameError))\n",
+      "stdout": "True 2 True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "name-error-defaults",
+      "stage": "LA17",
+      "source": "e=NameError()\nu=UnboundLocalError()\nprint(e.name is None,u.name is None,len(e.args),len(u.args))\n",
+      "stdout": "True True 0 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "name-error-mutable-field",
+      "stage": "LA17",
+      "source": "e=NameError(\"old\",name=[])\nn={}\ne.name=n\ne.args=(7,)\nprint(e.name is n,e.args[0])\ne.__dict__[\"name\"]=9\nprint(e.name is n,vars(e)[\"name\"])\ndel e.name\ndel e.name\nprint(e.name is None)\n",
+      "stdout": "True 7\nTrue 9\nTrue\n"
+    },
+    {
+      "id": "name-error-native-descriptor",
+      "stage": "LA17",
+      "source": "e=NameError()\nn=[]\nNameError.name.__set__(e,n)\nprint(NameError.name.__get__(e,NameError) is n)\nNameError.name.__delete__(e)\nprint(e.name is None,type(NameError.name).__name__)\n",
+      "stdout": "True\nTrue member_descriptor\n"
+    },
+    {
+      "id": "name-error-reinitialize",
+      "stage": "LA17",
+      "source": "e=NameError(\"old\",name=[])\nNameError.__init__(e,7,8,name={})\nprint(len(e.args),e.args[1],len(e.name))\nNameError.__init__(e)\nprint(len(e.args),e.name is None)\n",
+      "stdout": "2 8 0\n0 True\n"
+    },
+    {
+      "id": "name-error-invalid-keyword-partial-state",
+      "stage": "LA17",
+      "source": "old=[]\nnew={}\ne=NameError(\"old\",name=old)\ntry: NameError.__init__(e,\"new\",name=new,bad=7)\nexcept TypeError: print(e.args[0],e.name is old)\n",
+      "stdout": "new True\n"
+    },
+    {
+      "id": "name-error-base-init-keeps-field",
+      "stage": "LA17",
+      "source": "n=[]\ne=NameError(\"old\",name=n)\nBaseException.__init__(e,\"new\")\nprint(e.args[0],e.name is n)\n",
+      "stdout": "new True\n"
+    },
+    {
+      "id": "name-error-new-ignores-keywords",
+      "stage": "LA17",
+      "source": "e=NameError.__new__(NameError,7,name=[],bad=9)\nprint(e.args[0],e.name is None)\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "name-error-bad-keyword",
+      "stage": "LA17",
+      "source": "NameError(\"message\",bad=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "name-error-init-receiver",
+      "stage": "LA17",
+      "source": "NameError.__init__(Exception(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "name-error-field-receiver",
+      "stage": "LA17",
+      "source": "NameError.name.__get__(Exception(),Exception)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "name-error-field-call",
+      "stage": "LA17",
+      "source": "NameError.name(NameError())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "name-error-subclass",
+      "stage": "LA17",
+      "source": "class E(NameError): pass\nn=[]\ne=E(\"missing\",name=n)\nprint(type(e) is E,isinstance(e,NameError),e.name is n)\ntry: raise e\nexcept NameError as caught: print(caught is e)\n",
+      "stdout": "True True True\nTrue\n"
+    },
+    {
+      "id": "name-error-subclass-super",
+      "stage": "LA17",
+      "source": "class E(UnboundLocalError):\n __slots__=(\"saved\",)\n def __init__(self,x):\n  self.saved=x\n  super().__init__(\"missing\",name=x)\nn=[]\ne=E(n)\ne.extra=7\nprint(e.name is n,e.saved is n,e.extra,E.__base__ is UnboundLocalError)\n",
+      "stdout": "True True 7 True\n"
+    },
+    {
+      "id": "name-error-subclass-new",
+      "stage": "LA17",
+      "source": "class E(NameError):\n def __new__(cls,x): return super().__new__(cls,x)\n def __init__(self,x): super().__init__(x,name=x)\nx=[]\ne=E(x)\nprint(e.name is x,e.args[0] is x)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "name-error-compatible-layout",
+      "stage": "LA17",
+      "source": "class E(ValueError,NameError): pass\ne=E(7)\nprint(E.__base__ is NameError,e.name is None,isinstance(e,ValueError),isinstance(e,NameError))\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "name-error-slotted-inheritance",
+      "stage": "LA17",
+      "source": "class A(NameError):\n __slots__=(\"saved\",)\nclass B(A):\n __slots__=()\ne=B(7,name=[])\ne.saved=e.name\nprint(e.saved is e.name,e.args[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "name-error-conflicting-layout",
+      "stage": "LA17",
+      "source": "class E(NameError,list): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "generated-global-name-field",
+      "stage": "LA17",
+      "source": "try: missing\nexcept NameError as e: print(e.name)\n",
+      "stdout": "missing\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generated-local-name-field",
+      "stage": "LA17",
+      "source": "def f():\n try: x\n except UnboundLocalError as e: print(e.name is None)\n x=7\nf()\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generated-deletion-name-field",
+      "stage": "LA17",
+      "source": "try: del missing\nexcept NameError as e: print(e.name)\n",
+      "stdout": "missing\n"
+    },
+    {
+      "id": "name-error-native-attribute-hook",
+      "stage": "LA17",
+      "source": "class E(NameError):\n @property\n def name(self): return self.saved\n @name.setter\n def name(self,x): self.saved=x\nn=[]\ne=E(name=n)\nprint(NameError.name.__get__(e,E) is n)\ne.name=7\nprint(e.name,NameError.name.__get__(e,E) is n)\n",
+      "stdout": "True\n7 True\n"
+    },
+    {
+      "id": "name-error-args-callback",
+      "stage": "LA17",
+      "source": "class Args:\n def __iter__(self):\n  yield 7\n  raise ValueError(\"stopped\")\nn=[]\ne=NameError(\"old\",name=n)\ntry: e.args=Args()\nexcept ValueError: print(e.args[0],e.name is n)\n",
+      "stdout": "old True\n"
+    },
+    {
+      "id": "name-error-class-normalization",
+      "stage": "LA17",
+      "source": "class E(NameError):\n def __init__(self): super().__init__(name=\"chosen\")\ntry: raise E\nexcept E as e: print(e.name)\n",
+      "stdout": "chosen\n"
     }
   ]
 }

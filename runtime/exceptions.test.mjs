@@ -153,3 +153,17 @@ test('growing note graphs use the shared allocation budget', async () => {
 test('suspended handler selection retains exception state through collection and cancel/close', async () => {
   await lifetime('def work():\n try:\n  try: raise ValueError([7])\n  except (yield ValueError) as e:\n   e.add_note("selected")\n   yield e\n finally: print("closed")\ni=work()\nnext(i)\nprint("entered")\ne=i.send((ValueError,))\nprint(e.args[0][0],e.__notes__[0])\ni.close()\n', 'entered\n7 selected\nclosed\n');
 });
+
+test('native name fields retain temporary values through parked collection and cancellation', async () => {
+  await lifetime('class E(NameError):\n def __init__(self):\n  super().__init__(name=[7])\n  print("entered")\ne=E()\nprint(e.name[0])\n', 'entered\n7\n');
+});
+
+test('cyclic native name fields remain independent of the instance dictionary', async () => {
+  await lifetime('e=UnboundLocalError()\ne.name=e\ne.__dict__={}\nprint("entered")\nprint(e.name is e)\ndel e.name\nprint(e.name is None)\n', 'entered\nTrue\nTrue\n');
+});
+
+test('native name fields use the shared allocation budget', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True: held.append(NameError(name=[7]))\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
