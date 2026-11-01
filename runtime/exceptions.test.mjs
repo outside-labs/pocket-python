@@ -46,6 +46,20 @@ async function lifetime(source, expected, helpers = []) {
   } } finally { registry.close(); }
 }
 
+test('failed generic writes retain temporary receivers through parked collection', async () => {
+  await lifetime('class A: __slots__=()\ntry: A().missing=7\nexcept AttributeError as error: e=error\ne.args=()\nprint("entered")\nprint(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
+});
+
+test('failed writes retain cyclic subtype keys independently of args', async () => {
+  await lifetime('class Key(str): pass\nclass A: __slots__=()\nkey=Key("missing")\ntry: setattr(A(),key,7)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nkey=None\nprint("entered")\nprint(e.name.error is e,type(e.obj) is A)\n', 'entered\nTrue True\n');
+});
+
+test('retained generic write errors share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('class A: __slots__=()\nheld=[]\nprint("ready")\nwhile True:\n try: A().missing=7\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 48000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('Unicode encoding initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeEncodeError("codec","abc",I(),2,"bad")\nprint(e.encoding,e.object,e.start,e.end,e.reason)\n', 'entered\ncodec abc 1 2 bad\n');
 });
