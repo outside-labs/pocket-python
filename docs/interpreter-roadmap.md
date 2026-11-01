@@ -15,8 +15,10 @@ The first two language batches, LA-1–LA-7 (#602–#608), adopt
 The next two batches, LA-8–LA-13 and the LA-12A argument follow-up, adopt
 [ordinary exception semantics](interpreter-exceptions.md) under #124. Generic
 arguments/chaining and named generic exception subclasses have composed
-Node/Chromium/offline acceptance; groups, general handler expressions, traceback
-objects, notes and structured layouts retain their gates.
+Node/Chromium/offline acceptance. LA-14–LA-31 add lazy handler expressions, notes,
+native name/attribute/import/syntax/iteration fields and UnicodeTranslateError
+construction, fields, subclasses and rendering. Groups, traceback objects,
+remaining metadata and Unicode Encode/Decode families retain their gates.
 Remaining text/sequence APIs, formatting, language gaps and library/
 package qualification retain their separate issue gates. The track issues and
 Project fields record current delivery status; accepted stages do not measure
