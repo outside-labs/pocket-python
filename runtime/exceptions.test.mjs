@@ -102,6 +102,25 @@ test('module encoding cycles survive suspended generator cleanup', async () => {
     "entered\n'a' codec can't encode character '\\u96ea' in position 0: bad True\n", [{name: 'helper', source: 'class E(UnicodeEncodeError): pass\ndef fail():\n e=E("a","雪",0,1,"bad")\n e.record=[e]\n e.__cause__=ValueError(e.record)\n e.add_note("record")\n raise e\n'}]);
 });
 
+test('decoding initialization retains and copies a temporary mutable buffer after callbacks', async () => {
+  await lifetime('data=bytearray(b"abc")\nclass I:\n def __index__(self):\n  data[0]=99\n  print("entered")\n  return 0\ne=UnicodeDecodeError("a",data,I(),1,"r")\nprint(e.object[0],e.args[1] is data)\n', 'entered\n99 True\n');
+});
+
+test('decode native cycles survive parked collection and close', async () => {
+  await lifetime('e=UnicodeDecodeError("a",b"x",0,1,"r")\ne.object=e\ne.encoding=e\ne.reason=[e]\ne.args=()\nprint("entered")\nprint(e.object is e,e.encoding is e,e.reason[0] is e)\n', 'entered\nTrue True True\n');
+});
+
+test('decode buffer copies share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\ndata=bytearray(b"x"*1000)\nprint("ready")\nwhile True: held.append(UnicodeDecodeError("a",data,0,1,"r"))\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
+test('runtime decode metadata retains the explicit native field boundary', async () => {
+  const result = await runSourceRequest({modules: [unit('try: b"\\xff".decode("ascii")\nexcept UnicodeDecodeError as e: print(e.object)\n')], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+});
+
 test('Unicode translation initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeTranslateError("abc",I(),2,"bad")\nprint(e.object,e.start,e.end,e.reason)\n', 'entered\nabc 1 2 bad\n');
 });

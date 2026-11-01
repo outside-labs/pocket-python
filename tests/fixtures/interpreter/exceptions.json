@@ -33,7 +33,8 @@
     "LA31",
     "LA32",
     "LA33",
-    "LA34"
+    "LA34",
+    "LA35"
   ],
   "cases": [
     {
@@ -4806,6 +4807,424 @@
       "stage": "LA34",
       "source": "cause=ValueError(\"original\")\nclass R:\n def __str__(self): raise cause\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\ntry:\n try: raise e\n except UnicodeEncodeError: str(e)\nexcept ValueError as caught: print(caught is cause,caught.__context__ is e)\n",
       "stdout": "True True\n"
+    },
+    {
+      "id": "decode-native-fields",
+      "stage": "LA35",
+      "source": "s=b'\\xe9\\x9b\\xaa'\ne=UnicodeDecodeError(\"ascii\",s,0,1,\"bad\")\nprint(e.encoding,e.object is s,e.start,e.end,e.reason,len(e.args),e.args[1] is s,e.args is e.args)\n",
+      "stdout": "ascii True 0 1 bad 5 True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-arity-0",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError()\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (0 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-arity-1",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (1 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-arity-2",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc')\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (2 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-arity-3",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (3 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-arity-4",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (4 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-arity-6",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,1,\"bad\",None)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 5 arguments (6 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-string-validation-0-None",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(None,b'abc',0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 1 must be str, not None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-string-validation-0-7",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(7,b'abc',0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 1 must be str, not int\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-string-validation-0-b\"x\"",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"x\",b'abc',0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-string-validation-4-None",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,1,None)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 5 must be str, not None\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-string-validation-4-7",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,1,7)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 5 must be str, not int\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-string-validation-4-b\"x\"",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,1,b'x')\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "argument 5 must be str, not bytes\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-index-error-2-0",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',None,1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "decode-index-error-2-1",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',1.5,1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "decode-index-error-2-2",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',1 << 63,1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "decode-index-error-2-3",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',-(1 << 63)-1,1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "decode-index-error-3-0",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,None,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "decode-index-error-3-1",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,1.5,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "TypeError\n"
+    },
+    {
+      "id": "decode-index-error-3-2",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,1 << 63,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "decode-index-error-3-3",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"ascii\",b'abc',0,-(1 << 63)-1,\"bad\")\nexcept (TypeError,OverflowError) as e: print(type(e).__name__)\n",
+      "stdout": "OverflowError\n"
+    },
+    {
+      "id": "decode-native-new",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError.__new__(UnicodeDecodeError,\"ignored\",anything=1)\nprint(len(e.args),e.args[0],e.object is None,e.encoding is None,e.reason is None,e.start,e.end)\n",
+      "stdout": "1 ignored True True True 0 0\n"
+    },
+    {
+      "id": "decode-raise-class",
+      "stage": "LA35",
+      "source": "try: raise UnicodeDecodeError\nexcept TypeError: print(\"constructor\")\n",
+      "stdout": "constructor\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-cause-class",
+      "stage": "LA35",
+      "source": "try: raise ValueError() from UnicodeDecodeError\nexcept TypeError: print(\"cause\")\n",
+      "stdout": "cause\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-keyword-before-args",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError(\"old\",b'abc',0,1,\"bad\")\ntry: UnicodeDecodeError.__init__(e,\"new\",b'x',1,2,\"next\",reason=\"no\")\nexcept TypeError: print(e.args[0],e.encoding,e.object)\n",
+      "stdout": "old old b'abc'\n"
+    },
+    {
+      "id": "decode-failed-init-args",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError(\"old\",b'abc',0,1,\"bad\")\ntry: UnicodeDecodeError.__init__(e,\"new\",b'x',2,3,None)\nexcept TypeError: print(e.args[0],e.args[1],e.encoding,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "new b'x' old b'abc' 0 1 bad\n"
+    },
+    {
+      "id": "decode-independent-fields",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError(\"old\",b'abc',0,1,\"bad\")\ne.args=()\ne.__dict__[\"encoding\"]=\"shadow\"\ne.object=e\ne.reason=[e]\ne.encoding=e\nprint(len(e.args),e.object is e,e.reason[0] is e,e.encoding is e)\ndel e.encoding\ndel e.object\ndel e.reason\nprint(e.encoding is None,e.object is None,e.reason is None)\n",
+      "stdout": "0 True True True\nTrue True True\n"
+    },
+    {
+      "id": "decode-numeric-members",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError(\"a\",b'x',False,True,\"r\")\nprint(type(e.start) is int,e.start,e.end)\ne.start=True\nprint(type(e.start) is int,e.start)\ntry: del e.end\nexcept TypeError: print(\"delete\")\ntry: e.start=1 << 63\nexcept OverflowError: print(\"overflow\")\nprint(e.start)\n",
+      "stdout": "True 0 1\nTrue 1\ndelete\noverflow\n1\n"
+    },
+    {
+      "id": "decode-index-order",
+      "stage": "LA35",
+      "source": "class I:\n def __init__(self,n): self.n=n\n def __index__(self):\n  print(self.n)\n  return self.n\ne=UnicodeDecodeError(\"x\",b'abc',I(1),I(2),\"r\")\nprint(e.start,e.end)\n",
+      "stdout": "1\n2\n1 2\n"
+    },
+    {
+      "id": "decode-reason-after-index",
+      "stage": "LA35",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 0\ntry: UnicodeDecodeError(\"x\",b'abc',I(),I(),None)\nexcept TypeError: print(\"reason\")\n",
+      "stdout": "index\nindex\nreason\n"
+    },
+    {
+      "id": "decode-string-before-index",
+      "stage": "LA35",
+      "source": "class I:\n def __index__(self):\n  print(\"unexpected\")\n  return 0\ntry: UnicodeDecodeError(\"x\",None,I(),I(),\"r\")\nexcept TypeError: print(\"object\")\n",
+      "stdout": "unexpected\nunexpected\nobject\n"
+    },
+    {
+      "id": "decode-callback-mutation-failure",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError(\"old\",b'abc',0,1,\"r\")\nclass I:\n def __index__(self):\n  e.args=()\n  e.encoding=\"changed\"\n  return 2\ntry: UnicodeDecodeError.__init__(e,\"new\",b'xyz',I(),3,None)\nexcept TypeError: print(len(e.args),e.encoding,e.object,e.start)\n",
+      "stdout": "0 changed b'abc' 0\n"
+    },
+    {
+      "id": "decode-int-subtype-native-conversion",
+      "stage": "LA35",
+      "source": "class I(int):\n def __index__(self): raise ValueError()\ne=UnicodeDecodeError(\"x\",b'abc',I(1),I(2),\"r\")\ne.start=I(2)\nprint(e.start,e.end,type(e.start) is int)\n",
+      "stdout": "2 2 True\n"
+    },
+    {
+      "id": "decode-member-no-index",
+      "stage": "LA35",
+      "source": "class I:\n def __index__(self):\n  print(\"unexpected\")\n  return 0\ne=UnicodeDecodeError(\"x\",b'abc',0,1,\"r\")\ntry: e.start=I()\nexcept TypeError: print(\"native\")\n",
+      "stdout": "native\n"
+    },
+    {
+      "id": "decode-subclass-slots",
+      "stage": "LA35",
+      "source": "class E(UnicodeDecodeError):\n __slots__=(\"record\",)\ne=E(\"a\",b'\\xe9\\x9b\\xaa',0,1,\"r\")\ne.record=[e]\ne.extra=e.record\ntry: raise e\nexcept UnicodeError as caught: print(caught is e,caught.record[0] is e,caught.extra is e.record,type(e) is E)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "decode-subclass-custom-init",
+      "stage": "LA35",
+      "source": "class E(UnicodeDecodeError):\n def __init__(self,text):\n  super().__init__(\"ascii\",text,0,1,\"bad\")\n  self.saved=text\ne=E(b'\\xe9\\x9b\\xaa')\nprint(e.object is e.saved,e.encoding,e.reason)\n",
+      "stdout": "True ascii bad\n"
+    },
+    {
+      "id": "decode-mixed-generic-base",
+      "stage": "LA35",
+      "source": "class E(RuntimeError,UnicodeDecodeError): pass\ne=E(\"a\",b'x',0,1,\"r\")\nprint(e.encoding,e.object,isinstance(e,UnicodeDecodeError),isinstance(e,RuntimeError))\n",
+      "stdout": "a b'x' True True\n"
+    },
+    {
+      "id": "decode-layout-conflict",
+      "stage": "LA35",
+      "source": "try:\n class E(UnicodeDecodeError,UnicodeTranslateError): pass\nexcept TypeError: print(\"layout\")\n",
+      "stdout": "layout\n"
+    },
+    {
+      "id": "decode-native-descriptor",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError(\"a\",b'x',0,1,\"r\")\nUnicodeDecodeError.object.__set__(e,\"new\")\nprint(UnicodeDecodeError.object.__get__(e,UnicodeDecodeError))\ntry: UnicodeDecodeError.object.__get__(ValueError(),ValueError)\nexcept TypeError: print(\"receiver\")\n",
+      "stdout": "new\nreceiver\n"
+    },
+    {
+      "id": "decode-base-init-preserves-fields",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError(\"a\",b'x',0,1,\"r\")\nBaseException.__init__(e,7)\nprint(e.args[0],e.encoding,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "7 a b'x' 0 1 r\n"
+    },
+    {
+      "id": "decode-native-subtype-identities",
+      "stage": "LA35",
+      "source": "class S(str): pass\nclass B(bytes):\n def __bytes__(self): raise ValueError()\na=S(\"ascii\")\nr=S(\"bad\")\nb=B(b\"x\")\ne=UnicodeDecodeError(a,b,0,1,r)\nprint(e.encoding is a,e.object is b,e.reason is r,e.args[1] is b)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "decode-bytearray-copy",
+      "stage": "LA35",
+      "source": "data=bytearray(b\"abc\")\ne=UnicodeDecodeError(\"a\",data,0,1,\"bad\")\ndata[0]=99\nprint(e.object is data,type(e.object) is bytes,e.object[0],e.args[1] is data)\n",
+      "stdout": "False True 97 True\n"
+    },
+    {
+      "id": "decode-mutable-subtype-no-bytes",
+      "stage": "LA35",
+      "source": "class B(bytearray):\n def __bytes__(self): raise ValueError()\ndata=B(b\"abc\")\ne=UnicodeDecodeError(\"a\",data,0,1,\"bad\")\nprint(type(e.object) is bytes,e.object is data,e.object[0])\n",
+      "stdout": "True False 97\n"
+    },
+    {
+      "id": "decode-buffer-copy-after-indices",
+      "stage": "LA35",
+      "source": "data=bytearray(b\"abc\")\nclass I:\n def __index__(self):\n  data[0]=99\n  return 0\ne=UnicodeDecodeError(\"a\",data,I(),1,\"bad\")\nprint(e.object[0],e.args[1] is data)\n",
+      "stdout": "99 True\n"
+    },
+    {
+      "id": "decode-view-copy",
+      "stage": "LA35",
+      "source": "data=bytearray(b\"abcd\")\nv=memoryview(data)[1:3]\ne=UnicodeDecodeError(\"a\",v,0,1,\"bad\")\ndata[1]=90\nv.release()\nprint(e.object,e.args[1] is v)\n",
+      "stdout": "b'bc' True\n"
+    },
+    {
+      "id": "decode-strided-view-error",
+      "stage": "LA35",
+      "source": "v=memoryview(b\"abcd\")[::2]\ntry: UnicodeDecodeError(\"a\",v,0,1,\"bad\")\nexcept BufferError as e: print(str(e))\n",
+      "stdout": "memoryview: underlying buffer is not C-contiguous\n"
+    },
+    {
+      "id": "decode-single-strided-view",
+      "stage": "LA35",
+      "source": "v=memoryview(b\"abcd\")[1:2:2]\ne=UnicodeDecodeError(\"a\",v,0,1,\"bad\")\nprint(e.object)\n",
+      "stdout": "b'b'\n"
+    },
+    {
+      "id": "decode-empty-strided-view",
+      "stage": "LA35",
+      "source": "v=memoryview(b\"abcd\")[0:0:2]\ntry: UnicodeDecodeError(\"a\",v,0,1,\"bad\")\nexcept BufferError: print(\"noncontiguous\")\n",
+      "stdout": "noncontiguous\n"
+    },
+    {
+      "id": "decode-released-view-error",
+      "stage": "LA35",
+      "source": "v=memoryview(b\"abc\")\nv.release()\ntry: UnicodeDecodeError(\"a\",v,0,1,\"bad\")\nexcept ValueError: print(\"released\")\n",
+      "stdout": "released\n"
+    },
+    {
+      "id": "decode-view-released-during-index",
+      "stage": "LA35",
+      "source": "v=memoryview(b\"abc\")\nclass I:\n def __index__(self):\n  v.release()\n  return 0\ntry: UnicodeDecodeError(\"a\",v,I(),1,\"bad\")\nexcept ValueError: print(\"released\")\n",
+      "stdout": "released\n"
+    },
+    {
+      "id": "decode-invalid-buffer-after-reason",
+      "stage": "LA35",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  return 0\ntry: UnicodeDecodeError(\"a\",None,I(),I(),None)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "index\nindex\nargument 5 must be str, not None\n"
+    },
+    {
+      "id": "decode-invalid-buffer-0",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"a\",None,0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "a bytes-like object is required, not 'NoneType'\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-invalid-buffer-1",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"a\",\"x\",0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "a bytes-like object is required, not 'str'\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-invalid-buffer-2",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"a\",7,0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "a bytes-like object is required, not 'int'\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-invalid-buffer-3",
+      "stage": "LA35",
+      "source": "try: UnicodeDecodeError(\"a\",[1],0,1,\"bad\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "a bytes-like object is required, not 'list'\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-buffer-failure-preserves-fields",
+      "stage": "LA35",
+      "source": "e=UnicodeDecodeError(\"old\",b\"abc\",0,1,\"bad\")\nclass I:\n def __index__(self):\n  e.reason=\"changed\"\n  return 0\ntry: UnicodeDecodeError.__init__(e,\"new\",None,I(),1,\"next\")\nexcept TypeError: print(e.args[0],e.encoding,e.object,e.reason)\n",
+      "stdout": "new old b'abc' changed\n"
+    },
+    {
+      "id": "decode-no-bytes-protocol",
+      "stage": "LA35",
+      "source": "class B:\n def __bytes__(self):\n  print(\"unexpected\")\n  return b\"abc\"\ntry: UnicodeDecodeError(\"a\",B(),0,1,\"bad\")\nexcept TypeError: print(\"buffer\")\n",
+      "stdout": "buffer\n"
     }
   ],
   "reference_boundaries": [
