@@ -24,7 +24,8 @@ def prepared():
     corpus = {name: json.loads(raw) for name, raw in inputs.items()}
     cases = [*corpus["source.json"]["cases"], *corpus["source.json"]["boundaries"],
              *corpus["source.json"]["malformed_source"], *corpus["source.json"]["limits"]]
-    cases.extend({**case, "id": "functions:" + case["id"]} for case in corpus["functions.json"]["cases"] + corpus["functions.json"]["limits"])
+    cases.extend({**case, **case.get("source_expectation", {}), "id": "functions:" + case["id"]}
+                 for case in corpus["functions.json"]["cases"] + corpus["functions.json"]["limits"])
     cases.extend({**case, "id": "modules:" + case["id"]} for case in corpus["modules.json"]["cases"] + corpus["modules.json"]["limits"])
     cases.extend({**case, "id": "language:" + case["id"]} for case in corpus["language.json"]["cases"]
                  if case["id"] in {"closure", "exception-finally", "argument-default"})
@@ -86,6 +87,8 @@ def check(target, channel=None):
             if case["id"].startswith("unsupported-"):
                 compile(case["source"], "boundary.py", "exec")
             passed = not actual["ok"] and actual.get("error", {}).get("code") == case["code"]
+            if case.get("error_type"):
+                passed = passed and actual.get("error", {}).get("type") == case["error_type"]
             if "span" in case:
                 passed = passed and actual["error"].get("location", {}).get("span") == case["span"]
             if "phase" in case:

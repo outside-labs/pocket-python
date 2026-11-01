@@ -892,7 +892,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires classes-source/1");
               dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
             }
-          } else if (receiver instanceof ExceptionValue && arg === "value" && receiver.name === "StopIteration") stack.push(receiver.args[0] ?? null);
+          } else if (receiver instanceof ExceptionValue && arg === "args") stack.push(classes.exceptionArgs(receiver));
+          else if (receiver instanceof ExceptionValue && arg === "value" && receiver.name === "StopIteration") stack.push(receiver.args[0] ?? null);
           else if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
           else if (values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));
           else if (values.isSet(receiver)) { values.setMethod(receiver, arg); stack.push(allocate(ValueMethod, receiver, arg)); }

@@ -427,3 +427,13 @@ before execution roots unwind, without invoking source cleanup callbacks.
 All continuations trace their receiver, transaction, pending types and outer
 completion. Allocation without these optional records and all eight existing
 composed resource observations remain unchanged.
+
+## Ordinary exception argument identity
+
+LA-8 adopts the CPython identity rule that `str(exception)` returns its single
+exact string argument. Accounting revision 19 removes the redundant string
+allocation in three composed observations; previous counters remain in
+`accounting_18_cases`. The other five observations remain exact. Primitive
+costs, total quotas and transfer/teardown rules are unchanged. Exception argument
+tuples add their owned storage only when materialized; arbitrary arguments
+remain rooted without running formatting callbacks during construction.

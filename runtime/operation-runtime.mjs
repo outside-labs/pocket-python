@@ -3,7 +3,7 @@ import {dynamicEvaluator} from "./dynamic-evaluation.mjs";
 import {dynamicCompiler} from "./dynamic-source.mjs";
 import {NATIVE_SUBCLASS_BASES, CONTAINER_METHODS, CONTAINER_METHOD_NAMES} from "./class-values.mjs";
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, NATIVE_PROTOCOL_KEYS, allowsClassSpecial} from "./class-policy.mjs";
-import {VALUE_LIMITS} from "./values.mjs";
+import {VALUE_LIMITS, StringValue} from "./values.mjs";
 import {RegistryError} from "./module-registry.mjs";
 import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, hierarchyTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
@@ -28,6 +28,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
   const userProtocol = value => classes.protocolObject(value);
+  const exceptionDisplay = value => value instanceof ExceptionValue && (value.name === "KeyError" || value.args.length > 1 ||
+    value.args.length === 1 && !(value.args[0] === null || ["bigint", "boolean"].includes(typeof value.args[0]) || value.args[0] instanceof StringValue));
   const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
   const methodCompare = (receiver, other, invert, site, after, depth) => {
     if (receiver.callable === other.callable) return valueTask(invert !== (receiver.receiver === other.receiver), site, after);
@@ -253,8 +255,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return values.unary({bool: "truth", iter: "iter", next: "next"}[callable.name], args[0]);
     }
     if (Object.hasOwn(EXCEPTIONS, callable.name)) {
-      if (args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception arguments require the later repr profile.");
-      return allocate(ExceptionValue, callable.name, args, args.length ? display(args[0]) : "");
+      if (state.frames.at(-1).pool.code.version < 4) {
+        if (args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception arguments require the modern source profile under #124");
+        return allocate(ExceptionValue, callable.name, args, args.length ? display(args[0]) : "");
+      }
+      if (["UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError", "SyntaxError", "IndentationError", "TabError"].includes(callable.name) && args.length > 1)
+        hard("UNSUPPORTED", "UnsupportedOperationError", "Structured exception constructors remain under #124");
+      // Preserve the safe scalar diagnostic without running a user protocol.
+      const scalar = args.length === 1 && (args[0] === null || ["bigint", "boolean"].includes(typeof args[0]) || args[0] instanceof StringValue);
+      return allocate(ExceptionValue, callable.name, args, scalar ? display(args[0]) : "");
     }
     if (callable.name === "print") {
       const text = args.map(display).join(" ") + "\n";
@@ -287,6 +296,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (callable.name === "str" && args.length === 0) return values.string([]);
     if (args.length !== 1) python("TypeError", callable.name + "() requires one argument in this profile");
     if (callable.name === "str" && values.text(args[0]) !== null) return args[0];
+    if (callable.name === "str" && args[0] instanceof ExceptionValue && args[0].args.length === 1 && args[0].args[0] instanceof StringValue) return args[0].args[0];
     return callable.name === "len" ? values.unary("len", args[0]) : values.string(Array.from(display(args[0]), char => char.codePointAt(0)));
   };
   const lengthResult = value => {
@@ -1563,7 +1573,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     let text = prefix;
     for (; index < args.length; index++) {
       if (index) text += " ";
-      if (userProtocol(args[index])) {
+      if (userProtocol(args[index]) || exceptionDisplay(args[index])) {
         if (text) write(text);
         return unaryTask("str", args[index], site, continuation("print-argument", {args, index, depth, after}), depth);
       }
@@ -2326,6 +2336,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (["repr", "str", "repr-default"].includes(operation)) {
             if (operation === "repr-default") hard("UNSUPPORTED", "UnsupportedOperationError", "Default object representations require a later formatting stage.");
+            if (operation === "str" && value instanceof ExceptionValue) {
+              if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
+              if (value.args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception argument displays remain under #127");
+              task = value.args.length ? unaryTask(value.name === "KeyError" ? "repr" : "str", value.args[0], site, completion, depth) :
+                valueTask(values.string(Array.from(value.message, char => char.codePointAt(0))), site, completion);
+              continue;
+            }
             if (!userProtocol(value)) {
               const result = operation === "repr" ? values.repr(value) :
                 values.text(value) !== null ? value : values.string(Array.from(display(value), char => char.codePointAt(0)));
@@ -3498,10 +3515,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (args.length !== 1 || keywords.length) python("TypeError", "repr() requires one positional argument");
             task = unaryTask("repr", args[0], site, completion, depth); continue;
           }
-          if (callable.name === "str" && args.length === 1 && !keywords.length && userProtocol(args[0])) {
+          if (callable.name === "str" && args.length === 1 && !keywords.length && (userProtocol(args[0]) || exceptionDisplay(args[0]))) {
             count("builtin:str"); task = unaryTask("str", args[0], site, completion, depth); continue;
           }
-          if (callable.name === "print" && !keywords.length && args.some(userProtocol)) {
+          if (callable.name === "print" && !keywords.length && args.some(value => userProtocol(value) || exceptionDisplay(value))) {
             count("builtin:print"); task = printNext(args, 0, site, completion, depth); continue;
           }
           if (["len", "bool"].includes(callable.name) && args.length === 1 && !keywords.length) {

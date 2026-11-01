@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-exceptions/1",
+  "reference_version": "3.14.7",
+  "profile": "classes-source/1",
+  "implemented_stages": [
+    "LA8"
+  ],
+  "cases": [
+    {
+      "id": "empty-arguments",
+      "stage": "LA8",
+      "source": "e=ValueError()\nprint(len(e.args),e.args is e.args,len(str(e)))\n",
+      "stdout": "0 True 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "single-string-display-identity",
+      "stage": "LA8",
+      "source": "s=\"message\"\ne=ValueError(s)\nprint(str(e) is s)\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "argument-identity",
+      "stage": "LA8",
+      "source": "a=[]\ne=ValueError(a)\nprint(len(e.args),e.args[0] is a,e.args is e.args)\na.append(7)\nprint(e.args[0][0])\n",
+      "stdout": "1 True True\n7\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "multiple-arguments",
+      "stage": "LA8",
+      "source": "a=[]\nb={}\ne=Exception(a,b,None)\nprint(len(e.args),e.args[0] is a,e.args[1] is b,e.args[2] is None)\n",
+      "stdout": "3 True True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "constructor-does-not-format",
+      "stage": "LA8",
+      "source": "class M:\n def __str__(self):\n  print(\"format\")\n  return \"message\"\nm=M()\ne=ValueError(m)\nprint(\"made\",e.args[0] is m)\nprint(str(e))\nprint(e)\n",
+      "stdout": "made True\nformat\nmessage\nformat\nmessage\n"
+    },
+    {
+      "id": "constructor-defers-format-error",
+      "stage": "LA8",
+      "source": "class M:\n def __str__(self):\n  print(\"format\")\n  raise LookupError(\"broken\")\ne=ValueError(M())\nprint(\"made\")\ntry: str(e)\nexcept LookupError: print(\"caught\")\n",
+      "stdout": "made\nformat\ncaught\n"
+    },
+    {
+      "id": "constructor-never-runs-repr",
+      "stage": "LA8",
+      "source": "class M:\n def __repr__(self):\n  print(\"bad\")\n  return \"m\"\ne=RuntimeError(M(),M())\nprint(len(e.args))\n",
+      "stdout": "2\n"
+    },
+    {
+      "id": "assert-retains-message",
+      "stage": "LA8",
+      "source": "m=[]\ntry: assert False,m\nexcept AssertionError as e: print(e.args[0] is m)\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "assert-instance-message",
+      "stage": "LA8",
+      "source": "class M:\n def __str__(self):\n  print(\"bad\")\n  return \"m\"\nm=M()\ntry: assert False,m\nexcept AssertionError as e: print(e.args[0] is m)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "keyerror-single-display",
+      "stage": "LA8",
+      "source": "s=\"missing\"\ne=KeyError(s)\nprint(e.args[0] is s,str(e))\n",
+      "stdout": "True 'missing'\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "stop-value-identity",
+      "stage": "LA8",
+      "source": "a=[]\ne=StopIteration(a,7)\nprint(e.value is a,len(e.args),e.args[0] is a)\n",
+      "stdout": "True 2 True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "primitive-exception-display",
+      "stage": "LA8",
+      "source": "print(ValueError(None),ValueError(False),ValueError(7),ValueError(\"text\"),ValueError())\n",
+      "stdout": "None False 7 text \n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "constructor-keyword-error",
+      "stage": "LA8",
+      "source": "ValueError(message=7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "argument-evaluation-order",
+      "stage": "LA8",
+      "source": "def f(n):\n print(n)\n return []\ne=Exception(f(1),f(2))\nprint(len(e.args),e.args[0] is e.args[1])\n",
+      "stdout": "1\n2\n2 False\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "native-args-descriptor",
+      "stage": "LA8",
+      "source": "a=[]\ne=TypeError(a)\nd=vars(BaseException)[\"args\"]\nprint(d.__get__(e) is e.args,e.args[0] is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "native-args-invalid-receiver",
+      "stage": "LA8",
+      "source": "vars(BaseException)[\"args\"].__get__([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "lazy-string-result-validation",
+      "stage": "LA8",
+      "source": "class M:\n def __str__(self): return 7\ne=ValueError(M())\nprint(\"made\")\nstr(e)\n",
+      "stdout": "made\n",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "ordinary-exception-subclass",
+      "stage": "Future",
+      "source": "class E(Exception): pass\ne=E(7)\nprint(e.args[0])\n",
+      "stdout": "7\n",
+      "owner": "#124",
+      "boundary": "Ordinary exception subclasses follow in LA-11/LA-12"
+    }
+  ]
+}

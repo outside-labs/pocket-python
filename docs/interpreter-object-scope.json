@@ -267,18 +267,6 @@
     },
     {
       "corpus": "tests/fixtures/interpreter/ordinary-syntax.json",
-      "case": "assert-container-message-deferred",
-      "owner": "#127",
-      "boundary": "Assertion message display."
-    },
-    {
-      "corpus": "tests/fixtures/interpreter/ordinary-syntax.json",
-      "case": "assert-float-message-deferred",
-      "owner": "#127",
-      "boundary": "Assertion message display."
-    },
-    {
-      "corpus": "tests/fixtures/interpreter/ordinary-syntax.json",
       "case": "star-unpack-user-hints-deferred",
       "owner": "#116",
       "boundary": "General iterable length-hint consumers remain a separate sequence API."
@@ -590,12 +578,6 @@
       "site": "if (args.length !== 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"This builtin call form is outside the source profile.\");",
       "owner": "boundary:execution-interface",
       "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
-    },
-    {
-      "path": "runtime/operation-runtime.mjs",
-      "site": "if (args.length > 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Multiple exception arguments require the later repr profile.\");",
-      "owner": "#124",
-      "boundary": "Exception payload, clause, chaining and group semantics."
     },
     {
       "path": "runtime/operation-runtime.mjs",
@@ -1142,6 +1124,30 @@
       "site": "if (!base) this.fail(\"UnsupportedOperationError\", \"Unknown numeric builtin.\", \"UNSUPPORTED\");",
       "owner": "boundary:execution-interface",
       "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (operation !== \"get\") this.fail(\"UnsupportedOperationError\", \"Mutable exception arguments require LA-9 under #124\", \"UNSUPPORTED\");",
+      "owner": "#124",
+      "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Structured exception constructors remain under #124\");",
+      "owner": "#124",
+      "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (value.args.length > 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Multiple exception argument displays remain under #127\");",
+      "owner": "#127",
+      "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (args.length > 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Multiple exception arguments require the modern source profile under #124\");",
+      "owner": "#124",
+      "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
     }
   ],
   "native_tables": {
