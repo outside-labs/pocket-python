@@ -2718,6 +2718,12 @@
       "owner": "#124",
       "boundary": "Custom module provenance and metadata callbacks require a separate reference-backed contract",
       "stdout": "helper\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-optional-lookups-skip-setters",
+      "source": "class E(AttributeError):\n def __setattr__(self,name,value):\n  print(\"unexpected setter\")\n  super().__setattr__(name,value)\nclass A:\n def __getattr__(self,name): raise E()\nprint(getattr(A(),\"missing\",7),hasattr(A(),\"missing\"))\n",
+      "stdout": "7 False\n"
     }
   ],
   "reference_boundaries": [
