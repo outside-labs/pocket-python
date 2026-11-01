@@ -133,3 +133,31 @@ test('dictionary subtype views retain the complete original owner graph', async 
   } finally { session.close(); registry.close(); }
   closed(session.stats());
 });
+
+for (const expression of ['iter(d.keys())', 'reversed(d.items())', 'type(d.values()).__iter__(d.values())',
+  'type(d.keys()).__reversed__(d.keys())']) test('subtype view iterators retain owners until exhaustion: ' + expression, async () => {
+  const source = 'class D(dict): pass\nd=D()\nd.saved=[7]\nd[1]=9\ni=' + expression + '\nprint("made")\ndel d\nprint("detached")\nnext(i)\ntry: next(i)\nexcept StopIteration: print("empty")\n';
+  const {registry} = await compileSourceModules([unit(source)], {languageProfile: corpus.profile});
+  const session = new ModuleSession(registry); let output = '', owner, saved, checked = false;
+  session.context.begin({}, text => { output += text; });
+  const execution = Execution.modules(session.context);
+  try {
+    while (execution.state !== 'completed') {
+      execution.advance(); if (execution.state === 'paused') execution.park();
+      if (!owner && output === 'made\n') {
+        owner = session.context.module(registry.entry).environment.cells.get('d').value;
+        saved = owner.attributes.get('saved');
+      }
+      session.memory.collect([], {cleanup: true});
+      if (!checked && output === 'made\ndetached\n') {
+        assert.ok(session.memory.identityHash(owner) > 0);
+        assert.ok(session.memory.identityHash(saved) > 0); checked = true;
+      }
+    }
+    assert.ok(checked); assert.equal(output, 'made\ndetached\nempty\n');
+    session.memory.collect([], {cleanup: true});
+    assert.throws(() => session.memory.identityHash(owner), TypeError);
+    assert.throws(() => session.memory.identityHash(saved), TypeError);
+  } finally { execution.close(); execution.close(); session.context.finish(); session.close(); registry.close(); }
+  closed(session.stats());
+});

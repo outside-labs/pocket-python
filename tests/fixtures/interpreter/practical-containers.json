@@ -10,7 +10,8 @@
     "LA-4",
     "LA-5",
     "LA-6",
-    "LA-7"
+    "LA-7",
+    "LA-6A"
   ],
   "cases": [
     {
@@ -1739,6 +1740,30 @@
           "source": "def rows():\n yield 7\n yield 8\ndef take(queue):\n return queue.pop(0)\n"
         }
       ]
+    },
+    {
+      "id": "subtype-view-iterator-forward",
+      "stage": "LA-6A",
+      "source": "class D(dict): pass\nd=D()\nd.saved=[7]\nd[1]=9\ni=iter(d.keys())\ndel d\nprint(list(i)==[1])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subtype-view-iterator-reverse",
+      "stage": "LA-6A",
+      "source": "class D(dict): pass\nd=D()\nd.saved=[7]\nd[1]=9\ni=reversed(d.items())\ndel d\nprint(list(i)==[(1,9)])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subtype-view-iterator-native-forward",
+      "stage": "LA-6A",
+      "source": "class D(dict): pass\nd=D()\nd.saved=[7]\nd[1]=9\ni=type(d.values()).__iter__(d.values())\ndel d\nprint(list(i)==[9])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subtype-view-iterator-native-reverse",
+      "stage": "LA-6A",
+      "source": "class D(dict): pass\nd=D()\nd.saved=[7]\nd[1]=9\ni=type(d.keys()).__reversed__(d.keys())\ndel d\nprint(list(i)==[1])\n",
+      "stdout": "True\n"
     }
   ]
 }
