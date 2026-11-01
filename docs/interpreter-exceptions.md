@@ -18,13 +18,14 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-15 | `BaseException.add_note(note, /)`, inherited bound/unbound calls, lazy `__notes__`, string identity, ordinary note replacement/deletion and owned attribute hooks | Nonstring notes fail before lookup. An existing list or list subclass is appended through native storage; a missing attribute creates a list through ordinary assignment. Notes preserve `args` and `str(error)`; host summaries and traceback rendering retain their separate diagnostic contract. |
 | LA-16 | Composed handler/note record loading, modules, dynamic source, reraises and generator suspension during handler selection; offline cancellation and restart | The corpus records 174 observations: 167 semantic/error comparisons and seven explicit refusals, with 39 cases shared by core-source/1. Handler and note callbacks preserve zero logical teardown, including suspended selection and cyclic note dictionaries. |
 | LA-17 | `NameError(*args, name=None)` and `UnboundLocalError`, mutable native `name`, subclasses and explicit native initializers/descriptors | Native fields preserve identity independently of `args` and dictionaries. Reinitialization replaces arguments before rejecting an unknown keyword, preserving old fields on that error. Global/free/deleted missing names populate `name`; unbound locals retain None. Structured layouts permit compatible generic exception bases and reject conflicting storage. |
-| LA-18 | `AttributeError(*args, name=None, obj=None)`, native member fields, subclasses, owned constructors and descriptors | Explicit fields retain arbitrary values without callbacks. Replacement/deletion, initializer bypass and partial state on invalid keywords match the pinned oracle. Automatic runtime lookup enrichment retains a named refusal when its unresolved `name`/`obj` is read; explicit field assignment or reinitialization resolves that field boundary. |
+| LA-18 | `AttributeError(*args, name=None, obj=None)`, native member fields, subclasses, owned constructors and descriptors | Explicit fields retain arbitrary values without callbacks. Replacement/deletion, initializer bypass and partial state on invalid keywords match the pinned oracle. LA-23 adds automatic ordinary-read enrichment; write/delete metadata retains its separate field-read gate. |
 | LA-19 | Composed native-field record failures, modules, dynamic source diagnostics, causes/notes and generator suspension; installed offline stop/restart | The 233-case corpus records 225 semantic/error comparisons, eight explicit refusals and 48 explicitly shared core cases. The runnable example retains the failed record/key by identity; native field callbacks and suspended cleanup share existing resource limits. |
 | LA-20A | Native exception lookup at each position of the actual MRO | A native base's inherited entry cannot hide a later base's own initializer, string slot or member. Mixed generic/name/attribute bases preserve native keyword initialization, explicit descriptor identity, super and slotted subclass storage. Direct native lookup keeps its inherited behavior. |
 | LA-20 | `ImportError(*args, name=None, path=None, name_from=None)` and `ModuleNotFoundError`; mutable `msg`/`name`/`path`/`name_from`, native initializers/descriptors and subclasses | A single positional argument initializes `msg`. Native `__str__` selects an exact str `msg`; other values, including string subclasses, fall back to the retained BaseException argument display contract. Generic BaseException initialization preserves native fields. Invalid keywords replace `args` but preserve the old fields. Automatic import-failure metadata enrichment remains an explicit field-read refusal. |
 | LA-21 | StopIteration subclasses, native construction/initialization and independent `value` storage | Native `__new__` leaves `value` None; native initialization selects the first argument. BaseException initialization and `args` replacement preserve `value`. Native deletion clears it to None. Iterator exhaustion and PEP 479 use actual ancestry, including custom MROs, while the declared solid layout owns storage. User-class generator `throw` normalization remains #120. |
 | LA-21A | `yield from` forwards independent native `StopIteration.value` | Delegation consumes the native value rather than `args[0]`, including subclass exceptions, explicit None and temporary aliases. Native extraction bypasses owned `value` properties. The retained result shares parked collection, cancellation and close ownership. |
 | LA-22 | Composed import/exhaustion record sources, modules, dynamic source, suspended cleanup, native text selection and delegated return values; installed offline cancellation/restart | The automated corpus has 310 cases: 301 semantic/error comparisons, nine explicit refusals and 53 shared core cases. Two pinned-reference crash probes remain separately recorded divergences with safe interpreter checks on Node and the installed offline Chromium console. |
+| LA-23 | Runtime AttributeError `name`/`obj` enrichment on ordinary reads, `getattr`, descriptors, module hooks and native missing reads | Existing native fields, including an explicitly supplied None, suppress enrichment. Original error/key/receiver identity survives owned setters and their failures. This slice belongs to classes-source/1. Write/delete enrichment remains separately gated. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -77,7 +78,7 @@ python scripts/object_integration_browser_smoke.py --exceptions
 ```
 
 Exception groups/except*, traceback objects/mutation and note rendering/export,
-automatic attribute/import failure enrichment, and the SyntaxError/Unicode
+write/delete attribute and automatic import failure enrichment, and the SyntaxError/Unicode
 structured native families remain #124. Generator throw of a user
 exception class retains #120; throwing an instance remains adopted. Multiple
 argument/container/default exception representations remain #127. The ordinary
@@ -91,3 +92,11 @@ expression block references. Handler expressions use the ordinary frame,
 closure and namespace lookup paths, including suspended owned callbacks and
 the active exception for bare reraises. Alias cleanup and finally handling
 apply when expression evaluation or validation fails.
+
+LA-23 follows the pinned [attribute-context implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c#L1177-L1202).
+Native absence is distinct from explicit None. Enrichment assigns `name` before
+`obj` through ordinary exception attribute setters; setter failure replaces the
+lookup failure. Direct native generic lookup enriches its missing-member error,
+while an AttributeError raised inside its property callback remains unchanged
+until an ordinary read surrounds that operation. Previously populated errors
+retain their first receiver when reused.

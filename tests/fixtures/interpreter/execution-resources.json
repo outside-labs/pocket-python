@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "baseline": "execution-accounting/4 (O68)",
-  "contract": "execution-accounting/20: LA-14 compiles modern exception handler expressions into verified expression blocks. Handler evaluation adds ordinary instructions, source/pool bytes and collections; complete flat-tuple validation charges one work unit per element. Revision 19 counters remain in accounting_19_cases. Quotas and ownership-transfer policy are unchanged.",
+  "contract": "execution-accounting/21: LA-23 retains attribute-read context across owned callbacks. Additional traced receiver/key edges add bounded collection work; instructions, allocations, byte/owner counters and quotas are unchanged in all eight existing observations. Revision 20 counters remain in accounting_20_cases.",
   "cases": {
     "nested-binding-truth-finally": {
       "steps": 81,
@@ -61,7 +61,7 @@
     },
     "notification-snapshot-and-init": {
       "steps": 69,
-      "work": 51788,
+      "work": 51802,
       "state": "open",
       "bytes": 19562,
       "peakBytes": 21500,
@@ -2054,6 +2054,120 @@
       "allocations": 64,
       "reclaimed": 27,
       "collections": 150
+    }
+  },
+  "accounting_20_cases": {
+    "nested-binding-truth-finally": {
+      "steps": 81,
+      "work": 91446,
+      "state": "open",
+      "bytes": 30063,
+      "peakBytes": 31955,
+      "objects": 80,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 176,
+      "reclaimed": 104,
+      "collections": 417
+    },
+    "import-during-pending-return": {
+      "steps": 57,
+      "work": 44933,
+      "state": "open",
+      "bytes": 22218,
+      "peakBytes": 24662,
+      "objects": 65,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 125,
+      "reclaimed": 64,
+      "collections": 301
+    },
+    "import-failure-retry-in-truth-finally": {
+      "steps": 100,
+      "work": 112484,
+      "state": "open",
+      "bytes": 20911,
+      "peakBytes": 26971,
+      "objects": 61,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 194,
+      "reclaimed": 135,
+      "collections": 600
+    },
+    "import-inherits-active-exception": {
+      "steps": 44,
+      "work": 32918,
+      "state": "open",
+      "bytes": 16478,
+      "peakBytes": 20162,
+      "objects": 44,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 101,
+      "reclaimed": 59,
+      "collections": 267
+    },
+    "notification-snapshot-and-init": {
+      "steps": 69,
+      "work": 51788,
+      "state": "open",
+      "bytes": 19562,
+      "peakBytes": 21500,
+      "objects": 51,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 114,
+      "reclaimed": 67,
+      "collections": 308
+    },
+    "nested-import-source-error": {
+      "steps": 37,
+      "work": 31454,
+      "state": "open",
+      "bytes": 5869,
+      "peakBytes": 24787,
+      "objects": 13,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 108,
+      "reclaimed": 97,
+      "collections": 253
+    },
+    "binding-error-with-outer-operands": {
+      "steps": 39,
+      "work": 30419,
+      "state": "open",
+      "bytes": 4222,
+      "peakBytes": 18158,
+      "objects": 9,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 97,
+      "reclaimed": 92,
+      "collections": 219
+    },
+    "truth-failure-replaces-pending-return": {
+      "steps": 31,
+      "work": 15049,
+      "state": "open",
+      "bytes": 13682,
+      "peakBytes": 14944,
+      "objects": 39,
+      "roots": 1,
+      "frames": 0,
+      "external": 1,
+      "allocations": 64,
+      "reclaimed": 27,
+      "collections": 152
     }
   }
 }

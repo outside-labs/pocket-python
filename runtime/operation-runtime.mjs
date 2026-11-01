@@ -111,10 +111,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       mutate(receiver, () => {
         const before = new Map(receiver.nativeFields);
         const boundaries = receiver.nativeFieldBoundaries;
+        const present = receiver.attributeFields;
         for (const key of fields) receiver.nativeFields.set(key, keywords.includes(key) ? keywordValues[keywords.indexOf(key)] : null);
+        if (owner === "AttributeError") receiver.attributeFields = (keywords.includes("name") ? 1 : 0) | (keywords.includes("obj") ? 2 : 0);
         if (importing) receiver.nativeFields.set("msg", args.length === 1 ? args[0] : null);
         receiver.nativeFieldBoundaries = undefined;
-        return () => { receiver.nativeFields = before; receiver.nativeFieldBoundaries = boundaries; };
+        return () => { receiver.nativeFields = before; receiver.nativeFieldBoundaries = boundaries; receiver.attributeFields = present; };
       });
     }
   };
@@ -750,10 +752,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const next = {...record, qualification, phase: record.found ? "name" : "qualification"};
     return unaryTask("repr", record.found ? record.name : qualification, site, continuation("property-diagnostic", next), record.depth);
   };
+  const attributeFailure = (value, receiver, key, site, after = null) => {
+    if (!isException(value, "AttributeError") || value.attributeFields !== 0) return null;
+    state.temporaries.push(value, receiver);
+    if (typeof key === "string") key = values.string(Array.from(key, char => char.codePointAt(0)));
+    state.temporaries.push(key);
+    mutate(value, () => {
+      const before = value.nativeFieldBoundaries;
+      value.nativeFieldBoundaries = undefined;
+      return () => { value.nativeFieldBoundaries = before; };
+    });
+    return attributeTask(value, "name", site, continuation("attribute-context-name", {receiver, error: value, after}), 0, "set", null, null, key);
+  };
   const recover = (value, completion, site) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (current.kind === "attribute-context") {
+        const enriched = attributeFailure(value, current.receiver, current.key, site, current.after);
+        if (enriched) return enriched;
+      }
       if (current.kind === "property-diagnostic" && current.phase === "lookup" && value.name === "AttributeError")
         return propertyDiagnostic({...current, found: false, name: null}, site);
       if (current.kind === "property-diagnostic") {
@@ -852,7 +870,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
-    while (["init", "relay", "subclass-result", "vars-result", "property-name", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
+    if (completion?.kind === "attribute-context-name")
+      return attributeTask(completion.error, "obj", site, continuation("attribute-context-object", completion), 0, "set", null, null, completion.receiver);
+    if (completion?.kind === "attribute-context-object")
+      return unaryTask("attribute-error", completion.error, site, completion.after);
+    while (["init", "relay", "attribute-context", "subclass-result", "vars-result", "property-name", "attribute-fallback", "protocol-result", "format-result", "index-result", "item-result"].includes(completion?.kind)) {
       count("deliver:" + completion.kind);
       if (completion.kind === "init") {
         if (value !== null) python("TypeError", "__init__() should return None");
@@ -1903,12 +1925,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           continue;
         }
         if (task.kind === "attribute") {
+          if (task.operation === "get") {
+            completion = continuation("attribute-context", {receiver: task.receiver, key: task.key ?? task.name, after: completion});
+          }
           if (task.receiver instanceof ModuleValue && task.receiver.type && task.operation === "import") {
             task = attributeTask(task.receiver, task.name, site, continuation("module-missing", {receiver: task.receiver, name: task.name, mode: "import", skipNamespace: true, after: completion}), depth);
             continue;
           }
           if (task.receiver instanceof ModuleValue && !task.receiver.type) {
-            state.temporaries = operationRoots(task);
+            state.temporaries = [...operationRoots(task), ...completionRoots(completion)];
             const {receiver, name, operation} = task, environment = receiver.environment;
             const writing = ["set", "delete", "native-set", "native-delete"].includes(operation);
             if (name === "__dict__") {
@@ -1938,7 +1963,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const cell = environment.cells.get(name);
             task = moduleEntry(record, site, !!cell?.bound, cell?.value); continue;
           }
-          state.temporaries = operationRoots(task);
+          state.temporaries = [...operationRoots(task), ...completionRoots(completion)];
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
           const advertisedWrite = writing && name === "__class__" && userProtocol(receiver) && classes.hasSlot(classes.checkingType(receiver), "__class__");
@@ -1973,6 +1998,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           continue;
         }
         if (task.kind === "unary" && task.operation === "delegate-raise") { injectGenerator(task.value); return; }
+        if (task.kind === "unary" && task.operation === "attribute-error") throw new Raised(task.value);
         if (task.kind === "unary" && task.operation === "unpack-short") {
           state.temporaries = operationRoots(task); python("ValueError", "Not enough values to unpack");
         }
@@ -3292,12 +3318,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const name = callable.name, writing = name === "setattr" || name === "delattr";
             if (keywords.length || args.length < 2 || args.length > (name === "getattr" || name === "setattr" ? 3 : 2) || name === "setattr" && args.length !== 3)
               python("TypeError", name + "() received invalid arguments");
-            const attribute = values.text(args[1]);
+            const attribute = values.text(classes.payload(args[1]));
             if (attribute === null) python("TypeError", "attribute name must be string");
             if (attribute.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
             const receiver = args[0], optional = name === "hasattr" || name === "getattr" && args.length === 3;
             const target = writing ? continuation("attribute-write", {receiver, after: completion}) : optional ?
               continuation("attribute-result", {receiver, default: args[2] ?? null, mode: name, after: completion}) : completion;
+            if (!writing) { task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue; }
             if (receiver instanceof ModuleValue) {
               task = attributeTask(receiver, attribute, site, target, depth, writing ? name === "setattr" ? "set" : "delete" : "get", args[1], null, args[2] ?? null); continue;
             }
@@ -3658,7 +3685,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             continuation("namespace-lookup", {cache, task, owner: error.owner, name: error.name, dictionary: error.dictionary, phase: error.phase}), depth, "probe-entry");
           continue;
         }
-        const recovery = error instanceof Raised && recover(error.value, completion, site);
+        const nativeFailure = error instanceof Raised && task.kind === "attribute" && task.operation === "native-get" &&
+          attributeFailure(error.value, task.receiver, task.key ?? task.name, site, completion);
+        const recovery = nativeFailure || error instanceof Raised && recover(error.value, completion, site);
         if (!recovery) throw error;
         task = recovery;
       }
@@ -3666,5 +3695,5 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const call = (callable, args, keywords, keywordValues, site, completion = null) =>
     dispatch(callTask(callable, args, keywords, keywordValues, site, completion));
-  return Object.freeze({dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement: importer.statement});
+  return Object.freeze({dispatch, call, deliver, notifyNext, recover, attributeFailure, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement: importer.statement});
 }
