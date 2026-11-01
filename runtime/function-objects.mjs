@@ -191,15 +191,18 @@ export function matchesException(name, expected) {
   for (let current = name; current; current = EXCEPTIONS[current]) if (expected === current) return true;
   return false;
 }
-// These native bases share the generic BaseException layout. Structured
-// constructors/fields and StopIteration's extra storage retain their own gate.
+export function isException(value, name) {
+  return value instanceof ExceptionValue && (value.type ? value.type.mro.some(base => base instanceof BuiltinValue && base.name === name) : matchesException(value.name, name));
+}
+// Generic native bases share BaseException storage. Adopted structured bases
+// below keep their distinct solid layouts for multiple-inheritance checks.
 export const GENERIC_EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTIONS).filter(name =>
   !["StopIteration", "AttributeError", "ImportError", "ModuleNotFoundError", "NameError", "UnboundLocalError", "SyntaxError", "IndentationError", "TabError", "UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError"].includes(name)));
 export const EXCEPTION_FIELDS = Object.freeze({NameError: Object.freeze(["name"]), UnboundLocalError: Object.freeze(["name"]),
   AttributeError: Object.freeze(["name", "obj"]), ImportError: Object.freeze(["msg", "name", "path", "name_from"]),
   ModuleNotFoundError: Object.freeze(["msg", "name", "path", "name_from"])});
 export const EXCEPTION_LAYOUTS = Object.freeze({...Object.fromEntries(GENERIC_EXCEPTION_BASES.map(name => [name, "BaseException"])),
-  NameError: "NameError", UnboundLocalError: "NameError", AttributeError: "AttributeError", ImportError: "ImportError", ModuleNotFoundError: "ImportError"});
+  NameError: "NameError", UnboundLocalError: "NameError", AttributeError: "AttributeError", ImportError: "ImportError", ModuleNotFoundError: "ImportError", StopIteration: "StopIteration"});
 export const EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTION_LAYOUTS));
 
 // The source-visible builtin namespace contains only adopted capabilities.

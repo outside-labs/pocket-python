@@ -1098,10 +1098,10 @@
         "tests/fixtures/interpreter/exceptions.json:native-fields-composed-record",
         "tests/fixtures/interpreter/exceptions.json:native-fields-module-identity",
         "tests/fixtures/interpreter/exceptions.json:native-fields-dynamic-source",
-        "tests/fixtures/interpreter/exceptions.json:native-fields-suspended-generator"
+        "tests/fixtures/interpreter/exceptions.json:native-fields-suspended-generator",
+        "tests/fixtures/interpreter/exceptions.json:structured-subclass-deferred"
       ],
       "boundary_evidence": [
-        "tests/fixtures/interpreter/exceptions.json:structured-subclass-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-groups-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-traceback-object-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-structured-constructor-deferred",
