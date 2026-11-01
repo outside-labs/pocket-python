@@ -51,6 +51,10 @@ def references(corpus_path=CORPUS):
                         'reference_status': 'pass' if passed else 'fail', 'reference': actual})
     return {'schema_version': 1, 'suite': corpus.get('suite', 'interpreter-classes/1'), 'profile': corpus['profile'],
             'mode': 'reference-only', 'reference_version': platform.python_version(),
+            'reference_host': platform.platform(),
+            **({'reference_platform_contract': corpus['reference_platform_contract']} if 'reference_platform_contract' in corpus else {}),
+            'reference_qualifications': [{key: case[key] for key in ('id', 'classification', 'owner', 'boundary') if key in case}
+                                         for case in corpus.get('reference_boundaries', [])],
             'corpus_sha256': hashlib.sha256(raw).hexdigest(), 'source_execution': False,
             'implementation_status': 'Reference mode does not execute the independent engine; see source-mode reports.',
             'cases': records, 'summary': {status: sum(r['reference_status'] == status for r in records)

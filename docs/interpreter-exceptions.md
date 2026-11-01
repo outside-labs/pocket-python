@@ -29,6 +29,7 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-24 | Native runtime import message identity and registry-backed missing from-import `name`/`path`/`name_from` | Registry modules retain their original source path, including after namespace file replacement/deletion. User-raised errors retain their own fields. Policy denials keep their registry semantics and do not grant host imports. Custom module specs, source module subtypes and provenance callbacks retain a field-read boundary under #124. |
 | LA-25 | Composed runtime metadata across module calls, dynamic source, cause/note handlers and suspended cleanup; installed offline stop/restart during enrichment setters | The corpus records 359 cases: 351 semantic/error comparisons and eight explicit refusals, with 53 cases shared by core-source/1. Node and Chromium pass every drain, step and parked driver. The installed-wheel offline console passes 59 checks. |
 | LA-26 | SyntaxError/IndentationError/TabError layouts, subclasses, native initializers and nine mutable native fields; iterable detail conversion and plain native messages | Four, six or seven details succeed. Five details publish fields before TypeError; other invalid counts leave old detail fields intact after replacing args/msg. Detail conversion ignores length hints. Native location rendering follows in LA-27; parser-generated fields remain gated. |
+| LA-27 | Native SyntaxError message/location rendering, basename selection, exact-int line selection and owned message callbacks | Filename/line values are read before message callbacks; native fields bypass owned getters. String-subclass filenames render their native content, while bool/int-subclass line numbers are ignored. The deterministic profile uses POSIX separators and signed 64-bit C long overflow behavior; Windows differences are separately recorded. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -51,6 +52,16 @@ appears to explain this through its unchecked native payload reference. These
 are retained divergences under #120, excluded from successful differential
 counts. Separate interpreter tests require safe None results and complete
 logical teardown; automated reference checks do not execute the crashing probes.
+
+Two additional host qualifications record SyntaxError basename and C-long
+width differences. The interpreter uses POSIX `/` separators and a signed
+64-bit C long for deterministic native location rendering on every host.
+Windows CPython uses `\` separators and a 32-bit C long, so those cases differ.
+The corpus records exact outputs for each reference host, and conformance
+reports expose the declared reference contract, actual reference host and
+qualification list. These qualifications remain under #124 and are excluded
+from successful differential counts; they are checked separately in Node and
+the installed offline console.
 
 NameError and UnboundLocalError now have their own adopted native layout, with
 ordinary subclass dictionaries/slots, constructors and actual-ancestry handlers.
@@ -135,3 +146,10 @@ Explicit native new leaves fields None; generic BaseException initialization
 preserves them. Compatible generic bases share storage; conflicting structured
 layouts are rejected. Parser-generated native fields retain their field-read
 gate, while existing copied diagnostic messages remain available.
+
+LA-27 follows the pinned [native renderer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L2625-L2692).
+No filename/line suffix preserves an exact string message's identity. A suffix
+produces a native string after the message callback completes, using the
+previously read native filename and exact-int line number. Overflow renders -1;
+offset/text/end/metadata/print flags do not affect `str`. Host summaries retain
+their safe copied-diagnostic contract and do not invoke message callbacks.
