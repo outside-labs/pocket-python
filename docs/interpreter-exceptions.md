@@ -66,6 +66,19 @@ and Restart during index/reason/encoding callbacks and a reduced-profile scalar
 program. The eight deterministic execution observations retain revision 22.
 UnicodeDecodeError and automatic codec metadata remain under #124.
 
+LA-35 adopts `UnicodeDecodeError(encoding, object, start, end, reason, /)`,
+native fields/descriptors/initialization and compatible subclasses. Bytes and
+bytes subtypes retain identity; bytearrays and contiguous adopted memoryviews
+produce a fresh immutable bytes payload while args retain the original buffer.
+Buffer acquisition/copying follows encoding, index and reason validation, so
+index callbacks can mutate or release the input. Noncontiguous views raise
+BufferError; released views raise ValueError. Owned `__bytes__` is not invoked.
+Failed acquisition preserves old fields and callback mutations after replacing
+args. Numeric members and native field independence follow LA-32. Native decode
+messages and automatic runtime codec metadata remain separate contracts. The
+pinned [initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3755-L3796)
+defines the copying order.
+
 LA-29 adds `UnicodeTranslateError(object, start, end, reason, /)`, five native
 fields, native initializers/descriptors and subclasses. Object/reason require
 strings and retain subtype identity. Construction converts start/end in order
