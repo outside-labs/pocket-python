@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -79,6 +79,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             assert 'fail at native-fields-original.py:5' in page.locator('#diagnostic').inner_text()
                         if case['id'] == 'native-exceptions-dynamic-failure':
                             assert 'fail at native-exceptions-original.py:5' in page.locator('#diagnostic').inner_text()
+                        if case['id'] == 'runtime-metadata-dynamic-failure':
+                            assert 'fail at metadata-original.py:3' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     if exceptions:
                         for case in corpus.get('reference_boundaries', []):
@@ -88,6 +90,10 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         ordinary_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', ordinary], text=True, encoding='utf-8')
                         run(ordinary, ordinary_expected)
                         records.append({'id': 'ordinary-exception-example', 'status': 'pass'})
+                        metadata = (ROOT / 'examples/interpreter_error_metadata.py').read_text(encoding='utf-8')
+                        metadata_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', metadata], text=True, encoding='utf-8')
+                        run(metadata, metadata_expected)
+                        records.append({'id': 'runtime-error-metadata-example', 'status': 'pass'})
                     expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
                     run(example, expected)
                     busy = 'import operator\nnamespace={"add":operator.add}\nexec("class Box:\\n __slots__=(\'value\',)\\n def __init__(self): self.value=7\\n @property\\n def field(self):\\n  print(\'entered\')\\n  while True: self.value=add(self.value,1)\\nbox=Box()\\nbox.field",namespace)\n'
@@ -102,6 +108,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             'class E(Exception):\n def __setattr__(self,name,value):\n  print("entered")\n  while True: pass\nE().add_note("detail")\n',
                             'class E(AttributeError):\n def __init__(self):\n  super().__init__(name=[7],obj=[8])\n  print("entered")\n  while True: pass\nE()\n',
                             'class E(StopIteration):\n def __init__(self):\n  super().__init__([7])\n  print("entered")\n  while True: pass\nE()\n',
+                            'class E(AttributeError):\n def __setattr__(self,name,value):\n  print("entered")\n  while True: pass\nclass Record:\n def __getattr__(self,name): raise E()\nRecord().missing\n',
                         ]
                     for source in busy_sources:
                         page.fill('#input', source)
@@ -159,6 +166,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                   'stop-during-exception-normalization', 'stop-during-handler-expression', 'stop-during-note-setter',
                   'stop-during-native-field-initialization',
                   'stop-during-stop-iteration-initialization', 'core-native-error-fields',
+                  'stop-during-attribute-enrichment',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',

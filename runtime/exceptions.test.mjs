@@ -71,6 +71,15 @@ test('registry denial keeps finite import metadata without granting host imports
   assert.equal(result.stdout, 'True True True True\n'); assert.equal(result.ok, true); closed(result.closed);
 });
 
+test('runtime metadata enrichment preserves original dynamic failure frames', async () => {
+  const source = corpus.cases.find(item => item.id === 'runtime-metadata-dynamic-failure').source;
+  const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'AttributeError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 2], ['<module>', 'metadata-original.py', 4], ['fail', 'metadata-original.py', 3]]);
+  closed(result.closed);
+});
+
 test('lazy exception messages retain their arguments through park/cancel/close', async () => {
   await lifetime('class M:\n def __str__(self):\n  print("entered")\n  return "message"\nprint(str(ValueError(M())))\n', 'entered\nmessage\n');
 });

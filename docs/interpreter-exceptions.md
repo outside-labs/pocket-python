@@ -27,6 +27,7 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-22 | Composed import/exhaustion record sources, modules, dynamic source, suspended cleanup, native text selection and delegated return values; installed offline cancellation/restart | The automated corpus has 310 cases: 301 semantic/error comparisons, nine explicit refusals and 53 shared core cases. Two pinned-reference crash probes remain separately recorded divergences with safe interpreter checks on Node and the installed offline Chromium console. |
 | LA-23 | Runtime AttributeError `name`/`obj` enrichment on ordinary reads, `getattr`, descriptors, module hooks and native missing reads | Existing native fields, including an explicitly supplied None, suppress enrichment. Original error/key/receiver identity survives owned setters and their failures. This slice belongs to classes-source/1. Write/delete enrichment remains separately gated. |
 | LA-24 | Native runtime import message identity and registry-backed missing from-import `name`/`path`/`name_from` | Registry modules retain their original source path, including after namespace file replacement/deletion. User-raised errors retain their own fields. Policy denials keep their registry semantics and do not grant host imports. Custom module specs, source module subtypes and provenance callbacks retain a field-read boundary under #124. |
+| LA-25 | Composed runtime metadata across module calls, dynamic source, cause/note handlers and suspended cleanup; installed offline stop/restart during enrichment setters | The corpus records 359 cases: 351 semantic/error comparisons and eight explicit refusals, with 53 cases shared by core-source/1. Node and Chromium pass every drain, step and parked driver. The installed-wheel offline console passes 59 checks. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -112,3 +113,10 @@ require a separate contract: the original ImportError is still raised/caught,
 but its unresolved provenance fields refuse when read. Missing registry records
 carry their requested module name internally; verified source grants normally
 reject undeclared requests as policy ImportErrors before that lookup occurs.
+
+`examples/interpreter_error_metadata.py` runs unchanged on the pinned reference
+and the offline console. A reusable field reader wraps a runtime AttributeError
+while retaining the exact record/key as its cause. Offline acceptance also
+checks dynamic source frames, interrupted enrichment setters, fresh restart
+owners and a reduced-profile cache update. These observations do not widen the
+core profile to owned callbacks or the classes-only `getattr` builtin.
