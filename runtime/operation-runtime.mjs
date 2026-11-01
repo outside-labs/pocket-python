@@ -884,7 +884,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         nameError("name '" + current.name + "' is not defined", current.name);
       }
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
-      if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
+      if (current.kind === "instance-entry" && current.operation !== "get" && isException(value, "KeyError"))
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
       if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
       if (current.kind === "frame-update-boundary" && !value.frameUpdateFailure) {
@@ -1436,7 +1436,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (completion.operation === "set") return valueTask(null, site, completion.after);
       if (value.items[0]) return valueTask(value.items[1], site, completion.after);
       const fallback = completion.operation === "get" ? {found: completion.found, value: completion.fallback, skipNative: completion.skipNative} : {found: false, skipNative: true};
-      const plan = classes.instanceMissing(completion.receiver, values.text(classes.payload(completion.key)), fallback);
+      const name = values.text(classes.payload(completion.key));
+      if (completion.operation === "delete") classes.instanceMutationFailure(completion.receiver, name, completion.key, true);
+      const plan = classes.instanceMissing(completion.receiver, name, fallback);
       return plan.kind === "value" ? valueTask(plan.value, site, completion.after) :
         callTask(plan.callable, plan.args, [], [], site, completion.after, completion.depth);
     }
@@ -3397,7 +3399,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable.name === "instance-attribute-missing") {
             if (!classes.isInstance(args[0]) || !values.isString(classes.payload(args[1])) || args.length !== 2 || keywords.length)
               throw new TypeError("Invalid instance attribute failure.");
-            classes.instanceMissing(args[0], values.text(classes.payload(args[1])), {found: false, skipNative: true});
+            classes.instanceMutationFailure(args[0], values.text(classes.payload(args[1])), args[1], true, true);
           }
           if (callable.name === "method-attribute") {
             const [receiver, key] = args;

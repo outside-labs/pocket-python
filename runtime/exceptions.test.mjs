@@ -64,6 +64,20 @@ test('native attribute wrappers retain temporary subtype keys through interrupte
   await lifetime('class Key(str):\n def __str__(self): raise ValueError("unexpected")\nclass A:\n @property\n def field(self):\n  print("entered")\n  return [7]\nprint(object.__getattribute__(A(),Key("field"))[0])\n', 'entered\n7\n');
 });
 
+test('failed deletions retain temporary receivers and subtype keys through parked collection', async () => {
+  await lifetime('class Key(str): pass\nclass A: pass\ntry: delattr(A(),Key("field"))\nexcept AttributeError as error: e=error\ne.name.error=e\ne.args=()\nprint("entered")\nprint(e.name.error is e,type(e.obj) is A)\n', 'entered\nTrue True\n');
+});
+
+test('deletion dictionary callbacks retain original owners during replacement and interruption', async () => {
+  await lifetime('class Key:\n def __hash__(self): return hash("field")\n def __eq__(self,other):\n  a.__dict__={}\n  print("entered")\n  raise KeyError("owned")\nclass A: pass\na=A()\na.__dict__[Key()]=7\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a,len(a.__dict__))\n', 'entered\nfield True 0\n');
+});
+
+test('generic deletion callback loops share execution limits', async () => {
+  const result = await runSourceRequest({modules: [unit('class Key:\n def __hash__(self): return hash("field")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nclass A: pass\na=A()\na.__dict__[Key()]=7\ndel a.field\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 1000}});
+  assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+});
+
 test('Unicode encoding initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeEncodeError("codec","abc",I(),2,"bad")\nprint(e.encoding,e.object,e.start,e.end,e.reason)\n', 'entered\ncodec abc 1 2 bad\n');
 });
