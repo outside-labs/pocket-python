@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -81,6 +81,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             assert 'fail at native-exceptions-original.py:5' in page.locator('#diagnostic').inner_text()
                         if case['id'] == 'runtime-metadata-dynamic-failure':
                             assert 'fail at metadata-original.py:3' in page.locator('#diagnostic').inner_text()
+                        if case['id'] == 'syntax-exceptions-dynamic-failure':
+                            assert 'fail at syntax-original.py:2' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     if exceptions:
                         for case in corpus.get('reference_boundaries', []):
@@ -94,6 +96,10 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         metadata_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', metadata], text=True, encoding='utf-8')
                         run(metadata, metadata_expected)
                         records.append({'id': 'runtime-error-metadata-example', 'status': 'pass'})
+                        syntax = (ROOT / 'examples/interpreter_syntax_exceptions.py').read_text(encoding='utf-8')
+                        syntax_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', syntax], text=True, encoding='utf-8')
+                        run(syntax, syntax_expected)
+                        records.append({'id': 'structured-syntax-exception-example', 'status': 'pass'})
                     expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
                     run(example, expected)
                     busy = 'import operator\nnamespace={"add":operator.add}\nexec("class Box:\\n __slots__=(\'value\',)\\n def __init__(self): self.value=7\\n @property\\n def field(self):\\n  print(\'entered\')\\n  while True: self.value=add(self.value,1)\\nbox=Box()\\nbox.field",namespace)\n'
@@ -109,6 +115,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             'class E(AttributeError):\n def __init__(self):\n  super().__init__(name=[7],obj=[8])\n  print("entered")\n  while True: pass\nE()\n',
                             'class E(StopIteration):\n def __init__(self):\n  super().__init__([7])\n  print("entered")\n  while True: pass\nE()\n',
                             'class E(AttributeError):\n def __setattr__(self,name,value):\n  print("entered")\n  while True: pass\nclass Record:\n def __getattr__(self,name): raise E()\nRecord().missing\n',
+                            'class Info:\n def __iter__(self):\n  print("entered")\n  while True: pass\n  yield None\nSyntaxError("bad",Info())\n',
+                            'class Message:\n def __str__(self):\n  print("entered")\n  while True: pass\nprint(str(SyntaxError(Message(),("records.py",7,2,"text"))))\n',
                         ]
                     for source in busy_sources:
                         page.fill('#input', source)
@@ -145,6 +153,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     if exceptions:
                         run('key="missing"\ntry: {}[key]\nexcept KeyError as e: print(e.args[0] is key)\n', 'True\n')
                         run('e=ImportError("missing",name="config",path="local")\nprint(e.name,e.path,str(e))\n', 'config local missing\n')
+                        run('print(str(SyntaxError("bad",("records.py",7,2,"text"))))\n', 'bad (records.py, line 7)\n')
                     run('compile("class C: pass","removed.py","exec")\n', '', 'NameError')
                     assert not errors, errors
                     context.close()
@@ -167,6 +176,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                   'stop-during-native-field-initialization',
                   'stop-during-stop-iteration-initialization', 'core-native-error-fields',
                   'stop-during-attribute-enrichment',
+                  'stop-during-syntax-details', 'stop-during-native-syntax-message', 'core-syntax-native-fields',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',
