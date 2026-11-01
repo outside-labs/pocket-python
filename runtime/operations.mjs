@@ -108,6 +108,8 @@ export function completion(kind, fields = {}) {
     case "syntax-details": record = {kind, receiver: fields.receiver, result: fields.result, after}; break;
     case "syntax-message": record = {kind, receiver: fields.receiver, suffix: fields.suffix, after}; break;
     case "unicode-translate-message": record = {kind, receiver: fields.receiver, after}; break;
+    case "unicode-codec-reason": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; depthCheck(record.depth); break;
+    case "unicode-codec-message": record = {kind, receiver: fields.receiver, reason: fields.reason, after}; break;
     case "unicode-translate-index": case "unicode-codec-index":
       record = {kind, receiver: fields.receiver, args: operands(fields.args), start: fields.start ?? null,
         position: fields.position, result: fields.result, depth: fields.depth, after};
@@ -377,6 +379,8 @@ function visit(record) {
     case "syntax-details": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "syntax-message": return [record.receiver, record.suffix, ...completionRoots(record.after)];
     case "unicode-translate-message": return [record.receiver, ...completionRoots(record.after)];
+    case "unicode-codec-reason": return [record.receiver, ...completionRoots(record.after)];
+    case "unicode-codec-message": return [record.receiver, record.reason, ...completionRoots(record.after)];
     case "unicode-translate-index": case "unicode-codec-index": return [record.receiver, ...record.args, record.start, record.result, ...completionRoots(record.after)];
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "list-index": return [record.receiver, record.item, ...completionRoots(record.after)];
