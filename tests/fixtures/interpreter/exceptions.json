@@ -7,7 +7,8 @@
     "LA8",
     "LA9",
     "LA10",
-    "LA11"
+    "LA11",
+    "LA12"
   ],
   "cases": [
     {
@@ -558,6 +559,176 @@
       "stdout": "7\n",
       "owner": "#124",
       "boundary": "Structured native exception subclasses retain their layout/field gate"
+    },
+    {
+      "id": "raise-subclass-instance-identity",
+      "stage": "LA12",
+      "source": "class E(ValueError): pass\ne=E(7)\ntry: raise e\nexcept E as caught: print(caught is e,caught.args[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "raise-subclass-class-normalization",
+      "stage": "LA12",
+      "source": "class E(Exception):\n def __init__(self):\n  print(\"init\")\n  super().__init__(7)\ntry: raise E\nexcept E as e: print(type(e) is E,e.args[0])\n",
+      "stdout": "init\nTrue 7\n"
+    },
+    {
+      "id": "raise-subclass-native-ancestor",
+      "stage": "LA12",
+      "source": "class E(ValueError,TypeError): pass\ntry: raise E(7)\nexcept TypeError as e: print(type(e) is E,e.args[0])\n",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "raise-subclass-handler-alias",
+      "stage": "LA12",
+      "source": "class E(Exception): pass\nHandler=E\ntry: raise E\nexcept Handler: print(\"caught\")\n",
+      "stdout": "caught\n"
+    },
+    {
+      "id": "raise-subclass-flat-handlers",
+      "stage": "LA12",
+      "source": "class E(Exception): pass\nclass F(Exception): pass\ntry: raise E(7)\nexcept (ValueError,F): print(\"bad\")\nexcept (TypeError,E) as e: print(e.args[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "raise-subclass-live-namespace-handlers",
+      "stage": "LA12",
+      "source": "class E(Exception): pass\nclass F(Exception): pass\ng=globals()\ng[\"Handler\"]=E\ntry: raise E(7)\nexcept (F,Handler) as e: print(e.args[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "raise-subclass-cause-constructor-order",
+      "stage": "LA12",
+      "source": "class E(Exception):\n def __init__(self): print(\"error init\")\nclass C(Exception):\n def __init__(self): print(\"cause init\")\ndef error():\n print(\"error expression\")\n return E\ndef cause():\n print(\"cause expression\")\n return C\ntry: raise error() from cause()\nexcept E as e: print(type(e.__cause__) is C,e.__suppress_context__)\n",
+      "stdout": "error expression\ncause expression\nerror init\ncause init\nTrue True\n"
+    },
+    {
+      "id": "raise-subclass-constructor-failure",
+      "stage": "LA12",
+      "source": "class E(Exception):\n def __init__(self): raise LookupError(\"failed\")\ntry: raise E\nexcept LookupError as e: print(str(e))\n",
+      "stdout": "failed\n"
+    },
+    {
+      "id": "raise-subclass-cause-constructor-failure",
+      "stage": "LA12",
+      "source": "class C(Exception):\n def __init__(self): raise LookupError(\"cause failed\")\ntry: raise ValueError() from C\nexcept LookupError as e: print(str(e))\n",
+      "stdout": "cause failed\n"
+    },
+    {
+      "id": "raise-subclass-invalid-list-result",
+      "stage": "LA12",
+      "source": "class E(Exception):\n def __new__(cls): return []\nraise E\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "cause-subclass-invalid-list-result",
+      "stage": "LA12",
+      "source": "class C(Exception):\n def __new__(cls): return []\nraise ValueError() from C\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "raise-subclass-invalid-class-result",
+      "stage": "LA12",
+      "source": "class E(Exception):\n def __new__(cls): return ValueError\nraise E\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "cause-subclass-invalid-class-result",
+      "stage": "LA12",
+      "source": "class C(Exception):\n def __new__(cls): return ValueError\nraise ValueError() from C\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "raise-nonexception-class",
+      "stage": "LA12",
+      "source": "class E: pass\nraise E\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-handler-class",
+      "stage": "LA12",
+      "source": "class E: pass\ntry: raise ValueError()\nexcept E: pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "handler-evaluates-all-names",
+      "stage": "LA12",
+      "source": "bad=7\ntry: raise ValueError()\nexcept (bad,missing): pass\n",
+      "stdout": "",
+      "error_type": "NameError"
+    },
+    {
+      "id": "handler-validates-all-elements",
+      "stage": "LA12",
+      "source": "class E(Exception): pass\nbad=7\ntry: raise E\nexcept (E,bad): print(\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "handler-ignores-virtual-subclass-check",
+      "stage": "LA12",
+      "source": "class M(type):\n def __subclasscheck__(cls,other):\n  print(\"bad\")\n  return True\nclass E(Exception,metaclass=M): pass\ntry: raise ValueError()\nexcept E: print(\"bad\")\nexcept ValueError: print(\"native\")\n",
+      "stdout": "native\n"
+    },
+    {
+      "id": "subclass-reraise-context-finally",
+      "stage": "LA12",
+      "source": "class E(Exception): pass\ne=E(7)\ndef f():\n try: raise e\n except E: raise\n finally: print(\"finally\")\ntry: f()\nexcept E as caught: print(caught is e,caught.__context__ is None)\n",
+      "stdout": "finally\nTrue True\n"
+    },
+    {
+      "id": "subclass-generator-error",
+      "stage": "LA12",
+      "source": "class E(Exception): pass\ndef g():\n try:\n  yield 7\n  raise E(8) from None\n finally: print(\"closed\")\ni=g()\nprint(next(i))\ntry: next(i)\nexcept E as e: print(e.args[0],e.__suppress_context__)\n",
+      "stdout": "7\nclosed\n8 True\n"
+    },
+    {
+      "id": "subclass-generator-injected-instance",
+      "stage": "LA12",
+      "source": "class E(Exception): pass\ndef g():\n try: yield 7\n except E as e: yield e.args[0]\n finally: print(\"closed\")\ni=g()\nprint(next(i),i.throw(E(8)))\ni.close()\n",
+      "stdout": "7 8\nclosed\n"
+    },
+    {
+      "id": "subclass-traceback-source",
+      "stage": "LA12",
+      "source": "class E(ValueError): pass\ndef fail():\n raise E(7) from None\ndef middle():\n try: fail()\n except E: raise\nmiddle()\n",
+      "stdout": "",
+      "error_type": "E",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "middle",
+          "line": 5
+        },
+        {
+          "function": "fail",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "subclass-current-type-name",
+      "stage": "LA12",
+      "source": "class E(Exception): pass\ne=E()\nE.__name__=\"Renamed\"\nraise e\n",
+      "stdout": "",
+      "error_type": "Renamed"
+    },
+    {
+      "id": "named-tuple-handler-deferred",
+      "stage": "Future",
+      "source": "class E(Exception): pass\nhandlers=(E,ValueError)\ntry: raise E\nexcept handlers: print(\"caught\")\n",
+      "stdout": "caught\n",
+      "owner": "#124",
+      "boundary": "General handler expressions and named tuple handler values retain their exact evaluation gate"
     }
   ]
 }

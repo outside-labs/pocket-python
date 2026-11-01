@@ -606,7 +606,7 @@ class Compiler {
         }
         else if (value.kind === "Try") {
           const handlers = value.handlers.map(handler => {
-            if (handler.types.some(type => !Object.hasOwn(EXCEPTIONS, type.name))) this.fail("Handlers must name adopted builtin exception classes.", handler);
+            if (!this.classes && handler.types.some(type => !Object.hasOwn(EXCEPTIONS, type.name))) this.fail("Handlers must name adopted builtin exception classes.", handler);
             return [handler.types.map(type => type.name), handler.alias, makeBlock(handler.body), handler.span];
           });
           emit(value, "try", makeBlock(value.body), handlers, value.otherwise.length ? makeBlock(value.otherwise) : null, value.final.length ? makeBlock(value.final) : null);

@@ -91,3 +91,10 @@ for (const slot of ['new', 'init']) test('exception subclass ' + slot + ' callba
     'class E(Exception):\n def __init__(self,x):\n  print("entered")\n  self.saved=x\n  super().__init__(x)\ne=E([7])\nprint(e.saved is e.args[0])\n';
   await lifetime(source, 'entered\n' + (slot === 'new' ? '7\n' : 'True\n'));
 });
+
+for (const role of ['raised', 'cause']) test('owned ' + role + ' class normalization survives park/cancel/close', async () => {
+  const source = 'class E(Exception):\n def __init__(self):\n  print("entered")\n  super().__init__(7)\n' +
+    (role === 'raised' ? 'try: raise E\nexcept E as e: print(e.args[0])\n' :
+      'try: raise ValueError([]) from E\nexcept ValueError as e: print(e.__cause__.args[0],len(e.args[0]))\n');
+  await lifetime(source, 'entered\n' + (role === 'raised' ? '7\n' : '7 0\n'));
+});

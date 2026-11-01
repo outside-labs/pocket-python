@@ -23,7 +23,7 @@ const NATIVE_ARITIES = Object.freeze({
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const compiler = dynamicCompiler({state, memory, values, classes, allocate, charge, python, hard});
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
@@ -973,6 +973,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (!values.isSequenceType(value, "tuple")) python("TypeError", "__mro_entries__ must return a tuple");
       return resolveClassBases({...completion, resolved: [...completion.resolved, ...value.items], position: completion.position + 1, changed: true}, site);
     }
+    if (completion?.kind === "raise-value") return raiseException(value, completion.cause, completion.explicit, site, true);
+    if (completion?.kind === "raise-cause") return raiseException(completion.receiver, value, true, site, true, true);
     if (completion?.kind === "exception-args") {
       const receiver = completion.receiver;
       mutate(receiver, () => {

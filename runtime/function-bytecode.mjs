@@ -178,7 +178,7 @@ export function verifyFunctions(program) {
           if (!Array.isArray(extra) || extra.length > 32 || (!extra.length && instruction[4] === null)) fail("Try requires handlers or finally.");
           extra.forEach((handler, index) => {
             if (!Array.isArray(handler) || handler.length !== 4 || !Array.isArray(handler[0]) || handler[0].length > 16 ||
-                !Array.from(handler[0]).every(type => Object.hasOwn(EXCEPTIONS, type)) ||
+                !Array.from(handler[0]).every(type => classes ? validName(type) : Object.hasOwn(EXCEPTIONS, type)) ||
                 (!handler[0].length && index !== extra.length - 1) || (handler[1] !== null && !writable(handler[1]))) fail("Invalid exception clause.");
             blockRef(handler[2], "statement");
             sourceSpan(handler[3]);
