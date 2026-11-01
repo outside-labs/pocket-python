@@ -108,6 +108,26 @@ test('native syntax filename scans consume the shared work allowance', async () 
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
 });
 
+test('composed native syntax errors preserve original dynamic source frames', async () => {
+  const source = corpus.cases.find(item => item.id === 'syntax-exceptions-dynamic-failure').source;
+  const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'SyntaxError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 2], ['<module>', 'syntax-original.py', 3], ['fail', 'syntax-original.py', 2]]);
+  closed(result.closed);
+});
+
+test('host syntax diagnostics copy safe frames without invoking owned native message callbacks', async () => {
+  const result = await runSourceRequest({modules: [unit('class Message:\n def __str__(self):\n  print("unexpected callback")\n  return "bad"\nraise SyntaxError(Message(),("records.py",7,2,"text"))\n')], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.stdout, ''); assert.equal(result.error.type, 'SyntaxError');
+  assert.equal(result.error.traceback.at(-1).location.span[0], 5); closed(result.closed);
+});
+
+test('module-created syntax field and cause cycles survive suspended cleanup and interruption', async () => {
+  await lifetime('import helper\ndef work():\n try: helper.fail()\n except SyntaxError as e:\n  try: yield e\n  finally: print(str(e),e._metadata[0] is e,e.__cause__.args[0] is e._metadata)\ni=work()\ne=next(i)\nprint("entered")\ni.close()\n',
+    'entered\nbad (records.py, line 7) True True\n', [{name: 'helper', source: 'def fail():\n record=[]\n error=SyntaxError("bad",("records.py",7,1,"text",7,8,record))\n record.append(error)\n raise error from ValueError(record)\n'}]);
+});
+
 test('lazy exception messages retain their arguments through park/cancel/close', async () => {
   await lifetime('class M:\n def __str__(self):\n  print("entered")\n  return "message"\nprint(str(ValueError(M())))\n', 'entered\nmessage\n');
 });
