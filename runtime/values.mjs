@@ -306,11 +306,12 @@ export class ValueRuntime {
   }
   decodeBinary(value, encoding, errors) {
     const codec = this.codecName(encoding, errors), points = [], bytes = value.items;
-    const invalid = () => this.fail("UnicodeDecodeError", "Invalid input for the selected strict codec");
+    const invalid = (start, end, reason) => this.fail("UnicodeDecodeError", "Invalid input for the selected strict codec", "PYTHON", null,
+      codec === "ascii" ? {encoding: "ascii", object: this.binaryValue(bytes), start, end, reason} : null);
     for (let index = 0; index < bytes.length;) {
       this.charge(1); const byte = bytes[index++];
       if (codec === "latin1" || byte < 128) { points.push(byte); continue; }
-      if (codec === "ascii") invalid();
+      if (codec === "ascii") invalid(index - 1, index, "ordinal not in range(128)");
       const count = byte >= 194 && byte <= 223 ? 1 : byte >= 224 && byte <= 239 ? 2 : byte >= 240 && byte <= 244 ? 3 : 0;
       if (!count || index + count > bytes.length) invalid();
       let point = byte & (count === 1 ? 31 : count === 2 ? 15 : 7);

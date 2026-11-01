@@ -39,7 +39,8 @@
     "LA37",
     "LA38",
     "LA39",
-    "LA40"
+    "LA40",
+    "LA41"
   ],
   "cases": [
     {
@@ -5568,12 +5569,14 @@
       ]
     },
     {
-      "id": "decode-runtime-metadata-deferred",
-      "stage": "Future",
+      "id": "runtime-decode-ascii-metadata",
+      "stage": "LA41",
       "source": "try: b\"\\xff\".decode(\"ascii\")\nexcept UnicodeDecodeError as e: print(e.object)\n",
       "stdout": "b'\\xff'\n",
-      "owner": "#124",
-      "boundary": "Automatic native decoding metadata requires a separately adopted codec contract."
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     },
     {
       "id": "runtime-encode-ascii-method-728",
@@ -6116,6 +6119,206 @@
       "stage": "LA40",
       "source": "def handlers(): return (UnicodeDecodeError,UnicodeEncodeError)\ntry: \"\u96ea\".encode(\"ascii\")\nexcept handlers() as e: print(e.encoding,e.object,e.start,e.end)\n",
       "stdout": "ascii \u96ea 0 1\n"
+    },
+    {
+      "id": "runtime-ascii-decode-bytes-0",
+      "stage": "LA41",
+      "source": "data=bytes(b'\\xff')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 0 1 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0xff in position 0: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytearray-0",
+      "stage": "LA41",
+      "source": "data=bytearray(b'\\xff')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 0 1 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0xff in position 0: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytes-1",
+      "stage": "LA41",
+      "source": "data=bytes(b'A\\x80\\xffZ')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 1 2 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0x80 in position 1: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytearray-1",
+      "stage": "LA41",
+      "source": "data=bytearray(b'A\\x80\\xffZ')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 1 2 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0x80 in position 1: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytes-2",
+      "stage": "LA41",
+      "source": "data=bytes(b'\\x80abc')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 0 1 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0x80 in position 0: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytearray-2",
+      "stage": "LA41",
+      "source": "data=bytearray(b'\\x80abc')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 0 1 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0x80 in position 0: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytes-3",
+      "stage": "LA41",
+      "source": "data=bytes(b'abc\\xff')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 3 4 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0xff in position 3: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytearray-3",
+      "stage": "LA41",
+      "source": "data=bytearray(b'abc\\xff')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 3 4 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0xff in position 3: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytes-4",
+      "stage": "LA41",
+      "source": "data=bytes(b'\\x00A\\xffB')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 2 3 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0xff in position 2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-bytearray-4",
+      "stage": "LA41",
+      "source": "data=bytearray(b'\\x00A\\xffB')\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 2 3 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't decode byte 0xff in position 2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-alias-ASCII",
+      "stage": "LA41",
+      "source": "try: b\"A\\xffZ\".decode(encoding='ASCII',errors=\"strict\")\nexcept UnicodeDecodeError as e: print(e.encoding,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "ascii b'A\\xffZ' 1 2 ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-alias-us-ascii",
+      "stage": "LA41",
+      "source": "try: b\"A\\xffZ\".decode(encoding='us-ascii',errors=\"strict\")\nexcept UnicodeDecodeError as e: print(e.encoding,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "ascii b'A\\xffZ' 1 2 ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-alias-646",
+      "stage": "LA41",
+      "source": "try: b\"A\\xffZ\".decode(encoding='646',errors=\"strict\")\nexcept UnicodeDecodeError as e: print(e.encoding,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "ascii b'A\\xffZ' 1 2 ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-original-snapshot",
+      "stage": "LA41",
+      "source": "data=bytearray(b\"A\\xffZ\")\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as error: e=error\ndata[1]=65\nprint(e.object,e.args[1] is e.object,data,e.start,e.end)\n",
+      "stdout": "b'A\\xffZ' True bytearray(b'AAZ') 1 2\n"
+    },
+    {
+      "id": "runtime-ascii-decode-bytes-copy",
+      "stage": "LA41",
+      "source": "data=b\"A\\xffZ\"\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e: print(e.object is data,e.object==data,e.args[1] is e.object)\n",
+      "stdout": "False True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-ascii-decode-native-independent",
+      "stage": "LA41",
+      "source": "try: b\"A\\xffZ\".decode(\"ascii\")\nexcept UnicodeDecodeError as error: e=error\nargs=e.args\ne.args=()\ne.object=b\"new\"\ne.encoding=\"native\"\ne.reason=\"changed\"\ne.start=0\ne.end=1\nprint(str(e),args[0],args[1],args[2],args[3],args[4])\n",
+      "stdout": "'native' codec can't decode byte 0x6e in position 0: changed ascii b'A\\xffZ' 1 2 ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-ascii-decode-bytes-subtype",
+      "stage": "LA41",
+      "source": "class B(bytes):\n def __bytes__(self): raise ValueError(\"unexpected\")\ndata=B(b\"A\\xffZ\")\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e: print(type(e.object) is bytes,e.object is data,e.object,e.start,e.end)\n",
+      "stdout": "True False b'A\\xffZ' 1 2\n"
+    },
+    {
+      "id": "runtime-ascii-decode-bytes-unbound",
+      "stage": "LA41",
+      "source": "class B(bytes): pass\ndata=B(b\"A\\xffZ\")\ntry: bytes.decode(data,\"ascii\")\nexcept UnicodeDecodeError as e: print(type(e.object) is bytes,e.object,e.start,e.end)\n",
+      "stdout": "True b'A\\xffZ' 1 2\n"
+    },
+    {
+      "id": "runtime-ascii-decode-bytearray-subtype",
+      "stage": "LA41",
+      "source": "class B(bytearray):\n def __bytes__(self): raise ValueError(\"unexpected\")\ndata=B(b\"A\\xffZ\")\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e: print(type(e.object) is bytes,e.object is data,e.object,e.start,e.end)\n",
+      "stdout": "True False b'A\\xffZ' 1 2\n"
+    },
+    {
+      "id": "runtime-ascii-decode-bytearray-unbound",
+      "stage": "LA41",
+      "source": "class B(bytearray): pass\ndata=B(b\"A\\xffZ\")\ntry: bytearray.decode(data,\"ascii\")\nexcept UnicodeDecodeError as e: print(type(e.object) is bytes,e.object,e.start,e.end)\n",
+      "stdout": "True b'A\\xffZ' 1 2\n"
+    },
+    {
+      "id": "runtime-ascii-decode-option-subtypes",
+      "stage": "LA41",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"unexpected\")\ntry: b\"A\\xffZ\".decode(S(\"ASCII\"),S(\"strict\"))\nexcept UnicodeDecodeError as e: print(e.encoding,e.reason)\n",
+      "stdout": "ascii ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-ascii-decode-valid",
+      "stage": "LA41",
+      "source": "print(b\"\\x00ASCII\\x7f\".decode(\"ascii\")==\"\\x00ASCII\\x7f\",b\"\\xff\".decode(\"latin-1\"))\n",
+      "stdout": "True \u00ff\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-utf8-runtime-metadata-deferred",
+      "stage": "Future",
+      "source": "try: b\"A\\xffZ\".decode(\"utf-8\")\nexcept UnicodeDecodeError as e: print(e.encoding)\n",
+      "stdout": "utf-8\n",
+      "owner": "#124",
+      "boundary": "Runtime UTF-8 decoding metadata remains owned by LA-42."
     }
   ],
   "reference_boundaries": [
@@ -6162,6 +6365,16 @@
         "32-bit C long": "bad (line -1)\n"
       },
       "boundary": "The deterministic source profile uses a signed 64-bit C long; Windows CPython uses a 32-bit C long."
+    },
+    {
+      "id": "runtime-decode-single-byte-cache-identity",
+      "owner": "#117",
+      "source": "data=b\"\\xff\"\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as e: print(e.object is data)\n",
+      "reference_version": "3.14.7",
+      "reference_observation": "True\\n",
+      "interpreter_stdout": "False\n",
+      "classification": "retained-divergence",
+      "boundary": "CPython may reuse its one-byte bytes singleton; this profile makes fresh runtime decoder snapshots. General bytes interning/identity remains #117."
     }
   ],
   "reference_platform_contract": "CPython 3.14.7 POSIX with a signed 64-bit C long for SyntaxError native location rendering; Windows reference differences are separately qualified."

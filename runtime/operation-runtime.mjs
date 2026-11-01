@@ -3006,10 +3006,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = classes.nativeModule(args[0]);
             task = moduleEntry({receiver, key: args[1], name: values.text(args[1]), mode: "get", depth, after: continuation("relay", {receiver: args[0], after: completion})}, site, false, null); continue;
           }
-          if (nativeOwner === "str" && nativeName === "encode") {
-            if (!args.length || !values.isString(classes.payload(args[0]))) python("TypeError", "str.encode requires a string receiver");
+          if (nativeOwner === "str" && nativeName === "encode" || ["bytes", "bytearray"].includes(nativeOwner) && nativeName === "decode") {
+            const encoding = nativeName === "encode", receiver = classes.payload(args[0]);
+            if (!args.length || (encoding ? !values.isString(receiver) : !values.isBinary(receiver) || receiver.mutable !== (nativeOwner === "bytearray")))
+              python("TypeError", nativeOwner + "." + nativeName + " requires a compatible receiver");
             const bound = bindNamed(["encoding", "errors"], args.slice(1), keywords, keywordValues);
-            task = valueTask(values.encodeText(classes.payload(args[0]), classes.payload(bound.get("encoding")), classes.payload(bound.get("errors")), false, args[0]), site, completion); continue;
+            const codec = classes.payload(bound.get("encoding")), errors = classes.payload(bound.get("errors"));
+            task = valueTask(encoding ? values.encodeText(receiver, codec, errors, false, args[0]) : values.decodeBinary(receiver, codec, errors), site, completion); continue;
           }
           if ((NATIVE_SUBCLASS_BASES.includes(nativeOwner) || ["bool", "range", "slice", "memoryview", "NoneType", "NotImplementedType"].includes(nativeOwner)) && callable.name.includes(".") &&
               (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined || NATIVE_PROTOCOL_KEYS.includes(nativeName) || nativeOwner === "list" && nativeName === "append")) {
@@ -3544,7 +3547,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               (values.isString(callable.receiver) || values.isBinary(callable.receiver))) {
             const bound = bindNamed(["encoding", "errors"], args, keywords, keywordValues);
             task = valueTask(callable.name === "encode" ? values.encodeText(callable.receiver, classes.payload(bound.get("encoding")), classes.payload(bound.get("errors"))) :
-              values.decodeBinary(callable.receiver, bound.get("encoding"), bound.get("errors")), site, completion); continue;
+              values.decodeBinary(callable.receiver, classes.payload(bound.get("encoding")), classes.payload(bound.get("errors"))), site, completion); continue;
           }
           if (["bytes", "bytearray"].includes(callable.name)) {
             count("builtin:" + callable.name);

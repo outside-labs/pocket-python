@@ -158,9 +158,15 @@ test('decode buffer copies share the allocation limit', async () => {
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
-test('runtime decode metadata retains the explicit native field boundary', async () => {
-  const result = await runSourceRequest({modules: [unit('try: b"\\xff".decode("ascii")\nexcept UnicodeDecodeError as e: print(e.object)\n')], compileOptions: {languageProfile: corpus.profile}});
-  assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+test('runtime ASCII decoding snapshots outlive their original mutable buffers', async () => {
+  await lifetime('data=bytearray(b"A\\xffZ")\ntry: data.decode("ascii")\nexcept UnicodeDecodeError as error: e=error\ne.args=()\ndata[1]=65\ndata=None\nprint("entered")\nprint(e.object,e.encoding,e.start,e.end,e.reason)\n',
+    "entered\nb'A\\xffZ' ascii 1 2 ordinal not in range(128)\n");
+});
+
+test('runtime ASCII decoding snapshots share the allocation budget', async () => {
+  const result = await runSourceRequest({modules: [unit('data=b"a"*1000+b"\\xff"\nheld=[]\nprint("ready")\nwhile True:\n try: data.decode("ascii")\n except UnicodeDecodeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
 test('decoding messages retain reason results through interrupted encoding callbacks', async () => {
