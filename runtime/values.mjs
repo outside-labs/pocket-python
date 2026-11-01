@@ -291,8 +291,12 @@ export class ValueRuntime {
           {encoding: codec === "ascii" ? "ascii" : "latin-1", object: original, start: index, end,
             reason: "ordinal not in range(" + (codec === "ascii" ? 128 : 256) + ")"});
       }
-      if (point >= 0xd800 && point <= 0xdfff)
-        this.fail("UnicodeEncodeError", "Character cannot be encoded by the selected strict codec");
+      if (point >= 0xd800 && point <= 0xdfff) {
+        let end = index + 1;
+        while (end < value.points.length && value.points[end] >= 0xd800 && value.points[end] <= 0xdfff) { this.charge(1); end++; }
+        this.fail("UnicodeEncodeError", "Character cannot be encoded by the selected strict codec", "PYTHON", null,
+          {encoding: "utf-8", object: original, start: index, end, reason: "surrogates not allowed"});
+      }
       const bytes = codec !== "utf8" || point < 128 ? [point] : point < 2048 ? [192 | point >> 6, 128 | point & 63] :
         point < 65536 ? [224 | point >> 12, 128 | point >> 6 & 63, 128 | point & 63] :
         [240 | point >> 18, 128 | point >> 12 & 63, 128 | point >> 6 & 63, 128 | point & 63];

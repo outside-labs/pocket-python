@@ -299,3 +299,10 @@ string-subtype codec options use their native content without invoking user
 formatting. Source rendering uses the adopted native renderer; host summaries
 keep the copied diagnostic message. UTF-8 surrogate metadata and automatic
 decoding fields retain their separately owned LA-39/LA-41/LA-42 boundaries.
+
+LA-39 adopts strict UTF-8 surrogate failures with canonical `utf-8` encoding and
+`surrogates not allowed` reason. The first contiguous surrogate run uses source
+code-point positions, including after astral characters. The original string
+and its subtype remain shared by the native object field and args; rendering
+reads native content without calling the input's `__str__`. Existing successful
+UTF-8 encoding and the finite codec/error-policy admission are unchanged.

@@ -37,7 +37,8 @@
     "LA35",
     "LA36",
     "LA37",
-    "LA38"
+    "LA38",
+    "LA39"
   ],
   "cases": [
     {
@@ -5794,12 +5795,262 @@
       ]
     },
     {
-      "id": "encode-utf8-runtime-metadata-deferred",
-      "stage": "Future",
+      "id": "runtime-encode-utf8-metadata",
+      "stage": "LA39",
       "source": "try: chr(0xd800).encode(\"utf-8\")\nexcept UnicodeEncodeError as e: print(e.encoding)\n",
       "stdout": "utf-8\n",
-      "owner": "#124",
-      "boundary": "Runtime UTF-8 surrogate metadata remains owned by LA-39."
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-method-0",
+      "stage": "LA39",
+      "source": "s='\\ud800'\ntry: s.encode()\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\ud800' in position 0: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytes-0",
+      "stage": "LA39",
+      "source": "s='\\ud800'\ntry: bytes(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\ud800' in position 0: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytearray-0",
+      "stage": "LA39",
+      "source": "s='\\ud800'\ntry: bytearray(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\ud800' in position 0: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-method-1",
+      "stage": "LA39",
+      "source": "s='A\\udfffZ'\ntry: s.encode()\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 2 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\udfff' in position 1: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytes-1",
+      "stage": "LA39",
+      "source": "s='A\\udfffZ'\ntry: bytes(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 2 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\udfff' in position 1: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytearray-1",
+      "stage": "LA39",
+      "source": "s='A\\udfffZ'\ntry: bytearray(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 2 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\udfff' in position 1: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-method-2",
+      "stage": "LA39",
+      "source": "s='\\U0001f98a\\ud800\\udfffZ'\ntry: s.encode()\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 3 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 1-2: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytes-2",
+      "stage": "LA39",
+      "source": "s='\\U0001f98a\\ud800\\udfffZ'\ntry: bytes(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 3 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 1-2: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytearray-2",
+      "stage": "LA39",
+      "source": "s='\\U0001f98a\\ud800\\udfffZ'\ntry: bytearray(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 3 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 1-2: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-method-3",
+      "stage": "LA39",
+      "source": "s='\\ud800a\\udfff'\ntry: s.encode()\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\ud800' in position 0: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytes-3",
+      "stage": "LA39",
+      "source": "s='\\ud800a\\udfff'\ntry: bytes(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\ud800' in position 0: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytearray-3",
+      "stage": "LA39",
+      "source": "s='\\ud800a\\udfff'\ntry: bytearray(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode character '\\ud800' in position 0: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-method-4",
+      "stage": "LA39",
+      "source": "s='a\\ud800\\ud801\\udfff'\ntry: s.encode()\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 4 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 1-3: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytes-4",
+      "stage": "LA39",
+      "source": "s='a\\ud800\\ud801\\udfff'\ntry: bytes(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 4 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 1-3: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytearray-4",
+      "stage": "LA39",
+      "source": "s='a\\ud800\\ud801\\udfff'\ntry: bytearray(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 1 4 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 1-3: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-method-5",
+      "stage": "LA39",
+      "source": "s='\\xe9\\u96ea\\udbff\\udc00Z'\ntry: s.encode()\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 2 4 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 2-3: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytes-5",
+      "stage": "LA39",
+      "source": "s='\\xe9\\u96ea\\udbff\\udc00Z'\ntry: bytes(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 2 4 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 2-3: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-bytearray-5",
+      "stage": "LA39",
+      "source": "s='\\xe9\\u96ea\\udbff\\udc00Z'\ntry: bytearray(s,\"utf-8\")\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 2 4 surrogates not allowed\n5 True True True True True\n'utf-8' codec can't encode characters in position 2-3: surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-alias-utf-8",
+      "stage": "LA39",
+      "source": "s=chr(0xd800)\ntry: s.encode(encoding='utf-8',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.start,e.end,e.reason)\n",
+      "stdout": "utf-8 0 1 surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-alias-UTF_8",
+      "stage": "LA39",
+      "source": "s=chr(0xd800)\ntry: s.encode(encoding='UTF_8',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.start,e.end,e.reason)\n",
+      "stdout": "utf-8 0 1 surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-alias-u8",
+      "stage": "LA39",
+      "source": "s=chr(0xd800)\ntry: s.encode(encoding='u8',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.start,e.end,e.reason)\n",
+      "stdout": "utf-8 0 1 surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-alias-utf8",
+      "stage": "LA39",
+      "source": "s=chr(0xd800)\ntry: s.encode(encoding='utf8',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.start,e.end,e.reason)\n",
+      "stdout": "utf-8 0 1 surrogates not allowed\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-encode-subtype",
+      "stage": "LA39",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"unexpected\")\ns=S(chr(0xd800))\ntry: s.encode()\nexcept UnicodeEncodeError as e:\n print(e.object is s,type(e.object) is S,e.start,e.end,str(e))\n",
+      "stdout": "True True 0 1 'utf-8' codec can't encode character '\\ud800' in position 0: surrogates not allowed\n"
+    },
+    {
+      "id": "runtime-utf8-encode-unbound-subtype",
+      "stage": "LA39",
+      "source": "class S(str): pass\ns=S(chr(0xdfff))\ntry: str.encode(s)\nexcept UnicodeEncodeError as e: print(e.object is s,e.start,e.end,str(e))\n",
+      "stdout": "True 0 1 'utf-8' codec can't encode character '\\udfff' in position 0: surrogates not allowed\n"
+    },
+    {
+      "id": "runtime-utf8-encode-args-independent",
+      "stage": "LA39",
+      "source": "s=chr(0xd800)\ntry: s.encode()\nexcept UnicodeEncodeError as e:\n args=e.args\n e.args=()\n print(e.object is s,e.encoding,e.start,e.end,e.reason,args[1] is s)\n e.object=\"x\"\n e.reason=\"changed\"\n print(str(e),args[4])\n",
+      "stdout": "True utf-8 0 1 surrogates not allowed True\n'utf-8' codec can't encode character '\\x78' in position 0: changed surrogates not allowed\n"
+    },
+    {
+      "id": "runtime-utf8-encode-valid-extremes",
+      "stage": "LA39",
+      "source": "s=chr(0x7f)+chr(0x80)+chr(0x7ff)+chr(0x800)+chr(0xd7ff)+chr(0xe000)+chr(0xffff)+chr(0x10000)+chr(0x10ffff)\nprint(s.encode().decode()==s)\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     }
   ],
   "reference_boundaries": [
