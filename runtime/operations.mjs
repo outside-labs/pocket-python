@@ -277,6 +277,8 @@ export function completion(kind, fields = {}) {
       if (record.parts.length !== 3 || !Number.isSafeInteger(record.position) || record.position < 0 || record.position > 2)
         throw new TypeError("Invalid slice conversion position.");
       break;
+    case "raise-value": record = {kind, cause: fields.cause, explicit: fields.explicit}; break;
+    case "raise-cause": record = {kind, receiver: fields.receiver}; break;
     case "exception-args": record = {kind, receiver: fields.receiver, after}; break;
     case "format-result": record = {kind, receiver: fields.receiver, slot: fields.slot, after}; break;
     case "print-argument":
@@ -348,7 +350,7 @@ function visit(record) {
     case "class-prepare-lookup": case "class-prepare-result": return [record.callable, ...record.bases, record.originalBases ?? null, record.metaclass, ...record.keywordValues, record.rawModule, record.nameValue, record.basesTuple];
     case "class-base-missing": case "class-base-lookup": case "class-base-result": return [record.callable, ...record.bases, record.originalBases, ...record.resolved, ...(record.hasMeta ? [record.explicit] : []), ...record.keywordValues];
     case "class-module": return [record.callable, ...record.bases, ...(record.originalBases ? [record.originalBases] : []), record.metaclass, ...record.keywordValues];
-    case "handler-type": return completionRoots(record.after);
+    case "handler-type": return [...record.names, ...completionRoots(record.after)];
     case "store-body": return completionRoots(record.after);
     case "resume-control": return [record.value, ...completionRoots(record.after)];
     case "module-entry": case "module-hook": return [record.receiver, record.key, ...completionRoots(record.after)];
@@ -423,6 +425,8 @@ function visit(record) {
     case "compare-result": case "ne-result": case "sequence-item": case "sequence-truth": return [record.left, record.right, ...completionRoots(record.after)];
     case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
+    case "raise-value": return [record.cause];
+    case "raise-cause": return [record.receiver];
     case "exception-args": return [record.receiver, ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];

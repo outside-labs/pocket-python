@@ -7,7 +7,7 @@ import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
 import {isModuleContext} from "./module-context.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, valueTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
+import {callTask, completion as continuation, completionRoots, unaryTask, itemTask, attributeTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, valueTask, arithmeticTask, consumeTask, controlRoots, retainTransfer} from "./operations.mjs";
 
 import {Raised, operationRuntime} from "./operation-runtime.mjs";
 class Unhandled { constructor(value) { this.value = value; } }
@@ -243,6 +243,54 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     classNamespace(frame);
     return classModule(rawModule);
   };
+  const exceptionClass = value => value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name) ||
+    value instanceof ClassValue && value.storage?.family === "BaseException";
+  const exceptionMatches = (value, type) => value.type ? value.type.mro.includes(type) :
+    type instanceof BuiltinValue && matchesException(value.name, type.name);
+  const raiseException = (value, cause, explicit, site, valueReady = false, causeReady = false) => {
+    const frame = state.frames.at(-1);
+    if (!valueReady && value instanceof ClassValue && exceptionClass(value))
+      return callTask(value, [], [], [], site, continuation("raise-value", {cause, explicit}));
+    if (!valueReady && value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name)) value = allocate(ExceptionValue, value.name, [], "");
+    if (!(value instanceof ExceptionValue)) python("TypeError", "exceptions must derive from BaseException");
+    if (explicit) {
+      state.temporaries.push(value);
+      if (!causeReady && cause instanceof ClassValue && exceptionClass(cause))
+        return callTask(cause, [], [], [], site, continuation("raise-cause", {receiver: value}));
+      if (!causeReady && cause instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, cause.name)) cause = allocate(ExceptionValue, cause.name, [], "");
+      if (cause !== null && !(cause instanceof ExceptionValue)) python("TypeError", "exception causes must derive from BaseException");
+      mutate(value, () => {
+        const before = [value.cause, value.suppressContext]; value.cause = cause; value.suppressContext = true;
+        return () => { [value.cause, value.suppressContext] = before; };
+      });
+    }
+    addTrace(value, {function: state.current.function, location: state.current.location});
+    if (frame.activeException && frame.activeException !== value) {
+      // Explicit metadata can form cycles. Implicit chaining removes a path
+      // back to the raised exception before installing its context.
+      let current = frame.activeException; const seen = new Set([current]);
+      while (current.context) {
+        charge(1);
+        if (current.context === value) {
+          const link = current;
+          mutate(link, () => { const previous = link.context; link.context = null; return () => { link.context = previous; }; }); break;
+        }
+        if (seen.has(current.context)) break;
+        current = current.context; seen.add(current);
+      }
+      mutate(value, () => {
+        const previous = value.context; value.context = frame.activeException;
+        return () => { value.context = previous; };
+      });
+    }
+    throw new Raised(value);
+  };
+  const validateHandlers = types => {
+    for (const type of types) if (!exceptionClass(type)) {
+      if (values.isSequenceType(type, "tuple")) hard("UNSUPPORTED", "UnsupportedOperationError", "Named tuple handler values require the #124 handler-expression contract");
+      python("TypeError", "catching classes that do not inherit from BaseException is not allowed");
+    }
+  };
   const handlerNext = (position, names, site) => {
     const frame = state.frames.at(-1), task = frame.tasks.at(-1), handlers = task.instruction[2];
     while (task.handlerIndex < handlers.length) {
@@ -254,7 +302,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         if (result.task) return result.task;
         return handlerType(after, result.value, site);
       }
-      if (!types.length || names.some(name => matchesException(task.caught.name, name))) {
+      validateHandlers(names);
+      if (!types.length || names.some(type => exceptionMatches(task.caught, type))) {
         task.phase = "handler"; task.alias = alias;
         const writing = alias ? store(frame, alias, task.caught, true, continuation("store-body", {body})) : null;
         if (writing) return writing;
@@ -265,9 +314,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     task.phase = "unmatched"; settle({kind: "raise", value: task.caught}); return null;
   };
   const handlerType = (record, value, site) => {
-    if (!(value instanceof BuiltinValue) || !Object.hasOwn(EXCEPTIONS, value.name))
-      python("TypeError", "catching classes that do not inherit from BaseException is not allowed");
-    return handlerNext(record.position + 1, [...record.names, value.name], site);
+    return handlerNext(record.position + 1, [...record.names, value], site);
   };
   const bind = (callable, positional, keywordNames, keywordValues) => {
     const fn = callable.pool.code.functions[callable.index], constants = callable.pool.code.constants;
@@ -395,7 +442,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement} = operationRuntime({state, memory, values, classes,
     moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
-    setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
+    setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
     const generator = frame.generator, completion = frame.completion;
@@ -514,12 +561,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     else if (!fresh) frame.tasks.at(-1).stack.push(value);
   };
   const diagnostic = value => {
-    const error = new ExecutionError("PYTHON", value.name, value.message, state.current?.instruction ?? null, null);
+    const error = new ExecutionError("PYTHON", value.type?.name ?? value.name, value.message, state.current?.instruction ?? null, null);
     // Copy diagnostics without exporting unleased VM objects or frame locals.
     error.traceback = value.traceback.map(frame => ({function: frame.function, location: frame.location}));
     error.location = error.traceback.at(-1)?.location || null;
-    error.context = value.context ? {type: value.context.name, message: value.context.message} : null;
-    error.cause = value.cause ? {type: value.cause.name, message: value.cause.message} : null;
+    error.context = value.context ? {type: value.context.type?.name ?? value.context.name, message: value.context.message} : null;
+    error.cause = value.cause ? {type: value.cause.type?.name ?? value.cause.name, message: value.cause.message} : null;
     error.suppressContext = value.suppressContext === true;
     return error;
   };
@@ -574,14 +621,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             }
             const clause = handlers.find(([types, , , span]) => {
               state.current = {...state.current, location: task.site ? {filename: task.site.filename, span} : null};
-              const resolved = types.map(type => {
-                const expected = load(frame, type);
-                if (!(expected instanceof BuiltinValue) || !Object.hasOwn(EXCEPTIONS, expected.name)) {
-                  python("TypeError", "catching classes that do not inherit from BaseException is not allowed");
-                }
-                return expected.name;
-              });
-              return !resolved.length || resolved.some(type => matchesException(signal.value.name, type));
+              const resolved = types.map(type => load(frame, type));
+              validateHandlers(resolved);
+              return !resolved.length || resolved.some(type => exceptionMatches(signal.value, type));
             });
             if (clause) {
               task.phase = "handler"; task.caught = signal.value; task.alias = clause[1];
@@ -930,41 +972,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (["end", "return", "break", "continue"].includes(op)) {
         settle({kind: op === "end" ? "normal" : op, value: op === "return" || cursor.block.kind === "expression" ? stack.pop() : null});
       } else if (["raise", "raise-from", "reraise"].includes(op)) {
-        let cause = op === "raise-from" ? stack.pop() : null;
-        let value = op === "reraise" ? frame.activeException : stack.pop();
+        const cause = op === "raise-from" ? stack.pop() : null;
+        const value = op === "reraise" ? frame.activeException : stack.pop();
+        if (op === "reraise") {
+          if (value === null) python("RuntimeError", "No active exception to reraise");
+          throw new Raised(value);
+        }
         if (op === "raise-from") state.temporaries.push(value, cause);
-        if (op === "reraise" && value === null) python("RuntimeError", "No active exception to reraise");
-        if (value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name)) value = allocate(ExceptionValue, value.name, [], "");
-        if (!(value instanceof ExceptionValue)) python("TypeError", "exceptions must derive from BaseException");
-        if (op === "raise-from") {
-          if (cause instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, cause.name)) cause = allocate(ExceptionValue, cause.name, [], "");
-          if (cause !== null && !(cause instanceof ExceptionValue)) python("TypeError", "exception causes must derive from BaseException");
-          mutate(value, () => {
-            const before = [value.cause, value.suppressContext]; value.cause = cause; value.suppressContext = true;
-            return () => { [value.cause, value.suppressContext] = before; };
-          });
-        }
-        if (op !== "reraise") {
-          addTrace(value, {function: state.current.function, location: state.current.location});
-          if (frame.activeException && frame.activeException !== value) {
-            // Explicit metadata can form cycles. Implicit chaining removes a
-            // path back to the raised exception before installing its context.
-            let current = frame.activeException; const seen = new Set([current]);
-            while (current.context) {
-              charge(1);
-              if (current.context === value) {
-                mutate(current, () => { const previous = current.context; current.context = null; return () => { current.context = previous; }; }); break;
-              }
-              if (seen.has(current.context)) break;
-              current = current.context; seen.add(current);
-            }
-            mutate(value, () => {
-            const previous = value.context; value.context = frame.activeException;
-            return () => { value.context = previous; };
-            });
-          }
-        }
-        throw new Raised(value);
+        dispatch(raiseException(value, cause, op === "raise-from", summary(frame, cursor)));
       } else if (op === "display") {
         const value = stack.pop();
         if (value !== null) dispatch(unaryTask("repr", value, summary(frame, cursor), continuation("single-display", {after: continuation("name-stored")})));
