@@ -23,7 +23,7 @@ const NATIVE_ARITIES = Object.freeze({
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, nameError, registryException, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, nameError, addTrace, registryException, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const compiler = dynamicCompiler({state, memory, values, classes, allocate, charge, python, hard});
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
@@ -752,9 +752,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const next = {...record, qualification, phase: record.found ? "name" : "qualification"};
     return unaryTask("repr", record.found ? record.name : qualification, site, continuation("property-diagnostic", next), record.depth);
   };
-  const attributeFailure = (value, receiver, key, site, after = null) => {
+  const attributeFailure = (value, receiver, key, site, after = null, trace = false) => {
     if (!isException(value, "AttributeError") || value.attributeFields !== 0) return null;
     state.temporaries.push(value, receiver);
+    if (trace) addTrace(value, site);
     if (typeof key === "string") key = values.string(Array.from(key, char => char.codePointAt(0)));
     state.temporaries.push(key);
     mutate(value, () => {
@@ -764,12 +765,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     });
     return attributeTask(value, "name", site, continuation("attribute-context-name", {receiver, error: value, after}), 0, "set", null, null, key);
   };
-  const recover = (value, completion, site) => {
+  const recover = (value, completion, site, trace = false) => {
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
       if (current.kind === "attribute-context") {
-        const enriched = attributeFailure(value, current.receiver, current.key, site, current.after);
+        const enriched = attributeFailure(value, current.receiver, current.key, site, current.after, trace);
         if (enriched) return enriched;
       }
       if (current.kind === "property-diagnostic" && current.phase === "lookup" && value.name === "AttributeError")
@@ -1925,15 +1926,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           continue;
         }
         if (task.kind === "attribute") {
-          if (task.operation === "get") {
-            completion = continuation("attribute-context", {receiver: task.receiver, key: task.key ?? task.name, after: completion});
-          }
           if (task.receiver instanceof ModuleValue && task.receiver.type && task.operation === "import") {
             task = attributeTask(task.receiver, task.name, site, continuation("module-missing", {receiver: task.receiver, name: task.name, mode: "import", skipNamespace: true, after: completion}), depth);
             continue;
           }
           if (task.receiver instanceof ModuleValue && !task.receiver.type) {
-            state.temporaries = [...operationRoots(task), ...completionRoots(completion)];
+            state.temporaries = operationRoots(task);
             const {receiver, name, operation} = task, environment = receiver.environment;
             const writing = ["set", "delete", "native-set", "native-delete"].includes(operation);
             if (name === "__dict__") {
@@ -1963,7 +1961,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const cell = environment.cells.get(name);
             task = moduleEntry(record, site, !!cell?.bound, cell?.value); continue;
           }
-          state.temporaries = [...operationRoots(task), ...completionRoots(completion)];
+          state.temporaries = operationRoots(task);
           const {receiver, name, operation} = task;
           const writing = ["set", "delete", "native-set", "native-delete"].includes(operation), removing = operation.endsWith("delete");
           const advertisedWrite = writing && name === "__class__" && userProtocol(receiver) && classes.hasSlot(classes.checkingType(receiver), "__class__");
@@ -3324,7 +3322,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = args[0], optional = name === "hasattr" || name === "getattr" && args.length === 3;
             const target = writing ? continuation("attribute-write", {receiver, after: completion}) : optional ?
               continuation("attribute-result", {receiver, default: args[2] ?? null, mode: name, after: completion}) : completion;
-            if (!writing) { task = attributeTask(receiver, attribute, site, target, depth, "get", args[1]); continue; }
+            if (!writing) {
+              const after = optional ? target : continuation("attribute-context", {receiver, key: args[1], after: target});
+              task = attributeTask(receiver, attribute, site, after, depth, "get", args[1]); continue;
+            }
             if (receiver instanceof ModuleValue) {
               task = attributeTask(receiver, attribute, site, target, depth, writing ? name === "setattr" ? "set" : "delete" : "get", args[1], null, args[2] ?? null); continue;
             }

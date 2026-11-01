@@ -2778,6 +2778,12 @@
       "id": "runtime-metadata-setter-failure-handler",
       "source": "class E(AttributeError):\n def __setattr__(self,name,value):\n  if name==\"obj\": raise ValueError(\"receiver blocked\")\n  super().__setattr__(name,value)\nerror=E()\nclass Record:\n def __getattr__(self,name): raise error\ndef choose(): return (NameError,ValueError)\ntry: Record().missing\nexcept choose() as e:\n e.add_note(\"setter failed\")\n print(str(e),error.name,error.obj is None,e.__notes__[0])\n",
       "stdout": "receiver blocked missing True setter failed\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-optional-lookups-skip-setters",
+      "source": "class E(AttributeError):\n def __setattr__(self,name,value):\n  print(\"unexpected setter\")\n  super().__setattr__(name,value)\nclass A:\n def __getattr__(self,name): raise E()\nprint(getattr(A(),\"missing\",7),hasattr(A(),\"missing\"))\n",
+      "stdout": "7 False\n"
     }
   ],
   "reference_boundaries": [
