@@ -1339,7 +1339,7 @@ export class ClassRuntime {
     }
     if (receiver instanceof ExceptionValue && receiver.nativeFields?.has(name) && owner instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, owner.name)) {
       if (operation === "get") return {kind: "value", value: this.exceptionField(receiver, name)};
-      if (receiver.name === "UnicodeTranslateError" && ["start", "end"].includes(name)) {
+      if (receiver.unicodeFields !== undefined && ["start", "end"].includes(name)) {
         if (operation === "delete") this.fail("TypeError", "can't delete numeric/char attribute");
         const raw = this.payload(item);
         if (typeof raw !== "bigint" && typeof raw !== "boolean") this.fail("TypeError", "an integer is required");
@@ -1352,8 +1352,8 @@ export class ClassRuntime {
       const legacy = receiver.legacySyntaxMessage;
       const boundary = receiver.nativeFieldBoundaries?.delete(name);
       receiver.nativeFields.set(name, operation === "delete" ? null : item);
-      if (unicodeFields !== undefined && ["object", "reason"].includes(name)) {
-        const bit = name === "object" ? 1 : 2;
+      if (unicodeFields !== undefined && ["object", "reason", "encoding"].includes(name)) {
+        const bit = name === "object" ? 1 : name === "reason" ? 2 : 4;
         receiver.unicodeFields = operation === "delete" ? unicodeFields & ~bit : unicodeFields | bit;
       }
       if (name === "msg" && legacy) receiver.legacySyntaxMessage = false;

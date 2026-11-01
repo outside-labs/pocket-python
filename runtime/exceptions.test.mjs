@@ -46,6 +46,29 @@ async function lifetime(source, expected, helpers = []) {
   } } finally { registry.close(); }
 }
 
+test('Unicode encoding initialization retains temporary arguments across interrupted index callbacks', async () => {
+  await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeEncodeError("codec","abc",I(),2,"bad")\nprint(e.encoding,e.object,e.start,e.end,e.reason)\n', 'entered\ncodec abc 1 2 bad\n');
+});
+
+test('Unicode encoding reinitialization retains arguments after callback replacement', async () => {
+  await lifetime('e=UnicodeEncodeError("old","abc",0,1,"bad")\nclass I:\n def __index__(self):\n  e.args=()\n  print("entered")\n  return 1\nUnicodeEncodeError.__init__(e,"new","xyz",I(),2,"next")\nprint(len(e.args),e.encoding,e.object,e.start,e.end,e.reason)\n', 'entered\n0 new xyz 1 2 next\n');
+});
+
+test('Unicode encoding native field cycles survive parked collection', async () => {
+  await lifetime('e=UnicodeEncodeError("a","x",0,1,"bad")\ne.object=e\ne.reason=[e]\ne.encoding=e\ne.args=()\nprint("entered")\nprint(e.object is e,e.reason[0] is e,e.encoding is e)\n', 'entered\nTrue True True\n');
+});
+
+test('retained Unicode encoding graphs share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True: held.append(UnicodeEncodeError("a","x",0,1,"r"))\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
+test('runtime codec metadata retains its explicit field boundary', async () => {
+  const result = await runSourceRequest({modules: [unit('try: "雪".encode("ascii")\nexcept UnicodeEncodeError as e: print(e.encoding)\n')], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+});
+
 test('Unicode translation initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeTranslateError("abc",I(),2,"bad")\nprint(e.object,e.start,e.end,e.reason)\n', 'entered\nabc 1 2 bad\n');
 });

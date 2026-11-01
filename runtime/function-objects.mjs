@@ -170,12 +170,12 @@ export class ExceptionValue {
     this.traceback = []; this.context = null;
     this.attributes = null;
     if (EXCEPTION_FIELDS[name]) this.nativeFields = new Map(EXCEPTION_FIELDS[name].map(key => [key, null]));
-    if (name === "UnicodeTranslateError") {
+    if (["UnicodeTranslateError", "UnicodeEncodeError"].includes(name)) {
       this.nativeFields.set("start", 0n); this.nativeFields.set("end", 0n);
       this.unicodeFields = 0;
     }
     if (name === "AttributeError") this.attributeFields = 0;
-    if (["AttributeError", "ImportError", "ModuleNotFoundError", "SyntaxError", "IndentationError", "TabError"].includes(name) && args === null) this.nativeFieldBoundaries = new Set(EXCEPTION_FIELDS[name]);
+    if (["AttributeError", "ImportError", "ModuleNotFoundError", "SyntaxError", "IndentationError", "TabError", "UnicodeEncodeError"].includes(name) && args === null) this.nativeFieldBoundaries = new Set(EXCEPTION_FIELDS[name]);
     if (type !== null) {
       this.type = type; this.attributes = new Map();
       if (type.storage?.count) this.slotValues = new Map();
@@ -208,10 +208,11 @@ export const EXCEPTION_FIELDS = Object.freeze({NameError: Object.freeze(["name"]
   AttributeError: Object.freeze(["name", "obj"]), ImportError: Object.freeze(["msg", "name", "path", "name_from"]),
   ModuleNotFoundError: Object.freeze(["msg", "name", "path", "name_from"]),
   UnicodeTranslateError: Object.freeze(["encoding", "object", "start", "end", "reason"]),
+  UnicodeEncodeError: Object.freeze(["encoding", "object", "start", "end", "reason"]),
   SyntaxError: SYNTAX_FIELDS, IndentationError: SYNTAX_FIELDS, TabError: SYNTAX_FIELDS});
 export const EXCEPTION_LAYOUTS = Object.freeze({...Object.fromEntries(GENERIC_EXCEPTION_BASES.map(name => [name, "BaseException"])),
   NameError: "NameError", UnboundLocalError: "NameError", AttributeError: "AttributeError", ImportError: "ImportError", ModuleNotFoundError: "ImportError", StopIteration: "StopIteration",
-  SyntaxError: "SyntaxError", IndentationError: "SyntaxError", TabError: "SyntaxError", UnicodeTranslateError: "UnicodeTranslateError"});
+  SyntaxError: "SyntaxError", IndentationError: "SyntaxError", TabError: "SyntaxError", UnicodeTranslateError: "UnicodeTranslateError", UnicodeEncodeError: "UnicodeEncodeError"});
 export const EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTION_LAYOUTS));
 
 // The source-visible builtin namespace contains only adopted capabilities.

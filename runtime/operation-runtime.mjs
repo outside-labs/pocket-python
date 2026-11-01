@@ -95,7 +95,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const initializeException = (receiver, args, keywords, keywordValues, owner) => {
     const importing = ["ImportError", "ModuleNotFoundError"].includes(owner);
     const fields = ["NameError", "UnboundLocalError"].includes(owner) ? ["name"] : owner === "AttributeError" ? ["name", "obj"] : importing ? ["name", "path", "name_from"] : null;
-    if (!fields && keywords.length) python("TypeError", owner === "UnicodeTranslateError" ? classes.typeOf(receiver).name + "() takes no keyword arguments" : "Exception initialization does not accept keywords");
+    if (!fields && keywords.length) python("TypeError", ["UnicodeTranslateError", "UnicodeEncodeError"].includes(owner) ? classes.typeOf(receiver).name + "() takes no keyword arguments" : "Exception initialization does not accept keywords");
     mutate(receiver, () => {
       const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs, receiver.stopValue];
       const hadValue = Object.hasOwn(receiver, "stopValue");
@@ -131,7 +131,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     consumeTask("syntax-details", args[1], site, continuation("syntax-details", {receiver, result, after}), depth) : valueTask(result, site, after);
   const translateIndex = (record, site) => {
     const raw = classes.payload(record.args[record.position]);
-    const finish = continuation("unicode-translate-index", record);
+    const finish = continuation(record.args.length === 5 ? "unicode-codec-index" : "unicode-translate-index", record);
     // PyArg's native ssize_t conversion bypasses an int subtype's __index__.
     return typeof raw === "bigint" || typeof raw === "boolean" ?
       valueTask(typeof raw === "boolean" ? values.int(BigInt(raw)) : raw, site, finish) :
@@ -149,6 +149,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const finish = continuation("unicode-translate-message", {receiver: value, after});
     return value.unicodeFields & 2 ? unaryTask("str", value.nativeFields.get("reason"), site, finish, depth) :
       valueTask(values.string(Array.from("<NULL>", char => char.codePointAt(0))), site, finish);
+  };
+  const codecInitialize = (receiver, args, site, after, depth, result) => {
+    if (args.length !== 5) python("TypeError", "function takes exactly 5 arguments (" + args.length + " given)");
+    for (const position of [0, 1]) if (!(classes.payload(args[position]) instanceof StringValue))
+      python("TypeError", "argument " + (position + 1) + " must be str, not " + (args[position] === null ? "None" : classes.typeOf(args[position]).name));
+    return translateIndex({receiver, args, position: 2, result, depth, after}, site);
+  };
+  const codecMessage = (value, site, after, depth) => {
+    if (value.legacyUnicodeMessage || value.nativeFieldBoundaries?.has("object")) return exceptionString(value, site, after, depth);
+    hard("UNSUPPORTED", "UnsupportedOperationError", "Unicode encoding messages remain under #124");
   };
   const syntaxMessage = (value, site, after, depth) => {
     if (value.legacySyntaxMessage || value.nativeFieldBoundaries?.has("msg")) return exceptionString(value, site, after, depth);
@@ -362,10 +372,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         if (args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception arguments require the modern source profile under #124");
         const value = allocate(ExceptionValue, callable.name, args, args.length ? display(args[0]) : "");
         if (matchesException(callable.name, "SyntaxError")) value.legacySyntaxMessage = true;
-        if (callable.name === "UnicodeTranslateError") value.legacyUnicodeMessage = true;
+        if (["UnicodeTranslateError", "UnicodeEncodeError"].includes(callable.name)) value.legacyUnicodeMessage = true;
         return value;
       }
-      if (["UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError", "SyntaxError", "IndentationError", "TabError"].includes(callable.name) && args.length > 1)
+      if (["UnicodeDecodeError", "UnicodeTranslateError", "SyntaxError", "IndentationError", "TabError"].includes(callable.name) && args.length > 1)
         hard("UNSUPPORTED", "UnsupportedOperationError", "Structured exception constructors remain under #124");
       // Preserve the safe scalar diagnostic without running a user protocol.
       return makeException(callable.name, args);
@@ -970,18 +980,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       completion = completion.after;
     }
-    if (completion?.kind === "unicode-translate-index") {
+    if (["unicode-translate-index", "unicode-codec-index"].includes(completion?.kind)) {
+      const offset = completion.args.length === 5 ? 1 : 0;
       if (value < -(1n << 63n) || value >= 1n << 63n) python("OverflowError", "Python int too large to convert to C ssize_t");
-      if (completion.position === 1) return translateIndex({...completion, position: 2, start: value}, site);
-      if (!(classes.payload(completion.args[3]) instanceof StringValue)) python("TypeError", "argument 4 must be str, not " + classes.typeOf(completion.args[3]).name);
+      if (completion.position === 1 + offset) return translateIndex({...completion, position: 2 + offset, start: value}, site);
+      if (!(classes.payload(completion.args[3 + offset]) instanceof StringValue)) python("TypeError", "argument " + (4 + offset) + " must be str, not " + (offset && completion.args[3 + offset] === null ? "None" : classes.typeOf(completion.args[3 + offset]).name));
       mutate(completion.receiver, () => {
         const before = new Map(completion.receiver.nativeFields), present = completion.receiver.unicodeFields;
-        completion.receiver.nativeFields.set("object", completion.args[0]);
+        const boundaries = completion.receiver.nativeFieldBoundaries;
+        if (offset) completion.receiver.nativeFields.set("encoding", completion.args[0]);
+        completion.receiver.nativeFields.set("object", completion.args[offset]);
         completion.receiver.nativeFields.set("start", completion.start);
         completion.receiver.nativeFields.set("end", value);
-        completion.receiver.nativeFields.set("reason", completion.args[3]);
-        completion.receiver.unicodeFields = 3;
-        return () => { completion.receiver.nativeFields = before; completion.receiver.unicodeFields = present; };
+        completion.receiver.nativeFields.set("reason", completion.args[3 + offset]);
+        completion.receiver.unicodeFields = offset ? 7 : present | 3;
+        completion.receiver.nativeFieldBoundaries = undefined;
+        return () => { completion.receiver.nativeFields = before; completion.receiver.unicodeFields = present; completion.receiver.nativeFieldBoundaries = boundaries; };
       });
       return valueTask(completion.result, site, completion.after);
     }
@@ -2546,6 +2560,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (operation === "str" && value instanceof ExceptionValue && !value.type) {
               if (matchesException(value.name, "SyntaxError")) { task = syntaxMessage(value, site, completion, depth); continue; }
               if (value.name === "UnicodeTranslateError") { task = translateMessage(value, site, completion, depth); continue; }
+              if (value.name === "UnicodeEncodeError") { task = codecMessage(value, site, completion, depth); continue; }
               task = exceptionString(value, site, completion, depth, matchesException(value.name, "ImportError")); continue;
             }
             if (!userProtocol(value)) {
@@ -2667,11 +2682,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (["eval", "exec"].includes(callable.name)) { task = evaluator.start(callable.name, args, keywords, keywordValues, site, completion); continue; }
           if (callable.name === "__import__") { task = importer.start(args, keywords, keywordValues, site, completion); continue; }
           if (callable.name === "compile") { task = compiler.start(args, keywords, keywordValues, site, completion); continue; }
-          if ((matchesException(callable.name, "SyntaxError") || callable.name === "UnicodeTranslateError") && state.frames.at(-1).pool.code.version >= 4) {
+          if ((matchesException(callable.name, "SyntaxError") || ["UnicodeTranslateError", "UnicodeEncodeError"].includes(callable.name)) && state.frames.at(-1).pool.code.version >= 4) {
             count("builtin:" + callable.name);
             const receiver = makeException(callable.name, args); state.temporaries.push(receiver);
             initializeException(receiver, args, keywords, keywordValues, callable.name);
             if (callable.name === "UnicodeTranslateError") { task = translateInitialize(receiver, args, site, completion, depth, receiver); continue; }
+            if (callable.name === "UnicodeEncodeError") { task = codecInitialize(receiver, args, site, completion, depth, receiver); continue; }
             task = syntaxDetails(receiver, args, site, completion, depth, receiver); continue;
           }
           if (["getset_descriptor", "member_descriptor"].includes(callable.nativeKind)) python("TypeError", "Storage descriptor objects are not callable");
@@ -2707,12 +2723,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (!(args[0] instanceof ExceptionValue)) python("TypeError", "Exception initialization requires an exception receiver");
               initializeException(args[0], args.slice(1), keywords, keywordValues, nativeOwner);
               if (nativeOwner === "UnicodeTranslateError") { task = translateInitialize(args[0], args.slice(1), site, completion, depth, null); continue; }
+              if (nativeOwner === "UnicodeEncodeError") { task = codecInitialize(args[0], args.slice(1), site, completion, depth, null); continue; }
               if (matchesException(nativeOwner, "SyntaxError")) { task = syntaxDetails(args[0], args.slice(1), site, completion, depth, null); continue; }
               task = valueTask(null, site, completion); continue;
             }
             if (nativeName === "__str__") {
               if (args.length !== 1 || keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "Exception __str__ requires one receiver");
               task = nativeOwner === "UnicodeTranslateError" ? translateMessage(args[0], site, completion, depth) :
+                nativeOwner === "UnicodeEncodeError" ? codecMessage(args[0], site, completion, depth) :
                 matchesException(nativeOwner, "SyntaxError") ? syntaxMessage(args[0], site, completion, depth) :
                 exceptionString(args[0], site, completion, depth, nativeOwner === "ImportError"); continue;
             }
