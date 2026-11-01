@@ -136,12 +136,7 @@
     {
       "type": "UnicodeTranslateError",
       "type_case": "type-UnicodeTranslateError",
-      "instance_boundary": {
-        "case": "unicode-translate-construction-boundary",
-        "owner": "#124",
-        "error": "UnsupportedOperationError",
-        "reason": "CPython-compatible UnicodeTranslateError construction requires the #124 multiple-argument signature; the internal representation has the audited native directory."
-      }
+      "instance_case": "instance-UnicodeTranslateError"
     },
     {
       "type": "ValueError",

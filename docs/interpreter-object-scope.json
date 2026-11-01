@@ -164,12 +164,6 @@
       "boundary": "Iterator serialization/reduction/state library protocol."
     },
     {
-      "corpus": "tests/fixtures/interpreter/native-directory-closure.json",
-      "case": "unicode-translate-construction-boundary",
-      "owner": "#124",
-      "boundary": "Multiple-argument exception payload construction, including UnicodeTranslateError."
-    },
-    {
       "corpus": "tests/fixtures/interpreter/native-protocols.json",
       "case": "hash-range-bound",
       "owner": "#116",
@@ -1148,6 +1142,12 @@
       "site": "if (receiver.nativeFieldBoundaries?.has(name)) this.fail(\"UnsupportedOperationError\", \"Automatic native exception metadata remains under #124\", \"UNSUPPORTED\");",
       "owner": "#124",
       "boundary": "Automatic lookup/import metadata enrichment remains separate from explicit native exception construction/storage"
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
+      "site": "if (value.name === \"UnicodeTranslateError\" && !value.legacyUnicodeMessage) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Native Unicode translation rendering remains under #124\");",
+      "owner": "#124",
+      "boundary": "Native UnicodeTranslateError message rendering follows LA-30."
     }
   ],
   "native_tables": {

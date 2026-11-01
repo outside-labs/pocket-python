@@ -27,7 +27,8 @@
     "LA25",
     "LA26",
     "LA27",
-    "LA28"
+    "LA28",
+    "LA29"
   ],
   "cases": [
     {
@@ -3367,6 +3368,350 @@
       "id": "syntax-exceptions-native-mro",
       "source": "class RecordError(ValueError,SyntaxError):\n __slots__=(\"record\",)\n def __init__(self,record):\n  self.record=record\n  super().__init__(\"invalid\",(\"records.py\",7,1,\"text\"))\nrecord=[]\ne=RecordError(record)\ntry: raise e\nexcept SyntaxError as caught: print(str(caught),caught.record is record,isinstance(caught,ValueError))\n",
       "stdout": "invalid (records.py, line 7) True True\n"
+    },
+    {
+      "id": "translate-constructor-fields",
+      "stage": "LA29",
+      "source": "s=\"abc\"\nr=\"bad\"\ne=UnicodeTranslateError(s,1,2,r)\nprint(e.object is s,e.reason is r,e.encoding is None,e.start,e.end)\nprint(e.args[0] is s,e.args[3] is r,e.args is e.args)\n",
+      "stdout": "True True True 1 2\nTrue True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-arity-0",
+      "stage": "LA29",
+      "source": "try: UnicodeTranslateError()\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 4 arguments (0 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-arity-1",
+      "stage": "LA29",
+      "source": "try: UnicodeTranslateError(\"abc\")\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 4 arguments (1 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-arity-2",
+      "stage": "LA29",
+      "source": "try: UnicodeTranslateError(\"abc\",0)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 4 arguments (2 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-arity-3",
+      "stage": "LA29",
+      "source": "try: UnicodeTranslateError(\"abc\",0,1)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 4 arguments (3 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-arity-5",
+      "stage": "LA29",
+      "source": "try: UnicodeTranslateError(\"abc\",0,1,\"bad\",7)\nexcept TypeError as e: print(str(e))\n",
+      "stdout": "function takes exactly 4 arguments (5 given)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-invalid-0-7",
+      "stage": "LA29",
+      "source": "UnicodeTranslateError(7,0,1,\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-invalid-0-None",
+      "stage": "LA29",
+      "source": "UnicodeTranslateError(None,0,1,\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-invalid-1-bad",
+      "stage": "LA29",
+      "source": "UnicodeTranslateError(\"abc\",\"bad\",1,\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-invalid-1-15",
+      "stage": "LA29",
+      "source": "UnicodeTranslateError(\"abc\",1.5,1,\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-invalid-2-None",
+      "stage": "LA29",
+      "source": "UnicodeTranslateError(\"abc\",0,None,\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-invalid-3-[]",
+      "stage": "LA29",
+      "source": "UnicodeTranslateError(\"abc\",0,1,[])\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-keywords-preserve-args",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"bad\")\na=e.args\ntry: UnicodeTranslateError.__init__(e,\"new\",2,3,\"next\",object=\"x\")\nexcept TypeError as x: print(str(x))\nprint(e.args is a,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "UnicodeTranslateError() takes no keyword arguments\nTrue old 0 1 bad\n"
+    },
+    {
+      "id": "translate-failed-reinit-replaces-args",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"bad\")\ntry: UnicodeTranslateError.__init__(e,\"new\",2,3,[])\nexcept TypeError: print(\"invalid\")\nprint(e.args[0],e.args[1],e.object,e.start,e.end,e.reason)\n",
+      "stdout": "invalid\nnew 2 old 0 1 bad\n"
+    },
+    {
+      "id": "translate-failed-count-replaces-args",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"bad\")\ntry: UnicodeTranslateError.__init__(e,\"new\")\nexcept TypeError: print(\"invalid\")\nprint(len(e.args),e.args[0],e.object,e.start,e.end,e.reason)\n",
+      "stdout": "invalid\n1 new old 0 1 bad\n"
+    },
+    {
+      "id": "translate-successful-reinit",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"bad\")\na=[]\ne.encoding=a\nUnicodeTranslateError.__init__(e,\"new\",2,3,\"next\")\nprint(e.object,e.start,e.end,e.reason,e.encoding is a)\n",
+      "stdout": "new 2 3 next True\n"
+    },
+    {
+      "id": "translate-generic-init-independent",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"bad\")\nBaseException.__init__(e,[7])\nprint(e.args[0][0],e.object,e.start,e.end,e.reason)\ne.args=()\nprint(e.object,e.start,e.end,e.reason)\n",
+      "stdout": "7 old 0 1 bad\nold 0 1 bad\n"
+    },
+    {
+      "id": "translate-native-new",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError.__new__(UnicodeTranslateError,\"ignored\",keyword=7)\nprint(e.args[0],e.encoding is None,e.object is None,e.reason is None,e.start,e.end)\nUnicodeTranslateError.__init__(e,\"abc\",0,1,\"bad\")\nprint(e.object,e.start,e.end,e.reason)\n",
+      "stdout": "ignored True True True 0 0\nabc 0 1 bad\n"
+    },
+    {
+      "id": "translate-field-aliases",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\na=[]\ne.object=a\ne.reason=a\ne.encoding=a\ne.args=()\nprint(e.object is a,e.reason is a,e.encoding is a)\na.append(e)\nprint(e.object[0] is e,e.reason[0] is e)\n",
+      "stdout": "True True True\nTrue True\n"
+    },
+    {
+      "id": "translate-field-deletion",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.encoding=[]\ndel e.encoding\ndel e.object\ndel e.reason\nprint(e.encoding is None,e.object is None,e.reason is None,e.start,e.end)\n",
+      "stdout": "True True True 0 1\n"
+    },
+    {
+      "id": "translate-start-native-member",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.start=True\nprint(e.start,type(e.start) is int)\nfor value in [None,[],2**100]:\n try: setattr(e,\"start\",value)\n except (TypeError,OverflowError) as x: print(type(x).__name__,str(x))\nprint(e.start)\ntry: del e.start\nexcept TypeError as x: print(str(x))\n",
+      "stdout": "1 True\nTypeError an integer is required\nTypeError an integer is required\nOverflowError Python int too large to convert to C ssize_t\n1\ncan't delete numeric/char attribute\n"
+    },
+    {
+      "id": "translate-end-native-member",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.end=True\nprint(e.end,type(e.end) is int)\nfor value in [None,[],2**100]:\n try: setattr(e,\"end\",value)\n except (TypeError,OverflowError) as x: print(type(x).__name__,str(x))\nprint(e.end)\ntry: del e.end\nexcept TypeError as x: print(str(x))\n",
+      "stdout": "1 True\nTypeError an integer is required\nTypeError an integer is required\nOverflowError Python int too large to convert to C ssize_t\n1\ncan't delete numeric/char attribute\n"
+    },
+    {
+      "id": "translate-numeric-limits",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"abc\",-2**63,2**63-1,\"bad\")\nprint(e.start,e.end)\nfor value in [-2**63-1,2**63]:\n try: UnicodeTranslateError(\"abc\",value,1,\"bad\")\n except OverflowError as x: print(str(x))\n",
+      "stdout": "-9223372036854775808 9223372036854775807\nPython int too large to convert to C ssize_t\nPython int too large to convert to C ssize_t\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-index-order",
+      "stage": "LA29",
+      "source": "class I:\n def __init__(self,n): self.n=n\n def __index__(self):\n  print(\"index\",self.n)\n  return self.n\na=I(1)\nb=I(2)\ne=UnicodeTranslateError(\"abc\",a,b,\"bad\")\nprint(e.start,e.end,e.args[1] is a,e.args[2] is b)\n",
+      "stdout": "index 1\nindex 2\n1 2 True True\n"
+    },
+    {
+      "id": "translate-index-failure-order",
+      "stage": "LA29",
+      "source": "class I:\n def __index__(self):\n  print(\"index\")\n  raise LookupError(\"bad\")\ntry: UnicodeTranslateError(7,I(),I(),[])\nexcept TypeError: print(\"object first\")\ntry: UnicodeTranslateError(\"abc\",I(),I(),[])\nexcept LookupError: print(\"start first\")\ntry: UnicodeTranslateError(\"abc\",0,I(),[])\nexcept LookupError: print(\"end next\")\n",
+      "stdout": "object first\nindex\nstart first\nindex\nend next\n"
+    },
+    {
+      "id": "translate-reason-checked-after-index",
+      "stage": "LA29",
+      "source": "class I:\n def __index__(self): print(\"index\"); return 1\ntry: UnicodeTranslateError(\"abc\",I(),I(),[])\nexcept TypeError: print(\"reason last\")\n",
+      "stdout": "index\nindex\nreason last\n"
+    },
+    {
+      "id": "translate-index-invalid-result",
+      "stage": "LA29",
+      "source": "class I:\n def __index__(self): return \"bad\"\nUnicodeTranslateError(\"abc\",I(),0,\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "translate-index-overflow-before-end",
+      "stage": "LA29",
+      "source": "class I:\n def __index__(self): print(\"unexpected\"); return 1\ntry: UnicodeTranslateError(\"abc\",2**100,I(),\"bad\")\nexcept OverflowError: print(\"overflow\")\n",
+      "stdout": "overflow\n"
+    },
+    {
+      "id": "translate-int-subtype-bypass",
+      "stage": "LA29",
+      "source": "class N(int):\n def __index__(self): print(\"unexpected\"); return 99\na=N(1)\nb=N(2)\ne=UnicodeTranslateError(\"abc\",a,b,\"bad\")\nprint(e.start,e.end,e.args[1] is a,e.args[2] is b,type(e.start) is int)\ne.start=N(7)\nprint(e.start,type(e.start) is int)\n",
+      "stdout": "1 2 True True True\n7 True\n"
+    },
+    {
+      "id": "translate-numeric-member-ignores-index",
+      "stage": "LA29",
+      "source": "class I:\n def __index__(self): print(\"unexpected\"); return 8\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ntry: e.start=I()\nexcept TypeError: print(\"integer required\")\nprint(e.start)\n",
+      "stdout": "integer required\n0\n"
+    },
+    {
+      "id": "translate-string-subtype-identity",
+      "stage": "LA29",
+      "source": "class S(str):\n def __str__(self): print(\"unexpected\"); return \"changed\"\ns=S(\"abc\")\nr=S(\"bad\")\ne=UnicodeTranslateError(s,0,1,r)\nprint(e.object is s,e.reason is r,e.args[0] is s,e.args[3] is r)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "translate-callback-success-state",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"bad\")\nclass I:\n def __index__(self):\n  print(e.args[0],e.object,e.start)\n  e.object=\"callback\"\n  e.start=7\n  e.encoding=[]\n  return 2\nUnicodeTranslateError.__init__(e,\"new\",I(),3,\"next\")\nprint(e.object,e.start,e.end,e.reason,len(e.encoding))\n",
+      "stdout": "new old 0\nnew 2 3 next 0\n"
+    },
+    {
+      "id": "translate-callback-failure-state",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"bad\")\nclass I:\n def __index__(self):\n  e.object=\"callback\"\n  e.start=7\n  raise LookupError(\"bad\")\ntry: UnicodeTranslateError.__init__(e,\"new\",I(),3,\"next\")\nexcept LookupError: print(\"failed\")\nprint(e.args[0],e.object,e.start,e.end,e.reason)\n",
+      "stdout": "failed\nnew callback 7 1 bad\n"
+    },
+    {
+      "id": "translate-callback-args-replacement",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"bad\")\nclass I:\n def __index__(self): e.args=(\"changed\",); return 2\nUnicodeTranslateError.__init__(e,\"new\",I(),3,\"next\")\nprint(e.args[0],e.object,e.start,e.end,e.reason)\n",
+      "stdout": "changed new 2 3 next\n"
+    },
+    {
+      "id": "translate-subclass-storage",
+      "stage": "LA29",
+      "source": "class E(UnicodeTranslateError):\n __slots__=(\"record\",)\n def __init__(self,s,record):\n  super().__init__(s,0,1,\"bad\")\n  self.record=record\na=[]\ne=E(\"abc\",a)\ne.extra=a\nprint(isinstance(e,UnicodeError),type(e) is E,e.record is a,e.extra is a,e.object)\ntry: raise e\nexcept E as caught: print(caught is e)\n",
+      "stdout": "True True True True abc\nTrue\n"
+    },
+    {
+      "id": "translate-mixed-generic-base",
+      "stage": "LA29",
+      "source": "class G(Exception): pass\nclass E(G,UnicodeTranslateError): pass\ne=E(\"abc\",0,1,\"bad\")\nprint(e.object,e.start,e.end,e.reason)\nprint(E.__init__ is UnicodeTranslateError.__init__)\n",
+      "stdout": "abc 0 1 bad\nTrue\n"
+    },
+    {
+      "id": "translate-generic-base-later-init",
+      "stage": "LA29",
+      "source": "class G(Exception):\n def __init__(self,s,start,end,reason):\n  print(\"custom\")\n  super().__init__(s,start,end,reason)\nclass E(UnicodeTranslateError,G): pass\ne=E(\"abc\",0,1,\"bad\")\nprint(e.object,e.start,e.end,e.reason)\n",
+      "stdout": "abc 0 1 bad\n"
+    },
+    {
+      "id": "translate-conflicting-layout",
+      "stage": "LA29",
+      "source": "class E(UnicodeTranslateError,NameError): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "translate-new-subclass-bypass",
+      "stage": "LA29",
+      "source": "class E(UnicodeTranslateError):\n def __init__(self): pass\ne=E()\nprint(e.object is None,e.reason is None,e.start,e.end,len(e.args))\n",
+      "stdout": "True True 0 0 0\n"
+    },
+    {
+      "id": "translate-native-descriptors",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\nd=UnicodeTranslateError.object\na=[]\nd.__set__(e,a)\nprint(d.__get__(e,type(e)) is a)\nd.__delete__(e)\nprint(e.object is None)\nUnicodeTranslateError.start.__set__(e,True)\nprint(UnicodeTranslateError.start.__get__(e,type(e)))\n",
+      "stdout": "True\nTrue\n1\n"
+    },
+    {
+      "id": "translate-native-descriptor-type-check",
+      "stage": "LA29",
+      "source": "UnicodeTranslateError.object.__get__(ValueError(),ValueError)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "translate-dictionary-independent",
+      "stage": "LA29",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.__dict__[\"object\"]=[]\ne.__dict__[\"start\"]=9\nprint(e.object,e.start,e.__dict__[\"start\"])\n",
+      "stdout": "abc 0 9\n"
+    },
+    {
+      "id": "translate-owned-field-overrides",
+      "stage": "LA29",
+      "source": "class E(UnicodeTranslateError):\n @property\n def object(self): return \"visible\"\ne=E(\"native\",0,1,\"bad\")\nprint(e.object,UnicodeTranslateError.object.__get__(e,E))\n",
+      "stdout": "visible native\n"
+    },
+    {
+      "id": "translate-raise-class-invalid-constructor",
+      "stage": "LA29",
+      "source": "try: raise UnicodeTranslateError\nexcept TypeError: print(\"constructor failed\")\n",
+      "stdout": "constructor failed\n"
+    },
+    {
+      "id": "translate-new-incompatible-type",
+      "stage": "LA29",
+      "source": "UnicodeTranslateError.__new__(NameError)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "translate-index-result-subtype",
+      "stage": "LA29",
+      "source": "class N(int): pass\nclass I:\n def __index__(self): return N(2)\ne=UnicodeTranslateError(\"abc\",I(),I(),\"bad\")\nprint(e.start,e.end,type(e.start) is int,type(e.end) is int)\n",
+      "stdout": "2 2 True True\n"
+    },
+    {
+      "id": "translate-cause-class-invalid-constructor",
+      "stage": "LA29",
+      "source": "try: raise ValueError(\"outer\") from UnicodeTranslateError\nexcept TypeError: print(\"cause constructor failed\")\n",
+      "stdout": "cause constructor failed\n"
     }
   ],
   "reference_boundaries": [

@@ -107,6 +107,12 @@ export function completion(kind, fields = {}) {
     case "native-reinit": case "native-property-copy": record = {kind, receiver: fields.receiver, after}; break;
     case "syntax-details": record = {kind, receiver: fields.receiver, result: fields.result, after}; break;
     case "syntax-message": record = {kind, receiver: fields.receiver, suffix: fields.suffix, after}; break;
+    case "unicode-translate-index":
+      record = {kind, receiver: fields.receiver, args: operands(fields.args), start: fields.start ?? null,
+        position: fields.position, result: fields.result, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (record.args.length !== 4 || ![1, 2].includes(record.position)) throw new TypeError("Invalid Unicode translation index phase.");
+      break;
     case "native-repeat": record = {kind, receiver: fields.receiver, inplace: fields.inplace, after}; break;
     case "list-index": record = {kind, receiver: fields.receiver, name: fields.name, item: fields.item, after}; break;
     case "dictionary-pop": record = {kind, receiver: fields.receiver, key: fields.key, fallback: fields.fallback, missing: fields.missing, after}; break;
@@ -369,6 +375,7 @@ function visit(record) {
     case "native-reinit": case "native-property-copy": return [record.receiver, ...completionRoots(record.after)];
     case "syntax-details": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "syntax-message": return [record.receiver, record.suffix, ...completionRoots(record.after)];
+    case "unicode-translate-index": return [record.receiver, ...record.args, record.start, record.result, ...completionRoots(record.after)];
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "list-index": return [record.receiver, record.item, ...completionRoots(record.after)];
     case "dictionary-pop": return [record.receiver, record.key, record.fallback, ...completionRoots(record.after)];

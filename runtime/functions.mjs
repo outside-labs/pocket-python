@@ -292,13 +292,13 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     type instanceof BuiltinValue && matchesException(value.name, type.name);
   const raiseException = (value, cause, explicit, site, valueReady = false, causeReady = false) => {
     const frame = state.frames.at(-1);
-    if (!valueReady && value instanceof ClassValue && exceptionClass(value))
+    if (!valueReady && (value instanceof ClassValue || verified.code.version >= 4 && value instanceof BuiltinValue && value.name === "UnicodeTranslateError") && exceptionClass(value))
       return callTask(value, [], [], [], site, continuation("raise-value", {cause, explicit}));
     if (!valueReady && value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name)) value = allocate(ExceptionValue, value.name, [], "");
     if (!(value instanceof ExceptionValue)) python("TypeError", "exceptions must derive from BaseException");
     if (explicit) {
       state.temporaries.push(value);
-      if (!causeReady && cause instanceof ClassValue && exceptionClass(cause))
+      if (!causeReady && (cause instanceof ClassValue || verified.code.version >= 4 && cause instanceof BuiltinValue && cause.name === "UnicodeTranslateError") && exceptionClass(cause))
         return callTask(cause, [], [], [], site, continuation("raise-cause", {receiver: value}));
       if (!causeReady && cause instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, cause.name)) cause = allocate(ExceptionValue, cause.name, [], "");
       if (cause !== null && !(cause instanceof ExceptionValue)) python("TypeError", "exception causes must derive from BaseException");

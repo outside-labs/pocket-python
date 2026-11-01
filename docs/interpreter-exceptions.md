@@ -35,6 +35,18 @@ native message initialization retain their adopted field semantics.
 | LA-27 | Native SyntaxError message/location rendering, basename selection, exact-int line selection and owned message callbacks | Filename/line values are read before message callbacks; native fields bypass owned getters. String-subclass filenames render their native content, while bool/int-subclass line numbers are ignored. The deterministic profile uses POSIX separators and signed 64-bit C long overflow behavior; Windows differences are separately recorded. |
 | LA-28 | Composed structured syntax failures across modules, dynamic source, causes/notes and suspended cleanup; installed offline detail/message cancellation and core-profile updates | The corpus has 438 cases: 430 semantic/error comparisons, eight explicit refusals and 76 shared core cases. Node/Chromium pass every driver, with 71 installed-wheel offline checks. Two pinned-reference crash and two host qualifications remain separate from these counts. |
 
+LA-29 adds `UnicodeTranslateError(object, start, end, reason, /)`, five native
+fields, native initializers/descriptors and subclasses. Object/reason require
+strings and retain subtype identity. Construction converts start/end in order
+through `__index__`, with signed 64-bit bounds; numeric member assignment accepts
+integers without index callbacks. Argument replacement precedes validation,
+while successful field publication follows it. The exact contract follows the
+pinned [native initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3625-L3643).
+Native translation rendering follows LA-30; Encode/Decode remain under #124.
+Deleted object/reason fields read as None independently of args and dictionaries.
+Owned callbacks preserve their mutations when validation fails. The explicitly
+shared scalar core-source/1 cases do not admit owned callbacks in that profile.
+
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
 through draining, instruction stepping and parked execution. Logical work,
