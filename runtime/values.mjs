@@ -1228,7 +1228,10 @@ export class ValueRuntime {
     this.enableNamespace(dictionary); this.charge(1);
     return this.make(96, [dictionary], () => new IteratorValue(dictionary, kind, reverse));
   }
-  dictionaryView(dictionary, kind) { return this.make(56, [dictionary], () => new DictionaryViewValue(dictionary, kind)); }
+  dictionaryView(dictionary, kind, owner = dictionary) {
+    return this.make(owner === dictionary ? 56 : 64, owner === dictionary ? [dictionary] : [dictionary, owner],
+      () => new DictionaryViewValue(dictionary, kind, owner));
+  }
   iterator(value) {
     if (value instanceof ClassNamespaceValue) return this.dictionaryIterator(this.classNamespaceDictionary(value));
     if (value instanceof DictionaryViewValue) return this.dictionaryIterator(value.dictionary, value.kind);
@@ -1550,7 +1553,8 @@ export function valueLayout(value) {
   if (value instanceof DictValue) return {bytes: 96 + (value.namespace ? 16 : 0) + value.entries.reduce((bytes, entry) => bytes + (value.namespace ? 56 : 48) + 2 * entry.hash.length, 0),
     children: value.entries.flatMap(entry => [entry.key, entry.value])};
   if (value instanceof SetValue) return {bytes: 64, children: [value.storage]};
-  if (value instanceof DictionaryViewValue) return {bytes: 56, children: [value.dictionary]};
+  if (value instanceof DictionaryViewValue) return {bytes: value.owner === undefined ? 56 : 64,
+    children: value.owner === undefined ? [value.dictionary] : [value.dictionary, value.owner]};
   if (value instanceof IteratorValue && value.dictionaryKind !== undefined) return {bytes: 96, children: value.value === null ? [] : [value.value]};
   if (value instanceof IteratorValue) return value.value?.namespace ? {bytes: 80, children: [value.value]} : value.value instanceof RangeValue ? {bytes: 80, children: [value.value, value.index]} : {bytes: 64, children: [value.value]};
   if (value instanceof GeneratorValue) return {bytes: 152 + 8 * ([value.reflector, value.identityName, value.identityQualname].filter(item => item != null).length) + 48 * (value.frame?.tasks.length ?? 0) + 32 * (value.frame?.locals.size ?? value.bindings.size) + 8 * (value.frame?.tasks.reduce((sum, task) => sum + (task.stack?.length ?? 0), 0) ?? 0), children: generatorRoots(value)};

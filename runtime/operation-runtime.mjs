@@ -2464,6 +2464,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const original = callable instanceof ValueMethod ? callable.receiver : args[0];
             const receiver = classes.payload(original), rest = callable instanceof ValueMethod ? args : args.slice(1);
             if (containerOwner === "dict") {
+              if (["keys", "values", "items"].includes(nativeName)) {
+                if (keywords.length || rest.length) python("TypeError", nativeName + "() takes no arguments");
+                values.enableNamespace(receiver);
+                task = valueTask(values.dictionaryView(receiver, ["keys", "values", "items"].indexOf(nativeName), original), site, completion); continue;
+              }
               if (keywords.length || rest.length < 1 || rest.length > 2) python("TypeError", "Invalid " + nativeName + " arguments");
               const fallback = rest.length === 2 ? rest[1] : null;
               if (nativeName === "pop" && !receiver.entries.length) {

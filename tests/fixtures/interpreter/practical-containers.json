@@ -8,7 +8,8 @@
     "LA-2",
     "LA-3",
     "LA-4",
-    "LA-5"
+    "LA-5",
+    "LA-6"
   ],
   "cases": [
     {
@@ -1310,6 +1311,356 @@
       "stage": "MissingHook",
       "source": "class D(dict):\n def __missing__(self,key): return 9\nd=D()\nprint(d.get(1) is None,d.setdefault(1,7),d.pop(1))\n",
       "stdout": "True 7 7\n"
+    },
+    {
+      "id": "dict-keys-ordered",
+      "stage": "LA-6",
+      "source": "d={1:7,2:8}\nv=d.keys()\nprint(list(v)==[1,2],len(v),bool(v))\n",
+      "stdout": "True 2 True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-keys-live",
+      "stage": "LA-6",
+      "source": "d={1:7}\nv=d.keys()\nd[2]=8\nd[1]=9\nprint(len(v),list(v)==[1,2])\nd.pop(1)\nprint(len(v))\n",
+      "stdout": "2 True\n1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-keys-size-mutation",
+      "stage": "LA-6",
+      "source": "d={1:7}\ni=iter(d.keys())\nd[2]=8\nnext(i)\n",
+      "stdout": "",
+      "error_type": "RuntimeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-keys-replacement",
+      "stage": "LA-6",
+      "source": "d={1:7}\ni=iter(d.keys())\nd[1]=9\nprint(next(i)==1)\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-keys-detached",
+      "stage": "LA-6",
+      "source": "d={1:7}\nf=d.keys\ndel d\nv=f()\ndel f\nprint(len(v),len(list(v)))\n",
+      "stdout": "1 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-keys-arguments",
+      "stage": "LA-6",
+      "source": "{}.keys(1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-keys-keyword",
+      "stage": "LA-6",
+      "source": "{}.keys(value=1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-keys-receiver",
+      "stage": "LA-6",
+      "source": "dict.keys([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dict-keys-rebound",
+      "stage": "LA-6",
+      "source": "d={1:7}\nf=dict.keys.__get__(d)\nprint(len(f()))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "dict-values-ordered",
+      "stage": "LA-6",
+      "source": "d={1:7,2:8}\nv=d.values()\nprint(list(v)==[7,8],len(v),bool(v))\n",
+      "stdout": "True 2 True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-values-live",
+      "stage": "LA-6",
+      "source": "d={1:7}\nv=d.values()\nd[2]=8\nd[1]=9\nprint(len(v),list(v)==[9,8])\nd.pop(1)\nprint(len(v))\n",
+      "stdout": "2 True\n1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-values-size-mutation",
+      "stage": "LA-6",
+      "source": "d={1:7}\ni=iter(d.values())\nd[2]=8\nnext(i)\n",
+      "stdout": "",
+      "error_type": "RuntimeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-values-replacement",
+      "stage": "LA-6",
+      "source": "d={1:7}\ni=iter(d.values())\nd[1]=9\nprint(next(i)==9)\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-values-detached",
+      "stage": "LA-6",
+      "source": "d={1:7}\nf=d.values\ndel d\nv=f()\ndel f\nprint(len(v),len(list(v)))\n",
+      "stdout": "1 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-values-arguments",
+      "stage": "LA-6",
+      "source": "{}.values(1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-values-keyword",
+      "stage": "LA-6",
+      "source": "{}.values(value=1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-values-receiver",
+      "stage": "LA-6",
+      "source": "dict.values([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dict-values-rebound",
+      "stage": "LA-6",
+      "source": "d={1:7}\nf=dict.values.__get__(d)\nprint(len(f()))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "dict-items-ordered",
+      "stage": "LA-6",
+      "source": "d={1:7,2:8}\nv=d.items()\nprint(list(v)==[(1,7),(2,8)],len(v),bool(v))\n",
+      "stdout": "True 2 True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-live",
+      "stage": "LA-6",
+      "source": "d={1:7}\nv=d.items()\nd[2]=8\nd[1]=9\nprint(len(v),list(v)==[(1,9),(2,8)])\nd.pop(1)\nprint(len(v))\n",
+      "stdout": "2 True\n1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-size-mutation",
+      "stage": "LA-6",
+      "source": "d={1:7}\ni=iter(d.items())\nd[2]=8\nnext(i)\n",
+      "stdout": "",
+      "error_type": "RuntimeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-replacement",
+      "stage": "LA-6",
+      "source": "d={1:7}\ni=iter(d.items())\nd[1]=9\nprint(next(i)==(1,9))\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-detached",
+      "stage": "LA-6",
+      "source": "d={1:7}\nf=d.items\ndel d\nv=f()\ndel f\nprint(len(v),len(list(v)))\n",
+      "stdout": "1 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-arguments",
+      "stage": "LA-6",
+      "source": "{}.items(1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-keyword",
+      "stage": "LA-6",
+      "source": "{}.items(value=1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-receiver",
+      "stage": "LA-6",
+      "source": "dict.items([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dict-items-rebound",
+      "stage": "LA-6",
+      "source": "d={1:7}\nf=dict.items.__get__(d)\nprint(len(f()))\n",
+      "stdout": "1\n"
+    },
+    {
+      "id": "dict-keys-membership",
+      "stage": "LA-6",
+      "source": "d={1:7}\nv=d.keys()\nprint(1 in v,2 in v)\n",
+      "stdout": "True False\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-values-membership",
+      "stage": "LA-6",
+      "source": "d={1:7}\nv=d.values()\nprint(7 in v,9 in v)\n",
+      "stdout": "True False\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-membership",
+      "stage": "LA-6",
+      "source": "d={1:7}\nv=d.items()\nprint((1,7) in v,(1,9) in v,(2,7) in v,[1,7] in v)\n",
+      "stdout": "True False False False\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-keys-unhashable",
+      "stage": "LA-6",
+      "source": "[] in {}.keys()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-items-unhashable",
+      "stage": "LA-6",
+      "source": "([],7) in {}.items()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-view-mapping",
+      "stage": "LA-6",
+      "source": "value=[]\nd={1:value}\nv=d.values()\np=v.mapping\nprint(p is v.mapping,p[1] is value,p.get(2) is None)\nd[2]=7\nprint(p[2],len(p))\n",
+      "stdout": "False True True\n7 2\n"
+    },
+    {
+      "id": "dict-view-empty",
+      "stage": "LA-6",
+      "source": "d={}\nprint(len(d.keys()),bool(d.values()),list(d.items())==[])\n",
+      "stdout": "0 False True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-view-subclass",
+      "stage": "LA-6",
+      "source": "class D(dict):\n def __iter__(self): raise ValueError(\"bad\")\n def __getitem__(self,key): raise ValueError(\"bad\")\nd=D()\nd[1]=7\nprint(list(dict.keys(d))==[1],list(d.values())==[7],list(d.items())==[(1,7)])\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "dict-view-value-truth",
+      "stage": "LA-6",
+      "source": "class T:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass A:\n def __eq__(self,other):\n  print(\"equal\")\n  return T()\nd={1:A()}\nprint(7 in d.values(),(1,7) in d.items())\n",
+      "stdout": "equal\ntruth\nequal\ntruth\nTrue True\n"
+    },
+    {
+      "id": "dict-subclass-view-proxy-boundary",
+      "stage": "SubtypeProxy",
+      "source": "class D(dict): pass\nd=D()\nd[1]=7\nprint(d.keys().mapping[1])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "dict-view-set-boundary",
+      "stage": "ViewSets",
+      "source": "print({1:7}.keys()=={1})\n",
+      "stdout": "True\n"
     }
   ]
 }

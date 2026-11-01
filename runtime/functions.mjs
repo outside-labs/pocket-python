@@ -999,7 +999,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       }
       else if (["truth", "not", "len", "negative", "positive", "invert", "iter", "next"].includes(op))
         dispatch(unaryTask(op, stack.pop(), summary(frame, cursor)));
-      else if (op === "contains" && (frame.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue) &&
+      else if (op === "contains" && (frame.pool.code.version === 5 || stack.at(-1) instanceof GeneratorValue || stack.at(-1) instanceof DictionaryViewValue) &&
           (stack.at(-1) instanceof FrameLocalsValue || stack.at(-1) instanceof DictionaryViewValue || stack.at(-1) instanceof ClassNamespaceValue || stack.at(-1) instanceof GeneratorValue || userProtocol(stack.at(-1)) || stack.at(-1) instanceof IteratorValue || stack.at(-1) instanceof ProtocolIteratorValue ||
            values.hasUserEquality(stack.at(-1)) || values.hasUserEquality(stack.at(-2)) ||
            values.dictionaryNeedsProtocol(stack.at(-1), stack.at(-2)))) {
