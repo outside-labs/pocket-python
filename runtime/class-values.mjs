@@ -9,7 +9,7 @@ export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "
 export const CONTAINER_METHODS = Object.freeze({
   list: Object.freeze(["copy", "clear", "reverse", "insert", "pop", "count", "index", "extend"]),
   tuple: Object.freeze(["count", "index"]),
-  dict: Object.freeze(["get", "setdefault", "pop"]),
+  dict: Object.freeze(["get", "setdefault", "pop", "keys", "values", "items"]),
 });
 export const CONTAINER_METHOD_NAMES = new Set(Object.values(CONTAINER_METHODS).flat());
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
@@ -1342,6 +1342,7 @@ export class ClassRuntime {
     }
     if (receiver instanceof DictionaryViewValue && name === "mapping") {
       if (operation !== "get") this.fail("AttributeError", "Dictionary view mapping is read-only");
+      if (receiver.owner !== undefined) this.fail("UnsupportedOperationError", "Dictionary subclass view mappings require the #116 proxy contract", "UNSUPPORTED");
       return {kind: "value", value: this.make(ClassNamespaceValue, receiver.dictionary)};
     }
     const fieldOwner = this.nativeFieldOwner(name);

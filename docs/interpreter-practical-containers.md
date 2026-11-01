@@ -14,7 +14,7 @@ explicit #116 source boundary; these methods bypass admitted item overrides.
 | LA-3 | `list.count(value, /)`, `tuple.count(value, /)`, list/tuple `index(value, start=0, stop=sys.maxsize, /)` | Implemented. Identity fast paths and owned equality/truth callbacks scan current contents; positional index bounds convert in order and saturate to signed-size limits. |
 | LA-4 | `list.extend(iterable, /)` | Implemented for adopted iterables without user length hints. Self-extension snapshots the native payload, including subclasses; iterator failures retain the appended prefix. User hints refuse before binding or consumption and remain under #116. |
 | LA-5 | `dict.get(key, default=None, /)`, `dict.setdefault(key, default=None, /)`, `dict.pop(key[, default], /)` | Implemented. Owned hash/equality uses one hash per lookup, retains exact stored keys/defaults/values and restarts after key mutation. Empty pop bypasses hashing. General KeyError argument introspection remains #124. |
-| LA-6 | `dict.keys()`, `dict.values()`, `dict.items()` | Queued. Live ordered views, iteration/membership and owner lifetimes; further view operations require their own cases. |
+| LA-6 | `dict.keys()`, `dict.values()`, `dict.items()` | Implemented. Fresh live ordered views support len/truth, iteration and owned membership; native subtype owners stay rooted. Exact-dict view.mapping returns a fresh live read-only proxy. Subtype proxies and view set operations remain #116/#117. |
 | LA-7 | Composed source/offline acceptance | Queued. Integration does not imply the remaining #116 APIs. |
 
 The initial two batches do not adopt populated dictionary construction/update,

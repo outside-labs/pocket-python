@@ -114,3 +114,20 @@ for (const name of ['get', 'setdefault', 'pop']) test('dictionary ' + name + ' o
 test('dictionary removal owns the detached result during parked equality/truth callbacks', async () => {
   await callbackLifetime('class T:\n def __bool__(self):\n  print("entered")\n  return True\nclass K:\n def __hash__(self): return 7\n def __eq__(self,other): return T()\na=K()\nb=K()\nd={a:[]}\nv=d.pop(b)\ndel d\nv.append(7)\nprint(v[0])\n', 'entered\n7\n');
 });
+
+test('live values membership owns its view and equality result through park/cancel/close', async () => {
+  await callbackLifetime('class T:\n def __bool__(self):\n  print("entered")\n  return True\nclass A:\n def __eq__(self,other): return T()\nd={1:A()}\nv=d.values()\ndel d\nprint(7 in v)\n', 'entered\nTrue\n');
+});
+
+test('dictionary subtype views retain the complete original owner graph', async () => {
+  const source = 'class D(dict): pass\nd=D()\nd.saved=[7]\nv=d.keys()\ndel d\n';
+  const {registry} = await compileSourceModules([unit(source)], {languageProfile: corpus.profile});
+  const session = new ModuleSession(registry);
+  try {
+    session.run(); session.memory.collect([], {cleanup: true});
+    const view = session.context.module(registry.entry).environment.cells.get('v').value;
+    assert.equal(view.owner.type.name, 'D');
+    assert.ok(session.memory.identityHash(view.owner) > 0);
+  } finally { session.close(); registry.close(); }
+  closed(session.stats());
+});
