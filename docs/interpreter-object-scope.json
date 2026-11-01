@@ -329,6 +329,12 @@
   "source_refusals": [
     {
       "path": "runtime/class-values.mjs",
+      "site": "if (receiver.owner !== undefined) this.fail(\"UnsupportedOperationError\", \"Dictionary subclass view mappings require the #116 proxy contract\", \"UNSUPPORTED\");",
+      "owner": "#116",
+      "boundary": "Dictionary-subclass view mapping proxies require their own mapping override and owner contract; exact-dictionary view mappings are adopted."
+    },
+    {
+      "path": "runtime/class-values.mjs",
       "site": "this.fail(\"UnsupportedOperationError\", \"Further metaclass special protocols require a separate stage\", \"UNSUPPORTED\");",
       "owner": "table:native-apis",
       "boundary": "Adopted finite names execute through owned paths; unadopted names use the native field/API/slot owners."

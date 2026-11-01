@@ -987,13 +987,17 @@
       "id": "extend-refuses-__len__",
       "stage": "Hints",
       "source": "class A:\n def __iter__(self):\n  print(\"iter\")\n  return iter([7])\n def __len__(self):\n  print(\"hint\")\n  return 1\na=[]\na.extend(A())\nprint(a[0])\n",
-      "stdout": "iter\nhint\n7\n"
+      "stdout": "iter\nhint\n7\n",
+      "owner": "#116",
+      "boundary": "User iterable length hints remain a pre-consumption refusal under the remaining construction/extension contract."
     },
     {
       "id": "extend-refuses-__length_hint__",
       "stage": "Hints",
       "source": "class A:\n def __iter__(self):\n  print(\"iter\")\n  return iter([7])\n def __length_hint__(self):\n  print(\"hint\")\n  return 1\na=[]\na.extend(A())\nprint(a[0])\n",
-      "stdout": "iter\nhint\n7\n"
+      "stdout": "iter\nhint\n7\n",
+      "owner": "#116",
+      "boundary": "User iterable length hints remain a pre-consumption refusal under the remaining construction/extension contract."
     },
     {
       "id": "dict-get-defaults",
@@ -1312,7 +1316,9 @@
       "id": "dict-missing-hook-boundary",
       "stage": "MissingHook",
       "source": "class D(dict):\n def __missing__(self,key): return 9\nd=D()\nprint(d.get(1) is None,d.setdefault(1,7),d.pop(1))\n",
-      "stdout": "True 7 7\n"
+      "stdout": "True 7 7\n",
+      "owner": "#116",
+      "boundary": "Defining __missing__ requires its own dictionary item-fallback contract."
     },
     {
       "id": "dict-keys-ordered",
@@ -1656,13 +1662,17 @@
       "id": "dict-subclass-view-proxy-boundary",
       "stage": "SubtypeProxy",
       "source": "class D(dict): pass\nd=D()\nd[1]=7\nprint(d.keys().mapping[1])\n",
-      "stdout": "7\n"
+      "stdout": "7\n",
+      "owner": "#116",
+      "boundary": "Dictionary-subclass view mappings require an adopted mapping override/owner contract."
     },
     {
       "id": "dict-view-set-boundary",
       "stage": "ViewSets",
       "source": "print({1:7}.keys()=={1})\n",
-      "stdout": "True\n"
+      "stdout": "True\n",
+      "owner": "#116",
+      "boundary": "Dictionary view set-like comparison and algebra require their own finite API contract."
     },
     {
       "id": "composed-record-queue",

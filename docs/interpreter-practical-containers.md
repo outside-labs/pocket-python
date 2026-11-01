@@ -34,7 +34,7 @@ and work-queue example. The offline acceptance driver builds an independent
 console and executes the same source:
 
 ```sh
-python scripts/run_tests.py focused --feature practical-containers
+python scripts/run_tests.py focused --feature practical-containers --feature object-scope-inventory
 python scripts/object_integration_browser_smoke.py --containers
 ```
 
