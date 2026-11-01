@@ -1,11 +1,11 @@
 import {isVerifiedFunctionCode} from "./function-bytecode.mjs";
 import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS, NATIVE_CALLABLE_SIGNATURES} from "./native-namespaces.mjs";
-import {ClassValue, HierarchyTransaction, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, GENERIC_EXCEPTION_BASES, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
+import {ClassValue, HierarchyTransaction, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, EXCEPTION_BASES, EXCEPTION_LAYOUTS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS, NATIVE_PROTOCOL_KEYS} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
-export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super", ...GENERIC_EXCEPTION_BASES]);
+export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super", ...EXCEPTION_BASES]);
 export const CONTAINER_METHODS = Object.freeze({
   list: Object.freeze(["copy", "clear", "reverse", "insert", "pop", "count", "index", "extend"]),
   tuple: Object.freeze(["count", "index"]),
@@ -383,16 +383,16 @@ export class ClassRuntime {
   storageLayout(name, bases, namespace, slotNames) {
     let best = null;
     for (const base of bases) {
-      const solid = base instanceof BuiltinValue && GENERIC_EXCEPTION_BASES.includes(base.name) ? this.builtin("BaseException") : base.storage?.solid ?? (this.isMetaclass(base) || base instanceof BuiltinValue ? base : null);
+      const solid = base instanceof BuiltinValue && EXCEPTION_BASES.includes(base.name) ? this.builtin(EXCEPTION_LAYOUTS[base.name]) : base.storage?.solid ?? (this.isMetaclass(base) || base instanceof BuiltinValue ? base : null);
       if (solid === null) continue;
       if (best === null || this.subclass(solid, best)) best = solid;
       else if (!this.subclass(best, solid)) this.fail("TypeError", "multiple bases have instance lay-out conflict");
     }
     const inherited = bases.find(base => base.storage?.solid === best)?.storage;
     const count = inherited?.count ?? 0;
-    const dict = bases.some(base => base.storage?.dict ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && (["type", "module", "staticmethod", "classmethod"].includes(base.name) || GENERIC_EXCEPTION_BASES.includes(base.name))));
+    const dict = bases.some(base => base.storage?.dict ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && (["type", "module", "staticmethod", "classmethod"].includes(base.name) || EXCEPTION_BASES.includes(base.name))));
     const weak = bases.some(base => base.storage?.weak ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && ["type", "frozenset", "set", "module"].includes(base.name)));
-    const family = best instanceof BuiltinValue ? best.name : best?.storage?.family ?? "object";
+    const family = best instanceof BuiltinValue ? EXCEPTION_BASES.includes(best.name) ? "BaseException" : best.name : best?.storage?.family ?? "object";
     const variable = ["int", "bytes", "tuple"].includes(family);
     const ownNames = []; let ownDict = slotNames === null && !dict, ownWeak = slotNames === null && !weak && !variable;
     if (slotNames !== null) for (const item of slotNames) {
@@ -455,7 +455,7 @@ export class ClassRuntime {
   }
   defaultMro(type) { return type instanceof ClassValue ? [type, ...this.mergeMro(type.bases)] : this.mro(type); }
   layoutFamily(type) {
-    if (type instanceof BuiltinValue && GENERIC_EXCEPTION_BASES.includes(type.name)) return "BaseException";
+    if (type instanceof BuiltinValue && EXCEPTION_BASES.includes(type.name)) return "BaseException";
     if (type instanceof ClassValue && type.storage) return type.storage.family;
     const pending = [type], seen = new Set();
     while (pending.length) {
@@ -512,7 +512,7 @@ export class ClassRuntime {
       if (base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base)) return base;
     }
     if (type.storage?.baseSolid) return type.bases.find(base => base === type.storage.baseSolid || base.storage?.solid === type.storage.baseSolid ||
-      type.storage.family === "BaseException" && base instanceof BuiltinValue && GENERIC_EXCEPTION_BASES.includes(base.name)) ?? type.bases[0];
+      type.storage.family === "BaseException" && base instanceof BuiltinValue && EXCEPTION_LAYOUTS[base.name] === type.storage.baseSolid.name) ?? type.bases[0];
     return type.bases[0];
   }
   typeOf(value) {
@@ -1336,6 +1336,14 @@ export class ClassRuntime {
       if (operation === "delete") this.fail("TypeError", "args may not be deleted");
       if (operation === "set") return {kind: "call", callable: this.builtin("exception-set-args"), args: [receiver, item]};
       return {kind: "value", value: this.exceptionArgs(receiver)};
+    }
+    if (receiver instanceof ExceptionValue && receiver.nativeFields?.has(name) && owner instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, owner.name)) {
+      if (operation === "get") return {kind: "value", value: receiver.nativeFields.get(name)};
+      const before = receiver.nativeFields.get(name);
+      receiver.nativeFields.set(name, operation === "delete" ? null : item);
+      try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
+      catch (error) { receiver.nativeFields.set(name, before); throw error; }
+      return {kind: "value", value: null};
     }
     if (receiver instanceof ExceptionValue && ["__context__", "__cause__", "__suppress_context__", "value"].includes(name)) {
       if (name === "value") {

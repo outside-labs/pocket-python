@@ -5,7 +5,7 @@ import {NATIVE_SUBCLASS_BASES, CONTAINER_METHODS, CONTAINER_METHOD_NAMES} from "
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, NATIVE_PROTOCOL_KEYS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS, StringValue} from "./values.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, GENERIC_EXCEPTION_BASES, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, EXCEPTION_BASES, EXCEPTION_LAYOUTS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, hierarchyTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -23,7 +23,7 @@ const NATIVE_ARITIES = Object.freeze({
 // Fixed phases of the existing machine. Python callbacks enter its ordinary
 // frames; destinations use its block stack and single unwinder.
 export function operationRuntime({state, memory, values, classes, moduleContext, maxDepth,
-  allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
+  allocate, mutate, python, nameError, hard, charge, enter, bind, block, store, onOutput, setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle, resumeGenerator, yieldGenerator, delegateResult, injectGenerator}) {
   const compiler = dynamicCompiler({state, memory, values, classes, allocate, charge, python, hard});
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
@@ -86,6 +86,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const makeException = (name, args, type = null) => {
     const scalar = args.length === 1 && (args[0] === null || ["bigint", "boolean"].includes(typeof args[0]) || args[0] instanceof StringValue);
     return allocate(ExceptionValue, name, args, scalar ? display(args[0]) : "", type);
+  };
+  const initializeException = (receiver, args, keywords, keywordValues, owner) => {
+    const fields = ["NameError", "UnboundLocalError"].includes(owner) ? ["name"] : null;
+    if (!fields && keywords.length) python("TypeError", "Exception initialization does not accept keywords");
+    mutate(receiver, () => {
+      const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs];
+      receiver.args = args; receiver.argsTuple = undefined; receiver.messageArgs = false;
+      const first = args[0]; receiver.message = args.length === 1 && (first === null || ["bigint", "boolean"].includes(typeof first) || first instanceof StringValue) ? display(first) : "";
+      return () => { [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs] = before; };
+    });
+    // Structured initializers replace args before validating keywords. On a
+    // keyword error, their old native fields remain intact.
+    if (fields) {
+      if (keywords.some(key => !fields.includes(key))) python("TypeError", "Invalid " + owner + " keyword argument");
+      mutate(receiver, () => {
+        const before = new Map(receiver.nativeFields);
+        for (const key of fields) receiver.nativeFields.set(key, keywords.includes(key) ? keywordValues[keywords.indexOf(key)] : null);
+        return () => { receiver.nativeFields = before; };
+      });
+    }
   };
   const exceptionString = (value, site, after, depth) => {
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
@@ -250,6 +270,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
+    if (["NameError", "UnboundLocalError"].includes(callable.name) && state.frames.at(-1).pool.code.version >= 4) {
+      const positional = args.slice(0, args.length - keywords.length), keywordValues = args.slice(positional.length);
+      const value = makeException(callable.name, positional); state.temporaries.push(value);
+      initializeException(value, positional, keywords, keywordValues, callable.name);
+      return value;
+    }
     if (keywords.length) python("TypeError", callable.name + "() does not accept keywords in this profile");
     if (callable.name === "callable") {
       if (args.length !== 1) python("TypeError", "callable() requires one positional argument.");
@@ -751,7 +777,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "global-mapping-name" && value.name === "KeyError") {
         const result = builtinLookup(state.frames.at(-1), current.name, site, current.after); return result.task || valueTask(result.value, site, current.after);
       }
-      if (current.kind === "builtin-mapping-name" && value.name === "KeyError") python(current.name === "__import__" && current.after?.kind === "import-statement-call" ? "ImportError" : "NameError", "name '" + current.name + "' is not defined");
+      if (current.kind === "builtin-mapping-name" && value.name === "KeyError") {
+        if (current.name === "__import__" && current.after?.kind === "import-statement-call") python("ImportError", "name '" + current.name + "' is not defined");
+        nameError("name '" + current.name + "' is not defined", current.name);
+      }
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "instance-entry" && current.operation !== "get" && value.name === "KeyError")
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
@@ -905,7 +934,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (["global-mapping-name", "builtin-mapping-name"].includes(completion?.kind)) return valueTask(value, site, completion.after);
     if (completion?.kind === "builtin-name") {
-      if (!value.items[0]) python(completion.name === "__import__" && completion.after?.kind === "import-statement-call" ? "ImportError" : "NameError", "name '" + completion.name + "' is not defined");
+      if (!value.items[0]) {
+        if (completion.name === "__import__" && completion.after?.kind === "import-statement-call") python("ImportError", "name '" + completion.name + "' is not defined");
+        nameError("name '" + completion.name + "' is not defined", completion.name);
+      }
       return valueTask(value.items[1], site, completion.after);
     }
     if (completion?.kind === "name-stored") return null;
@@ -933,7 +965,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (["global-name", "global-delete"].includes(completion?.kind)) {
       const [found, item] = value.items;
       if (completion.kind === "global-delete") {
-        if (!found) python("NameError", "name '" + completion.name + "' is not defined");
+        if (!found) nameError("name '" + completion.name + "' is not defined", completion.name);
         return null;
       }
       if (found) return valueTask(item, site, completion.after);
@@ -2506,7 +2538,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           const nativeOwner = callable.nativeOwner instanceof BuiltinValue ? callable.nativeOwner.name : callable.name.split(".")[0];
           const nativeName = callable.nativeKey ?? callable.name.slice(callable.name.indexOf(".") + 1);
-          if (GENERIC_EXCEPTION_BASES.includes(nativeOwner)) {
+          if (EXCEPTION_BASES.includes(nativeOwner)) {
             if (nativeName === "add_note") {
               if (args.length !== 2 || keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "add_note() takes one positional note argument");
               if (!(classes.payload(args[1]) instanceof StringValue)) python("TypeError", "note must be a str");
@@ -2515,18 +2547,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (nativeName === "__new__") {
               const type = args[0];
               if (!classes.isType(type) || !classes.subclass(type, classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
-              const base = classes.mro(type).find(base => base instanceof BuiltinValue && GENERIC_EXCEPTION_BASES.includes(base.name));
+              const bases = classes.mro(type).filter(base => base instanceof BuiltinValue && EXCEPTION_BASES.includes(base.name));
+              const base = bases.find(base => EXCEPTION_LAYOUTS[base.name] !== "BaseException") ?? bases[0];
               task = valueTask(makeException(base.name, args.slice(1), type instanceof ClassValue ? type : null), site, completion); continue;
             }
             if (nativeName === "__init__") {
-              if (keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "Exception initialization requires a receiver and positional arguments");
-              const receiver = args[0], replacement = args.slice(1);
-              mutate(receiver, () => {
-                const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs];
-                receiver.args = replacement; receiver.argsTuple = undefined; receiver.messageArgs = false;
-                const first = replacement[0]; receiver.message = replacement.length === 1 && (first === null || ["bigint", "boolean"].includes(typeof first) || first instanceof StringValue) ? display(first) : "";
-                return () => { [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs] = before; };
-              });
+              if (!(args[0] instanceof ExceptionValue)) python("TypeError", "Exception initialization requires an exception receiver");
+              initializeException(args[0], args.slice(1), keywords, keywordValues, nativeOwner);
               task = valueTask(null, site, completion); continue;
             }
             if (nativeName === "__str__") {

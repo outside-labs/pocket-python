@@ -79,6 +79,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     return error;
   };
   const python = (name, message, args = null) => { throw new Raised(exception(name, message, args)); };
+  const nameError = (message, key) => {
+    const error = exception("NameError", message); state.temporaries.push(error);
+    const name = values.string(Array.from(key, char => char.codePointAt(0)));
+    mutate(error, () => { error.nativeFields.set("name", name); return () => { error.nativeFields.set("name", null); }; });
+    throw new Raised(error);
+  };
   const values = new ValueRuntime({memory, charge, numeric: verified.code.version >= 4, fail: (name, message, code = "PYTHON", args = null) => {
     if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message, args);
     hard(code, name, message);
@@ -107,7 +113,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     if (cell?.bound) return cell.value;
     if (!global && classBody && !frame.namespaceEnvironment && key === "__firstlineno__" && frame.namespaceOrder.has(key)) return values.int(BigInt(frame.fn.firstLine ?? frame.callsite?.location?.span[0] ?? 1));
     if (local && !classBody && frame.index !== 0) python("UnboundLocalError", "cannot access local variable '" + key + "' where it is not associated with a value");
-    if (!global && frame.closure.has(key) && !(classBody && local)) python("NameError", "cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope");
+    if (!global && frame.closure.has(key) && !(classBody && local)) nameError("cannot access free variable '" + key + "' where it is not associated with a value in enclosing scope", key);
     if (fallback) return fallback();
     if (frame.pool.code.version === 5 && key === "object") return objectType();
     if (frame.pool.code.version === 5 && key === "NotImplemented") return moduleContext.builtin(key, () => allocate(NotImplementedValue));
@@ -118,7 +124,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       if (!state.builtins.has(key)) state.builtins.set(key, allocate(BuiltinValue, key));
       return state.builtins.get(key);
     }
-    python("NameError", "name '" + key + "' is not defined");
+    nameError("name '" + key + "' is not defined", key);
   };
   const targetCell = (frame, key, create = false) => {
     if (frame.fn.nonlocals?.includes(key)) return frame.closure.get(key);
@@ -448,7 +454,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     } finally { leave(); }
   };
   const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement} = operationRuntime({state, memory, values, classes,
-    moduleContext, maxDepth, allocate, mutate, python, hard, charge, enter, bind, block, store, onOutput,
+    moduleContext, maxDepth, allocate, mutate, python, nameError, hard, charge, enter, bind, block, store, onOutput,
     setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
@@ -845,8 +851,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           frame.namespaceOrder.delete(arg); const cell = targetCell(frame, arg); if (cell?.bound) setCell(cell, null, false); return;
         }
         if (!targetCell(frame, arg)?.bound) {
-          if (frame.fn.nonlocals?.includes(arg)) python("NameError", "cannot access free variable '" + arg + "' where it is not associated with a value in enclosing scope");
-          if (frame.index === 0 || frame.fn.kind === "class" || frame.fn.globals?.includes(arg)) python("NameError", "name '" + arg + "' is not defined");
+          if (frame.fn.nonlocals?.includes(arg)) nameError("cannot access free variable '" + arg + "' where it is not associated with a value in enclosing scope", arg);
+          if (frame.index === 0 || frame.fn.kind === "class" || frame.fn.globals?.includes(arg)) nameError("name '" + arg + "' is not defined", arg);
           python("UnboundLocalError", "cannot access local variable '" + arg + "' where it is not associated with a value");
         }
         store(frame, arg, null, false);
@@ -961,6 +967,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           } else if (receiver instanceof ExceptionValue && frame.pool.code.version === 5 && (receiver.type || arg !== "args" && arg !== "value"))
             dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (receiver instanceof ExceptionValue && arg === "args") stack.push(classes.exceptionArgs(receiver));
+          else if (receiver instanceof ExceptionValue && receiver.nativeFields?.has(arg)) stack.push(receiver.nativeFields.get(arg));
           else if (receiver instanceof ExceptionValue && arg === "value" && receiver.name === "StopIteration") stack.push(classes.exceptionValue(receiver));
           else if (values.isComplex(receiver)) stack.push(values.complexAttribute(receiver, arg));
           else if (values.isRange(receiver)) stack.push(values.rangeAttribute(receiver, arg));

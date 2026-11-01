@@ -17,6 +17,7 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-14 | Lazy handler expressions, named/empty flat tuples, attribute/call/subscript selection and tuple subclasses | Each selected expression completes before all flat tuple elements are validated. Matching uses actual ancestry. Nested tuples and nonexception elements raise TypeError; later clauses are evaluated only after a valid nonmatch. |
 | LA-15 | `BaseException.add_note(note, /)`, inherited bound/unbound calls, lazy `__notes__`, string identity, ordinary note replacement/deletion and owned attribute hooks | Nonstring notes fail before lookup. An existing list or list subclass is appended through native storage; a missing attribute creates a list through ordinary assignment. Notes preserve `args` and `str(error)`; host summaries and traceback rendering retain their separate diagnostic contract. |
 | LA-16 | Composed handler/note record loading, modules, dynamic source, reraises and generator suspension during handler selection; offline cancellation and restart | The corpus records 174 observations: 167 semantic/error comparisons and seven explicit refusals, with 39 cases shared by core-source/1. Handler and note callbacks preserve zero logical teardown, including suspended selection and cyclic note dictionaries. |
+| LA-17 | `NameError(*args, name=None)` and `UnboundLocalError`, mutable native `name`, subclasses and explicit native initializers/descriptors | Native fields preserve identity independently of `args` and dictionaries. Reinitialization replaces arguments before rejecting an unknown keyword, preserving old fields on that error. Global/free/deleted missing names populate `name`; unbound locals retain None. Structured layouts permit compatible generic exception bases and reject conflicting storage. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -29,6 +30,13 @@ note lists.
 
 Exception groups, traceback objects, specialized native exception fields,
 serialization and remaining formatting families retain separate gates.
+
+NameError and UnboundLocalError now have their own adopted native layout, with
+ordinary subclass dictionaries/slots, constructors and actual-ancestry handlers.
+Their scalar constructor/field-read cases explicitly shared with core-source/1
+do not admit owned callbacks in that profile. Traceback objects, native error
+suggestions and class-namespace deletion enrichment remain separate from these
+constructor/storage contracts.
 
 The generic subclass bases are BaseException, GeneratorExit, Exception,
 AssertionError, ArithmeticError, ZeroDivisionError, OverflowError, LookupError,
