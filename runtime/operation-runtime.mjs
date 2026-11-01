@@ -188,6 +188,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     items.sort((left, right) => values.less(left, right) ? -1 : values.less(right, left) ? 1 : 0);
     return values.list(items);
   };
+  const sequenceScan = (record, site) => {
+    const receiver = classes.payload(record.receiver);
+    while (record.position < receiver.items.length && BigInt(record.position) < record.stop) {
+      charge(1);
+      const candidate = receiver.items[record.position];
+      if (candidate !== record.key) return compareTask("equal", candidate, record.key, site,
+        continuation("sequence-scan-equal", {...record, candidate}), record.depth);
+      if (record.name === "index") return valueTask(values.int(BigInt(record.position)), site, record.after);
+      record = {...record, position: record.position + 1, count: record.count + 1};
+    }
+    if (record.name === "index") python("ValueError", "Sequence index value not found");
+    return valueTask(values.int(BigInt(record.count)), site, record.after);
+  };
   const bindNamed = (labels, args, keywords, keywordValues) => {
     if (args.length > labels.length) python("TypeError", "Too many positional arguments");
     const bound = new Map(labels.slice(0, args.length).map((name, index) => [name, args[index]]));
@@ -1038,6 +1051,20 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (name === "insert") items.splice(Number(index), 0, item); else items.splice(Number(index), 1);
       mutate(receiver, () => { const before = receiver.items; receiver.items = items; return () => { receiver.items = before; }; });
       return valueTask(result, site, after);
+    }
+    if (completion?.kind === "sequence-bound") {
+      const {receiver, key, position, depth, after} = completion, maximum = (1n << 63n) - 1n;
+      const bounds = completion.bounds.map((bound, index) => index === position ? value < -maximum - 1n ? -maximum - 1n : value > maximum ? maximum : value : bound);
+      if (position === 0) return unaryTask("index", bounds[1], site,
+        continuation("sequence-bound", {...completion, bounds, position: 1}), depth);
+      const length = BigInt(classes.payload(receiver).items.length);
+      const [start, stop] = bounds.map(bound => bound < 0n ? bound + length < 0n ? 0n : bound + length : bound);
+      return sequenceScan({receiver, key, name: "index", position: Number(start), stop, count: 0, candidate: null, depth, after}, site);
+    }
+    if (completion?.kind === "sequence-scan-equal") return unaryTask("truth", value, site, continuation("sequence-scan-truth", completion), completion.depth);
+    if (completion?.kind === "sequence-scan-truth") {
+      if (value && completion.name === "index") return valueTask(values.int(BigInt(completion.position)), site, completion.after);
+      return sequenceScan({...completion, position: completion.position + 1, count: completion.count + (value ? 1 : 0)}, site);
     }
     if (completion?.kind === "native-bytes-init") {
       const receiver = completion.receiver.nativePayload;
@@ -2431,6 +2458,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (CONTAINER_METHODS[containerOwner]?.includes(nativeName)) {
             const original = callable instanceof ValueMethod ? callable.receiver : args[0];
             const receiver = classes.payload(original), rest = callable instanceof ValueMethod ? args : args.slice(1);
+            if (["count", "index"].includes(nativeName)) {
+              if (keywords.length || rest.length < 1 || rest.length > (nativeName === "index" ? 3 : 1))
+                python("TypeError", "Invalid " + nativeName + " arguments");
+              task = nativeName === "count" ? sequenceScan({receiver: original, key: rest[0], name: nativeName,
+                position: 0, stop: (1n << 63n) - 1n, count: 0, candidate: null, depth, after: completion}, site) :
+                unaryTask("index", rest.length > 1 ? rest[1] : 0n, site,
+                  continuation("sequence-bound", {receiver: original, key: rest[0], bounds: [0n, rest.length > 2 ? rest[2] : (1n << 63n) - 1n], position: 0, depth, after: completion}), depth);
+              continue;
+            }
             if (["insert", "pop"].includes(nativeName)) {
               if (keywords.length || (nativeName === "insert" ? rest.length !== 2 : rest.length > 1))
                 python("TypeError", "Invalid " + nativeName + " arguments");

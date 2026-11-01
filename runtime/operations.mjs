@@ -107,6 +107,10 @@ export function completion(kind, fields = {}) {
     case "native-reinit": case "native-property-copy": record = {kind, receiver: fields.receiver, after}; break;
     case "native-repeat": record = {kind, receiver: fields.receiver, inplace: fields.inplace, after}; break;
     case "list-index": record = {kind, receiver: fields.receiver, name: fields.name, item: fields.item, after}; break;
+    case "sequence-bound": record = {kind, receiver: fields.receiver, key: fields.key, bounds: operands(fields.bounds), position: fields.position, depth: fields.depth, after}; depthCheck(record.depth); break;
+    case "sequence-scan-equal": case "sequence-scan-truth":
+      record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, position: fields.position,
+        count: fields.count, stop: fields.stop, candidate: fields.candidate, depth: fields.depth, after}; depthCheck(record.depth); break;
     case "native-bytes-init": record = {kind, receiver: fields.receiver, after}; break;
     case "native-new": record = {kind, type: fields.type, after}; break;
     case "new-result":
@@ -353,6 +357,8 @@ function visit(record) {
     case "native-reinit": case "native-property-copy": return [record.receiver, ...completionRoots(record.after)];
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "list-index": return [record.receiver, record.item, ...completionRoots(record.after)];
+    case "sequence-bound": return [record.receiver, record.key, ...record.bounds, ...completionRoots(record.after)];
+    case "sequence-scan-equal": case "sequence-scan-truth": return [record.receiver, record.key, record.candidate, record.stop, ...completionRoots(record.after)];
     case "native-bytes-init": return [record.receiver, ...completionRoots(record.after)];
     case "native-new": return [record.type, ...completionRoots(record.after)];
     case "eval-locals": case "eval-builtins-probe": case "eval-builtins-default": case "eval-builtins-stored": return [record.source, record.globals, record.locals, record.builtins, record.key, record.closure, ...completionRoots(record.after)];

@@ -5,7 +5,8 @@
   "reference_version": "3.14.7",
   "implemented_stages": [
     "LA-1",
-    "LA-2"
+    "LA-2",
+    "LA-3"
   ],
   "cases": [
     {
@@ -438,6 +439,335 @@
       "source": "list.insert((),0,7)\n",
       "stdout": "",
       "error_type": "TypeError"
+    },
+    {
+      "id": "list-count",
+      "stage": "LA-3",
+      "source": "a=[1,2,1,3]\nprint(a.count(1),a.count(9),a.index(1),a.index(1,1),a.index(3,-1,10**40))\n",
+      "stdout": "2 0 0 2 3\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-index-negative",
+      "stage": "LA-3",
+      "source": "a=[1,2,1,3]\nprint(a.index(1,-99,-1),a.index(1,True,3))\n",
+      "stdout": "0 2\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-absent",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].index(9)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-stop",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].index(1,1,2)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-empty-range",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].index(1,3,1)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-none",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].index(1,None)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-float",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].index(1,1.0)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-extra",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].count(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-count-missing",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].count()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-index-missing",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].index()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-count-keyword",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].count(value=1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-index-keyword",
+      "stage": "LA-3",
+      "source": "[1,2,1,3].index(1,start=0)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "list-search-native",
+      "stage": "LA-3",
+      "source": "a=[1,2,1,3]\nprint(list.count(a,1),list.index.__get__(a)(3))\n",
+      "stdout": "2 3\n"
+    },
+    {
+      "id": "list-search-receiver",
+      "stage": "LA-3",
+      "source": "list.count(7,1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "tuple-count",
+      "stage": "LA-3",
+      "source": "a=(1,2,1,3)\nprint(a.count(1),a.count(9),a.index(1),a.index(1,1),a.index(3,-1,10**40))\n",
+      "stdout": "2 0 0 2 3\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-index-negative",
+      "stage": "LA-3",
+      "source": "a=(1,2,1,3)\nprint(a.index(1,-99,-1),a.index(1,True,3))\n",
+      "stdout": "0 2\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-absent",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).index(9)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-stop",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).index(1,1,2)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-empty-range",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).index(1,3,1)\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-none",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).index(1,None)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-float",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).index(1,1.0)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-extra",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).count(1,2)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-count-missing",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).count()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-index-missing",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).index()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-count-keyword",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).count(value=1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-index-keyword",
+      "stage": "LA-3",
+      "source": "(1,2,1,3).index(1,start=0)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "tuple-search-native",
+      "stage": "LA-3",
+      "source": "a=(1,2,1,3)\nprint(tuple.count(a,1),tuple.index.__get__(a)(3))\n",
+      "stdout": "2 3\n"
+    },
+    {
+      "id": "tuple-search-receiver",
+      "stage": "LA-3",
+      "source": "tuple.count(7,1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "search-identity",
+      "stage": "LA-3",
+      "source": "class A:\n def __eq__(self,other): raise ValueError(\"bad\")\na=A()\nprint([a].count(a),(a,).index(a))\n",
+      "stdout": "1 0\n"
+    },
+    {
+      "id": "search-equality-truth",
+      "stage": "LA-3",
+      "source": "class T:\n def __bool__(self):\n  print(\"truth\")\n  return True\nclass A:\n def __eq__(self,other):\n  print(\"equal\")\n  return T()\na=A()\nprint([a].count(7),(a,).index(7))\n",
+      "stdout": "equal\ntruth\nequal\ntruth\n1 0\n"
+    },
+    {
+      "id": "search-mutating-list",
+      "stage": "LA-3",
+      "source": "a=[]\nclass A:\n def __eq__(self,other):\n  a.clear()\n  a.append(7)\n  return False\na.append(A())\na.append(7)\nprint(a.count(7),a[0])\n",
+      "stdout": "0 7\n"
+    },
+    {
+      "id": "search-conversion-order",
+      "stage": "LA-3",
+      "source": "a=[1,2,3]\nclass I:\n def __init__(self,label,value): self.label=label; self.value=value\n def __index__(self):\n  print(self.label)\n  return self.value\nprint(a.index(2,I(\"start\",0),I(\"stop\",3)))\n",
+      "stdout": "start\nstop\n1\n"
+    },
+    {
+      "id": "search-conversion-mutates",
+      "stage": "LA-3",
+      "source": "a=[1,2]\nclass I:\n def __index__(self):\n  a.clear()\n  a.append(7)\n  return 0\nprint(a.index(7,I()))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "search-callback-error",
+      "stage": "LA-3",
+      "source": "class A:\n def __eq__(self,other): raise ValueError(\"bad\")\n[A()].count(7)\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "search-subclass-native",
+      "stage": "LA-3",
+      "source": "class A(list):\n def __iter__(self): raise ValueError(\"bad\")\n def __getitem__(self,k): raise ValueError(\"bad\")\na=A([7,8,7])\nprint(a.count(7),list.index(a,8))\n",
+      "stdout": "2 1\n"
     }
   ]
 }
