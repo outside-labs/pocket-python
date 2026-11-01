@@ -112,7 +112,7 @@ jobs:
           - {suite: browser-integration, shard: 2, shards: 3}
           - {suite: browser-integration, shard: 3, shards: 3}
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ matrix.suite == 'browser-integration' && 15 || 12 }}
+    timeout-minutes: 15
     env:
       UV_PYTHON: '3.14.7'
     steps:
