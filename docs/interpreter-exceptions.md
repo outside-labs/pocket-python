@@ -42,10 +42,22 @@ through `__index__`, with signed 64-bit bounds; numeric member assignment accept
 integers without index callbacks. Argument replacement precedes validation,
 while successful field publication follows it. The exact contract follows the
 pinned [native initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3625-L3643).
-Native translation rendering follows LA-30; Encode/Decode remain under #124.
+LA-30 adds native translation rendering; Encode/Decode remain under #124.
 Deleted object/reason fields read as None independently of args and dictionaries.
 Owned callbacks preserve their mutations when validation fails. The explicitly
 shared scalar core-source/1 cases do not admit owned callbacks in that profile.
+
+Native `UnicodeTranslateError.__str__` follows the pinned
+[renderer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3647-L3697).
+An absent object renders an empty string before invoking any reason callback.
+Otherwise the native reason is formatted first, then object/start/end are read,
+including changes made by that callback. One valid character uses a lowercase
+hex escape of width two, four or eight; other ranges use their original numeric
+positions and the signed 64-bit end-minus-one value. Native field reads bypass
+owned properties. Deleted reason storage renders `<NULL>`, while an explicit
+None renders `None`. Argument replacement and the unused encoding field do not
+alter this selection. Host summaries retain copied safe diagnostics without
+running these source-level formatting callbacks.
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source

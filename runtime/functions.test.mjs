@@ -19,8 +19,8 @@ const run = (source, options = {}) => {
   return {value, output};
 };
 
-test("legacy syntax exception messages preserve their scalar constructor contract", () => {
-  for (const name of ["SyntaxError", "IndentationError", "TabError"]) {
+test("legacy structured exception messages preserve their scalar constructor contract", () => {
+  for (const name of ["SyntaxError", "IndentationError", "TabError", "UnicodeTranslateError"]) {
     const {output} = run('print(str(' + name + '("bad")),str(' + name + '(7)),str(' + name + '()))\nprint(' + name + '("direct"))\n');
     assert.equal(output, 'bad 7 \ndirect\n');
   }

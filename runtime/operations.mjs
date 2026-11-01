@@ -107,6 +107,7 @@ export function completion(kind, fields = {}) {
     case "native-reinit": case "native-property-copy": record = {kind, receiver: fields.receiver, after}; break;
     case "syntax-details": record = {kind, receiver: fields.receiver, result: fields.result, after}; break;
     case "syntax-message": record = {kind, receiver: fields.receiver, suffix: fields.suffix, after}; break;
+    case "unicode-translate-message": record = {kind, receiver: fields.receiver, after}; break;
     case "unicode-translate-index":
       record = {kind, receiver: fields.receiver, args: operands(fields.args), start: fields.start ?? null,
         position: fields.position, result: fields.result, depth: fields.depth, after};
@@ -375,6 +376,7 @@ function visit(record) {
     case "native-reinit": case "native-property-copy": return [record.receiver, ...completionRoots(record.after)];
     case "syntax-details": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "syntax-message": return [record.receiver, record.suffix, ...completionRoots(record.after)];
+    case "unicode-translate-message": return [record.receiver, ...completionRoots(record.after)];
     case "unicode-translate-index": return [record.receiver, ...record.args, record.start, record.result, ...completionRoots(record.after)];
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "list-index": return [record.receiver, record.item, ...completionRoots(record.after)];
