@@ -38,7 +38,8 @@
     "LA36",
     "LA37",
     "LA38",
-    "LA39"
+    "LA39",
+    "LA40"
   ],
   "cases": [
     {
@@ -6051,6 +6052,70 @@
         "classes-source/1",
         "core-source/1"
       ]
+    },
+    {
+      "id": "runtime-encoding-record-example",
+      "stage": "LA40",
+      "source": "\"\"\"Retain a failed record and the codec's original input and location.\"\"\"\n\n\nclass RecordEncodingError(ValueError):\n    def __init__(self, record):\n        super().__init__(\"record cannot be encoded\")\n        self.record = record\n\n\ndef encode_record(record):\n    try:\n        return record[\"text\"].encode(\"ascii\")\n    except UnicodeEncodeError as failure:\n        failure.add_note(\"check the original record\")\n        raise RecordEncodingError(record) from failure\n\n\nrecord = {\"id\": 7, \"text\": \"A\u96ea\u00e9B\"}\ntry:\n    encode_record(record)\nexcept RecordEncodingError as error:\n    failure = error.__cause__\n    print(error.record is record, failure.object is record[\"text\"])\n    print(failure.encoding, failure.start, failure.end, failure.reason)\n    print(str(failure))\n    print(failure.__notes__[0])\n",
+      "stdout": "True True\nascii 1 3 ordinal not in range(128)\n'ascii' codec can't encode characters in position 1-2: ordinal not in range(128)\ncheck the original record\n"
+    },
+    {
+      "id": "runtime-encoding-core-program",
+      "stage": "LA40",
+      "source": "s=\"A\u96ea\u00e9B\"\ntry: s.encode(\"ascii\")\nexcept UnicodeEncodeError as e:\n print(e.object is s,e.encoding,e.start,e.end,e.reason,len(e.args))\n print(str(e))\n",
+      "stdout": "True ascii 1 3 ordinal not in range(128) 5\n'ascii' codec can't encode characters in position 1-2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encoding-dynamic-failure",
+      "stage": "LA40",
+      "source": "exec(compile(\"def fail():\\n chr(0xd800).encode()\\nfail()\",\"runtime-encoding-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "UnicodeEncodeError"
+    },
+    {
+      "id": "runtime-encoding-dynamic-scope",
+      "stage": "LA40",
+      "source": "scope={\"text\":\"\u96ea\"}\nexec(compile(\"try: text.encode('ascii')\\nexcept UnicodeEncodeError as e: saved=e\",\"runtime-input.py\",\"exec\"),scope)\ne=scope[\"saved\"]\nprint(e.object is scope[\"text\"],e.encoding,e.start,e.end,str(e))\n",
+      "stdout": "True ascii 0 1 'ascii' codec can't encode character '\\u96ea' in position 0: ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-encoding-generator-cleanup",
+      "stage": "LA40",
+      "source": "def work():\n try:\n  try: \"\u96ea\".encode(\"ascii\")\n  except UnicodeEncodeError as e: yield e\n finally: chr(0xd800).encode()\ni=work()\ne=next(i)\ntry: i.close()\nexcept UnicodeEncodeError as caught: print(caught.encoding,caught.reason,str(caught))\nprint(e.object,e.reason)\n",
+      "stdout": "utf-8 surrogates not allowed 'utf-8' codec can't encode character '\\ud800' in position 0: surrogates not allowed\n\u96ea ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-encoding-module-cycle",
+      "stage": "LA40",
+      "source": "import helper\nrecord={\"text\":\"\u96ea\u00e9\"}\ntry: helper.fail(record)\nexcept UnicodeEncodeError as e:\n print(e.object is record[\"text\"],record[\"error\"] is e,e.__cause__.args[0])\n print(str(e),e.__notes__[0])\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def fail(record):\n try: record[\"text\"].encode(\"ascii\")\n except UnicodeEncodeError as e:\n  record[\"error\"]=e\n  e.record=record\n  e.add_note(\"original\")\n  raise e from ValueError(7)\n"
+        }
+      ],
+      "stdout": "True True 7\n'ascii' codec can't encode characters in position 0-1: ordinal not in range(128) original\n"
+    },
+    {
+      "id": "runtime-encoding-rendering-callback",
+      "stage": "LA40",
+      "source": "try: \"\u96ea\".encode(\"ascii\")\nexcept UnicodeEncodeError as error: e=error\nclass Reason:\n def __str__(self):\n  e.object=\"\u00e9\"\n  e.reason=None\n  return \"kept\"\ne.reason=Reason()\nprint(str(e),e.args[1],e.args[4])\n",
+      "stdout": "'ascii' codec can't encode character '\\xe9' in position 0: kept \u96ea ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-encoding-handler-expression",
+      "stage": "LA40",
+      "source": "def handlers(): return (UnicodeDecodeError,UnicodeEncodeError)\ntry: \"\u96ea\".encode(\"ascii\")\nexcept handlers() as e: print(e.encoding,e.object,e.start,e.end)\n",
+      "stdout": "ascii \u96ea 0 1\n"
     }
   ],
   "reference_boundaries": [
