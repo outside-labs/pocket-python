@@ -160,6 +160,7 @@ export function verifyFunctions(program) {
         else if (modern && ["yield", "yield-from", "list-push", "list-extend", "list-to-tuple", "dict-merge", "dict-insert", "set-insert", "set-extend"].includes(op)) {
           if (["yield", "yield-from"].includes(op) && (functionIndex === 0 || kind === "class")) fail("Yield requires a function body.");
         }
+        else if (modern && op === "raise-from") {}
         else if (modern && op === "assertion-error") { length = 2; if (typeof arg !== "boolean") fail("Invalid assertion message flag."); }
         else if (modern && op === "call-keyword") { length = 2; if (!validName(arg)) fail("Invalid assembled keyword name."); }
         else if (modern && ["call-start", "call-argument", "call-star", "call-mapping", "call-expanded"].includes(op)) {}
@@ -195,11 +196,11 @@ export function verifyFunctions(program) {
       const heights = new Map([[0, 0]]), pending = [0];
       for (let cursor = 0; cursor < pending.length; cursor++) {
         const at = pending[cursor], [op, arg, extra] = instructions[at], before = heights.get(at);
-        const needs = op === "dict-insert" ? 3 : ["list-push", "list-extend", "dict-merge", "set-insert", "set-extend"].includes(op) ? 2 : ["unpack", "list-to-tuple"].includes(op) ? 1 : op === "assertion-error" ? Number(arg) : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? 2 : ["call-start", "call-expanded", "class-expanded"].includes(op) ? 1 : ["function-defaults", "class-keywords"].includes(op) ? extra + instructions[at][3].length : ["class", "class-meta"].includes(op) ? extra + Number(op === "class-meta") : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
+        const needs = op === "raise-from" ? 2 : op === "dict-insert" ? 3 : ["list-push", "list-extend", "dict-merge", "set-insert", "set-extend"].includes(op) ? 2 : ["unpack", "list-to-tuple"].includes(op) ? 1 : op === "assertion-error" ? Number(arg) : ["call-argument", "call-star", "call-mapping", "call-keyword"].includes(op) ? 2 : ["call-start", "call-expanded", "class-expanded"].includes(op) ? 1 : ["function-defaults", "class-keywords"].includes(op) ? extra + instructions[at][3].length : ["class", "class-meta"].includes(op) ? extra + Number(op === "class-meta") : op === "attribute-set" ? 2 : BINARY.has(op) || op === "swap" ? 2 : ["setitem", "build-slice"].includes(op) ? 3 : op === "slice" ? 4 :
           op === "call" ? 1 + arg + extra.length : CONSTRUCT.has(op) ? arg * (op === "build-dict" ? 2 : 1) :
           UNARY.has(op) || ["yield", "yield-from", "attribute-get", "attribute-delete", "module-get", "import-from", "store", "display", "pop", "dup", "if", "jump-if-false", "return", "raise"].includes(op) ? 1 : 0;
         if (before < needs) fail("Reachable function stack underflow.");
-        if (["end", "return", "raise", "reraise", "break", "continue"].includes(op)) {
+        if (["end", "return", "raise", "raise-from", "reraise", "break", "continue"].includes(op)) {
           if (before !== (op === "end" ? Number(block.kind === "expression") : needs)) fail("Block completion requires an exact stack height.");
           continue;
         }

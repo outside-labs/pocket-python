@@ -13,7 +13,8 @@ export async function runSourceRequest(request) {
   } catch (error) {
     response = {ok: false, stdout, compilation, error: {code: error.code || "HOST", type: error.name,
       phase: error.phase || "execute", message: error.message, location: error.location || null,
-      traceback: error.traceback || [], context: error.context || null}, stats: session?.stats() || null};
+      traceback: error.traceback || [], context: error.context || null, cause: error.cause || null,
+      suppressContext: error.suppressContext === true}, stats: session?.stats() || null};
   } finally {
     session?.close(); registry?.close();
     if (session) response.closed = session.stats();

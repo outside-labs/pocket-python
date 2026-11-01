@@ -569,16 +569,14 @@
     {
       "id": "exception-causes",
       "source": "try:\n raise ValueError(\"bad\") from None\nexcept ValueError: print(\"caught\")\n",
-      "classification": "deferred",
+      "classification": "supported",
       "reference": {
         "stdout": "caught\n",
         "error_type": null
       },
       "engine": {
-        "stdout": "",
-        "error_type": null,
-        "code": "UNSUPPORTED",
-        "phase": "parse"
+        "stdout": "caught\n",
+        "error_type": null
       }
     },
     {

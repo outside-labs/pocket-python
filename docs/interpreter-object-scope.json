@@ -809,12 +809,6 @@
     },
     {
       "path": "runtime/source-parser.mjs",
-      "site": "if (this.at(\"from\")) this.unsupported(\"Explicit exception causes are not adopted.\");",
-      "owner": "#124",
-      "boundary": "Exception payload, clause, chaining and group semantics."
-    },
-    {
-      "path": "runtime/source-parser.mjs",
       "site": "if (this.at(\":\")) this.unsupported(\"Annotations and pattern statements are not adopted.\", start);",
       "owner": "#125",
       "boundary": "Annotation/type-parameter/generic semantics."

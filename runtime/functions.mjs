@@ -519,6 +519,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     error.traceback = value.traceback.map(frame => ({function: frame.function, location: frame.location}));
     error.location = error.traceback.at(-1)?.location || null;
     error.context = value.context ? {type: value.context.name, message: value.context.message} : null;
+    error.cause = value.cause ? {type: value.cause.name, message: value.cause.message} : null;
+    error.suppressContext = value.suppressContext === true;
     return error;
   };
   const settle = signal => {
@@ -927,17 +929,40 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           caught: null, pending: null, alias: null, site: state.current.location}); block(frame, arg);
       } else if (["end", "return", "break", "continue"].includes(op)) {
         settle({kind: op === "end" ? "normal" : op, value: op === "return" || cursor.block.kind === "expression" ? stack.pop() : null});
-      } else if (op === "raise" || op === "reraise") {
-        let value = op === "raise" ? stack.pop() : frame.activeException;
-        if (!value) python("RuntimeError", "No active exception to reraise");
+      } else if (["raise", "raise-from", "reraise"].includes(op)) {
+        let cause = op === "raise-from" ? stack.pop() : null;
+        let value = op === "reraise" ? frame.activeException : stack.pop();
+        if (op === "raise-from") state.temporaries.push(value, cause);
+        if (op === "reraise" && value === null) python("RuntimeError", "No active exception to reraise");
         if (value instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, value.name)) value = allocate(ExceptionValue, value.name, [], "");
         if (!(value instanceof ExceptionValue)) python("TypeError", "exceptions must derive from BaseException");
-        if (op === "raise") {
+        if (op === "raise-from") {
+          if (cause instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, cause.name)) cause = allocate(ExceptionValue, cause.name, [], "");
+          if (cause !== null && !(cause instanceof ExceptionValue)) python("TypeError", "exception causes must derive from BaseException");
+          mutate(value, () => {
+            const before = [value.cause, value.suppressContext]; value.cause = cause; value.suppressContext = true;
+            return () => { [value.cause, value.suppressContext] = before; };
+          });
+        }
+        if (op !== "reraise") {
           addTrace(value, {function: state.current.function, location: state.current.location});
-          if (frame.activeException && frame.activeException !== value) mutate(value, () => {
+          if (frame.activeException && frame.activeException !== value) {
+            // Explicit metadata can form cycles. Implicit chaining removes a
+            // path back to the raised exception before installing its context.
+            let current = frame.activeException; const seen = new Set([current]);
+            while (current.context) {
+              charge(1);
+              if (current.context === value) {
+                mutate(current, () => { const previous = current.context; current.context = null; return () => { current.context = previous; }; }); break;
+              }
+              if (seen.has(current.context)) break;
+              current = current.context; seen.add(current);
+            }
+            mutate(value, () => {
             const previous = value.context; value.context = frame.activeException;
             return () => { value.context = previous; };
-          });
+            });
+          }
         }
         throw new Raised(value);
       } else if (op === "display") {

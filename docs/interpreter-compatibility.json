@@ -1050,8 +1050,8 @@
     {
       "id": "exceptions",
       "status": "partial",
-      "scope": "Adopted builtin exception classes, catch/raise/bare reraise, try/except/else/finally, active context and source tracebacks.",
-      "gaps": "Custom exception inheritance, explicit causes/suppression and exception groups/except* remain deferred.",
+      "scope": "Adopted builtin exception classes, catch/raise/bare reraise, try/except/else/finally, active context and source tracebacks. LA-8\u2013LA-10 adopt generic argument identity, atomic argument replacement, chaining metadata and explicit causes/suppression with original source frames.",
+      "gaps": "Custom exception inheritance, exception groups/except*, traceback objects and structured native fields remain deferred; argument display families retain #127.",
       "reference_version": "3.14.7",
       "targets": [
         "node",

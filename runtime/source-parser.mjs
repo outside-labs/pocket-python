@@ -165,8 +165,8 @@ class Parser {
     }
     if (this.eat("raise")) {
       const value = this.ending() ? null : this.expression();
-      if (this.at("from")) this.unsupported("Explicit exception causes are not adopted.");
-      return this.node("Raise", start, {value});
+      const cause = this.eat("from") ? this.expression() : null;
+      return this.node("Raise", start, {value, cause});
     }
     if (this.eat("del")) {
       const targets = [this.expression()];

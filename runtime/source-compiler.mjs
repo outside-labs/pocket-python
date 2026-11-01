@@ -588,7 +588,10 @@ class Compiler {
           emit(value, value.key ? "dict-insert" : value.form === "set" ? "set-insert" : "list-push"); emit(value, "pop");
         }
         else if (value.kind === "Return") { value.value ? expr(value.value) : pushNone(value); emit(value, "return"); }
-        else if (value.kind === "Raise") { if (value.value) { expr(value.value); emit(value, "raise"); } else emit(value, "reraise"); }
+        else if (value.kind === "Raise") {
+          if (value.value) { expr(value.value); if (value.cause) expr(value.cause); emit(value, value.cause ? "raise-from" : "raise"); }
+          else emit(value, "reraise");
+        }
         else if (value.kind === "Break" || value.kind === "Continue") emit(value, value.kind.toLowerCase());
         else if (value.kind === "If") { expr(value.test); emit(value, "if", makeBlock(value.body), makeBlock(value.otherwise)); }
         else if (value.kind === "While") emit(value, "while", makeBlock([value.test], true), makeBlock(value.body), makeBlock(value.otherwise));
