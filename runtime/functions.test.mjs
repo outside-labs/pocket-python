@@ -18,6 +18,13 @@ const run = (source, options = {}) => {
   const value = execute(compile(source), {...options, onOutput: text => { output += text; }});
   return {value, output};
 };
+
+test("legacy syntax exception messages preserve their scalar constructor contract", () => {
+  for (const name of ["SyntaxError", "IndentationError", "TabError"]) {
+    const {output} = run('print(str(' + name + '("bad")),str(' + name + '(7)),str(' + name + '()))\nprint(' + name + '("direct"))\n');
+    assert.equal(output, 'bad 7 \ndirect\n');
+  }
+});
 function returning(source, name) {
   const code = compile(source), block = code.functions[0].blocks[0];
   block.instructions.splice(-1, 0, ["load", name], ["return"]);

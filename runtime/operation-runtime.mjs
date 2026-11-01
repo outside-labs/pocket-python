@@ -121,15 +121,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (matchesException(owner, "SyntaxError") && args.length) mutate(receiver, () => {
       const before = receiver.nativeFields.get("msg");
+      const legacy = receiver.legacySyntaxMessage;
       const boundary = receiver.nativeFieldBoundaries?.delete("msg");
-      receiver.nativeFields.set("msg", args[0]);
-      return () => { receiver.nativeFields.set("msg", before); if (boundary) receiver.nativeFieldBoundaries.add("msg"); };
+      receiver.nativeFields.set("msg", args[0]); receiver.legacySyntaxMessage = false;
+      return () => { receiver.nativeFields.set("msg", before); receiver.legacySyntaxMessage = legacy; if (boundary) receiver.nativeFieldBoundaries.add("msg"); };
     });
   };
   const syntaxDetails = (receiver, args, site, after, depth, result) => args.length === 2 ?
     consumeTask("syntax-details", args[1], site, continuation("syntax-details", {receiver, result, after}), depth) : valueTask(result, site, after);
   const syntaxMessage = (value, site, after, depth) => {
-    if (value.nativeFieldBoundaries?.has("msg")) return exceptionString(value, site, after, depth);
+    if (value.legacySyntaxMessage || value.nativeFieldBoundaries?.has("msg")) return exceptionString(value, site, after, depth);
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
     state.temporaries.push(value);
     const raw = classes.payload(value.nativeFields.get("filename")), line = value.nativeFields.get("lineno");
@@ -338,7 +339,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (Object.hasOwn(EXCEPTIONS, callable.name)) {
       if (state.frames.at(-1).pool.code.version < 4) {
         if (args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception arguments require the modern source profile under #124");
-        return allocate(ExceptionValue, callable.name, args, args.length ? display(args[0]) : "");
+        const value = allocate(ExceptionValue, callable.name, args, args.length ? display(args[0]) : "");
+        if (matchesException(callable.name, "SyntaxError")) value.legacySyntaxMessage = true;
+        return value;
       }
       if (["UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError", "SyntaxError", "IndentationError", "TabError"].includes(callable.name) && args.length > 1)
         hard("UNSUPPORTED", "UnsupportedOperationError", "Structured exception constructors remain under #124");
