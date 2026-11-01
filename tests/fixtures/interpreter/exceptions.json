@@ -16,7 +16,8 @@
     "LA16",
     "LA17",
     "LA18",
-    "LA19"
+    "LA19",
+    "LA20"
   ],
   "cases": [
     {
@@ -1758,6 +1759,199 @@
           "source": "class FieldError(AttributeError): pass\ndef make_error(record,key):\n e=FieldError(\"missing\",name=key,obj=record)\n e.add_note(\"helper\")\n return e\n"
         }
       ]
+    },
+    {
+      "id": "import-error-field-identity",
+      "stage": "LA20",
+      "source": "m=[]\nn={}\np=[]\nf={}\ne=ImportError(m,name=n,path=p,name_from=f)\nprint(e.args[0] is m,e.msg is m,e.name is n,e.path is p,e.name_from is f)\n",
+      "stdout": "True True True True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "module-not-found-fields",
+      "stage": "LA20",
+      "source": "m=\"missing\"\ne=ModuleNotFoundError(m,name=[],path={},name_from=[7])\nprint(e.msg is m,len(e.name),len(e.path),e.name_from[0],isinstance(e,ImportError))\n",
+      "stdout": "True 0 0 7 True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "import-error-default-fields",
+      "stage": "LA20",
+      "source": "e=ImportError()\nprint(e.msg is None,e.name is None,e.path is None,e.name_from is None,len(e.args))\n",
+      "stdout": "True True True True 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "import-error-message-string-identity",
+      "stage": "LA20",
+      "source": "s=\"message\"\ne=ImportError(s)\nprint(str(e) is s,e.msg is s)\ne.args=(\"changed\",)\nprint(str(e),e.args[0])\n",
+      "stdout": "True True\nmessage changed\n"
+    },
+    {
+      "id": "import-error-native-str-override",
+      "stage": "LA20",
+      "source": "e=ImportError(\"old\")\ne.msg=\"new\"\nprint(str(e),BaseException.__str__(e),ImportError.__str__(e))\n",
+      "stdout": "new old new\n"
+    },
+    {
+      "id": "import-error-string-subclass",
+      "stage": "LA20",
+      "source": "class S(str): pass\ns=S(\"message\")\ne=ImportError(s)\nprint(e.msg is s,type(str(e)) is str,str(e) is s,str(e))\n",
+      "stdout": "True True False message\n"
+    },
+    {
+      "id": "import-error-message-fallback",
+      "stage": "LA20",
+      "source": "e=ImportError(\"original\")\ne.msg=7\nprint(str(e))\ne.msg=[]\nprint(str(e))\ndel e.msg\nprint(str(e),e.msg is None)\n",
+      "stdout": "original\noriginal\noriginal True\n"
+    },
+    {
+      "id": "import-error-message-bypasses-args-format",
+      "stage": "LA20",
+      "source": "e=ImportError(7,8)\ne.msg=\"chosen\"\nprint(str(e))\ne=ImportError()\ne.msg=\"empty override\"\nprint(str(e))\n",
+      "stdout": "chosen\nempty override\n"
+    },
+    {
+      "id": "import-error-ignores-unselected-display",
+      "stage": "LA20",
+      "source": "class M:\n def __str__(self):\n  print(\"unselected\")\n  return \"bad\"\ne=ImportError(\"original\")\ne.msg=M()\nprint(str(e))\n",
+      "stdout": "original\n"
+    },
+    {
+      "id": "import-error-lazy-message-callback",
+      "stage": "LA20",
+      "source": "class M:\n def __str__(self):\n  print(\"format\")\n  return \"message\"\nm=M()\ne=ImportError(m)\nprint(e.msg is m)\nprint(str(e))\n",
+      "stdout": "True\nformat\nmessage\n"
+    },
+    {
+      "id": "import-error-native-field-mutation",
+      "stage": "LA20",
+      "source": "e=ImportError(\"old\",name=[],path={},name_from=[])\ne.__dict__={\"msg\":7,\"name\":8}\ne.path=e\ne.name_from=e.name\nprint(e.path is e,e.name_from is e.name,vars(e)[\"msg\"],e.msg)\ndel e.name\ndel e.path\ndel e.name_from\ndel e.name_from\nprint(e.name is None,e.path is None,e.name_from is None)\n",
+      "stdout": "True True 7 old\nTrue True True\n"
+    },
+    {
+      "id": "import-error-native-descriptors",
+      "stage": "LA20",
+      "source": "e=ImportError()\nx=[]\nImportError.msg.__set__(e,x)\nprint(ImportError.msg.__get__(e,ImportError) is x)\nImportError.msg.__delete__(e)\nprint(e.msg is None)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "id": "import-error-reinitialization",
+      "stage": "LA20",
+      "source": "e=ImportError(\"old\",name=[],path={},name_from=[])\nImportError.__init__(e,\"new\",name=7)\nprint(e.msg,e.args[0],e.name,e.path is None,e.name_from is None)\nImportError.__init__(e,1,2)\nprint(e.msg is None,e.name is None,len(e.args))\nImportError.__init__(e)\nprint(e.msg is None,len(e.args))\n",
+      "stdout": "new new 7 True True\nTrue True 2\nTrue 0\n"
+    },
+    {
+      "id": "import-error-invalid-keyword-partial-state",
+      "stage": "LA20",
+      "source": "n=[]\np={}\nf=[]\ne=ImportError(\"old\",name=n,path=p,name_from=f)\ntry: ImportError.__init__(e,\"new\",name=7,path=8,name_from=9,bad=10)\nexcept TypeError: print(e.args[0],e.msg,e.name is n,e.path is p,e.name_from is f,str(e))\n",
+      "stdout": "new old True True True old\n"
+    },
+    {
+      "id": "import-error-msg-keyword-is-invalid",
+      "stage": "LA20",
+      "source": "e=ImportError(\"old\")\ntry: ImportError.__init__(e,\"new\",msg=\"bad\")\nexcept TypeError: print(e.args[0],e.msg)\n",
+      "stdout": "new old\n"
+    },
+    {
+      "id": "import-error-base-init-keeps-msg",
+      "stage": "LA20",
+      "source": "e=ImportError(\"old\",name=7,path=8,name_from=9)\nBaseException.__init__(e,\"new\")\nprint(e.args[0],e.msg,e.name,e.path,e.name_from,str(e))\n",
+      "stdout": "new old 7 8 9 old\n"
+    },
+    {
+      "id": "import-error-new-only",
+      "stage": "LA20",
+      "source": "e=ImportError.__new__(ModuleNotFoundError,\"new\",name=7,bad=9)\nprint(type(e) is ModuleNotFoundError,e.args[0],e.msg is None,e.name is None)\n",
+      "stdout": "True new True True\n"
+    },
+    {
+      "id": "import-error-init-receiver",
+      "stage": "LA20",
+      "source": "ImportError.__init__(NameError(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "import-error-field-receiver",
+      "stage": "LA20",
+      "source": "ImportError.name.__get__(NameError(),NameError)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "import-error-string-receiver",
+      "stage": "LA20",
+      "source": "ImportError.__str__(Exception())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "import-error-subclass",
+      "stage": "LA20",
+      "source": "class E(ModuleNotFoundError):\n __slots__=(\"saved\",)\n def __init__(self,x):\n  super().__init__(\"missing\",name=x,path=self,name_from=x)\n  self.saved=x\ne=E([])\ntry: raise e\nexcept ImportError as x: print(x is e,x.saved is x.name,x.path is x,x.name_from is x.name,str(x))\n",
+      "stdout": "True True True True missing\n"
+    },
+    {
+      "id": "import-error-subclass-new",
+      "stage": "LA20",
+      "source": "class E(ImportError):\n def __new__(cls,x): return super().__new__(cls,x)\n def __init__(self,x): super().__init__(x,name=x)\ne=E([])\nprint(e.msg is e.name,e.name is e.args[0])\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "import-error-compatible-layout",
+      "stage": "LA20",
+      "source": "class E(ValueError,ImportError): pass\ne=E(7)\nprint(E.__base__ is ImportError,e.msg is None,e.name is None,e.args[0])\n",
+      "stdout": "True False True 7\n"
+    },
+    {
+      "id": "import-error-layout-conflict",
+      "stage": "LA20",
+      "source": "class E(ImportError,AttributeError): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "import-error-owned-field-hook",
+      "stage": "LA20",
+      "source": "class E(ImportError):\n @property\n def msg(self):\n  print(\"get\")\n  return \"owned\"\ne=E(\"native\")\nprint(e.msg,str(e),ImportError.msg.__get__(e,E))\n",
+      "stdout": "get\nowned native native\n"
+    },
+    {
+      "id": "import-error-automatic-metadata-deferred",
+      "stage": "Future",
+      "source": "try:\n from helper import missing\nexcept ImportError as e: print(e.name)\n",
+      "stdout": "helper\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "owner": "#124",
+      "boundary": "Automatic import failure metadata enrichment remains separate from explicit ImportError construction/storage"
+    },
+    {
+      "id": "import-error-multiple-display-deferred",
+      "stage": "Future",
+      "source": "e=ImportError(1,2)\nprint(str(e))\n",
+      "stdout": "(1, 2)\n",
+      "owner": "#127",
+      "boundary": "ImportError without a string msg retains the multiple-argument formatting boundary"
     }
   ]
 }

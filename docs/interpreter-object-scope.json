@@ -1145,9 +1145,9 @@
     },
     {
       "path": "runtime/class-values.mjs",
-      "site": "if (receiver.nativeFieldBoundaries?.has(name)) this.fail(\"UnsupportedOperationError\", \"Automatic attribute error metadata remains under #124\", \"UNSUPPORTED\");",
+      "site": "if (receiver.nativeFieldBoundaries?.has(name)) this.fail(\"UnsupportedOperationError\", \"Automatic native exception metadata remains under #124\", \"UNSUPPORTED\");",
       "owner": "#124",
-      "boundary": "Automatic lookup error name/receiver enrichment remains separate from explicit AttributeError construction/storage"
+      "boundary": "Automatic lookup/import metadata enrichment remains separate from explicit native exception construction/storage"
     }
   ],
   "native_tables": {

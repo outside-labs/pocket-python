@@ -28,7 +28,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
   const userProtocol = value => classes.protocolObject(value);
-  const exceptionDisplay = value => value instanceof ExceptionValue && (value.name === "KeyError" || value.args.length > 1 ||
+  const exceptionDisplay = value => value instanceof ExceptionValue && (value.name === "KeyError" || value.nativeFields?.has("msg") || value.args.length > 1 ||
     value.args.length === 1 && !(value.args[0] === null || ["bigint", "boolean"].includes(typeof value.args[0]) || value.args[0] instanceof StringValue));
   const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
   const methodCompare = (receiver, other, invert, site, after, depth) => {
@@ -88,7 +88,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return allocate(ExceptionValue, name, args, scalar ? display(args[0]) : "", type);
   };
   const initializeException = (receiver, args, keywords, keywordValues, owner) => {
-    const fields = ["NameError", "UnboundLocalError"].includes(owner) ? ["name"] : owner === "AttributeError" ? ["name", "obj"] : null;
+    const importing = ["ImportError", "ModuleNotFoundError"].includes(owner);
+    const fields = ["NameError", "UnboundLocalError"].includes(owner) ? ["name"] : owner === "AttributeError" ? ["name", "obj"] : importing ? ["name", "path", "name_from"] : null;
     if (!fields && keywords.length) python("TypeError", "Exception initialization does not accept keywords");
     mutate(receiver, () => {
       const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs];
@@ -104,13 +105,18 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         const before = new Map(receiver.nativeFields);
         const boundaries = receiver.nativeFieldBoundaries;
         for (const key of fields) receiver.nativeFields.set(key, keywords.includes(key) ? keywordValues[keywords.indexOf(key)] : null);
+        if (importing) receiver.nativeFields.set("msg", args.length === 1 ? args[0] : null);
         receiver.nativeFieldBoundaries = undefined;
         return () => { receiver.nativeFields = before; receiver.nativeFieldBoundaries = boundaries; };
       });
     }
   };
-  const exceptionString = (value, site, after, depth) => {
+  const exceptionString = (value, site, after, depth, importMessage = false) => {
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
+    if (importMessage && !value.nativeFieldBoundaries?.has("msg")) {
+      const original = value.nativeFields.get("msg"), message = classes.payload(original);
+      if (message instanceof StringValue) return valueTask(original === message ? message : values.string(message.points), site, after);
+    }
     if (value.args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception argument displays remain under #127");
     return value.args.length ? unaryTask(value.name === "KeyError" ? "repr" : "str", value.args[0], site, after, depth) :
       valueTask(values.string(Array.from(value.message, char => char.codePointAt(0))), site, after);
@@ -272,7 +278,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
-    if (["NameError", "UnboundLocalError", "AttributeError"].includes(callable.name) && state.frames.at(-1).pool.code.version >= 4) {
+    if (["NameError", "UnboundLocalError", "AttributeError", "ImportError", "ModuleNotFoundError"].includes(callable.name) && state.frames.at(-1).pool.code.version >= 4) {
       const positional = args.slice(0, args.length - keywords.length), keywordValues = args.slice(positional.length);
       const value = makeException(callable.name, positional); state.temporaries.push(value);
       initializeException(value, positional, keywords, keywordValues, callable.name);
@@ -2405,7 +2411,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (["repr", "str", "repr-default"].includes(operation)) {
             if (operation === "repr-default") hard("UNSUPPORTED", "UnsupportedOperationError", "Default object representations require a later formatting stage.");
             if (operation === "str" && value instanceof ExceptionValue && !value.type) {
-              task = exceptionString(value, site, completion, depth); continue;
+              task = exceptionString(value, site, completion, depth, matchesException(value.name, "ImportError")); continue;
             }
             if (!userProtocol(value)) {
               const result = operation === "repr" ? values.repr(value) :
@@ -2560,7 +2566,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
             if (nativeName === "__str__") {
               if (args.length !== 1 || keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "Exception __str__ requires one receiver");
-              task = exceptionString(args[0], site, completion, depth); continue;
+              task = exceptionString(args[0], site, completion, depth, nativeOwner === "ImportError"); continue;
             }
             if (nativeName === "__repr__") hard("UNSUPPORTED", "UnsupportedOperationError", "Default exception repr remains under #127");
           }

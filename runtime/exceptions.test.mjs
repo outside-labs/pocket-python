@@ -185,3 +185,17 @@ test('attribute error field graphs obey the shared allocation limit', async () =
 test('composed native error fields survive generator suspension and interrupted cleanup', async () => {
   await lifetime('def work():\n try:\n  raise AttributeError("missing",name=[7],obj={})\n except AttributeError as e:\n  e.add_note("detail")\n  try: yield e\n  finally: print(e.name[0],e.__notes__[0])\ni=work()\ne=next(i)\nprint("entered")\nprint(e.obj is not None)\ni.close()\n', 'entered\nTrue\n7 detail\n');
 });
+
+test('import error fields retain temporary graphs during owned constructors and interruption', async () => {
+  await lifetime('class E(ImportError):\n def __init__(self):\n  super().__init__([7],name=[8],path=[9],name_from=[10])\n  print("entered")\ne=E()\nprint(e.msg[0],e.name[0],e.path[0],e.name_from[0])\n', 'entered\n7 8 9 10\n');
+});
+
+test('native import message selection preserves callbacks and cyclic field owners', async () => {
+  await lifetime('class M:\n def __str__(self):\n  print("entered")\n  return "message"\ne=ModuleNotFoundError(M())\ne.name=e\ne.path=e\ne.name_from=e\nprint(str(e),e.name is e,e.path is e,e.name_from is e)\n', 'entered\nmessage True True True\n');
+});
+
+test('import error native fields share the allocation budget', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True: held.append(ImportError(name=[7],path=[8],name_from=[9]))\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
