@@ -9,6 +9,7 @@ export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "
 export const CONTAINER_METHODS = Object.freeze({
   list: Object.freeze(["copy", "clear", "reverse", "insert", "pop", "count", "index", "extend"]),
   tuple: Object.freeze(["count", "index"]),
+  dict: Object.freeze(["get", "setdefault", "pop"]),
 });
 export const CONTAINER_METHOD_NAMES = new Set(Object.values(CONTAINER_METHODS).flat());
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});

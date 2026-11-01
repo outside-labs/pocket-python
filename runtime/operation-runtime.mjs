@@ -1052,6 +1052,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       mutate(receiver, () => { const before = receiver.items; receiver.items = items; return () => { receiver.items = before; }; });
       return valueTask(result, site, after);
     }
+    if (completion?.kind === "dictionary-pop") {
+      const [found, item] = values.comparisonSequence(value);
+      if (!found && completion.missing) python("KeyError", "Dictionary key not found");
+      return valueTask(found ? item : completion.fallback, site, completion.after);
+    }
     if (completion?.kind === "sequence-bound") {
       const {receiver, key, position, depth, after} = completion, maximum = (1n << 63n) - 1n;
       const bounds = completion.bounds.map((bound, index) => index === position ? value < -maximum - 1n ? -maximum - 1n : value > maximum ? maximum : value : bound);
@@ -2458,6 +2463,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (CONTAINER_METHODS[containerOwner]?.includes(nativeName)) {
             const original = callable instanceof ValueMethod ? callable.receiver : args[0];
             const receiver = classes.payload(original), rest = callable instanceof ValueMethod ? args : args.slice(1);
+            if (containerOwner === "dict") {
+              if (keywords.length || rest.length < 1 || rest.length > 2) python("TypeError", "Invalid " + nativeName + " arguments");
+              const fallback = rest.length === 2 ? rest[1] : null;
+              if (nativeName === "pop" && !receiver.entries.length) {
+                if (rest.length === 1) python("KeyError", "Dictionary key not found");
+                task = valueTask(fallback, site, completion); continue;
+              }
+              values.enableNamespace(receiver);
+              task = nativeName === "setdefault" ? dictionaryTask(receiver, rest[0], site,
+                continuation("relay", {receiver: original, after: completion}), depth, "set-default", fallback) :
+                dictionaryTask(receiver, rest[0], site, nativeName === "get" ?
+                  continuation("proxy-get", {receiver: original, fallback, after: completion}) :
+                  continuation("dictionary-pop", {receiver: original, key: rest[0], fallback, missing: rest.length === 1, after: completion}),
+                depth, nativeName === "get" ? "probe" : "pop-probe");
+              continue;
+            }
             if (nativeName === "extend") {
               if (keywords.length || rest.length !== 1) python("TypeError", "extend() takes one positional iterable");
               const source = classes.payload(rest[0]) === receiver ? values.list(receiver.items) : rest[0];

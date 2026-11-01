@@ -105,3 +105,12 @@ test('extension enforces the shared item quota and tears down partial results', 
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}});
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
 });
+
+for (const name of ['get', 'setdefault', 'pop']) test('dictionary ' + name + ' owns keys/defaults during parked hash callbacks', async () => {
+  const source = 'class K:\n def __hash__(self):\n  print("entered")\n  return 7\nk=K()\nf=[]\nd=' + (name === 'pop' ? '{1:7}' : '{}') + '\nr=d.' + name + '(k,f)\nprint(r is f)\n';
+  await callbackLifetime(source, 'entered\nTrue\n');
+});
+
+test('dictionary removal owns the detached result during parked equality/truth callbacks', async () => {
+  await callbackLifetime('class T:\n def __bool__(self):\n  print("entered")\n  return True\nclass K:\n def __hash__(self): return 7\n def __eq__(self,other): return T()\na=K()\nb=K()\nd={a:[]}\nv=d.pop(b)\ndel d\nv.append(7)\nprint(v[0])\n', 'entered\n7\n');
+});

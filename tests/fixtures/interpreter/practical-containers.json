@@ -7,7 +7,8 @@
     "LA-1",
     "LA-2",
     "LA-3",
-    "LA-4"
+    "LA-4",
+    "LA-5"
   ],
   "cases": [
     {
@@ -990,6 +991,325 @@
       "stage": "Hints",
       "source": "class A:\n def __iter__(self):\n  print(\"iter\")\n  return iter([7])\n def __length_hint__(self):\n  print(\"hint\")\n  return 1\na=[]\na.extend(A())\nprint(a[0])\n",
       "stdout": "iter\nhint\n7\n"
+    },
+    {
+      "id": "dict-get-defaults",
+      "stage": "LA-5",
+      "source": "v=[]\nf=[]\nd={1:v}\nprint(d.get(1) is v,d.get(2) is None,d.get(2,f) is f,len(d))\n",
+      "stdout": "True True True 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-setdefault-identity",
+      "stage": "LA-5",
+      "source": "v=[]\nf=[]\nd={1:v}\nprint(d.setdefault(1,f) is v,d.setdefault(2,f) is f,d[2] is f,d.setdefault(3) is None,len(d))\n",
+      "stdout": "True True True True 3\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-pop-identity",
+      "stage": "LA-5",
+      "source": "v=[]\nf=[]\nd={1:v}\nprint(d.pop(1) is v,len(d),d.pop(2,f) is f,d.pop(2,None) is None)\n",
+      "stdout": "True 0 True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-numeric-aliases",
+      "stage": "LA-5",
+      "source": "d={1:7}\nprint(d.get(True),d.setdefault(1.0,9),d.pop(True),len(d))\n",
+      "stdout": "7 7 7 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-setdefault-order",
+      "stage": "LA-5",
+      "source": "d={2:7,1:8}\nd.setdefault(2,9)\nd.setdefault(3,0)\nprint(list(d)==[2,1,3])\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-get-arity-missing",
+      "stage": "LA-5",
+      "source": "{1:7}.get()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-get-extra",
+      "stage": "LA-5",
+      "source": "{1:7}.get(1,2,3)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-get-keyword",
+      "stage": "LA-5",
+      "source": "{1:7}.get(key=1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-get-unhashable",
+      "stage": "LA-5",
+      "source": "{1:7}.get([])\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-get-rebound",
+      "stage": "LA-5",
+      "source": "d={1:7}\nf=dict.get.__get__(d)\nprint(f(1))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "dict-get-receiver",
+      "stage": "LA-5",
+      "source": "dict.get([],1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dict-setdefault-arity-missing",
+      "stage": "LA-5",
+      "source": "{1:7}.setdefault()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-setdefault-extra",
+      "stage": "LA-5",
+      "source": "{1:7}.setdefault(1,2,3)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-setdefault-keyword",
+      "stage": "LA-5",
+      "source": "{1:7}.setdefault(key=1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-setdefault-unhashable",
+      "stage": "LA-5",
+      "source": "{1:7}.setdefault([])\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-setdefault-rebound",
+      "stage": "LA-5",
+      "source": "d={1:7}\nf=dict.setdefault.__get__(d)\nprint(f(1))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "dict-setdefault-receiver",
+      "stage": "LA-5",
+      "source": "dict.setdefault([],1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dict-pop-arity-missing",
+      "stage": "LA-5",
+      "source": "{1:7}.pop()\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-pop-extra",
+      "stage": "LA-5",
+      "source": "{1:7}.pop(1,2,3)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-pop-keyword",
+      "stage": "LA-5",
+      "source": "{1:7}.pop(key=1)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-pop-unhashable",
+      "stage": "LA-5",
+      "source": "{1:7}.pop([])\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-pop-rebound",
+      "stage": "LA-5",
+      "source": "d={1:7}\nf=dict.pop.__get__(d)\nprint(f(1))\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "dict-pop-receiver",
+      "stage": "LA-5",
+      "source": "dict.pop([],1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "dict-pop-missing",
+      "stage": "LA-5",
+      "source": "{1:7}.pop(2)\n",
+      "stdout": "",
+      "error_type": "KeyError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-pop-empty-unhashable",
+      "stage": "LA-5",
+      "source": "{}.pop([])\n",
+      "stdout": "",
+      "error_type": "KeyError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-pop-empty-default",
+      "stage": "LA-5",
+      "source": "f=[]\nprint({}.pop([],f) is f)\n",
+      "stdout": "True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-get-empty-unhashable",
+      "stage": "LA-5",
+      "source": "{}.get([])\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-setdefault-empty-unhashable",
+      "stage": "LA-5",
+      "source": "{}.setdefault([])\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "dict-setdefault-hash-once",
+      "stage": "LA-5",
+      "source": "calls=[0]\nclass K:\n def __hash__(self):\n  calls[0]+=1\n  return 7\nk=K()\nv=[]\nd={}\nprint(d.setdefault(k,v) is v,calls[0])\nprint(d.setdefault(k,9) is v,calls[0])\n",
+      "stdout": "True 1\nTrue 2\n"
+    },
+    {
+      "id": "dict-equal-key-identity",
+      "stage": "LA-5",
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other): return True\na=K()\nb=K()\nv=[]\nd={a:v}\nprint(d.get(b) is v,d.setdefault(b,9) is v,next(iter(d)) is a,d.pop(b) is v,len(d))\n",
+      "stdout": "True True True True 0\n"
+    },
+    {
+      "id": "dict-subclass-bypass",
+      "stage": "LA-5",
+      "source": "class D(dict):\n def __getitem__(self,key): raise ValueError(\"bad\")\nd=D()\nprint(d.get(1) is None,d.setdefault(1,7),dict.pop(d,1))\n",
+      "stdout": "True 7 7\n"
+    },
+    {
+      "id": "dict-hash-error",
+      "stage": "LA-5",
+      "source": "class K:\n def __hash__(self): raise ValueError(\"hash\")\n{}.get(K())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dict-equality-error",
+      "stage": "LA-5",
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other): raise ValueError(\"equal\")\na=K()\nd={a:7}\nd.pop(K())\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "dict-equality-mutation",
+      "stage": "LA-5",
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other):\n  del d[self]\n  d[other]=9\n  return True\na=K()\nb=K()\nd={a:7}\nprint(d.get(b),len(d),next(iter(d)) is b)\n",
+      "stdout": "9 1 True\n"
+    },
+    {
+      "id": "dict-missing-hook-boundary",
+      "stage": "MissingHook",
+      "source": "class D(dict):\n def __missing__(self,key): return 9\nd=D()\nprint(d.get(1) is None,d.setdefault(1,7),d.pop(1))\n",
+      "stdout": "True 7 7\n"
     }
   ]
 }
