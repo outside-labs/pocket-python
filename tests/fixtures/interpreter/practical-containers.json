@@ -9,7 +9,8 @@
     "LA-3",
     "LA-4",
     "LA-5",
-    "LA-6"
+    "LA-6",
+    "LA-7"
   ],
   "cases": [
     {
@@ -1661,6 +1662,83 @@
       "stage": "ViewSets",
       "source": "print({1:7}.keys()=={1})\n",
       "stdout": "True\n"
+    },
+    {
+      "id": "composed-record-queue",
+      "stage": "LA-7",
+      "source": "\"\"\"Group records and process a mutable work queue with practical container APIs.\"\"\"\n\nrecords = [(\"todo\", \"read\"), (\"done\", \"ship\"), (\"todo\", \"write\")]\n\n\ndef completed(rows):\n    for state, title in rows:\n        if state == \"done\":\n            yield title\n\n\ngroups = {}\nfor state, title in records:\n    groups.setdefault(state, []).append(title)\n\npending = groups.get(\"todo\").copy()\npending.insert(0, \"review\")\npending.extend(completed(records))\nprint(pending.pop(0), pending.count(\"ship\"), pending.index(\"read\"))\nsnapshot = pending.copy()\nsnapshot.reverse()\nprint(snapshot[0], pending[0])\n\nview = groups.items()\ngroups[\"hold\"] = []\nfor state, titles in view:\n    print(state, len(titles))\nremoved = groups.pop(\"hold\")\npending.clear()\nprint(len(pending), len(removed))\n",
+      "stdout": "review 1 0\nship read\ntodo 2\ndone 1\nhold 0\n0 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "composed-subclass-callbacks",
+      "stage": "LA-7",
+      "source": "class Key:\n def __hash__(self): return 7\n def __eq__(self,other): return True\nclass Queue(list): pass\nclass Index:\n def __index__(self): return 0\na=Key()\nb=Key()\nd={}\nq=Queue()\nd.setdefault(a,q).extend(x for x in [7,8])\nq.insert(Index(),9)\nv=d.items()\nprint(d.get(b) is q,q.pop(Index()),q.count(7),q.index(8))\nprint(list(v)[0][0] is a,d.pop(b) is q,len(v))\n",
+      "stdout": "True 9 1 1\nTrue True 0\n"
+    },
+    {
+      "id": "composed-generator-view-lifetime",
+      "stage": "LA-7",
+      "source": "d={1:[],2:[7]}\ndef g():\n yield d.items()\ngen=g()\nv=next(gen)\ndel d\nrows=list(v)\nrows[0][1].append(9)\nprint(rows[0][1][0],rows[1][1][0],len(v))\ngen.close()\n",
+      "stdout": "9 7 2\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "composed-dynamic-container-source",
+      "stage": "LA-7",
+      "source": "namespace={}\nexec(compile(\"d={}\\nd.setdefault(1,[]).extend([7,8])\\nview=d.values()\", \"container-rules.py\", \"exec\"),namespace)\na=list(namespace[\"view\"])[0]\na.reverse()\nprint(a.pop(),a[0],namespace[\"d\"].get(1) is a)\n",
+      "stdout": "7 8 True\n"
+    },
+    {
+      "id": "composed-dynamic-container-error",
+      "stage": "LA-7",
+      "source": "print(\"prefix\")\nexec(compile(\"def fail():\\n return {}.pop(7)\\nfail()\", \"containers-original.py\", \"exec\"))\n",
+      "stdout": "prefix\n",
+      "error_type": "KeyError"
+    },
+    {
+      "id": "composed-callback-failure",
+      "stage": "LA-7",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  raise ValueError(\"key\")\na=[7]\nprint(a.pop())\n{}.setdefault(K(),[])\n",
+      "stdout": "7\nhash\n",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "composed-error-prefix",
+      "stage": "LA-7",
+      "source": "def records():\n yield (\"todo\",7)\n raise ValueError(\"source\")\nqueue=[]\ntry: queue.extend(records())\nexcept ValueError:\n d={}\n for key,item in queue: d.setdefault(key,[]).append(item)\n print(d.get(\"todo\")[0],list(d.keys())==[\"todo\"],len(d.items()))\n",
+      "stdout": "7 True 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "composed-module-helpers",
+      "stage": "LA-7",
+      "source": "import helper\nd={}\nq=d.setdefault(\"queue\",[])\nq.extend(helper.rows())\nprint(helper.take(q),len(d.values()),q.count(8))\n",
+      "stdout": "7 1 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def rows():\n yield 7\n yield 8\ndef take(queue):\n return queue.pop(0)\n"
+        }
+      ]
     }
   ]
 }

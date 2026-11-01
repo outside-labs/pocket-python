@@ -108,8 +108,8 @@
     {
       "id": "container-values",
       "status": "partial",
-      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Finite list/tuple construction preserves primitive and owned iterable elements; user length hints remain refused. Set/frozenset construction, displays, owned membership/equality, finite mutation APIs and primitive algebra are adopted. Bytes/bytearray values adopt a finite binary-sequence/codec surface. Ordinary list/tuple repetition makes shallow copies with primitive factors in both profiles and owned index callbacks in classes-source/1.",
-      "gaps": "Dictionary constructors, broader methods, structural dictionary comparison mutation and remaining value/hash families are deferred.",
+      "scope": "List/tuple/dict literals, item access/mutation, scalar list deletion, primitive reads, list append/aliases/in-place operations and primitive-key dictionary equivalence/order; classes-source/1 also admits bounded list/tuple RHS slice assignment/deletion. Classes-source/1 also adopts user/default dictionary keys and owned list/tuple/dictionary equality. Finite list/tuple construction preserves primitive and owned iterable elements; user length hints remain refused. Set/frozenset construction, displays, owned membership/equality, finite mutation APIs and primitive algebra are adopted. Bytes/bytearray values adopt a finite binary-sequence/codec surface. Ordinary list/tuple repetition makes shallow copies with primitive factors in both profiles and owned index callbacks in classes-source/1. LA-1\u2013LA-7 adopt list copy/clear/reverse/insert/pop/count/index/extend, tuple count/index and dict get/setdefault/pop/keys/values/items with owned callbacks and live views; exact signatures and retained boundaries are in docs/interpreter-practical-containers.md.",
+      "gaps": "Populated dictionary construction/update, remaining list/text/consumer APIs, user length hints, general iterable slice assignment, __missing__ source admission, subtype view proxies and view set operations retain their exact #116/#117 owners; structural dictionary comparison mutation outside adopted native namespaces remains deferred.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -126,14 +126,21 @@
         "sets",
         "bytes",
         "complex",
-        "sequence-repetition-index"
+        "sequence-repetition-index",
+        "practical-composed-record-queue",
+        "practical-dict-setdefault-hash-once",
+        "practical-dict-items-live"
       ],
       "evidence": [
         "tests/fixtures/interpreter/source.json:list-inplace-aliases",
         "tests/fixtures/interpreter/source.json:item-write-order",
         "tests/fixtures/interpreter/source.json:key-delete",
         "tests/fixtures/interpreter/value-families.json:set-algebra",
-        "tests/fixtures/interpreter/repetition.json:list-shallow"
+        "tests/fixtures/interpreter/repetition.json:list-shallow",
+        "tests/fixtures/interpreter/practical-containers.json:composed-record-queue",
+        "tests/fixtures/interpreter/practical-containers.json:composed-subclass-callbacks",
+        "tests/fixtures/interpreter/practical-containers.json:composed-generator-view-lifetime",
+        "tests/fixtures/interpreter/practical-containers.json:dict-view-mapping"
       ]
     },
     {
@@ -2996,8 +3003,8 @@
     {
       "id": "dict",
       "status": "partial",
-      "scope": "No-argument dict() in classes-source/1; dictionary literals and existing owned operations retain their separate contracts.",
-      "gaps": "Populated dictionary construction and broader dictionary methods remain deferred.",
+      "scope": "No-argument dict() in classes-source/1; dictionary literals and existing owned operations retain their separate contracts. Practical get/setdefault/pop and live keys/values/items views have exact positional signatures and owned hash/equality.",
+      "gaps": "Populated construction/update, additional methods, __missing__ source admission, subtype view mapping proxies and set-like view operations remain #116/#117. General exception argument introspection remains #124.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -3010,7 +3017,11 @@
         "builtin-dict"
       ],
       "evidence": [
-        "tests/fixtures/interpreter/construction.json:type-primitives"
+        "tests/fixtures/interpreter/construction.json:type-primitives",
+        "tests/fixtures/interpreter/practical-containers.json:dict-setdefault-hash-once",
+        "tests/fixtures/interpreter/practical-containers.json:dict-equality-mutation",
+        "tests/fixtures/interpreter/practical-containers.json:dict-items-live",
+        "tests/fixtures/interpreter/practical-containers.json:dict-view-subclass"
       ]
     },
     {
@@ -4357,8 +4368,8 @@
     {
       "id": "list",
       "status": "partial",
-      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Lists are fresh shallow containers.",
-      "gaps": "General iterable length-hint consumers and additional sequence methods retain #116. Native list subtypes, namespaces and reflection are delivered by O69\u2013O90.",
+      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Lists are fresh shallow containers. Practical methods copy/clear/reverse/insert/pop/count/index/extend run through admitted primitive/owned protocols.",
+      "gaps": "User length hints, general iterable slice assignment, list remove/sort and remaining sequence APIs stay under #116. Native list subtypes/namespaces retain their delivered contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -4372,7 +4383,11 @@
       ],
       "evidence": [
         "tests/fixtures/interpreter/sequences.json:construct-shallow",
-        "tests/fixtures/interpreter/sequences.json:construct-user"
+        "tests/fixtures/interpreter/sequences.json:construct-user",
+        "tests/fixtures/interpreter/practical-containers.json:shallow-copy",
+        "tests/fixtures/interpreter/practical-containers.json:pop-mutation-index",
+        "tests/fixtures/interpreter/practical-containers.json:search-equality-truth",
+        "tests/fixtures/interpreter/practical-containers.json:extend-partial-error"
       ]
     },
     {
@@ -5032,8 +5047,8 @@
     {
       "id": "tuple",
       "status": "partial",
-      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Existing tuple identity and shallow elements are preserved.",
-      "gaps": "General iterable length-hint consumers and additional sequence methods retain #116. Native tuple subtypes, namespaces and reflection are delivered by O69\u2013O90.",
+      "scope": "Zero or one positional adopted iterable; primitives in both profiles, owned user iteration in classes-source/1 without user length hints. Existing tuple identity and shallow elements are preserved. Positional count/index use identity and owned equality/truth, with ordered index-bound conversion.",
+      "gaps": "General iterable length-hint construction and residual sequence/hash families remain under #116; native subtype/namespaces retain their delivered contracts.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -5047,7 +5062,8 @@
       ],
       "evidence": [
         "tests/fixtures/interpreter/sequences.json:construct-shallow",
-        "tests/fixtures/interpreter/sequences.json:construct-user"
+        "tests/fixtures/interpreter/sequences.json:construct-user",
+        "tests/fixtures/interpreter/practical-containers.json:tuple-count"
       ]
     },
     {
@@ -5481,6 +5497,34 @@
         {
           "id": "INT-SEQ-01E",
           "issue": "https://github.com/outside-labs/pocket-python/issues/190"
+        },
+        {
+          "id": "LA-1",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/602"
+        },
+        {
+          "id": "LA-2",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/603"
+        },
+        {
+          "id": "LA-3",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/604"
+        },
+        {
+          "id": "LA-4",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/605"
+        },
+        {
+          "id": "LA-5",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/606"
+        },
+        {
+          "id": "LA-6",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/607"
+        },
+        {
+          "id": "LA-7",
+          "issue": "https://github.com/outside-labs/pocket-python/issues/608"
         }
       ]
     },

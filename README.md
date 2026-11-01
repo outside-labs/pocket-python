@@ -6,6 +6,12 @@ The finite O1–O96 object, construction and reflection contract has
 owners for retained boundaries. Earlier delivery notes below retain their
 checkpoint context; broad Python and package compatibility continue separately.
 
+[Track A](https://github.com/outside-labs/pocket-python/issues/600) maps full
+Python 3.14 compatibility and a useful language/library profile.
+[Track B](https://github.com/outside-labs/pocket-python/issues/601) maps the
+application engine, consuming that useful profile while language work continues.
+The first language batches adopt [practical container APIs](docs/interpreter-practical-containers.md).
+
 Pocket-python builds offline browser applications from explicit verified client
 sources. The compiled profile runs emitted JavaScript and selected helpers in a
 module worker. The supplied MicroPython profile runs compatible Python through
