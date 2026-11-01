@@ -19,6 +19,7 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-16 | Composed handler/note record loading, modules, dynamic source, reraises and generator suspension during handler selection; offline cancellation and restart | The corpus records 174 observations: 167 semantic/error comparisons and seven explicit refusals, with 39 cases shared by core-source/1. Handler and note callbacks preserve zero logical teardown, including suspended selection and cyclic note dictionaries. |
 | LA-17 | `NameError(*args, name=None)` and `UnboundLocalError`, mutable native `name`, subclasses and explicit native initializers/descriptors | Native fields preserve identity independently of `args` and dictionaries. Reinitialization replaces arguments before rejecting an unknown keyword, preserving old fields on that error. Global/free/deleted missing names populate `name`; unbound locals retain None. Structured layouts permit compatible generic exception bases and reject conflicting storage. |
 | LA-18 | `AttributeError(*args, name=None, obj=None)`, native member fields, subclasses, owned constructors and descriptors | Explicit fields retain arbitrary values without callbacks. Replacement/deletion, initializer bypass and partial state on invalid keywords match the pinned oracle. Automatic runtime lookup enrichment retains a named refusal when its unresolved `name`/`obj` is read; explicit field assignment or reinitialization resolves that field boundary. |
+| LA-19 | Composed native-field record failures, modules, dynamic source diagnostics, causes/notes and generator suspension; installed offline stop/restart | The 233-case corpus records 225 semantic/error comparisons, eight explicit refusals and 48 explicitly shared core cases. The runnable example retains the failed record/key by identity; native field callbacks and suspended cleanup share existing resource limits. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -46,8 +47,8 @@ RuntimeError, SystemError and RecursionError. Native fields beyond the adopted
 argument/chaining storage and ordinary dictionaries retain their named gates.
 
 Run `examples/interpreter_exceptions.py` unchanged on CPython or in the console.
-It selects a tuple of reusable error types through a function and adds a note
-while preserving the original failed key and cause.
+It selects reusable error types through a function, attaches notes, and retains
+the original failed key, record and cause in native and ordinary fields.
 The exact corpus is included in the shared Node/Chromium matrix:
 
 ```sh

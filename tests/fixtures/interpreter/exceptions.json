@@ -15,7 +15,8 @@
     "LA15",
     "LA16",
     "LA17",
-    "LA18"
+    "LA18",
+    "LA19"
   ],
   "cases": [
     {
@@ -1669,6 +1670,94 @@
       "stdout": "missing\n",
       "owner": "#124",
       "boundary": "Automatic lookup error name/receiver enrichment remains separate from explicit AttributeError construction/storage"
+    },
+    {
+      "id": "native-fields-composed-record",
+      "stage": "LA19",
+      "source": "class FieldError(AttributeError):\n def __init__(self,record,key): super().__init__(\"field missing\",name=key,obj=record)\ndef read(record,key):\n try: return record[key]\n except KeyError as cause:\n  error=FieldError(record,key)\n  error.add_note(\"check the schema\")\n  raise error from cause\nrecord={\"ready\":[7]}\nprint(read(record,\"ready\")[0])\nkey=\"missing\"\ntry: read(record,key)\nexcept (NameError,FieldError) as e:\n print(e.name is key,e.obj is record,e.__cause__.args[0] is key)\n print(e.__notes__[0],str(e))\nfinally: print(\"finished\")\n",
+      "stdout": "7\nTrue True True\ncheck the schema field missing\nfinished\n"
+    },
+    {
+      "id": "native-fields-composed-normalization",
+      "stage": "LA19",
+      "source": "class E(NameError):\n def __init__(self): super().__init__(\"missing\",name=\"config\")\ntry:\n try: raise E\n except E as cause: raise AttributeError(\"bad field\",name=\"item\",obj=cause) from cause\nexcept AttributeError as e:\n print(e.name,e.obj is e.__cause__,e.obj.name,e.__context__ is e.__cause__)\n",
+      "stdout": "item True config True\n"
+    },
+    {
+      "id": "native-fields-dynamic-source",
+      "stage": "LA19",
+      "source": "ns={}\nexec(\"class E(NameError): pass\\nerror=E('bad',name=[])\\nerror.name.append(7)\",ns)\ne=ns[\"error\"]\nprint(e.name[0],eval(\"error.name is error.name\",ns))\n",
+      "stdout": "7 True\n"
+    },
+    {
+      "id": "native-fields-dynamic-generated-name",
+      "stage": "LA19",
+      "source": "ns={}\ntry: eval(\"required\",ns)\nexcept NameError as e: print(e.name)\n",
+      "stdout": "required\n"
+    },
+    {
+      "id": "native-fields-dynamic-failure",
+      "stage": "LA19",
+      "source": "exec(compile(\"class E(AttributeError): pass\\ndef fail():\\n e=E('bad',name='field',obj=[])\\n e.add_note('detail')\\n raise e\\nfail()\",\"native-fields-original.py\",\"exec\"),{})\n",
+      "stdout": "",
+      "error_type": "E"
+    },
+    {
+      "id": "native-fields-suspended-generator",
+      "stage": "LA19",
+      "source": "def work():\n e=AttributeError(\"missing\",name=[],obj={})\n try:\n  yield e\n  yield e.name\n finally:\n  print(e.name[0],len(e.obj))\ni=work()\ne=next(i)\ne.name.append(7)\nprint(next(i) is e.name)\ni.close()\n",
+      "stdout": "True\n7 0\n"
+    },
+    {
+      "id": "native-fields-handled-generator",
+      "stage": "LA19",
+      "source": "def work():\n try: raise NameError(\"missing\",name=[7])\n except NameError as e:\n  e.add_note(\"saved\")\n  yield e\n  print(e.name[0],e.__notes__[0])\ni=work()\ne=next(i)\nprint(e.name[0])\ntry: next(i)\nexcept StopIteration: print(\"done\")\n",
+      "stdout": "7\n7 saved\ndone\n"
+    },
+    {
+      "id": "native-fields-shared-cause",
+      "stage": "LA19",
+      "source": "key=[]\nrecord={}\ncause=NameError(name=key)\ntry: raise AttributeError(\"missing\",name=key,obj=record) from cause\nexcept AttributeError as e: print(e.name is key,e.obj is record,e.__cause__.name is key)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "native-fields-shared-replacement",
+      "stage": "LA19",
+      "source": "e=NameError(7,name=[])\na=e.name\ne.name={}\nprint(e.args[0],e.name is a,len(e.name),len(a))\n",
+      "stdout": "7 False 0 0\n"
+    },
+    {
+      "id": "native-fields-failed-callback-chain",
+      "stage": "LA19",
+      "source": "class E(AttributeError):\n def __init__(self,record):\n  super().__init__(\"missing\",name=\"field\",obj=record)\n  raise NameError(\"bad schema\",name=self)\ntry: E({})\nexcept NameError as e: print(e.name.obj is not None,e.name.name,str(e))\n",
+      "stdout": "True field bad schema\n"
+    },
+    {
+      "id": "native-fields-shared-handling",
+      "stage": "LA19",
+      "source": "key=[]\nrecord={}\ntry: raise AttributeError(\"missing\",name=key,obj=record)\nexcept AttributeError as e: print(e.name is key,e.obj is record)\n",
+      "stdout": "True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "native-fields-module-identity",
+      "stage": "LA19",
+      "source": "from errors import FieldError,make_error\nrecord={}\nkey=[]\ne=make_error(record,key)\ntry: raise e\nexcept FieldError as x: print(x is e,x.name is key,x.obj is record,x.__notes__[0])\n",
+      "stdout": "True True True helper\n",
+      "imports": [
+        "errors"
+      ],
+      "modules": [
+        {
+          "name": "errors",
+          "package": false,
+          "imports": [],
+          "source": "class FieldError(AttributeError): pass\ndef make_error(record,key):\n e=FieldError(\"missing\",name=key,obj=record)\n e.add_note(\"helper\")\n return e\n"
+        }
+      ]
     }
   ]
 }

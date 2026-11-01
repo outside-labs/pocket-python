@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -75,6 +75,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             assert 'fail at exception-original.py:4' in page.locator('#diagnostic').inner_text()
                         if case['id'] == 'handler-notes-dynamic-failure':
                             assert 'fail at handler-notes-original.py:5' in page.locator('#diagnostic').inner_text()
+                        if case['id'] == 'native-fields-dynamic-failure':
+                            assert 'fail at native-fields-original.py:5' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
                     run(example, expected)
@@ -88,6 +90,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         busy_sources += [
                             'def handlers():\n print("entered")\n while True: pass\ntry: raise ValueError()\nexcept handlers(): pass\n',
                             'class E(Exception):\n def __setattr__(self,name,value):\n  print("entered")\n  while True: pass\nE().add_note("detail")\n',
+                            'class E(AttributeError):\n def __init__(self):\n  super().__init__(name=[7],obj=[8])\n  print("entered")\n  while True: pass\nE()\n',
                         ]
                     for source in busy_sources:
                         page.fill('#input', source)
@@ -142,6 +145,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
     if exceptions:
         checks = ['fresh-offline-exception-source', 'original-dynamic-diagnostics', 'runnable-example',
                   'stop-during-exception-normalization', 'stop-during-handler-expression', 'stop-during-note-setter',
+                  'stop-during-native-field-initialization',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',
@@ -156,7 +160,7 @@ if __name__ == '__main__':
     parser.add_argument('--require-installed', action='store_true')
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument('--containers', action='store_true', help='Accept the LA-7 practical-container composition slice.')
-    selection.add_argument('--exceptions', action='store_true', help='Accept the LA-13/LA-16 ordinary-exception composition slices.')
+    selection.add_argument('--exceptions', action='store_true', help='Accept the ordinary and native-field exception composition slices.')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
     report = smoke(args.require_installed, args.containers, args.exceptions)

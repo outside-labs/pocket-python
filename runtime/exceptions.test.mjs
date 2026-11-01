@@ -181,3 +181,7 @@ test('attribute error field graphs obey the shared allocation limit', async () =
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
+
+test('composed native error fields survive generator suspension and interrupted cleanup', async () => {
+  await lifetime('def work():\n try:\n  raise AttributeError("missing",name=[7],obj={})\n except AttributeError as e:\n  e.add_note("detail")\n  try: yield e\n  finally: print(e.name[0],e.__notes__[0])\ni=work()\ne=next(i)\nprint("entered")\nprint(e.obj is not None)\ni.close()\n', 'entered\nTrue\n7 detail\n');
+});
