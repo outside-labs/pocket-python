@@ -313,3 +313,16 @@ causes and suspended generator cleanup. Run
 console. Installed acceptance exercises fresh source, original dynamic frames,
 Stop/Restart in runtime-error rendering and reduced-profile runtime metadata.
 All eight deterministic execution observations retain accounting revision 22.
+
+LA-41 adopts strict ASCII decoder metadata through bytes/bytearray methods and
+native bound/unbound entry points. The canonical `ascii` encoding and
+`ordinal not in range(128)` reason identify the first invalid byte. Native
+object and args share an immutable exact-bytes snapshot, including when the
+receiver is a mutable buffer or subtype. Subsequent buffer mutation and argument
+replacement preserve that snapshot. UTF-8 metadata follows in LA-42.
+
+General bytes interning remains #117: CPython can reuse its one-byte bytes
+singleton for decoder snapshots, whereas this profile creates a fresh snapshot.
+The named `runtime-decode-single-byte-cache-identity` divergence is recorded and
+checked separately from successful differential observations. Snapshot content,
+argument/native sharing and exact bytes type are adopted for every length.
