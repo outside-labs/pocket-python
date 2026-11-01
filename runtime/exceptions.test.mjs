@@ -64,9 +64,21 @@ test('retained Unicode encoding graphs share the allocation limit', async () => 
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
-test('runtime codec metadata retains its explicit field boundary', async () => {
-  const result = await runSourceRequest({modules: [unit('try: "雪".encode("ascii")\nexcept UnicodeEncodeError as e: print(e.encoding)\n')], compileOptions: {languageProfile: corpus.profile}});
-  assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+test('runtime encoding failures retain temporary string subtype owners through parked collection', async () => {
+  await lifetime('class S(str): pass\ntry: S("雪").encode("ascii")\nexcept UnicodeEncodeError as error: saved=error\nsaved.args=()\nprint("entered")\nprint(type(saved.object) is S,saved.encoding,saved.start,saved.end,saved.reason)\n',
+    'entered\nTrue ascii 0 1 ordinal not in range(128)\n');
+});
+
+test('retained runtime encoding errors share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True:\n try: ("雪"*1000).encode("ascii")\n except UnicodeEncodeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 28000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
+test('runtime encoding failure range scans share the work limit', async () => {
+  const result = await runSourceRequest({modules: [unit('s="雪"*1000\nprint("ready")\nwhile True:\n try: s.encode("ascii")\n except UnicodeEncodeError: pass\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 50000, maxWork: 150000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
 });
 
 test('encoding messages retain reason results through interrupted encoding callbacks', async () => {

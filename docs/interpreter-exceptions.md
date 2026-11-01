@@ -287,3 +287,15 @@ runtime codec metadata still refuses on field reads and has two named corpus
 boundaries. Groups/except*, traceback objects/mutation, note rendering/export,
 remaining attribute/import/parser metadata and general representations retain
 their existing #124/#127 owners. A2 and candidate/release gates remain open.
+
+LA-38 adopts runtime strict ASCII/Latin-1 encoding failures in `str.encode` and
+`bytes`/`bytearray` string constructors. The native fields and five arguments
+share the canonical codec/reason values and retain the original string,
+including its subtype identity. Positions count Unicode code points and cover
+the first contiguous unencodable run, following the pinned
+[one-byte encoder](https://github.com/python/cpython/blob/v3.14.7/Objects/unicodeobject.c#L6917-L7090).
+Native fields remain independent of later argument replacement. Aliases and
+string-subtype codec options use their native content without invoking user
+formatting. Source rendering uses the adopted native renderer; host summaries
+keep the copied diagnostic message. UTF-8 surrogate metadata and automatic
+decoding fields retain their separately owned LA-39/LA-41/LA-42 boundaries.

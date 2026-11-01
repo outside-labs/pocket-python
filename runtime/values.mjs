@@ -278,12 +278,20 @@ export class ValueRuntime {
       this.fail("UnsupportedOperationError", "This encoding requires a later codec profile.", "UNSUPPORTED");
     this.fail("LookupError", "unknown encoding: " + name);
   }
-  encodeText(value, encoding, errors, mutable = false) {
+  encodeText(value, encoding, errors, mutable = false, original = value) {
     const codec = this.codecName(encoding, errors), result = [];
     if (!(value instanceof StringValue)) this.fail("TypeError", "Encoding requires a string");
-    for (const point of value.points) {
+    for (let index = 0; index < value.points.length; index++) {
+      const point = value.points[index];
       this.charge(1);
-      if (point >= 0xd800 && point <= 0xdfff || codec === "ascii" && point > 127 || codec === "latin1" && point > 255)
+      if (codec !== "utf8" && point >= (codec === "ascii" ? 128 : 256)) {
+        let end = index + 1;
+        while (end < value.points.length && value.points[end] >= (codec === "ascii" ? 128 : 256)) { this.charge(1); end++; }
+        this.fail("UnicodeEncodeError", "Character cannot be encoded by the selected strict codec", "PYTHON", null,
+          {encoding: codec === "ascii" ? "ascii" : "latin-1", object: original, start: index, end,
+            reason: "ordinal not in range(" + (codec === "ascii" ? 128 : 256) + ")"});
+      }
+      if (point >= 0xd800 && point <= 0xdfff)
         this.fail("UnicodeEncodeError", "Character cannot be encoded by the selected strict codec");
       const bytes = codec !== "utf8" || point < 128 ? [point] : point < 2048 ? [192 | point >> 6, 128 | point & 63] :
         point < 65536 ? [224 | point >> 12, 128 | point >> 6 & 63, 128 | point & 63] :

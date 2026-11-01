@@ -3006,6 +3006,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const receiver = classes.nativeModule(args[0]);
             task = moduleEntry({receiver, key: args[1], name: values.text(args[1]), mode: "get", depth, after: continuation("relay", {receiver: args[0], after: completion})}, site, false, null); continue;
           }
+          if (nativeOwner === "str" && nativeName === "encode") {
+            if (!args.length || !values.isString(classes.payload(args[0]))) python("TypeError", "str.encode requires a string receiver");
+            const bound = bindNamed(["encoding", "errors"], args.slice(1), keywords, keywordValues);
+            task = valueTask(values.encodeText(classes.payload(args[0]), classes.payload(bound.get("encoding")), classes.payload(bound.get("errors")), false, args[0]), site, completion); continue;
+          }
           if ((NATIVE_SUBCLASS_BASES.includes(nativeOwner) || ["bool", "range", "slice", "memoryview", "NoneType", "NotImplementedType"].includes(nativeOwner)) && callable.name.includes(".") &&
               (nativeName === "__new__" || args[0] instanceof InstanceValue && args[0].nativePayload !== undefined || NATIVE_PROTOCOL_KEYS.includes(nativeName) || nativeOwner === "list" && nativeName === "append")) {
             if (nativeName === "__new__") {
@@ -3538,15 +3543,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (callable instanceof ValueMethod && ["encode", "decode"].includes(callable.name) &&
               (values.isString(callable.receiver) || values.isBinary(callable.receiver))) {
             const bound = bindNamed(["encoding", "errors"], args, keywords, keywordValues);
-            task = valueTask(callable.name === "encode" ? values.encodeText(callable.receiver, bound.get("encoding"), bound.get("errors")) :
+            task = valueTask(callable.name === "encode" ? values.encodeText(callable.receiver, classes.payload(bound.get("encoding")), classes.payload(bound.get("errors"))) :
               values.decodeBinary(callable.receiver, bound.get("encoding"), bound.get("errors")), site, completion); continue;
           }
           if (["bytes", "bytearray"].includes(callable.name)) {
             count("builtin:" + callable.name);
             const bound = bindNamed(["source", "encoding", "errors"], args, keywords, keywordValues), source = bound.get("source"), mutable = callable.name === "bytearray";
             if (bound.has("encoding") || bound.has("errors")) {
-              if (!values.isString(source) || !bound.has("encoding")) python("TypeError", "encoding/errors require a string source and encoding");
-              task = valueTask(values.encodeText(source, bound.get("encoding"), bound.get("errors"), mutable), site, completion); continue;
+              if (!values.isString(classes.payload(source)) || !bound.has("encoding")) python("TypeError", "encoding/errors require a string source and encoding");
+              task = valueTask(values.encodeText(classes.payload(source), classes.payload(bound.get("encoding")), classes.payload(bound.get("errors")), mutable, source), site, completion); continue;
             }
             if (!bound.has("source")) { task = valueTask(values.binaryValue([], mutable), site, completion); continue; }
             if (values.isString(source)) python("TypeError", "string argument without an encoding");
