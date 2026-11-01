@@ -262,6 +262,8 @@ name/attribute/import/syntax/iteration fields and Unicode translation exceptions
 preserve their adopted subclass layouts and signatures. Composed source and
 offline cases cover callback failures, original frames and interruption. Run
 `examples/interpreter_translation_exceptions.py` for a record validation example.
+Selective generic attribute mutation fields retain the original receiver/key;
+`examples/interpreter_attribute_mutations.py` reports rejected record updates.
 Groups, traceback objects, remaining structured families and formatting retain
 their gates.
 

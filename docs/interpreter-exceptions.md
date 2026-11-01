@@ -277,8 +277,8 @@ on CPython or in the offline console. Installed acceptance adds fresh source,
 original dynamic diagnostics, Stop/Restart in index/reason/encoding callbacks
 and a reduced-profile bytes program.
 
-The combined exception corpus records 852 cases: 844 semantic/error comparisons
-and 8 explicit refusals, with 267 cases explicitly shared by core-source/1.
+The combined exception corpus records 941 cases: 930 semantic/error comparisons
+and 11 explicit refusals, with 267 cases explicitly shared by core-source/1.
 Five host/crash/cache qualifications remain separate. These finite
 observations do not measure overall Python completion. The eight deterministic
 resource cases retain accounting revision 22. Explicit Encode/Decode
@@ -373,6 +373,18 @@ subtype names, replacement, self-assignment and dictionary deletion take the
 qualified dictionary path. Other native/module/class mutation layouts remain
 separately owned. The pinned [inline failure path](https://github.com/python/cpython/blob/v3.14.7/Objects/dictobject.c#L6505-L6565)
 defines this retained distinction.
+
+LA-46 accepts generic mutation failures across modules, dynamic source, causes,
+notes and suspended generator cleanup. Run
+`examples/interpreter_attribute_mutations.py` unchanged on CPython or in the
+offline console. Installed acceptance checks original dynamic write/delete
+frames, fresh source and receivers, Stop/Restart in a setter and dictionary
+comparison callback, and the reduced profile's mutation-builtin boundary.
+The 89 new corpus observations contain 86 supported comparisons and three
+explicit refusals; these finite results do not measure overall Python
+completion. Core admission and the five prior host/crash/cache qualifications
+are unchanged. A2, groups/except*, tracebacks, note export, remaining native
+metadata and library/package/candidate gates remain open.
 
 LA-43 accepts runtime decoding failures across modules, dynamic source, notes,
 causes and suspended generator cleanup. Run
