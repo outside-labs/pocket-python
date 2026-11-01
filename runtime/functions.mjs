@@ -67,7 +67,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       return () => { if (prepend) value.traceback.shift(); else value.traceback.pop(); };
     });
   };
-  const exception = (name, message, args = []) => {
+  const exception = (name, message, args = null) => {
     const error = allocate(ExceptionValue, name, args, message);
     const active = state.frames.at(-1)?.activeException;
     mutate(error, () => {
@@ -77,9 +77,9 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     });
     return error;
   };
-  const python = (name, message) => { throw new Raised(exception(name, message)); };
-  const values = new ValueRuntime({memory, charge, numeric: verified.code.version >= 4, fail: (name, message, code = "PYTHON") => {
-    if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message);
+  const python = (name, message, args = null) => { throw new Raised(exception(name, message, args)); };
+  const values = new ValueRuntime({memory, charge, numeric: verified.code.version >= 4, fail: (name, message, code = "PYTHON", args = null) => {
+    if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message, args);
     hard(code, name, message);
   }});
   const nativeBuiltin = name => {

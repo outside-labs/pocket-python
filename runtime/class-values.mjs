@@ -1748,7 +1748,13 @@ export class ClassRuntime {
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
   exceptionArgs(receiver) {
-    if (receiver.argsTuple === undefined) this.functionMetadata(receiver, "argsTuple", this.values.tuple(receiver.args));
+    if (receiver.argsTuple === undefined) {
+      const args = receiver.messageArgs ? [this.values.string(Array.from(receiver.message, char => char.codePointAt(0)))] : receiver.args;
+      const tuple = this.values.tuple(args), before = [receiver.args, receiver.messageArgs];
+      receiver.args = tuple.items; receiver.messageArgs = false;
+      try { this.functionMetadata(receiver, "argsTuple", tuple); }
+      catch (error) { [receiver.args, receiver.messageArgs] = before; throw error; }
+    }
     return receiver.argsTuple;
   }
   exceptionValue(receiver) { return Object.hasOwn(receiver, "stopValue") ? receiver.stopValue : receiver.args[0] ?? null; }

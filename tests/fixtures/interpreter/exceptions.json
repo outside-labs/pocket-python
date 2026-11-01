@@ -8,7 +8,8 @@
     "LA9",
     "LA10",
     "LA11",
-    "LA12"
+    "LA12",
+    "LA12A"
   ],
   "cases": [
     {
@@ -729,6 +730,92 @@
       "stdout": "caught\n",
       "owner": "#124",
       "boundary": "General handler expressions and named tuple handler values retain their exact evaluation gate"
+    },
+    {
+      "id": "generated-typeerror-message-arguments",
+      "stage": "LA12A",
+      "source": "try: len(7)\nexcept TypeError as e: print(len(e.args),isinstance(e.args[0],str),str(e) is e.args[0],e.args is e.args)\n",
+      "stdout": "1 True True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generated-indexerror-message-arguments",
+      "stage": "LA12A",
+      "source": "try: [7][3]\nexcept IndexError as e: print(len(e.args),isinstance(e.args[0],str),str(e) is e.args[0])\n",
+      "stdout": "1 True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generated-args-replacement",
+      "stage": "LA12A",
+      "source": "try: len(7)\nexcept TypeError as e:\n e.args=(\"new\",)\n print(str(e),e.args[0])\n",
+      "stdout": "new new\n"
+    },
+    {
+      "id": "generated-keyerror-primitive",
+      "stage": "LA12A",
+      "source": "key=\"missing\"\ntry: {}[key]\nexcept KeyError as e: print(e.args[0] is key,str(e))\n",
+      "stdout": "True 'missing'\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generated-keyerror-delete",
+      "stage": "LA12A",
+      "source": "key=\"missing\"\ntry: del {}[key]\nexcept KeyError as e: print(e.args[0] is key,str(e))\n",
+      "stdout": "True 'missing'\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generated-keyerror-empty-pop",
+      "stage": "LA12A",
+      "source": "key=[]\ntry: {}.pop(key)\nexcept KeyError as e: print(e.args[0] is key,len(e.args))\n",
+      "stdout": "True 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "generated-keyerror-owned-key",
+      "stage": "LA12A",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  return 7\nkey=K()\ntry: {1:7}[key]\nexcept KeyError as e: print(e.args[0] is key)\n",
+      "stdout": "hash\nTrue\n"
+    },
+    {
+      "id": "generated-keyerror-owned-pop",
+      "stage": "LA12A",
+      "source": "class K:\n def __hash__(self):\n  print(\"hash\")\n  return 7\nkey=K()\ntry: {1:7}.pop(key)\nexcept KeyError as e: print(e.args[0] is key)\n",
+      "stdout": "hash\nTrue\n"
+    },
+    {
+      "id": "generated-keyerror-compared-key",
+      "stage": "LA12A",
+      "source": "class K:\n def __hash__(self): return 7\n def __eq__(self,other): return False\na=K()\nb=K()\nd={a:7}\ntry: d[b]\nexcept KeyError as e: print(e.args[0] is b,e.args[0] is a)\n",
+      "stdout": "True False\n"
+    },
+    {
+      "id": "generated-keyerror-proxy-key",
+      "stage": "LA12A",
+      "source": "class C: pass\nkey=\"missing\"\ntry: vars(C)[key]\nexcept KeyError as e: print(e.args[0] is key)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "generated-no-format-callback",
+      "stage": "LA12A",
+      "source": "class K:\n def __hash__(self): return 7\n def __repr__(self):\n  print(\"repr\")\n  return \"key\"\nkey=K()\ntry: {}[key]\nexcept KeyError as e:\n print(\"caught\",e.args[0] is key)\n print(str(e))\n",
+      "stdout": "caught True\nrepr\nkey\n"
     }
   ]
 }

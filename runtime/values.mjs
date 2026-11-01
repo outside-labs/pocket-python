@@ -1030,7 +1030,7 @@ export class ValueRuntime {
   index(value, index) {
     if (value instanceof ClassNamespaceValue) {
       const entry = this.classNamespaceEntry(value, index);
-      if (!entry.found) this.fail("KeyError", "Class namespace key not found");
+      if (!entry.found) this.fail("KeyError", "Class namespace key not found", "PYTHON", [index]);
       return entry.value;
     }
     if (value instanceof MemoryViewValue) {
@@ -1042,7 +1042,7 @@ export class ValueRuntime {
     }
     if (value instanceof DictValue) {
       const found = this.find(value, index);
-      if (found < 0) this.fail("KeyError", "Dictionary key not found.");
+      if (found < 0) this.fail("KeyError", "Dictionary key not found.", "PYTHON", [index]);
       return value.entries[found].value;
     }
     if (!sequence(value) && !(value instanceof RangeValue)) this.fail("TypeError", "Value is not subscriptable in this stage.");
@@ -1122,7 +1122,7 @@ export class ValueRuntime {
     }
     if (!(value instanceof DictValue)) this.fail("TypeError", "Dictionary deletion requires a dict.");
     const found = this.find(value, key);
-    if (found < 0) this.fail("KeyError", "Dictionary key not found.");
+    if (found < 0) this.fail("KeyError", "Dictionary key not found.", "PYTHON", [key]);
     this.charge(value.entries.length); value.entries.splice(found, 1); value.version++; return null;
   }
   mutateSlice(value, start, stop, step, item, remove = false) {

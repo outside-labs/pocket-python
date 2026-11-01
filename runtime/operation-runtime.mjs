@@ -648,7 +648,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return dictionaryTask(classes.frameExtras(frame), key, site, continuation("frame-write", {receiver, after}), 0, "set-default", record.item);
     }
     if (operation === "get" || operation === "pop" && record.hasFallback) return valueTask(record.fallback, site, after);
-    python("KeyError", "Frame local key not found");
+    python("KeyError", "Frame local key not found", [key]);
   };
   const frameEntries = receiver => [
     ...classes.frameKeys(receiver.frame).entries.filter(entry => entry.value.bound).map(entry => [entry.key, entry.value.value]),
@@ -978,13 +978,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "exception-args") {
       const receiver = completion.receiver;
       mutate(receiver, () => {
-        const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.stopValue];
+        const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.stopValue, receiver.messageArgs];
         const hadValue = Object.hasOwn(receiver, "stopValue");
         if (receiver.name === "StopIteration") receiver.stopValue = classes.exceptionValue(receiver);
-        receiver.args = value.items; receiver.argsTuple = value;
+        receiver.args = value.items; receiver.argsTuple = value; receiver.messageArgs = false;
         const first = value.items[0];
         receiver.message = value.items.length === 1 && (first === null || ["bigint", "boolean"].includes(typeof first) || first instanceof StringValue) ? display(first) : "";
-        return () => { [receiver.args, receiver.argsTuple, receiver.message, receiver.stopValue] = before; if (!hadValue) delete receiver.stopValue; };
+        return () => { [receiver.args, receiver.argsTuple, receiver.message, receiver.stopValue, receiver.messageArgs] = before; if (!hadValue) delete receiver.stopValue; };
       });
       return valueTask(null, site, completion.after);
     }
@@ -1088,7 +1088,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "dictionary-pop") {
       const [found, item] = values.comparisonSequence(value);
-      if (!found && completion.missing) python("KeyError", "Dictionary key not found");
+      if (!found && completion.missing) python("KeyError", "Dictionary key not found", [completion.key]);
       return valueTask(found ? item : completion.fallback, site, completion.after);
     }
     if (completion?.kind === "sequence-bound") {
@@ -1684,7 +1684,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (operation === "probe") return valueTask(values.tuple([found, found ? receiver.entries[position].value : null]), site, after);
     if (operation === "set") return valueTask(values.commitDictionary(receiver, key, item, hash, position), site, after);
     if (operation === "discard" && !found) return valueTask(null, site, after);
-    if (!found) python("KeyError", "Dictionary key not found");
+    if (!found) python("KeyError", "Dictionary key not found", [key]);
     return valueTask(operation === "get" ? receiver.entries[position].value :
       values.commitDictionary(receiver, key, null, hash, position, true), site, after);
   };
@@ -2507,10 +2507,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "Exception initialization requires a receiver and positional arguments");
               const receiver = args[0], replacement = args.slice(1);
               mutate(receiver, () => {
-                const before = [receiver.args, receiver.argsTuple, receiver.message];
-                receiver.args = replacement; receiver.argsTuple = undefined;
+                const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs];
+                receiver.args = replacement; receiver.argsTuple = undefined; receiver.messageArgs = false;
                 const first = replacement[0]; receiver.message = replacement.length === 1 && (first === null || ["bigint", "boolean"].includes(typeof first) || first instanceof StringValue) ? display(first) : "";
-                return () => { [receiver.args, receiver.argsTuple, receiver.message] = before; };
+                return () => { [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs] = before; };
               });
               task = valueTask(null, site, completion); continue;
             }
@@ -2533,7 +2533,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               if (keywords.length || rest.length < 1 || rest.length > 2) python("TypeError", "Invalid " + nativeName + " arguments");
               const fallback = rest.length === 2 ? rest[1] : null;
               if (nativeName === "pop" && !receiver.entries.length) {
-                if (rest.length === 1) python("KeyError", "Dictionary key not found");
+                if (rest.length === 1) python("KeyError", "Dictionary key not found", [rest[0]]);
                 task = valueTask(fallback, site, completion); continue;
               }
               values.enableNamespace(receiver);
