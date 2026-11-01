@@ -520,7 +520,7 @@ def smoke(channel=None):
                     assert 'sources/app.py:1' in page.locator('#status').inner_text()
                     refused('print("never")\na,*b,*c=[1,2,3]\n', 'SyntaxError:')
                     assert page.locator('#result').inner_text() == ''
-                    refused('assert False,[1]\n', 'UnsupportedOperationError:')
+                    refused('assert False,[1]\n', 'AssertionError:')
                     checks.append('assert-lambda-unpack-original-errors-and-explicit-message-boundary')
                     refused('class K:\n def __hash__(self):\n  raise ValueError("key")\nset([K()])\n', 'ValueError:')
                     assert '__hash__ at sources/app.py:3' in page.locator('#diagnostic').inner_text()
