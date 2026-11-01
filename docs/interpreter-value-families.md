@@ -96,3 +96,9 @@ length hints, bytearray resizing, buffer slice mutation/casts/formats, non-stric
 codecs and native buffers remain unfinished. INT-VALUES-01 stays open for these
 continuing APIs; generators, object/exception protocols, formatting and libraries
 retain their own established tasks.
+
+Runtime strict encoding/decoding failures expose native exception fields and
+arguments through LA-38–LA-43; see [the exception contract](interpreter-exceptions.md).
+Decoder snapshots preserve exact bytes content after mutable-input changes.
+The one-byte CPython bytes-cache identity difference is explicitly recorded
+under #117, outside successful differential counts.
