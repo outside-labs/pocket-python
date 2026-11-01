@@ -207,3 +207,21 @@ test('import error native fields share the allocation budget', async () => {
 test('import error string-subclass argument callbacks retain the message across interruption', async () => {
   await lifetime('class S(str):\n def __str__(self):\n  print("entered")\n  return "message"\ne=ImportError(S("native"))\nprint(str(e))\n', 'entered\nmessage\n');
 });
+
+test('StopIteration native values remain owned during subclass initialization and interruption', async () => {
+  await lifetime('class E(StopIteration):\n def __init__(self):\n  super().__init__([7])\n  print("entered")\ne=E()\nBaseException.__init__(e,8)\nprint(e.value[0],e.args[0])\n', 'entered\n7 8\n');
+});
+
+test('cyclic StopIteration values survive parked collection and args replacement', async () => {
+  await lifetime('class E(StopIteration): pass\ne=E()\ne.value=e\ne.args=(7,)\nprint("entered")\nprint(e.value is e,e.args[0])\n', 'entered\nTrue 7\n');
+});
+
+test('StopIteration subclass exhaustion retains the exception until its callback completes', async () => {
+  await lifetime('class E(StopIteration): pass\nclass I:\n def __iter__(self): return self\n def __next__(self):\n  e=E([7])\n  print("entered")\n  raise e\nprint(next(I(),8))\n', 'entered\n8\n');
+});
+
+test('independent StopIteration values obey the shared allocation budget', async () => {
+  const result = await runSourceRequest({modules: [unit('class E(StopIteration): pass\nheld=[]\nprint("ready")\nwhile True:\n e=E()\n e.value=[7]\n held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});

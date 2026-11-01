@@ -5,7 +5,7 @@ import {NATIVE_SUBCLASS_BASES, CONTAINER_METHODS, CONTAINER_METHOD_NAMES} from "
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, NATIVE_PROTOCOL_KEYS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS, StringValue} from "./values.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, EXCEPTION_BASES, EXCEPTION_LAYOUTS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, EXCEPTION_BASES, EXCEPTION_LAYOUTS, matchesException, isException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, hierarchyTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -83,19 +83,26 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (text !== null) return text;
     hard("UNSUPPORTED", "UnsupportedOperationError", "Formatting this value is outside the function stage.");
   };
-  const makeException = (name, args, type = null) => {
+  const makeException = (name, args, type = null, newOnly = false) => {
     const scalar = args.length === 1 && (args[0] === null || ["bigint", "boolean"].includes(typeof args[0]) || args[0] instanceof StringValue);
-    return allocate(ExceptionValue, name, args, scalar ? display(args[0]) : "", type);
+    const value = allocate(ExceptionValue, name, args, scalar ? display(args[0]) : "", type);
+    if (newOnly && name === "StopIteration") {
+      state.temporaries.push(value);
+      mutate(value, () => { value.stopValue = null; return () => { delete value.stopValue; }; });
+    }
+    return value;
   };
   const initializeException = (receiver, args, keywords, keywordValues, owner) => {
     const importing = ["ImportError", "ModuleNotFoundError"].includes(owner);
     const fields = ["NameError", "UnboundLocalError"].includes(owner) ? ["name"] : owner === "AttributeError" ? ["name", "obj"] : importing ? ["name", "path", "name_from"] : null;
     if (!fields && keywords.length) python("TypeError", "Exception initialization does not accept keywords");
     mutate(receiver, () => {
-      const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs];
+      const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs, receiver.stopValue];
+      const hadValue = Object.hasOwn(receiver, "stopValue");
+      if (receiver.name === "StopIteration") receiver.stopValue = owner === "StopIteration" ? args[0] ?? null : classes.exceptionValue(receiver);
       receiver.args = args; receiver.argsTuple = undefined; receiver.messageArgs = false;
       const first = args[0]; receiver.message = args.length === 1 && (first === null || ["bigint", "boolean"].includes(typeof first) || first instanceof StringValue) ? display(first) : "";
-      return () => { [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs] = before; };
+      return () => { [receiver.args, receiver.argsTuple, receiver.message, receiver.messageArgs, receiver.stopValue] = before; if (!hadValue) delete receiver.stopValue; };
     });
     // Structured initializers replace args before validating keywords. On a
     // keyword error, their old native fields remain intact.
@@ -278,7 +285,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const builtin = (callable, args, keywords) => {
     count("builtin:" + callable.name);
-    if (["NameError", "UnboundLocalError", "AttributeError", "ImportError", "ModuleNotFoundError"].includes(callable.name) && state.frames.at(-1).pool.code.version >= 4) {
+    if (["NameError", "UnboundLocalError", "AttributeError", "ImportError", "ModuleNotFoundError", "StopIteration"].includes(callable.name) && state.frames.at(-1).pool.code.version >= 4) {
       const positional = args.slice(0, args.length - keywords.length), keywordValues = args.slice(positional.length);
       const value = makeException(callable.name, positional); state.temporaries.push(value);
       initializeException(value, positional, keywords, keywordValues, callable.name);
@@ -773,7 +780,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "bases-instance" && value.name === "AttributeError") return valueTask(false, site, current.after);
       if (current.kind === "class-prepare-lookup" && value.name === "AttributeError") return valueTask(values.dict([]), site, continuation("class-prepare-result", current));
       if (current.kind === "import-fromlist-path" && value.name === "AttributeError") return importer.done(current, site);
-      if (current.kind === "import-next" && value.name === "StopIteration") return importer.exhausted(current, site);
+      if (current.kind === "import-next" && isException(value, "StopIteration")) return importer.exhausted(current, site);
       if (current.kind === "import-member" && value.name === "AttributeError") return importer.missing(current, site);
       if (current.kind === "import-all-probe" && value.name === "AttributeError") return importer.next(current, site);
       if (current.kind === "class-mapping-name" && value.name === "KeyError") return valueTask(null, site, continuation("class-mapping-fallback", current));
@@ -817,12 +824,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind.startsWith("call-map-") && (value.name === "AttributeError" || value.name === "KeyError" && current.mode !== "display"))
         return value.name === "KeyError" ? duplicateKeyword(current.receiver, value.args[0] ?? current.key, site, current.after) :
           unaryTask("call-mapping-required", current.receiver, site, current.after);
-      if (current.kind === "indexed-result" && ["IndexError", "StopIteration"].includes(value.name) ||
-          current.kind === "callable-result" && value.name === "StopIteration") {
+      if (current.kind === "indexed-result" && (value.name === "IndexError" || isException(value, "StopIteration")) ||
+          current.kind === "callable-result" && isException(value, "StopIteration")) {
         exhaust(current.receiver);
         return unaryTask("iterator-stop", current.receiver, site, current.after);
       }
-      if (value.name !== "StopIteration") continue;
+      if (!isException(value, "StopIteration")) continue;
       if (current.kind === "delegate-next") return valueTask(value.args[0] ?? null, site, continuation("delegate-return", {receiver: current.receiver}));
       if (current.kind === "next-default") return valueTask(current.default, site, current.after);
       if (current.kind === "for-next") return valueTask(null, site, continuation("for-exhausted"));
@@ -2556,8 +2563,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               const type = args[0];
               if (!classes.isType(type) || !classes.subclass(type, classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
               const bases = classes.mro(type).filter(base => base instanceof BuiltinValue && EXCEPTION_BASES.includes(base.name));
-              const base = bases.find(base => EXCEPTION_LAYOUTS[base.name] !== "BaseException") ?? bases[0];
-              task = valueTask(makeException(base.name, args.slice(1), type instanceof ClassValue ? type : null), site, completion); continue;
+              let solid = type instanceof ClassValue ? type.storage.solid : type;
+              while (solid instanceof ClassValue && !solid.root) { charge(1); solid = solid.storage.baseSolid; }
+              const base = bases.find(base => EXCEPTION_LAYOUTS[base.name] === solid?.name) ?? (solid instanceof BuiltinValue && EXCEPTION_BASES.includes(solid.name) ? solid : bases[0]);
+              task = valueTask(makeException(base.name, args.slice(1), type instanceof ClassValue ? type : null, true), site, completion); continue;
             }
             if (nativeName === "__init__") {
               if (!(args[0] instanceof ExceptionValue)) python("TypeError", "Exception initialization requires an exception receiver");
@@ -3405,7 +3414,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
               while (true) {
                 let item;
                 try { item = values.next(iterator); }
-                catch (error) { if (error instanceof Raised && error.value.name === "StopIteration") break; throw error; }
+                catch (error) { if (error instanceof Raised && isException(error.value, "StopIteration")) break; throw error; }
                 state.temporaries.push(item); values.append(result, item); state.temporaries.pop();
               }
             }

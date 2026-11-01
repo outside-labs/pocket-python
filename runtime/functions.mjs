@@ -1,6 +1,6 @@
 import {ARITHMETIC_SLOTS, NATIVE_PROTOCOL_KEYS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
-import {GeneratorValue, FrameValue, FrameLocalsValue, Cell, Environment, environmentCell, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {GeneratorValue, FrameValue, FrameLocalsValue, Cell, Environment, environmentCell, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, isException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {ClassRuntime, CONTAINER_METHODS, CONTAINER_METHOD_NAMES} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
@@ -507,7 +507,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
   };
   const delegateAdvance = (mode, value) => {
     const frame = state.frames.at(-1), task = frame.tasks.at(-1), site = task.site;
-    if (mode === "throw" && value.name === "GeneratorExit") mode = "close";
+    if (mode === "throw" && isException(value, "GeneratorExit")) mode = "close";
     if (mode === "close") task.closing = value instanceof ExceptionValue ? value : allocate(ExceptionValue, "GeneratorExit", [], "");
     const finish = continuation(mode === "close" ? "delegate-close" : "delegate-next", {receiver: frame.generator});
     if (mode === "send" && value === null) { dispatch(unaryTask("next", task.iterator, site, finish)); return; }
@@ -618,7 +618,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           let item;
           try { item = values.next(task.iterator); }
           catch (error) {
-            if (!(error instanceof Raised) || error.value.name !== "StopIteration") throw error;
+            if (!(error instanceof Raised) || !isException(error.value, "StopIteration")) throw error;
             frame.tasks.pop(); block(frame, task.otherwise); return;
           }
           const writing = store(frame, task.target, item, true, continuation("store-body", {body: task.body}));
@@ -690,7 +690,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         frame.active = false; if (frame.reflector) frame.reflector.back = null;
         generator.reflector = null;
         generator.status = "closed"; generator.frame = null; generator.callable = null; generator.closure = null; generator.bindings.clear();
-        if (signal.kind === "raise" && returned.name === "StopIteration") {
+        if (signal.kind === "raise" && isException(returned, "StopIteration")) {
           const original = returned;
           returned = exception("RuntimeError", "generator raised StopIteration");
           mutate(returned, () => {
@@ -703,7 +703,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         if (signal.kind !== "raise" && mode !== "close") {
           returned = exception("StopIteration", "", returned === null ? [] : [returned]);
           signal = {kind: "raise", value: returned};
-        } else if (signal.kind === "raise" && mode === "close" && ["GeneratorExit", "StopIteration"].includes(returned.name)) {
+        } else if (signal.kind === "raise" && mode === "close" && (isException(returned, "GeneratorExit") || isException(returned, "StopIteration"))) {
           returned = null; signal = {kind: "return", value: null};
         }
       }

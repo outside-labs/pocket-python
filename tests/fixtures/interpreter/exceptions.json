@@ -18,7 +18,8 @@
     "LA18",
     "LA19",
     "LA20A",
-    "LA20"
+    "LA20",
+    "LA21"
   ],
   "cases": [
     {
@@ -564,11 +565,9 @@
     },
     {
       "id": "structured-subclass-deferred",
-      "stage": "Future",
+      "stage": "LA21",
       "source": "class E(StopIteration): pass\ne=E(7)\nprint(e.value)\n",
-      "stdout": "7\n",
-      "owner": "#124",
-      "boundary": "Structured native exception subclasses retain their layout/field gate"
+      "stdout": "7\n"
     },
     {
       "id": "raise-subclass-instance-identity",
@@ -1989,6 +1988,170 @@
       "stdout": "(1, 2)\n",
       "owner": "#127",
       "boundary": "ImportError without a string msg retains the multiple-argument formatting boundary"
+    },
+    {
+      "id": "stop-iteration-subclass-identity",
+      "stage": "LA21",
+      "source": "class E(StopIteration): pass\nx=[]\ne=E(x,7)\nprint(type(e) is E,e.value is x,e.args[0] is x,e.args[1],isinstance(e,Exception))\n",
+      "stdout": "True True True 7 True\n"
+    },
+    {
+      "id": "stop-iteration-new-only",
+      "stage": "LA21",
+      "source": "x=[]\ne=StopIteration.__new__(StopIteration,x,bad=7)\nprint(e.args[0] is x,e.value is None)\nStopIteration.__init__(e,x)\nprint(e.value is x)\n",
+      "stdout": "True True\nTrue\n"
+    },
+    {
+      "id": "stop-iteration-subclass-new-only",
+      "stage": "LA21",
+      "source": "class E(StopIteration): pass\ne=BaseException.__new__(E,7)\nprint(type(e) is E,e.args[0],e.value is None)\n",
+      "stdout": "True 7 True\n"
+    },
+    {
+      "id": "stop-iteration-base-init-independent",
+      "stage": "LA21",
+      "source": "e=StopIteration(\"old\")\nBaseException.__init__(e,\"new\")\nprint(e.args[0],e.value)\n",
+      "stdout": "new old\n"
+    },
+    {
+      "id": "stop-iteration-native-reinitialization",
+      "stage": "LA21",
+      "source": "x=[]\ne=StopIteration(\"old\")\nStopIteration.__init__(e,x,7)\nprint(e.value is x,e.args[0] is x,e.args[1])\nStopIteration.__init__(e)\nprint(e.value is None,len(e.args))\n",
+      "stdout": "True True 7\nTrue 0\n"
+    },
+    {
+      "id": "stop-iteration-failed-init-is-atomic",
+      "stage": "LA21",
+      "source": "e=StopIteration(\"old\")\ntry: StopIteration.__init__(e,\"new\",bad=7)\nexcept TypeError: print(e.args[0],e.value)\n",
+      "stdout": "old old\n"
+    },
+    {
+      "id": "stop-iteration-value-native-descriptor",
+      "stage": "LA21",
+      "source": "e=StopIteration(7)\nx=[]\nStopIteration.value.__set__(e,x)\nprint(e.value is x,e.args[0],StopIteration.value.__get__(e,StopIteration) is x)\nStopIteration.value.__delete__(e)\nStopIteration.value.__delete__(e)\nprint(e.value is None,e.args[0])\n",
+      "stdout": "True 7 True\nTrue 7\n"
+    },
+    {
+      "id": "stop-iteration-init-receiver",
+      "stage": "LA21",
+      "source": "StopIteration.__init__(Exception(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "stop-iteration-value-receiver",
+      "stage": "LA21",
+      "source": "StopIteration.value.__get__(Exception(),Exception)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "stop-iteration-value-cyclic-subclass",
+      "stage": "LA21",
+      "source": "class E(StopIteration):\n __slots__=(\"saved\",)\ne=E(7)\ne.saved=[]\ne.value=e\ne.extra=e.saved\ne.args=(8,)\nprint(e.value is e,e.args[0],e.saved is e.extra,E.__base__ is StopIteration)\n",
+      "stdout": "True 8 True True\n"
+    },
+    {
+      "id": "stop-iteration-custom-init-bypass",
+      "stage": "LA21",
+      "source": "class E(StopIteration):\n def __init__(self,x): self.saved=x\ne=E([])\nprint(e.value is None,e.args[0] is e.saved)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "stop-iteration-custom-super",
+      "stage": "LA21",
+      "source": "class E(StopIteration):\n def __new__(cls,x): return super().__new__(cls,x)\n def __init__(self,x):\n  print(self.value is None)\n  super().__init__(x)\nx=[]\ne=E(x)\nprint(e.value is x,e.args[0] is x)\n",
+      "stdout": "True\nTrue True\n"
+    },
+    {
+      "id": "stop-iteration-mixed-native-initializer",
+      "stage": "LA21",
+      "source": "class E(ValueError,StopIteration): pass\nx=[]\ne=E(x)\nprint(e.value is x,E.__base__ is StopIteration,E.__init__ is StopIteration.__init__)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "stop-iteration-layout-conflict",
+      "stage": "LA21",
+      "source": "class E(StopIteration,NameError): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "stop-iteration-owned-iterator-exhaustion",
+      "stage": "LA21",
+      "source": "class Done(StopIteration): pass\nclass I:\n def __iter__(self): return self\n def __next__(self): raise Done([7])\nprint(len(list(I())),len(tuple(I())))\nfor x in I(): print(\"never\")\nelse: print(\"finished\")\nprint(next(I(),8))\n",
+      "stdout": "0 0\nfinished\n8\n"
+    },
+    {
+      "id": "stop-iteration-indexed-exhaustion",
+      "stage": "LA21",
+      "source": "class Done(StopIteration): pass\nclass I:\n def __getitem__(self,i):\n  if i==2: raise Done(7)\n  return i\nprint(list(I())==[0,1])\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "stop-iteration-callable-exhaustion",
+      "stage": "LA21",
+      "source": "class Done(StopIteration): pass\nclass C:\n def __call__(self): raise Done([7])\nprint(len(list(iter(C(),9))))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "stop-iteration-containers-consume-subtype",
+      "stage": "LA21",
+      "source": "class Done(StopIteration): pass\nclass I:\n def __iter__(self):\n  yield 7\n  return 8\nclass J:\n def __iter__(self): return self\n def __next__(self): raise Done([9])\nx=[7]\nx.extend(J())\nprint(x==list(I()),len(set(J())),all(J()),any(J()))\n",
+      "stdout": "True 0 True False\n"
+    },
+    {
+      "id": "stop-iteration-pep479-subclass",
+      "stage": "LA21",
+      "source": "class Done(StopIteration): pass\ndef work():\n raise Done([7])\n yield\ntry: next(work())\nexcept RuntimeError as e:\n print(type(e.__cause__) is Done,e.__cause__.value[0],e.__cause__ is e.__context__,e.__suppress_context__)\n",
+      "stdout": "True 7 True True\n"
+    },
+    {
+      "id": "stop-iteration-instance-throw",
+      "stage": "LA21",
+      "source": "class Done(StopIteration): pass\ndef work():\n try: yield 7\n except Done as e: print(e.value[0])\ni=work()\nnext(i)\ntry: i.throw(Done([8]))\nexcept StopIteration as e: print(len(e.args))\n",
+      "stdout": "8\n0\n"
+    },
+    {
+      "id": "stop-iteration-generator-return-identity",
+      "stage": "LA21",
+      "source": "class Done(StopIteration): pass\nx=[]\ndef work():\n yield 7\n return x\ni=work()\nnext(i)\ntry: next(i)\nexcept StopIteration as e:\n print(e.value is x)\n BaseException.__init__(e,9)\n print(e.value is x,e.args[0])\n",
+      "stdout": "True\nTrue 9\n"
+    },
+    {
+      "id": "stop-iteration-args-failure",
+      "stage": "LA21",
+      "source": "class E(StopIteration): pass\nclass I:\n def __iter__(self):\n  yield 7\n  raise ValueError()\ne=E(\"old\")\ntry: e.args=I()\nexcept ValueError: print(e.value,e.args[0])\n",
+      "stdout": "old old\n"
+    },
+    {
+      "id": "stop-iteration-owned-value-hook",
+      "stage": "LA21",
+      "source": "class E(StopIteration):\n @property\n def value(self):\n  print(\"get\")\n  return self\ne=E([7])\nprint(e.value is e,StopIteration.value.__get__(e,E)[0])\n",
+      "stdout": "get\nTrue 7\n"
+    },
+    {
+      "id": "stop-iteration-actual-mro-excludes-exhaustion",
+      "stage": "LA21",
+      "source": "class M(type):\n def mro(cls): return [cls,Exception,BaseException,object]\nclass Done(StopIteration,metaclass=M): pass\nclass I:\n def __iter__(self): return self\n def __next__(self): raise Done(7)\ntry: list(I())\nexcept Done as e: print(e.args[0],isinstance(e,StopIteration))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "stop-iteration-actual-mro-excludes-pep479",
+      "stage": "LA21",
+      "source": "class M(type):\n def mro(cls): return [cls,Exception,BaseException,object]\nclass Done(StopIteration,metaclass=M): pass\ndef work():\n raise Done(7)\n yield\ntry: next(work())\nexcept Done as e: print(e.args[0],isinstance(e,RuntimeError))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "id": "stop-iteration-exact-constructor-keyword",
+      "stage": "LA21",
+      "source": "StopIteration(value=7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     },
     {
       "id": "import-error-string-subclass-uses-args",
