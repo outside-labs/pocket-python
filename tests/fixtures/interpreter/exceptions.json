@@ -36,7 +36,8 @@
     "LA34",
     "LA35",
     "LA36",
-    "LA37"
+    "LA37",
+    "LA38"
   ],
   "cases": [
     {
@@ -5555,12 +5556,14 @@
       "stdout": "b'abc' 'a' codec can't decode byte 0x61 in position 0: r\n"
     },
     {
-      "id": "encode-runtime-metadata-deferred",
-      "stage": "Future",
+      "id": "encode-runtime-ascii-metadata",
+      "stage": "LA38",
       "source": "try: \"\u96ea\".encode(\"ascii\")\nexcept UnicodeEncodeError as e: print(e.encoding)\n",
       "stdout": "ascii\n",
-      "owner": "#124",
-      "boundary": "Automatic native encoding metadata requires a separately adopted codec contract."
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     },
     {
       "id": "decode-runtime-metadata-deferred",
@@ -5569,6 +5572,234 @@
       "stdout": "b'\\xff'\n",
       "owner": "#124",
       "boundary": "Automatic native decoding metadata requires a separately adopted codec contract."
+    },
+    {
+      "id": "runtime-encode-ascii-method-728",
+      "stage": "LA38",
+      "source": "s='A\\u96ea\\xe9B'\ncodec='ascii'\ntry: s.encode(codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 1 3 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't encode characters in position 1-2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-ascii-bytes-729",
+      "stage": "LA38",
+      "source": "s='A\\u96ea\\xe9B'\ncodec='ascii'\ntry: bytes(s,codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 1 3 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't encode characters in position 1-2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-ascii-bytearray-730",
+      "stage": "LA38",
+      "source": "s='A\\u96ea\\xe9B'\ncodec='ascii'\ntry: bytearray(s,codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 1 3 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't encode characters in position 1-2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-latin-1-method-731",
+      "stage": "LA38",
+      "source": "s='A\\u96ea\\u20acB'\ncodec='latin-1'\ntry: s.encode(codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "latin-1 True 1 3 ordinal not in range(256)\n5 True True True True True\n'latin-1' codec can't encode characters in position 1-2: ordinal not in range(256)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-latin-1-bytes-732",
+      "stage": "LA38",
+      "source": "s='A\\u96ea\\u20acB'\ncodec='latin-1'\ntry: bytes(s,codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "latin-1 True 1 3 ordinal not in range(256)\n5 True True True True True\n'latin-1' codec can't encode characters in position 1-2: ordinal not in range(256)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-latin-1-bytearray-733",
+      "stage": "LA38",
+      "source": "s='A\\u96ea\\u20acB'\ncodec='latin-1'\ntry: bytearray(s,codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "latin-1 True 1 3 ordinal not in range(256)\n5 True True True True True\n'latin-1' codec can't encode characters in position 1-2: ordinal not in range(256)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-ascii-method-734",
+      "stage": "LA38",
+      "source": "s='\\U0001f98a\\xe9\\u96eax'\ncodec='ascii'\ntry: s.encode(codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 0 3 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't encode characters in position 0-2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-ascii-bytes-735",
+      "stage": "LA38",
+      "source": "s='\\U0001f98a\\xe9\\u96eax'\ncodec='ascii'\ntry: bytes(s,codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 0 3 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't encode characters in position 0-2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-ascii-bytearray-736",
+      "stage": "LA38",
+      "source": "s='\\U0001f98a\\xe9\\u96eax'\ncodec='ascii'\ntry: bytearray(s,codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "ascii True 0 3 ordinal not in range(128)\n5 True True True True True\n'ascii' codec can't encode characters in position 0-2: ordinal not in range(128)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-latin-1-method-737",
+      "stage": "LA38",
+      "source": "s='\\xe9\\u96eaa\\u20ac'\ncodec='latin-1'\ntry: s.encode(codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "latin-1 True 1 2 ordinal not in range(256)\n5 True True True True True\n'latin-1' codec can't encode character '\\u96ea' in position 1: ordinal not in range(256)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-latin-1-bytes-738",
+      "stage": "LA38",
+      "source": "s='\\xe9\\u96eaa\\u20ac'\ncodec='latin-1'\ntry: bytes(s,codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "latin-1 True 1 2 ordinal not in range(256)\n5 True True True True True\n'latin-1' codec can't encode character '\\u96ea' in position 1: ordinal not in range(256)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-latin-1-bytearray-739",
+      "stage": "LA38",
+      "source": "s='\\xe9\\u96eaa\\u20ac'\ncodec='latin-1'\ntry: bytearray(s,codec)\nexcept UnicodeEncodeError as e:\n print(e.encoding,e.object is s,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is s,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "latin-1 True 1 2 ordinal not in range(256)\n5 True True True True True\n'latin-1' codec can't encode character '\\u96ea' in position 1: ordinal not in range(256)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-alias-ASCII",
+      "stage": "LA38",
+      "source": "s=\"\u96ea\"\ntry: s.encode(encoding='ASCII',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.reason,e.start,e.end)\n",
+      "stdout": "ascii ordinal not in range(128) 0 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-alias-us-ascii",
+      "stage": "LA38",
+      "source": "s=\"\u96ea\"\ntry: s.encode(encoding='us-ascii',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.reason,e.start,e.end)\n",
+      "stdout": "ascii ordinal not in range(128) 0 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-alias-646",
+      "stage": "LA38",
+      "source": "s=\"\u96ea\"\ntry: s.encode(encoding='646',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.reason,e.start,e.end)\n",
+      "stdout": "ascii ordinal not in range(128) 0 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-alias-LATIN_1",
+      "stage": "LA38",
+      "source": "s=\"\u96ea\"\ntry: s.encode(encoding='LATIN_1',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.reason,e.start,e.end)\n",
+      "stdout": "latin-1 ordinal not in range(256) 0 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-alias-iso-8859-1",
+      "stage": "LA38",
+      "source": "s=\"\u96ea\"\ntry: s.encode(encoding='iso-8859-1',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.reason,e.start,e.end)\n",
+      "stdout": "latin-1 ordinal not in range(256) 0 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-alias-cp819",
+      "stage": "LA38",
+      "source": "s=\"\u96ea\"\ntry: s.encode(encoding='cp819',errors=\"strict\")\nexcept UnicodeEncodeError as e: print(e.encoding,e.reason,e.start,e.end)\n",
+      "stdout": "latin-1 ordinal not in range(256) 0 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-encode-native-args-independent",
+      "stage": "LA38",
+      "source": "try: \"\u96ea\".encode(\"ascii\")\nexcept UnicodeEncodeError as e:\n args=e.args\n e.args=()\n e.object=\"\u00e9\"\n e.reason=\"changed\"\n e.encoding=\"native\"\n e.start=2\n e.end=4\n print(args[0],args[1],args[2],args[3],args[4])\n print(len(e.args),e.object,e.reason,e.encoding,e.start,e.end)\n",
+      "stdout": "ascii \u96ea 0 1 ordinal not in range(128)\n0 \u00e9 changed native 2 4\n"
+    },
+    {
+      "id": "runtime-encode-subtype-identity",
+      "stage": "LA38",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"unexpected\")\ns=S(\"\u96ea\u00e9\")\nfor call in [s.encode,bytes,bytearray]:\n try:\n  if call is s.encode: pass\n  if call is bytes or call is bytearray: call(s,\"ascii\")\n  else: call(\"ascii\")\n except UnicodeEncodeError as e:\n  print(e.object is s,type(e.object) is S,e.start,e.end)\n  print(str(e))\n",
+      "stdout": "True True 0 2\n'ascii' codec can't encode characters in position 0-1: ordinal not in range(128)\nTrue True 0 2\n'ascii' codec can't encode characters in position 0-1: ordinal not in range(128)\nTrue True 0 2\n'ascii' codec can't encode characters in position 0-1: ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-encode-unbound-subtype-identity",
+      "stage": "LA38",
+      "source": "class S(str): pass\ns=S(\"\u96ea\")\ntry: str.encode(s,\"ascii\")\nexcept UnicodeEncodeError as e: print(e.object is s,e.encoding)\n",
+      "stdout": "True ascii\n"
+    },
+    {
+      "id": "runtime-encode-text-option-subtypes",
+      "stage": "LA38",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"unexpected\")\ntry: \"\u96ea\".encode(S(\"ASCII\"),S(\"strict\"))\nexcept UnicodeEncodeError as e: print(e.encoding,e.reason)\n",
+      "stdout": "ascii ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-encode-active-context",
+      "stage": "LA38",
+      "source": "original=ValueError(\"original\")\ntry:\n try: raise original\n except ValueError: \"\u96ea\".encode(\"ascii\")\nexcept UnicodeEncodeError as e: print(e.__context__ is original,e.__cause__ is None,e.__suppress_context__,e.object)\n",
+      "stdout": "True True False \u96ea\n"
+    },
+    {
+      "id": "runtime-encode-valid-success",
+      "stage": "LA38",
+      "source": "print(\"ASCII\".encode(\"ascii\"),\"\u00e9\".encode(\"latin-1\"),\"\u96ea\ud83e\udd8a\".encode(\"utf-8\"))\n",
+      "stdout": "b'ASCII' b'\\xe9' b'\\xe9\\x9b\\xaa\\xf0\\x9f\\xa6\\x8a'\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-utf8-runtime-metadata-deferred",
+      "stage": "Future",
+      "source": "try: chr(0xd800).encode(\"utf-8\")\nexcept UnicodeEncodeError as e: print(e.encoding)\n",
+      "stdout": "utf-8\n",
+      "owner": "#124",
+      "boundary": "Runtime UTF-8 surrogate metadata remains owned by LA-39."
     }
   ],
   "reference_boundaries": [

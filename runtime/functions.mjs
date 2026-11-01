@@ -67,9 +67,18 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       return () => { if (prepend) value.traceback.shift(); else value.traceback.pop(); };
     });
   };
-  const exception = (name, message, args = null) => {
+  const exception = (name, message, args = null, codec = null) => {
+    if (codec && verified.code.version >= 4) {
+      state.temporaries.push(codec.object);
+      const text = item => { const value = values.string(Array.from(item, char => char.codePointAt(0))); state.temporaries.push(value); return value; };
+      args = [text(codec.encoding), codec.object, values.int(BigInt(codec.start)), values.int(BigInt(codec.end)), text(codec.reason)];
+    }
     if (args === null && message === "" && ["StopIteration", "GeneratorExit"].includes(name)) args = [];
     const error = allocate(ExceptionValue, name, args, message);
+    if (codec && verified.code.version >= 4) {
+      for (const [index, key] of ["encoding", "object", "start", "end", "reason"].entries()) error.nativeFields.set(key, args[index]);
+      error.unicodeFields = 7;
+    }
     const active = state.frames.at(-1)?.activeException;
     mutate(error, () => {
       error.context = active && active !== error ? active : null;
@@ -114,15 +123,15 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     });
     return value;
   };
-  const python = (name, message, args = null) => { throw new Raised(exception(name, message, args)); };
+  const python = (name, message, args = null, codec = null) => { throw new Raised(exception(name, message, args, codec)); };
   const nameError = (message, key) => {
     const error = exception("NameError", message); state.temporaries.push(error);
     const name = values.string(Array.from(key, char => char.codePointAt(0)));
     mutate(error, () => { error.nativeFields.set("name", name); return () => { error.nativeFields.set("name", null); }; });
     throw new Raised(error);
   };
-  const values = new ValueRuntime({memory, charge, numeric: verified.code.version >= 4, fail: (name, message, code = "PYTHON", args = null) => {
-    if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message, args);
+  const values = new ValueRuntime({memory, charge, numeric: verified.code.version >= 4, fail: (name, message, code = "PYTHON", args = null, codec = null) => {
+    if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message, args, codec);
     hard(code, name, message);
   }});
   const nativeBuiltin = name => {
