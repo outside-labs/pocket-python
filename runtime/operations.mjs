@@ -277,6 +277,7 @@ export function completion(kind, fields = {}) {
       if (record.parts.length !== 3 || !Number.isSafeInteger(record.position) || record.position < 0 || record.position > 2)
         throw new TypeError("Invalid slice conversion position.");
       break;
+    case "exception-args": record = {kind, receiver: fields.receiver, after}; break;
     case "format-result": record = {kind, receiver: fields.receiver, slot: fields.slot, after}; break;
     case "print-argument":
       record = {kind, args: operands(fields.args), index: fields.index, depth: fields.depth, after};
@@ -422,6 +423,7 @@ function visit(record) {
     case "compare-result": case "ne-result": case "sequence-item": case "sequence-truth": return [record.left, record.right, ...completionRoots(record.after)];
     case "index-key": return [record.receiver, record.key, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
     case "slice-index": return [record.receiver, ...record.parts, ...(record.operation === "set" ? [record.item] : []), ...completionRoots(record.after)];
+    case "exception-args": return [record.receiver, ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];
     case "attribute-write": return [record.receiver, ...completionRoots(record.after)];
