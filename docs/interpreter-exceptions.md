@@ -28,6 +28,7 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-23 | Runtime AttributeError `name`/`obj` enrichment on ordinary reads, `getattr`, descriptors, module hooks and native missing reads | Existing native fields, including an explicitly supplied None, suppress enrichment. Original error/key/receiver identity survives owned setters and their failures. This slice belongs to classes-source/1. Write/delete enrichment remains separately gated. |
 | LA-24 | Native runtime import message identity and registry-backed missing from-import `name`/`path`/`name_from` | Registry modules retain their original source path, including after namespace file replacement/deletion. User-raised errors retain their own fields. Policy denials keep their registry semantics and do not grant host imports. Custom module specs, source module subtypes and provenance callbacks retain a field-read boundary under #124. |
 | LA-25 | Composed runtime metadata across module calls, dynamic source, cause/note handlers and suspended cleanup; installed offline stop/restart during enrichment setters | The corpus records 359 cases: 351 semantic/error comparisons and eight explicit refusals, with 53 cases shared by core-source/1. Node and Chromium pass every drain, step and parked driver. The installed-wheel offline console passes 59 checks. |
+| LA-26 | SyntaxError/IndentationError/TabError layouts, subclasses, native initializers and nine mutable native fields; iterable detail conversion and plain native messages | Four, six or seven details succeed. Five details publish fields before TypeError; other invalid counts leave old detail fields intact after replacing args/msg. Detail conversion ignores length hints. Native location rendering follows in LA-27; parser-generated fields remain gated. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -80,7 +81,7 @@ python scripts/object_integration_browser_smoke.py --exceptions
 ```
 
 Exception groups/except*, traceback objects/mutation and note rendering/export,
-write/delete attribute and custom import provenance enrichment, and the SyntaxError/Unicode
+write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and the Unicode
 structured native families remain #124. Generator throw of a user
 exception class retains #120; throwing an instance remains adopted. Multiple
 argument/container/default exception representations remain #127. The ordinary
@@ -120,3 +121,17 @@ while retaining the exact record/key as its cause. Offline acceptance also
 checks dynamic source frames, interrupted enrichment setters, fresh restart
 owners and a reduced-profile cache update. These observations do not widen the
 core profile to owned callbacks or the classes-only `getattr` builtin.
+
+LA-26 follows the pinned [SyntaxError initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L2544-L2586).
+The native fields are `msg`, `filename`, `lineno`, `offset`, `text`, `end_lineno`,
+`end_offset`, `print_file_and_line` and `_metadata`. Values retain identity and
+remain independent of args and instance dictionaries; deletion resets a field
+to None. No arguments preserve existing msg/details, one or more arguments
+replace msg, and exactly two arguments convert the second value into details.
+Unknown keywords fail before replacing args. Conversion completes before count
+validation and ignores owned length hints, matching the pinned
+[sequence conversion](https://github.com/python/cpython/blob/v3.14.7/Objects/abstract.c#L1866-L1937).
+Explicit native new leaves fields None; generic BaseException initialization
+preserves them. Compatible generic bases share storage; conflicting structured
+layouts are rejected. Parser-generated native fields retain their field-read
+gate, while existing copied diagnostic messages remain available.

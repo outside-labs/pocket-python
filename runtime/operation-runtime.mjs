@@ -119,6 +119,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         return () => { receiver.nativeFields = before; receiver.nativeFieldBoundaries = boundaries; receiver.attributeFields = present; };
       });
     }
+    if (matchesException(owner, "SyntaxError") && args.length) mutate(receiver, () => {
+      const before = receiver.nativeFields.get("msg");
+      const boundary = receiver.nativeFieldBoundaries?.delete("msg");
+      receiver.nativeFields.set("msg", args[0]);
+      return () => { receiver.nativeFields.set("msg", before); if (boundary) receiver.nativeFieldBoundaries.add("msg"); };
+    });
+  };
+  const syntaxDetails = (receiver, args, site, after, depth, result) => args.length === 2 ?
+    consumeTask("syntax-details", args[1], site, continuation("syntax-details", {receiver, result, after}), depth) : valueTask(result, site, after);
+  const syntaxMessage = (value, site, after, depth) => {
+    if (value.nativeFieldBoundaries?.has("msg")) return exceptionString(value, site, after, depth);
+    if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
+    if (values.isString(classes.payload(value.nativeFields.get("filename"))) || typeof value.nativeFields.get("lineno") === "bigint")
+      hard("UNSUPPORTED", "UnsupportedOperationError", "SyntaxError location rendering remains under #124");
+    return unaryTask("str", value.nativeFields.get("msg"), site, after, depth);
   };
   const exceptionString = (value, site, after, depth, importMessage = false) => {
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
@@ -392,7 +407,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const consumeFinish = (name, result, site, after) => {
     state.temporaries.push(result);
-    const value = name === "bytes" ? values.binaryValue(result.items) : name === "tuple" ? values.tuple(result.items) :
+    const value = name === "bytes" ? values.binaryValue(result.items) : ["tuple", "syntax-details"].includes(name) ? values.tuple(result.items) :
       ["bytearray", "list", "set", "frozenset", "set-update"].includes(name) ? result : name === "all";
     state.temporaries.push(value); return valueTask(value, site, after);
   };
@@ -871,6 +886,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
   };
   const deliverValue = (value, completion, site) => {
+    if (completion?.kind === "syntax-details") {
+      const items = value.items;
+      if (items.length < 4 || items.length > 7) python("TypeError", "SyntaxError details require four to seven values");
+      mutate(completion.receiver, () => {
+        const before = new Map(completion.receiver.nativeFields);
+        const boundaries = completion.receiver.nativeFieldBoundaries && new Set(completion.receiver.nativeFieldBoundaries);
+        for (const [index, key] of ["filename", "lineno", "offset", "text", "end_lineno", "end_offset", "_metadata"].entries()) {
+          completion.receiver.nativeFields.set(key, items[index] ?? null);
+          completion.receiver.nativeFieldBoundaries?.delete(key);
+        }
+        return () => { completion.receiver.nativeFields = before; completion.receiver.nativeFieldBoundaries = boundaries; };
+      });
+      if (items.length === 5) python("TypeError", "end_offset must be provided when end_lineno is provided");
+      return valueTask(completion.result, site, completion.after);
+    }
     if (completion?.kind === "attribute-context-name")
       return attributeTask(completion.error, "obj", site, continuation("attribute-context-object", completion), 0, "set", null, null, completion.receiver);
     if (completion?.kind === "attribute-context-object")
@@ -1440,7 +1470,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "consume-next") {
       const {name, receiver, result, after, depth} = completion;
       state.temporaries.push(value);
-      if (["list", "tuple"].includes(name)) {
+      if (["list", "tuple", "syntax-details"].includes(name)) {
         values.append(result, value); return consumeNext(name, receiver, result, site, after, depth);
       }
       if (values.isSet(result)) return dictionaryTask(result.storage, value, site,
@@ -2093,9 +2123,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         }
         if (task.kind === "consume") {
           state.temporaries = operationRoots(task);
-          const {name, receiver} = task, building = ["list", "tuple"].includes(name);
+          const {name, receiver} = task, building = ["list", "tuple", "syntax-details"].includes(name);
           const hintOwner = receiver instanceof ProtocolIteratorValue && receiver.kind === "indexed" ? receiver.source : receiver;
-          if ((building || name === "bytes") && userProtocol(hintOwner) &&
+          if (name !== "syntax-details" && (building || name === "bytes") && userProtocol(hintOwner) &&
               ["__len__", "__length_hint__"].some(slot => (hintOwner.nativePayload === undefined ? classes.lookup(classes.checkingType(hintOwner), slot).found : classes.hasSlot(classes.checkingType(hintOwner), slot))))
             hard("UNSUPPORTED", "UnsupportedOperationError", "User length hints require a separate construction stage.");
           const result = task.result ?? (building ? values.list([]) : ["bytes", "bytearray"].includes(name) ? values.binaryValue([], true) :
@@ -2442,6 +2472,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (["repr", "str", "repr-default"].includes(operation)) {
             if (operation === "repr-default") hard("UNSUPPORTED", "UnsupportedOperationError", "Default object representations require a later formatting stage.");
             if (operation === "str" && value instanceof ExceptionValue && !value.type) {
+              if (matchesException(value.name, "SyntaxError")) { task = syntaxMessage(value, site, completion, depth); continue; }
               task = exceptionString(value, site, completion, depth, matchesException(value.name, "ImportError")); continue;
             }
             if (!userProtocol(value)) {
@@ -2563,6 +2594,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           if (["eval", "exec"].includes(callable.name)) { task = evaluator.start(callable.name, args, keywords, keywordValues, site, completion); continue; }
           if (callable.name === "__import__") { task = importer.start(args, keywords, keywordValues, site, completion); continue; }
           if (callable.name === "compile") { task = compiler.start(args, keywords, keywordValues, site, completion); continue; }
+          if (matchesException(callable.name, "SyntaxError") && state.frames.at(-1).pool.code.version >= 4) {
+            count("builtin:" + callable.name);
+            const receiver = makeException(callable.name, args); state.temporaries.push(receiver);
+            initializeException(receiver, args, keywords, keywordValues, callable.name);
+            task = syntaxDetails(receiver, args, site, completion, depth, receiver); continue;
+          }
           if (["getset_descriptor", "member_descriptor"].includes(callable.nativeKind)) python("TypeError", "Storage descriptor objects are not callable");
           const nativeKind = callable.nativeKind ?? classes.nativeDescriptorKind(callable);
           const descriptor = callable.nativeOwner ? callable : nativeKind === null ? null :
@@ -2595,11 +2632,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (nativeName === "__init__") {
               if (!(args[0] instanceof ExceptionValue)) python("TypeError", "Exception initialization requires an exception receiver");
               initializeException(args[0], args.slice(1), keywords, keywordValues, nativeOwner);
+              if (matchesException(nativeOwner, "SyntaxError")) { task = syntaxDetails(args[0], args.slice(1), site, completion, depth, null); continue; }
               task = valueTask(null, site, completion); continue;
             }
             if (nativeName === "__str__") {
               if (args.length !== 1 || keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "Exception __str__ requires one receiver");
-              task = exceptionString(args[0], site, completion, depth, nativeOwner === "ImportError"); continue;
+              task = matchesException(nativeOwner, "SyntaxError") ? syntaxMessage(args[0], site, completion, depth) :
+                exceptionString(args[0], site, completion, depth, nativeOwner === "ImportError"); continue;
             }
             if (nativeName === "__repr__") hard("UNSUPPORTED", "UnsupportedOperationError", "Default exception repr remains under #127");
           }

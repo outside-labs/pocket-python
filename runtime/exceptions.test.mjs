@@ -80,6 +80,24 @@ test('runtime metadata enrichment preserves original dynamic failure frames', as
   closed(result.closed);
 });
 
+test('SyntaxError details retain temporary native field graphs through interrupted iteration', async () => {
+  await lifetime('class Info:\n def __iter__(self):\n  print("entered")\n  yield [7]\n  yield 1\n  yield 2\n  yield "text"\n  yield 3\n  yield 4\n  yield [8]\ne=SyntaxError([],Info())\nprint(e.filename[0],e._metadata[0])\n', 'entered\n7 8\n');
+});
+
+test('five SyntaxError details publish their partial native fields before failure', async () => {
+  await lifetime('class Info:\n def __iter__(self):\n  print("entered")\n  yield [7]\n  yield 1\n  yield 2\n  yield "text"\n  yield [8]\ne=SyntaxError("old")\ntry: SyntaxError.__init__(e,"new",Info())\nexcept TypeError: print(e.msg,e.filename[0],e.end_lineno[0],e.end_offset is None)\n', 'entered\nnew 7 8 True\n');
+});
+
+test('cyclic SyntaxError native fields survive parked collection independently of args', async () => {
+  await lifetime('e=SyntaxError()\ne.msg=e\ne.filename=e\ne._metadata=[e]\ne.args=()\nprint("entered")\nprint(e.msg is e,e.filename is e,e._metadata[0] is e)\n', 'entered\nTrue True True\n');
+});
+
+test('structured syntax exception graphs obey the shared allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True: held.append(SyntaxError([],("file",1,2,[],3,4,[])))\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('lazy exception messages retain their arguments through park/cancel/close', async () => {
   await lifetime('class M:\n def __str__(self):\n  print("entered")\n  return "message"\nprint(str(ValueError(M())))\n', 'entered\nmessage\n');
 });
