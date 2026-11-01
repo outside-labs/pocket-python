@@ -586,6 +586,13 @@
       "features": [
         "source.exception-causes"
       ]
+    },
+    {
+      "id": "empty-handler-never-matches",
+      "source": "print(\"ready\")\ntry:\n raise ValueError()\nexcept ():\n print(\"bad\")\nexcept ValueError:\n print(\"caught\")\n",
+      "features": [
+        "source.grammar"
+      ]
     }
   ],
   "boundaries": [
@@ -648,14 +655,6 @@
     {
       "id": "unsupported-template-string",
       "source": "print('must not run')\nt'{x}'",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-empty-handler",
-      "source": "print('must not run')\ntry:\n    pass\nexcept ():\n    pass\n",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"
