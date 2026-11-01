@@ -8,7 +8,8 @@
     "Lambda",
     "Unpack",
     "Display",
-    "O68"
+    "O68",
+    "LA8"
   ],
   "cases": [
     {
@@ -582,29 +583,25 @@
     },
     {
       "id": "assert-container-message-deferred",
-      "stage": "Future",
+      "stage": "LA8",
       "source": "assert False,[1]\n",
       "stdout": "",
       "profiles": [
         "core-source/1",
         "classes-source/1"
       ],
-      "error_type": "AssertionError",
-      "owner": "#127",
-      "boundary": "Assertion message display."
+      "error_type": "AssertionError"
     },
     {
       "id": "assert-float-message-deferred",
-      "stage": "Future",
+      "stage": "LA8",
       "source": "assert False,1.25\n",
       "stdout": "",
       "profiles": [
         "core-source/1",
         "classes-source/1"
       ],
-      "error_type": "AssertionError",
-      "owner": "#127",
-      "boundary": "Assertion message display."
+      "error_type": "AssertionError"
     },
     {
       "id": "comprehension-deferred",

@@ -1314,6 +1314,10 @@ export class ClassRuntime {
   namespaceGetset(descriptor, receiver, operation = "get", item = null) {
     this.namespaceDescriptorValid(descriptor, receiver);
     const owner = descriptor.nativeOwner, name = descriptor.nativeKey;
+    if (receiver instanceof ExceptionValue && name === "args") {
+      if (operation !== "get") this.fail("UnsupportedOperationError", "Mutable exception arguments require LA-9 under #124", "UNSUPPORTED");
+      return {kind: "value", value: this.exceptionArgs(receiver)};
+    }
     if (this.isInstance(receiver) && receiver.nativePayload !== undefined && owner instanceof BuiltinValue && ["property", "staticmethod", "classmethod", "module", "super"].includes(owner.name))
       return this.namespaceGetset(descriptor, receiver.nativePayload, operation, item);
     if (descriptor.slotIndex !== undefined) {
@@ -1707,6 +1711,10 @@ export class ClassRuntime {
     const position = this.values.find(dictionary, key);
     if (position < 0) return value(this.functionMissing(receiver, name, operation));
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
+  }
+  exceptionArgs(receiver) {
+    if (receiver.argsTuple === undefined) this.functionMetadata(receiver, "argsTuple", this.values.tuple(receiver.args));
+    return receiver.argsTuple;
   }
   functionMetadata(receiver, field, value) {
     const before = receiver[field]; receiver[field] = value;
