@@ -326,3 +326,14 @@ singleton for decoder snapshots, whereas this profile creates a fresh snapshot.
 The named `runtime-decode-single-byte-cache-identity` divergence is recorded and
 checked separately from successful differential observations. Snapshot content,
 argument/native sharing and exact bytes type are adopted for every length.
+
+LA-42 adopts strict UTF-8 decoder metadata and the pinned
+[failure selection](https://github.com/python/cpython/blob/v3.14.7/Objects/unicodeobject.c#L4978-L5072).
+Invalid leading bytes cover one byte; a failed continuation excludes that byte
+from the native range; truncated valid prefixes extend to the input's end.
+Overlong encodings, surrogate encodings and values above U+10FFFF fail at the
+second-byte restriction before later truncation is considered. Canonical
+`utf-8`, native snapshot/args sharing and all three exact reason strings are
+adopted. The matrix includes every possible leading byte and continuation
+boundaries for each special leading-byte family. The #117 bytes-cache identity
+qualification remains separate.

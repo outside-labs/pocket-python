@@ -1123,8 +1123,7 @@
         "tests/fixtures/interpreter/exceptions.json:exception-multiple-display-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-native-repr-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-generator-throw-class-deferred",
-        "tests/fixtures/interpreter/exceptions.json:import-error-multiple-display-deferred",
-        "tests/fixtures/interpreter/exceptions.json:decode-utf8-runtime-metadata-deferred"
+        "tests/fixtures/interpreter/exceptions.json:import-error-multiple-display-deferred"
       ]
     },
     {

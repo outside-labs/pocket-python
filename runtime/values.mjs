@@ -307,18 +307,22 @@ export class ValueRuntime {
   decodeBinary(value, encoding, errors) {
     const codec = this.codecName(encoding, errors), points = [], bytes = value.items;
     const invalid = (start, end, reason) => this.fail("UnicodeDecodeError", "Invalid input for the selected strict codec", "PYTHON", null,
-      codec === "ascii" ? {encoding: "ascii", object: this.binaryValue(bytes), start, end, reason} : null);
+      {encoding: codec === "ascii" ? "ascii" : "utf-8", object: this.binaryValue(bytes), start, end, reason});
     for (let index = 0; index < bytes.length;) {
-      this.charge(1); const byte = bytes[index++];
+      this.charge(1); const start = index, byte = bytes[index++];
       if (codec === "latin1" || byte < 128) { points.push(byte); continue; }
-      if (codec === "ascii") invalid(index - 1, index, "ordinal not in range(128)");
+      if (codec === "ascii") invalid(start, index, "ordinal not in range(128)");
       const count = byte >= 194 && byte <= 223 ? 1 : byte >= 224 && byte <= 239 ? 2 : byte >= 240 && byte <= 244 ? 3 : 0;
-      if (!count || index + count > bytes.length) invalid();
+      if (!count) invalid(start, index, "invalid start byte");
       let point = byte & (count === 1 ? 31 : count === 2 ? 15 : 7);
       for (let offset = 0; offset < count; offset++) {
-        this.charge(1); const next = bytes[index++]; if (next < 128 || next > 191) invalid(); point = point * 64 + (next & 63);
+        if (index === bytes.length) invalid(start, index, "unexpected end of data");
+        this.charge(1); const next = bytes[index];
+        const minimum = offset === 0 && (byte === 224 || byte === 240) ? byte === 224 ? 160 : 144 : 128;
+        const maximum = offset === 0 && (byte === 237 || byte === 244) ? byte === 237 ? 159 : 143 : 191;
+        if (next < minimum || next > maximum) invalid(start, index, "invalid continuation byte");
+        index++; point = point * 64 + (next & 63);
       }
-      if (point < [0, 128, 2048, 65536][count] || point > 0x10ffff || point >= 0xd800 && point <= 0xdfff) invalid();
       points.push(point);
     }
     return this.string(points);

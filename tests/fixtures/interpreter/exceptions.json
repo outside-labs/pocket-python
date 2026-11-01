@@ -40,7 +40,8 @@
     "LA38",
     "LA39",
     "LA40",
-    "LA41"
+    "LA41",
+    "LA42"
   ],
   "cases": [
     {
@@ -6313,12 +6314,336 @@
       ]
     },
     {
-      "id": "decode-utf8-runtime-metadata-deferred",
-      "stage": "Future",
+      "id": "runtime-decode-utf8-metadata",
+      "stage": "LA42",
       "source": "try: b\"A\\xffZ\".decode(\"utf-8\")\nexcept UnicodeDecodeError as e: print(e.encoding)\n",
       "stdout": "utf-8\n",
-      "owner": "#124",
-      "boundary": "Runtime UTF-8 decoding metadata remains owned by LA-42."
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-0",
+      "stage": "LA42",
+      "source": "data=bytearray(b'\\x80')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 invalid start byte\n5 True True True True True\n'utf-8' codec can't decode byte 0x80 in position 0: invalid start byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-1",
+      "stage": "LA42",
+      "source": "data=bytes(b'A\\xc3\\xa9\\xc0\\x80')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 4 invalid start byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xc0 in position 3: invalid start byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-2",
+      "stage": "LA42",
+      "source": "data=bytes(b'\\xc1\\xbf')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 invalid start byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xc1 in position 0: invalid start byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-3",
+      "stage": "LA42",
+      "source": "data=bytearray(b'A\\xc3\\xa9\\xf5\\x80\\x80\\x80')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 4 invalid start byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xf5 in position 3: invalid start byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-4",
+      "stage": "LA42",
+      "source": "data=bytes(b'\\xff')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 invalid start byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-5",
+      "stage": "LA42",
+      "source": "data=bytes(b'A\\xc3\\xa9\\xc2')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 4 unexpected end of data\n5 True True True True True\n'utf-8' codec can't decode byte 0xc2 in position 3: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-6",
+      "stage": "LA42",
+      "source": "data=bytearray(b'\\xe0')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 unexpected end of data\n5 True True True True True\n'utf-8' codec can't decode byte 0xe0 in position 0: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-7",
+      "stage": "LA42",
+      "source": "data=bytes(b'A\\xc3\\xa9\\xe0\\xa0')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 5 unexpected end of data\n5 True True True True True\n'utf-8' codec can't decode bytes in position 3-4: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-8",
+      "stage": "LA42",
+      "source": "data=bytes(b'\\xf0')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 unexpected end of data\n5 True True True True True\n'utf-8' codec can't decode byte 0xf0 in position 0: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-9",
+      "stage": "LA42",
+      "source": "data=bytearray(b'A\\xc3\\xa9\\xf0\\x90')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 5 unexpected end of data\n5 True True True True True\n'utf-8' codec can't decode bytes in position 3-4: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-10",
+      "stage": "LA42",
+      "source": "data=bytes(b'\\xf0\\x90\\x80')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 3 unexpected end of data\n5 True True True True True\n'utf-8' codec can't decode bytes in position 0-2: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-11",
+      "stage": "LA42",
+      "source": "data=bytes(b'A\\xc3\\xa9\\xc2A')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 4 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xc2 in position 3: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-12",
+      "stage": "LA42",
+      "source": "data=bytearray(b'\\xe1\\x80A')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 2 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode bytes in position 0-1: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-13",
+      "stage": "LA42",
+      "source": "data=bytes(b'A\\xc3\\xa9\\xf1\\x80\\x80A')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 6 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode bytes in position 3-5: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-14",
+      "stage": "LA42",
+      "source": "data=bytes(b'\\xe0\\x9f\\x80')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xe0 in position 0: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-15",
+      "stage": "LA42",
+      "source": "data=bytearray(b'A\\xc3\\xa9\\xed\\xa0\\x80')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 4 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xed in position 3: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-16",
+      "stage": "LA42",
+      "source": "data=bytes(b'\\xed\\xa0')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xed in position 0: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-17",
+      "stage": "LA42",
+      "source": "data=bytes(b'A\\xc3\\xa9\\xf0\\x8f\\xbf\\xbf')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 4 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xf0 in position 3: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-18",
+      "stage": "LA42",
+      "source": "data=bytearray(b'\\xf4\\x90\\x80\\x80')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 1 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xf4 in position 0: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-19",
+      "stage": "LA42",
+      "source": "data=bytes(b'A\\xc3\\xa9\\xe2(')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 4 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xe2 in position 3: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-20",
+      "stage": "LA42",
+      "source": "data=bytes(b'\\xe1\\x80\\xff')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 2 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode bytes in position 0-1: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-21",
+      "stage": "LA42",
+      "source": "data=bytearray(b'A\\xc3\\xa9\\xf1\\x80\\xff')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 5 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode bytes in position 3-4: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-22",
+      "stage": "LA42",
+      "source": "data=bytes(b'\\xf1\\x80\\x80')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 0 3 unexpected end of data\n5 True True True True True\n'utf-8' codec can't decode bytes in position 0-2: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-invalid-23",
+      "stage": "LA42",
+      "source": "data=bytes(b'A\\xc3\\xa9\\xf4\\x90')\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.encoding,e.object==data,e.start,e.end,e.reason)\n print(len(e.args),e.args[0] is e.encoding,e.args[1] is e.object,e.args[2]==e.start,e.args[3]==e.end,e.args[4] is e.reason)\n print(str(e))\n",
+      "stdout": "utf-8 True 3 4 invalid continuation byte\n5 True True True True True\n'utf-8' codec can't decode byte 0xf4 in position 3: invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-alias-utf-8",
+      "stage": "LA42",
+      "source": "try: b\"A\\xe1\\x80\".decode(encoding='utf-8',errors=\"strict\")\nexcept UnicodeDecodeError as e: print(e.encoding,e.start,e.end,e.reason,str(e))\n",
+      "stdout": "utf-8 1 3 unexpected end of data 'utf-8' codec can't decode bytes in position 1-2: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-alias-UTF_8",
+      "stage": "LA42",
+      "source": "try: b\"A\\xe1\\x80\".decode(encoding='UTF_8',errors=\"strict\")\nexcept UnicodeDecodeError as e: print(e.encoding,e.start,e.end,e.reason,str(e))\n",
+      "stdout": "utf-8 1 3 unexpected end of data 'utf-8' codec can't decode bytes in position 1-2: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-alias-utf8",
+      "stage": "LA42",
+      "source": "try: b\"A\\xe1\\x80\".decode(encoding='utf8',errors=\"strict\")\nexcept UnicodeDecodeError as e: print(e.encoding,e.start,e.end,e.reason,str(e))\n",
+      "stdout": "utf-8 1 3 unexpected end of data 'utf-8' codec can't decode bytes in position 1-2: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-alias-u8",
+      "stage": "LA42",
+      "source": "try: b\"A\\xe1\\x80\".decode(encoding='u8',errors=\"strict\")\nexcept UnicodeDecodeError as e: print(e.encoding,e.start,e.end,e.reason,str(e))\n",
+      "stdout": "utf-8 1 3 unexpected end of data 'utf-8' codec can't decode bytes in position 1-2: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-leading-byte-inventory",
+      "stage": "LA42",
+      "source": "for value in range(256):\n data=bytes([value])\n try:\n  data.decode()\n  print(value,\"ok\")\n except UnicodeDecodeError as e: print(value,e.start,e.end,e.reason)\n",
+      "stdout": "0 ok\n1 ok\n2 ok\n3 ok\n4 ok\n5 ok\n6 ok\n7 ok\n8 ok\n9 ok\n10 ok\n11 ok\n12 ok\n13 ok\n14 ok\n15 ok\n16 ok\n17 ok\n18 ok\n19 ok\n20 ok\n21 ok\n22 ok\n23 ok\n24 ok\n25 ok\n26 ok\n27 ok\n28 ok\n29 ok\n30 ok\n31 ok\n32 ok\n33 ok\n34 ok\n35 ok\n36 ok\n37 ok\n38 ok\n39 ok\n40 ok\n41 ok\n42 ok\n43 ok\n44 ok\n45 ok\n46 ok\n47 ok\n48 ok\n49 ok\n50 ok\n51 ok\n52 ok\n53 ok\n54 ok\n55 ok\n56 ok\n57 ok\n58 ok\n59 ok\n60 ok\n61 ok\n62 ok\n63 ok\n64 ok\n65 ok\n66 ok\n67 ok\n68 ok\n69 ok\n70 ok\n71 ok\n72 ok\n73 ok\n74 ok\n75 ok\n76 ok\n77 ok\n78 ok\n79 ok\n80 ok\n81 ok\n82 ok\n83 ok\n84 ok\n85 ok\n86 ok\n87 ok\n88 ok\n89 ok\n90 ok\n91 ok\n92 ok\n93 ok\n94 ok\n95 ok\n96 ok\n97 ok\n98 ok\n99 ok\n100 ok\n101 ok\n102 ok\n103 ok\n104 ok\n105 ok\n106 ok\n107 ok\n108 ok\n109 ok\n110 ok\n111 ok\n112 ok\n113 ok\n114 ok\n115 ok\n116 ok\n117 ok\n118 ok\n119 ok\n120 ok\n121 ok\n122 ok\n123 ok\n124 ok\n125 ok\n126 ok\n127 ok\n128 0 1 invalid start byte\n129 0 1 invalid start byte\n130 0 1 invalid start byte\n131 0 1 invalid start byte\n132 0 1 invalid start byte\n133 0 1 invalid start byte\n134 0 1 invalid start byte\n135 0 1 invalid start byte\n136 0 1 invalid start byte\n137 0 1 invalid start byte\n138 0 1 invalid start byte\n139 0 1 invalid start byte\n140 0 1 invalid start byte\n141 0 1 invalid start byte\n142 0 1 invalid start byte\n143 0 1 invalid start byte\n144 0 1 invalid start byte\n145 0 1 invalid start byte\n146 0 1 invalid start byte\n147 0 1 invalid start byte\n148 0 1 invalid start byte\n149 0 1 invalid start byte\n150 0 1 invalid start byte\n151 0 1 invalid start byte\n152 0 1 invalid start byte\n153 0 1 invalid start byte\n154 0 1 invalid start byte\n155 0 1 invalid start byte\n156 0 1 invalid start byte\n157 0 1 invalid start byte\n158 0 1 invalid start byte\n159 0 1 invalid start byte\n160 0 1 invalid start byte\n161 0 1 invalid start byte\n162 0 1 invalid start byte\n163 0 1 invalid start byte\n164 0 1 invalid start byte\n165 0 1 invalid start byte\n166 0 1 invalid start byte\n167 0 1 invalid start byte\n168 0 1 invalid start byte\n169 0 1 invalid start byte\n170 0 1 invalid start byte\n171 0 1 invalid start byte\n172 0 1 invalid start byte\n173 0 1 invalid start byte\n174 0 1 invalid start byte\n175 0 1 invalid start byte\n176 0 1 invalid start byte\n177 0 1 invalid start byte\n178 0 1 invalid start byte\n179 0 1 invalid start byte\n180 0 1 invalid start byte\n181 0 1 invalid start byte\n182 0 1 invalid start byte\n183 0 1 invalid start byte\n184 0 1 invalid start byte\n185 0 1 invalid start byte\n186 0 1 invalid start byte\n187 0 1 invalid start byte\n188 0 1 invalid start byte\n189 0 1 invalid start byte\n190 0 1 invalid start byte\n191 0 1 invalid start byte\n192 0 1 invalid start byte\n193 0 1 invalid start byte\n194 0 1 unexpected end of data\n195 0 1 unexpected end of data\n196 0 1 unexpected end of data\n197 0 1 unexpected end of data\n198 0 1 unexpected end of data\n199 0 1 unexpected end of data\n200 0 1 unexpected end of data\n201 0 1 unexpected end of data\n202 0 1 unexpected end of data\n203 0 1 unexpected end of data\n204 0 1 unexpected end of data\n205 0 1 unexpected end of data\n206 0 1 unexpected end of data\n207 0 1 unexpected end of data\n208 0 1 unexpected end of data\n209 0 1 unexpected end of data\n210 0 1 unexpected end of data\n211 0 1 unexpected end of data\n212 0 1 unexpected end of data\n213 0 1 unexpected end of data\n214 0 1 unexpected end of data\n215 0 1 unexpected end of data\n216 0 1 unexpected end of data\n217 0 1 unexpected end of data\n218 0 1 unexpected end of data\n219 0 1 unexpected end of data\n220 0 1 unexpected end of data\n221 0 1 unexpected end of data\n222 0 1 unexpected end of data\n223 0 1 unexpected end of data\n224 0 1 unexpected end of data\n225 0 1 unexpected end of data\n226 0 1 unexpected end of data\n227 0 1 unexpected end of data\n228 0 1 unexpected end of data\n229 0 1 unexpected end of data\n230 0 1 unexpected end of data\n231 0 1 unexpected end of data\n232 0 1 unexpected end of data\n233 0 1 unexpected end of data\n234 0 1 unexpected end of data\n235 0 1 unexpected end of data\n236 0 1 unexpected end of data\n237 0 1 unexpected end of data\n238 0 1 unexpected end of data\n239 0 1 unexpected end of data\n240 0 1 unexpected end of data\n241 0 1 unexpected end of data\n242 0 1 unexpected end of data\n243 0 1 unexpected end of data\n244 0 1 unexpected end of data\n245 0 1 invalid start byte\n246 0 1 invalid start byte\n247 0 1 invalid start byte\n248 0 1 invalid start byte\n249 0 1 invalid start byte\n250 0 1 invalid start byte\n251 0 1 invalid start byte\n252 0 1 invalid start byte\n253 0 1 invalid start byte\n254 0 1 invalid start byte\n255 0 1 invalid start byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-second-byte-boundaries",
+      "stage": "LA42",
+      "source": "for first in [0xc2,0xe0,0xe1,0xed,0xef,0xf0,0xf1,0xf4]:\n for second in [0x7f,0x80,0x8f,0x90,0x9f,0xa0,0xbf,0xc0]:\n  data=bytes([first,second,0x80,0x80])\n  try:\n   data.decode()\n   print(first,second,\"ok\")\n  except UnicodeDecodeError as e: print(first,second,e.start,e.end,e.reason)\n",
+      "stdout": "194 127 0 1 invalid continuation byte\n194 128 2 3 invalid start byte\n194 143 2 3 invalid start byte\n194 144 2 3 invalid start byte\n194 159 2 3 invalid start byte\n194 160 2 3 invalid start byte\n194 191 2 3 invalid start byte\n194 192 0 1 invalid continuation byte\n224 127 0 1 invalid continuation byte\n224 128 0 1 invalid continuation byte\n224 143 0 1 invalid continuation byte\n224 144 0 1 invalid continuation byte\n224 159 0 1 invalid continuation byte\n224 160 3 4 invalid start byte\n224 191 3 4 invalid start byte\n224 192 0 1 invalid continuation byte\n225 127 0 1 invalid continuation byte\n225 128 3 4 invalid start byte\n225 143 3 4 invalid start byte\n225 144 3 4 invalid start byte\n225 159 3 4 invalid start byte\n225 160 3 4 invalid start byte\n225 191 3 4 invalid start byte\n225 192 0 1 invalid continuation byte\n237 127 0 1 invalid continuation byte\n237 128 3 4 invalid start byte\n237 143 3 4 invalid start byte\n237 144 3 4 invalid start byte\n237 159 3 4 invalid start byte\n237 160 0 1 invalid continuation byte\n237 191 0 1 invalid continuation byte\n237 192 0 1 invalid continuation byte\n239 127 0 1 invalid continuation byte\n239 128 3 4 invalid start byte\n239 143 3 4 invalid start byte\n239 144 3 4 invalid start byte\n239 159 3 4 invalid start byte\n239 160 3 4 invalid start byte\n239 191 3 4 invalid start byte\n239 192 0 1 invalid continuation byte\n240 127 0 1 invalid continuation byte\n240 128 0 1 invalid continuation byte\n240 143 0 1 invalid continuation byte\n240 144 ok\n240 159 ok\n240 160 ok\n240 191 ok\n240 192 0 1 invalid continuation byte\n241 127 0 1 invalid continuation byte\n241 128 ok\n241 143 ok\n241 144 ok\n241 159 ok\n241 160 ok\n241 191 ok\n241 192 0 1 invalid continuation byte\n244 127 0 1 invalid continuation byte\n244 128 ok\n244 143 ok\n244 144 0 1 invalid continuation byte\n244 159 0 1 invalid continuation byte\n244 160 0 1 invalid continuation byte\n244 191 0 1 invalid continuation byte\n244 192 0 1 invalid continuation byte\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-utf8-decode-subtype",
+      "stage": "LA42",
+      "source": "class B(bytes):\n def __bytes__(self): raise ValueError(\"unexpected\")\ndata=B(b\"A\\xe1\\x80\")\ntry: bytes.decode(data)\nexcept UnicodeDecodeError as e: print(type(e.object) is bytes,e.object is data,e.object,e.start,e.end,e.reason)\n",
+      "stdout": "True False b'A\\xe1\\x80' 1 3 unexpected end of data\n"
+    },
+    {
+      "id": "runtime-utf8-decode-buffer-snapshot",
+      "stage": "LA42",
+      "source": "data=bytearray(b\"A\\xe1\\x80\")\ntry: data.decode()\nexcept UnicodeDecodeError as error: e=error\ndata[1]=65\ndata[2]=66\nprint(e.object,e.args[1] is e.object,data,e.start,e.end,e.reason)\n",
+      "stdout": "b'A\\xe1\\x80' True bytearray(b'AAB') 1 3 unexpected end of data\n"
+    },
+    {
+      "id": "runtime-utf8-decode-valid-extremes",
+      "stage": "LA42",
+      "source": "s=chr(0x7f)+chr(0x80)+chr(0x7ff)+chr(0x800)+chr(0xd7ff)+chr(0xe000)+chr(0xffff)+chr(0x10000)+chr(0x10ffff)\nprint(s.encode().decode()==s,bytearray(s,\"utf-8\").decode()==s)\n",
+      "stdout": "True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     }
   ],
   "reference_boundaries": [
