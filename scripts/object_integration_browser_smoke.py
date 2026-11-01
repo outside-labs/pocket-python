@@ -26,7 +26,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
     feature = 'exceptions' if exceptions else 'practical-containers' if containers else 'object-integration'
     corpus_path = ROOT / f'tests/fixtures/interpreter/{feature}.json'
     corpus = json.loads(corpus_path.read_bytes())
-    example = (ROOT / ('examples/interpreter_exceptions.py' if exceptions else 'examples/interpreter_containers.py' if containers else 'examples/interpreter_object_integration.py')).read_text(encoding='utf-8')
+    example = (ROOT / ('examples/interpreter_native_exceptions.py' if exceptions else 'examples/interpreter_containers.py' if containers else 'examples/interpreter_object_integration.py')).read_text(encoding='utf-8')
     records = []
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -77,7 +77,17 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             assert 'fail at handler-notes-original.py:5' in page.locator('#diagnostic').inner_text()
                         if case['id'] == 'native-fields-dynamic-failure':
                             assert 'fail at native-fields-original.py:5' in page.locator('#diagnostic').inner_text()
+                        if case['id'] == 'native-exceptions-dynamic-failure':
+                            assert 'fail at native-exceptions-original.py:5' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
+                    if exceptions:
+                        for case in corpus.get('reference_boundaries', []):
+                            run(case['source'], case['interpreter_stdout'])
+                            records.append({'id': case['id'], 'status': 'pass', 'classification': case['classification']})
+                        ordinary = (ROOT / 'examples/interpreter_exceptions.py').read_text(encoding='utf-8')
+                        ordinary_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', ordinary], text=True, encoding='utf-8')
+                        run(ordinary, ordinary_expected)
+                        records.append({'id': 'ordinary-exception-example', 'status': 'pass'})
                     expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
                     run(example, expected)
                     busy = 'import operator\nnamespace={"add":operator.add}\nexec("class Box:\\n __slots__=(\'value\',)\\n def __init__(self): self.value=7\\n @property\\n def field(self):\\n  print(\'entered\')\\n  while True: self.value=add(self.value,1)\\nbox=Box()\\nbox.field",namespace)\n'
@@ -91,6 +101,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             'def handlers():\n print("entered")\n while True: pass\ntry: raise ValueError()\nexcept handlers(): pass\n',
                             'class E(Exception):\n def __setattr__(self,name,value):\n  print("entered")\n  while True: pass\nE().add_note("detail")\n',
                             'class E(AttributeError):\n def __init__(self):\n  super().__init__(name=[7],obj=[8])\n  print("entered")\n  while True: pass\nE()\n',
+                            'class E(StopIteration):\n def __init__(self):\n  super().__init__([7])\n  print("entered")\n  while True: pass\nE()\n',
                         ]
                     for source in busy_sources:
                         page.fill('#input', source)
@@ -126,6 +137,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         run('d={}\nd.setdefault(1,[]).extend([7])\nprint(list(d.values())[0].pop())\n', '7\n')
                     if exceptions:
                         run('key="missing"\ntry: {}[key]\nexcept KeyError as e: print(e.args[0] is key)\n', 'True\n')
+                        run('e=ImportError("missing",name="config",path="local")\nprint(e.name,e.path,str(e))\n', 'config local missing\n')
                     run('compile("class C: pass","removed.py","exec")\n', '', 'NameError')
                     assert not errors, errors
                     context.close()
@@ -146,6 +158,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
         checks = ['fresh-offline-exception-source', 'original-dynamic-diagnostics', 'runnable-example',
                   'stop-during-exception-normalization', 'stop-during-handler-expression', 'stop-during-note-setter',
                   'stop-during-native-field-initialization',
+                  'stop-during-stop-iteration-initialization', 'core-native-error-fields',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',

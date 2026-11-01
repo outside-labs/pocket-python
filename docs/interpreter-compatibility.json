@@ -1050,8 +1050,8 @@
     {
       "id": "exceptions",
       "status": "partial",
-      "scope": "Adopted builtin catch/raise/bare reraise, try/except/else/finally, active context and source diagnostics. LA-8\u2013LA-13 adopt generic argument identity and atomic replacement; lazy runtime message arguments and actual failed mapping keys; chaining metadata and explicit causes/suppression; the named generic exception subclass layouts, owned class normalization and actual-ancestry named handlers. Composed Node/Chromium and offline console cases retain source frames, interruption and zero logical teardown. LA-14 adopts lazy handler expressions and named/empty flat tuples, with complete validation, actual-MRO matching and owned callback execution. LA-15 adopts positional add_note and lazy ordinary __notes__ storage, including string/list subclasses, dictionary aliases and owned attribute hooks; source notes preserve argument and display semantics. LA-16 composes handlers and notes across modules/dynamic source, generator selection suspension, reraises and offline stop/restart. LA-17\u2013LA-19 adopt NameError/UnboundLocalError and explicit AttributeError construction, native field identity/mutation, exact initializer error order, distinct subclass layouts and composed dynamic/module/generator/offline programs. The pinned exception corpus has 233 cases: 225 semantic/error comparisons, 8 explicit refusals and 48 explicitly shared core cases.",
-      "gaps": "Exception groups/except*, traceback objects/mutation, automatic attribute-error lookup enrichment, and the remaining structured native constructor/field/subclass families remain #124. Generator throw of user classes remains #120; recursive/multiple-argument/native exception repr families remain #127.",
+      "scope": "Adopted builtin catch/raise/bare reraise, try/except/else/finally, active context and source diagnostics. LA-8\u2013LA-13 adopt generic argument identity and atomic replacement; lazy runtime message arguments and actual failed mapping keys; chaining metadata and explicit causes/suppression; the named generic exception subclass layouts, owned class normalization and actual-ancestry named handlers. Composed Node/Chromium and offline console cases retain source frames, interruption and zero logical teardown. LA-14 adopts lazy handler expressions and named/empty flat tuples, with complete validation, actual-MRO matching and owned callback execution. LA-15 adopts positional add_note and lazy ordinary __notes__ storage, including string/list subclasses, dictionary aliases and owned attribute hooks; source notes preserve argument and display semantics. LA-16 composes handlers and notes across modules/dynamic source, generator selection suspension, reraises and offline stop/restart. LA-17\u2013LA-19 adopt NameError/UnboundLocalError and explicit AttributeError construction, native field identity/mutation, exact initializer error order, distinct subclass layouts and composed dynamic/module/generator/offline programs. LA-20A repairs native entry lookup across mixed exception MROs. LA-20\u2013LA-22 adopt ImportError/ModuleNotFoundError construction and native fields/message selection, StopIteration subclasses and independent values, actual-ancestry exhaustion/PEP 479 and native delegated return values. The pinned automated exception corpus has 307 cases: 298 semantic/error comparisons, 9 explicit refusals and 53 explicitly shared core cases. Two separately recorded pinned-reference crash probes are retained divergences with safe None interpreter tests; they are excluded from successful differential counts.",
+      "gaps": "Exception groups/except*, traceback objects/mutation and note rendering/export, automatic attribute/import metadata enrichment, and SyntaxError/Unicode structured native constructor/field/subclass families remain #124. Generator throw of user classes and two pinned-reference delegated NULL-payload crash qualifications remain #120; recursive/multiple-argument/native exception repr families remain #127.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1099,7 +1099,16 @@
         "tests/fixtures/interpreter/exceptions.json:native-fields-module-identity",
         "tests/fixtures/interpreter/exceptions.json:native-fields-dynamic-source",
         "tests/fixtures/interpreter/exceptions.json:native-fields-suspended-generator",
-        "tests/fixtures/interpreter/exceptions.json:structured-subclass-deferred"
+        "tests/fixtures/interpreter/exceptions.json:structured-subclass-deferred",
+        "tests/fixtures/interpreter/exceptions.json:mixed-name-native-initializer",
+        "tests/fixtures/interpreter/exceptions.json:import-error-invalid-keyword-partial-state",
+        "tests/fixtures/interpreter/exceptions.json:import-error-native-str-override",
+        "tests/fixtures/interpreter/exceptions.json:stop-iteration-base-init-independent",
+        "tests/fixtures/interpreter/exceptions.json:stop-iteration-actual-mro-excludes-pep479",
+        "tests/fixtures/interpreter/exceptions.json:delegated-subclass-value-identity",
+        "tests/fixtures/interpreter/exceptions.json:native-exceptions-record-source",
+        "tests/fixtures/interpreter/exceptions.json:native-exceptions-module-identity",
+        "tests/fixtures/interpreter/exceptions.json:native-exceptions-delegated-record-value"
       ],
       "boundary_evidence": [
         "tests/fixtures/interpreter/exceptions.json:exception-groups-deferred",
@@ -1108,7 +1117,9 @@
         "tests/fixtures/interpreter/exceptions.json:exception-multiple-display-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-native-repr-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-generator-throw-class-deferred",
-        "tests/fixtures/interpreter/exceptions.json:attribute-error-automatic-metadata-deferred"
+        "tests/fixtures/interpreter/exceptions.json:attribute-error-automatic-metadata-deferred",
+        "tests/fixtures/interpreter/exceptions.json:import-error-automatic-metadata-deferred",
+        "tests/fixtures/interpreter/exceptions.json:import-error-multiple-display-deferred"
       ]
     },
     {

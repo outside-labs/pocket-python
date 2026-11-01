@@ -230,3 +230,7 @@ for (const item of corpus.reference_boundaries ?? []) test('safe retained refere
   const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
   assert.equal(result.error, undefined); assert.equal(result.stdout, item.interpreter_stdout); closed(result.closed);
 });
+
+test('composed import/exhaustion cycles retain native fields through generator cleanup', async () => {
+  await lifetime('class Done(StopIteration): pass\ndef work():\n e=ModuleNotFoundError([7],name=[8],path={})\n stop=Done(e)\n try: yield stop\n finally: print(e.msg[0],e.name[0],e.path is stop)\ni=work()\nstop=next(i)\nstop.value.path=stop\nprint("entered")\ni.close()\n', 'entered\n7 8 True\n');
+});

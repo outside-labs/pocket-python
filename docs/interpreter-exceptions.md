@@ -24,6 +24,7 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-20 | `ImportError(*args, name=None, path=None, name_from=None)` and `ModuleNotFoundError`; mutable `msg`/`name`/`path`/`name_from`, native initializers/descriptors and subclasses | A single positional argument initializes `msg`. Native `__str__` selects a string `msg`, strips string-subclass identity without calling its hooks, and otherwise uses the retained BaseException display contract. Generic BaseException initialization preserves native fields. Invalid keywords replace `args` but preserve the old fields. Automatic import-failure metadata enrichment remains an explicit field-read refusal. |
 | LA-21 | StopIteration subclasses, native construction/initialization and independent `value` storage | Native `__new__` leaves `value` None; native initialization selects the first argument. BaseException initialization and `args` replacement preserve `value`. Native deletion clears it to None. Iterator exhaustion and PEP 479 use actual ancestry, including custom MROs, while the declared solid layout owns storage. User-class generator `throw` normalization remains #120. |
 | LA-21A | `yield from` forwards independent native `StopIteration.value` | Delegation consumes the native value rather than `args[0]`, including subclass exceptions, explicit None and temporary aliases. Native extraction bypasses owned `value` properties. The retained result shares parked collection, cancellation and close ownership. |
+| LA-22 | Composed import/exhaustion record sources, modules, dynamic source, suspended cleanup, native text selection and delegated return values; installed offline cancellation/restart | The automated corpus has 307 cases: 298 semantic/error comparisons, nine explicit refusals and 53 shared core cases. Two pinned-reference crash probes remain separately recorded divergences with safe interpreter checks on Node and the installed offline Chromium console. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -63,6 +64,10 @@ argument/chaining storage and ordinary dictionaries retain their named gates.
 Run `examples/interpreter_exceptions.py` unchanged on CPython or in the console.
 It selects reusable error types through a function, attaches notes, and retains
 the original failed key, record and cause in native and ordinary fields.
+`examples/interpreter_native_exceptions.py` adds a named record registry and an
+owned cursor: ImportError retains the source name/path, and a StopIteration
+subclass retains its independent exhaustion value. Both examples run unchanged
+on the pinned reference and in the offline console.
 The exact corpus is included in the shared Node/Chromium matrix:
 
 ```sh
@@ -71,8 +76,9 @@ python scripts/run_tests.py browser-conformance --feature exceptions
 python scripts/object_integration_browser_smoke.py --exceptions
 ```
 
-Exception groups/except*, traceback objects/mutation, and structured
-native constructors/fields/subclasses remain #124. Generator throw of a user
+Exception groups/except*, traceback objects/mutation and note rendering/export,
+automatic attribute/import failure enrichment, and the SyntaxError/Unicode
+structured native families remain #124. Generator throw of a user
 exception class retains #120; throwing an instance remains adopted. Multiple
 argument/container/default exception representations remain #127. The ordinary
 exception slices do not complete Track A A2, which also requires formatting.
