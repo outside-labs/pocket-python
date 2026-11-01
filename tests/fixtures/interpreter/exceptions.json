@@ -2223,7 +2223,7 @@
       "stdout": "missing True 0\n"
     },
     {
-      "id": "native-exceptions-string-subclass-bypass",
+      "id": "native-exceptions-string-subclass-failure",
       "stage": "LA22",
       "source": "class S(str):\n def __str__(self): raise ValueError(\"owned\")\ne=ImportError(S(\"native\"))\nprint(str(e),type(str(e)) is str)\ntry: BaseException.__str__(e)\nexcept ValueError as x: print(str(x))\n",
       "stdout": "",
@@ -2261,6 +2261,24 @@
           "source": "class SourceError(ModuleNotFoundError): pass\nclass Done(StopIteration): pass\ndef make_error(key):\n e=SourceError(\"missing\",name=key,path=\"local\")\n e.add_note(\"helper\")\n return e\n"
         }
       ]
+    },
+    {
+      "id": "import-error-string-subclass-uses-args",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self):\n  print(\"format\")\n  return \"owned\"\ne=ImportError(S(\"native\"))\nprint(str(e))\ne.args=(\"changed\",)\nprint(str(e))\n",
+      "stdout": "format\nowned\nchanged\n"
+    },
+    {
+      "id": "import-error-string-subclass-msg-not-selected",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"wrong\")\ne=ImportError(\"original\")\ne.msg=S(\"unselected\")\nprint(str(e))\n",
+      "stdout": "original\n"
+    },
+    {
+      "id": "import-error-string-subclass-error",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"owned\")\ne=ImportError(S(\"native\"))\ntry: str(e)\nexcept ValueError as x: print(str(x))\n",
+      "stdout": "owned\n"
     }
   ],
   "reference_boundaries": [
