@@ -79,6 +79,15 @@ messages and automatic runtime codec metadata remain separate contracts. The
 pinned [initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3755-L3796)
 defines the copying order.
 
+LA-36 adds native byte/range rendering. Reason formatting precedes encoding
+formatting, then native object/start/end are read after both callbacks. A valid
+single-byte range uses two lowercase hexadecimal digits; all other ranges keep
+their original positions. Missing fields, native property bypass, temporary
+callback results, shared work limits and copied host summaries follow LA-33.
+Replacing object with a mutable buffer does not repeat constructor conversion;
+the renderer requires bytes, including bytes subtypes. See the pinned
+[renderer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3799-L3860).
+
 LA-29 adds `UnicodeTranslateError(object, start, end, reason, /)`, five native
 fields, native initializers/descriptors and subclasses. Object/reason require
 strings and retain subtype identity. Construction converts start/end in order
