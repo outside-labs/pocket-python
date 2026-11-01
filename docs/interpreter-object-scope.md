@@ -46,7 +46,7 @@ native ownership report does not invoke or certify every listed library method.
 | Other unadopted source grammar, AST/future/incomplete compilation modes | #119, with annotation modes #125 and async modes #34 |
 | Further generator send/throw/close/yield execution signatures | #120 |
 | Context managers and pattern matching | #121 |
-| Exception groups, traceback objects/mutation, note rendering/export, remaining attribute/import/parser metadata | #124 |
+| Exception groups, traceback objects/mutation, note rendering/export, remaining native/module/class attribute/import/parser metadata, original-instance exact-string deletion fields and type-namespace subtype-key writes | #124 |
 | Annotation/type-parameter evaluation, generic aliases/unions and class subscription | #125 |
 | Serialization/reduction/state, abc/weakref/gc/debug libraries, named Unicode database, broader importlib/wildcard/library APIs | #126; package certification #128 |
 | Expanded default/float/complex/container displays, recursive property diagnostic displays, formatting and f-/t-strings | #127 |

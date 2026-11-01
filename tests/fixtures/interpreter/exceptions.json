@@ -45,7 +45,8 @@
     "LA43",
     "LA44",
     "LA44A",
-    "LA45"
+    "LA45",
+    "LA46"
   ],
   "cases": [
     {
@@ -7231,6 +7232,79 @@
       "stage": "LA45",
       "source": "class A: pass\na=A()\nA.__dict__[\"__dict__\"].__set__(a,{})\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
       "stdout": "field True\n"
+    },
+    {
+      "id": "attribute-mutations-record-example",
+      "stage": "LA46",
+      "source": "\"\"\"Report a rejected record update with its original field and receiver.\"\"\"\n\n\nclass Record:\n    __slots__ = (\"title\",)\n\n    def __init__(self, title):\n        self.title = title\n\n\nclass RecordUpdateError(ValueError):\n    def __init__(self, record):\n        super().__init__(\"record update rejected\")\n        self.record = record\n\n\ndef update(record, field, value):\n    try:\n        setattr(record, field, value)\n    except AttributeError as failure:\n        failure.add_note(\"check the record schema\")\n        raise RecordUpdateError(record) from failure\n\n\nrecord = Record(\"draft\")\nupdate(record, \"title\", \"ready\")\nprint(record.title)\nfield = \"unknown\"\ntry:\n    update(record, field, \"ignored\")\nexcept RecordUpdateError as error:\n    failure = error.__cause__\n    print(failure.name is field, failure.obj is record, error.record is record)\n    print(failure.__notes__[0])\n\ntry:\n    delattr(record, field)\nexcept AttributeError as failure:\n    print(failure.name is field, failure.obj is record)\n",
+      "stdout": "ready\nTrue True True\ncheck the record schema\nTrue True\n"
+    },
+    {
+      "id": "attribute-mutations-module-cycles",
+      "stage": "LA46",
+      "source": "import helper\nkey=\"field\"\ntry: helper.fail(key)\nexcept AttributeError as e:\n print(e.name is key,e.obj is e.record[1],e.record[0] is e)\n print(e.__cause__.args[0] is e.record,e.__notes__[0])\n",
+      "modules": [
+        {
+          "name": "helper",
+          "imports": [],
+          "package": false,
+          "source": "class Record: __slots__=()\ndef fail(key):\n record=Record()\n try: setattr(record,key,7)\n except AttributeError as e:\n  e.record=[e,record,key]\n  e.__cause__=ValueError(e.record)\n  e.add_note(\"check the schema\")\n  raise\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True True\nTrue check the schema\n"
+    },
+    {
+      "id": "attribute-mutations-dynamic-write-failure",
+      "stage": "LA46",
+      "source": "exec(compile(\"class Record: __slots__=()\\ndef fail():\\n Record().field=7\\nfail()\",\"mutation-write-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "attribute-mutations-dynamic-delete-failure",
+      "stage": "LA46",
+      "source": "exec(compile(\"class Record: __slots__=()\\ndef fail():\\n del Record().field\\nfail()\",\"mutation-delete-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "attribute-mutations-dynamic-caught",
+      "stage": "LA46",
+      "source": "ns={}\nexec(\"class Record: __slots__=()\\nrecord=Record()\\ntry: record.field=7\\nexcept AttributeError as error: saved=error\",ns)\ne=ns[\"saved\"]\nprint(e.obj is ns[\"record\"],e.name)\n",
+      "stdout": "True field\n"
+    },
+    {
+      "id": "attribute-mutations-generator-cleanup",
+      "stage": "LA46",
+      "source": "class Key(str): pass\nclass Record: pass\ndef work():\n try: delattr(Record(),Key(\"field\"))\n except AttributeError as e:\n  e.__notes__=[e]\n  try: yield e\n  finally: print(e.name,e.__notes__[0] is e,type(e.obj) is Record)\ni=work()\ne=next(i)\ne.args=()\ni.close()\n",
+      "stdout": "field True True\n"
+    },
+    {
+      "id": "attribute-mutations-cleanup-replacement",
+      "stage": "LA46",
+      "source": "class Record: __slots__=()\ndef work():\n try:\n  try: Record().field=7\n  except AttributeError as e: yield e\n finally: del Record().other\ni=work()\ne=next(i)\ntry: i.close()\nexcept AttributeError as failure: print(failure.name,type(failure.obj) is Record,failure.__context__.__class__ is GeneratorExit)\nprint(e.name)\n",
+      "stdout": "other True True\nfield\n"
+    },
+    {
+      "id": "attribute-mutations-callback-reraise-context",
+      "stage": "LA46",
+      "source": "class Record:\n __slots__=()\n def __delattr__(self,key):\n  try: super().__delattr__(key)\n  except AttributeError as e:\n   e.add_note(\"callback\")\n   raise\nr=Record()\ntry: del r.field\nexcept AttributeError as e: print(e.name,e.obj is r,e.__notes__[0])\n",
+      "stdout": "field True callback\n"
+    },
+    {
+      "id": "attribute-mutations-replaced-dictionary-cleanup",
+      "stage": "LA46",
+      "source": "class Record: pass\nr=Record()\nr.__dict__={}\ndef work():\n try: del r.field\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,e.obj is r,len(e.args))\ni=work()\ne=next(i)\ne.args=()\ni.close()\n",
+      "stdout": "field True 0\n"
+    },
+    {
+      "id": "attribute-mutations-fresh-receiver",
+      "stage": "LA46",
+      "source": "class Record: __slots__=()\nfirst=Record()\nsecond=Record()\ntry: first.field=7\nexcept AttributeError as error: saved=error\ntry: del second.field\nexcept AttributeError as e: print(saved.obj is first,e.obj is second,saved is e)\n",
+      "stdout": "True True False\n"
     }
   ],
   "reference_boundaries": [

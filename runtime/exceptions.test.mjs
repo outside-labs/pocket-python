@@ -78,6 +78,21 @@ test('generic deletion callback loops share execution limits', async () => {
   assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
 });
 
+for (const mode of ['write', 'delete']) test('generic attribute ' + mode + ' failures retain original dynamic frames', async () => {
+  const source = corpus.cases.find(item => item.id === 'attribute-mutations-dynamic-' + mode + '-failure').source;
+  const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'AttributeError');
+  const filename = 'mutation-' + mode + '-original.py';
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', filename, 4], ['fail', filename, 3]]);
+  closed(result.closed);
+});
+
+test('module-owned mutation error cycles survive interrupted generator cleanup', async () => {
+  const helper = corpus.cases.find(item => item.id === 'attribute-mutations-module-cycles').modules[0];
+  await lifetime('import helper\ndef work():\n try: helper.fail("field")\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,e.obj is e.record[1],e.record[0] is e)\ni=work()\ne=next(i)\ne.args=()\nprint("entered")\ni.close()\n', 'entered\nfield True True\n', [helper]);
+});
+
 test('Unicode encoding initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeEncodeError("codec","abc",I(),2,"bad")\nprint(e.encoding,e.object,e.start,e.end,e.reason)\n', 'entered\ncodec abc 1 2 bad\n');
 });
