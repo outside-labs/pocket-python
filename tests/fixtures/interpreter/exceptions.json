@@ -25,7 +25,8 @@
     "LA23",
     "LA24",
     "LA25",
-    "LA26"
+    "LA26",
+    "LA27"
   ],
   "cases": [
     {
@@ -3049,11 +3050,9 @@
       "stdout": "recursive\n"
     },
     {
-      "stage": "Future",
+      "stage": "LA27",
       "id": "syntax-error-location-display-deferred",
       "source": "print(str(SyntaxError(\"bad\",(\"original.py\",1,2,\"text\"))))\n",
-      "owner": "#124",
-      "boundary": "Native SyntaxError location rendering is selected separately in LA-27",
       "stdout": "bad (original.py, line 1)\n"
     },
     {
@@ -3063,6 +3062,256 @@
       "owner": "#124",
       "boundary": "Parser-generated native SyntaxError fields and suggestions retain their separate contract",
       "stdout": "selected.py\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-family-SyntaxError",
+      "source": "print(SyntaxError(\"bad\",(\"original.py\",7,2,\"text\")))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (original.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-family-IndentationError",
+      "source": "print(IndentationError(\"bad\",(\"original.py\",7,2,\"text\")))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (original.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-family-TabError",
+      "source": "print(TabError(\"bad\",(\"original.py\",7,2,\"text\")))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (original.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-filename-only",
+      "source": "e=SyntaxError(\"bad\",(\"file.py\",None,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (file.py)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-line-only",
+      "source": "e=SyntaxError(\"bad\",(None,7,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-empty-name",
+      "source": "e=SyntaxError(\"bad\",(\"\",None,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad ()\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-empty-with-line",
+      "source": "e=SyntaxError(\"bad\",(\"\",0,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (, line 0)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-negative-line",
+      "source": "e=SyntaxError(\"bad\",(None,-7,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (line -7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-nonstring-name",
+      "source": "e=SyntaxError(\"bad\",([],7,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-bool-line",
+      "source": "e=SyntaxError(\"bad\",(None,True,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-float-line",
+      "source": "e=SyntaxError(\"bad\",(\"file.py\",7.0,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (file.py)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-huge-line",
+      "source": "e=SyntaxError(\"bad\",(None,1<<100,None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (line -1)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-huge-negative",
+      "source": "e=SyntaxError(\"bad\",(\"file.py\",-(1<<100),None,None))\nprint(str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad (file.py, line -1)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-basename",
+      "source": "e=SyntaxError(\"bad\",('folder/sub/file.py',7,2,\"text\"))\nprint(str(e))\n",
+      "stdout": "bad (file.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-trailing-separator",
+      "source": "e=SyntaxError(\"bad\",('folder/',7,2,\"text\"))\nprint(str(e))\n",
+      "stdout": "bad (, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-unicode-name",
+      "source": "e=SyntaxError(\"bad\",('folder/\u03bb\u03cc\u03b3\u03bf\u03c2.py',7,2,\"text\"))\nprint(str(e))\n",
+      "stdout": "bad (\u03bb\u03cc\u03b3\u03bf\u03c2.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-backslash",
+      "source": "e=SyntaxError(\"bad\",('folder\\\\file.py',7,2,\"text\"))\nprint(str(e))\n",
+      "stdout": "bad (folder\\file.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-single-message-identity",
+      "source": "message=\"bad\"\ne=SyntaxError(message)\nprint(str(e) is message)\ne.args=(7,8)\nprint(str(e) is message)\n",
+      "stdout": "True\nTrue\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-new-only",
+      "source": "e=SyntaxError.__new__(SyntaxError,\"ignored\")\nprint(str(e))\ne.filename=\"folder/file.py\"\ne.lineno=7\nprint(str(e))\n",
+      "stdout": "None\nNone (file.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-filename-subclass-content",
+      "source": "class Name(str):\n def __str__(self): raise ValueError(\"filename\")\nname=Name(\"folder/file.py\")\ne=SyntaxError(\"bad\",(name,7,2,\"text\"))\nprint(str(e),e.filename is name)\n",
+      "stdout": "bad (file.py, line 7) True\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-line-subclass-ignored",
+      "source": "class Line(int):\n def __index__(self): raise ValueError(\"index\")\ne=SyntaxError(\"bad\",(\"file.py\",Line(7),2,\"text\"))\nprint(str(e))\n",
+      "stdout": "bad (file.py)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-native-fields-bypass-properties",
+      "source": "class E(SyntaxError):\n @property\n def msg(self): raise ValueError(\"msg\")\n @property\n def filename(self): raise ValueError(\"filename\")\n @property\n def lineno(self): raise ValueError(\"lineno\")\ne=E(\"bad\",(\"folder/file.py\",7,2,\"text\"))\nprint(str(e))\n",
+      "stdout": "bad (file.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-native-fields-ignore-dictionary",
+      "source": "e=SyntaxError(\"bad\",(\"folder/file.py\",7,2,\"text\"))\ne.__dict__[\"msg\"]=\"ignored\"\ne.__dict__[\"filename\"]=\"ignored\"\ne.__dict__[\"lineno\"]=9\nprint(str(e))\n",
+      "stdout": "bad (file.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-owned-message",
+      "source": "class Message:\n def __str__(self):\n  print(\"format\")\n  return \"bad\"\ne=SyntaxError(Message(),(\"folder/file.py\",7,2,\"text\"))\nprint(str(e))\n",
+      "stdout": "format\nbad (file.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-message-mutation-snapshot",
+      "source": "class Message:\n def __str__(self):\n  e.filename=\"changed.py\"\n  e.lineno=9\n  e.msg=\"next\"\n  return \"first\"\ne=SyntaxError(Message(),(\"folder/file.py\",7,2,\"text\"))\nprint(str(e))\nprint(str(e))\n",
+      "stdout": "first (file.py, line 7)\nnext (changed.py, line 9)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-message-error",
+      "source": "class Message:\n def __str__(self): raise LookupError(\"display\")\ne=SyntaxError(Message(),(\"file.py\",7,2,\"text\"))\ntry: str(e)\nexcept LookupError as caught: print(str(caught),e.filename,e.lineno)\n",
+      "stdout": "display file.py 7\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-message-result-subclass",
+      "source": "class Text(str):\n def __add__(self,other): raise ValueError(\"add\")\nclass Message:\n def __str__(self): return Text(\"bad\")\ne=SyntaxError(Message(),(\"file.py\",7,2,\"text\"))\nprint(str(e),type(str(e)) is str)\n",
+      "stdout": "bad (file.py, line 7) True\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-native-explicit",
+      "source": "class E(SyntaxError):\n def __str__(self): return \"owned\"\ne=E(\"bad\",(\"folder/file.py\",7,2,\"text\"))\nprint(str(e),SyntaxError.__str__(e),BaseException.__str__(SyntaxError(\"plain\")))\n",
+      "stdout": "owned bad (file.py, line 7) plain\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-message-args-independence",
+      "source": "e=SyntaxError(\"old\",(\"file.py\",7,2,\"text\"))\nBaseException.__init__(e,\"new\")\nprint(str(e),e.args[0])\ne.msg=\"changed\"\nprint(str(e),e.args[0])\n",
+      "stdout": "old (file.py, line 7) new\nchanged (file.py, line 7) new\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-ignored-extra-fields",
+      "source": "e=SyntaxError(\"bad\",(\"file.py\",7,2,\"text\",8,9,[]))\ne.print_file_and_line=False\ne.text=[]\ne.offset={}\nprint(str(e))\n",
+      "stdout": "bad (file.py, line 7)\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-deleted-fields",
+      "source": "e=SyntaxError(\"bad\",(\"file.py\",7,2,\"text\"))\ndel e.filename\nprint(str(e))\ndel e.lineno\nprint(str(e))\ndel e.msg\nprint(str(e))\n",
+      "stdout": "bad (line 7)\nbad\nNone\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-unbound-receiver",
+      "source": "try: SyntaxError.__str__(ValueError())\nexcept TypeError: print(\"receiver\")\ntry: SyntaxError.__str__(SyntaxError(),7)\nexcept TypeError: print(\"arguments\")\n",
+      "stdout": "receiver\narguments\n"
+    },
+    {
+      "stage": "LA27",
+      "id": "syntax-display-recursive-message-with-location",
+      "source": "e=SyntaxError(\"bad\",(\"file.py\",7,2,\"text\"))\ne.msg=e\ntry: str(e)\nexcept RecursionError: print(\"recursive\")\n",
+      "stdout": "recursive\n"
     }
   ],
   "reference_boundaries": [
@@ -3085,6 +3334,31 @@
       "interpreter_stdout": "True\n",
       "classification": "retained-divergence",
       "boundary": "Deleted or uninitialized native StopIteration payload; safe None in the interpreter, no successful pinned-reference observation"
+    },
+    {
+      "id": "syntax-location-posix-separator-profile",
+      "classification": "host-qualified-divergence",
+      "owner": "#124",
+      "source": "print(str(SyntaxError(\"bad\",(\"folder/file.py\",7,2,\"text\"))))\n",
+      "interpreter_stdout": "bad (file.py, line 7)\n",
+      "reference_platforms": {
+        "POSIX": "bad (file.py, line 7)\n",
+        "Windows": "bad (folder/file.py, line 7)\n"
+      },
+      "boundary": "The deterministic source profile uses POSIX separators; Windows CPython uses its native backslash separator."
+    },
+    {
+      "id": "syntax-location-c-long-profile",
+      "classification": "host-qualified-divergence",
+      "owner": "#124",
+      "source": "print(str(SyntaxError(\"bad\",(None,1<<40,2,\"text\"))))\n",
+      "interpreter_stdout": "bad (line 1099511627776)\n",
+      "reference_platforms": {
+        "64-bit C long": "bad (line 1099511627776)\n",
+        "32-bit C long": "bad (line -1)\n"
+      },
+      "boundary": "The deterministic source profile uses a signed 64-bit C long; Windows CPython uses a 32-bit C long."
     }
-  ]
+  ],
+  "reference_platform_contract": "CPython 3.14.7 POSIX with a signed 64-bit C long for SyntaxError native location rendering; Windows reference differences are separately qualified."
 }

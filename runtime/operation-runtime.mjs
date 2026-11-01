@@ -131,9 +131,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const syntaxMessage = (value, site, after, depth) => {
     if (value.nativeFieldBoundaries?.has("msg")) return exceptionString(value, site, after, depth);
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
-    if (values.isString(classes.payload(value.nativeFields.get("filename"))) || typeof value.nativeFields.get("lineno") === "bigint")
-      hard("UNSUPPORTED", "UnsupportedOperationError", "SyntaxError location rendering remains under #124");
-    return unaryTask("str", value.nativeFields.get("msg"), site, after, depth);
+    state.temporaries.push(value);
+    const raw = classes.payload(value.nativeFields.get("filename")), line = value.nativeFields.get("lineno");
+    let filename = null;
+    if (raw instanceof StringValue) {
+      charge(raw.points.length);
+      filename = values.string(raw.points.slice(raw.points.lastIndexOf(47) + 1)); state.temporaries.push(filename);
+    }
+    const haveLine = typeof line === "bigint";
+    if (filename === null && !haveLine) return unaryTask("str", value.nativeFields.get("msg"), site, after, depth);
+    // The deterministic source profile uses POSIX separators and a signed
+    // 64-bit C long. Native message callbacks run after these fields are read.
+    const number = haveLine ? line < -(1n << 63n) || line > (1n << 63n) - 1n ? -1n : line : null;
+    const text = " (" + (filename === null ? "" : values.text(filename)) +
+      (haveLine ? (filename === null ? "" : ", ") + "line " + number.toString() : "") + ")";
+    const suffix = values.string(Array.from(text, char => char.codePointAt(0))); state.temporaries.push(suffix);
+    return unaryTask("str", value.nativeFields.get("msg"), site, continuation("syntax-message", {receiver: value, suffix, after}), depth);
   };
   const exceptionString = (value, site, after, depth, importMessage = false) => {
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
@@ -931,6 +944,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       }
       completion = completion.after;
     }
+    if (completion?.kind === "syntax-message")
+      return valueTask(values.binary("add", classes.payload(value), completion.suffix), site, completion.after);
     if (completion?.kind === "proxy-get") return valueTask(value.items[0] ? value.items[1] : completion.fallback, site, completion.after);
     if (completion?.kind === "view-item") {
       const [found, item] = values.comparisonSequence(value);

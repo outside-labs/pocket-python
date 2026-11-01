@@ -98,6 +98,16 @@ test('structured syntax exception graphs obey the shared allocation limit', asyn
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+test('native syntax locations remain snapshots across parked message callbacks and mutation', async () => {
+  await lifetime('class Message:\n def __str__(self):\n  e.filename="changed.py"\n  e.lineno=9\n  e.msg="next"\n  print("entered")\n  return "first"\ne=SyntaxError(Message(),("folder/file.py",7,2,"text"))\nprint(str(e))\nprint(str(e))\n', 'entered\nfirst (file.py, line 7)\nnext (changed.py, line 9)\n');
+});
+
+test('native syntax filename scans consume the shared work allowance', async () => {
+  const result = await runSourceRequest({modules: [unit('e=SyntaxError("bad",("folder/"+"x"*1000,7,2,"text"))\nprint("ready")\nwhile True: text=str(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 50000, maxWork: 100000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+});
+
 test('lazy exception messages retain their arguments through park/cancel/close', async () => {
   await lifetime('class M:\n def __str__(self):\n  print("entered")\n  return "message"\nprint(str(ValueError(M())))\n', 'entered\nmessage\n');
 });

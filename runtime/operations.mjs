@@ -106,6 +106,7 @@ export function completion(kind, fields = {}) {
     case "native-doc-result": record = {kind, receiver: fields.receiver, ignoreAttribute: fields.ignoreAttribute, after}; break;
     case "native-reinit": case "native-property-copy": record = {kind, receiver: fields.receiver, after}; break;
     case "syntax-details": record = {kind, receiver: fields.receiver, result: fields.result, after}; break;
+    case "syntax-message": record = {kind, receiver: fields.receiver, suffix: fields.suffix, after}; break;
     case "native-repeat": record = {kind, receiver: fields.receiver, inplace: fields.inplace, after}; break;
     case "list-index": record = {kind, receiver: fields.receiver, name: fields.name, item: fields.item, after}; break;
     case "dictionary-pop": record = {kind, receiver: fields.receiver, key: fields.key, fallback: fields.fallback, missing: fields.missing, after}; break;
@@ -367,6 +368,7 @@ function visit(record) {
     case "native-doc-result":
     case "native-reinit": case "native-property-copy": return [record.receiver, ...completionRoots(record.after)];
     case "syntax-details": return [record.receiver, record.result, ...completionRoots(record.after)];
+    case "syntax-message": return [record.receiver, record.suffix, ...completionRoots(record.after)];
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "list-index": return [record.receiver, record.item, ...completionRoots(record.after)];
     case "dictionary-pop": return [record.receiver, record.key, record.fallback, ...completionRoots(record.after)];
