@@ -14,6 +14,7 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-12 | Raising generic exception instances/classes; owned class normalization for values/causes; named class handlers and flat tuples of class names; actual-MRO matching; original source frames | Handler matching bypasses virtual subclass hooks and evaluates names before validation. General handler expressions/named tuple values, groups and structured subclasses retain #124. |
 | LA-12A | Lazy ordinary runtime message arguments; original failed keys in primitive/owned dictionary, proxy, removal and pop errors | Errors retain the searched key without formatting it. Message tuple materialization preserves `str(error)` identity. Structured exception field/constructor families remain separate. |
 | LA-13 | Composed record loading, modules, dynamic source, message callback failures, empty exhaustion arguments, PEP 479 causes, suspended cleanup and offline stop/restart/profile updates | The 123-case corpus has 115 semantic/error observations and eight explicit refusals; 24 cases are explicitly shared with core-source/1. These are finite API observations, not an overall Python completion measure. |
+| LA-14 | Lazy handler expressions, named/empty flat tuples, attribute/call/subscript selection and tuple subclasses | Each selected expression completes before all flat tuple elements are validated. Matching uses actual ancestry. Nested tuples and nonexception elements raise TypeError; later clauses are evaluated only after a valid nonmatch. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -40,9 +41,17 @@ python scripts/run_tests.py browser-conformance --feature exceptions
 python scripts/object_integration_browser_smoke.py --exceptions
 ```
 
-General handler expressions (including a name containing a tuple of classes),
-exception groups/except*, traceback objects/mutation, notes, and structured
+Exception groups/except*, traceback objects/mutation, notes, and structured
 native constructors/fields/subclasses remain #124. Generator throw of a user
 exception class retains #120; throwing an instance remains adopted. Multiple
 argument/container/default exception representations remain #127. The ordinary
 exception slices do not complete Track A A2, which also requires formatting.
+
+Modern bytecode 4/5 handler records accept an expression block reference in
+their first field. A successful expression must leave exactly one value; an
+empty tuple never matches. The existing name-array representation and empty
+array bare-handler representation remain readable. Bytecode 2/3 does not admit
+expression block references. Handler expressions use the ordinary frame,
+closure and namespace lookup paths, including suspended owned callbacks and
+the active exception for bare reraises. Alias cleanup and finally handling
+apply when expression evaluation or validation fails.

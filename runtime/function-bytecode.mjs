@@ -177,9 +177,14 @@ export function verifyFunctions(program) {
           length = 5; blockRef(arg, "statement");
           if (!Array.isArray(extra) || extra.length > 32 || (!extra.length && instruction[4] === null)) fail("Try requires handlers or finally.");
           extra.forEach((handler, index) => {
-            if (!Array.isArray(handler) || handler.length !== 4 || !Array.isArray(handler[0]) || handler[0].length > 16 ||
-                !Array.from(handler[0]).every(type => classes ? validName(type) : Object.hasOwn(EXCEPTIONS, type)) ||
-                (!handler[0].length && index !== extra.length - 1) || (handler[1] !== null && !writable(handler[1]))) fail("Invalid exception clause.");
+            if (!Array.isArray(handler) || handler.length !== 4 || (handler[1] !== null && !writable(handler[1]))) fail("Invalid exception clause.");
+            if (Array.isArray(handler[0])) {
+              if (handler[0].length > 16 || !Array.from(handler[0]).every(type => classes ? validName(type) : Object.hasOwn(EXCEPTIONS, type)) ||
+                  (!handler[0].length && index !== extra.length - 1)) fail("Invalid exception clause.");
+            } else {
+              if (!modern) fail("Handler expressions require modern bytecode.");
+              blockRef(handler[0], "expression");
+            }
             blockRef(handler[2], "statement");
             sourceSpan(handler[3]);
           });
@@ -190,7 +195,7 @@ export function verifyFunctions(program) {
         if (instruction.length !== length || (kind === "class" && op === "return") ||
             (block.kind === "expression" && ["return", "break", "continue", "if", "while", "for", "for-iterator", "try"].includes(op))) fail("Invalid operands or expression control flow.");
         return Object.freeze(instruction.map((value, index) => op === "try" && index === 2 ?
-          Object.freeze(value.map(handler => Object.freeze([Object.freeze([...handler[0]]), handler[1], handler[2], sourceSpan(handler[3])]))) :
+          Object.freeze(value.map(handler => Object.freeze([Array.isArray(handler[0]) ? Object.freeze([...handler[0]]) : handler[0], handler[1], handler[2], sourceSpan(handler[3])]))) :
           Array.isArray(value) ? Object.freeze([...value]) : value));
       });
       const heights = new Map([[0, 0]]), pending = [0];
@@ -244,7 +249,7 @@ export function verifyFunctions(program) {
         if (op === "while") { control(a, loop); control(b, true); control(c, loop); }
         if (["for", "for-iterator"].includes(op)) { control(b, loop); control(c, true); control(d, loop); }
         if (op === "try") {
-          control(a, loop); for (const handler of b) control(handler[2], loop);
+          control(a, loop); for (const handler of b) { if (!Array.isArray(handler[0])) control(handler[0], loop); control(handler[2], loop); }
           if (c !== null) control(c, loop); if (d !== null) control(d, loop);
         }
       }

@@ -863,12 +863,6 @@
     },
     {
       "path": "runtime/source-parser.mjs",
-      "site": "if ((type !== null && !types.length) || types.some(value => value.kind !== \"Name\")) this.unsupported(\"Only nonempty named builtin exception clauses are adopted.\", type || clause);",
-      "owner": "#124",
-      "boundary": "Exception payload, clause, chaining and group semantics."
-    },
-    {
-      "path": "runtime/source-parser.mjs",
       "site": "if ([\"await\", \"yield\"].some(value => this.at(value))) this.unsupported(\"This generator/async expression is not adopted.\");",
       "owner": "#34",
       "boundary": "Async syntax/protocols; mixed context forms also retain #121."
@@ -1140,12 +1134,6 @@
     {
       "path": "runtime/operation-runtime.mjs",
       "site": "if (args.length > 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Multiple exception arguments require the modern source profile under #124\");",
-      "owner": "#124",
-      "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
-    },
-    {
-      "path": "runtime/functions.mjs",
-      "site": "if (values.isSequenceType(type, \"tuple\")) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Named tuple handler values require the #124 handler-expression contract\");",
       "owner": "#124",
       "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
     },
