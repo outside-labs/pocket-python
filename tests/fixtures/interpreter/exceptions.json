@@ -23,7 +23,8 @@
     "LA21A",
     "LA22",
     "LA23",
-    "LA24"
+    "LA24",
+    "LA25"
   ],
   "cases": [
     {
@@ -2718,6 +2719,65 @@
       "owner": "#124",
       "boundary": "Custom module provenance and metadata callbacks require a separate reference-backed contract",
       "stdout": "helper\n"
+    },
+    {
+      "stage": "LA25",
+      "id": "runtime-metadata-module-record",
+      "source": "import helper\nrecord=helper.Record()\ntry: helper.read(record)\nexcept AttributeError as e: print(e.name,e.obj is record)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "class Record: pass\ndef read(record): return record.missing\n"
+        }
+      ],
+      "stdout": "missing True\n"
+    },
+    {
+      "stage": "LA25",
+      "id": "runtime-metadata-module-import-chain",
+      "source": "import helper\ndef work():\n try:\n  try: from helper import missing\n  except ImportError as cause: raise ValueError(\"record\") from cause\n except ValueError as e:\n  e.add_note(\"schema\")\n  try: yield e\n  finally: print(e.__cause__.name,e.__cause__.name_from,e.__notes__[0])\ni=work()\ne=next(i)\nprint(e.__cause__.path is helper.__file__)\ni.close()\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "True\nhelper missing schema\n"
+    },
+    {
+      "stage": "LA25",
+      "id": "runtime-metadata-dynamic-selection",
+      "source": "ns={}\nexec(compile(\"class Record: pass\\ndef read(record): return record.missing\",\"metadata-original.py\",\"exec\"),ns)\nrecord=ns[\"Record\"]()\ntry: ns[\"read\"](record)\nexcept (NameError,AttributeError) as e:\n e.add_note(\"missing field\")\n print(e.name,e.obj is record,e.__notes__[0])\n",
+      "stdout": "missing True missing field\n"
+    },
+    {
+      "stage": "LA25",
+      "id": "runtime-metadata-dynamic-failure",
+      "source": "ns={}\nexec(compile(\"class Record: pass\\ndef fail():\\n Record().missing\\nfail()\",\"metadata-original.py\",\"exec\"),ns)\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "stage": "LA25",
+      "id": "runtime-metadata-suspended-receiver-cycle",
+      "source": "class Record: pass\ndef work():\n record=Record()\n try: record.missing\n except AttributeError as e:\n  record.error=e\n  try: yield e\n  finally: print(e.obj.error is e,e.name)\ni=work()\ne=next(i)\nprint(e.obj.error is e)\ni.close()\n",
+      "stdout": "True\nTrue missing\n"
+    },
+    {
+      "stage": "LA25",
+      "id": "runtime-metadata-setter-failure-handler",
+      "source": "class E(AttributeError):\n def __setattr__(self,name,value):\n  if name==\"obj\": raise ValueError(\"receiver blocked\")\n  super().__setattr__(name,value)\nerror=E()\nclass Record:\n def __getattr__(self,name): raise error\ndef choose(): return (NameError,ValueError)\ntry: Record().missing\nexcept choose() as e:\n e.add_note(\"setter failed\")\n print(str(e),error.name,error.obj is None,e.__notes__[0])\n",
+      "stdout": "receiver blocked missing True setter failed\n"
     }
   ],
   "reference_boundaries": [
