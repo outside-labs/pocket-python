@@ -92,6 +92,25 @@ test('runtime UTF-8 surrogate runs share work and cancellation limits', async ()
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
 });
 
+test('runtime encoding errors retain native owners through interrupted reason callbacks', async () => {
+  await lifetime('try: "雪".encode("ascii")\nexcept UnicodeEncodeError as error: e=error\nclass Reason:\n def __str__(self):\n  e.reason=None\n  print("entered")\n  return "kept"\ne.args=()\ne.reason=Reason()\nprint(str(e))\n',
+    "entered\n'ascii' codec can't encode character '\\u96ea' in position 0: kept\n");
+});
+
+test('runtime encoding failures preserve original dynamic source frames', async () => {
+  const source = corpus.cases.find(item => item.id === 'runtime-encoding-dynamic-failure').source;
+  const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'UnicodeEncodeError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', 'runtime-encoding-original.py', 3], ['fail', 'runtime-encoding-original.py', 2]]);
+  closed(result.closed);
+});
+
+test('runtime encoding module cycles survive suspended generator cleanup', async () => {
+  await lifetime('import helper\ndef work():\n try: helper.fail()\n except UnicodeEncodeError as e:\n  try: yield e\n  finally: print(str(e),e.record[0] is e)\ni=work()\ne=next(i)\nprint("entered")\ni.close()\n',
+    "entered\n'ascii' codec can't encode character '\\u96ea' in position 0: ordinal not in range(128) True\n", [{name: 'helper', source: 'def fail():\n try: "雪".encode("ascii")\n except UnicodeEncodeError as e:\n  e.record=[e]\n  raise e\n'}]);
+});
+
 test('encoding messages retain reason results through interrupted encoding callbacks', async () => {
   await lifetime('class R:\n def __str__(self):\n  e.reason=None\n  return "kept"\nclass C:\n def __str__(self):\n  e.object="雪"\n  e.encoding=None\n  print("entered")\n  return "codec"\ne=UnicodeEncodeError("a","x",0,1,"r")\ne.reason=R()\ne.encoding=C()\nprint(str(e))\n', "entered\n'codec' codec can't encode character '\\u96ea' in position 0: kept\n");
 });
