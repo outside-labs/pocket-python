@@ -66,7 +66,7 @@ test('native method invocation retains source recursion and instruction/work lim
   for (const [body, options, code] of [
     ['return p.__get__(obj)', {}, 'PYTHON'],
     ['while True: pass', {maxSteps: 160}, 'BUDGET'],
-    ['while True: pass', {maxWork: 10000}, 'BUDGET'],
+    ['while True: pass', {maxWork: 11000}, 'BUDGET'],
   ]) {
     const result = await run('def read(obj):\n print("entered")\n '+body+'\np=property(read)\nq=property.getter.__get__(p)(None)\nq.__get__([7])\n', options);
     assert.equal(result.error?.code, code, JSON.stringify(result.error));
