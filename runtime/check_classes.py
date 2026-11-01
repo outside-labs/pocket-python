@@ -38,7 +38,11 @@ def references(corpus_path=CORPUS):
         raise AssertionError('The corpus requires its explicitly pinned reference version.')
     records = []
     for case in corpus['cases']:
-        actual = reference_case(case)
+        try:
+            actual = reference_case(case)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            detail = f'exit {error.returncode}' if isinstance(error, subprocess.CalledProcessError) else f'timeout after {error.timeout}s'
+            raise RuntimeError(f"Reference case {case['id']!r} failed ({detail})") from error
         passed = actual['ok'] == ('error_type' not in case)
         passed = passed and actual['stdout'] == case.get('stdout', '')
         if 'error_type' in case:

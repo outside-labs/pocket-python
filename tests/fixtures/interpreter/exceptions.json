@@ -7174,12 +7174,6 @@
       "stdout": "compare\nfield True False\n"
     },
     {
-      "id": "delete-metadata-callback-mutates-dictionary",
-      "stage": "LA45",
-      "source": "class K:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  a.__dict__={}\n  return False\nclass A: pass\na=A()\na.__dict__[K()]=7\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a,len(a.__dict__))\n",
-      "stdout": "field True 0\n"
-    },
-    {
       "id": "delete-metadata-native-slot-descriptor",
       "stage": "LA45",
       "source": "class A: __slots__=(\"field\",)\na=A()\ntry: A.field.__delete__(a)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
@@ -7361,6 +7355,16 @@
       "interpreter_stdout": "False\n",
       "classification": "retained-divergence",
       "boundary": "CPython may reuse its one-byte bytes singleton; this profile makes fresh runtime decoder snapshots. General bytes interning/identity remains #117."
+    },
+    {
+      "id": "delete-metadata-callback-mutates-dictionary",
+      "owner": "#124",
+      "source": "class K:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  a.__dict__={}\n  return False\nclass A: pass\na=A()\na.__dict__[K()]=7\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a,len(a.__dict__))\n",
+      "reference_version": "3.14.7",
+      "reference_observation": "SIGSEGV (-11) in 3 of 16 isolated repeated CPython 3.14.7 macOS arm64 probes; other invocations completed with the recorded interpreter output. Two Linux CI corpus invocations also crashed before case-identifying diagnostics were available.",
+      "interpreter_stdout": "field True 0\n",
+      "classification": "retained-divergence",
+      "boundary": "Replacing the original instance dictionary inside its key comparison can crash the pinned reference. Safe native mutation metadata and logical teardown are checked separately; this input is excluded from successful differential counts."
     }
   ],
   "reference_platform_contract": "CPython 3.14.7 POSIX with a signed 64-bit C long for SyntaxError native location rendering; Windows reference differences are separately qualified."
