@@ -5,6 +5,8 @@ import {runSourceRequest} from './source-request.mjs';
 import {compileSourceModules} from './source-modules.mjs';
 import {ModuleSession} from './module-session.mjs';
 import {Execution} from './functions.mjs';
+import {compileSource} from './source-compiler.mjs';
+import {verifyFunctions} from './function-bytecode.mjs';
 
 const corpus = JSON.parse(readFileSync(new URL('../tests/fixtures/interpreter/exceptions.json', import.meta.url)));
 const unit = source => ({name: 'app', source, imports: [], package: false, notice: 'Synthetic exception fixture'});
@@ -58,4 +60,27 @@ test('argument replacement retains the receiver through parked iterator callback
 test('cyclic exception arguments and chains survive collection and release together', async () => {
   const source = 'e=ValueError([])\nf=LookupError(e)\ne.args=(f,)\ne.__cause__=f\nf.__context__=e\nprint("entered")\nprint(e.args[0] is f,f.__context__ is e)\n';
   await lifetime(source, 'entered\nTrue True\n');
+});
+
+test('explicit cause evaluation survives parking, cancellation and close', async () => {
+  await lifetime('def cause():\n print("entered")\n return ValueError(7)\ntry: raise TypeError() from cause()\nexcept TypeError as e: print(e.__cause__.args[0])\n', 'entered\n7\n');
+});
+
+test('raise-from verification requires a modern program and exactly two operands', () => {
+  const source = compileSource('raise ValueError from None\n').program;
+  for (const change of [
+    program => { program.version = 3; },
+    program => { program.functions[0].blocks[0].instructions.splice(1, 1); program.functions[0].blocks[0].source.spans.splice(1, 1); },
+    program => { program.functions[0].blocks[0].instructions.unshift(['const', 0]); program.functions[0].blocks[0].source.spans.unshift([...program.functions[0].blocks[0].source.spans[0]]); },
+  ]) {
+    const program = structuredClone(source); change(program);
+    assert.throws(() => verifyFunctions(program), {code: 'BYTECODE'});
+  }
+});
+
+test('unhandled chain summaries retain source frames without exporting live exceptions', async () => {
+  const result = await runSourceRequest({modules: [unit('def fail():\n raise ValueError("outer") from TypeError("inner")\nfail()\n')], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'ValueError'); assert.deepEqual(result.error.cause, {type: 'TypeError', message: 'inner'});
+  assert.equal(result.error.suppressContext, true);
+  assert.deepEqual(result.error.traceback.map(frame => frame.location.span[0]), [3, 2]); closed(result.closed);
 });

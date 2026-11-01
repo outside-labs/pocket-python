@@ -5,7 +5,8 @@
   "profile": "classes-source/1",
   "implemented_stages": [
     "LA8",
-    "LA9"
+    "LA9",
+    "LA10"
   ],
   "cases": [
     {
@@ -275,6 +276,155 @@
       "stage": "LA9",
       "source": "e=Exception()\nc=ValueError()\nd=vars(BaseException)[\"__cause__\"]\nd.__set__(e,c)\nprint(d.__get__(e) is c,e.__suppress_context__)\n",
       "stdout": "True True\n"
+    },
+    {
+      "id": "explicit-cause-identity",
+      "stage": "LA10",
+      "source": "e=ValueError(\"error\")\nc=TypeError(\"cause\")\ntry: raise e from c\nexcept ValueError as caught: print(caught is e,caught.__cause__ is c,caught.__suppress_context__,caught.__context__ is None)\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "explicit-cause-with-context",
+      "stage": "LA10",
+      "source": "a=LookupError()\nb=ValueError()\nc=TypeError()\ntry:\n try: raise a\n except LookupError: raise b from c\nexcept ValueError as e: print(e.__context__ is a,e.__cause__ is c,e.__suppress_context__)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "explicit-none-preserves-context",
+      "stage": "LA10",
+      "source": "a=LookupError()\ntry:\n try: raise a\n except LookupError: raise ValueError() from None\nexcept ValueError as e: print(e.__context__ is a,e.__cause__ is None,e.__suppress_context__)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "explicit-builtin-classes",
+      "stage": "LA10",
+      "source": "try: raise ValueError from TypeError\nexcept ValueError as e: print(type(e) is ValueError,type(e.__cause__) is TypeError,len(e.args),len(e.__cause__.args))\n",
+      "stdout": "True True 0 0\n"
+    },
+    {
+      "id": "from-evaluation-order",
+      "stage": "LA10",
+      "source": "def e():\n print(\"exception\")\n return ValueError()\ndef c():\n print(\"cause\")\n return None\ntry: raise e() from c()\nexcept ValueError: print(\"caught\")\n",
+      "stdout": "exception\ncause\ncaught\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "from-evaluates-cause-before-validation",
+      "stage": "LA10",
+      "source": "def c():\n print(\"cause\")\n return None\nraise 7 from c()\n",
+      "stdout": "cause\n",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "cause-evaluation-error",
+      "stage": "LA10",
+      "source": "def c():\n raise LookupError(\"cause failed\")\nraise ValueError(\"error\") from c()\n",
+      "stdout": "",
+      "error_type": "LookupError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "invalid-cause",
+      "stage": "LA10",
+      "source": "raise ValueError() from 7\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "invalid-raised-none",
+      "stage": "LA10",
+      "source": "raise None\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "invalid-raised-false",
+      "stage": "LA10",
+      "source": "raise False\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "bare-reraise-no-active",
+      "stage": "LA10",
+      "source": "raise\n",
+      "stdout": "",
+      "error_type": "RuntimeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "reraise-preserves-cause",
+      "stage": "LA10",
+      "source": "c=TypeError()\ndef f():\n try: raise ValueError(\"x\") from c\n except ValueError: raise\ntry: f()\nexcept ValueError as e: print(e.__cause__ is c,e.__suppress_context__)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "from-finally-order",
+      "stage": "LA10",
+      "source": "try:\n try: raise ValueError() from None\n finally: print(\"finally\")\nexcept ValueError: print(\"caught\")\n",
+      "stdout": "finally\ncaught\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "implicit-context-removes-cycle",
+      "stage": "LA10",
+      "source": "a=ValueError()\nb=TypeError()\ntry:\n try: raise a\n except ValueError:\n  try: raise b\n  except TypeError: raise a\nexcept ValueError as e: print(e is a,a.__context__ is b,b.__context__ is None)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "explicit-self-cause",
+      "stage": "LA10",
+      "source": "e=ValueError()\ntry: raise e from e\nexcept ValueError as caught: print(caught.__cause__ is caught,caught.__context__ is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "cause-traceback-source",
+      "stage": "LA10",
+      "source": "def fail():\n raise ValueError(\"x\") from TypeError(\"y\")\ndef middle():\n try: fail()\n except ValueError: raise\nmiddle()\n",
+      "stdout": "",
+      "error_type": "ValueError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 6
+        },
+        {
+          "function": "middle",
+          "line": 4
+        },
+        {
+          "function": "fail",
+          "line": 2
+        }
+      ]
     }
   ]
 }

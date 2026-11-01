@@ -579,6 +579,13 @@
       "features": [
         "source.scope.comprehension-walrus"
       ]
+    },
+    {
+      "id": "explicit-exception-cause",
+      "source": "print(\"before\")\nraise ValueError() from None\n",
+      "features": [
+        "source.exception-causes"
+      ]
     }
   ],
   "boundaries": [
@@ -617,14 +624,6 @@
     {
       "id": "unsupported-parameter-annotation",
       "source": "print('must not run')\ndef f(a:int): pass",
-      "code": "UNSUPPORTED",
-      "features": [
-        "source.feature-boundary"
-      ]
-    },
-    {
-      "id": "unsupported-exception-cause",
-      "source": "print('must not run')\nraise ValueError() from None",
       "code": "UNSUPPORTED",
       "features": [
         "source.feature-boundary"
