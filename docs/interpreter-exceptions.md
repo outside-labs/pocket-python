@@ -355,6 +355,25 @@ Type namespace writes using subtype keys retain their owned-hash publication
 gate under #124, recorded as a separate corpus refusal.
 Generated diagnostic wording retains its existing copied-message contract.
 
+LA-45 adopts selective deletion fields for dictionary-free source instances,
+empty native slots, string-subtype names and explicitly replaced/reset instance
+dictionaries. Missing dictionary entries retain receiver/name identity even
+when a class value exists. Empty slots and read-only non-data attributes leave
+both fields absent; owned hooks/descriptors keep their own exceptions. Native
+dictionary mutation converts a callback's KeyError (including subclasses) into
+a fresh AttributeError without retaining the discarded callback as its context.
+That conversion also publishes fields for the existing generic write path.
+
+Exact-string deletion metadata from original instance storage retains a named
+field-read refusal under #124. CPython's shared-key cache and inline-storage
+transitions can select either empty or populated native fields, including after
+cache exhaustion. This profile does not track that native state. It still
+raises/catches the original AttributeError and preserves copied diagnostics;
+subtype names, replacement, self-assignment and dictionary deletion take the
+qualified dictionary path. Other native/module/class mutation layouts remain
+separately owned. The pinned [inline failure path](https://github.com/python/cpython/blob/v3.14.7/Objects/dictobject.c#L6505-L6565)
+defines this retained distinction.
+
 LA-43 accepts runtime decoding failures across modules, dynamic source, notes,
 causes and suspended generator cleanup. Run
 `examples/interpreter_runtime_decoding.py` unchanged on CPython or in the offline

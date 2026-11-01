@@ -44,7 +44,8 @@
     "LA42",
     "LA43",
     "LA44",
-    "LA44A"
+    "LA44A",
+    "LA45"
   ],
   "cases": [
     {
@@ -7028,6 +7029,208 @@
       "stage": "LA44A",
       "source": "class Key(str): pass\nkey=Key(\"field\")\na=ValueError()\nvalue=[]\nobject.__setattr__(a,key,value)\nprint(object.__getattribute__(a,key) is value)\nobject.__delattr__(a,key)\nprint(hasattr(a,\"field\"))\n",
       "stdout": "True\nFalse\n"
+    },
+    {
+      "id": "delete-metadata-object-syntax",
+      "stage": "LA45",
+      "source": "a=object()\nkey=\"field\"\ntry: del a.field\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "delete-metadata-object-builtin",
+      "stage": "LA45",
+      "source": "a=object()\nkey=\"field\"\ntry: delattr(a,key)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "delete-metadata-object-native",
+      "stage": "LA45",
+      "source": "a=object()\nkey=\"field\"\ntry: object.__delattr__(a,key)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "delete-metadata-object-bound",
+      "stage": "LA45",
+      "source": "a=object()\nkey=\"field\"\ntry: a.__delattr__(key)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "delete-metadata-slots-syntax",
+      "stage": "LA45",
+      "source": "class A: __slots__=()\na=A()\nkey=\"field\"\ntry: del a.field\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "delete-metadata-slots-builtin",
+      "stage": "LA45",
+      "source": "class A: __slots__=()\na=A()\nkey=\"field\"\ntry: delattr(a,key)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "delete-metadata-slots-native",
+      "stage": "LA45",
+      "source": "class A: __slots__=()\na=A()\nkey=\"field\"\ntry: object.__delattr__(a,key)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "delete-metadata-slots-bound",
+      "stage": "LA45",
+      "source": "class A: __slots__=()\na=A()\nkey=\"field\"\ntry: a.__delattr__(key)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "delete-metadata-dictionary-syntax",
+      "stage": "Future",
+      "source": "class A: pass\na=A()\nkey=\"field\"\ntry: del a.field\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "False False\nFalse False\n",
+      "owner": "#124",
+      "boundary": "Exact-string deletion failures in original instance storage require native shared-key cache and inline-to-dictionary transition state; copied AttributeError diagnostics remain available"
+    },
+    {
+      "id": "delete-metadata-inherited-value-native",
+      "stage": "Future",
+      "source": "class A: field=7\na=A()\nkey=\"field\"\ntry: object.__delattr__(a,key)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "False False\nFalse False\n",
+      "owner": "#124",
+      "boundary": "Exact-string deletion failures in original instance storage require native shared-key cache and inline-to-dictionary transition state; copied AttributeError diagnostics remain available"
+    },
+    {
+      "id": "delete-metadata-no-dict-subtype-builtin",
+      "stage": "LA45",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nclass A: __slots__=()\na=A()\nkey=Key(\"field\")\ntry: delattr(a,key)\nexcept AttributeError as e: print(e.name is key,e.obj is a,type(e.name) is Key)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "delete-metadata-no-dict-subtype-native",
+      "stage": "LA45",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nclass A: __slots__=()\na=A()\nkey=Key(\"field\")\ntry: object.__delattr__(a,key)\nexcept AttributeError as e: print(e.name is key,e.obj is a,type(e.name) is Key)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "delete-metadata-nondata",
+      "stage": "LA45",
+      "source": "class A:\n __slots__=()\n field=7\na=A()\ntry: del a.field\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "delete-metadata-empty-slot",
+      "stage": "LA45",
+      "source": "class A: __slots__=(\"field\",)\na=A()\ntry: del a.field\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "delete-metadata-slot-populated",
+      "stage": "LA45",
+      "source": "class A: __slots__=(\"field\",)\na=A()\na.field=[]\ndel a.field\ntry: del a.field\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "delete-metadata-forwarded-hook",
+      "stage": "LA45",
+      "source": "class A:\n __slots__=()\n def __delattr__(self,key):\n  print(\"forward\",key)\n  object.__delattr__(self,key)\na=A()\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "forward field\nfield True\n"
+    },
+    {
+      "id": "delete-metadata-hook-original-error",
+      "stage": "LA45",
+      "source": "error=AttributeError(\"owned\")\nclass A:\n def __delattr__(self,key): raise error\na=A()\ntry: del a.field\nexcept AttributeError as e: print(e is error,e.name is None,e.obj is None)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "delete-metadata-descriptor-original-error",
+      "stage": "LA45",
+      "source": "error=AttributeError(\"owned\")\nclass D:\n def __delete__(self,obj): raise error\nclass A: field=D()\na=A()\ntry: del a.field\nexcept AttributeError as e: print(e is error,e.name is None,e.obj is None)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "delete-metadata-dictionary-callback-KeyError",
+      "stage": "LA45",
+      "source": "error=KeyError(\"owned\")\nclass K:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\")\n  raise error\nclass A: pass\na=A()\na.__dict__[K()]=7\ntry: del a.field\nexcept AttributeError as e: print(e is error,e.name==\"field\",e.obj is a,e.__context__ is error)\nexcept ValueError as e: print(e is error)\n",
+      "stdout": "compare\nFalse True True False\n"
+    },
+    {
+      "id": "delete-metadata-dictionary-callback-SubKey",
+      "stage": "LA45",
+      "source": "class SubKey(KeyError): pass\nerror=SubKey(\"owned\")\nclass K:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\")\n  raise error\nclass A: pass\na=A()\na.__dict__[K()]=7\ntry: del a.field\nexcept AttributeError as e: print(e is error,e.name==\"field\",e.obj is a,e.__context__ is error)\nexcept ValueError as e: print(e is error)\n",
+      "stdout": "compare\nFalse True True False\n"
+    },
+    {
+      "id": "delete-metadata-dictionary-callback-AttributeError",
+      "stage": "LA45",
+      "source": "error=AttributeError(\"owned\")\nclass K:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\")\n  raise error\nclass A: pass\na=A()\na.__dict__[K()]=7\ntry: del a.field\nexcept AttributeError as e: print(e is error,e.name==\"field\",e.obj is a,e.__context__ is error)\nexcept ValueError as e: print(e is error)\n",
+      "stdout": "compare\nTrue False False False\n"
+    },
+    {
+      "id": "delete-metadata-dictionary-callback-ValueError",
+      "stage": "LA45",
+      "source": "error=ValueError(\"owned\")\nclass K:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\")\n  raise error\nclass A: pass\na=A()\na.__dict__[K()]=7\ntry: del a.field\nexcept AttributeError as e: print(e is error,e.name==\"field\",e.obj is a,e.__context__ is error)\nexcept ValueError as e: print(e is error)\n",
+      "stdout": "compare\nTrue\n"
+    },
+    {
+      "id": "delete-metadata-write-dictionary-keyerror-conversion",
+      "stage": "LA45",
+      "source": "error=KeyError(\"owned\")\nclass K:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\")\n  raise error\nclass A: pass\na=A()\na.__dict__[K()]=7\ntry: a.field=8\nexcept AttributeError as e: print(e.name,e.obj is a,e.__context__ is error)\n",
+      "stdout": "compare\nfield True False\n"
+    },
+    {
+      "id": "delete-metadata-callback-mutates-dictionary",
+      "stage": "LA45",
+      "source": "class K:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  a.__dict__={}\n  return False\nclass A: pass\na=A()\na.__dict__[K()]=7\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a,len(a.__dict__))\n",
+      "stdout": "field True 0\n"
+    },
+    {
+      "id": "delete-metadata-native-slot-descriptor",
+      "stage": "LA45",
+      "source": "class A: __slots__=(\"field\",)\na=A()\ntry: A.field.__delete__(a)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "delete-metadata-read-enriches-empty-slot",
+      "stage": "LA45",
+      "source": "class A: __slots__=(\"field\",)\na=A()\ntry: del a.field\nexcept AttributeError as error: saved=error\nclass Read:\n @property\n def item(self): raise saved\nr=Read()\ntry: r.item\nexcept AttributeError as e: print(e is saved,e.name,e.obj is r)\n",
+      "stdout": "True item True\n"
+    },
+    {
+      "id": "delete-metadata-first-context-retained",
+      "stage": "LA45",
+      "source": "class A: pass\na=A()\na.__dict__={}\ntry: del a.field\nexcept AttributeError as error: saved=error\nclass Read:\n @property\n def item(self): raise saved\ntry: Read().item\nexcept AttributeError as e: print(e is saved,e.name,e.obj is a)\n",
+      "stdout": "True field True\n"
+    },
+    {
+      "id": "delete-metadata-replaced-dictionary-syntax",
+      "stage": "LA45",
+      "source": "class A: field=7\na=A()\na.__dict__={}\nkey=\"field\"\ntry: del a.field\nexcept AttributeError as e: print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "delete-metadata-replaced-dictionary-native",
+      "stage": "LA45",
+      "source": "class A: field=7\na=A()\na.__dict__={}\nkey=\"field\"\ntry: object.__delattr__(a,key)\nexcept AttributeError as e: print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "delete-metadata-self-assignment",
+      "stage": "LA45",
+      "source": "class A: pass\na=A()\na.__dict__=a.__dict__\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "field True\n"
+    },
+    {
+      "id": "delete-metadata-deleted-dictionary",
+      "stage": "LA45",
+      "source": "class A: pass\na=A()\ndel a.__dict__\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "field True\n"
+    },
+    {
+      "id": "delete-metadata-shared-original",
+      "stage": "LA45",
+      "source": "class A: pass\na=A()\nb=A()\na.__dict__=b.__dict__\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "field True\n"
+    },
+    {
+      "id": "delete-metadata-explicit-descriptor",
+      "stage": "LA45",
+      "source": "class A: pass\na=A()\nA.__dict__[\"__dict__\"].__set__(a,{})\ntry: del a.field\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "field True\n"
     }
   ],
   "reference_boundaries": [

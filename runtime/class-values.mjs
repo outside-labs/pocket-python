@@ -1384,7 +1384,8 @@ export class ClassRuntime {
       const slots = receiver.slotValues;
       if (!(slots instanceof Map)) this.fail("TypeError", "Descriptor does not apply to this receiver layout");
       const index = descriptor.slotIndex, present = slots.has(index), before = slots.get(index);
-      if (operation !== "set" && !present) this.fail("AttributeError", "'" + this.typeOf(receiver).name + "' object has no attribute '" + name + "'");
+      if (operation !== "set" && !present) this.fail("AttributeError", "'" + this.typeOf(receiver).name + "' object has no attribute '" + name + "'", "PYTHON", null, null,
+        operation === "delete" ? {receiver, key: name, enriched: false} : null);
       if (operation === "get") return {kind: "value", value: before};
       if (operation === "set") slots.set(index, item); else slots.delete(index);
       try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
@@ -1417,7 +1418,7 @@ export class ClassRuntime {
       if (owner instanceof ClassValue && !owner.root && !this.isMetaclass(owner)) {
         if (operation === "get") return {kind: "value", value: this.instanceDictionary(receiver)};
         if (operation === "set" && !this.values.isDict(item)) this.fail("TypeError", "__dict__ must be set to a dictionary");
-        return {kind: "value", value: this.functionMetadata(receiver, "attributes", operation === "delete" ? new Map() : item)};
+        return {kind: "value", value: this.replaceInstanceDictionary(receiver, operation === "delete" ? new Map() : item)};
       }
       if (owner instanceof BuiltinValue && owner.name === "type") {
         if (operation !== "get") this.fail("AttributeError", "Type __dict__ is read-only");
@@ -1487,15 +1488,23 @@ export class ClassRuntime {
     }
     return receiver.attributes;
   }
+  replaceInstanceDictionary(receiver, dictionary) {
+    const result = this.functionMetadata(receiver, "attributes", dictionary);
+    receiver.mutationDictionary = true;
+    return result;
+  }
   instanceMissing(receiver, name, fallback = {found: false}) {
     if (fallback.found) return this.bindAttribute(fallback.value, receiver, receiver.type);
     if (!fallback.skipNative && this.nativeModule(receiver)) return {kind: "call", callable: this.builtin("native-module-missing"), args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
   }
-  instanceMutationFailure(receiver, name, key = null) {
-    // Generic storage failures attach context only when no class attribute exists.
-    // Descriptor failures and owned mutation hooks keep their own exceptions.
-    const enriched = !this.lookup(receiver.type, name).found;
+  instanceMutationFailure(receiver, name, key = null, dictionary = false, convertedKeyError = false) {
+    // Original storage needs native shared-key state before exact-name failures
+    // can expose metadata. Replaced dictionaries and subtype names use dict errors.
+    if (dictionary && !convertedKeyError && (key === null || this.values.isString(key)) &&
+        !receiver.mutationDictionary)
+      this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
+    const enriched = dictionary || !this.lookup(receiver.type, name).found;
     this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.", "PYTHON", null, null,
       {receiver, key: key ?? name, enriched});
   }
@@ -1505,7 +1514,7 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver.attributes instanceof Map && operation === "get")
       return receiver.attributes.has(name) ? value(receiver.attributes.get(name)) : this.instanceMissing(receiver, name, fallback);
-    if (receiver.type.root || receiver.type.storage && !receiver.type.storage.dict) return operation === "set" ?
+    if (receiver.type.root || receiver.type.storage && !receiver.type.storage.dict) return operation !== "get" ?
       this.instanceMutationFailure(receiver, name, key) : this.instanceMissing(receiver, name, operation === "get" ? fallback : {found: false, skipNative: true});
     const dictionary = this.instanceDictionary(receiver);
     key ??= this.values.string(Array.from(name, char => char.codePointAt(0)));
@@ -1513,7 +1522,7 @@ export class ClassRuntime {
       callable: this.builtin("instance-dictionary-" + operation), args: [receiver, dictionary, key, item, fallback.found, fallback.value ?? null, ...(fallback.skipNative ? [true] : [])]};
     if (operation === "set") return value(this.values.set(dictionary, key, item));
     const position = this.values.find(dictionary, key);
-    if (position < 0) return this.instanceMissing(receiver, name, operation === "get" ? fallback : {found: false, skipNative: true});
+    if (position < 0) return operation === "delete" ? this.instanceMutationFailure(receiver, name, key, true) : this.instanceMissing(receiver, name, fallback);
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
   nativeCallableDirectoryKind(receiver) {
@@ -1848,7 +1857,7 @@ export class ClassRuntime {
     if (receiver instanceof FunctionValue && name === "__class__") this.fail("TypeError", "Function type cannot be changed.");
     if (this.isInstance(receiver) && name === "__dict__" && this.instanceDictionarySlot(receiver.type)) {
       if (!remove && !this.values.isDict(value)) this.fail("TypeError", "Instance __dict__ must be set to a dictionary.");
-      return this.functionMetadata(receiver, "attributes", remove ? new Map() : value);
+      return this.replaceInstanceDictionary(receiver, remove ? new Map() : value);
     }
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__", "__module__"].includes(name)) {
       if (name !== "__module__" && (remove || !this.values.isString(value)))
@@ -1892,8 +1901,7 @@ export class ClassRuntime {
     if (this.isInstance(receiver) && receiver.type.root && name === "__dict__")
       this.fail("AttributeError", "Object instance has no dictionary.");
     if (this.isInstance(receiver) && (receiver.type.root || receiver.type.storage && !receiver.type.storage.dict)) {
-      if (!remove) this.instanceMutationFailure(receiver, name, key);
-      this.instanceMissing(receiver, name, {found: false, skipNative: true});
+      this.instanceMutationFailure(receiver, name, key);
     }
     if (this.isInstance(receiver) && !(receiver.attributes instanceof Map)) {
       const plan = this.instanceEntry(receiver, name, remove ? "delete" : "set", value);
@@ -1909,7 +1917,10 @@ export class ClassRuntime {
     const mapPresent = map.has(mapName), before = map.get(mapName);
     const position = own?.found ? dictionary.entries.findIndex(entry => entry.key === own.key) : -1;
     const present = mapPresent || position >= 0;
-    if (remove && !present) this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
+    if (remove && !present) {
+      if (this.isInstance(receiver)) this.instanceMutationFailure(receiver, name, key, true);
+      this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
+    }
     this.bounded(remove || present || map.size < CLASS_LIMITS.attributes, "Class/instance attribute budget exceeded.");
     const initialCount = receiver instanceof ClassValue ? receiver.directoryInitialCount : null;
     const entries = receiver.namespaceEntries;
