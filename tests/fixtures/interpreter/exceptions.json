@@ -17,6 +17,7 @@
     "LA17",
     "LA18",
     "LA19",
+    "LA20A",
     "LA20"
   ],
   "cases": [
@@ -1759,6 +1760,42 @@
           "source": "class FieldError(AttributeError): pass\ndef make_error(record,key):\n e=FieldError(\"missing\",name=key,obj=record)\n e.add_note(\"helper\")\n return e\n"
         }
       ]
+    },
+    {
+      "id": "mixed-name-native-initializer",
+      "stage": "LA20A",
+      "source": "class E(ValueError,NameError): pass\nn=[]\ne=E(\"missing\",name=n)\nprint(e.name is n,e.args[0],E.__init__ is NameError.__init__)\n",
+      "stdout": "True missing True\n"
+    },
+    {
+      "id": "mixed-attribute-native-initializer",
+      "stage": "LA20A",
+      "source": "class E(ValueError,AttributeError): pass\nn=[]\no={}\ne=E(\"missing\",name=n,obj=o)\nprint(e.name is n,e.obj is o,E.__init__ is AttributeError.__init__)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "mixed-name-reversed-order",
+      "stage": "LA20A",
+      "source": "class E(NameError,ValueError): pass\nn=[]\ne=E(7,name=n)\nprint(e.name is n,E.__init__ is NameError.__init__,E.__base__ is NameError)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "mixed-native-super-initializer",
+      "stage": "LA20A",
+      "source": "class E(ValueError,AttributeError):\n def __init__(self,x): super().__init__(\"missing\",obj=x,name=x)\nx=[]\ne=E(x)\nprint(e.name is x,e.obj is x,super(E,e).__init__.__self__ is e)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "mixed-native-string-slot",
+      "stage": "LA20A",
+      "source": "class E(ValueError,NameError): pass\ne=E(\"message\",name=[])\nprint(str(e),E.__str__ is BaseException.__str__,E.__init__ is NameError.__init__)\n",
+      "stdout": "message True True\n"
+    },
+    {
+      "id": "mixed-native-slotted-subclass",
+      "stage": "LA20A",
+      "source": "class A(ValueError,AttributeError):\n __slots__=(\"saved\",)\nclass E(A): pass\ne=E(\"missing\",name=[],obj={})\ne.saved=e.obj\nprint(e.saved is e.obj,A.__init__ is AttributeError.__init__,E.__base__ is A)\n",
+      "stdout": "True True True\n"
     },
     {
       "id": "import-error-field-identity",

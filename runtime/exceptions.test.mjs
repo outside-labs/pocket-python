@@ -186,6 +186,10 @@ test('composed native error fields survive generator suspension and interrupted 
   await lifetime('def work():\n try:\n  raise AttributeError("missing",name=[7],obj={})\n except AttributeError as e:\n  e.add_note("detail")\n  try: yield e\n  finally: print(e.name[0],e.__notes__[0])\ni=work()\ne=next(i)\nprint("entered")\nprint(e.obj is not None)\ni.close()\n', 'entered\nTrue\n7 detail\n');
 });
 
+test('mixed native exception MRO retains fields across owned constructor callbacks', async () => {
+  await lifetime('class E(ValueError,AttributeError):\n def __init__(self):\n  super().__init__(name=[7],obj=[8])\n  print("entered")\ne=E()\nprint(e.name[0],e.obj[0])\n', 'entered\n7 8\n');
+});
+
 test('import error fields retain temporary graphs during owned constructors and interruption', async () => {
   await lifetime('class E(ImportError):\n def __init__(self):\n  super().__init__([7],name=[8],path=[9],name_from=[10])\n  print("entered")\ne=E()\nprint(e.msg[0],e.name[0],e.path[0],e.name_from[0])\n', 'entered\n7 8 9 10\n');
 });
