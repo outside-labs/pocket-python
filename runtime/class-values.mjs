@@ -6,6 +6,8 @@ import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
 export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"]);
+export const CONTAINER_METHODS = Object.freeze({list: Object.freeze(["copy", "clear", "reverse"])});
+export const CONTAINER_METHOD_NAMES = new Set(Object.values(CONTAINER_METHODS).flat());
 export const CLASS_LIMITS = Object.freeze({bases: 16, mro: 64, attributes: 128, name: 256});
 const NATIVE_TYPES = new Set(["type", "bool", "int", "float", "complex", "str", "list", "tuple", "dict", "range", "slice", "set", "frozenset", "bytes", "bytearray", "memoryview",
   "mappingproxy", "super", "property", "staticmethod", "classmethod", "NoneType", "NotImplementedType", "function", "method", "method-wrapper", "method_descriptor", "wrapper_descriptor", "builtin_function_or_method", "generator", "module", "code", "frame", "FrameLocalsProxy", "cell",
@@ -1448,7 +1450,7 @@ export class ClassRuntime {
     return null;
   }
   hasNativeProtocol(receiver, name) {
-    return NATIVE_PROTOCOL_KEYS.includes(name) && !this.isType(receiver) && !this.protocolObject(receiver) &&
+    return (NATIVE_PROTOCOL_KEYS.includes(name) || CONTAINER_METHOD_NAMES.has(name) && CONTAINER_METHODS[this.values.typeName(this.payload(receiver))]?.includes(name)) && !this.isType(receiver) && !this.protocolObject(receiver) &&
       !(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue) && this.mro(this.typeOf(receiver)).some(base =>
         NATIVE_NAMESPACES[base.root ? "object" : base.name]?.some(entry => entry[0] === name));
   }

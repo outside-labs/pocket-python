@@ -1,7 +1,7 @@
 import {ARITHMETIC_SLOTS, NATIVE_PROTOCOL_KEYS, ORDERING_SLOTS} from "./class-policy.mjs";
 import {verifyFunctions} from "./function-bytecode.mjs";
 import {GeneratorValue, FrameValue, FrameLocalsValue, Cell, Environment, environmentCell, CodePool, CodeValue, ModuleValue, FunctionValue, CallArguments, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, InstanceValue, BoundMethodValue, SuperValue, PropertyValue, MethodWrapperValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
-import {ClassRuntime} from "./class-values.mjs";
+import {ClassRuntime, CONTAINER_METHODS, CONTAINER_METHOD_NAMES} from "./class-values.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {MemoryArena} from "./memory.mjs";
 import {ExecutionError} from "./vm.mjs";
@@ -907,7 +907,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
             const plan = classes.read(receiver, arg);
             if (plan.kind === "value") stack.push(plan.value);
             else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }
-          } else if (["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver)) stack.push(allocate(AppendValue, receiver));
+          } else if (["module-get", "attribute-get"].includes(op) && CONTAINER_METHOD_NAMES.has(arg) && CONTAINER_METHODS[values.typeName(receiver)]?.includes(arg)) stack.push(allocate(ValueMethod, receiver, arg));
+          else if (["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver)) stack.push(allocate(AppendValue, receiver));
           else {
             const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
             if (result.kind === "value") stack.push(result.value);
