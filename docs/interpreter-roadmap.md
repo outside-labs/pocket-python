@@ -18,7 +18,9 @@ arguments/chaining and named generic exception subclasses have composed
 Node/Chromium/offline acceptance. LA-14–LA-31 add lazy handler expressions, notes,
 native name/attribute/import/syntax/iteration fields and UnicodeTranslateError
 construction, fields, subclasses and rendering. Groups, traceback objects,
-remaining metadata and Unicode Encode/Decode families retain their gates.
+remaining metadata and UnicodeDecodeError retain their gates. LA-32–LA-34 add
+UnicodeEncodeError construction, independent native fields, callbacks and
+rendering, with composed source and installed offline acceptance.
 Remaining text/sequence APIs, formatting, language gaps and library/
 package qualification retain their separate issue gates. The track issues and
 Project fields record current delivery status; accepted stages do not measure

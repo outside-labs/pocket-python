@@ -58,6 +58,14 @@ subclass properties, while ordinary `str` honors subclass overrides. Copied host
 diagnostics do not execute these callbacks. See the pinned
 [renderer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3673-L3734).
 
+LA-34 composes encoding exceptions with record subclasses, module-owned cycles,
+dynamic source frames, causes/notes and suspended generator cleanup.
+`examples/interpreter_encoding_exceptions.py` runs unchanged on CPython and in
+the offline console. Installed offline acceptance includes fresh source, Stop
+and Restart during index/reason/encoding callbacks and a reduced-profile scalar
+program. The eight deterministic execution observations retain revision 22.
+UnicodeDecodeError and automatic codec metadata remain under #124.
+
 LA-29 adds `UnicodeTranslateError(object, start, end, reason, /)`, five native
 fields, native initializers/descriptors and subclasses. Object/reason require
 strings and retain subtype identity. Construction converts start/end in order
@@ -97,7 +105,7 @@ callbacks, a fresh restart owner and a reduced-profile translation program. The
 eight deterministic execution resource observations retain accounting revision
 22. This accepts the UnicodeTranslateError slice while #124 and A2 remain open
 for groups/except*, traceback objects/mutation, note rendering/export, remaining
-metadata and the Unicode Encode/Decode structured families. General exception
+metadata and the UnicodeDecodeError structured fields and automatic codec metadata. General exception
 representations and formatting remain under #127.
 
 The source corpus `exceptions.json` distinguishes implemented cases from
@@ -164,8 +172,7 @@ python scripts/object_integration_browser_smoke.py --exceptions
 ```
 
 Exception groups/except*, traceback objects/mutation and note rendering/export,
-write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and the Unicode Encode/Decode
-structured native families remain #124. Generator throw of a user
+write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and the UnicodeDecodeError and automatic codec metadata remain #124. Generator throw of a user
 exception class retains #120; throwing an instance remains adopted. Multiple
 argument/container/default exception representations remain #127. The ordinary
 exception slices do not complete Track A A2, which also requires formatting.
@@ -235,7 +242,7 @@ All eight existing deterministic resource observations retain revision 22.
 
 These two batches keep A2 and #124 open for groups/except*, traceback objects
 and mutation, note rendering/export, write/delete attribute metadata, custom
-import provenance, parser-generated syntax fields, Unicode Encode/Decode structured families
+import provenance, parser-generated syntax fields, UnicodeDecodeError structured fields and automatic codec metadata
 and the declared host qualifications. Remaining general displays/formatting
 stay under #127. Package/library qualification and candidate/release gates keep
 their separate evidence requirements.
