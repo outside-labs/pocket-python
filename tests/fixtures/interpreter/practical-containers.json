@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "suite": "interpreter-practical-containers/1",
+  "profile": "classes-source/1",
+  "reference_version": "3.14.7",
+  "implemented_stages": [
+    "LA-1"
+  ],
+  "cases": [
+    {
+      "id": "shallow-copy",
+      "stage": "LA-1",
+      "source": "v=[7]\na=[v]\nb=a.copy()\nprint(a is b,a[0] is b[0])\nb.append(9)\nv.append(8)\nprint(len(a),len(b),b[0][1])\n",
+      "stdout": "False True\n1 2 8\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "clear-alias",
+      "stage": "LA-1",
+      "source": "a=[1,2]\nb=a\nprint(a.clear() is None,len(b))\n",
+      "stdout": "True 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "reverse-alias",
+      "stage": "LA-1",
+      "source": "a=[1,2,3]\nb=a\nprint(a.reverse() is None,b[0],b[2])\n",
+      "stdout": "True 3 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "reverse-live-iterator",
+      "stage": "LA-1",
+      "source": "a=[1,2,3]\ni=iter(a)\nprint(next(i))\na.reverse()\nprint(next(i),next(i))\n",
+      "stdout": "1\n2 1\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "clear-live-iterator",
+      "stage": "LA-1",
+      "source": "a=[1,2]\ni=iter(a)\na.clear()\nprint(next(i,9))\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "empty-methods",
+      "stage": "LA-1",
+      "source": "a=[]\nb=a.copy()\nprint(a is b,a.clear() is None,a.reverse() is None,len(a),len(b))\n",
+      "stdout": "False True True 0 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "copy-cycle",
+      "stage": "LA-1",
+      "source": "a=[]\na.append(a)\nb=a.copy()\nprint(a is b,b[0] is a)\n",
+      "stdout": "False True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "copy-extra",
+      "stage": "LA-1",
+      "source": "[1].copy(7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "copy-keyword",
+      "stage": "LA-1",
+      "source": "[1].copy(value=7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "copy-receiver",
+      "stage": "LA-1",
+      "source": "list.copy(())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "copy-unbound",
+      "stage": "LA-1",
+      "source": "a=[1,2]\nf=list.copy\nr=f(a)\nprint(r is None,len(a),a[0] if a else 0)\n",
+      "stdout": "False 2 1\n"
+    },
+    {
+      "id": "copy-rebound",
+      "stage": "LA-1",
+      "source": "a=[1,2]\nf=list.copy.__get__(a)\nr=f()\nprint(r is None,len(a))\n",
+      "stdout": "False 2\n"
+    },
+    {
+      "id": "clear-extra",
+      "stage": "LA-1",
+      "source": "[1].clear(7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "clear-keyword",
+      "stage": "LA-1",
+      "source": "[1].clear(value=7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "clear-receiver",
+      "stage": "LA-1",
+      "source": "list.clear(())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "clear-unbound",
+      "stage": "LA-1",
+      "source": "a=[1,2]\nf=list.clear\nr=f(a)\nprint(r is None,len(a),a[0] if a else 0)\n",
+      "stdout": "True 0 0\n"
+    },
+    {
+      "id": "clear-rebound",
+      "stage": "LA-1",
+      "source": "a=[1,2]\nf=list.clear.__get__(a)\nr=f()\nprint(r is None,len(a))\n",
+      "stdout": "True 0\n"
+    },
+    {
+      "id": "reverse-extra",
+      "stage": "LA-1",
+      "source": "[1].reverse(7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "reverse-keyword",
+      "stage": "LA-1",
+      "source": "[1].reverse(value=7)\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "reverse-receiver",
+      "stage": "LA-1",
+      "source": "list.reverse(())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "reverse-unbound",
+      "stage": "LA-1",
+      "source": "a=[1,2]\nf=list.reverse\nr=f(a)\nprint(r is None,len(a),a[0] if a else 0)\n",
+      "stdout": "True 2 2\n"
+    },
+    {
+      "id": "reverse-rebound",
+      "stage": "LA-1",
+      "source": "a=[1,2]\nf=list.reverse.__get__(a)\nr=f()\nprint(r is None,len(a))\n",
+      "stdout": "True 2\n"
+    },
+    {
+      "id": "subclass-copy",
+      "stage": "LA-1",
+      "source": "class A(list):\n def __iter__(self): raise ValueError(\"bad\")\na=A([7])\nb=list.copy(a)\nprint(type(b) is list,b[0],len(a))\n",
+      "stdout": "True 7 1\n"
+    },
+    {
+      "id": "subclass-overrides",
+      "stage": "LA-1",
+      "source": "class A(list):\n def reverse(self): return 9\na=A([1,2])\nprint(a.reverse())\nprint(list.reverse(a) is None,a[0])\n",
+      "stdout": "9\nTrue 2\n"
+    }
+  ]
+}

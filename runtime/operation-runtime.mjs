@@ -1,7 +1,7 @@
 import {dynamicImporter} from "./dynamic-imports.mjs";
 import {dynamicEvaluator} from "./dynamic-evaluation.mjs";
 import {dynamicCompiler} from "./dynamic-source.mjs";
-import {NATIVE_SUBCLASS_BASES} from "./class-values.mjs";
+import {NATIVE_SUBCLASS_BASES, CONTAINER_METHODS, CONTAINER_METHOD_NAMES} from "./class-values.mjs";
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, NATIVE_PROTOCOL_KEYS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS} from "./values.mjs";
 import {RegistryError} from "./module-registry.mjs";
@@ -2409,6 +2409,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           const nativeOwner = callable.nativeOwner instanceof BuiltinValue ? callable.nativeOwner.name : callable.name.split(".")[0];
           const nativeName = callable.nativeKey ?? callable.name.slice(callable.name.indexOf(".") + 1);
+          const containerOwner = callable instanceof ValueMethod && CONTAINER_METHOD_NAMES.has(nativeName) ? values.typeName(classes.payload(callable.receiver)) : nativeOwner;
+          if (CONTAINER_METHODS[containerOwner]?.includes(nativeName)) {
+            const original = callable instanceof ValueMethod ? callable.receiver : args[0];
+            const receiver = classes.payload(original), rest = callable instanceof ValueMethod ? args : args.slice(1);
+            if (keywords.length || rest.length) python("TypeError", nativeName + "() takes no arguments");
+            const finish = continuation("relay", {receiver: original, after: completion});
+            charge(receiver.items.length);
+            if (nativeName === "copy") task = valueTask(values.list(receiver.items), site, finish);
+            else {
+              const items = nativeName === "clear" ? [] : [...receiver.items].reverse();
+              mutate(receiver, () => { const before = receiver.items; receiver.items = items; return () => { receiver.items = before; }; });
+              task = valueTask(null, site, finish);
+            }
+            continue;
+          }
           if (["property-no-getter", "property-no-setter", "property-no-deleter"].includes(callable.name)) {
             if (++depth > maxDepth) python("RecursionError", "maximum property diagnostic depth exceeded");
             const receiver = args[0], record = {receiver, target: args[1], operation: callable.name.slice("property-no-".length), phase: "lookup", depth, after: completion};
