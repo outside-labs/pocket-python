@@ -4,7 +4,8 @@
   "reference_version": "3.14.7",
   "profile": "classes-source/1",
   "implemented_stages": [
-    "LA8"
+    "LA8",
+    "LA9"
   ],
   "cases": [
     {
@@ -159,6 +160,121 @@
       "stdout": "7\n",
       "owner": "#124",
       "boundary": "Ordinary exception subclasses follow in LA-11/LA-12"
+    },
+    {
+      "id": "replace-args-tuple-identity",
+      "stage": "LA9",
+      "source": "e=ValueError(1)\na=[]\nt=(a,7)\ne.args=t\nprint(e.args is t,e.args[0] is a,e.args[1])\n",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "replace-args-list",
+      "stage": "LA9",
+      "source": "e=ValueError(1)\na=[7]\ne.args=a\na.append(8)\nprint(len(e.args),e.args[0],str(e))\ne.args=()\nprint(len(e.args),len(str(e)))\n",
+      "stdout": "1 7 7\n0 0\n"
+    },
+    {
+      "id": "replace-args-owned-iterable",
+      "stage": "LA9",
+      "source": "class I:\n def __iter__(self):\n  print(\"iter\")\n  yield 7\n  yield 8\ne=Exception()\ne.args=I()\nprint(e.args[0],e.args[1])\n",
+      "stdout": "iter\n7 8\n"
+    },
+    {
+      "id": "replace-args-failure-is-atomic",
+      "stage": "LA9",
+      "source": "class I:\n def __iter__(self):\n  yield 7\n  raise ValueError(\"broken\")\ne=Exception(9)\nt=e.args\ntry: e.args=I()\nexcept ValueError: print(e.args is t,e.args[0])\n",
+      "stdout": "True 9\n"
+    },
+    {
+      "id": "replace-args-invalid",
+      "stage": "LA9",
+      "source": "e=Exception(9)\ntry: e.args=7\nexcept TypeError: print(e.args[0])\n",
+      "stdout": "9\n"
+    },
+    {
+      "id": "delete-args-invalid",
+      "stage": "LA9",
+      "source": "e=Exception()\ndel e.args\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "stop-value-independent",
+      "stage": "LA9",
+      "source": "a=[]\ne=StopIteration(a)\ne.args=(7,)\nprint(e.value is a,e.args[0])\ne.value=8\nprint(e.value,e.args[0])\ndel e.value\nprint(e.value is None,e.args[0])\n",
+      "stdout": "True 7\n8 7\nTrue 7\n"
+    },
+    {
+      "id": "chain-defaults",
+      "stage": "LA9",
+      "source": "e=Exception()\nprint(e.__context__ is None,e.__cause__ is None,e.__suppress_context__)\n",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "chain-metadata",
+      "stage": "LA9",
+      "source": "e=ValueError()\nc=LookupError()\ne.__context__=c\nprint(e.__context__ is c,e.__suppress_context__)\ne.__cause__=c\nprint(e.__cause__ is c,e.__suppress_context__)\ne.__cause__=None\nprint(e.__cause__ is None,e.__suppress_context__)\ne.__suppress_context__=False\nprint(e.__suppress_context__,e.__context__ is c)\n",
+      "stdout": "True False\nTrue True\nTrue True\nFalse True\n"
+    },
+    {
+      "id": "self-chain-metadata",
+      "stage": "LA9",
+      "source": "e=Exception()\ne.__cause__=e\ne.__context__=e\nprint(e.__cause__ is e,e.__context__ is e)\ne.__cause__=None\ne.__context__=None\nprint(e.__cause__ is None,e.__context__ is None)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "caught-implicit-context",
+      "stage": "LA9",
+      "source": "outer=ValueError(\"outer\")\ntry:\n try: raise outer\n except ValueError: raise TypeError(\"inner\")\nexcept TypeError as e: print(e.__context__ is outer,e.__cause__ is None,e.__suppress_context__)\n",
+      "stdout": "True True False\n"
+    },
+    {
+      "id": "invalid-__context__",
+      "stage": "LA9",
+      "source": "e=Exception()\nsetattr(e,\"__context__\",7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "delete-__context__",
+      "stage": "LA9",
+      "source": "e=Exception()\ndelattr(e,\"__context__\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-__cause__",
+      "stage": "LA9",
+      "source": "e=Exception()\nsetattr(e,\"__cause__\",7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "delete-__cause__",
+      "stage": "LA9",
+      "source": "e=Exception()\ndelattr(e,\"__cause__\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "invalid-__suppress_context__",
+      "stage": "LA9",
+      "source": "e=Exception()\nsetattr(e,\"__suppress_context__\",7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "delete-__suppress_context__",
+      "stage": "LA9",
+      "source": "e=Exception()\ndelattr(e,\"__suppress_context__\")\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "metadata-native-descriptors",
+      "stage": "LA9",
+      "source": "e=Exception()\nc=ValueError()\nd=vars(BaseException)[\"__cause__\"]\nd.__set__(e,c)\nprint(d.__get__(e) is c,e.__suppress_context__)\n",
+      "stdout": "True True\n"
     }
   ]
 }

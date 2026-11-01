@@ -50,3 +50,12 @@ test('exception argument graphs obey shared allocation limits', async () => {
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
+
+test('argument replacement retains the receiver through parked iterator callbacks', async () => {
+  await lifetime('class I:\n def __iter__(self):\n  print("entered")\n  yield [7]\ne=Exception(9)\ne.args=I()\nprint(e.args[0][0])\n', 'entered\n7\n');
+});
+
+test('cyclic exception arguments and chains survive collection and release together', async () => {
+  const source = 'e=ValueError([])\nf=LookupError(e)\ne.args=(f,)\ne.__cause__=f\nf.__context__=e\nprint("entered")\nprint(e.args[0] is f,f.__context__ is e)\n';
+  await lifetime(source, 'entered\nTrue True\n');
+});

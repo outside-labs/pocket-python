@@ -1604,8 +1604,9 @@ export function valueLayout(value) {
   if (value instanceof ValueMethod) return {bytes: 64 + 2 * value.name.length, children: [value.receiver]};
   if (value instanceof BuiltinValue) return {bytes: (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 48 + 2 * value.name.length + (value.nativeOwner ? 8 : 0) + (value.namespaceDictionary ? 8 : 0) + (value.qualifiedName === undefined ? 0 : 8),
     children: [...(value.namespaceKeys || []), ...(value.nativeOwner ? [value.nativeOwner] : []), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.qualifiedName === undefined ? [] : [value.qualifiedName])]};
-  if (value instanceof ExceptionValue) return {bytes: 96 + (value.argsTuple === undefined ? 0 : 8) + 2 * (value.name.length + value.message.length) +
+  if (value instanceof ExceptionValue) return {bytes: 96 + (value.argsTuple === undefined ? 0 : 8) + (value.cause === undefined ? 0 : 8) + (Object.hasOwn(value, "stopValue") ? 8 : 0) + 2 * (value.name.length + value.message.length) +
     value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),
-    children: [...value.args, ...(value.argsTuple === undefined ? [] : [value.argsTuple]), ...(value.context ? [value.context] : [])]};
+    children: [...value.args, ...(value.argsTuple === undefined ? [] : [value.argsTuple]), ...(value.context ? [value.context] : []),
+      ...(value.cause == null ? [] : [value.cause]), ...(Object.hasOwn(value, "stopValue") ? [value.stopValue] : [])]};
   throw new TypeError("Only adopted VM values have an allocation layout.");
 }

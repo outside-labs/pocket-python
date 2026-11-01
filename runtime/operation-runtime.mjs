@@ -964,6 +964,19 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (!values.isSequenceType(value, "tuple")) python("TypeError", "__mro_entries__ must return a tuple");
       return resolveClassBases({...completion, resolved: [...completion.resolved, ...value.items], position: completion.position + 1, changed: true}, site);
     }
+    if (completion?.kind === "exception-args") {
+      const receiver = completion.receiver;
+      mutate(receiver, () => {
+        const before = [receiver.args, receiver.argsTuple, receiver.message, receiver.stopValue];
+        const hadValue = Object.hasOwn(receiver, "stopValue");
+        if (receiver.name === "StopIteration") receiver.stopValue = classes.exceptionValue(receiver);
+        receiver.args = value.items; receiver.argsTuple = value;
+        const first = value.items[0];
+        receiver.message = value.items.length === 1 && (first === null || ["bigint", "boolean"].includes(typeof first) || first instanceof StringValue) ? display(first) : "";
+        return () => { [receiver.args, receiver.argsTuple, receiver.message, receiver.stopValue] = before; if (!hadValue) delete receiver.stopValue; };
+      });
+      return valueTask(null, site, completion.after);
+    }
     if (completion?.kind === "wrapper-metadata") {
       const key = values.string(Array.from(wrapperKeys[completion.position], char => char.codePointAt(0))); state.temporaries.push(key, value);
       values.set(classes.functionDictionary(completion.receiver), key, value);
@@ -2981,6 +2994,10 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (keywords.length || args.length !== (setting ? 3 : 2) || !(descriptor instanceof BuiltinValue) || descriptor.nativeKind !== callable.name.split(".")[0]) python("TypeError", "Invalid native storage descriptor operation");
             const plan = classes.namespaceGetset(descriptor, args[1], setting ? "set" : "delete", args[2] ?? null);
             task = plan.kind === "value" ? valueTask(plan.value, site, completion) : callTask(plan.callable, plan.args, [], [], site, completion, depth); continue;
+          }
+          if (callable.name === "exception-set-args") {
+            if (keywords.length || args.length !== 2 || !(args[0] instanceof ExceptionValue)) python("TypeError", "Invalid exception argument assignment");
+            task = callTask(classes.builtin("tuple"), [args[1]], [], [], site, continuation("exception-args", {receiver: args[0], after: completion}), depth); continue;
           }
           if (callable.name === "namespace-getset") {
             if (keywords.length || args.length !== 2) python("TypeError", "Invalid native storage getter");

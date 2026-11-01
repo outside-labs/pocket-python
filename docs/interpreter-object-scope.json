@@ -1126,12 +1126,6 @@
       "boundary": "Internal synchronous/legacy helpers cannot drive owned callbacks; current source uses the owned execution machine."
     },
     {
-      "path": "runtime/class-values.mjs",
-      "site": "if (operation !== \"get\") this.fail(\"UnsupportedOperationError\", \"Mutable exception arguments require LA-9 under #124\", \"UNSUPPORTED\");",
-      "owner": "#124",
-      "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
-    },
-    {
       "path": "runtime/operation-runtime.mjs",
       "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Structured exception constructors remain under #124\");",
       "owner": "#124",

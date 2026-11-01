@@ -1082,6 +1082,12 @@ export class ClassRuntime {
     return result.value;
   }
   write(receiver, name, value, remove = false, key = null) {
+    if (receiver instanceof ExceptionValue) {
+      const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
+      if (entry.found && ["getset_descriptor", "member_descriptor"].includes(entry.value?.nativeKind))
+        return this.namespaceGetset(entry.value, receiver, remove ? "delete" : "set", value);
+      this.fail("AttributeError", "Exception has no writable attribute '" + name + "'");
+    }
     if (name === "__class__" && !this.protocolObject(receiver) && !(receiver instanceof ClassValue)) return {kind: "value", value: this.reassignClass(receiver, value, remove)};
     if (receiver instanceof GeneratorValue && ["__name__", "__qualname__"].includes(name)) {
       if (remove || !this.values.isString(value)) this.fail("TypeError", name + " must be a string");
@@ -1315,8 +1321,25 @@ export class ClassRuntime {
     this.namespaceDescriptorValid(descriptor, receiver);
     const owner = descriptor.nativeOwner, name = descriptor.nativeKey;
     if (receiver instanceof ExceptionValue && name === "args") {
-      if (operation !== "get") this.fail("UnsupportedOperationError", "Mutable exception arguments require LA-9 under #124", "UNSUPPORTED");
+      if (operation === "delete") this.fail("TypeError", "args may not be deleted");
+      if (operation === "set") return {kind: "call", callable: this.builtin("exception-set-args"), args: [receiver, item]};
       return {kind: "value", value: this.exceptionArgs(receiver)};
+    }
+    if (receiver instanceof ExceptionValue && ["__context__", "__cause__", "__suppress_context__", "value"].includes(name)) {
+      if (name === "value") {
+        if (operation === "get") return {kind: "value", value: this.exceptionValue(receiver)};
+        return {kind: "value", value: this.functionMetadata(receiver, "stopValue", operation === "delete" ? null : item)};
+      }
+      if (operation === "delete") this.fail("TypeError", name + " may not be deleted");
+      const field = {__context__: "context", __cause__: "cause", __suppress_context__: "suppressContext"}[name];
+      if (operation === "get") return {kind: "value", value: receiver[field] ?? (name === "__suppress_context__" ? false : null)};
+      if (name === "__suppress_context__" ? typeof item !== "boolean" : item !== null && !(item instanceof ExceptionValue))
+        this.fail("TypeError", name === "__suppress_context__" ? "attribute value type must be bool" : "exception chaining requires an exception instance or None");
+      const before = receiver.suppressContext;
+      if (name === "__cause__") receiver.suppressContext = true;
+      try { this.functionMetadata(receiver, field, item); }
+      catch (error) { receiver.suppressContext = before; throw error; }
+      return {kind: "value", value: null};
     }
     if (this.isInstance(receiver) && receiver.nativePayload !== undefined && owner instanceof BuiltinValue && ["property", "staticmethod", "classmethod", "module", "super"].includes(owner.name))
       return this.namespaceGetset(descriptor, receiver.nativePayload, operation, item);
@@ -1716,6 +1739,7 @@ export class ClassRuntime {
     if (receiver.argsTuple === undefined) this.functionMetadata(receiver, "argsTuple", this.values.tuple(receiver.args));
     return receiver.argsTuple;
   }
+  exceptionValue(receiver) { return Object.hasOwn(receiver, "stopValue") ? receiver.stopValue : receiver.args[0] ?? null; }
   functionMetadata(receiver, field, value) {
     const before = receiver[field]; receiver[field] = value;
     try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
