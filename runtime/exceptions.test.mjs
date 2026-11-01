@@ -78,6 +78,20 @@ test('host translation diagnostics preserve safe messages without invoking reaso
   assert.equal(result.error.traceback.at(-1).location.span[0], 7); closed(result.closed);
 });
 
+test('composed translation errors preserve original dynamic source frames', async () => {
+  const source = corpus.cases.find(item => item.id === 'translate-composed-dynamic-failure').source;
+  const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'UnicodeTranslateError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 2], ['<module>', 'translation-original.py', 3], ['fail', 'translation-original.py', 2]]);
+  closed(result.closed);
+});
+
+test('module translation field and cause cycles survive suspended generator cleanup', async () => {
+  await lifetime('import helper\ndef work():\n try: helper.fail()\n except UnicodeTranslateError as e:\n  try: yield e\n  finally: print(str(e),e.record[0] is e)\ni=work()\ne=next(i)\nprint("entered")\ni.close()\n',
+    "entered\ncan't translate character '\\u96ea' in position 0: rejected True\n", [{name: 'helper', source: 'class Error(UnicodeTranslateError): pass\ndef fail():\n e=Error("雪",0,1,"rejected")\n e.record=[e]\n e.encoding=e.record\n e.__cause__=ValueError(e.record)\n raise e\n'}]);
+});
+
 test('retained Unicode translation native graphs share the allocation limit', async () => {
   const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True: held.append(UnicodeTranslateError("abc",0,1,"bad"))\n')],
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});

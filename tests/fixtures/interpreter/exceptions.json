@@ -29,7 +29,8 @@
     "LA27",
     "LA28",
     "LA29",
-    "LA30"
+    "LA30",
+    "LA31"
   ],
   "cases": [
     {
@@ -4081,6 +4082,93 @@
       "stage": "LA30",
       "source": "class E(UnicodeTranslateError):\n def __init__(self): pass\ne=E()\nprint(len(str(e)))\ne.object=\"z\"\nprint(str(e))\n",
       "stdout": "0\ncan't translate characters in position 0--1: <NULL>\n"
+    },
+    {
+      "id": "translate-composed-record-example",
+      "stage": "LA31",
+      "source": "class RecordTranslationError(UnicodeTranslateError):\n    def __init__(self, record, start, end, reason):\n        super().__init__(record[\"text\"], start, end, reason)\n        self.record = record\n\n\ndef require_ascii(record):\n    text = record[\"text\"]\n    for index in range(len(text)):\n        if ord(text[index]) > 127:\n            error = RecordTranslationError(record, index, index + 1, \"ASCII required\")\n            error.add_note(\"check the original record\")\n            raise error from ValueError(record[\"id\"])\n    return text\n\n\nrecord = {\"id\": 7, \"text\": \"A\u96eaB\"}\ntry:\n    require_ascii(record)\nexcept RecordTranslationError as error:\n    print(error.record is record, error.object is record[\"text\"], error.start, error.end)\n    print(str(error))\n    print(error.__cause__.args[0], error.__notes__[0])\n",
+      "stdout": "True True 1 2\ncan't translate character '\\u96ea' in position 1: ASCII required\n7 check the original record\n"
+    },
+    {
+      "id": "translate-composed-module-records",
+      "stage": "LA31",
+      "source": "import helper\nrecord={\"text\":\"A\u96eaB\",\"id\":7}\ntry: helper.fail(record)\nexcept helper.Error as e:\n print(e.record is record,e.object is record[\"text\"],e.start,e.end)\n print(str(e),e.__notes__[0],e.__cause__.args[0])\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "class Error(UnicodeTranslateError):\n def __init__(self,record):\n  super().__init__(record[\"text\"],1,2,\"rejected\")\n  self.record=record\ndef fail(record):\n e=Error(record)\n e.add_note(\"original record\")\n raise e from ValueError(record[\"id\"])\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 1 2\ncan't translate character '\\u96ea' in position 1: rejected original record 7\n"
+    },
+    {
+      "id": "translate-composed-dynamic-failure",
+      "stage": "LA31",
+      "source": "code=compile('def fail():\\n raise UnicodeTranslateError(\"\u96ea\",0,1,\"rejected\")\\nfail()',\"translation-original.py\",\"exec\")\nexec(code)\n",
+      "stdout": "",
+      "error_type": "UnicodeTranslateError"
+    },
+    {
+      "id": "translate-composed-generator-cleanup",
+      "stage": "LA31",
+      "source": "def work():\n e=UnicodeTranslateError(\"\u96ea\",0,1,\"rejected\")\n e.encoding=e\n e.__notes__=[e]\n e.__cause__=ValueError(e)\n try: yield e\n finally:\n  print(str(e))\n  print(e.encoding is e,e.__notes__[0] is e,e.__cause__.args[0] is e)\ni=work()\ne=next(i)\nprint(e.object,e.start,e.end)\ni.close()\n",
+      "stdout": "\u96ea 0 1\ncan't translate character '\\u96ea' in position 0: rejected\nTrue True True\n"
+    },
+    {
+      "id": "translate-composed-reinitialization-failure",
+      "stage": "LA31",
+      "source": "e=UnicodeTranslateError(\"old\",0,1,\"first\")\nclass I:\n def __index__(self):\n  e.object=\"\u96ea\"\n  e.add_note(\"callback\")\n  raise LookupError(\"index failed\")\ntry: UnicodeTranslateError.__init__(e,\"new\",I(),2,\"next\")\nexcept LookupError as failure:\n e.__cause__=failure\nprint(str(e))\nprint(e.args[0],e.__notes__[0],e.__cause__.args[0])\n",
+      "stdout": "can't translate character '\\u96ea' in position 0: first\nnew callback index failed\n"
+    },
+    {
+      "id": "translate-composed-reason-exception-context",
+      "stage": "LA31",
+      "source": "class Reason:\n def __str__(self): raise LookupError(\"display failed\")\ne=UnicodeTranslateError(\"\u96ea\",0,1,\"first\")\ne.reason=Reason()\ntry:\n raise e\nexcept UnicodeTranslateError as caught:\n try: str(caught)\n except LookupError as failure:\n  print(failure.__context__ is caught,caught.reason is e.reason)\n  print(failure.args[0],caught.object,caught.start,caught.end)\n",
+      "stdout": "True True\ndisplay failed \u96ea 0 1\n"
+    },
+    {
+      "id": "translate-composed-native-reason-replacement",
+      "stage": "LA31",
+      "source": "class Reason:\n def __str__(self):\n  e.object=\"\ud83d\ude00\"\n  e.reason=None\n  return \"first\"\ne=UnicodeTranslateError(\"old\",0,1,\"bad\")\ne.reason=Reason()\nprint(str(e))\nprint(str(e))\n",
+      "stdout": "can't translate character '\\U0001f600' in position 0: first\ncan't translate character '\\U0001f600' in position 0: None\n"
+    },
+    {
+      "id": "translate-composed-dynamic-handled",
+      "stage": "LA31",
+      "source": "namespace={}\nexec('class Error(UnicodeTranslateError): pass\\ndef make(): return Error(\"\u96ea\",0,1,\"rejected\")',namespace)\ne=namespace[\"make\"]()\ntry: raise e from None\nexcept namespace[\"Error\"] as caught:\n print(caught is e,caught.__suppress_context__,str(caught))\n",
+      "stdout": "True True can't translate character '\\u96ea' in position 0: rejected\n"
+    },
+    {
+      "id": "translate-composed-module-native-cycle",
+      "stage": "LA31",
+      "source": "import helper\ndef work():\n try: helper.fail()\n except UnicodeTranslateError as e:\n  try: yield e\n  finally: print(str(e),e.record[0] is e)\ni=work()\ne=next(i)\nprint(e.object,e.start,e.end)\ni.close()\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "class Error(UnicodeTranslateError): pass\ndef fail():\n e=Error(\"\u96ea\",0,1,\"rejected\")\n e.record=[e]\n e.encoding=e.record\n e.__cause__=ValueError(e.record)\n raise e\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "\u96ea 0 1\ncan't translate character '\\u96ea' in position 0: rejected True\n"
+    },
+    {
+      "id": "translate-composed-core-program",
+      "stage": "LA31",
+      "source": "text=\"A\u96eaB\"\ntry: raise UnicodeTranslateError(text,1,2,\"ASCII required\") from None\nexcept UnicodeTranslateError as e:\n print(e.object is text,e.start,e.end)\n print(str(e))\n",
+      "stdout": "True 1 2\ncan't translate character '\\u96ea' in position 1: ASCII required\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     }
   ],
   "reference_boundaries": [

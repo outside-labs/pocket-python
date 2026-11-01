@@ -257,9 +257,13 @@ cells and escaped values retain Python namespace order and owned lifetimes.
 
 The [ordinary exception slices](docs/interpreter-exceptions.md) adopt generic
 argument identity/replacement, lazy runtime message and failed-key arguments,
-chaining, named generic subclasses and owned raising/catching. Composed source
-and offline cases cover callback failures, original frames and interruption.
-Groups, structured exception layouts and remaining formatting retain their gates.
+chaining, lazy handler expressions, notes and owned raising/catching. Native
+name/attribute/import/syntax/iteration fields and Unicode translation exceptions
+preserve their adopted subclass layouts and signatures. Composed source and
+offline cases cover callback failures, original frames and interruption. Run
+`examples/interpreter_translation_exceptions.py` for a record validation example.
+Groups, traceback objects, remaining structured families and formatting retain
+their gates.
 
 [Sequence repetition](docs/interpreter-repetition.md) adopts shallow list/tuple
 copies and Unicode text multiplication, including owned index callbacks after

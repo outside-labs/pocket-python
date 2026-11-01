@@ -2358,7 +2358,7 @@
       "id": "native-directory-closure",
       "status": "supported",
       "scope": "O78: audited directory closure over 85 actual native types and seven native callable/descriptor layouts; actual namespace key identities, module hooks, frames/code/cells, exception representations and view iterators.",
-      "gaps": "UnicodeTranslateError native construction/fields are adopted in LA-29; its rendering and the remaining structured exception families retain #124. Slot/native subtype layouts are included in the current audit. Listed library APIs retain #126 and their individual #116/#117/#120/#127 owners.",
+      "gaps": "UnicodeTranslateError native construction/fields and rendering are adopted in LA-29/LA-30, with composed LA-31 acceptance; the remaining structured exception families retain #124. Slot/native subtype layouts are included in the current audit. Listed library APIs retain #126 and their individual #116/#117/#120/#127 owners.",
       "reference_version": "3.14.7",
       "targets": [
         "node",

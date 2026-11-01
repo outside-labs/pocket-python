@@ -59,6 +59,24 @@ None renders `None`. Argument replacement and the unused encoding field do not
 alter this selection. Host summaries retain copied safe diagnostics without
 running these source-level formatting callbacks.
 
+LA-31 composes native translation errors with module-owned record subclasses,
+dynamic source, causes/notes and suspended generator cleanup. Run
+`examples/interpreter_translation_exceptions.py` unchanged on CPython or in the
+offline console: a record validator retains the original record/text and reports
+the rejected code-point location. The exception corpus now records 543 cases:
+535 semantic/error comparisons and eight explicit refusals, including 109 cases
+explicitly shared with core-source/1. The four existing host/crash qualifications
+remain outside these successful differential counts. These are finite corpus
+observations, not an overall Python-completion percentage.
+
+The installed offline acceptance adds Stop/Restart inside native index and reason
+callbacks, a fresh restart owner and a reduced-profile translation program. The
+eight deterministic execution resource observations retain accounting revision
+22. This accepts the UnicodeTranslateError slice while #124 and A2 remain open
+for groups/except*, traceback objects/mutation, note rendering/export, remaining
+metadata and the Unicode Encode/Decode structured families. General exception
+representations and formatting remain under #127.
+
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
 through draining, instruction stepping and parked execution. Logical work,
@@ -123,7 +141,7 @@ python scripts/object_integration_browser_smoke.py --exceptions
 ```
 
 Exception groups/except*, traceback objects/mutation and note rendering/export,
-write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and the Unicode
+write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and the Unicode Encode/Decode
 structured native families remain #124. Generator throw of a user
 exception class retains #120; throwing an instance remains adopted. Multiple
 argument/container/default exception representations remain #127. The ordinary
@@ -194,7 +212,7 @@ All eight existing deterministic resource observations retain revision 22.
 
 These two batches keep A2 and #124 open for groups/except*, traceback objects
 and mutation, note rendering/export, write/delete attribute metadata, custom
-import provenance, parser-generated syntax fields, Unicode structured families
+import provenance, parser-generated syntax fields, Unicode Encode/Decode structured families
 and the declared host qualifications. Remaining general displays/formatting
 stay under #127. Package/library qualification and candidate/release gates keep
 their separate evidence requirements.

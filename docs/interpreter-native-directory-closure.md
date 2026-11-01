@@ -38,10 +38,12 @@ probes use the source matrices' explicit 50,000-instruction/20,000,000-work limi
 the runtime's default limits remain unchanged.
 
 The audit includes UnicodeEncodeError/UnicodeDecodeError produced by admitted
-codecs. CPython-compatible UnicodeTranslateError construction retains #124's
-multiple-argument boundary: its type directory and the internal representation's
-native directory are covered, and the valid constructor has an explicit source
-refusal case. Exception payload/chaining APIs remain #124. Listing methods never adopts reduction,
+codecs. LA-29 replaces the former UnicodeTranslateError construction refusal
+with positive native instance-directory evidence. Its four-argument constructor,
+five independent fields and subclasses, followed by LA-30 native rendering and
+LA-31 composed acceptance, are documented in the
+[exception contract](interpreter-exceptions.md). Remaining exception families
+retain #124. Listing methods never adopts reduction,
 serialization, display, annotation or other separately owned APIs.
 
 Node/Chromium drain, instruction-boundary and parked matrices, lifecycle/shared
