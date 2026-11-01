@@ -338,6 +338,19 @@ adopted. The matrix includes every possible leading byte and continuation
 boundaries for each special leading-byte family. The #117 bytes-cache identity
 qualification remains separate.
 
+LA-44 adopts native `name`/`obj` fields for failed generic writes to `object`
+and dictionary-free source instances. A missing class attribute records the
+original receiver and key; a read-only non-data attribute leaves both fields
+absent (reading as None). Syntax, `setattr` and explicit native object setters
+share that selection. String-subtype keys passed to `setattr` retain identity
+without formatting callbacks. Owned setters and descriptors keep the exception
+they raise, without automatic outer-write enrichment. Argument replacement
+does not release the independent native fields. This follows the pinned
+[generic storage failure paths](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c#L1820-L1917).
+Other native mutation layouts and deletion metadata retain #124; native wrapper
+validation of string-subtype names follows in LA-44A. Generated diagnostic
+message wording retains its existing copied-message contract.
+
 LA-43 accepts runtime decoding failures across modules, dynamic source, notes,
 causes and suspended generator cleanup. Run
 `examples/interpreter_runtime_decoding.py` unchanged on CPython or in the offline

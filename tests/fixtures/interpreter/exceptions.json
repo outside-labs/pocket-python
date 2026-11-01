@@ -42,7 +42,8 @@
     "LA40",
     "LA41",
     "LA42",
-    "LA43"
+    "LA43",
+    "LA44"
   ],
   "cases": [
     {
@@ -6715,6 +6716,150 @@
       "stage": "LA43",
       "source": "def handlers(): return (UnicodeEncodeError,UnicodeDecodeError)\ntry: b\"A\\xe1\\x80\".decode()\nexcept handlers() as e: print(e.encoding,e.object,e.start,e.end)\n",
       "stdout": "utf-8 b'A\\xe1\\x80' 1 3\n"
+    },
+    {
+      "id": "write-metadata-object-syntax",
+      "stage": "LA44",
+      "source": "a=object()\nkey=\"missing\"\ntry: a.missing=7\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-object-builtin",
+      "stage": "LA44",
+      "source": "a=object()\nkey=\"missing\"\ntry: setattr(a,key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-object-native",
+      "stage": "LA44",
+      "source": "a=object()\nkey=\"missing\"\ntry: object.__setattr__(a,key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-object-bound",
+      "stage": "LA44",
+      "source": "a=object()\nkey=\"missing\"\ntry: a.__setattr__(key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-slots-syntax",
+      "stage": "LA44",
+      "source": "class A: __slots__=()\na=A()\nkey=\"missing\"\ntry: a.missing=7\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-slots-builtin",
+      "stage": "LA44",
+      "source": "class A: __slots__=()\na=A()\nkey=\"missing\"\ntry: setattr(a,key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-slots-native",
+      "stage": "LA44",
+      "source": "class A: __slots__=()\na=A()\nkey=\"missing\"\ntry: object.__setattr__(a,key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-slots-bound",
+      "stage": "LA44",
+      "source": "class A: __slots__=()\na=A()\nkey=\"missing\"\ntry: a.__setattr__(key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-inherited-slots-syntax",
+      "stage": "LA44",
+      "source": "class Base: __slots__=()\nclass A(Base): __slots__=()\na=A()\nkey=\"missing\"\ntry: a.missing=7\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-inherited-slots-builtin",
+      "stage": "LA44",
+      "source": "class Base: __slots__=()\nclass A(Base): __slots__=()\na=A()\nkey=\"missing\"\ntry: setattr(a,key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-inherited-slots-native",
+      "stage": "LA44",
+      "source": "class Base: __slots__=()\nclass A(Base): __slots__=()\na=A()\nkey=\"missing\"\ntry: object.__setattr__(a,key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-inherited-slots-bound",
+      "stage": "LA44",
+      "source": "class Base: __slots__=()\nclass A(Base): __slots__=()\na=A()\nkey=\"missing\"\ntry: a.__setattr__(key,7)\nexcept AttributeError as e:\n print(e.name==key,e.obj is a)\n e.args=()\n print(e.name==key,e.obj is a)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "write-metadata-read-only-value",
+      "stage": "LA44",
+      "source": "class A:\n __slots__=()\n field=42\na=A()\ntry: a.field=7\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "write-metadata-read-only-function",
+      "stage": "LA44",
+      "source": "class A:\n __slots__=()\n field=lambda self: None\na=A()\ntry: a.field=7\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "write-metadata-subtype-key-slots",
+      "stage": "LA44",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): return str.__hash__(self)\nclass A: __slots__=()\na=A()\nkey=Key(\"missing\")\ntry: setattr(a,key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is a,type(e.name) is Key)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "write-metadata-subtype-key-object",
+      "stage": "LA44",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): return str.__hash__(self)\na=object()\nkey=Key(\"missing\")\ntry: setattr(a,key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is a,type(e.name) is Key)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "write-metadata-forwarded-hook",
+      "stage": "LA44",
+      "source": "class A:\n __slots__=()\n def __setattr__(self,key,value):\n  print(\"forward\",key)\n  object.__setattr__(self,key,value)\na=A()\ntry: a.missing=7\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "forward missing\nmissing True\n"
+    },
+    {
+      "id": "write-metadata-hook-reused-error",
+      "stage": "LA44",
+      "source": "error=AttributeError(\"owned\")\nclass A:\n def __setattr__(self,key,value): raise error\na=A()\ntry: a.field=7\nexcept AttributeError as e: print(e is error,e.name is None,e.obj is None)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "write-metadata-descriptor-reused-error",
+      "stage": "LA44",
+      "source": "error=AttributeError(\"owned\")\nclass D:\n def __set__(self,obj,value): raise error\nclass A: field=D()\na=A()\ntry: a.field=7\nexcept AttributeError as e: print(e is error,e.name is None,e.obj is None)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "write-metadata-hook-explicit-fields",
+      "stage": "LA44",
+      "source": "token=[]\nerror=AttributeError(\"owned\",name=token,obj=token)\nclass A:\n def __setattr__(self,key,value): raise error\na=A()\ntry: a.field=7\nexcept AttributeError as e: print(e is error,e.name is token,e.obj is token)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "id": "write-metadata-read-enriches-read-only",
+      "stage": "LA44",
+      "source": "class A:\n __slots__=()\n field=7\na=A()\ntry: a.field=1\nexcept AttributeError as error: saved=error\nclass Read:\n @property\n def item(self): raise saved\nr=Read()\ntry: r.item\nexcept AttributeError as e: print(e is saved,e.name,e.obj is r)\n",
+      "stdout": "True item True\n"
+    },
+    {
+      "id": "write-metadata-first-context-retained",
+      "stage": "LA44",
+      "source": "class A: __slots__=()\na=A()\ntry: a.missing=7\nexcept AttributeError as error: saved=error\nclass Read:\n @property\n def item(self): raise saved\ntry: Read().item\nexcept AttributeError as e: print(e is saved,e.name,e.obj is a)\n",
+      "stdout": "True missing True\n"
+    },
+    {
+      "id": "write-metadata-dictionary-success",
+      "stage": "LA44",
+      "source": "class A: pass\na=A()\nkey=\"field\"\nvalue=[]\nsetattr(a,key,value)\nprint(a.field is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "write-metadata-nonattribute-error",
+      "stage": "LA44",
+      "source": "class A:\n def __setattr__(self,key,value): raise ValueError(value)\nvalue=[]\ntry: A().field=value\nexcept ValueError as e: print(e.args[0] is value)\n",
+      "stdout": "True\n"
     }
   ],
   "reference_boundaries": [

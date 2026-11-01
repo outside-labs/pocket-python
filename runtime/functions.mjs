@@ -67,7 +67,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       return () => { if (prepend) value.traceback.shift(); else value.traceback.pop(); };
     });
   };
-  const exception = (name, message, args = null, codec = null) => {
+  const exception = (name, message, args = null, codec = null, attribute = null) => {
+    if (attribute) {
+      state.temporaries.push(attribute.receiver);
+      if (typeof attribute.key !== "string") state.temporaries.push(attribute.key);
+      if (attribute.enriched && typeof attribute.key === "string")
+        attribute = {...attribute, key: values.string(Array.from(attribute.key, char => char.codePointAt(0)))};
+      if (attribute.enriched) state.temporaries.push(attribute.key);
+    }
     if (codec && verified.code.version >= 4) {
       state.temporaries.push(codec.object);
       const text = item => { const value = values.string(Array.from(item, char => char.codePointAt(0))); state.temporaries.push(value); return value; };
@@ -75,6 +82,20 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
     if (args === null && message === "" && ["StopIteration", "GeneratorExit"].includes(name)) args = [];
     const error = allocate(ExceptionValue, name, args, message);
+    if (attribute && verified.code.version >= 4) {
+      mutate(error, () => {
+        const boundaries = error.nativeFieldBoundaries;
+        error.nativeFieldBoundaries = undefined;
+        if (attribute.enriched) {
+          error.nativeFields.set("name", attribute.key); error.nativeFields.set("obj", attribute.receiver);
+          error.attributeFields = 3;
+        }
+        return () => {
+          error.nativeFields.set("name", null); error.nativeFields.set("obj", null);
+          error.attributeFields = 0; error.nativeFieldBoundaries = boundaries;
+        };
+      });
+    }
     if (codec && verified.code.version >= 4) {
       for (const [index, key] of ["encoding", "object", "start", "end", "reason"].entries()) error.nativeFields.set(key, args[index]);
       error.unicodeFields = 7;
@@ -123,15 +144,15 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     });
     return value;
   };
-  const python = (name, message, args = null, codec = null) => { throw new Raised(exception(name, message, args, codec)); };
+  const python = (name, message, args = null, codec = null, attribute = null) => { throw new Raised(exception(name, message, args, codec, attribute)); };
   const nameError = (message, key) => {
     const error = exception("NameError", message); state.temporaries.push(error);
     const name = values.string(Array.from(key, char => char.codePointAt(0)));
     mutate(error, () => { error.nativeFields.set("name", name); return () => { error.nativeFields.set("name", null); }; });
     throw new Raised(error);
   };
-  const values = new ValueRuntime({memory, charge, numeric: verified.code.version >= 4, fail: (name, message, code = "PYTHON", args = null, codec = null) => {
-    if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message, args, codec);
+  const values = new ValueRuntime({memory, charge, numeric: verified.code.version >= 4, fail: (name, message, code = "PYTHON", args = null, codec = null, attribute = null) => {
+    if (["PYTHON", "ZERO_DIVISION"].includes(code)) python(name, message, args, codec, attribute);
     hard(code, name, message);
   }});
   const nativeBuiltin = name => {

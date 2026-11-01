@@ -1492,13 +1492,21 @@ export class ClassRuntime {
     if (!fallback.skipNative && this.nativeModule(receiver)) return {kind: "call", callable: this.builtin("native-module-missing"), args: [receiver, this.values.string(Array.from(name, char => char.codePointAt(0)))]};
     this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
   }
+  instanceMutationFailure(receiver, name, key = null) {
+    // Generic storage failures attach context only when no class attribute exists.
+    // Descriptor failures and owned mutation hooks keep their own exceptions.
+    const enriched = !this.lookup(receiver.type, name).found;
+    this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.", "PYTHON", null, null,
+      {receiver, key: key ?? name, enriched});
+  }
   instanceEntry(receiver, name, operation = "get", item = null, key = null, fallback = {found: false}) {
     const value = value => ({kind: "value", value});
     if (operation !== "get" && !allowsClassSpecial(name, "mutate") && name !== "__dict__")
       this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (receiver.attributes instanceof Map && operation === "get")
       return receiver.attributes.has(name) ? value(receiver.attributes.get(name)) : this.instanceMissing(receiver, name, fallback);
-    if (receiver.type.storage && !receiver.type.storage.dict) return this.instanceMissing(receiver, name, operation === "get" ? fallback : {found: false, skipNative: true});
+    if (receiver.type.root || receiver.type.storage && !receiver.type.storage.dict) return operation === "set" ?
+      this.instanceMutationFailure(receiver, name, key) : this.instanceMissing(receiver, name, operation === "get" ? fallback : {found: false, skipNative: true});
     const dictionary = this.instanceDictionary(receiver);
     key ??= this.values.string(Array.from(name, char => char.codePointAt(0)));
     if (this.values.dictionaryNeedsProtocol(dictionary, key)) return {kind: "call",
@@ -1883,7 +1891,10 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Special attribute mutation is outside classes-source/1.", "UNSUPPORTED");
     if (this.isInstance(receiver) && receiver.type.root && name === "__dict__")
       this.fail("AttributeError", "Object instance has no dictionary.");
-    if (this.isInstance(receiver) && receiver.type.storage && !receiver.type.storage.dict) this.instanceMissing(receiver, name, {found: false, skipNative: true});
+    if (this.isInstance(receiver) && (receiver.type.root || receiver.type.storage && !receiver.type.storage.dict)) {
+      if (!remove) this.instanceMutationFailure(receiver, name, key);
+      this.instanceMissing(receiver, name, {found: false, skipNative: true});
+    }
     if (this.isInstance(receiver) && !(receiver.attributes instanceof Map)) {
       const plan = this.instanceEntry(receiver, name, remove ? "delete" : "set", value);
       if (plan.kind !== "value") this.fail("UnsupportedOperationError", "Dictionary callbacks require VM execution frames.", "UNSUPPORTED");
