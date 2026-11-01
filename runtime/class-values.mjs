@@ -1,11 +1,11 @@
 import {isVerifiedFunctionCode} from "./function-bytecode.mjs";
 import {NATIVE_NAMESPACES, NATIVE_DOC_COPIES, NATIVE_CALLABLE_DOCS, NATIVE_CALLABLE_SIGNATURES} from "./native-namespaces.mjs";
-import {ClassValue, HierarchyTransaction, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
+import {ClassValue, HierarchyTransaction, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupRequest, InstanceValue, BoundMethodValue, SuperValue, FunctionValue, BuiltinValue, ExceptionValue, EXCEPTIONS, GENERIC_EXCEPTION_BASES, matchesException, PropertyValue, MethodWrapperValue, PropertyAccessorValue, GeneratorValue, FrameValue, FrameLocalsValue, ModuleValue, CodeValue, Cell, NotImplementedValue, ProtocolIteratorValue, AppendValue, ValueMethod} from "./function-objects.mjs";
 import {allowsClassSpecial, isSpecialName, METACLASS_PROTOCOLS, NATIVE_PROTOCOL_KEYS} from "./class-policy.mjs";
 import {ValueRuntime, valueLayout, IteratorValue} from "./values.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
-export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"]);
+export const NATIVE_SUBCLASS_BASES = Object.freeze(["int", "float", "complex", "str", "bytes", "tuple", "frozenset", "list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super", ...GENERIC_EXCEPTION_BASES]);
 export const CONTAINER_METHODS = Object.freeze({
   list: Object.freeze(["copy", "clear", "reverse", "insert", "pop", "count", "index", "extend"]),
   tuple: Object.freeze(["count", "index"]),
@@ -383,14 +383,14 @@ export class ClassRuntime {
   storageLayout(name, bases, namespace, slotNames) {
     let best = null;
     for (const base of bases) {
-      const solid = base.storage?.solid ?? (this.isMetaclass(base) || base instanceof BuiltinValue ? base : null);
+      const solid = base instanceof BuiltinValue && GENERIC_EXCEPTION_BASES.includes(base.name) ? this.builtin("BaseException") : base.storage?.solid ?? (this.isMetaclass(base) || base instanceof BuiltinValue ? base : null);
       if (solid === null) continue;
       if (best === null || this.subclass(solid, best)) best = solid;
       else if (!this.subclass(best, solid)) this.fail("TypeError", "multiple bases have instance lay-out conflict");
     }
     const inherited = bases.find(base => base.storage?.solid === best)?.storage;
     const count = inherited?.count ?? 0;
-    const dict = bases.some(base => base.storage?.dict ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && ["type", "module", "staticmethod", "classmethod"].includes(base.name)));
+    const dict = bases.some(base => base.storage?.dict ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && (["type", "module", "staticmethod", "classmethod"].includes(base.name) || GENERIC_EXCEPTION_BASES.includes(base.name))));
     const weak = bases.some(base => base.storage?.weak ?? (base instanceof ClassValue && !base.root || base instanceof BuiltinValue && ["type", "frozenset", "set", "module"].includes(base.name)));
     const family = best instanceof BuiltinValue ? best.name : best?.storage?.family ?? "object";
     const variable = ["int", "bytes", "tuple"].includes(family);
@@ -455,6 +455,7 @@ export class ClassRuntime {
   }
   defaultMro(type) { return type instanceof ClassValue ? [type, ...this.mergeMro(type.bases)] : this.mro(type); }
   layoutFamily(type) {
+    if (type instanceof BuiltinValue && GENERIC_EXCEPTION_BASES.includes(type.name)) return "BaseException";
     if (type instanceof ClassValue && type.storage) return type.storage.family;
     const pending = [type], seen = new Set();
     while (pending.length) {
@@ -510,7 +511,8 @@ export class ClassRuntime {
       this.charge(1);
       if (base instanceof BuiltinValue && base.name === "type" || this.isMetaclass(base)) return base;
     }
-    if (type.storage?.baseSolid) return type.bases.find(base => base === type.storage.baseSolid || base.storage?.solid === type.storage.baseSolid) ?? type.bases[0];
+    if (type.storage?.baseSolid) return type.bases.find(base => base === type.storage.baseSolid || base.storage?.solid === type.storage.baseSolid ||
+      type.storage.family === "BaseException" && base instanceof BuiltinValue && GENERIC_EXCEPTION_BASES.includes(base.name)) ?? type.bases[0];
     return type.bases[0];
   }
   typeOf(value) {
@@ -546,7 +548,7 @@ export class ClassRuntime {
     return this.protocolObject(value) && this.hasSlot(this.checkingType(value), "__class__") ||
       ["__getattribute__", "__getattr__"].some(name => this.hasAttributeHook(value, name));
   }
-  isInstance(value) { return value instanceof InstanceValue || value instanceof ModuleValue && value.type instanceof ClassValue; }
+  isInstance(value) { return value instanceof InstanceValue || (value instanceof ModuleValue || value instanceof ExceptionValue) && value.type instanceof ClassValue; }
   nativeModule(value) { return value instanceof ModuleValue ? value : value?.nativePayload instanceof ModuleValue ? value.nativePayload : null; }
   protocolObject(value) { return this.isInstance(value) || value instanceof ClassValue && value.metaclass !== null; }
   checkingType(value) {
@@ -678,6 +680,11 @@ export class ClassRuntime {
   read(receiver, name, native = false, key = null) {
     this.key(name); this.touch(receiver);
     const value = value => ({kind: "value", value});
+    if (receiver instanceof ExceptionValue && !receiver.type) {
+      const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
+      if (entry.found) return this.bindAttribute(entry.value, receiver, this.typeOf(receiver));
+      return this.functionEntry(receiver, name, "get", null, key);
+    }
     if (this.hasNativeProtocol(receiver, name)) {
       const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
       return receiver === null ? value(this.make(BoundMethodValue, entry.value, receiver)) : this.bindAttribute(entry.value, receiver, this.typeOf(receiver));
@@ -1069,7 +1076,7 @@ export class ClassRuntime {
     if (type === null) throw new TypeError("Implicit user protocols require a class or instance.");
     const present = this.hasSlot(type, name), callbacks = this.lookupMayCallback(receiver);
     if (!present && receiver.nativePayload !== undefined && name === "__str__" && !NATIVE_NAMESPACES[this.layoutFamily(type)]?.some(entry => entry[0] === name)) return this.special(receiver, "__repr__");
-    if (!present && receiver.nativePayload === undefined && ["__eq__", "__ne__", "__repr__", "__str__"].includes(name)) return null;
+    if (!present && receiver.nativePayload === undefined && (["__eq__", "__ne__"].includes(name) || !(receiver instanceof ExceptionValue) && ["__repr__", "__str__"].includes(name))) return null;
     const start = !present && callbacks ? this.mro(type).findIndex(base => base instanceof BuiltinValue || base.root) : 0;
     const item = this.lookup(type, name, true, Math.max(start, 0));
     if (!item.found && present && callbacks) this.fail("AttributeError", "Type slot '" + name + "' is missing.");
@@ -1082,11 +1089,11 @@ export class ClassRuntime {
     return result.value;
   }
   write(receiver, name, value, remove = false, key = null) {
-    if (receiver instanceof ExceptionValue) {
+    if (receiver instanceof ExceptionValue && !receiver.type) {
       const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
       if (entry.found && ["getset_descriptor", "member_descriptor"].includes(entry.value?.nativeKind))
         return this.namespaceGetset(entry.value, receiver, remove ? "delete" : "set", value);
-      this.fail("AttributeError", "Exception has no writable attribute '" + name + "'");
+      return this.functionEntry(receiver, name, remove ? "delete" : "set", value, key);
     }
     if (name === "__class__" && !this.protocolObject(receiver) && !(receiver instanceof ClassValue)) return {kind: "value", value: this.reassignClass(receiver, value, remove)};
     if (receiver instanceof GeneratorValue && ["__name__", "__qualname__"].includes(name)) {
@@ -1320,6 +1327,11 @@ export class ClassRuntime {
   namespaceGetset(descriptor, receiver, operation = "get", item = null) {
     this.namespaceDescriptorValid(descriptor, receiver);
     const owner = descriptor.nativeOwner, name = descriptor.nativeKey;
+    if (receiver instanceof ExceptionValue && name === "__dict__") {
+      if (operation === "delete" || operation === "set" && !this.values.isDict(item)) this.fail("TypeError", "Exception __dict__ must be set to a dictionary");
+      if (operation === "get") return {kind: "value", value: receiver.type ? this.instanceDictionary(receiver) : this.functionDictionary(receiver)};
+      return {kind: "value", value: this.functionMetadata(receiver, "attributes", item)};
+    }
     if (receiver instanceof ExceptionValue && name === "args") {
       if (operation === "delete") this.fail("TypeError", "args may not be deleted");
       if (operation === "set") return {kind: "call", callable: this.builtin("exception-set-args"), args: [receiver, item]};
