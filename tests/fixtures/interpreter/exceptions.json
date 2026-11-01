@@ -35,7 +35,8 @@
     "LA33",
     "LA34",
     "LA35",
-    "LA36"
+    "LA36",
+    "LA37"
   ],
   "cases": [
     {
@@ -5488,6 +5489,86 @@
       "stage": "LA36",
       "source": "class S(str):\n def __str__(self):\n  print(\"called\")\n  return \"visible\"\ne=UnicodeDecodeError(S(\"codec\"),b\"\\xff\",0,1,S(\"bad\"))\nprint(str(e))\n",
       "stdout": "called\ncalled\n'visible' codec can't decode byte 0xff in position 0: visible\n"
+    },
+    {
+      "id": "decode-composed-record-program",
+      "stage": "LA37",
+      "source": "class RecordDecodingError(UnicodeDecodeError):\n    def __init__(self, record, start, end):\n        super().__init__(\"ascii\", record[\"data\"], start, end, \"ASCII required\")\n        self.record = record\n\n\ndef decode_record(record):\n    data = record[\"data\"]\n    for index in range(len(data)):\n        if data[index] > 127:\n            error = RecordDecodingError(record, index, index + 1)\n            error.add_note(\"check the original record\")\n            raise error from ValueError(record[\"id\"])\n    return data.decode(\"ascii\")\n\n\nrecord = {\"id\": 7, \"data\": b\"A\\xffB\"}\ntry:\n    decode_record(record)\nexcept RecordDecodingError as error:\n    print(error.record is record, error.object is record[\"data\"], error.encoding)\n    print(str(error))\n    print(error.__cause__.args[0], error.__notes__[0])\n",
+      "stdout": "True True ascii\n'ascii' codec can't decode byte 0xff in position 1: ASCII required\n7 check the original record\n"
+    },
+    {
+      "id": "decode-composed-core-program",
+      "stage": "LA37",
+      "source": "data=b\"A\\xffB\"\ne=UnicodeDecodeError(\"ascii\",data,1,2,\"rejected\")\ntry: raise e from None\nexcept UnicodeError as caught:\n print(caught is e,caught.object is data,caught.encoding,caught.start,caught.end)\n print(str(caught))\n",
+      "stdout": "True True ascii 1 2\n'ascii' codec can't decode byte 0xff in position 1: rejected\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "decode-composed-dynamic-program",
+      "stage": "LA37",
+      "source": "scope={}\nexec(compile(\"class Error(UnicodeDecodeError): pass\\ne=Error('ascii',b'\\\\xff',0,1,'bad')\",\"decoding-input.py\",\"exec\"),scope)\ne=scope[\"e\"]\ne.add_note(\"dynamic\")\nprint(str(e),type(e) is scope[\"Error\"],e.__notes__[0])\n",
+      "stdout": "'ascii' codec can't decode byte 0xff in position 0: bad True dynamic\n"
+    },
+    {
+      "id": "decode-composed-dynamic-failure",
+      "stage": "LA37",
+      "source": "exec(compile(\"def fail():\\n raise UnicodeDecodeError('ascii',b'\\\\xff',0,1,'bad')\\nfail()\",\"decoding-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "UnicodeDecodeError"
+    },
+    {
+      "id": "decode-composed-generator-cleanup",
+      "stage": "LA37",
+      "source": "def work():\n try: yield UnicodeDecodeError(\"a\",b\"\\xff\",0,1,\"bad\")\n finally: raise UnicodeDecodeError(\"a\",b\"x\",0,1,\"cleanup\")\ni=work()\ne=next(i)\ntry: i.close()\nexcept UnicodeError as caught: print(caught.object,str(caught))\nprint(e.object,e.reason)\n",
+      "stdout": "b'x' 'a' codec can't decode byte 0x78 in position 0: cleanup\nb'\\xff' bad\n"
+    },
+    {
+      "id": "decode-composed-module-records",
+      "stage": "LA37",
+      "source": "import helper\nrecord={\"data\":b\"\\xff\"}\ntry: helper.fail(record)\nexcept UnicodeDecodeError as e:\n print(e.record is record,e.object is record[\"data\"],str(e),e.__cause__.args[0])\n",
+      "stdout": "True True 'ascii' codec can't decode byte 0xff in position 0: bad 7\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "class Error(UnicodeDecodeError): pass\ndef fail(record):\n e=Error(\"ascii\",record[\"data\"],0,1,\"bad\")\n e.record=record\n record[\"error\"]=e\n e.add_note(\"check\")\n raise e from ValueError(7)\n"
+        }
+      ]
+    },
+    {
+      "id": "decode-composed-callback-cause",
+      "stage": "LA37",
+      "source": "cause=ValueError(\"original\")\nclass R:\n def __str__(self): raise cause\ne=UnicodeDecodeError(\"a\",b\"x\",0,1,\"r\")\ne.reason=R()\ntry:\n try: raise e\n except UnicodeDecodeError: str(e)\nexcept ValueError as caught: print(caught is cause,caught.__context__ is e)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "decode-composed-released-input-copy",
+      "stage": "LA37",
+      "source": "data=bytearray(b\"abc\")\nv=memoryview(data)\ne=UnicodeDecodeError(\"a\",v,0,1,\"r\")\ne.args=()\nv.release()\ndata[0]=99\nprint(e.object,str(e))\n",
+      "stdout": "b'abc' 'a' codec can't decode byte 0x61 in position 0: r\n"
+    },
+    {
+      "id": "encode-runtime-metadata-deferred",
+      "stage": "Future",
+      "source": "try: \"\u96ea\".encode(\"ascii\")\nexcept UnicodeEncodeError as e: print(e.encoding)\n",
+      "stdout": "ascii\n",
+      "owner": "#124",
+      "boundary": "Automatic native encoding metadata requires a separately adopted codec contract."
+    },
+    {
+      "id": "decode-runtime-metadata-deferred",
+      "stage": "Future",
+      "source": "try: b\"\\xff\".decode(\"ascii\")\nexcept UnicodeDecodeError as e: print(e.object)\n",
+      "stdout": "b'\\xff'\n",
+      "owner": "#124",
+      "boundary": "Automatic native decoding metadata requires a separately adopted codec contract."
     }
   ],
   "reference_boundaries": [

@@ -140,6 +140,24 @@ test('host decoding summaries do not execute source formatting callbacks', async
   assert.equal(result.stdout, ''); assert.equal(result.error.type, 'UnicodeDecodeError'); closed(result.closed);
 });
 
+test('composed decoding errors retain original dynamic frames', async () => {
+  const source = corpus.cases.find(item => item.id === 'decode-composed-dynamic-failure').source;
+  const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'UnicodeDecodeError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', 'decoding-original.py', 3], ['fail', 'decoding-original.py', 2]]);
+  closed(result.closed);
+});
+
+test('module decoding cycles survive suspended generator cleanup', async () => {
+  await lifetime('import helper\ndef work():\n try: helper.fail()\n except UnicodeDecodeError as e:\n  try: yield e\n  finally: print(str(e),e.record[0] is e)\ni=work()\ne=next(i)\nprint("entered")\ni.close()\n',
+    "entered\n'a' codec can't decode byte 0xff in position 0: bad True\n", [{name: 'helper', source: 'class E(UnicodeDecodeError): pass\ndef fail():\n e=E("a",b"\\xff",0,1,"bad")\n e.record=[e]\n e.__cause__=ValueError(e.record)\n e.add_note("record")\n raise e\n'}]);
+});
+
+test('native copied decode payload survives release of its original buffer graph', async () => {
+  await lifetime('v=memoryview(bytearray(b"abc"))\ne=UnicodeDecodeError("a",v,0,1,"r")\ne.args=()\nv.release()\nv=None\nprint("entered")\nprint(e.object,str(e))\n', "entered\nb'abc' 'a' codec can't decode byte 0x61 in position 0: r\n");
+});
+
 test('Unicode translation initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeTranslateError("abc",I(),2,"bad")\nprint(e.object,e.start,e.end,e.reason)\n', 'entered\nabc 1 2 bad\n');
 });

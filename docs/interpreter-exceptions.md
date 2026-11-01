@@ -64,7 +64,7 @@ dynamic source frames, causes/notes and suspended generator cleanup.
 the offline console. Installed offline acceptance includes fresh source, Stop
 and Restart during index/reason/encoding callbacks and a reduced-profile scalar
 program. The eight deterministic execution observations retain revision 22.
-UnicodeDecodeError and automatic codec metadata remain under #124.
+UnicodeDecodeError follows in LA-35–LA-37; automatic codec metadata remains under #124.
 
 LA-35 adopts `UnicodeDecodeError(encoding, object, start, end, reason, /)`,
 native fields/descriptors/initialization and compatible subclasses. Bytes and
@@ -95,7 +95,7 @@ through `__index__`, with signed 64-bit bounds; numeric member assignment accept
 integers without index callbacks. Argument replacement precedes validation,
 while successful field publication follows it. The exact contract follows the
 pinned [native initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3625-L3643).
-LA-30 adds native translation rendering; Encode/Decode remain under #124.
+LA-30 adds native translation rendering; encoding/decoding follow in LA-32–LA-37.
 Deleted object/reason fields read as None independently of args and dictionaries.
 Owned callbacks preserve their mutations when validation fails. The explicitly
 shared scalar core-source/1 cases do not admit owned callbacks in that profile.
@@ -127,7 +127,7 @@ callbacks, a fresh restart owner and a reduced-profile translation program. The
 eight deterministic execution resource observations retain accounting revision
 22. This accepts the UnicodeTranslateError slice while #124 and A2 remain open
 for groups/except*, traceback objects/mutation, note rendering/export, remaining
-metadata and the UnicodeDecodeError structured fields and automatic codec metadata. General exception
+metadata and the automatic codec metadata. General exception
 representations and formatting remain under #127.
 
 The source corpus `exceptions.json` distinguishes implemented cases from
@@ -194,7 +194,7 @@ python scripts/object_integration_browser_smoke.py --exceptions
 ```
 
 Exception groups/except*, traceback objects/mutation and note rendering/export,
-write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and the UnicodeDecodeError and automatic codec metadata remain #124. Generator throw of a user
+write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and automatic codec metadata remain #124. Generator throw of a user
 exception class retains #120; throwing an instance remains adopted. Multiple
 argument/container/default exception representations remain #127. The ordinary
 exception slices do not complete Track A A2, which also requires formatting.
@@ -264,7 +264,26 @@ All eight existing deterministic resource observations retain revision 22.
 
 These two batches keep A2 and #124 open for groups/except*, traceback objects
 and mutation, note rendering/export, write/delete attribute metadata, custom
-import provenance, parser-generated syntax fields, UnicodeDecodeError structured fields and automatic codec metadata
+import provenance, parser-generated syntax fields, automatic codec metadata
 and the declared host qualifications. Remaining general displays/formatting
 stay under #127. Package/library qualification and candidate/release gates keep
 their separate evidence requirements.
+
+
+LA-37 accepts composed decoding failures across modules, dynamic source and
+suspended generator cleanup, including copied buffers after release of their
+original input graph. Run `examples/interpreter_decoding_exceptions.py` unchanged
+on CPython or in the offline console. Installed acceptance adds fresh source,
+original dynamic diagnostics, Stop/Restart in index/reason/encoding callbacks
+and a reduced-profile bytes program.
+
+The combined exception corpus records 728 cases: 718 semantic/error comparisons
+and ten explicit refusals, with 173 cases explicitly shared by core-source/1.
+The four existing host/crash qualifications remain separate. These finite
+observations do not measure overall Python completion. The eight deterministic
+resource cases retain accounting revision 22. Explicit Encode/Decode
+construction, native fields, subclasses and rendering are adopted; automatic
+runtime codec metadata still refuses on field reads and has two named corpus
+boundaries. Groups/except*, traceback objects/mutation, note rendering/export,
+remaining attribute/import/parser metadata and general representations retain
+their existing #124/#127 owners. A2 and candidate/release gates remain open.
