@@ -19,7 +19,8 @@
     "LA19",
     "LA20A",
     "LA20",
-    "LA21"
+    "LA21",
+    "LA21A"
   ],
   "cases": [
     {
@@ -2154,6 +2155,30 @@
       ]
     },
     {
+      "id": "delegated-native-value-overrides-args",
+      "stage": "LA21A",
+      "source": "class I:\n def __iter__(self): return self\n def __next__(self):\n  e=StopIteration(7)\n  e.value=8\n  raise e\ndef work():\n value=yield from I()\n print(value)\ntry: next(work())\nexcept StopIteration: pass\n",
+      "stdout": "8\n"
+    },
+    {
+      "id": "delegated-subclass-value-identity",
+      "stage": "LA21A",
+      "source": "class E(StopIteration): pass\nx=[]\nclass I:\n def __iter__(self): return self\n def __next__(self):\n  e=E(7)\n  e.value=x\n  raise e\ndef work():\n value=yield from I()\n print(value is x)\ntry: next(work())\nexcept StopIteration: pass\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "delegated-explicit-none-independent-of-args",
+      "stage": "LA21A",
+      "source": "class I:\n def __iter__(self): return self\n def __next__(self):\n  e=StopIteration(7)\n  e.value=None\n  raise e\ndef work():\n value=yield from I()\n print(value is None)\ntry: next(work())\nexcept StopIteration: pass\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "delegated-native-value-bypasses-property",
+      "stage": "LA21A",
+      "source": "class E(StopIteration):\n @property\n def value(self):\n  print(\"wrong\")\n  return 9\nclass I:\n def __iter__(self): return self\n def __next__(self): raise E(7)\ndef work():\n value=yield from I()\n print(value)\ntry: next(work())\nexcept StopIteration: pass\n",
+      "stdout": "7\n"
+    },
+    {
       "id": "import-error-string-subclass-uses-args",
       "stage": "LA20",
       "source": "class S(str):\n def __str__(self):\n  print(\"format\")\n  return \"owned\"\ne=ImportError(S(\"native\"))\nprint(str(e))\ne.args=(\"changed\",)\nprint(str(e))\n",
@@ -2170,6 +2195,28 @@
       "stage": "LA20",
       "source": "class S(str):\n def __str__(self): raise ValueError(\"owned\")\ne=ImportError(S(\"native\"))\ntry: str(e)\nexcept ValueError as x: print(str(x))\n",
       "stdout": "owned\n"
+    }
+  ],
+  "reference_boundaries": [
+    {
+      "id": "delegated-none-independent-of-args",
+      "owner": "#120",
+      "source": "class I:\n def __iter__(self): return self\n def __next__(self):\n  e=StopIteration(7)\n  del e.value\n  raise e\ndef work():\n value=yield from I()\n print(value is None)\ntry: next(work())\nexcept StopIteration: pass\n",
+      "reference_version": "3.14.7",
+      "reference_observation": "SIGSEGV (-11) in an isolated CPython 3.14.7 macOS arm64 subprocess",
+      "interpreter_stdout": "True\n",
+      "classification": "retained-divergence",
+      "boundary": "Deleted or uninitialized native StopIteration payload; safe None in the interpreter, no successful pinned-reference observation"
+    },
+    {
+      "id": "delegated-new-only-value",
+      "owner": "#120",
+      "source": "class E(StopIteration):\n def __init__(self,x): pass\nclass I:\n def __iter__(self): return self\n def __next__(self): raise E(7)\ndef work():\n value=yield from I()\n print(value is None)\ntry: next(work())\nexcept StopIteration: pass\n",
+      "reference_version": "3.14.7",
+      "reference_observation": "SIGSEGV (-11) in an isolated CPython 3.14.7 macOS arm64 subprocess",
+      "interpreter_stdout": "True\n",
+      "classification": "retained-divergence",
+      "boundary": "Deleted or uninitialized native StopIteration payload; safe None in the interpreter, no successful pinned-reference observation"
     }
   ]
 }

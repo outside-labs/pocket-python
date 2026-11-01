@@ -225,3 +225,12 @@ test('independent StopIteration values obey the shared allocation budget', async
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
+
+test('delegated native values retain temporary graphs through parked collection and interruption', async () => {
+  await lifetime('class E(StopIteration): pass\nclass I:\n def __iter__(self): return self\n def __next__(self):\n  e=E(9)\n  e.value=[7]\n  raise e\ndef work():\n value=yield from I()\n print("entered")\n print(value[0])\ntry: next(work())\nexcept StopIteration: pass\n', 'entered\n7\n');
+});
+
+for (const item of corpus.reference_boundaries ?? []) test('safe retained reference limitation: ' + item.id, async () => {
+  const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error, undefined); assert.equal(result.stdout, item.interpreter_stdout); closed(result.closed);
+});
