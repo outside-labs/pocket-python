@@ -23,7 +23,7 @@ const numericPosition = value => {
   return value;
 };
 const consumerName = value => {
-  if (!["list", "tuple", "all", "any", "set", "frozenset", "set-update", "bytes", "bytearray"].includes(value)) throw new TypeError("Invalid iterable consumer.");
+  if (!["list", "tuple", "syntax-details", "all", "any", "set", "frozenset", "set-update", "bytes", "bytearray"].includes(value)) throw new TypeError("Invalid iterable consumer.");
   return value;
 };
 export function completion(kind, fields = {}) {
@@ -105,6 +105,7 @@ export function completion(kind, fields = {}) {
     case "hierarchy-result": case "hierarchy-iter": case "hierarchy-sequence": record = {kind, transaction: fields.transaction, type: fields.type, before: fields.before, pending: operands(fields.pending), after}; break;
     case "native-doc-result": record = {kind, receiver: fields.receiver, ignoreAttribute: fields.ignoreAttribute, after}; break;
     case "native-reinit": case "native-property-copy": record = {kind, receiver: fields.receiver, after}; break;
+    case "syntax-details": record = {kind, receiver: fields.receiver, result: fields.result, after}; break;
     case "native-repeat": record = {kind, receiver: fields.receiver, inplace: fields.inplace, after}; break;
     case "list-index": record = {kind, receiver: fields.receiver, name: fields.name, item: fields.item, after}; break;
     case "dictionary-pop": record = {kind, receiver: fields.receiver, key: fields.key, fallback: fields.fallback, missing: fields.missing, after}; break;
@@ -365,6 +366,7 @@ function visit(record) {
     case "hierarchy-result": case "hierarchy-iter": case "hierarchy-sequence": return [record.transaction, record.type, ...record.before, ...record.pending, ...completionRoots(record.after)];
     case "native-doc-result":
     case "native-reinit": case "native-property-copy": return [record.receiver, ...completionRoots(record.after)];
+    case "syntax-details": return [record.receiver, record.result, ...completionRoots(record.after)];
     case "native-repeat": return [record.receiver, ...completionRoots(record.after)];
     case "list-index": return [record.receiver, record.item, ...completionRoots(record.after)];
     case "dictionary-pop": return [record.receiver, record.key, record.fallback, ...completionRoots(record.after)];

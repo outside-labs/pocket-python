@@ -24,7 +24,8 @@
     "LA22",
     "LA23",
     "LA24",
-    "LA25"
+    "LA25",
+    "LA26"
   ],
   "cases": [
     {
@@ -894,11 +895,9 @@
     },
     {
       "id": "exception-structured-constructor-deferred",
-      "stage": "Future",
+      "stage": "LA26",
       "source": "e=SyntaxError(\"bad\",(\"original.py\",1,1,\"bad\"))\nprint(e.args[0])\n",
-      "stdout": "bad\n",
-      "owner": "#124",
-      "boundary": "Structured native exception constructors/fields retain their exact signature gate"
+      "stdout": "bad\n"
     },
     {
       "id": "exception-multiple-display-deferred",
@@ -2784,6 +2783,286 @@
       "id": "attribute-context-optional-lookups-skip-setters",
       "source": "class E(AttributeError):\n def __setattr__(self,name,value):\n  print(\"unexpected setter\")\n  super().__setattr__(name,value)\nclass A:\n def __getattr__(self,name): raise E()\nprint(getattr(A(),\"missing\",7),hasattr(A(),\"missing\"))\n",
       "stdout": "7 False\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-empty-SyntaxError",
+      "source": "e=SyntaxError()\nprint(len(e.args),e.msg is None,e.filename is None,e._metadata is None,str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 True True True None\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-arguments-SyntaxError",
+      "source": "m=[]\ne=SyntaxError(m,7,8)\nprint(len(e.args),e.msg is m,e.args[0] is m,e.filename is None)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "3 True True True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-empty-IndentationError",
+      "source": "e=IndentationError()\nprint(len(e.args),e.msg is None,e.filename is None,e._metadata is None,str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 True True True None\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-arguments-IndentationError",
+      "source": "m=[]\ne=IndentationError(m,7,8)\nprint(len(e.args),e.msg is m,e.args[0] is m,e.filename is None)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "3 True True True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-empty-TabError",
+      "source": "e=TabError()\nprint(len(e.args),e.msg is None,e.filename is None,e._metadata is None,str(e))\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "0 True True True None\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-arguments-TabError",
+      "source": "m=[]\ne=TabError(m,7,8)\nprint(len(e.args),e.msg is m,e.args[0] is m,e.filename is None)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "3 True True True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-details-4",
+      "source": "info=tuple(range(4))\ne=SyntaxError(\"bad\",info)\nprint(e.msg,e.args[1] is info,e.filename,e.lineno,e.offset,e.text,e.end_lineno,e.end_offset,e._metadata,e.print_file_and_line)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad True 0 1 2 3 None None None None\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-details-6",
+      "source": "info=tuple(range(6))\ne=SyntaxError(\"bad\",info)\nprint(e.msg,e.args[1] is info,e.filename,e.lineno,e.offset,e.text,e.end_lineno,e.end_offset,e._metadata,e.print_file_and_line)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad True 0 1 2 3 4 5 None None\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-details-7",
+      "source": "info=tuple(range(7))\ne=SyntaxError(\"bad\",info)\nprint(e.msg,e.args[1] is info,e.filename,e.lineno,e.offset,e.text,e.end_lineno,e.end_offset,e._metadata,e.print_file_and_line)\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "bad True 0 1 2 3 4 5 6 None\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-fields-independent",
+      "source": "m=[]\nf={}\ninfo=(f,[],{},[],[],[],{})\ne=SyntaxError(m,info)\nprint(e.msg is m,e.filename is f,e.lineno is info[1],e._metadata is info[6])\ne.args=(7,)\nprint(e.msg is m,e.filename is f,e.args[0])\n",
+      "stdout": "True True True True\nTrue True 7\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-field-storage",
+      "source": "e=SyntaxError()\nfor key in (\"msg\",\"filename\",\"lineno\",\"offset\",\"text\",\"end_lineno\",\"end_offset\",\"print_file_and_line\",\"_metadata\"):\n value=[]\n setattr(e,key,value)\n e.__dict__[key]=7\n print(getattr(e,key) is value)\n delattr(e,key)\n print(getattr(e,key) is None)\nprint(len(e.args))\n",
+      "stdout": "True\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\nTrue\n0\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-base-initializer",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4,[]))\nm=e._metadata\nBaseException.__init__(e,\"new\")\nprint(e.msg,e.filename,e.args[0],e._metadata is m)\n",
+      "stdout": "old path new True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-empty-reinitializer",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4,[]))\nm=e._metadata\nSyntaxError.__init__(e)\nprint(len(e.args),e.msg,e.filename,e._metadata is m)\n",
+      "stdout": "0 old path True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-one-reinitializer",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4,[]))\nm=e._metadata\nSyntaxError.__init__(e,\"new\")\nprint(e.args[0],e.msg,e.filename,e._metadata is m)\n",
+      "stdout": "new new path True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-three-reinitializer",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4))\nSyntaxError.__init__(e,\"new\",7,8)\nprint(len(e.args),e.msg,e.filename,e.end_lineno,e.end_offset)\n",
+      "stdout": "3 new path 3 4\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-short-reinitializer",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4,[]))\ne.print_file_and_line=[]\nflag=e.print_file_and_line\nSyntaxError.__init__(e,\"new\",(\"next\",5,6,\"line\"))\nprint(e.msg,e.filename,e.end_lineno,e.end_offset,e._metadata,e.print_file_and_line is flag)\n",
+      "stdout": "new next None None None True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-invalid-keyword-order",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\"))\ntry: SyntaxError.__init__(e,\"new\",bad=7)\nexcept TypeError: print(e.args[0],e.msg,e.filename)\n",
+      "stdout": "old old path\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-constructor-keywords",
+      "source": "SyntaxError(msg=\"bad\")\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ],
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-invalid-details-0",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4))\ninfo=tuple(range(0))\ntry: SyntaxError.__init__(e,\"new\",info)\nexcept TypeError: print(e.msg,e.args[1] is info,e.filename,e.lineno,e.end_lineno,e.end_offset)\n",
+      "stdout": "new True path 1 3 4\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-invalid-details-1",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4))\ninfo=tuple(range(1))\ntry: SyntaxError.__init__(e,\"new\",info)\nexcept TypeError: print(e.msg,e.args[1] is info,e.filename,e.lineno,e.end_lineno,e.end_offset)\n",
+      "stdout": "new True path 1 3 4\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-invalid-details-3",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4))\ninfo=tuple(range(3))\ntry: SyntaxError.__init__(e,\"new\",info)\nexcept TypeError: print(e.msg,e.args[1] is info,e.filename,e.lineno,e.end_lineno,e.end_offset)\n",
+      "stdout": "new True path 1 3 4\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-invalid-details-5",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4))\ninfo=tuple(range(5))\ntry: SyntaxError.__init__(e,\"new\",info)\nexcept TypeError: print(e.msg,e.args[1] is info,e.filename,e.lineno,e.end_lineno,e.end_offset)\n",
+      "stdout": "new True 0 1 4 None\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-invalid-details-8",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\",3,4))\ninfo=tuple(range(8))\ntry: SyntaxError.__init__(e,\"new\",info)\nexcept TypeError: print(e.msg,e.args[1] is info,e.filename,e.lineno,e.end_lineno,e.end_offset)\n",
+      "stdout": "new True path 1 3 4\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-noniterable-details",
+      "source": "e=SyntaxError(\"old\",(\"path\",1,2,\"text\"))\ntry: SyntaxError.__init__(e,\"new\",7)\nexcept TypeError: print(e.msg,e.args[1],e.filename)\n",
+      "stdout": "new 7 path\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-details-ignore-hints",
+      "source": "class Info:\n def __len__(self): raise ValueError(\"length\")\n def __length_hint__(self): raise ValueError(\"hint\")\n def __iter__(self):\n  print(\"iter\")\n  yield \"file\"\n  yield 1\n  yield 2\n  yield \"text\"\ne=SyntaxError(\"bad\",Info())\nprint(e.filename,e.lineno,e.offset,e.text)\n",
+      "stdout": "iter\nfile 1 2 text\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-details-tuple-subclass",
+      "source": "class Info(tuple):\n def __iter__(self):\n  print(\"iter\")\n  yield \"selected\"\n  yield 7\n  yield 8\n  yield \"line\"\n def __len__(self): raise ValueError(\"length\")\ninfo=Info((\"ignored\",1,2,\"text\"))\ne=SyntaxError(\"bad\",info)\nprint(e.args[1] is info,e.filename,e.lineno)\n",
+      "stdout": "iter\nTrue selected 7\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-details-list-subclass",
+      "source": "class Info(list):\n def __iter__(self):\n  print(\"iter\")\n  yield \"selected\"\n  yield 7\n  yield 8\n  yield \"line\"\n def __len__(self): raise ValueError(\"length\")\ninfo=Info((\"ignored\",1,2,\"text\"))\ne=SyntaxError(\"bad\",info)\nprint(e.args[1] is info,e.filename,e.lineno)\n",
+      "stdout": "iter\nTrue selected 7\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-details-callback-error",
+      "source": "class Info:\n def __iter__(self):\n  print(\"iter\")\n  yield 7\n  raise LookupError(\"details\")\ne=SyntaxError(\"old\",(\"path\",1,2,\"text\"))\ninfo=Info()\ntry: SyntaxError.__init__(e,\"new\",info)\nexcept LookupError as caught: print(str(caught),e.msg,e.args[1] is info,e.filename)\n",
+      "stdout": "iter\ndetails new True path\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-details-reentrant-init",
+      "source": "e=SyntaxError(\"old\")\nclass Info:\n def __iter__(self):\n  SyntaxError.__init__(e,\"inner\")\n  yield \"path\"\n  yield 1\n  yield 2\n  yield \"text\"\nSyntaxError.__init__(e,\"outer\",Info())\nprint(e.msg,e.args[0],len(e.args),e.filename)\n",
+      "stdout": "inner inner 1 path\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-new-only",
+      "source": "info=(\"path\",1,2,\"text\")\ne=SyntaxError.__new__(SyntaxError,\"bad\",info)\nprint(e.args[0],e.args[1] is info,e.msg is None,e.filename is None)\n",
+      "stdout": "bad True True True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-subclass-slots",
+      "source": "class E(TabError):\n __slots__=(\"saved\",)\n def __init__(self,message,info):\n  self.saved=info\n  super().__init__(message,info)\ninfo=(\"path\",1,2,\"text\")\ne=E(\"bad\",info)\nprint(type(e) is E,e.saved is info,e.args[1] is info,e.filename,e.msg)\ntry: raise e\nexcept SyntaxError as caught: print(caught is e)\n",
+      "stdout": "True True True path bad\nTrue\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-mixed-generic-base",
+      "source": "class E(ValueError,SyntaxError): pass\ne=E(\"bad\",(\"path\",1,2,\"text\"))\nprint(e.msg,e.filename,isinstance(e,SyntaxError),isinstance(e,ValueError))\n",
+      "stdout": "bad path True True\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-layout-conflict",
+      "source": "class E(SyntaxError,NameError): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-native-descriptor",
+      "source": "e=IndentationError()\nvalue=[]\nSyntaxError.filename.__set__(e,value)\nprint(SyntaxError.filename.__get__(e,IndentationError) is value)\nSyntaxError.filename.__delete__(e)\nprint(e.filename is None)\ntry: SyntaxError.filename.__get__(ValueError(),ValueError)\nexcept TypeError: print(\"receiver\")\n",
+      "stdout": "True\nTrue\nreceiver\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-native-init-receiver",
+      "source": "try: SyntaxError.__init__(ValueError(),\"bad\")\nexcept TypeError: print(\"receiver\")\n",
+      "stdout": "receiver\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-constructor-does-not-format",
+      "source": "class Message:\n def __str__(self): raise ValueError(\"display\")\nm=Message()\ne=SyntaxError(m)\nprint(e.msg is m,e.args[0] is m)\ntry: str(e)\nexcept ValueError as caught: print(str(caught))\n",
+      "stdout": "True True\ndisplay\n"
+    },
+    {
+      "stage": "LA26",
+      "id": "syntax-error-recursive-message",
+      "source": "e=SyntaxError()\ne.msg=e\ntry: str(e)\nexcept RecursionError: print(\"recursive\")\n",
+      "stdout": "recursive\n"
+    },
+    {
+      "stage": "Future",
+      "id": "syntax-error-location-display-deferred",
+      "source": "print(str(SyntaxError(\"bad\",(\"original.py\",1,2,\"text\"))))\n",
+      "owner": "#124",
+      "boundary": "Native SyntaxError location rendering is selected separately in LA-27",
+      "stdout": "bad (original.py, line 1)\n"
+    },
+    {
+      "stage": "Future",
+      "id": "syntax-error-parser-fields-deferred",
+      "source": "try: compile(\"if\", \"selected.py\", \"exec\")\nexcept SyntaxError as e: print(e.filename)\n",
+      "owner": "#124",
+      "boundary": "Parser-generated native SyntaxError fields and suggestions retain their separate contract",
+      "stdout": "selected.py\n"
     }
   ],
   "reference_boundaries": [
