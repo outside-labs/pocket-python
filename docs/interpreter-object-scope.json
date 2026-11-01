@@ -1142,6 +1142,12 @@
       "site": "if (value instanceof ClassValue && exceptionClass(value)) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Generator throw class normalization remains under #120\");",
       "owner": "#120",
       "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "if (receiver.nativeFieldBoundaries?.has(name)) this.fail(\"UnsupportedOperationError\", \"Automatic attribute error metadata remains under #124\", \"UNSUPPORTED\");",
+      "owner": "#124",
+      "boundary": "Automatic lookup error name/receiver enrichment remains separate from explicit AttributeError construction/storage"
     }
   ],
   "native_tables": {

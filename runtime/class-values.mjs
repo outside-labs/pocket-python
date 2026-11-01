@@ -1338,11 +1338,12 @@ export class ClassRuntime {
       return {kind: "value", value: this.exceptionArgs(receiver)};
     }
     if (receiver instanceof ExceptionValue && receiver.nativeFields?.has(name) && owner instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, owner.name)) {
-      if (operation === "get") return {kind: "value", value: receiver.nativeFields.get(name)};
+      if (operation === "get") return {kind: "value", value: this.exceptionField(receiver, name)};
       const before = receiver.nativeFields.get(name);
+      const boundary = receiver.nativeFieldBoundaries?.delete(name);
       receiver.nativeFields.set(name, operation === "delete" ? null : item);
       try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
-      catch (error) { receiver.nativeFields.set(name, before); throw error; }
+      catch (error) { receiver.nativeFields.set(name, before); if (boundary) receiver.nativeFieldBoundaries.add(name); throw error; }
       return {kind: "value", value: null};
     }
     if (receiver instanceof ExceptionValue && ["__context__", "__cause__", "__suppress_context__", "value"].includes(name)) {
@@ -1766,6 +1767,10 @@ export class ClassRuntime {
     return receiver.argsTuple;
   }
   exceptionValue(receiver) { return Object.hasOwn(receiver, "stopValue") ? receiver.stopValue : receiver.args[0] ?? null; }
+  exceptionField(receiver, name) {
+    if (receiver.nativeFieldBoundaries?.has(name)) this.fail("UnsupportedOperationError", "Automatic attribute error metadata remains under #124", "UNSUPPORTED");
+    return receiver.nativeFields.get(name);
+  }
   functionMetadata(receiver, field, value) {
     const before = receiver[field]; receiver[field] = value;
     try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }

@@ -14,7 +14,8 @@
     "LA14",
     "LA15",
     "LA16",
-    "LA17"
+    "LA17",
+    "LA18"
   ],
   "cases": [
     {
@@ -1517,6 +1518,157 @@
       "stage": "LA17",
       "source": "class E(NameError):\n def __init__(self): super().__init__(name=\"chosen\")\ntry: raise E\nexcept E as e: print(e.name)\n",
       "stdout": "chosen\n"
+    },
+    {
+      "id": "attribute-error-field-identity",
+      "stage": "LA18",
+      "source": "n=[]\no={}\nm=[]\ne=AttributeError(m,name=n,obj=o)\nprint(e.name is n,e.obj is o,e.args[0] is m,e.name is e.name)\n",
+      "stdout": "True True True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "attribute-error-defaults",
+      "stage": "LA18",
+      "source": "e=AttributeError(7,8)\nprint(len(e.args),e.name is None,e.obj is None)\n",
+      "stdout": "2 True True\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "attribute-error-independent-fields",
+      "stage": "LA18",
+      "source": "e=AttributeError()\nn=[]\no={}\ne.name=n\ne.obj=o\ne.args=(7,)\ne.__dict__={\"name\":9,\"obj\":8}\nprint(e.name is n,e.obj is o,e.args[0],vars(e)[\"obj\"])\ndel e.name\ndel e.obj\ndel e.obj\nprint(e.name is None,e.obj is None)\n",
+      "stdout": "True True 7 8\nTrue True\n"
+    },
+    {
+      "id": "attribute-error-native-descriptors",
+      "stage": "LA18",
+      "source": "e=AttributeError()\nn=[]\nAttributeError.name.__set__(e,n)\nAttributeError.obj.__set__(e,e)\nprint(AttributeError.name.__get__(e,AttributeError) is n,e.obj is e)\nAttributeError.obj.__delete__(e)\nprint(e.obj is None)\n",
+      "stdout": "True True\nTrue\n"
+    },
+    {
+      "id": "attribute-error-init-receiver",
+      "stage": "LA18",
+      "source": "AttributeError.__init__(Exception(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "attribute-error-field-receiver",
+      "stage": "LA18",
+      "source": "AttributeError.obj.__set__(NameError(),7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "attribute-error-field-call",
+      "stage": "LA18",
+      "source": "AttributeError.obj(AttributeError())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "attribute-error-keywords-order",
+      "stage": "LA18",
+      "source": "n=[]\no={}\ne=AttributeError(obj=o,name=n)\nprint(e.name is n,e.obj is o,len(e.args))\n",
+      "stdout": "True True 0\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "attribute-error-reinitialize",
+      "stage": "LA18",
+      "source": "e=AttributeError(\"old\",name=[],obj={})\nAttributeError.__init__(e,\"new\",obj=7)\nprint(e.args[0],e.name is None,e.obj)\nAttributeError.__init__(e)\nprint(len(e.args),e.name is None,e.obj is None)\n",
+      "stdout": "new True 7\n0 True True\n"
+    },
+    {
+      "id": "attribute-error-invalid-keyword-partial-state",
+      "stage": "LA18",
+      "source": "n=[]\no={}\ne=AttributeError(\"old\",name=n,obj=o)\ntry: AttributeError.__init__(e,\"new\",name=7,obj=8,bad=9)\nexcept TypeError: print(e.args[0],e.name is n,e.obj is o)\n",
+      "stdout": "new True True\n"
+    },
+    {
+      "id": "attribute-error-base-init",
+      "stage": "LA18",
+      "source": "n=[]\no={}\ne=AttributeError(\"old\",name=n,obj=o)\nBaseException.__init__(e,\"new\")\nprint(e.args[0],e.name is n,e.obj is o)\n",
+      "stdout": "new True True\n"
+    },
+    {
+      "id": "attribute-error-new-only",
+      "stage": "LA18",
+      "source": "e=AttributeError.__new__(AttributeError,7,name=8,obj=9,bad=10)\nprint(e.args[0],e.name is None,e.obj is None)\n",
+      "stdout": "7 True True\n"
+    },
+    {
+      "id": "attribute-error-unknown-keyword",
+      "stage": "LA18",
+      "source": "AttributeError(\"bad\",unknown=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "attribute-error-subclass",
+      "stage": "LA18",
+      "source": "class E(AttributeError): pass\nn=[]\no={}\ne=E(\"missing\",name=n,obj=o)\ne.saved=7\ntry: raise e\nexcept AttributeError as x: print(x is e,x.name is n,x.obj is o,x.saved)\n",
+      "stdout": "True True True 7\n"
+    },
+    {
+      "id": "attribute-error-subclass-slots",
+      "stage": "LA18",
+      "source": "class E(AttributeError):\n __slots__=(\"saved\",)\n def __init__(self,x):\n  super().__init__(\"bad\",name=x,obj=self)\n  self.saved=x\ne=E([])\nprint(e.name is e.saved,e.obj is e)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "attribute-error-subclass-new",
+      "stage": "LA18",
+      "source": "class E(AttributeError):\n def __new__(cls,x): return super().__new__(cls,x)\n def __init__(self,x): super().__init__(x,name=x,obj=self)\ne=E([])\nprint(e.name is e.args[0],e.obj is e)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "attribute-error-layout-compatible",
+      "stage": "LA18",
+      "source": "class E(ValueError,AttributeError): pass\ne=E(7)\nprint(E.__base__ is AttributeError,e.name is None,e.obj is None,isinstance(e,ValueError))\n",
+      "stdout": "True True True True\n"
+    },
+    {
+      "id": "attribute-error-layout-conflict",
+      "stage": "LA18",
+      "source": "class E(AttributeError,NameError): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "attribute-error-owned-getter",
+      "stage": "LA18",
+      "source": "class E(AttributeError):\n @property\n def obj(self):\n  print(\"get\")\n  return self\ne=E(obj=[])\nprint(e.obj is e,len(AttributeError.obj.__get__(e,E)))\n",
+      "stdout": "get\nTrue 0\n"
+    },
+    {
+      "id": "attribute-error-cause-notes",
+      "stage": "LA18",
+      "source": "e=AttributeError(\"missing\",name=\"field\",obj=[])\ne.add_note(\"context\")\ntry: raise e from NameError(name=\"record\")\nexcept AttributeError as x: print(x is e,x.name,x.__cause__.name,x.__notes__[0])\n",
+      "stdout": "True field record context\n"
+    },
+    {
+      "id": "attribute-error-runtime-reinitialize",
+      "stage": "LA18",
+      "source": "class A: pass\ntry: A().missing\nexcept AttributeError as e:\n AttributeError.__init__(e,\"explicit\",name=\"field\",obj=7)\n print(e.name,e.obj,str(e))\n",
+      "stdout": "field 7 explicit\n"
+    },
+    {
+      "id": "attribute-error-automatic-metadata-deferred",
+      "stage": "Future",
+      "source": "class A: pass\ntry: A().missing\nexcept AttributeError as e: print(e.name)\n",
+      "stdout": "missing\n",
+      "owner": "#124",
+      "boundary": "Automatic lookup error name/receiver enrichment remains separate from explicit AttributeError construction/storage"
     }
   ]
 }

@@ -1611,6 +1611,7 @@ export function valueLayout(value) {
       (value.slotValues ? 8 + 8 * value.type.storage.count : 0) +
       (value.cause === undefined ? 0 : 8) + (Object.hasOwn(value, "stopValue") ? 8 : 0) + 2 * (value.name.length + value.message.length) +
       (value.nativeFields ? 32 + 8 * value.nativeFields.size : 0) +
+      (value.nativeFieldBoundaries ? 32 + 8 * value.nativeFieldBoundaries.size : 0) +
       value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),
       children: [...value.args, ...(value.argsTuple === undefined ? [] : [value.argsTuple]), ...(value.context ? [value.context] : []),
         ...(value.cause == null ? [] : [value.cause]), ...(Object.hasOwn(value, "stopValue") ? [value.stopValue] : []),

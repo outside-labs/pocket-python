@@ -167,3 +167,17 @@ test('native name fields use the shared allocation budget', async () => {
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
+
+test('attribute error native fields retain values through owned constructors and parked collection', async () => {
+  await lifetime('class E(AttributeError):\n def __init__(self):\n  super().__init__(name=[7],obj=[8])\n  print("entered")\ne=E()\nprint(e.name[0],e.obj[0])\n', 'entered\n7 8\n');
+});
+
+test('attribute error native fields survive owned getter callbacks and cycles', async () => {
+  await lifetime('class E(AttributeError):\n @property\n def obj(self):\n  print("entered")\n  return AttributeError.obj.__get__(self,E)\ne=E(obj=[7])\ne.name=e\nprint(e.obj[0],e.name is e)\n', 'entered\n7 True\n');
+});
+
+test('attribute error field graphs obey the shared allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True: held.append(AttributeError(name=[7],obj=[8]))\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
