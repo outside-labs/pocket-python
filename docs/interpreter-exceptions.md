@@ -75,7 +75,7 @@ index callbacks can mutate or release the input. Noncontiguous views raise
 BufferError; released views raise ValueError. Owned `__bytes__` is not invoked.
 Failed acquisition preserves old fields and callback mutations after replacing
 args. Numeric members and native field independence follow LA-32. Native decode
-messages follow in LA-36; runtime decoding metadata retains its separate contract. The
+messages follow in LA-36; runtime decoding metadata is adopted by LA-41/LA-42. The
 pinned [initializer](https://github.com/python/cpython/blob/v3.14.7/Objects/exceptions.c#L3755-L3796)
 defines the copying order.
 
@@ -127,7 +127,7 @@ callbacks, a fresh restart owner and a reduced-profile translation program. The
 eight deterministic execution resource observations retain accounting revision
 22. This accepts the UnicodeTranslateError slice while #124 and A2 remain open
 for groups/except*, traceback objects/mutation, note rendering/export, remaining
-metadata and automatic decoding metadata. General exception
+native metadata. General exception
 representations and formatting remain under #127.
 
 The source corpus `exceptions.json` distinguishes implemented cases from
@@ -194,7 +194,7 @@ python scripts/object_integration_browser_smoke.py --exceptions
 ```
 
 Exception groups/except*, traceback objects/mutation and note rendering/export,
-write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and automatic decoding metadata remain #124. Generator throw of a user
+write/delete attribute and custom import provenance enrichment, parser-generated SyntaxError fields and remaining native metadata remain #124. Generator throw of a user
 exception class retains #120; throwing an instance remains adopted. Multiple
 argument/container/default exception representations remain #127. The ordinary
 exception slices do not complete Track A A2, which also requires formatting.
@@ -264,7 +264,7 @@ All eight existing deterministic resource observations retain revision 22.
 
 These two batches keep A2 and #124 open for groups/except*, traceback objects
 and mutation, note rendering/export, write/delete attribute metadata, custom
-import provenance, parser-generated syntax fields, automatic decoding metadata
+import provenance, parser-generated syntax fields, remaining native metadata
 and the declared host qualifications. Remaining general displays/formatting
 stay under #127. Package/library qualification and candidate/release gates keep
 their separate evidence requirements.
@@ -277,14 +277,14 @@ on CPython or in the offline console. Installed acceptance adds fresh source,
 original dynamic diagnostics, Stop/Restart in index/reason/encoding callbacks
 and a reduced-profile bytes program.
 
-The combined exception corpus records 787 cases: 778 semantic/error comparisons
-and 9 explicit refusals, with 218 cases explicitly shared by core-source/1.
-The four existing host/crash qualifications remain separate. These finite
+The combined exception corpus records 852 cases: 844 semantic/error comparisons
+and 8 explicit refusals, with 267 cases explicitly shared by core-source/1.
+Five host/crash/cache qualifications remain separate. These finite
 observations do not measure overall Python completion. The eight deterministic
 resource cases retain accounting revision 22. Explicit Encode/Decode
 construction, native fields, subclasses and rendering are adopted. Runtime
-encoding metadata is adopted through LA-40; decoding field reads retain one
-named corpus boundary until LA-41/LA-42. Groups/except*, traceback objects/mutation, note rendering/export,
+encoding metadata is adopted through LA-40 and decoding metadata through
+LA-43. The one-byte bytes-cache identity qualification retains #117. Groups/except*, traceback objects/mutation, note rendering/export,
 remaining attribute/import/parser metadata and general representations retain
 their existing #124/#127 owners. A2 and candidate/release gates remain open.
 
@@ -298,7 +298,7 @@ Native fields remain independent of later argument replacement. Aliases and
 string-subtype codec options use their native content without invoking user
 formatting. Source rendering uses the adopted native renderer; host summaries
 keep the copied diagnostic message. UTF-8 surrogate metadata follows in LA-39;
-automatic decoding fields retain their LA-41/LA-42 boundaries.
+automatic decoding fields follow in LA-41/LA-42.
 
 LA-39 adopts strict UTF-8 surrogate failures with canonical `utf-8` encoding and
 `surrogates not allowed` reason. The first contiguous surrogate run uses source
@@ -337,3 +337,14 @@ second-byte restriction before later truncation is considered. Canonical
 adopted. The matrix includes every possible leading byte and continuation
 boundaries for each special leading-byte family. The #117 bytes-cache identity
 qualification remains separate.
+
+LA-43 accepts runtime decoding failures across modules, dynamic source, notes,
+causes and suspended generator cleanup. Run
+`examples/interpreter_runtime_decoding.py` unchanged on CPython or in the offline
+console. It repairs an original mutable record while preserving the error
+snapshot. Installed acceptance adds original dynamic diagnostics, released
+input graphs, Stop/Restart in runtime-error rendering and reduced-profile
+decoder metadata. The eight deterministic execution resource observations
+retain revision 22. Groups/except*, traceback objects/mutation, note export and
+remaining attribute/import/parser metadata retain #124; wider codec/error-policy
+APIs and bytes-cache identity retain #117; general formatting remains #127.

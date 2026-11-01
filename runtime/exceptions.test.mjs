@@ -180,6 +180,30 @@ test('runtime UTF-8 validation and snapshots share the work limit', async () => 
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
 });
 
+test('runtime decoding snapshots outlive the released original input graph', async () => {
+  await lifetime('data=bytearray(b"A\\xffZ")\nview=memoryview(data)\ntry: data.decode("ascii")\nexcept UnicodeDecodeError as error: e=error\ne.args=()\nview.release()\nview=None\ndata=None\nprint("entered")\nprint(e.object,e.encoding,e.start,e.end,e.reason)\n',
+    "entered\nb'A\\xffZ' ascii 1 2 ordinal not in range(128)\n");
+});
+
+test('runtime decoding errors retain native snapshots through interrupted reason callbacks', async () => {
+  await lifetime('try: b"A\\xe1\\x80".decode()\nexcept UnicodeDecodeError as error: e=error\nclass Reason:\n def __str__(self):\n  e.reason=None\n  print("entered")\n  return "kept"\ne.args=()\ne.reason=Reason()\nprint(str(e))\n',
+    "entered\n'utf-8' codec can't decode bytes in position 1-2: kept\n");
+});
+
+test('runtime decoding failures preserve original dynamic source frames', async () => {
+  const source = corpus.cases.find(item => item.id === 'runtime-decoding-dynamic-failure').source;
+  const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'UnicodeDecodeError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', 'runtime-decoding-original.py', 3], ['fail', 'runtime-decoding-original.py', 2]]);
+  closed(result.closed);
+});
+
+test('runtime decoding module cycles survive suspended generator cleanup', async () => {
+  await lifetime('import helper\ndef work():\n try: helper.fail()\n except UnicodeDecodeError as e:\n  try: yield e\n  finally: print(str(e),e.record[0] is e)\ni=work()\ne=next(i)\nprint("entered")\ni.close()\n',
+    "entered\n'utf-8' codec can't decode bytes in position 1-2: unexpected end of data True\n", [{name: 'helper', source: 'def fail():\n try: bytearray(b"A\\xe1\\x80").decode()\n except UnicodeDecodeError as e:\n  e.record=[e]\n  raise e\n'}]);
+});
+
 test('decoding messages retain reason results through interrupted encoding callbacks', async () => {
   await lifetime('class R:\n def __str__(self):\n  e.reason=None\n  return "kept"\nclass C:\n def __str__(self):\n  e.object=b"\\xff"\n  e.encoding=None\n  print("entered")\n  return "codec"\ne=UnicodeDecodeError("a",b"x",0,1,"r")\ne.reason=R()\ne.encoding=C()\nprint(str(e))\n', "entered\n'codec' codec can't decode byte 0xff in position 0: kept\n");
 });

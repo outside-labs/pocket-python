@@ -41,7 +41,8 @@
     "LA39",
     "LA40",
     "LA41",
-    "LA42"
+    "LA42",
+    "LA43"
   ],
   "cases": [
     {
@@ -6644,6 +6645,76 @@
         "classes-source/1",
         "core-source/1"
       ]
+    },
+    {
+      "id": "runtime-decoding-record-example",
+      "stage": "LA43",
+      "source": "\"\"\"Retain a codec failure's snapshot while the source buffer is repaired.\"\"\"\n\n\nclass RecordDecodingError(ValueError):\n    def __init__(self, record):\n        super().__init__(\"record cannot be decoded\")\n        self.record = record\n\n\ndef decode_record(record):\n    try:\n        return record[\"data\"].decode(\"utf-8\")\n    except UnicodeDecodeError as failure:\n        failure.add_note(\"check the original input bytes\")\n        raise RecordDecodingError(record) from failure\n\n\nrecord = {\"id\": 7, \"data\": bytearray(b\"A\\xe1\\x80\")}\ntry:\n    decode_record(record)\nexcept RecordDecodingError as error:\n    failure = error.__cause__\n    record[\"data\"][1] = 66\n    record[\"data\"][2] = 67\n    print(error.record is record, failure.object, record[\"data\"])\n    print(failure.encoding, failure.start, failure.end, failure.reason)\n    print(str(failure))\n    print(failure.__notes__[0])\n",
+      "stdout": "True b'A\\xe1\\x80' bytearray(b'ABC')\nutf-8 1 3 unexpected end of data\n'utf-8' codec can't decode bytes in position 1-2: unexpected end of data\ncheck the original input bytes\n"
+    },
+    {
+      "id": "runtime-decoding-core-program",
+      "stage": "LA43",
+      "source": "data=b\"A\\xe1\\x80\"\ntry: data.decode()\nexcept UnicodeDecodeError as e:\n print(e.object==data,e.encoding,e.start,e.end,e.reason,len(e.args))\n print(str(e))\n",
+      "stdout": "True utf-8 1 3 unexpected end of data 5\n'utf-8' codec can't decode bytes in position 1-2: unexpected end of data\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "runtime-decoding-dynamic-failure",
+      "stage": "LA43",
+      "source": "exec(compile(\"def fail():\\n b'A\\\\xe1\\\\x80'.decode()\\nfail()\",\"runtime-decoding-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "UnicodeDecodeError"
+    },
+    {
+      "id": "runtime-decoding-dynamic-scope",
+      "stage": "LA43",
+      "source": "scope={\"data\":bytearray(b\"A\\xffZ\")}\nexec(compile(\"try: data.decode('ascii')\\nexcept UnicodeDecodeError as e: saved=e\",\"runtime-decoding-input.py\",\"exec\"),scope)\ne=scope[\"saved\"]\nscope[\"data\"][1]=65\nprint(e.object,e.args[1] is e.object,e.encoding,e.start,e.end,str(e))\n",
+      "stdout": "b'A\\xffZ' True ascii 1 2 'ascii' codec can't decode byte 0xff in position 1: ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-decoding-generator-cleanup",
+      "stage": "LA43",
+      "source": "def work():\n try:\n  try: b\"A\\xffZ\".decode(\"ascii\")\n  except UnicodeDecodeError as e: yield e\n finally: b\"A\\xe1\\x80\".decode()\ni=work()\ne=next(i)\ntry: i.close()\nexcept UnicodeDecodeError as caught: print(caught.encoding,caught.reason,str(caught))\nprint(e.object,e.reason)\n",
+      "stdout": "utf-8 unexpected end of data 'utf-8' codec can't decode bytes in position 1-2: unexpected end of data\nb'A\\xffZ' ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-decoding-module-cycle",
+      "stage": "LA43",
+      "source": "import helper\nrecord={\"data\":bytearray(b\"A\\xffZ\")}\ntry: helper.fail(record)\nexcept UnicodeDecodeError as e:\n record[\"data\"][1]=65\n print(e.object,record[\"error\"] is e,e.__cause__.args[0])\n print(str(e),e.__notes__[0])\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def fail(record):\n try: record[\"data\"].decode(\"ascii\")\n except UnicodeDecodeError as e:\n  record[\"error\"]=e\n  e.record=record\n  e.add_note(\"original\")\n  raise e from ValueError(7)\n"
+        }
+      ],
+      "stdout": "b'A\\xffZ' True 7\n'ascii' codec can't decode byte 0xff in position 1: ordinal not in range(128) original\n"
+    },
+    {
+      "id": "runtime-decoding-rendering-callback",
+      "stage": "LA43",
+      "source": "try: b\"A\\xffZ\".decode(\"ascii\")\nexcept UnicodeDecodeError as error: e=error\nclass Reason:\n def __str__(self):\n  e.object=b\"ABC\"\n  e.reason=None\n  return \"kept\"\ne.reason=Reason()\nprint(str(e),e.args[1],e.args[4])\n",
+      "stdout": "'ascii' codec can't decode byte 0x42 in position 1: kept b'A\\xffZ' ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-decoding-released-input-graph",
+      "stage": "LA43",
+      "source": "data=bytearray(b\"A\\xffZ\")\nview=memoryview(data)\ntry: data.decode(\"ascii\")\nexcept UnicodeDecodeError as error: e=error\ne.args=()\nview.release()\nview=None\ndata=None\nprint(e.object,e.encoding,e.start,e.end,e.reason)\n",
+      "stdout": "b'A\\xffZ' ascii 1 2 ordinal not in range(128)\n"
+    },
+    {
+      "id": "runtime-decoding-handler-expression",
+      "stage": "LA43",
+      "source": "def handlers(): return (UnicodeEncodeError,UnicodeDecodeError)\ntry: b\"A\\xe1\\x80\".decode()\nexcept handlers() as e: print(e.encoding,e.object,e.start,e.end)\n",
+      "stdout": "utf-8 b'A\\xe1\\x80' 1 3\n"
     }
   ],
   "reference_boundaries": [

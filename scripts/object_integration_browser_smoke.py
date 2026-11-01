@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -91,6 +91,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             assert 'fail at decoding-original.py:2' in page.locator('#diagnostic').inner_text()
                         if case['id'] == 'runtime-encoding-dynamic-failure':
                             assert 'fail at runtime-encoding-original.py:2' in page.locator('#diagnostic').inner_text()
+                        if case['id'] == 'runtime-decoding-dynamic-failure':
+                            assert 'fail at runtime-decoding-original.py:2' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     if exceptions:
                         for case in corpus.get('reference_boundaries', []):
@@ -124,6 +126,10 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         runtime_encoding_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', runtime_encoding], text=True, encoding='utf-8')
                         run(runtime_encoding, runtime_encoding_expected)
                         records.append({'id': 'runtime-encoding-example', 'status': 'pass'})
+                        runtime_decoding = (ROOT / 'examples/interpreter_runtime_decoding.py').read_text(encoding='utf-8')
+                        runtime_decoding_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', runtime_decoding], text=True, encoding='utf-8')
+                        run(runtime_decoding, runtime_decoding_expected)
+                        records.append({'id': 'runtime-decoding-example', 'status': 'pass'})
                     expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
                     run(example, expected)
                     busy = 'import operator\nnamespace={"add":operator.add}\nexec("class Box:\\n __slots__=(\'value\',)\\n def __init__(self): self.value=7\\n @property\\n def field(self):\\n  print(\'entered\')\\n  while True: self.value=add(self.value,1)\\nbox=Box()\\nbox.field",namespace)\n'
@@ -150,6 +156,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             'class Reason:\n def __str__(self):\n  print("entered")\n  while True: pass\ne=UnicodeDecodeError("ascii",b"record",0,1,"rejected")\ne.reason=Reason()\nprint(str(e))\n',
                             'class Encoding:\n def __str__(self):\n  print("entered")\n  while True: pass\ne=UnicodeDecodeError("ascii",b"record",0,1,"rejected")\ne.encoding=Encoding()\nprint(str(e))\n',
                             'try: "雪".encode("ascii")\nexcept UnicodeEncodeError as error: e=error\nclass Reason:\n def __str__(self):\n  print("entered")\n  while True: pass\ne.reason=Reason()\nprint(str(e))\n',
+                            'try: b"A\\xe1\\x80".decode()\nexcept UnicodeDecodeError as error: e=error\nclass Reason:\n def __str__(self):\n  print("entered")\n  while True: pass\ne.reason=Reason()\nprint(str(e))\n',
                         ]
                     for source in busy_sources:
                         page.fill('#input', source)
@@ -195,6 +202,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         run(decoding_core['source'], decoding_core['stdout'])
                         runtime_encoding_core = next(case for case in corpus['cases'] if case['id'] == 'runtime-encoding-core-program')
                         run(runtime_encoding_core['source'], runtime_encoding_core['stdout'])
+                        runtime_decoding_core = next(case for case in corpus['cases'] if case['id'] == 'runtime-decoding-core-program')
+                        run(runtime_decoding_core['source'], runtime_decoding_core['stdout'])
                     run('compile("class C: pass","removed.py","exec")\n', '', 'NameError')
                     assert not errors, errors
                     context.close()
@@ -222,6 +231,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                   'stop-during-encoding-index', 'stop-during-encoding-reason', 'stop-during-encoding-name', 'core-encoding-native-fields',
                   'stop-during-decoding-index', 'stop-during-decoding-reason', 'stop-during-decoding-name', 'core-decoding-native-fields',
                   'stop-during-runtime-encoding-reason', 'core-runtime-encoding-fields',
+                  'stop-during-runtime-decoding-reason', 'core-runtime-decoding-fields',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',
