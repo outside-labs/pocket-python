@@ -149,3 +149,7 @@ test('growing note graphs use the shared allocation budget', async () => {
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
+
+test('suspended handler selection retains exception state through collection and cancel/close', async () => {
+  await lifetime('def work():\n try:\n  try: raise ValueError([7])\n  except (yield ValueError) as e:\n   e.add_note("selected")\n   yield e\n finally: print("closed")\ni=work()\nnext(i)\nprint("entered")\ne=i.send((ValueError,))\nprint(e.args[0][0],e.__notes__[0])\ni.close()\n', 'entered\n7 selected\nclosed\n');
+});

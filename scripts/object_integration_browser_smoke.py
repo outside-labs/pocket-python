@@ -53,7 +53,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     def run(source, expected, error=None):
                         page.fill('#input', source)
                         page.click('#run')
-                        page.wait_for_function("()=>document.querySelector('#status').textContent==='Completed' || document.querySelector('#status').textContent.includes('Error:')")
+                        page.wait_for_function("()=>document.querySelector('#status').textContent!=='Running…'")
                         status = page.locator('#status').inner_text()
                         assert status.startswith(error + ':') if error else status == 'Completed', (status, source)
                         assert page.locator('#result').inner_text() == expected, source
@@ -66,13 +66,15 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] != 'LA13'):
+                            exceptions and case['stage'] not in {'LA13', 'LA16'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
                             assert 'fail at composed-original.py:4' in page.locator('#diagnostic').inner_text(), page.locator('#diagnostic').inner_text()
                         if case['id'] == 'exception-dynamic-source-failure':
                             assert 'fail at exception-original.py:4' in page.locator('#diagnostic').inner_text()
+                        if case['id'] == 'handler-notes-dynamic-failure':
+                            assert 'fail at handler-notes-original.py:5' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
                     run(example, expected)
@@ -81,17 +83,24 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         busy = 'class Key:\n def __hash__(self):\n  print("entered")\n  while True: pass\n{}.setdefault(Key(),[])\n'
                     if exceptions:
                         busy = 'class BusyError(Exception):\n def __init__(self):\n  print("entered")\n  while True: pass\nraise BusyError from None\n'
-                    page.fill('#input', busy)
-                    page.click('#run')
-                    page.wait_for_function("()=>document.querySelector('#result').textContent==='entered\\n'")
-                    page.click('#stop')
-                    page.wait_for_function("()=>document.querySelector('#status').textContent==='Stopped'")
-                    output = page.locator('#result').inner_text()
-                    page.wait_for_timeout(50)
-                    assert page.locator('#result').inner_text() == output
-                    page.click('#restart')
-                    ready()
-                    run(example, expected)
+                    busy_sources = [busy]
+                    if exceptions:
+                        busy_sources += [
+                            'def handlers():\n print("entered")\n while True: pass\ntry: raise ValueError()\nexcept handlers(): pass\n',
+                            'class E(Exception):\n def __setattr__(self,name,value):\n  print("entered")\n  while True: pass\nE().add_note("detail")\n',
+                        ]
+                    for source in busy_sources:
+                        page.fill('#input', source)
+                        page.click('#run')
+                        page.wait_for_function("()=>document.querySelector('#result').textContent==='entered\\n'")
+                        page.click('#stop')
+                        page.wait_for_function("()=>document.querySelector('#status').textContent==='Stopped'")
+                        output = page.locator('#result').inner_text()
+                        page.wait_for_timeout(50)
+                        assert page.locator('#result').inner_text() == output
+                        page.click('#restart')
+                        ready()
+                        run(example, expected)
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/console')
                     shutil.copytree(root / 'reduced', root / 'site/console')
@@ -132,7 +141,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                   'old-cache-removed', 'core-container-apis', 'core-source-boundary']
     if exceptions:
         checks = ['fresh-offline-exception-source', 'original-dynamic-diagnostics', 'runnable-example',
-                  'stop-during-exception-normalization', 'restart-fresh-owner', 'reduced-profile-update',
+                  'stop-during-exception-normalization', 'stop-during-handler-expression', 'stop-during-note-setter',
+                  'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',
             'installed_distribution_required': require_installed, 'package_origin': str(package),
@@ -146,7 +156,7 @@ if __name__ == '__main__':
     parser.add_argument('--require-installed', action='store_true')
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument('--containers', action='store_true', help='Accept the LA-7 practical-container composition slice.')
-    selection.add_argument('--exceptions', action='store_true', help='Accept the LA-13 ordinary-exception composition slice.')
+    selection.add_argument('--exceptions', action='store_true', help='Accept the LA-13/LA-16 ordinary-exception composition slices.')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
     report = smoke(args.require_installed, args.containers, args.exceptions)

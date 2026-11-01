@@ -1,4 +1,4 @@
-"""Load records with reusable errors that preserve their original causes."""
+"""Select reusable errors and attach notes while preserving original causes."""
 
 
 class RecordError(ValueError):
@@ -11,7 +11,13 @@ def load(records, key):
     try:
         return records[key]
     except KeyError as cause:
-        raise RecordError(key, "record missing") from cause
+        error = RecordError(key, "record missing")
+        error.add_note("check the record key")
+        raise error from cause
+
+
+def failure_types():
+    return (RecordError,)
 
 
 records = {"ready": [7, 8]}
@@ -19,9 +25,10 @@ print(len(load(records, "ready")))
 key = "absent"
 try:
     load(records, key)
-except RecordError as error:
+except failure_types() as error:
     print(str(error))
     print(error.key is key, error.__cause__.args[0] is key)
     print(error.__suppress_context__, error.__context__ is error.__cause__)
+    print(error.__notes__[0])
 finally:
     print("finished")
