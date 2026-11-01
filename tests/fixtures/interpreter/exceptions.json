@@ -2177,6 +2177,24 @@
       "stage": "LA21A",
       "source": "class E(StopIteration):\n @property\n def value(self):\n  print(\"wrong\")\n  return 9\nclass I:\n def __iter__(self): return self\n def __next__(self): raise E(7)\ndef work():\n value=yield from I()\n print(value)\ntry: next(work())\nexcept StopIteration: pass\n",
       "stdout": "7\n"
+    },
+    {
+      "id": "import-error-string-subclass-uses-args",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self):\n  print(\"format\")\n  return \"owned\"\ne=ImportError(S(\"native\"))\nprint(str(e))\ne.args=(\"changed\",)\nprint(str(e))\n",
+      "stdout": "format\nowned\nchanged\n"
+    },
+    {
+      "id": "import-error-string-subclass-msg-not-selected",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"wrong\")\ne=ImportError(\"original\")\ne.msg=S(\"unselected\")\nprint(str(e))\n",
+      "stdout": "original\n"
+    },
+    {
+      "id": "import-error-string-subclass-error",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"owned\")\ne=ImportError(S(\"native\"))\ntry: str(e)\nexcept ValueError as x: print(str(x))\n",
+      "stdout": "owned\n"
     }
   ],
   "reference_boundaries": [
