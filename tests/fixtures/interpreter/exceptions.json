@@ -2456,6 +2456,12 @@
       "id": "attribute-context-direct-native-value",
       "source": "a=7\ntry: a.missing\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
       "stdout": "missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-optional-lookups-skip-setters",
+      "source": "class E(AttributeError):\n def __setattr__(self,name,value):\n  print(\"unexpected setter\")\n  super().__setattr__(name,value)\nclass A:\n def __getattr__(self,name): raise E()\nprint(getattr(A(),\"missing\",7),hasattr(A(),\"missing\"))\n",
+      "stdout": "7 False\n"
     }
   ],
   "reference_boundaries": [

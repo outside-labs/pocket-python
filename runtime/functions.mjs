@@ -454,7 +454,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     } finally { leave(); }
   };
   const {dispatch, call, deliver, notifyNext, recover, attributeFailure, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement} = operationRuntime({state, memory, values, classes,
-    moduleContext, maxDepth, allocate, mutate, python, nameError, hard, charge, enter, bind, block, store, onOutput,
+    moduleContext, maxDepth, allocate, mutate, python, nameError, addTrace, hard, charge, enter, bind, block, store, onOutput,
     setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
@@ -723,7 +723,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         frame.leave(); state.frames.pop(); return;
       }
       if (signal.kind === "raise") {
-        const recovery = recover(returned, frame.completion, frame.callsite);
+        const recovery = recover(returned, frame.completion, frame.callsite, true);
         if (recovery) {
           retainTransfer(state.temporaries, [], frame.completion);
           state.current = {...frame.callsite, instruction: frame.returnInstruction};
@@ -928,7 +928,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         }
       } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
         const owner = frame.pool.module;
-        const read = task => { attributeRead = undefined; dispatch(task); };
+        const read = task => {
+          attributeRead = undefined;
+          if (task.operation === "get") task = attributeTask(task.receiver, task.name, task.site,
+            continuation("attribute-context", {receiver: task.receiver, key: task.key ?? task.name, after: task.completion}), task.depth);
+          dispatch(task);
+        };
         if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
         if (op === "import") {
           if (frame.pool.code.version === 5 && fifth !== undefined) dispatch(importStatement(arg, extra, fifth, summary(frame, cursor)));
