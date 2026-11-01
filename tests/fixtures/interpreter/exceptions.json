@@ -32,7 +32,8 @@
     "LA30",
     "LA31",
     "LA32",
-    "LA33"
+    "LA33",
+    "LA34"
   ],
   "cases": [
     {
@@ -4747,6 +4748,64 @@
       "stage": "LA33",
       "source": "class R:\n def __str__(self): return str(e)\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\ntry: str(e)\nexcept RecursionError: print(\"recursive\")\n",
       "stdout": "recursive\n"
+    },
+    {
+      "id": "encode-composed-record-program",
+      "stage": "LA34",
+      "source": "class RecordEncodingError(UnicodeEncodeError):\n    def __init__(self, record, start, end):\n        super().__init__(\"ascii\", record[\"text\"], start, end, \"ASCII required\")\n        self.record = record\n\n\ndef encode_record(record):\n    text = record[\"text\"]\n    for index in range(len(text)):\n        if ord(text[index]) > 127:\n            error = RecordEncodingError(record, index, index + 1)\n            error.add_note(\"check the original record\")\n            raise error from ValueError(record[\"id\"])\n    return text.encode(\"ascii\")\n\n\nrecord = {\"id\": 7, \"text\": \"A\u96eaB\"}\ntry:\n    encode_record(record)\nexcept RecordEncodingError as error:\n    print(error.record is record, error.object is record[\"text\"], error.encoding)\n    print(str(error))\n    print(error.__cause__.args[0], error.__notes__[0])\n",
+      "stdout": "True True ascii\n'ascii' codec can't encode character '\\u96ea' in position 1: ASCII required\n7 check the original record\n"
+    },
+    {
+      "id": "encode-composed-core-program",
+      "stage": "LA34",
+      "source": "text=\"A\u96eaB\"\ne=UnicodeEncodeError(\"ascii\",text,1,2,\"rejected\")\ntry: raise e from None\nexcept UnicodeError as caught:\n print(caught is e,caught.object is text,caught.encoding,caught.start,caught.end)\n print(str(caught))\n",
+      "stdout": "True True ascii 1 2\n'ascii' codec can't encode character '\\u96ea' in position 1: rejected\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "encode-composed-dynamic-program",
+      "stage": "LA34",
+      "source": "scope={}\nexec(compile(\"class Error(UnicodeEncodeError): pass\\ne=Error('ascii','\u96ea',0,1,'bad')\",\"encoding-input.py\",\"exec\"),scope)\ne=scope[\"e\"]\ne.add_note(\"dynamic\")\nprint(str(e),type(e) is scope[\"Error\"],e.__notes__[0])\n",
+      "stdout": "'ascii' codec can't encode character '\\u96ea' in position 0: bad True dynamic\n"
+    },
+    {
+      "id": "encode-composed-dynamic-failure",
+      "stage": "LA34",
+      "source": "exec(compile(\"def fail():\\n raise UnicodeEncodeError('ascii','\u96ea',0,1,'bad')\\nfail()\",\"encoding-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "UnicodeEncodeError"
+    },
+    {
+      "id": "encode-composed-generator-cleanup",
+      "stage": "LA34",
+      "source": "def work():\n try: yield UnicodeEncodeError(\"a\",\"\u96ea\",0,1,\"bad\")\n finally: raise UnicodeEncodeError(\"a\",\"x\",0,1,\"cleanup\")\ni=work()\ne=next(i)\ntry: i.close()\nexcept UnicodeError as caught:\n print(caught.object,str(caught))\nprint(e.object,e.reason)\n",
+      "stdout": "x 'a' codec can't encode character '\\x78' in position 0: cleanup\n\u96ea bad\n"
+    },
+    {
+      "id": "encode-composed-module-records",
+      "stage": "LA34",
+      "source": "import helper\nrecord={\"text\":\"\u96ea\"}\ntry: helper.fail(record)\nexcept UnicodeEncodeError as e:\n print(e.record is record,e.object is record[\"text\"],str(e),e.__cause__.args[0])\n",
+      "stdout": "True True 'ascii' codec can't encode character '\\u96ea' in position 0: bad 7\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "class Error(UnicodeEncodeError): pass\ndef fail(record):\n e=Error(\"ascii\",record[\"text\"],0,1,\"bad\")\n e.record=record\n record[\"error\"]=e\n e.add_note(\"check\")\n raise e from ValueError(7)\n"
+        }
+      ]
+    },
+    {
+      "id": "encode-composed-callback-cause",
+      "stage": "LA34",
+      "source": "cause=ValueError(\"original\")\nclass R:\n def __str__(self): raise cause\ne=UnicodeEncodeError(\"a\",\"x\",0,1,\"r\")\ne.reason=R()\ntry:\n try: raise e\n except UnicodeEncodeError: str(e)\nexcept ValueError as caught: print(caught is cause,caught.__context__ is e)\n",
+      "stdout": "True True\n"
     }
   ],
   "reference_boundaries": [

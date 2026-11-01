@@ -88,6 +88,20 @@ test('host encoding summaries do not execute source formatting callbacks', async
   assert.equal(result.stdout, ''); assert.equal(result.error.type, 'UnicodeEncodeError'); closed(result.closed);
 });
 
+test('composed encoding errors retain original dynamic frames', async () => {
+  const source = corpus.cases.find(item => item.id === 'encode-composed-dynamic-failure').source;
+  const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'UnicodeEncodeError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', 'encoding-original.py', 3], ['fail', 'encoding-original.py', 2]]);
+  closed(result.closed);
+});
+
+test('module encoding cycles survive suspended generator cleanup', async () => {
+  await lifetime('import helper\ndef work():\n try: helper.fail()\n except UnicodeEncodeError as e:\n  try: yield e\n  finally: print(str(e),e.record[0] is e)\ni=work()\ne=next(i)\nprint("entered")\ni.close()\n',
+    "entered\n'a' codec can't encode character '\\u96ea' in position 0: bad True\n", [{name: 'helper', source: 'class E(UnicodeEncodeError): pass\ndef fail():\n e=E("a","雪",0,1,"bad")\n e.record=[e]\n e.__cause__=ValueError(e.record)\n e.add_note("record")\n raise e\n'}]);
+});
+
 test('Unicode translation initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeTranslateError("abc",I(),2,"bad")\nprint(e.object,e.start,e.end,e.reason)\n', 'entered\nabc 1 2 bad\n');
 });
