@@ -121,6 +121,25 @@ test('runtime decode metadata retains the explicit native field boundary', async
   assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
 });
 
+test('decoding messages retain reason results through interrupted encoding callbacks', async () => {
+  await lifetime('class R:\n def __str__(self):\n  e.reason=None\n  return "kept"\nclass C:\n def __str__(self):\n  e.object=b"\\xff"\n  e.encoding=None\n  print("entered")\n  return "codec"\ne=UnicodeDecodeError("a",b"x",0,1,"r")\ne.reason=R()\ne.encoding=C()\nprint(str(e))\n', "entered\n'codec' codec can't decode byte 0xff in position 0: kept\n");
+});
+
+test('decoding messages retain temporary reason callbacks through cancellation', async () => {
+  await lifetime('class R:\n def __str__(self):\n  e.reason=None\n  print("entered")\n  return "kept"\ne=UnicodeDecodeError("a",b"x",0,1,"r")\ne.reason=R()\nprint(str(e))\n', "entered\n'a' codec can't decode byte 0x78 in position 0: kept\n");
+});
+
+test('native decoding message copies share the work limit', async () => {
+  const result = await runSourceRequest({modules: [unit('e=UnicodeDecodeError("a"*1000,b"x",0,1,"r"*1000)\nprint("ready")\nwhile True: text=str(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 50000, maxWork: 100000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+});
+
+test('host decoding summaries do not execute source formatting callbacks', async () => {
+  const result = await runSourceRequest({modules: [unit('class R:\n def __str__(self):\n  print("unexpected")\n  return "r"\ne=UnicodeDecodeError("a",b"x",0,1,"r")\ne.reason=R()\ne.encoding=R()\nraise e\n')], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.stdout, ''); assert.equal(result.error.type, 'UnicodeDecodeError'); closed(result.closed);
+});
+
 test('Unicode translation initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeTranslateError("abc",I(),2,"bad")\nprint(e.object,e.start,e.end,e.reason)\n', 'entered\nabc 1 2 bad\n');
 });

@@ -158,7 +158,6 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const codecMessage = (value, site, after, depth) => {
     if (value.legacyUnicodeMessage || value.nativeFieldBoundaries?.has("object")) return exceptionString(value, site, after, depth);
-    if (value.name === "UnicodeDecodeError") hard("UNSUPPORTED", "UnsupportedOperationError", "Unicode decoding messages remain under #124");
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
     if (!(value.unicodeFields & 1)) return valueTask(values.string([]), site, after);
     return codecFieldString(value, "reason", 2, site, continuation("unicode-codec-reason", {receiver: value, depth, after}), depth);
@@ -1022,19 +1021,24 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         continuation("unicode-codec-message", {receiver: completion.receiver, reason: value, after: completion.after}), completion.depth);
     if (completion?.kind === "unicode-translate-message" || completion?.kind === "unicode-codec-message") {
       const receiver = completion.receiver, object = classes.payload(receiver.nativeFields.get("object"));
+      const codec = completion.kind === "unicode-codec-message", decoding = codec && receiver.name === "UnicodeDecodeError";
       if (!(receiver.unicodeFields & 1)) python("TypeError", "UnicodeError 'object' attribute is not set");
-      if (!(object instanceof StringValue)) python("TypeError", "UnicodeError 'object' attribute must be a string");
+      if (decoding ? !values.isBinary(object) || object.mutable : !(object instanceof StringValue))
+        python("TypeError", "UnicodeError 'object' attribute must be " + (decoding ? "a bytes" : "a string"));
       // Reason callbacks can replace the native object and numeric positions.
-      const start = receiver.nativeFields.get("start"), end = receiver.nativeFields.get("end"), size = BigInt(object.points.length);
+      const start = receiver.nativeFields.get("start"), end = receiver.nativeFields.get("end"), size = BigInt(decoding ? object.items.length : object.points.length);
       let prefix;
       if (start >= 0n && start < size && end >= 0n && end <= size && end === start + 1n) {
-        const point = object.points[Number(start)], width = point <= 0xff ? 2 : point <= 0xffff ? 4 : 8;
-        const escape = "\\" + (width === 2 ? "x" : width === 4 ? "u" : "U") + point.toString(16).padStart(width, "0");
-        prefix = "character '" + escape + "' in position " + start.toString() + ": ";
-      } else prefix = "characters in position " + start.toString() + "-" + BigInt.asIntN(64, end - 1n).toString() + ": ";
-      const codec = completion.kind === "unicode-codec-message", reason = classes.payload(codec ? completion.reason : value);
+        if (decoding) prefix = "byte 0x" + object.items[Number(start)].toString(16).padStart(2, "0") + " in position " + start.toString() + ": ";
+        else {
+          const point = object.points[Number(start)], width = point <= 0xff ? 2 : point <= 0xffff ? 4 : 8;
+          const escape = "\\" + (width === 2 ? "x" : width === 4 ? "u" : "U") + point.toString(16).padStart(width, "0");
+          prefix = "character '" + escape + "' in position " + start.toString() + ": ";
+        }
+      } else prefix = (decoding ? "bytes" : "characters") + " in position " + start.toString() + "-" + BigInt.asIntN(64, end - 1n).toString() + ": ";
+      const reason = classes.payload(codec ? completion.reason : value);
       const encoding = codec ? classes.payload(value).points : [];
-      prefix = (codec ? " codec can't encode " : "can't translate ") + prefix;
+      prefix = (codec ? " codec can't " + (decoding ? "decode " : "encode ") : "can't translate ") + prefix;
       charge(reason.points.length + encoding.length + prefix.length);
       return valueTask(values.string([...(codec ? [39, ...encoding, 39] : []), ...Array.from(prefix, char => char.codePointAt(0)), ...reason.points]), site, completion.after);
     }
