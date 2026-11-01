@@ -1768,7 +1768,7 @@ export class ClassRuntime {
   }
   exceptionValue(receiver) { return Object.hasOwn(receiver, "stopValue") ? receiver.stopValue : receiver.args[0] ?? null; }
   exceptionField(receiver, name) {
-    if (receiver.nativeFieldBoundaries?.has(name)) this.fail("UnsupportedOperationError", "Automatic attribute error metadata remains under #124", "UNSUPPORTED");
+    if (receiver.nativeFieldBoundaries?.has(name)) this.fail("UnsupportedOperationError", "Automatic native exception metadata remains under #124", "UNSUPPORTED");
     return receiver.nativeFields.get(name);
   }
   functionMetadata(receiver, field, value) {
