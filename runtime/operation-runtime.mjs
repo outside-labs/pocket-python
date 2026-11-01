@@ -5,7 +5,7 @@ import {NATIVE_SUBCLASS_BASES, CONTAINER_METHODS, CONTAINER_METHOD_NAMES} from "
 import {ARITHMETIC_SLOTS, ORDERING_SLOTS, CLASS_PROTOCOL_NAMES, NATIVE_PROTOCOL_KEYS, allowsClassSpecial} from "./class-policy.mjs";
 import {VALUE_LIMITS, StringValue} from "./values.mjs";
 import {RegistryError} from "./module-registry.mjs";
-import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
+import {ModuleValue, FrameValue, FrameLocalsValue, Environment, SOURCE_BUILTINS, environmentCell, GeneratorValue, FunctionValue, CallArguments, Cell, CodeValue, SuperValue, BuiltinValue, AppendValue, ValueMethod, ExceptionValue, EXCEPTIONS, GENERIC_EXCEPTION_BASES, matchesException, ClassValue, ClassNamespaceValue, DictionaryViewValue, NamespaceLookupCache, NamespaceLookupRequest, InstanceValue, BoundMethodValue, PropertyValue, MethodWrapperValue, PropertyAccessorValue, ProtocolIteratorValue, NotImplementedValue} from "./function-objects.mjs";
 import {completion as continuation, completionRoots, callTask, constructTask, unaryTask, valueTask, itemTask, attributeTask, instanceTask, subclassTask, sliceTask, containsTask, compareTask, dictionaryTask, dictionaryBuildTask, namespaceCreateTask, hierarchyTask, arithmeticTask, numericTask, consumeTask, operationRoots} from "./operations.mjs";
 
 export class Raised { constructor(value) { this.value = value; } }
@@ -82,6 +82,16 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const text = values.text(value);
     if (text !== null) return text;
     hard("UNSUPPORTED", "UnsupportedOperationError", "Formatting this value is outside the function stage.");
+  };
+  const makeException = (name, args, type = null) => {
+    const scalar = args.length === 1 && (args[0] === null || ["bigint", "boolean"].includes(typeof args[0]) || args[0] instanceof StringValue);
+    return allocate(ExceptionValue, name, args, scalar ? display(args[0]) : "", type);
+  };
+  const exceptionString = (value, site, after, depth) => {
+    if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
+    if (value.args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception argument displays remain under #127");
+    return value.args.length ? unaryTask(value.name === "KeyError" ? "repr" : "str", value.args[0], site, after, depth) :
+      valueTask(values.string(Array.from(value.message, char => char.codePointAt(0))), site, after);
   };
   const write = text => {
     if (moduleContext) { moduleContext.write(text, hard); return; }
@@ -262,8 +272,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (["UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError", "SyntaxError", "IndentationError", "TabError"].includes(callable.name) && args.length > 1)
         hard("UNSUPPORTED", "UnsupportedOperationError", "Structured exception constructors remain under #124");
       // Preserve the safe scalar diagnostic without running a user protocol.
-      const scalar = args.length === 1 && (args[0] === null || ["bigint", "boolean"].includes(typeof args[0]) || args[0] instanceof StringValue);
-      return allocate(ExceptionValue, callable.name, args, scalar ? display(args[0]) : "");
+      return makeException(callable.name, args);
     }
     if (callable.name === "print") {
       const text = args.map(display).join(" ") + "\n";
@@ -1564,7 +1573,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const initializePlan = (instance, args, keywords, keywordValues, site, after, depth, customNew = false) => {
     const type = instance instanceof InstanceValue ? instance.type : classes.typeOf(instance);
-    let initializer = classes.lookup(type, "__init__", instance instanceof ClassValue || instance.nativePayload !== undefined && ["list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"].includes(type.storage.family));
+    let initializer = classes.lookup(type, "__init__", instance instanceof ExceptionValue || instance instanceof ClassValue || instance.nativePayload !== undefined && ["list", "dict", "set", "bytearray", "property", "staticmethod", "classmethod", "module", "super"].includes(type.storage.family));
     if (instance instanceof ClassValue && classes.isMetaclass(type) && !classes.hasSlot(type, "__init__") && initializer.value instanceof BuiltinValue && initializer.value.name === "object.__init__")
       initializer = {found: true, value: classes.builtin("type.__init__")};
     if (!initializer.found) {
@@ -2349,12 +2358,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (["repr", "str", "repr-default"].includes(operation)) {
             if (operation === "repr-default") hard("UNSUPPORTED", "UnsupportedOperationError", "Default object representations require a later formatting stage.");
-            if (operation === "str" && value instanceof ExceptionValue) {
-              if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
-              if (value.args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception argument displays remain under #127");
-              task = value.args.length ? unaryTask(value.name === "KeyError" ? "repr" : "str", value.args[0], site, completion, depth) :
-                valueTask(values.string(Array.from(value.message, char => char.codePointAt(0))), site, completion);
-              continue;
+            if (operation === "str" && value instanceof ExceptionValue && !value.type) {
+              task = exceptionString(value, site, completion, depth); continue;
             }
             if (!userProtocol(value)) {
               const result = operation === "repr" ? values.repr(value) :
@@ -2415,9 +2420,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           continue;
         }
         state.temporaries.push(...operationRoots(task));
-        if (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod" || callable instanceof InstanceValue) {
+        if (callable instanceof BoundMethodValue || callable instanceof MethodWrapperValue && callable.kind === "staticmethod" || classes.isInstance(callable)) {
           charge(1);
-          if (callable instanceof InstanceValue) {
+          if (classes.isInstance(callable)) {
             if (++depth > maxDepth) python("RecursionError", "maximum implicit call dispatch depth exceeded");
             const plan = classes.special(callable, "__call__");
             if (!plan) python("TypeError", "Instance has no callable type slot");
@@ -2489,6 +2494,30 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           const nativeOwner = callable.nativeOwner instanceof BuiltinValue ? callable.nativeOwner.name : callable.name.split(".")[0];
           const nativeName = callable.nativeKey ?? callable.name.slice(callable.name.indexOf(".") + 1);
+          if (GENERIC_EXCEPTION_BASES.includes(nativeOwner)) {
+            if (nativeName === "__new__") {
+              const type = args[0];
+              if (!classes.isType(type) || !classes.subclass(type, classes.builtin(nativeOwner))) python("TypeError", nativeOwner + ".__new__ requires a subtype receiver");
+              const base = classes.mro(type).find(base => base instanceof BuiltinValue && GENERIC_EXCEPTION_BASES.includes(base.name));
+              task = valueTask(makeException(base.name, args.slice(1), type instanceof ClassValue ? type : null), site, completion); continue;
+            }
+            if (nativeName === "__init__") {
+              if (keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "Exception initialization requires a receiver and positional arguments");
+              const receiver = args[0], replacement = args.slice(1);
+              mutate(receiver, () => {
+                const before = [receiver.args, receiver.argsTuple, receiver.message];
+                receiver.args = replacement; receiver.argsTuple = undefined;
+                const first = replacement[0]; receiver.message = replacement.length === 1 && (first === null || ["bigint", "boolean"].includes(typeof first) || first instanceof StringValue) ? display(first) : "";
+                return () => { [receiver.args, receiver.argsTuple, receiver.message] = before; };
+              });
+              task = valueTask(null, site, completion); continue;
+            }
+            if (nativeName === "__str__") {
+              if (args.length !== 1 || keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "Exception __str__ requires one receiver");
+              task = exceptionString(args[0], site, completion, depth); continue;
+            }
+            if (nativeName === "__repr__") hard("UNSUPPORTED", "UnsupportedOperationError", "Default exception repr remains under #127");
+          }
           const containerOwner = callable instanceof ValueMethod && CONTAINER_METHOD_NAMES.has(nativeName) ? values.typeName(classes.payload(callable.receiver)) : nativeOwner;
           if (CONTAINER_METHODS[containerOwner]?.includes(nativeName)) {
             const original = callable instanceof ValueMethod ? callable.receiver : args[0];
@@ -3445,7 +3474,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
                 task = attributeTask(receiver, "__dir__", site, continuation("module-dir", {receiver, depth, after: completion}), depth); continue;
               }
               if (callable.name === "vars") {
-                if (!(receiver instanceof ModuleValue || receiver instanceof InstanceValue || classes.isType(receiver) || receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || classes.isPythonMethod(receiver))) {
+                if (!(receiver instanceof ExceptionValue || receiver instanceof ModuleValue || receiver instanceof InstanceValue || classes.isType(receiver) || receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof SuperValue || classes.isPythonMethod(receiver))) {
                   if (values.typeName(receiver) !== null || receiver instanceof FrameValue || receiver instanceof GeneratorValue || receiver instanceof ProtocolIteratorValue ||
                       receiver instanceof BuiltinValue && !classes.isType(receiver)) python("TypeError", "vars() argument must have a __dict__ attribute");
                   hard("UNSUPPORTED", "UnsupportedOperationError", "This object's namespace requires a separate dictionary contract.");

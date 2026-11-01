@@ -164,9 +164,14 @@ export class IntegerIdentityRecord {
   constructor(integer, identity) { this.integer = integer; this.identity = identity; Object.freeze(this); }
 }
 export class ExceptionValue {
-  constructor(name, args, message) {
+  constructor(name, args, message, type = null) {
     this.name = name; this.args = args; this.message = message;
     this.traceback = []; this.context = null;
+    this.attributes = null;
+    if (type !== null) {
+      this.type = type; this.attributes = new Map();
+      if (type.storage?.count) this.slotValues = new Map();
+    }
   }
 }
 export const EXCEPTIONS = Object.freeze({
@@ -183,6 +188,10 @@ export function matchesException(name, expected) {
   for (let current = name; current; current = EXCEPTIONS[current]) if (expected === current) return true;
   return false;
 }
+// These native bases share the generic BaseException layout. Structured
+// constructors/fields and StopIteration's extra storage retain their own gate.
+export const GENERIC_EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTIONS).filter(name =>
+  !["StopIteration", "AttributeError", "ImportError", "ModuleNotFoundError", "NameError", "UnboundLocalError", "SyntaxError", "IndentationError", "TabError", "UnicodeEncodeError", "UnicodeDecodeError", "UnicodeTranslateError"].includes(name)));
 
 // The source-visible builtin namespace contains only adopted capabilities.
 export const SOURCE_BUILTINS = Object.freeze(["__import__", "exec", "__name__", "eval", "compile", "print", "str", "repr", "len", "isinstance", "bool", "iter", "next", "memoryview", "bytes", "bytearray", "set", "frozenset", "all", "any", "list", "tuple", "range", "int", "float", "complex", "abs", "divmod", "pow", "round", "bin", "oct", "hex", "chr", "ord", "id", "globals", "locals", "vars", "dir", "dict", "super", "getattr", "setattr", "delattr", "hasattr", "type", "issubclass", "property", "staticmethod", "classmethod", "callable", "slice", "hash", "reversed", "object", "NotImplemented", ...Object.keys(EXCEPTIONS)]);

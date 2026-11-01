@@ -6,7 +6,8 @@
   "implemented_stages": [
     "LA8",
     "LA9",
-    "LA10"
+    "LA10",
+    "LA11"
   ],
   "cases": [
     {
@@ -156,11 +157,9 @@
     },
     {
       "id": "ordinary-exception-subclass",
-      "stage": "Future",
+      "stage": "LA11",
       "source": "class E(Exception): pass\ne=E(7)\nprint(e.args[0])\n",
-      "stdout": "7\n",
-      "owner": "#124",
-      "boundary": "Ordinary exception subclasses follow in LA-11/LA-12"
+      "stdout": "7\n"
     },
     {
       "id": "replace-args-tuple-identity",
@@ -425,6 +424,140 @@
           "line": 2
         }
       ]
+    },
+    {
+      "id": "subclass-argument-and-type-identity",
+      "stage": "LA11",
+      "source": "class E(ValueError): pass\na=[]\ne=E(a,7)\nprint(type(e) is E,isinstance(e,E),isinstance(e,ValueError),isinstance(e,Exception),e.args[0] is a,e.args[1])\n",
+      "stdout": "True True True True True 7\n"
+    },
+    {
+      "id": "subclass-default-display",
+      "stage": "LA11",
+      "source": "class E(ValueError): pass\ne=E(\"message\")\nprint(str(e),BaseException.__str__(e))\n",
+      "stdout": "message message\n"
+    },
+    {
+      "id": "subclass-custom-initializer",
+      "stage": "LA11",
+      "source": "class E(ValueError):\n def __init__(self,x,*,label=\"message\"):\n  print(self.args[0] is x)\n  super().__init__(label)\n  self.original=x\na=[]\ne=E(a,label=\"label\")\nprint(str(e),e.original is a,e.args[0])\n",
+      "stdout": "True\nlabel True label\n"
+    },
+    {
+      "id": "subclass-custom-new",
+      "stage": "LA11",
+      "source": "class E(Exception):\n def __new__(cls,x):\n  print(\"new\")\n  e=super().__new__(cls,x)\n  e.saved=x\n  return e\n def __init__(self,x):\n  print(\"init\",self.saved is x,self.args[0] is x)\ne=E([])\nprint(type(e) is E)\n",
+      "stdout": "new\ninit True True\nTrue\n"
+    },
+    {
+      "id": "subclass-new-unrelated-result",
+      "stage": "LA11",
+      "source": "class E(Exception):\n def __new__(cls): return []\n def __init__(self): print(\"bad\")\ne=E()\nprint(type(e) is list)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "subclass-new-wrong-allocator",
+      "stage": "LA11",
+      "source": "class E(Exception):\n def __new__(cls): return object.__new__(cls)\nE()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-custom-display",
+      "stage": "LA11",
+      "source": "class E(ValueError):\n def __str__(self): return \"custom\"\n def __repr__(self): return \"representation\"\ne=E(\"message\")\nprint(str(e),repr(e),BaseException.__str__(e))\n",
+      "stdout": "custom representation message\n"
+    },
+    {
+      "id": "subclass-dictionary",
+      "stage": "LA11",
+      "source": "class E(Exception): pass\ne=E()\na=[]\ne.saved=a\nd=vars(e)\nprint(d is e.__dict__,d[\"saved\"] is a)\nd[\"other\"]=7\nprint(e.other)\ne.__dict__={\"fresh\":8}\nprint(e.fresh,hasattr(e,\"saved\"))\n",
+      "stdout": "True True\n7\n8 False\n"
+    },
+    {
+      "id": "builtin-exception-dictionary",
+      "stage": "LA11",
+      "source": "e=Exception()\ne.saved=[]\nprint(vars(e) is e.__dict__,vars(e)[\"saved\"] is e.saved)\ndel e.saved\nprint(hasattr(e,\"saved\"))\n",
+      "stdout": "True True\nFalse\n"
+    },
+    {
+      "id": "subclass-slots-inherit-dictionary",
+      "stage": "LA11",
+      "source": "class E(Exception):\n __slots__=(\"saved\",)\ne=E(7)\ne.saved=[]\ne.other=8\nprint(e.args[0],e.other,vars(e)[\"other\"],\"saved\" in vars(E))\n",
+      "stdout": "7 8 8 True\n"
+    },
+    {
+      "id": "subclass-multiple-generic-bases",
+      "stage": "LA11",
+      "source": "class E(ValueError,TypeError): pass\ne=E(7)\nprint(isinstance(e,ValueError),isinstance(e,TypeError),e.args[0])\n",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "subclass-ordinary-mixin",
+      "stage": "LA11",
+      "source": "class M:\n def result(self): return self.args[0]\nclass E(M,ValueError): pass\ne=E(7)\nprint(e.result(),e.args[0],isinstance(e,Exception))\nprint(E.__base__ is ValueError)\n",
+      "stdout": "7 7 True\nTrue\n"
+    },
+    {
+      "id": "subclass-layout-conflict",
+      "stage": "LA11",
+      "source": "class E(Exception,list): pass\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-inherited-descriptor",
+      "stage": "LA11",
+      "source": "class E(Exception):\n @property\n def args(self): return (9,)\ne=E(7)\nprint(e.args[0],BaseException.args.__get__(e)[0],str(e))\n",
+      "stdout": "9 7 7\n"
+    },
+    {
+      "id": "subclass-default-keyword-error",
+      "stage": "LA11",
+      "source": "class E(Exception): pass\nE(message=7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-init-result-error",
+      "stage": "LA11",
+      "source": "class E(Exception):\n def __init__(self): return 7\nE()\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-native-new-receiver-error",
+      "stage": "LA11",
+      "source": "BaseException.__new__(int)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-native-init-receiver-error",
+      "stage": "LA11",
+      "source": "BaseException.__init__([])\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "subclass-chain-fields",
+      "stage": "LA11",
+      "source": "class E(Exception): pass\ne=E()\nc=ValueError()\ne.__cause__=c\nprint(e.__cause__ is c,e.__suppress_context__)\ne.args=[7]\nprint(e.args[0])\n",
+      "stdout": "True True\n7\n"
+    },
+    {
+      "id": "subclass-call-equality-hash",
+      "stage": "LA11",
+      "source": "class E(Exception):\n def __call__(self): return self.args[0]\n def __eq__(self,other): return True\n def __hash__(self): return 7\ne=E(8)\nprint(e(),e==9,hash(e),{e:1}[e])\n",
+      "stdout": "8 True 7 1\n"
+    },
+    {
+      "id": "structured-subclass-deferred",
+      "stage": "Future",
+      "source": "class E(StopIteration): pass\ne=E(7)\nprint(e.value)\n",
+      "stdout": "7\n",
+      "owner": "#124",
+      "boundary": "Structured native exception subclasses retain their layout/field gate"
     }
   ]
 }

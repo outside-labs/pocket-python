@@ -84,3 +84,10 @@ test('unhandled chain summaries retain source frames without exporting live exce
   assert.equal(result.error.suppressContext, true);
   assert.deepEqual(result.error.traceback.map(frame => frame.location.span[0]), [3, 2]); closed(result.closed);
 });
+
+for (const slot of ['new', 'init']) test('exception subclass ' + slot + ' callbacks retain construction across park/cancel/close', async () => {
+  const source = slot === 'new' ?
+    'class E(Exception):\n def __new__(cls,x):\n  print("entered")\n  return super().__new__(cls,x)\ne=E([7])\nprint(e.args[0][0])\n' :
+    'class E(Exception):\n def __init__(self,x):\n  print("entered")\n  self.saved=x\n  super().__init__(x)\ne=E([7])\nprint(e.saved is e.args[0])\n';
+  await lifetime(source, 'entered\n' + (slot === 'new' ? '7\n' : 'True\n'));
+});

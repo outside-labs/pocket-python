@@ -477,7 +477,7 @@ export class ValueRuntime {
     const pending = [value], seen = new Set();
     while (pending.length) {
       const item = pending.pop();
-      if (item instanceof FrameLocalsValue || item instanceof InstanceValue || item instanceof ModuleValue && item.type instanceof ClassValue || item instanceof ClassValue && item.metaclass !== null || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
+      if (item instanceof FrameLocalsValue || item instanceof InstanceValue || (item instanceof ModuleValue || item instanceof ExceptionValue) && item.type instanceof ClassValue || item instanceof ClassValue && item.metaclass !== null || item instanceof SliceValue || item instanceof ClassNamespaceValue || item instanceof DictionaryViewValue) return true;
       if (item instanceof SetValue) { pending.push(...item.storage.entries.map(entry => entry.key)); continue; }
       if (item instanceof DictValue && item.ownedKeys) return true;
       if (item instanceof BoundMethodValue && item.pythonMethod && !seen.has(item)) {
@@ -1604,9 +1604,17 @@ export function valueLayout(value) {
   if (value instanceof ValueMethod) return {bytes: 64 + 2 * value.name.length, children: [value.receiver]};
   if (value instanceof BuiltinValue) return {bytes: (value.namespaceKeys ? 8 + 8 * value.namespaceKeys.length : 0) + 48 + 2 * value.name.length + (value.nativeOwner ? 8 : 0) + (value.namespaceDictionary ? 8 : 0) + (value.qualifiedName === undefined ? 0 : 8),
     children: [...(value.namespaceKeys || []), ...(value.nativeOwner ? [value.nativeOwner] : []), ...(value.namespaceDictionary ? [value.namespaceDictionary] : []), ...(value.qualifiedName === undefined ? [] : [value.qualifiedName])]};
-  if (value instanceof ExceptionValue) return {bytes: 96 + (value.argsTuple === undefined ? 0 : 8) + (value.cause === undefined ? 0 : 8) + (Object.hasOwn(value, "stopValue") ? 8 : 0) + 2 * (value.name.length + value.message.length) +
-    value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),
-    children: [...value.args, ...(value.argsTuple === undefined ? [] : [value.argsTuple]), ...(value.context ? [value.context] : []),
-      ...(value.cause == null ? [] : [value.cause]), ...(Object.hasOwn(value, "stopValue") ? [value.stopValue] : [])]};
+  if (value instanceof ExceptionValue) {
+    const entries = value.attributes instanceof Map ? [...value.attributes] : null;
+    return {bytes: 96 + Math.max(0, value.args.length - 1) * 8 + (value.argsTuple === undefined ? 0 : 8) +
+      (value.type ? 8 : 0) + (value.attributes === null ? 0 : entries ? 32 + entries.reduce((sum, [key]) => sum + 32 + 2 * key.length, 0) : 8) +
+      (value.slotValues ? 8 + 8 * value.type.storage.count : 0) +
+      (value.cause === undefined ? 0 : 8) + (Object.hasOwn(value, "stopValue") ? 8 : 0) + 2 * (value.name.length + value.message.length) +
+      value.traceback.reduce((sum, frame) => sum + 64 + 2 * (frame.function.length + (frame.location?.filename.length || 0)), 0),
+      children: [...value.args, ...(value.argsTuple === undefined ? [] : [value.argsTuple]), ...(value.context ? [value.context] : []),
+        ...(value.cause == null ? [] : [value.cause]), ...(Object.hasOwn(value, "stopValue") ? [value.stopValue] : []),
+        ...(value.type ? [value.type] : []), ...(value.attributes === null ? [] : entries ? entries.map(([, item]) => item) : [value.attributes]),
+        ...(value.slotValues?.values() || [])]};
+  }
   throw new TypeError("Only adopted VM values have an allocation layout.");
 }

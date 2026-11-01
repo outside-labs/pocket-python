@@ -1133,6 +1133,12 @@
     },
     {
       "path": "runtime/operation-runtime.mjs",
+      "site": "if (nativeName === \"__repr__\") hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Default exception repr remains under #127\");",
+      "owner": "#124",
+      "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
+    },
+    {
+      "path": "runtime/operation-runtime.mjs",
       "site": "if (args.length > 1) hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Multiple exception arguments require the modern source profile under #124\");",
       "owner": "#124",
       "boundary": "Retained exception boundary; see the exact ordinary exception API contract."
