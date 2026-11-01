@@ -347,9 +347,13 @@ without formatting callbacks. Owned setters and descriptors keep the exception
 they raise, without automatic outer-write enrichment. Argument replacement
 does not release the independent native fields. This follows the pinned
 [generic storage failure paths](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c#L1820-L1917).
-Other native mutation layouts and deletion metadata retain #124; native wrapper
-validation of string-subtype names follows in LA-44A. Generated diagnostic
-message wording retains its existing copied-message contract.
+Other native mutation layouts and deletion metadata retain #124. LA-44A accepts
+string-subtype names in native object/module mutation wrappers and native
+method/super/object/type/module getters. Validation reads the native string
+payload without calling `__str__`, while dispatch retains the original key.
+Type namespace writes using subtype keys retain their owned-hash publication
+gate under #124, recorded as a separate corpus refusal.
+Generated diagnostic wording retains its existing copied-message contract.
 
 LA-43 accepts runtime decoding failures across modules, dynamic source, notes,
 causes and suspended generator cleanup. Run

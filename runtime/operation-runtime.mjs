@@ -427,7 +427,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     return value;
   };
   const nativeAttributeName = value => {
-    const name = values.text(value);
+    const name = values.text(classes.payload(value));
     if (name === null) python("TypeError", "attribute name must be string, not '" + classes.typeOf(value).name + "'");
     if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
     return name;
@@ -1429,14 +1429,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "attribute-write") return valueTask(null, site, completion.after);
     if (completion?.kind === "function-entry") {
-      const result = value.items[0] ? value.items[1] : classes.functionMissing(completion.receiver, values.text(completion.key), completion.operation);
+      const result = value.items[0] ? value.items[1] : classes.functionMissing(completion.receiver, values.text(classes.payload(completion.key)), completion.operation);
       return valueTask(result, site, completion.after);
     }
     if (completion?.kind === "instance-entry") {
       if (completion.operation === "set") return valueTask(null, site, completion.after);
       if (value.items[0]) return valueTask(value.items[1], site, completion.after);
       const fallback = completion.operation === "get" ? {found: completion.found, value: completion.fallback, skipNative: completion.skipNative} : {found: false, skipNative: true};
-      const plan = classes.instanceMissing(completion.receiver, values.text(completion.key), fallback);
+      const plan = classes.instanceMissing(completion.receiver, values.text(classes.payload(completion.key)), fallback);
       return plan.kind === "value" ? valueTask(plan.value, site, completion.after) :
         callTask(plan.callable, plan.args, [], [], site, completion.after, completion.depth);
     }
@@ -3380,7 +3380,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (callable.name.startsWith("function-dictionary-")) {
             const [receiver, dictionary, key, item] = args, operation = callable.name.slice("function-dictionary-".length);
-            if (!(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue) || !values.isDict(dictionary) || !values.isString(key) || args.length !== 4 || keywords.length)
+            if (!(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof ExceptionValue) || !values.isDict(dictionary) || !values.isString(classes.payload(key)) || args.length !== 4 || keywords.length)
               throw new TypeError("Invalid function dictionary operation.");
             const after = continuation("function-entry", {receiver, key, operation, after: completion});
             task = dictionaryTask(dictionary, key, site, operation === "set" ? continuation("relay", {receiver, after: completion}) : after,
@@ -3388,23 +3388,23 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           }
           if (callable.name.startsWith("instance-dictionary-")) {
             const [receiver, dictionary, key, item, found, fallback, skipNative = false] = args, operation = callable.name.slice("instance-dictionary-".length);
-            if (!classes.isInstance(receiver) || !values.isDict(dictionary) || !values.isString(key) || typeof found !== "boolean" || typeof skipNative !== "boolean" || ![6, 7].includes(args.length) || keywords.length)
+            if (!classes.isInstance(receiver) || !values.isDict(dictionary) || !values.isString(classes.payload(key)) || typeof found !== "boolean" || typeof skipNative !== "boolean" || ![6, 7].includes(args.length) || keywords.length)
               throw new TypeError("Invalid instance dictionary operation.");
             const after = continuation("instance-entry", {receiver, key, operation, found, fallback, skipNative, depth, after: completion});
             task = dictionaryTask(dictionary, key, site, after,
               depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
           }
           if (callable.name === "instance-attribute-missing") {
-            if (!classes.isInstance(args[0]) || !values.isString(args[1]) || args.length !== 2 || keywords.length)
+            if (!classes.isInstance(args[0]) || !values.isString(classes.payload(args[1])) || args.length !== 2 || keywords.length)
               throw new TypeError("Invalid instance attribute failure.");
-            classes.instanceMissing(args[0], values.text(args[1]), {found: false, skipNative: true});
+            classes.instanceMissing(args[0], values.text(classes.payload(args[1])), {found: false, skipNative: true});
           }
           if (callable.name === "method-attribute") {
             const [receiver, key] = args;
-            if (!classes.isPythonMethod(receiver) || !values.isString(key) || args.length !== 2 || keywords.length)
+            if (!classes.isPythonMethod(receiver) || !values.isString(classes.payload(key)) || args.length !== 2 || keywords.length)
               throw new TypeError("Invalid method attribute lookup.");
             if (++depth > maxDepth) python("RecursionError", "maximum method attribute lookup depth exceeded");
-            task = attributeTask(receiver.callable, values.text(key), site,
+            task = attributeTask(receiver.callable, values.text(classes.payload(key)), site,
               continuation("relay", {receiver, after: completion}), depth, "get", key); continue;
           }
           if (["method-abstract-marker", "method-documentation", "method-name", "method-qualname", "method-module"].includes(callable.name)) {
