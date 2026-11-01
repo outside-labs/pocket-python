@@ -10,7 +10,8 @@
     "LA11",
     "LA12",
     "LA12A",
-    "LA13"
+    "LA13",
+    "LA14"
   ],
   "cases": [
     {
@@ -725,12 +726,10 @@
       "error_type": "Renamed"
     },
     {
-      "id": "named-tuple-handler-deferred",
-      "stage": "Future",
+      "id": "named-tuple-handler",
+      "stage": "LA14",
       "source": "class E(Exception): pass\nhandlers=(E,ValueError)\ntry: raise E\nexcept handlers: print(\"caught\")\n",
-      "stdout": "caught\n",
-      "owner": "#124",
-      "boundary": "General handler expressions and named tuple handler values retain their exact evaluation gate"
+      "stdout": "caught\n"
     },
     {
       "id": "generated-typeerror-message-arguments",
@@ -935,6 +934,208 @@
       "stage": "LA13",
       "source": "def work():\n yield 1\n raise StopIteration(7)\ni=work()\nnext(i)\ntry: next(i)\nexcept RuntimeError as e: print(e.__cause__.args[0],e.__context__ is e.__cause__,e.__suppress_context__)\n",
       "stdout": "7 True True\n"
+    },
+    {
+      "id": "handler-call-order",
+      "stage": "LA14",
+      "source": "def choose(n,t):\n print(n)\n return t\ntry: raise ValueError(7)\nexcept choose(1,TypeError): print(\"bad\")\nexcept choose(2,(ValueError,LookupError)) as e: print(e.args[0])\nexcept choose(3,Exception): print(\"bad\")\n",
+      "stdout": "1\n2\n7\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-not-evaluated-on-success",
+      "stage": "LA14",
+      "source": "def choose():\n print(\"bad\")\n return Exception\ntry: print(\"body\")\nexcept choose(): pass\nelse: print(\"else\")\nfinally: print(\"finally\")\n",
+      "stdout": "body\nelse\nfinally\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-empty-tuple",
+      "stage": "LA14",
+      "source": "try: raise ValueError(7)\nexcept (): print(\"bad\")\nexcept ValueError as e: print(e.args[0])\n",
+      "stdout": "7\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-nested-tuple-invalid",
+      "stage": "LA14",
+      "source": "try: raise ValueError()\nexcept (ValueError,(TypeError,)): print(\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-single-tuple-element-invalid",
+      "stage": "LA14",
+      "source": "handlers=(ValueError,)\ntry: raise ValueError()\nexcept (handlers,): print(\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-expression-validates-whole-tuple",
+      "stage": "LA14",
+      "source": "def choose():\n print(\"choose\")\n return (ValueError,7)\ntry: raise ValueError()\nexcept choose(): print(\"bad\")\nfinally: print(\"finally\")\n",
+      "stdout": "choose\nfinally\n",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-expression-evaluates-before-validation",
+      "stage": "LA14",
+      "source": "def choose():\n print(\"choose\")\n return ValueError\ntry: raise ValueError()\nexcept (7,choose(),missing): pass\n",
+      "stdout": "choose\n",
+      "error_type": "NameError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-list-invalid",
+      "stage": "LA14",
+      "source": "try: raise ValueError()\nexcept [ValueError]: print(\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-instance-invalid",
+      "stage": "LA14",
+      "source": "try: raise ValueError()\nexcept ValueError(): print(\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-key-lookup",
+      "stage": "LA14",
+      "source": "handlers={\"error\":(ValueError,TypeError)}\ntry: raise ValueError(7)\nexcept handlers[\"error\"] as e: print(e.args[0])\n",
+      "stdout": "7\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-rebound-builtin",
+      "stage": "LA14",
+      "source": "ValueError=(TypeError,)\ntry: raise TypeError(7)\nexcept ValueError as e: print(e.args[0])\n",
+      "stdout": "7\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-unparenthesized-expressions",
+      "stage": "LA14",
+      "source": "def choose(t):\n print(\"choose\")\n return t\ntry: raise ValueError()\nexcept choose(ValueError),choose(TypeError): print(\"caught\")\n",
+      "stdout": "choose\nchoose\ncaught\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-callback-failure-context",
+      "stage": "LA14",
+      "source": "original=ValueError(7)\ndef choose():\n raise LookupError(8)\ntry:\n try: raise original\n except choose(): print(\"bad\")\n except LookupError: print(\"bad\")\n finally: print(\"finally\")\nexcept LookupError as e: print(e.__context__ is original,e.args[0])\n",
+      "stdout": "finally\nTrue 8\n"
+    },
+    {
+      "id": "handler-bare-reraise-callback",
+      "stage": "LA14",
+      "source": "original=ValueError(7)\ndef choose(): raise\ntry:\n try: raise original\n except choose(): print(\"bad\")\nexcept ValueError as e: print(e is original,e.__context__ is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "handler-local-closure",
+      "stage": "LA14",
+      "source": "def outer():\n handlers=(ValueError,)\n def run():\n  try: raise ValueError(7)\n  except handlers as e: print(e.args[0])\n  try: e\n  except UnboundLocalError: print(\"cleared\")\n run()\nouter()\n",
+      "stdout": "7\ncleared\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-expression-original-frames",
+      "stage": "LA14",
+      "source": "def choose():\n raise LookupError(8)\ndef run():\n try: raise ValueError(7)\n except choose(): pass\n finally: print(\"finally\")\nrun()\n",
+      "stdout": "finally\n",
+      "error_type": "LookupError",
+      "error_frames": [
+        {
+          "function": "<module>",
+          "line": 7
+        },
+        {
+          "function": "run",
+          "line": 5
+        },
+        {
+          "function": "choose",
+          "line": 2
+        }
+      ],
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "handler-descriptor-expression",
+      "stage": "LA14",
+      "source": "class Select:\n def __get__(self,obj,owner):\n  print(\"select\")\n  return (ValueError,)\nclass H: target=Select()\ntry: raise ValueError(7)\nexcept H.target as e: print(e.args[0])\n",
+      "stdout": "select\n7\n"
+    },
+    {
+      "id": "handler-tuple-subtype-native-storage",
+      "stage": "LA14",
+      "source": "class T(tuple):\n def __iter__(self):\n  print(\"bad iter\")\n  return iter([])\n def __getitem__(self,key):\n  print(\"bad item\")\n  return TypeError\nhandlers=T((ValueError,))\ntry: raise ValueError(7)\nexcept handlers as e: print(e.args[0])\n",
+      "stdout": "7\n"
+    },
+    {
+      "id": "handler-expression-actual-ancestry",
+      "stage": "LA14",
+      "source": "class M(type):\n def __subclasscheck__(cls,other):\n  print(\"bad\")\n  return True\nclass E(Exception,metaclass=M): pass\ndef choose(): return E\ntry: raise ValueError()\nexcept choose(): print(\"bad\")\nexcept ValueError: print(\"native\")\n",
+      "stdout": "native\n"
+    },
+    {
+      "id": "handler-tuple-name-not-flattened",
+      "stage": "LA14",
+      "source": "handlers=(ValueError,)\ntry: raise ValueError()\nexcept handlers,TypeError: print(\"bad\")\n",
+      "stdout": "",
+      "error_type": "TypeError",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
     }
   ]
 }

@@ -1,7 +1,6 @@
 import {parseSource, freezeSourceTree} from "./source-parser.mjs";
 import {SourceError, SOURCE_LIMITS} from "./source-tokens.mjs";
 import {verifyFunctions, FUNCTION_LIMITS} from "./function-bytecode.mjs";
-import {EXCEPTIONS} from "./function-objects.mjs";
 import {allowsClassSpecial} from "./class-policy.mjs";
 import {isPythonIdentifier} from "./source-identifiers.mjs";
 
@@ -606,8 +605,7 @@ class Compiler {
         }
         else if (value.kind === "Try") {
           const handlers = value.handlers.map(handler => {
-            if (!this.classes && handler.types.some(type => !Object.hasOwn(EXCEPTIONS, type.name))) this.fail("Handlers must name adopted builtin exception classes.", handler);
-            return [handler.types.map(type => type.name), handler.alias, makeBlock(handler.body), handler.span];
+            return [handler.expression === null ? [] : makeBlock([handler.expression], true), handler.alias, makeBlock(handler.body), handler.span];
           });
           emit(value, "try", makeBlock(value.body), handlers, value.otherwise.length ? makeBlock(value.otherwise) : null, value.final.length ? makeBlock(value.final) : null);
         } else if (value.kind === "Import") {
@@ -651,7 +649,7 @@ class Compiler {
             visitBlock(extra); remember(arg); visitBlock(other); visitBlock(final);
           } else if (op === "try") {
             visitBlock(arg); visitBlock(other);
-            for (const [types, alias, body] of extra) { types.forEach(remember); if (alias) remember(alias); visitBlock(body); }
+            for (const [types, alias, body] of extra) { if (Array.isArray(types)) types.forEach(remember); else visitBlock(types); if (alias) remember(alias); visitBlock(body); }
             visitBlock(final);
           }
         }
@@ -698,7 +696,7 @@ class Compiler {
             visitBlock(owner, extra); remember(arg); visitBlock(owner, other); visitBlock(owner, final);
           } else if (op === "try") {
             visitBlock(owner, arg); visitBlock(owner, other);
-            for (const [types, alias, body] of extra) { types.forEach(remember); if (alias) remember(alias); visitBlock(owner, body); }
+            for (const [types, alias, body] of extra) { if (Array.isArray(types)) types.forEach(remember); else visitBlock(owner, types); if (alias) remember(alias); visitBlock(owner, body); }
             visitBlock(owner, final);
           }
         }

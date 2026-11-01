@@ -287,15 +287,26 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     throw new Raised(value);
   };
   const validateHandlers = types => {
-    for (const type of types) if (!exceptionClass(type)) {
-      if (values.isSequenceType(type, "tuple")) hard("UNSUPPORTED", "UnsupportedOperationError", "Named tuple handler values require the #124 handler-expression contract");
-      python("TypeError", "catching classes that do not inherit from BaseException is not allowed");
+    for (const type of types) {
+      charge(1);
+      if (!exceptionClass(type)) python("TypeError", "catching classes that do not inherit from BaseException is not allowed");
     }
+  };
+  const handlerBody = () => {
+    const frame = state.frames.at(-1), task = frame.tasks.at(-1);
+    const [, alias, body] = task.instruction[2][task.handlerIndex];
+    task.phase = "handler"; task.alias = alias;
+    const writing = alias ? store(frame, alias, task.caught, true, continuation("store-body", {body})) : null;
+    if (writing) return writing;
+    block(frame, body); return null;
   };
   const handlerNext = (position, names, site) => {
     const frame = state.frames.at(-1), task = frame.tasks.at(-1), handlers = task.instruction[2];
     while (task.handlerIndex < handlers.length) {
-      const [types, alias, body, span] = handlers[task.handlerIndex];
+      const [types, , , span] = handlers[task.handlerIndex];
+      if (!Array.isArray(types)) {
+        task.phase = "handler-expression"; block(frame, types); return null;
+      }
       if (position < types.length) {
         state.current = {...state.current, location: task.site ? {filename: task.site.filename, span} : null};
         const after = continuation("handler-type", {position, names});
@@ -304,12 +315,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         return handlerType(after, result.value, site);
       }
       validateHandlers(names);
-      if (!types.length || names.some(type => exceptionMatches(task.caught, type))) {
-        task.phase = "handler"; task.alias = alias;
-        const writing = alias ? store(frame, alias, task.caught, true, continuation("store-body", {body})) : null;
-        if (writing) return writing;
-        block(frame, body); return null;
-      }
+      if (!types.length || names.some(type => exceptionMatches(task.caught, type))) return handlerBody();
       task.handlerIndex++; position = 0; names = [];
     }
     task.phase = "unmatched"; settle({kind: "raise", value: task.caught}); return null;
@@ -617,7 +623,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
           void body;
           if (task.phase === "body" && signal.kind === "raise") {
             task.phase = "matching"; task.caught = signal.value; frame.activeException = signal.value; frame.ownsException = true;
-            if (frame.callable.globals.dictionary !== null || frame.namespaceEnvironment) {
+            if (handlers.some(([types]) => !Array.isArray(types)) || frame.callable.globals.dictionary !== null || frame.namespaceEnvironment) {
               task.handlerIndex = 0; const matching = handlerNext(0, [], state.current);
               if (matching) dispatch(matching); return;
             }
@@ -636,6 +642,16 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               }
               block(frame, clause[2]); return;
             }
+          } else if (task.phase === "handler-expression" && signal.kind === "normal") {
+            const value = classes.payload(signal.value);
+            state.temporaries.push(signal.value);
+            const types = values.isSequenceType(value, "tuple") ? value.items : [signal.value];
+            validateHandlers(types);
+            if (types.some(type => exceptionMatches(task.caught, type))) {
+              const writing = handlerBody(); if (writing) dispatch(writing); return;
+            }
+            task.phase = "matching"; task.handlerIndex++;
+            const matching = handlerNext(0, [], state.current); if (matching) dispatch(matching); return;
           } else if (task.phase === "body" && signal.kind === "normal" && otherwise !== null) {
             task.phase = "else"; block(frame, otherwise); return;
           }

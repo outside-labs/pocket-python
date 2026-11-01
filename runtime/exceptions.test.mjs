@@ -110,3 +110,24 @@ test('lazy generated message arguments obey shared allocation limits', async () 
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
+
+test('handler expression callbacks preserve the caught exception through park/cancel/close', async () => {
+  await lifetime('def choose():\n print("entered")\n return (ValueError,)\ne=ValueError([7])\ntry: raise e\nexcept choose() as caught: print(caught is e,caught.args[0][0])\n', 'entered\nTrue 7\n');
+});
+
+test('temporary handler tuples and classes remain owned during descriptor callbacks', async () => {
+  await lifetime('class H:\n @property\n def handlers(self):\n  print("entered")\n  class E(Exception): pass\n  return (E,ValueError)\ntry: raise ValueError([7])\nexcept H().handlers as e: print(e.args[0][0])\n', 'entered\n7\n');
+});
+
+test('handler expression blocks require modern bytecode and a verified expression result', () => {
+  const original = compileSource('try: raise ValueError()\nexcept ValueError: pass\n').program;
+  for (const change of [
+    program => { program.version = 3; },
+    program => { program.functions[0].blocks[0].instructions.find(item => item[0] === 'try')[2][0][0] = null; },
+    program => { program.functions[0].blocks[0].instructions.find(item => item[0] === 'try')[2][0][0] = 0; },
+    program => { program.functions[0].blocks[0].instructions.find(item => item[0] === 'try')[2][0][0] = 999999; },
+  ]) {
+    const program = structuredClone(original); change(program);
+    assert.throws(() => verifyFunctions(program), {code: 'BYTECODE'});
+  }
+});

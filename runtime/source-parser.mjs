@@ -387,14 +387,12 @@ class Parser {
       if (bare) this.fail("A bare handler must be last.", clause);
       const parenthesized = this.at("(");
       const type = this.at(":") ? null : this.expressionList();
-      const types = type === null ? [] : type.kind === "Tuple" ? type.items : [type];
-      if ((type !== null && !types.length) || types.some(value => value.kind !== "Name")) this.unsupported("Only nonempty named builtin exception clauses are adopted.", type || clause);
       if (type?.kind === "Tuple" && !parenthesized && this.at("as")) this.fail("Multiple handler types require parentheses with an alias.");
       const alias = this.eat("as") ? this.name().value : null;
       if (type === null && alias !== null) this.fail("A bare handler cannot bind an alias.", clause);
       bare = type === null;
       const handlerBody = this.suite();
-      handlers.push(this.node("Handler", clause, {types, alias, body: handlerBody}, handlerBody.at(-1)));
+      handlers.push(this.node("Handler", clause, {expression: type, alias, body: handlerBody}, handlerBody.at(-1)));
     }
     let otherwise = [], final = [];
     if (this.eat("else")) { if (!handlers.length) this.fail("Try else requires an exception handler."); otherwise = this.suite(); }

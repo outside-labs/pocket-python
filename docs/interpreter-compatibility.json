@@ -1050,8 +1050,8 @@
     {
       "id": "exceptions",
       "status": "partial",
-      "scope": "Adopted builtin catch/raise/bare reraise, try/except/else/finally, active context and source diagnostics. LA-8\u2013LA-13 adopt generic argument identity and atomic replacement; lazy runtime message arguments and actual failed mapping keys; chaining metadata and explicit causes/suppression; the named generic exception subclass layouts, owned class normalization and actual-ancestry named handlers. Composed Node/Chromium and offline console cases retain source frames, interruption and zero logical teardown.",
-      "gaps": "Exception groups/except*, general handler expressions/named tuple values, traceback objects/mutation, notes and structured native exception constructors/fields/subclasses remain #124. Generator throw of user classes remains #120; recursive/multiple-argument/native exception repr families remain #127.",
+      "scope": "Adopted builtin catch/raise/bare reraise, try/except/else/finally, active context and source diagnostics. LA-8\u2013LA-13 adopt generic argument identity and atomic replacement; lazy runtime message arguments and actual failed mapping keys; chaining metadata and explicit causes/suppression; the named generic exception subclass layouts, owned class normalization and actual-ancestry named handlers. Composed Node/Chromium and offline console cases retain source frames, interruption and zero logical teardown. LA-14 adopts lazy handler expressions and named/empty flat tuples, with complete validation, actual-MRO matching and owned callback execution.",
+      "gaps": "Exception groups/except*, traceback objects/mutation, notes and structured native exception constructors/fields/subclasses remain #124. Generator throw of user classes remains #120; recursive/multiple-argument/native exception repr families remain #127.",
       "reference_version": "3.14.7",
       "targets": [
         "node",
@@ -1075,11 +1075,14 @@
         "tests/fixtures/interpreter/exceptions.json:generated-keyerror-owned-key",
         "tests/fixtures/interpreter/exceptions.json:exception-record-loader",
         "tests/fixtures/interpreter/exceptions.json:exception-module-identity",
-        "tests/fixtures/interpreter/exceptions.json:exception-dynamic-source"
+        "tests/fixtures/interpreter/exceptions.json:exception-dynamic-source",
+        "tests/fixtures/interpreter/exceptions.json:named-tuple-handler",
+        "tests/fixtures/interpreter/exceptions.json:handler-call-order",
+        "tests/fixtures/interpreter/exceptions.json:handler-expression-validates-whole-tuple",
+        "tests/fixtures/interpreter/exceptions.json:handler-tuple-subtype-native-storage"
       ],
       "boundary_evidence": [
         "tests/fixtures/interpreter/exceptions.json:structured-subclass-deferred",
-        "tests/fixtures/interpreter/exceptions.json:named-tuple-handler-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-groups-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-traceback-object-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-structured-constructor-deferred",
