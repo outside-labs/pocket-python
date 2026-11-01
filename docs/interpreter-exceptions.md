@@ -16,13 +16,16 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-13 | Composed record loading, modules, dynamic source, message callback failures, empty exhaustion arguments, PEP 479 causes, suspended cleanup and offline stop/restart/profile updates | The 123-case corpus has 115 semantic/error observations and eight explicit refusals; 24 cases are explicitly shared with core-source/1. These are finite API observations, not an overall Python completion measure. |
 | LA-14 | Lazy handler expressions, named/empty flat tuples, attribute/call/subscript selection and tuple subclasses | Each selected expression completes before all flat tuple elements are validated. Matching uses actual ancestry. Nested tuples and nonexception elements raise TypeError; later clauses are evaluated only after a valid nonmatch. |
 | LA-15 | `BaseException.add_note(note, /)`, inherited bound/unbound calls, lazy `__notes__`, string identity, ordinary note replacement/deletion and owned attribute hooks | Nonstring notes fail before lookup. An existing list or list subclass is appended through native storage; a missing attribute creates a list through ordinary assignment. Notes preserve `args` and `str(error)`; host summaries and traceback rendering retain their separate diagnostic contract. |
+| LA-16 | Composed handler/note record loading, modules, dynamic source, reraises and generator suspension during handler selection; offline cancellation and restart | The corpus records 174 observations: 167 semantic/error comparisons and seven explicit refusals, with 39 cases shared by core-source/1. Handler and note callbacks preserve zero logical teardown, including suspended selection and cyclic note dictionaries. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
 through draining, instruction stepping and parked execution. Logical work,
 allocation and cancellation limits continue to apply. Host error summaries
 copy safe diagnostics without exporting live exception objects or invoking
-arbitrary message callbacks.
+arbitrary message callbacks. Notes remain source-visible values; host summaries
+do not execute note getters or format arbitrary values in manually replaced
+note lists.
 
 Exception groups, traceback objects, specialized native exception fields,
 serialization and remaining formatting families retain separate gates.
@@ -34,6 +37,8 @@ RuntimeError, SystemError and RecursionError. Native fields beyond the adopted
 argument/chaining storage and ordinary dictionaries retain their named gates.
 
 Run `examples/interpreter_exceptions.py` unchanged on CPython or in the console.
+It selects a tuple of reusable error types through a function and adds a note
+while preserving the original failed key and cause.
 The exact corpus is included in the shared Node/Chromium matrix:
 
 ```sh

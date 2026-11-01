@@ -12,7 +12,8 @@
     "LA12A",
     "LA13",
     "LA14",
-    "LA15"
+    "LA15",
+    "LA16"
   ],
   "cases": [
     {
@@ -1280,6 +1281,66 @@
       "stage": "LA15",
       "source": "class E(Exception):\n @property\n def __notes__(self):\n  self.args=(8,)\n  return self.saved\ne=E(7)\ne.saved=[]\ne.add_note(\"one\")\nprint(e.args[0],e.saved[0])\n",
       "stdout": "8 one\n"
+    },
+    {
+      "id": "handler-notes-record-loader",
+      "source": "\"\"\"Select reusable errors and attach notes while preserving original causes.\"\"\"\n\n\nclass RecordError(ValueError):\n    def __init__(self, key, reason):\n        super().__init__(reason)\n        self.key = key\n\n\ndef load(records, key):\n    try:\n        return records[key]\n    except KeyError as cause:\n        error = RecordError(key, \"record missing\")\n        error.add_note(\"check the record key\")\n        raise error from cause\n\n\ndef failure_types():\n    return (RecordError,)\n\n\nrecords = {\"ready\": [7, 8]}\nprint(len(load(records, \"ready\")))\nkey = \"absent\"\ntry:\n    load(records, key)\nexcept failure_types() as error:\n    print(str(error))\n    print(error.key is key, error.__cause__.args[0] is key)\n    print(error.__suppress_context__, error.__context__ is error.__cause__)\n    print(error.__notes__[0])\nfinally:\n    print(\"finished\")\n",
+      "stage": "LA16",
+      "stdout": "2\nrecord missing\nTrue True\nTrue True\ncheck the record key\nfinished\n"
+    },
+    {
+      "id": "handler-notes-module-identity",
+      "source": "from errors import read,handlers\nkey=\"missing\"\ntry: read({},key)\nexcept handlers() as e: print(e.args[0] is key,e.__cause__.args[0] is key,e.__notes__[0])\n",
+      "imports": [
+        "errors"
+      ],
+      "modules": [
+        {
+          "name": "errors",
+          "source": "class DomainError(Exception): pass\ndef handlers(): return (DomainError,)\ndef read(data,key):\n try: return data[key]\n except KeyError as cause:\n  e=DomainError(key)\n  e.add_note(\"lookup failed\")\n  raise e from cause\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "stage": "LA16",
+      "stdout": "True True lookup failed\n"
+    },
+    {
+      "id": "handler-notes-dynamic-source",
+      "source": "ns={}\nexec(compile(\"class E(Exception): pass\\ndef handlers(): return (E,)\\ndef run():\\n e=E(7)\\n e.add_note('dynamic note')\\n raise e from None\\n\",\"handler-notes-original.py\",\"exec\"),ns)\ntry: ns[\"run\"]()\nexcept ns[\"handlers\"]() as e: print(e.args[0],e.__notes__[0],e.__suppress_context__)\n",
+      "stage": "LA16",
+      "stdout": "7 dynamic note True\n"
+    },
+    {
+      "id": "handler-notes-dynamic-failure",
+      "source": "ns={}\nexec(compile(\"class E(Exception): pass\\ndef fail():\\n e=E(7)\\n e.add_note('dynamic note')\\n raise e from None\\nfail()\\n\",\"handler-notes-original.py\",\"exec\"),ns)\n",
+      "stage": "LA16",
+      "stdout": "",
+      "error_type": "E"
+    },
+    {
+      "id": "handler-notes-suspended-selection",
+      "source": "def work():\n try:\n  try: raise ValueError(7)\n  except (yield ValueError) as e:\n   e.add_note(\"selected\")\n   yield e\n finally: print(\"closed\")\ni=work()\nprint(next(i) is ValueError)\ne=i.send((ValueError,))\nprint(e.args[0],e.__notes__[0])\ni.close()\n",
+      "stage": "LA16",
+      "stdout": "True\n7 selected\nclosed\n"
+    },
+    {
+      "id": "handler-expression-generator-close",
+      "source": "def work():\n try:\n  try: raise ValueError(7)\n  except (yield ValueError): print(\"bad\")\n finally: print(\"closed\")\ni=work()\nprint(next(i) is ValueError)\ni.close()\n",
+      "stage": "LA16",
+      "stdout": "True\nclosed\n"
+    },
+    {
+      "id": "handler-expression-generator-throw-context",
+      "source": "original=ValueError(7)\ndef work():\n try:\n  try: raise original\n  except (yield ValueError): print(\"bad\")\n finally: print(\"closed\")\ni=work()\nprint(next(i) is ValueError)\ntry: i.throw(LookupError(8))\nexcept LookupError as e: print(e.__context__ is original,e.args[0])\n",
+      "stage": "LA16",
+      "stdout": "True\nclosed\nTrue 8\n"
+    },
+    {
+      "id": "handler-notes-failure-reraise",
+      "source": "class E(Exception): pass\ndef handlers(): return (E,)\ne=E(7)\ntry:\n try: raise e\n except handlers() as caught:\n  caught.add_note(\"retry failed\")\n  raise\n finally: print(\"finally\")\nexcept handlers() as caught: print(caught is e,caught.__notes__[0],caught.__context__ is None)\n",
+      "stage": "LA16",
+      "stdout": "finally\nTrue retry failed True\n"
     }
   ]
 }
