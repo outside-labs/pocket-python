@@ -165,7 +165,8 @@ export class IntegerIdentityRecord {
 }
 export class ExceptionValue {
   constructor(name, args, message, type = null) {
-    this.name = name; this.args = args; this.message = message;
+    this.name = name; this.args = args ?? []; this.message = message;
+    this.messageArgs = args === null;
     this.traceback = []; this.context = null;
     this.attributes = null;
     if (type !== null) {

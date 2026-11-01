@@ -98,3 +98,13 @@ for (const role of ['raised', 'cause']) test('owned ' + role + ' class normaliza
       'try: raise ValueError([]) from E\nexcept ValueError as e: print(e.__cause__.args[0],len(e.args[0]))\n');
   await lifetime(source, 'entered\n' + (role === 'raised' ? '7\n' : '7 0\n'));
 });
+
+test('a generated KeyError retains its temporary key after the hash callback exits', async () => {
+  await lifetime('class K:\n def __hash__(self):\n  print("entered")\n  return 7\ntry: {}[K()]\nexcept KeyError as e: print(type(e.args[0]) is K)\n', 'entered\nTrue\n');
+});
+
+test('lazy generated message arguments obey shared allocation limits', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True:\n try: len(7)\n except TypeError as e: held.append(e.args)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
