@@ -60,6 +60,10 @@ test('retained generic write errors share the allocation limit', async () => {
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+test('native attribute wrappers retain temporary subtype keys through interrupted descriptors', async () => {
+  await lifetime('class Key(str):\n def __str__(self): raise ValueError("unexpected")\nclass A:\n @property\n def field(self):\n  print("entered")\n  return [7]\nprint(object.__getattribute__(A(),Key("field"))[0])\n', 'entered\n7\n');
+});
+
 test('Unicode encoding initialization retains temporary arguments across interrupted index callbacks', async () => {
   await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeEncodeError("codec","abc",I(),2,"bad")\nprint(e.encoding,e.object,e.start,e.end,e.reason)\n', 'entered\ncodec abc 1 2 bad\n');
 });

@@ -43,7 +43,8 @@
     "LA41",
     "LA42",
     "LA43",
-    "LA44"
+    "LA44",
+    "LA44A"
   ],
   "cases": [
     {
@@ -6860,6 +6861,173 @@
       "stage": "LA44",
       "source": "class A:\n def __setattr__(self,key,value): raise ValueError(value)\nvalue=[]\ntry: A().field=value\nexcept ValueError as e: print(e.args[0] is value)\n",
       "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-unbound-set",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: pass\na=A()\nvalue=[]\nobject.__setattr__(a,key,value)\nprint(a.field is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-unbound-get",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: pass\na=A()\nvalue=[]\na.field=value\nprint(object.__getattribute__(a,key) is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-unbound-delete",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: pass\na=A()\nvalue=[]\na.field=value\nobject.__delattr__(a,key)\nprint(hasattr(a,\"field\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "native-attribute-subtype-bound-set",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: pass\na=A()\nvalue=[]\na.__setattr__(key,value)\nprint(a.field is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-bound-get",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: pass\na=A()\nvalue=[]\na.field=value\nprint(a.__getattribute__(key) is value)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-bound-delete",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: pass\na=A()\nvalue=[]\na.field=value\na.__delattr__(key)\nprint(hasattr(a,\"field\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "native-attribute-subtype-missing-6",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: __slots__=()\na=A()\ntry: object.__setattr__(a,key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "native-attribute-subtype-missing-7",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: __slots__=()\na=A()\ntry: a.__setattr__(key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "native-attribute-subtype-hook-native-forward",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A:\n __slots__=()\n def __setattr__(self,name,value):\n  print(name is key)\n  super().__setattr__(name,value)\na=A()\ntry: setattr(a,key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True\nTrue True\n"
+    },
+    {
+      "id": "native-attribute-subtype-type-get",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: field=[]\nprint(type.__getattribute__(A,key) is A.field)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-type-set",
+      "stage": "Future",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: pass\nvalue=[]\ntype.__setattr__(A,key,value)\nprint(A.field is value)\n",
+      "stdout": "True\n",
+      "owner": "#124",
+      "boundary": "Type namespace writes with string-subtype keys require owned hash publication; validation accepts the key before this retained storage refusal"
+    },
+    {
+      "id": "native-attribute-subtype-type-delete",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A: field=7\ntype.__delattr__(A,key)\nprint(hasattr(A,\"field\"))\n",
+      "stdout": "False\n"
+    },
+    {
+      "id": "native-attribute-subtype-method-get",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass A:\n def f(self): pass\na=A()\nm=a.f\nm.__func__.field=[]\nprint(type(m).__getattribute__(m,key) is m.__func__.field)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-super-get",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\nclass Base: field=[]\nclass A(Base): pass\ns=super(A,A())\nprint(super.__getattribute__(s,key) is Base.field)\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-module-get",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\na=__import__(\"helper\")\nM=type(a)\na.field=[]\nprint(M.__getattribute__(a,key) is a.field)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-module-set",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\na=__import__(\"helper\")\nM=type(a)\nvalue=[]\nM.__setattr__(a,key,value)\nprint(a.field is value)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-attribute-subtype-module-delete",
+      "stage": "LA44A",
+      "source": "class Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"field\")\na=__import__(\"helper\")\nM=type(a)\na.field=[]\nM.__delattr__(a,key)\nprint(hasattr(a,\"field\"))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "source": "pass\n",
+          "imports": [],
+          "package": false
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "False\n"
+    },
+    {
+      "id": "native-attribute-subtype-invalid-17",
+      "stage": "LA44A",
+      "source": "class A: pass\na=A()\ntry: object.__getattribute__(a,[])\nexcept TypeError: print(\"bad name\")\n",
+      "stdout": "bad name\n"
+    },
+    {
+      "id": "native-attribute-subtype-invalid-18",
+      "stage": "LA44A",
+      "source": "class A: pass\na=A()\ntry: object.__setattr__(a,[],7)\nexcept TypeError: print(\"bad name\")\n",
+      "stdout": "bad name\n"
+    },
+    {
+      "id": "native-attribute-subtype-invalid-19",
+      "stage": "LA44A",
+      "source": "class A: pass\na=A()\ntry: object.__delattr__(a,[])\nexcept TypeError: print(\"bad name\")\n",
+      "stdout": "bad name\n"
+    },
+    {
+      "id": "native-attribute-subtype-function-dictionary",
+      "stage": "LA44A",
+      "source": "class Key(str): pass\nkey=Key(\"field\")\ndef a(): pass\nvalue=[]\nobject.__setattr__(a,key,value)\nprint(object.__getattribute__(a,key) is value)\nobject.__delattr__(a,key)\nprint(hasattr(a,\"field\"))\n",
+      "stdout": "True\nFalse\n"
+    },
+    {
+      "id": "native-attribute-subtype-exception-dictionary",
+      "stage": "LA44A",
+      "source": "class Key(str): pass\nkey=Key(\"field\")\na=ValueError()\nvalue=[]\nobject.__setattr__(a,key,value)\nprint(object.__getattribute__(a,key) is value)\nobject.__delattr__(a,key)\nprint(hasattr(a,\"field\"))\n",
+      "stdout": "True\nFalse\n"
     }
   ],
   "reference_boundaries": [
