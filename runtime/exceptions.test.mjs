@@ -46,6 +46,24 @@ async function lifetime(source, expected, helpers = []) {
   } } finally { registry.close(); }
 }
 
+test('Unicode translation initialization retains temporary arguments across interrupted index callbacks', async () => {
+  await lifetime('class I:\n def __index__(self):\n  print("entered")\n  return 1\ne=UnicodeTranslateError("abc",I(),2,"bad")\nprint(e.object,e.start,e.end,e.reason)\n', 'entered\nabc 1 2 bad\n');
+});
+
+test('Unicode translation reinitialization retains original arguments after callback replacement', async () => {
+  await lifetime('e=UnicodeTranslateError("old",0,1,"bad")\nclass I:\n def __index__(self):\n  e.args=()\n  print("entered")\n  return 1\nUnicodeTranslateError.__init__(e,"new",I(),2,"next")\nprint(len(e.args),e.object,e.start,e.end,e.reason)\n', 'entered\n0 new 1 2 next\n');
+});
+
+test('Unicode translation native field cycles survive parked collection', async () => {
+  await lifetime('e=UnicodeTranslateError("abc",0,1,"bad")\ne.object=e\ne.reason=[e]\ne.encoding=e\ne.args=()\nprint("entered")\nprint(e.object is e,e.reason[0] is e,e.encoding is e)\n', 'entered\nTrue True True\n');
+});
+
+test('retained Unicode translation native graphs share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True: held.append(UnicodeTranslateError("abc",0,1,"bad"))\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('attribute enrichment setters retain the original error and temporary receiver across interruption', async () => {
   await lifetime('class E(AttributeError):\n def __setattr__(self,key,value):\n  if key=="name": print("entered")\n  super().__setattr__(key,value)\nclass A:\n def __getattr__(self,key): raise E()\ntry: A().missing\nexcept AttributeError as e: print(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
 });

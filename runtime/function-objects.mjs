@@ -170,6 +170,10 @@ export class ExceptionValue {
     this.traceback = []; this.context = null;
     this.attributes = null;
     if (EXCEPTION_FIELDS[name]) this.nativeFields = new Map(EXCEPTION_FIELDS[name].map(key => [key, null]));
+    if (name === "UnicodeTranslateError") {
+      this.nativeFields.set("start", 0n); this.nativeFields.set("end", 0n);
+      this.unicodeFields = 0;
+    }
     if (name === "AttributeError") this.attributeFields = 0;
     if (["AttributeError", "ImportError", "ModuleNotFoundError", "SyntaxError", "IndentationError", "TabError"].includes(name) && args === null) this.nativeFieldBoundaries = new Set(EXCEPTION_FIELDS[name]);
     if (type !== null) {
@@ -203,10 +207,11 @@ const SYNTAX_FIELDS = Object.freeze(["msg", "filename", "lineno", "offset", "tex
 export const EXCEPTION_FIELDS = Object.freeze({NameError: Object.freeze(["name"]), UnboundLocalError: Object.freeze(["name"]),
   AttributeError: Object.freeze(["name", "obj"]), ImportError: Object.freeze(["msg", "name", "path", "name_from"]),
   ModuleNotFoundError: Object.freeze(["msg", "name", "path", "name_from"]),
+  UnicodeTranslateError: Object.freeze(["encoding", "object", "start", "end", "reason"]),
   SyntaxError: SYNTAX_FIELDS, IndentationError: SYNTAX_FIELDS, TabError: SYNTAX_FIELDS});
 export const EXCEPTION_LAYOUTS = Object.freeze({...Object.fromEntries(GENERIC_EXCEPTION_BASES.map(name => [name, "BaseException"])),
   NameError: "NameError", UnboundLocalError: "NameError", AttributeError: "AttributeError", ImportError: "ImportError", ModuleNotFoundError: "ImportError", StopIteration: "StopIteration",
-  SyntaxError: "SyntaxError", IndentationError: "SyntaxError", TabError: "SyntaxError"});
+  SyntaxError: "SyntaxError", IndentationError: "SyntaxError", TabError: "SyntaxError", UnicodeTranslateError: "UnicodeTranslateError"});
 export const EXCEPTION_BASES = Object.freeze(Object.keys(EXCEPTION_LAYOUTS));
 
 // The source-visible builtin namespace contains only adopted capabilities.

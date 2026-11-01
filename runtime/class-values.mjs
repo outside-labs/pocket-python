@@ -1339,15 +1339,27 @@ export class ClassRuntime {
     }
     if (receiver instanceof ExceptionValue && receiver.nativeFields?.has(name) && owner instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, owner.name)) {
       if (operation === "get") return {kind: "value", value: this.exceptionField(receiver, name)};
+      if (receiver.name === "UnicodeTranslateError" && ["start", "end"].includes(name)) {
+        if (operation === "delete") this.fail("TypeError", "can't delete numeric/char attribute");
+        const raw = this.payload(item);
+        if (typeof raw !== "bigint" && typeof raw !== "boolean") this.fail("TypeError", "an integer is required");
+        item = typeof raw === "boolean" ? this.values.int(BigInt(raw)) : raw;
+        if (item < -(1n << 63n) || item >= 1n << 63n) this.fail("OverflowError", "Python int too large to convert to C ssize_t");
+      }
       const before = receiver.nativeFields.get(name);
       const present = receiver.attributeFields;
+      const unicodeFields = receiver.unicodeFields;
       const legacy = receiver.legacySyntaxMessage;
       const boundary = receiver.nativeFieldBoundaries?.delete(name);
       receiver.nativeFields.set(name, operation === "delete" ? null : item);
+      if (unicodeFields !== undefined && ["object", "reason"].includes(name)) {
+        const bit = name === "object" ? 1 : 2;
+        receiver.unicodeFields = operation === "delete" ? unicodeFields & ~bit : unicodeFields | bit;
+      }
       if (name === "msg" && legacy) receiver.legacySyntaxMessage = false;
       if (present !== undefined) receiver.attributeFields = operation === "delete" ? present & ~(name === "name" ? 1 : 2) : present | (name === "name" ? 1 : 2);
       try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
-      catch (error) { receiver.nativeFields.set(name, before); receiver.attributeFields = present; receiver.legacySyntaxMessage = legacy; if (boundary) receiver.nativeFieldBoundaries.add(name); throw error; }
+      catch (error) { receiver.nativeFields.set(name, before); receiver.attributeFields = present; receiver.unicodeFields = unicodeFields; receiver.legacySyntaxMessage = legacy; if (boundary) receiver.nativeFieldBoundaries.add(name); throw error; }
       return {kind: "value", value: null};
     }
     if (receiver instanceof ExceptionValue && ["__context__", "__cause__", "__suppress_context__", "value"].includes(name)) {
