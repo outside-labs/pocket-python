@@ -2152,6 +2152,24 @@
         "classes-source/1",
         "core-source/1"
       ]
+    },
+    {
+      "id": "import-error-string-subclass-uses-args",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self):\n  print(\"format\")\n  return \"owned\"\ne=ImportError(S(\"native\"))\nprint(str(e))\ne.args=(\"changed\",)\nprint(str(e))\n",
+      "stdout": "format\nowned\nchanged\n"
+    },
+    {
+      "id": "import-error-string-subclass-msg-not-selected",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"wrong\")\ne=ImportError(\"original\")\ne.msg=S(\"unselected\")\nprint(str(e))\n",
+      "stdout": "original\n"
+    },
+    {
+      "id": "import-error-string-subclass-error",
+      "stage": "LA20",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"owned\")\ne=ImportError(S(\"native\"))\ntry: str(e)\nexcept ValueError as x: print(str(x))\n",
+      "stdout": "owned\n"
     }
   ]
 }

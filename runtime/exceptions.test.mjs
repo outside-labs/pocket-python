@@ -204,6 +204,10 @@ test('import error native fields share the allocation budget', async () => {
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+test('import error string-subclass argument callbacks retain the message across interruption', async () => {
+  await lifetime('class S(str):\n def __str__(self):\n  print("entered")\n  return "message"\ne=ImportError(S("native"))\nprint(str(e))\n', 'entered\nmessage\n');
+});
+
 test('StopIteration native values remain owned during subclass initialization and interruption', async () => {
   await lifetime('class E(StopIteration):\n def __init__(self):\n  super().__init__([7])\n  print("entered")\ne=E()\nBaseException.__init__(e,8)\nprint(e.value[0],e.args[0])\n', 'entered\n7 8\n');
 });

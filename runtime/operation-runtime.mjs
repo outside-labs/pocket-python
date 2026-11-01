@@ -121,8 +121,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const exceptionString = (value, site, after, depth, importMessage = false) => {
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
     if (importMessage && !value.nativeFieldBoundaries?.has("msg")) {
-      const original = value.nativeFields.get("msg"), message = classes.payload(original);
-      if (message instanceof StringValue) return valueTask(original === message ? message : values.string(message.points), site, after);
+      const message = value.nativeFields.get("msg");
+      if (message instanceof StringValue) return valueTask(message, site, after);
     }
     if (value.args.length > 1) hard("UNSUPPORTED", "UnsupportedOperationError", "Multiple exception argument displays remain under #127");
     return value.args.length ? unaryTask(value.name === "KeyError" ? "repr" : "str", value.args[0], site, after, depth) :
