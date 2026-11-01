@@ -4,6 +4,9 @@ Track A [#600](https://github.com/outside-labs/pocket-python/issues/600) adopts
 focused exception slices under [#124](https://github.com/outside-labs/pocket-python/issues/124),
 using CPython 3.14.7 as the semantic oracle. Bytecode 4/5 retain their existing
 profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
+LA-28B preserves version-3 scalar SyntaxError-family message rendering rather
+than selecting uninitialized native fields. Modern construction and explicit
+native message initialization retain their adopted field semantics.
 
 | Stage | Exact surface | Boundary |
 | --- | --- | --- |
