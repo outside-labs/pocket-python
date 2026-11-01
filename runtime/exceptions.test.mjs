@@ -169,6 +169,17 @@ test('runtime ASCII decoding snapshots share the allocation budget', async () =>
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+test('runtime UTF-8 snapshots retain truncated input through parked collection', async () => {
+  await lifetime('data=bytearray(b"A\\xe1\\x80")\ntry: data.decode()\nexcept UnicodeDecodeError as error: e=error\ne.args=()\ndata=None\nprint("entered")\nprint(e.object,e.encoding,e.start,e.end,e.reason)\n',
+    "entered\nb'A\\xe1\\x80' utf-8 1 3 unexpected end of data\n");
+});
+
+test('runtime UTF-8 validation and snapshots share the work limit', async () => {
+  const result = await runSourceRequest({modules: [unit('data=b"a"*1000+b"\\xe1\\x80"\nprint("ready")\nwhile True:\n try: data.decode()\n except UnicodeDecodeError: pass\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 50000, maxWork: 150000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+});
+
 test('decoding messages retain reason results through interrupted encoding callbacks', async () => {
   await lifetime('class R:\n def __str__(self):\n  e.reason=None\n  return "kept"\nclass C:\n def __str__(self):\n  e.object=b"\\xff"\n  e.encoding=None\n  print("entered")\n  return "codec"\ne=UnicodeDecodeError("a",b"x",0,1,"r")\ne.reason=R()\ne.encoding=C()\nprint(str(e))\n', "entered\n'codec' codec can't decode byte 0xff in position 0: kept\n");
 });
