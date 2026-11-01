@@ -830,7 +830,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         return unaryTask("iterator-stop", current.receiver, site, current.after);
       }
       if (!isException(value, "StopIteration")) continue;
-      if (current.kind === "delegate-next") return valueTask(value.args[0] ?? null, site, continuation("delegate-return", {receiver: current.receiver}));
+      if (current.kind === "delegate-next") return valueTask(classes.exceptionValue(value), site, continuation("delegate-return", {receiver: current.receiver}));
       if (current.kind === "next-default") return valueTask(current.default, site, current.after);
       if (current.kind === "for-next") return valueTask(null, site, continuation("for-exhausted"));
       if (current.kind === "search-next") return valueTask(false, site, current.after);

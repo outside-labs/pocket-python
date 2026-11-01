@@ -23,6 +23,7 @@ profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 | LA-20A | Native exception lookup at each position of the actual MRO | A native base's inherited entry cannot hide a later base's own initializer, string slot or member. Mixed generic/name/attribute bases preserve native keyword initialization, explicit descriptor identity, super and slotted subclass storage. Direct native lookup keeps its inherited behavior. |
 | LA-20 | `ImportError(*args, name=None, path=None, name_from=None)` and `ModuleNotFoundError`; mutable `msg`/`name`/`path`/`name_from`, native initializers/descriptors and subclasses | A single positional argument initializes `msg`. Native `__str__` selects a string `msg`, strips string-subclass identity without calling its hooks, and otherwise uses the retained BaseException display contract. Generic BaseException initialization preserves native fields. Invalid keywords replace `args` but preserve the old fields. Automatic import-failure metadata enrichment remains an explicit field-read refusal. |
 | LA-21 | StopIteration subclasses, native construction/initialization and independent `value` storage | Native `__new__` leaves `value` None; native initialization selects the first argument. BaseException initialization and `args` replacement preserve `value`. Native deletion clears it to None. Iterator exhaustion and PEP 479 use actual ancestry, including custom MROs, while the declared solid layout owns storage. User-class generator `throw` normalization remains #120. |
+| LA-21A | `yield from` forwards independent native `StopIteration.value` | Delegation consumes the native value rather than `args[0]`, including subclass exceptions, explicit None and temporary aliases. Native extraction bypasses owned `value` properties. The retained result shares parked collection, cancellation and close ownership. |
 
 The source corpus `exceptions.json` distinguishes implemented cases from
 retained refusals. Node and Chromium execute independently compiled source
@@ -35,6 +36,16 @@ note lists.
 
 Exception groups, traceback objects, specialized native exception fields,
 serialization and remaining formatting families retain separate gates.
+
+Two delegated-value probes are recorded separately in the corpus's
+`reference_boundaries`: deleting `StopIteration.value`, or bypassing native
+initialization in a subclass, then exhausting that iterator through `yield from`.
+Both isolated CPython 3.14.7 macOS arm64 probes exited with SIGSEGV (-11).
+The pinned [native extraction code](https://github.com/python/cpython/blob/v3.14.7/Objects/genobject.c#L635-L649)
+appears to explain this through its unchecked native payload reference. These
+are retained divergences under #120, excluded from successful differential
+counts. Separate interpreter tests require safe None results and complete
+logical teardown; automated reference checks do not execute the crashing probes.
 
 NameError and UnboundLocalError now have their own adopted native layout, with
 ordinary subclass dictionaries/slots, constructors and actual-ancestry handlers.
