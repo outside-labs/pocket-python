@@ -296,6 +296,9 @@ export function completion(kind, fields = {}) {
       record = {kind, operation: fields.operation, args: operands(fields.args), position: fields.position, order: fields.order, active: fields.active ?? null, nativeInplace: fields.nativeInplace === true, depth: fields.depth, after};
       arithmeticCheck(record.operation, record.args, record.position, record.order, record.active); depthCheck(record.depth); break;
     case "attribute-write": record = {kind, receiver: fields.receiver, after}; break;
+    case "attribute-context": record = {kind, receiver: fields.receiver, key: fields.key, after}; break;
+    case "attribute-context-name": case "attribute-context-object":
+      record = {kind, receiver: fields.receiver, error: fields.error, after}; break;
     case "advertised-instance": case "advertised-super": record = {kind, receiver: fields.receiver, type: fields.type, after}; break;
     case "check-result": case "check-truth":
       record = {kind, receiver: fields.receiver, type: fields.type, depth: fields.depth, after};
@@ -435,6 +438,8 @@ function visit(record) {
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];
     case "attribute-write": return [record.receiver, ...completionRoots(record.after)];
+    case "attribute-context": return [record.receiver, ...(typeof record.key === "string" ? [] : [record.key]), ...completionRoots(record.after)];
+    case "attribute-context-name": case "attribute-context-object": return [record.receiver, record.error, ...completionRoots(record.after)];
     case "advertised-instance": case "advertised-super": case "instance-tuple": case "subclass-tuple": case "check-result": case "check-truth": return [record.receiver, record.type, ...completionRoots(record.after)];
     case "attribute-fallback": return [record.receiver, record.key, record.hook, ...completionRoots(record.after)];
     case "attribute-result": return [record.receiver, record.default, ...completionRoots(record.after)];

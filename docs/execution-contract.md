@@ -437,3 +437,12 @@ allocation in three composed observations; previous counters remain in
 costs, total quotas and transfer/teardown rules are unchanged. Exception argument
 tuples add their owned storage only when materialized; arbitrary arguments
 remain rooted without running formatting callbacks during construction.
+
+## Attribute error context accounting revision 21
+
+LA-23 retains the failed receiver and explicit attribute key while owned reads
+and exception setters run. These continuation edges use the existing traced
+root traversal and shared work budget. One existing observation adds 14
+work units; instructions, allocations, byte counts and final owners remain
+unchanged in all eight observations. Revision 20 counters are retained in
+`accounting_20_cases`. Quotas, cancellation and teardown rules are unchanged.

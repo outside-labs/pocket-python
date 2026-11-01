@@ -1108,7 +1108,8 @@
         "tests/fixtures/interpreter/exceptions.json:delegated-subclass-value-identity",
         "tests/fixtures/interpreter/exceptions.json:native-exceptions-record-source",
         "tests/fixtures/interpreter/exceptions.json:native-exceptions-module-identity",
-        "tests/fixtures/interpreter/exceptions.json:native-exceptions-delegated-record-value"
+        "tests/fixtures/interpreter/exceptions.json:native-exceptions-delegated-record-value",
+        "tests/fixtures/interpreter/exceptions.json:attribute-error-automatic-metadata-deferred"
       ],
       "boundary_evidence": [
         "tests/fixtures/interpreter/exceptions.json:exception-groups-deferred",
@@ -1117,7 +1118,6 @@
         "tests/fixtures/interpreter/exceptions.json:exception-multiple-display-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-native-repr-deferred",
         "tests/fixtures/interpreter/exceptions.json:exception-generator-throw-class-deferred",
-        "tests/fixtures/interpreter/exceptions.json:attribute-error-automatic-metadata-deferred",
         "tests/fixtures/interpreter/exceptions.json:import-error-automatic-metadata-deferred",
         "tests/fixtures/interpreter/exceptions.json:import-error-multiple-display-deferred"
       ]

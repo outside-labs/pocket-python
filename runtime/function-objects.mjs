@@ -170,6 +170,7 @@ export class ExceptionValue {
     this.traceback = []; this.context = null;
     this.attributes = null;
     if (EXCEPTION_FIELDS[name]) this.nativeFields = new Map(EXCEPTION_FIELDS[name].map(key => [key, null]));
+    if (name === "AttributeError") this.attributeFields = 0;
     if (["AttributeError", "ImportError", "ModuleNotFoundError"].includes(name) && args === null) this.nativeFieldBoundaries = new Set(EXCEPTION_FIELDS[name]);
     if (type !== null) {
       this.type = type; this.attributes = new Map();

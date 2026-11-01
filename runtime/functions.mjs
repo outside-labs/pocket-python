@@ -453,8 +453,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       generator.bindings.clear(); return value;
     } finally { leave(); }
   };
-  const {dispatch, call, deliver, notifyNext, recover, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement} = operationRuntime({state, memory, values, classes,
-    moduleContext, maxDepth, allocate, mutate, python, nameError, hard, charge, enter, bind, block, store, onOutput,
+  const {dispatch, call, deliver, notifyNext, recover, attributeFailure, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement} = operationRuntime({state, memory, values, classes,
+    moduleContext, maxDepth, allocate, mutate, python, nameError, addTrace, hard, charge, enter, bind, block, store, onOutput,
     setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
@@ -723,7 +723,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         frame.leave(); state.frames.pop(); return;
       }
       if (signal.kind === "raise") {
-        const recovery = recover(returned, frame.completion, frame.callsite);
+        const recovery = recover(returned, frame.completion, frame.callsite, true);
         if (recovery) {
           retainTransfer(state.temporaries, [], frame.completion);
           state.current = {...frame.callsite, instruction: frame.returnInstruction};
@@ -832,6 +832,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     state.current = {...summary(frame, cursor), instruction: cursor.pc - 1};
     state.temporaries = stack.slice();
     frame.currentSite = state.current.location;
+    let attributeRead;
     try {
       if (op === "const") stack.push(frame.pool.code.constants[arg]);
       else if (op === "load") {
@@ -927,6 +928,12 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         }
       } else if (["import", "module-get", "import-from", "attribute-get"].includes(op)) {
         const owner = frame.pool.module;
+        const read = task => {
+          attributeRead = undefined;
+          if (task.operation === "get") task = attributeTask(task.receiver, task.name, task.site,
+            continuation("attribute-context", {receiver: task.receiver, key: task.key ?? task.name, after: task.completion}), task.depth);
+          dispatch(task);
+        };
         if (!owner || !moduleContext) hard("BYTECODE", "BytecodeError", "Module opcode has no verified registry owner.");
         if (op === "import") {
           if (frame.pool.code.version === 5 && fifth !== undefined) dispatch(importStatement(arg, extra, fifth, summary(frame, cursor)));
@@ -934,7 +941,8 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         }
         else {
           const receiver = stack.pop();
-          if (op === "import-from" && frame.pool.code.version === 5 && !(receiver instanceof ModuleValue)) { dispatch(attributeTask(receiver, arg, summary(frame, cursor))); return; }
+          if (op === "attribute-get" && frame.pool.code.version >= 4) attributeRead = receiver;
+          if (op === "import-from" && frame.pool.code.version === 5 && !(receiver instanceof ModuleValue)) { read(attributeTask(receiver, arg, summary(frame, cursor))); return; }
           if (receiver instanceof ModuleValue) {
             const environment = receiver.environment, cell = environment.cells.get(arg);
             if (frame.pool.code.version !== 5) {
@@ -946,26 +954,26 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
               if (result.kind === "value") stack.push(result.value);
               else state.pendingImport = {plan: result.plan, inheritedException: frame.activeException};
-            } else dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "import-from" ? "import" : "get"));
+            } else read(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "import-from" ? "import" : "get"));
           } else if (op === "attribute-get" &&
               (classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, "__getattribute__") || classes.hasAttributeHook(receiver, "__getattr__") || userProtocol(receiver) && arg === "__class__" && classes.hasSlot(classes.checkingType(receiver), "__class__")))
-            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+            read(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (op === "attribute-get" && arg === "__class__") stack.push(classes.classAttribute(receiver));
           else if (op === "attribute-get" && frame.pool.code.version === 5 && ["__dict__", "__bases__"].includes(arg) && values.typeName(receiver) !== null)
-            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+            read(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (["attribute-get", "module-get"].includes(op) && arg === "__dir__" && classes.hasFixedDirectory(receiver)) {
             if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Native directories require classes-source/1.");
-            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+            read(attributeTask(receiver, arg, summary(frame, cursor)));
           } else if (op === "attribute-get" && frame.pool.code.version === 5 && classes.hasNativeProtocol(receiver, arg))
-            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+            read(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (receiver instanceof GeneratorValue) {
             if (["send", "throw", "close", "__iter__", "__next__"].includes(arg)) stack.push(allocate(ValueMethod, receiver, arg));
             else {
               if (frame.pool.code.version !== 5) hard("UNSUPPORTED", "UnsupportedOperationError", "Generator reflection requires classes-source/1");
-              dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+              read(attributeTask(receiver, arg, summary(frame, cursor)));
             }
           } else if (receiver instanceof ExceptionValue && frame.pool.code.version === 5 && (receiver.type || arg !== "args" && arg !== "value"))
-            dispatch(attributeTask(receiver, arg, summary(frame, cursor)));
+            read(attributeTask(receiver, arg, summary(frame, cursor)));
           else if (receiver instanceof ExceptionValue && arg === "args") stack.push(classes.exceptionArgs(receiver));
           else if (receiver instanceof ExceptionValue && receiver.nativeFields?.has(arg)) stack.push(classes.exceptionField(receiver, arg));
           else if (receiver instanceof ExceptionValue && arg === "value" && receiver.name === "StopIteration") stack.push(classes.exceptionValue(receiver));
@@ -982,9 +990,14 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
               hard("UNSUPPORTED", "UnsupportedOperationError", "Explicit descriptor binding requires the class profile.");
             const plan = classes.read(receiver, arg);
             if (plan.kind === "value") stack.push(plan.value);
-            else { state.temporaries.push(plan.callable, ...plan.args); call(plan.callable, plan.args, [], [], summary(frame, cursor)); }
+            else {
+              state.temporaries.push(plan.callable, ...plan.args);
+              attributeRead = undefined;
+              call(plan.callable, plan.args, [], [], summary(frame, cursor), continuation("attribute-context", {receiver, key: arg}));
+            }
           } else if (["module-get", "attribute-get"].includes(op) && CONTAINER_METHOD_NAMES.has(arg) && CONTAINER_METHODS[values.typeName(receiver)]?.includes(arg)) stack.push(allocate(ValueMethod, receiver, arg));
           else if (["module-get", "attribute-get"].includes(op) && arg === "append" && values.isList(receiver)) stack.push(allocate(AppendValue, receiver));
+          else if (op === "attribute-get" && frame.pool.code.version >= 4 && !(receiver instanceof ModuleValue)) read(attributeTask(receiver, arg, summary(frame, cursor)));
           else {
             const result = moduleContext.planAttribute(receiver, arg, op === "import-from", owner.name);
             if (result.kind === "value") stack.push(result.value);
@@ -1087,7 +1100,16 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
         const right = stack.pop(), left = stack.pop(); dispatch(arithmeticTask(op, [left, right], summary(frame, cursor)));
       }
       else { const right = stack.pop(), left = stack.pop(); stack.push(op.startsWith("inplace-") ? values.inplace(op.slice(8), left, right) : values.binary(op, left, right)); }
-    } catch (error) { handle(error); }
+    } catch (error) {
+      if (attributeRead !== undefined) {
+        if (error instanceof RegistryError && error.name === "AttributeError" && error.code === "IMPORT") error = new Raised(exception(error.name, error.message));
+        if (error instanceof Raised) {
+          const task = attributeFailure(error.value, attributeRead, arg, summary(frame, cursor));
+          if (task) { try { dispatch(task); } catch (next) { handle(next); } return; }
+        }
+      }
+      handle(error);
+    }
   };
   const handle = error => {
     if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(exception(error.name, error.message));

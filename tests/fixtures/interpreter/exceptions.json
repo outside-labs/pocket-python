@@ -21,7 +21,8 @@
     "LA20",
     "LA21",
     "LA21A",
-    "LA22"
+    "LA22",
+    "LA23"
   ],
   "cases": [
     {
@@ -1668,11 +1669,9 @@
     },
     {
       "id": "attribute-error-automatic-metadata-deferred",
-      "stage": "Future",
+      "stage": "LA23",
       "source": "class A: pass\ntry: A().missing\nexcept AttributeError as e: print(e.name)\n",
-      "stdout": "missing\n",
-      "owner": "#124",
-      "boundary": "Automatic lookup error name/receiver enrichment remains separate from explicit AttributeError construction/storage"
+      "stdout": "missing\n"
     },
     {
       "id": "native-fields-composed-record",
@@ -2279,6 +2278,190 @@
       "stage": "LA20",
       "source": "class S(str):\n def __str__(self): raise ValueError(\"owned\")\ne=ImportError(S(\"native\"))\ntry: str(e)\nexcept ValueError as x: print(str(x))\n",
       "stdout": "owned\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-direct",
+      "source": "class A: pass\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e.name,e.obj is a,len(e.args))\n",
+      "stdout": "missing True 1\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-native-int",
+      "source": "a=7\nkey=\"missing\"\ntry: getattr(a,key)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-native-list",
+      "source": "a=[]\nkey=\"missing\"\ntry: getattr(a,key)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-native-tuple",
+      "source": "a=()\nkey=\"missing\"\ntry: getattr(a,key)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-native-dict",
+      "source": "a={}\nkey=\"missing\"\ntry: getattr(a,key)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-native-none",
+      "source": "a=None\nkey=\"missing\"\ntry: getattr(a,key)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-key-subclass",
+      "source": "class S(str):\n def __str__(self): raise ValueError()\nclass A: pass\na=A()\nkey=S(\"missing\")\ntry: getattr(a,key)\nexcept AttributeError as e: print(e.name is key,e.obj is a)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-explicit-none-name",
+      "source": "error=AttributeError(name=None)\nclass A:\n def __getattr__(self,key): raise error\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e is error,e.name is None,e.obj is None)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-explicit-none-obj",
+      "source": "error=AttributeError(obj=None)\nclass A:\n def __getattr__(self,key): raise error\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e is error,e.name is None,e.obj is None)\n",
+      "stdout": "True True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-existing-name",
+      "source": "error=AttributeError(name=\"prior\")\nclass A:\n def __getattribute__(self,key): raise error\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e is error,e.name,e.obj is None)\n",
+      "stdout": "True prior True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-cleared-field",
+      "source": "error=AttributeError(name=None,obj=None)\ndel error.name\ndel error.obj\nclass A:\n def __getattr__(self,key): raise error\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e is error,e.name,e.obj is a)\n",
+      "stdout": "True missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-reused-error",
+      "source": "error=AttributeError()\nclass A:\n def __getattr__(self,key): raise error\na=A()\nb=A()\nfor obj in (a,b):\n try: obj.missing\n except AttributeError as e: print(e is error,e.name,e.obj is a)\n",
+      "stdout": "True missing True\nTrue missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-property",
+      "source": "error=AttributeError()\nclass A:\n @property\n def missing(self): raise error\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e is error,e.name,e.obj is a)\n",
+      "stdout": "True missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-fallback",
+      "source": "class A:\n def __getattribute__(self,key): raise AttributeError()\n def __getattr__(self,key):\n  print(\"fallback\",key)\n  raise AttributeError()\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "fallback missing\nmissing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-setter-order",
+      "source": "class E(AttributeError):\n def __setattr__(self,key,value):\n  print(\"set\",key)\n  super().__setattr__(key,value)\nerror=E()\nclass A:\n def __getattr__(self,key): raise error\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e is error,e.name,e.obj is a)\n",
+      "stdout": "set name\nset obj\nTrue missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-setter-error",
+      "source": "class E(AttributeError):\n def __setattr__(self,key,value):\n  print(\"set\",key)\n  raise ValueError(\"setter\")\nerror=E()\nclass A:\n def __getattr__(self,key): raise error\ntry: A().missing\nexcept ValueError as e: print(str(e))\n",
+      "stdout": "set name\nsetter\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-setter-object-error",
+      "source": "class E(AttributeError):\n def __setattr__(self,key,value):\n  print(\"set\",key)\n  if key==\"obj\": raise ValueError()\n  super().__setattr__(key,value)\nerror=E()\nclass A:\n def __getattr__(self,key): raise error\ntry: A().missing\nexcept ValueError: print(error.name,error.obj is None)\n",
+      "stdout": "set name\nset obj\nmissing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-setter-native-bypass-not-used",
+      "source": "class E(AttributeError):\n @property\n def name(self): return \"custom\"\n @name.setter\n def name(self,value):\n  print(\"name\",value)\n  AttributeError.name.__set__(self,value)\nerror=E()\nclass A:\n def __getattr__(self,key): raise error\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e.name,AttributeError.name.__get__(e,E),e.obj is a)\n",
+      "stdout": "name missing\ncustom missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-native-missing",
+      "source": "class A: pass\na=A()\ntry: object.__getattribute__(a,\"missing\")\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-native-property",
+      "source": "class A:\n @property\n def missing(self): raise AttributeError()\na=A()\ntry: object.__getattribute__(a,\"missing\")\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-module-missing",
+      "source": "import helper\ntry: helper.missing\nexcept AttributeError as e: print(e.name,e.obj is helper)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "pass\n"
+        }
+      ],
+      "stdout": "missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-module-hook",
+      "source": "import helper\ntry: helper.missing\nexcept AttributeError as e: print(e.name,e.obj is helper)\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def __getattr__(name): raise AttributeError()\n"
+        }
+      ],
+      "stdout": "missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-suppressed-errors",
+      "source": "class A:\n def __getattr__(self,key): raise AttributeError()\na=A()\nprint(getattr(a,\"missing\",7),hasattr(a,\"missing\"))\n",
+      "stdout": "7 False\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-reinitialized-presence",
+      "source": "error=AttributeError(name=None)\nAttributeError.__init__(error)\nclass A:\n def __getattr__(self,key): raise error\na=A()\ntry: a.missing\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-setter-without-storage",
+      "source": "class E(AttributeError):\n def __setattr__(self,key,value): print(\"set\",key)\nerror=E()\nclass A:\n def __getattr__(self,key): raise error\ntry: A().missing\nexcept AttributeError as e: print(e is error,e.name is None,e.obj is None)\n",
+      "stdout": "set name\nset obj\nTrue True True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-direct-native-value",
+      "source": "a=7\ntry: a.missing\nexcept AttributeError as e: print(e.name,e.obj is a)\n",
+      "stdout": "missing True\n"
+    },
+    {
+      "stage": "LA23",
+      "id": "attribute-context-optional-lookups-skip-setters",
+      "source": "class E(AttributeError):\n def __setattr__(self,name,value):\n  print(\"unexpected setter\")\n  super().__setattr__(name,value)\nclass A:\n def __getattr__(self,name): raise E()\nprint(getattr(A(),\"missing\",7),hasattr(A(),\"missing\"))\n",
+      "stdout": "7 False\n"
     }
   ],
   "reference_boundaries": [

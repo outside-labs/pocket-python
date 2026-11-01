@@ -1340,10 +1340,12 @@ export class ClassRuntime {
     if (receiver instanceof ExceptionValue && receiver.nativeFields?.has(name) && owner instanceof BuiltinValue && Object.hasOwn(EXCEPTIONS, owner.name)) {
       if (operation === "get") return {kind: "value", value: this.exceptionField(receiver, name)};
       const before = receiver.nativeFields.get(name);
+      const present = receiver.attributeFields;
       const boundary = receiver.nativeFieldBoundaries?.delete(name);
       receiver.nativeFields.set(name, operation === "delete" ? null : item);
+      if (present !== undefined) receiver.attributeFields = operation === "delete" ? present & ~(name === "name" ? 1 : 2) : present | (name === "name" ? 1 : 2);
       try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
-      catch (error) { receiver.nativeFields.set(name, before); if (boundary) receiver.nativeFieldBoundaries.add(name); throw error; }
+      catch (error) { receiver.nativeFields.set(name, before); receiver.attributeFields = present; if (boundary) receiver.nativeFieldBoundaries.add(name); throw error; }
       return {kind: "value", value: null};
     }
     if (receiver instanceof ExceptionValue && ["__context__", "__cause__", "__suppress_context__", "value"].includes(name)) {

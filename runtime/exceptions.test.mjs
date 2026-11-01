@@ -45,6 +45,20 @@ async function lifetime(source, expected) {
   } } finally { registry.close(); }
 }
 
+test('attribute enrichment setters retain the original error and temporary receiver across interruption', async () => {
+  await lifetime('class E(AttributeError):\n def __setattr__(self,key,value):\n  if key=="name": print("entered")\n  super().__setattr__(key,value)\nclass A:\n def __getattr__(self,key): raise E()\ntry: A().missing\nexcept AttributeError as e: print(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
+});
+
+test('runtime attribute metadata retains cyclic receivers through parked collection', async () => {
+  await lifetime('class A: pass\na=A()\ntry: a.missing\nexcept AttributeError as e: a.error=e\nprint("entered")\nprint(a.error.obj is a,a.error.name)\n', 'entered\nTrue missing\n');
+});
+
+test('retained runtime attribute errors share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('class A: pass\nheld=[]\nprint("ready")\nwhile True:\n try: A().missing\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('lazy exception messages retain their arguments through park/cancel/close', async () => {
   await lifetime('class M:\n def __str__(self):\n  print("entered")\n  return "message"\nprint(str(ValueError(M())))\n', 'entered\nmessage\n');
 });
