@@ -1,5 +1,23 @@
 # Execution consolidation and broad Python compatibility
 
+## Language and application tracks
+
+[Track A #600](https://github.com/outside-labs/pocket-python/issues/600) maps
+full Python 3.14 language/builtin support, explicit standard-library coverage
+and real package qualification. Its useful A+ profile is an intermediate
+milestone for [Track B #601](https://github.com/outside-labs/pocket-python/issues/601),
+which maps native await, typed browser capabilities and durable offline
+application acceptance under #34. Both tracks keep existing scope owners and
+can progress independently. The later C/Rust/Wasm backend is not a prerequisite.
+
+The first two language batches, LA-1–LA-7 (#602–#608), adopt
+[practical list/dictionary APIs](interpreter-practical-containers.md) under #116.
+Remaining text/sequence APIs, exceptions, formatting, language gaps and library/
+package qualification retain their separate issue gates. The track issues and
+Project fields record current delivery status; accepted stages do not measure
+an overall compatibility percentage. Candidate #36 and publication/deployment
+remain separate gates.
+
 The current finite object/construction/reflection scope is recorded in the
 [O95 reconciliation](interpreter-object-scope.md) and
 [O96 integrated acceptance](interpreter-object-integration.md). Earlier object

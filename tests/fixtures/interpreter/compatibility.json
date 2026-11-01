@@ -9867,6 +9867,45 @@
         "stdout": "9 9 7 9\n",
         "error_type": null
       }
+    },
+    {
+      "id": "practical-composed-record-queue",
+      "source": "\"\"\"Group records and process a mutable work queue with practical container APIs.\"\"\"\n\nrecords = [(\"todo\", \"read\"), (\"done\", \"ship\"), (\"todo\", \"write\")]\n\n\ndef completed(rows):\n    for state, title in rows:\n        if state == \"done\":\n            yield title\n\n\ngroups = {}\nfor state, title in records:\n    groups.setdefault(state, []).append(title)\n\npending = groups.get(\"todo\").copy()\npending.insert(0, \"review\")\npending.extend(completed(records))\nprint(pending.pop(0), pending.count(\"ship\"), pending.index(\"read\"))\nsnapshot = pending.copy()\nsnapshot.reverse()\nprint(snapshot[0], pending[0])\n\nview = groups.items()\ngroups[\"hold\"] = []\nfor state, titles in view:\n    print(state, len(titles))\nremoved = groups.pop(\"hold\")\npending.clear()\nprint(len(pending), len(removed))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "review 1 0\nship read\ntodo 2\ndone 1\nhold 0\n0 0\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "review 1 0\nship read\ntodo 2\ndone 1\nhold 0\n0 0\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "practical-dict-setdefault-hash-once",
+      "source": "calls=[0]\nclass K:\n def __hash__(self):\n  calls[0]+=1\n  return 7\nk=K()\nv=[]\nd={}\nprint(d.setdefault(k,v) is v,calls[0])\nprint(d.setdefault(k,9) is v,calls[0])\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "True 1\nTrue 2\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "True 1\nTrue 2\n",
+        "error_type": null
+      }
+    },
+    {
+      "id": "practical-dict-items-live",
+      "source": "d={1:7}\nv=d.items()\nd[2]=8\nd[1]=9\nprint(len(v),list(v)==[(1,9),(2,8)])\nd.pop(1)\nprint(len(v))\n",
+      "classification": "supported",
+      "reference": {
+        "stdout": "2 True\n1\n",
+        "error_type": null
+      },
+      "engine": {
+        "stdout": "2 True\n1\n",
+        "error_type": null
+      }
     }
   ]
 }

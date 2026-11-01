@@ -15,7 +15,7 @@ explicit #116 source boundary; these methods bypass admitted item overrides.
 | LA-4 | `list.extend(iterable, /)` | Implemented for adopted iterables without user length hints. Self-extension snapshots the native payload, including subclasses; iterator failures retain the appended prefix. User hints refuse before binding or consumption and remain under #116. |
 | LA-5 | `dict.get(key, default=None, /)`, `dict.setdefault(key, default=None, /)`, `dict.pop(key[, default], /)` | Implemented. Owned hash/equality uses one hash per lookup, retains exact stored keys/defaults/values and restarts after key mutation. Empty pop bypasses hashing. General KeyError argument introspection remains #124. |
 | LA-6 | `dict.keys()`, `dict.values()`, `dict.items()` | Implemented. Fresh live ordered views support len/truth, iteration and owned membership; native subtype owners stay rooted. Exact-dict view.mapping returns a fresh live read-only proxy. Subtype proxies and view set operations remain #116/#117. |
-| LA-7 | Composed source/offline acceptance | Queued. Integration does not imply the remaining #116 APIs. |
+| LA-7 | Composed source/offline acceptance | Composed record queues, native subclasses, callbacks, suspended views, modules and dynamic source have reference cases. The offline console covers fresh source, callback errors, interruption/restart and profile updates. Integration does not imply the remaining #116 APIs. |
 
 The initial two batches do not adopt populated dictionary construction/update,
 text methods, aggregate/sorting/map/filter APIs, enumerate/zip or general reversed
@@ -28,3 +28,18 @@ instruction stepping and parked execution. Tests distinguish semantic successes
 and errors from unsupported operations. Method-name availability alone is not
 API support. Logical item/work/memory limits and cancellation continue to apply;
 zero teardown observations measure logical owners rather than host RSS.
+
+Run `examples/interpreter_containers.py` as ordinary Python for the grouped-record
+and work-queue example. The offline acceptance driver builds an independent
+console and executes the same source:
+
+```sh
+python scripts/run_tests.py focused --feature practical-containers
+python scripts/object_integration_browser_smoke.py --containers
+```
+
+The differential matrix includes explicit refusals for user length hints,
+`__missing__` definitions, dictionary-subclass view proxies and view set
+operations. Positive cases and negative boundaries are counted separately.
+General exception argument introspection remains #124. No library, package,
+host capability or release promise follows from this container slice.

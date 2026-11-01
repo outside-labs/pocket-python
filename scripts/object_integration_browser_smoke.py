@@ -1,4 +1,4 @@
-"""Accept fresh composed object source through an offline installed console."""
+"""Accept fresh composed source through an offline installed console."""
 
 import argparse
 from functools import partial
@@ -19,18 +19,19 @@ from interpreter_browser_smoke import EXAMPLE, Handler, Server
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def smoke(require_installed=False):
+def smoke(require_installed=False, containers=False):
     package = Path(pocket_python.__file__).resolve()
     if require_installed:
         assert not package.is_relative_to(ROOT), 'This check requires an isolated installed distribution.'
-    corpus_path = ROOT / 'tests/fixtures/interpreter/object-integration.json'
+    feature = 'practical-containers' if containers else 'object-integration'
+    corpus_path = ROOT / f'tests/fixtures/interpreter/{feature}.json'
     corpus = json.loads(corpus_path.read_bytes())
-    example = (ROOT / 'examples/interpreter_object_integration.py').read_text(encoding='utf-8')
+    example = (ROOT / ('examples/interpreter_containers.py' if containers else 'examples/interpreter_object_integration.py')).read_text(encoding='utf-8')
     records = []
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         selected = build_interpreter(EXAMPLE.write_source(root / 'source', source=example),
-                                     read_interpreter(ROOT / 'runtime', library_profile='operator/1'),
+                                     read_interpreter(ROOT / 'runtime', **({} if containers else {'library_profile': 'operator/1'})),
                                      root / 'site/console', language_profile='classes-source/1')
         reduced = build_interpreter(EXAMPLE.write_source(root / 'reduced-source', source='print(42)\n'),
                                     read_interpreter(ROOT / 'runtime'), root / 'reduced')
@@ -63,7 +64,7 @@ def smoke(require_installed=False):
                     page.reload()
                     ready()
                     for case in corpus['cases']:
-                        if case.get('modules'):
+                        if case.get('modules') or containers and case['stage'] != 'LA-7':
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -72,6 +73,8 @@ def smoke(require_installed=False):
                     expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', example], text=True, encoding='utf-8')
                     run(example, expected)
                     busy = 'import operator\nnamespace={"add":operator.add}\nexec("class Box:\\n __slots__=(\'value\',)\\n def __init__(self): self.value=7\\n @property\\n def field(self):\\n  print(\'entered\')\\n  while True: self.value=add(self.value,1)\\nbox=Box()\\nbox.field",namespace)\n'
+                    if containers:
+                        busy = 'class Key:\n def __hash__(self):\n  print("entered")\n  while True: pass\n{}.setdefault(Key(),[])\n'
                     page.fill('#input', busy)
                     page.click('#run')
                     page.wait_for_function("()=>document.querySelector('#result').textContent==='entered\\n'")
@@ -101,6 +104,8 @@ def smoke(require_installed=False):
                     page.goto(url)
                     ready()
                     run('print(42)\n', '42\n')
+                    if containers:
+                        run('d={}\nd.setdefault(1,[]).extend([7])\nprint(list(d.values())[0].pop())\n', '7\n')
                     run('compile("class C: pass","removed.py","exec")\n', '', 'NameError')
                     assert not errors, errors
                     context.close()
@@ -110,22 +115,27 @@ def smoke(require_installed=False):
             server.shutdown()
             server.server_close()
             thread.join(timeout=5)
-    return {'schema_version': 1, 'suite': 'interpreter-object-offline/1',
+    checks = ['fresh-offline-composed-source', 'original-dynamic-diagnostics', 'runnable-example',
+              'stop-after-dynamic-descriptor-entry', 'restart-fresh-owner',
+              'reduced-profile-update', 'old-cache-removed', 'core-source-boundary']
+    if containers:
+        checks = ['fresh-offline-container-source', 'container-callback-errors', 'runnable-example',
+                  'stop-after-container-hash-entry', 'restart-fresh-owner', 'reduced-profile-update',
+                  'old-cache-removed', 'core-container-apis', 'core-source-boundary']
+    return {'schema_version': 1, 'suite': 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',
             'installed_distribution_required': require_installed, 'package_origin': str(package),
             'corpus_sha256': hashlib.sha256(corpus_path.read_bytes()).hexdigest(),
             'engine_fingerprint': selected['engine']['fingerprint'], 'cases': records,
-            'checks': ['fresh-offline-composed-source', 'original-dynamic-diagnostics', 'runnable-example',
-                       'stop-after-dynamic-descriptor-entry', 'restart-fresh-owner',
-                       'reduced-profile-update', 'old-cache-removed', 'core-source-boundary'],
-            'summary': {'pass': len(records) + 8, 'fail': 0}}
+            'checks': checks, 'summary': {'pass': len(records) + len(checks), 'fail': 0}}
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--require-installed', action='store_true')
+    parser.add_argument('--containers', action='store_true', help='Accept the LA-7 practical-container composition slice.')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
-    report = smoke(args.require_installed)
+    report = smoke(args.require_installed, args.containers)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
