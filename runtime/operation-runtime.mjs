@@ -28,7 +28,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   const evaluator = dynamicEvaluator({state, values, classes, allocate, enter, bind, loadName, classModule, compiler, python});
   const importer = dynamicImporter({state, moduleContext, values, classes, builtinLookup, python, hard});
   const userProtocol = value => classes.protocolObject(value);
-  const exceptionDisplay = value => value instanceof ExceptionValue && (value.name === "KeyError" || value.nativeFields?.has("msg") || value.args.length > 1 ||
+  const exceptionDisplay = value => value instanceof ExceptionValue && (value.name === "KeyError" || value.name === "UnicodeTranslateError" || value.nativeFields?.has("msg") || value.args.length > 1 ||
     value.args.length === 1 && !(value.args[0] === null || ["bigint", "boolean"].includes(typeof value.args[0]) || value.args[0] instanceof StringValue));
   const genericHash = value => value === null ? values.pythonHash(null) : typeof value === "boolean" || typeof value === "bigint" ? values.objectId(value) : values.identityHash(value);
   const methodCompare = (receiver, other, invert, site, after, depth) => {
@@ -142,6 +142,14 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (!(classes.payload(args[0]) instanceof StringValue)) python("TypeError", "argument 1 must be str, not " + classes.typeOf(args[0]).name);
     return translateIndex({receiver, args, position: 1, result, depth, after}, site);
   };
+  const translateMessage = (value, site, after, depth) => {
+    if (value.legacyUnicodeMessage) return exceptionString(value, site, after, depth);
+    if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
+    if (!(value.unicodeFields & 1)) return valueTask(values.string([]), site, after);
+    const finish = continuation("unicode-translate-message", {receiver: value, after});
+    return value.unicodeFields & 2 ? unaryTask("str", value.nativeFields.get("reason"), site, finish, depth) :
+      valueTask(values.string(Array.from("<NULL>", char => char.codePointAt(0))), site, finish);
+  };
   const syntaxMessage = (value, site, after, depth) => {
     if (value.legacySyntaxMessage || value.nativeFieldBoundaries?.has("msg")) return exceptionString(value, site, after, depth);
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
@@ -164,7 +172,6 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
   };
   const exceptionString = (value, site, after, depth, importMessage = false) => {
     if (++depth > maxDepth) python("RecursionError", "maximum exception formatting depth exceeded");
-    if (value.name === "UnicodeTranslateError" && !value.legacyUnicodeMessage) hard("UNSUPPORTED", "UnsupportedOperationError", "Native Unicode translation rendering remains under #124");
     if (importMessage && !value.nativeFieldBoundaries?.has("msg")) {
       const message = value.nativeFields.get("msg");
       if (message instanceof StringValue) return valueTask(message, site, after);
@@ -977,6 +984,22 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         return () => { completion.receiver.nativeFields = before; completion.receiver.unicodeFields = present; };
       });
       return valueTask(completion.result, site, completion.after);
+    }
+    if (completion?.kind === "unicode-translate-message") {
+      const receiver = completion.receiver, object = classes.payload(receiver.nativeFields.get("object"));
+      if (!(receiver.unicodeFields & 1)) python("TypeError", "UnicodeError 'object' attribute is not set");
+      if (!(object instanceof StringValue)) python("TypeError", "UnicodeError 'object' attribute must be a string");
+      // Reason callbacks can replace the native object and numeric positions.
+      const start = receiver.nativeFields.get("start"), end = receiver.nativeFields.get("end"), size = BigInt(object.points.length);
+      let prefix;
+      if (start >= 0n && start < size && end >= 0n && end <= size && end === start + 1n) {
+        const point = object.points[Number(start)], width = point <= 0xff ? 2 : point <= 0xffff ? 4 : 8;
+        const escape = "\\" + (width === 2 ? "x" : width === 4 ? "u" : "U") + point.toString(16).padStart(width, "0");
+        prefix = "can't translate character '" + escape + "' in position " + start.toString() + ": ";
+      } else prefix = "can't translate characters in position " + start.toString() + "-" + BigInt.asIntN(64, end - 1n).toString() + ": ";
+      const reason = classes.payload(value);
+      charge(reason.points.length + prefix.length);
+      return valueTask(values.string([...Array.from(prefix, char => char.codePointAt(0)), ...reason.points]), site, completion.after);
     }
     if (completion?.kind === "syntax-message")
       return valueTask(values.binary("add", classes.payload(value), completion.suffix), site, completion.after);
@@ -2522,6 +2545,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (operation === "repr-default") hard("UNSUPPORTED", "UnsupportedOperationError", "Default object representations require a later formatting stage.");
             if (operation === "str" && value instanceof ExceptionValue && !value.type) {
               if (matchesException(value.name, "SyntaxError")) { task = syntaxMessage(value, site, completion, depth); continue; }
+              if (value.name === "UnicodeTranslateError") { task = translateMessage(value, site, completion, depth); continue; }
               task = exceptionString(value, site, completion, depth, matchesException(value.name, "ImportError")); continue;
             }
             if (!userProtocol(value)) {
@@ -2688,7 +2712,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
             if (nativeName === "__str__") {
               if (args.length !== 1 || keywords.length || !(args[0] instanceof ExceptionValue)) python("TypeError", "Exception __str__ requires one receiver");
-              task = matchesException(nativeOwner, "SyntaxError") ? syntaxMessage(args[0], site, completion, depth) :
+              task = nativeOwner === "UnicodeTranslateError" ? translateMessage(args[0], site, completion, depth) :
+                matchesException(nativeOwner, "SyntaxError") ? syntaxMessage(args[0], site, completion, depth) :
                 exceptionString(args[0], site, completion, depth, nativeOwner === "ImportError"); continue;
             }
             if (nativeName === "__repr__") hard("UNSUPPORTED", "UnsupportedOperationError", "Default exception repr remains under #127");

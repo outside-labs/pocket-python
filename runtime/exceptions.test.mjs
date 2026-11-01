@@ -58,6 +58,26 @@ test('Unicode translation native field cycles survive parked collection', async 
   await lifetime('e=UnicodeTranslateError("abc",0,1,"bad")\ne.object=e\ne.reason=[e]\ne.encoding=e\ne.args=()\nprint("entered")\nprint(e.object is e,e.reason[0] is e,e.encoding is e)\n', 'entered\nTrue True True\n');
 });
 
+test('native Unicode translation rendering observes fields after an interrupted reason callback', async () => {
+  await lifetime('class R:\n def __str__(self):\n  e.object="new"\n  e.start=1\n  e.end=2\n  e.reason="next"\n  print("entered")\n  return "first"\ne=UnicodeTranslateError("abc",0,1,"bad")\ne.reason=R()\nprint(str(e))\nprint(str(e))\n', "entered\ncan't translate character '\\x65' in position 1: first\ncan't translate character '\\x65' in position 1: next\n");
+});
+
+test('native Unicode translation rendering retains a temporary reason after its field is replaced', async () => {
+  await lifetime('class R:\n def __str__(self):\n  e.reason=None\n  print("entered")\n  return "kept"\ne=UnicodeTranslateError("abc",0,1,"bad")\ne.reason=R()\nprint(str(e))\n', "entered\ncan't translate character '\\x61' in position 0: kept\n");
+});
+
+test('Unicode translation reason copies consume shared work', async () => {
+  const result = await runSourceRequest({modules: [unit('e=UnicodeTranslateError("x",0,1,"r"*1000)\nprint("ready")\nwhile True: text=str(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 50000, maxWork: 100000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+});
+
+test('host translation diagnostics preserve safe messages without invoking reason callbacks', async () => {
+  const result = await runSourceRequest({modules: [unit('class R:\n def __str__(self):\n  print("unexpected")\n  return "bad"\ne=UnicodeTranslateError("x",0,1,"bad")\ne.reason=R()\nraise e\n')], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.stdout, ''); assert.equal(result.error.type, 'UnicodeTranslateError');
+  assert.equal(result.error.traceback.at(-1).location.span[0], 7); closed(result.closed);
+});
+
 test('retained Unicode translation native graphs share the allocation limit', async () => {
   const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True: held.append(UnicodeTranslateError("abc",0,1,"bad"))\n')],
     compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});

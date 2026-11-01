@@ -28,7 +28,8 @@
     "LA26",
     "LA27",
     "LA28",
-    "LA29"
+    "LA29",
+    "LA30"
   ],
   "cases": [
     {
@@ -3712,6 +3713,374 @@
       "stage": "LA29",
       "source": "try: raise ValueError(\"outer\") from UnicodeTranslateError\nexcept TypeError: print(\"cause constructor failed\")\n",
       "stdout": "cause constructor failed\n"
+    },
+    {
+      "id": "translate-display-ascii",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError('abc',0,1,\"bad\")\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x61' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-nul",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError('\\x00',0,1,\"bad\")\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x00' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-latin",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError('\\xe9',0,1,\"bad\")\nprint(str(e))\n",
+      "stdout": "can't translate character '\\xe9' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-bmp",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError('\\u96ea',0,1,\"bad\")\nprint(str(e))\n",
+      "stdout": "can't translate character '\\u96ea' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-astral",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError('\\U0001f600',0,1,\"bad\")\nprint(str(e))\n",
+      "stdout": "can't translate character '\\U0001f600' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-surrogate",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError('\\ud800',0,1,\"bad\")\nprint(str(e))\n",
+      "stdout": "can't translate character '\\ud800' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-range",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',0,2,\"bad\")))\n",
+      "stdout": "can't translate characters in position 0-1: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-empty",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('',0,1,\"bad\")))\n",
+      "stdout": "can't translate characters in position 0-0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-negative",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',-1,0,\"bad\")))\n",
+      "stdout": "can't translate characters in position -1--1: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-beyond",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',4,5,\"bad\")))\n",
+      "stdout": "can't translate characters in position 4-4: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-end-beyond",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',0,4,\"bad\")))\n",
+      "stdout": "can't translate characters in position 0-3: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-reversed",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',2,1,\"bad\")))\n",
+      "stdout": "can't translate characters in position 2-0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-equal",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',1,1,\"bad\")))\n",
+      "stdout": "can't translate characters in position 1-0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-zero",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',0,0,\"bad\")))\n",
+      "stdout": "can't translate characters in position 0--1: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-min",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',0,-9223372036854775808,\"bad\")))\n",
+      "stdout": "can't translate characters in position 0-9223372036854775807: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-max",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError('abc',9223372036854775807,9223372036854775807,\"bad\")))\n",
+      "stdout": "can't translate characters in position 9223372036854775807-9223372036854775806: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-args-independent",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.args=()\nprint(str(e))\nBaseException.__init__(e,\"ignored\")\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x61' in position 0: bad\ncan't translate character '\\x61' in position 0: bad\n"
+    },
+    {
+      "id": "translate-display-uninitialized",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError.__new__(UnicodeTranslateError)\nprint(len(str(e)))\ne.object=\"x\"\nprint(str(e))\ne.reason=None\nprint(str(e))\n",
+      "stdout": "0\ncan't translate characters in position 0--1: <NULL>\ncan't translate characters in position 0--1: None\n"
+    },
+    {
+      "id": "translate-display-deleted-object",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ndel e.object\nprint(len(str(e)))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "translate-display-deleted-reason",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ndel e.reason\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x61' in position 0: <NULL>\n"
+    },
+    {
+      "id": "translate-display-none-reason",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.reason=None\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x61' in position 0: None\n"
+    },
+    {
+      "id": "translate-display-number-reason",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.reason=7\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x61' in position 0: 7\n"
+    },
+    {
+      "id": "translate-display-empty-reason",
+      "stage": "LA30",
+      "source": "print(str(UnicodeTranslateError(\"x\",0,1,\"\")))\n",
+      "stdout": "can't translate character '\\x78' in position 0: \n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-nul-reason",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"x\",0,1,\"a\\x00b\")\ns=str(e)\nprint(len(s),ord(s[-2]),s[-1])\n",
+      "stdout": "51 0 b\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-invalid-object-none",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.object=None\ntry: str(e)\nexcept TypeError as x: print(str(x))\n",
+      "stdout": "UnicodeError 'object' attribute must be a string\n"
+    },
+    {
+      "id": "translate-display-invalid-object-list",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.object=[]\ntry: str(e)\nexcept TypeError as x: print(str(x))\n",
+      "stdout": "UnicodeError 'object' attribute must be a string\n"
+    },
+    {
+      "id": "translate-display-invalid-object-int",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.object=7\ntry: str(e)\nexcept TypeError as x: print(str(x))\n",
+      "stdout": "UnicodeError 'object' attribute must be a string\n"
+    },
+    {
+      "id": "translate-display-reason-callback",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self): print(\"reason\"); return \"custom\"\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.reason=R()\nprint(str(e))\n",
+      "stdout": "reason\ncan't translate character '\\x61' in position 0: custom\n"
+    },
+    {
+      "id": "translate-display-reason-fails-before-object-validation",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self): print(\"reason\"); raise LookupError(\"failed\")\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.object=None\ne.reason=R()\ntry: str(e)\nexcept LookupError: print(\"reason first\")\n",
+      "stdout": "reason\nreason first\n"
+    },
+    {
+      "id": "translate-display-missing-object-skips-reason",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self): print(\"unexpected\"); return \"changed\"\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ndel e.object\ne.reason=R()\nprint(len(str(e)))\n",
+      "stdout": "0\n"
+    },
+    {
+      "id": "translate-display-reason-mutates-fields",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self):\n  e.object=\"\ud83d\ude00z\"\n  e.start=0\n  e.end=1\n  e.reason=\"next\"\n  return \"first\"\ne=UnicodeTranslateError(\"abc\",1,3,\"bad\")\ne.reason=R()\nprint(str(e))\nprint(str(e))\n",
+      "stdout": "can't translate character '\\U0001f600' in position 0: first\ncan't translate character '\\U0001f600' in position 0: next\n"
+    },
+    {
+      "id": "translate-display-reason-reinitializes",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self):\n  UnicodeTranslateError.__init__(e,\"new\",1,2,\"next\")\n  return \"first\"\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.reason=R()\nprint(str(e))\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x65' in position 1: first\ncan't translate character '\\x65' in position 1: next\n"
+    },
+    {
+      "id": "translate-display-reason-deletes-object",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self): del e.object; return \"changed\"\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.reason=R()\ntry: str(e)\nexcept TypeError as x: print(str(x))\n",
+      "stdout": "UnicodeError 'object' attribute is not set\n"
+    },
+    {
+      "id": "translate-display-reason-breaks-object",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self): e.object=None; return \"changed\"\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.reason=R()\ntry: str(e)\nexcept TypeError as x: print(str(x))\n",
+      "stdout": "UnicodeError 'object' attribute must be a string\n"
+    },
+    {
+      "id": "translate-display-reason-repairs-object",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self): e.object=\"x\"; return \"fixed\"\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.object=None\ne.reason=R()\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x78' in position 0: fixed\n"
+    },
+    {
+      "id": "translate-display-reason-bad-result",
+      "stage": "LA30",
+      "source": "class R:\n def __str__(self): return 7\ne=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.reason=R()\nstr(e)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "translate-display-reason-cycle",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"abc\",0,1,\"bad\")\ne.reason=e\ntry: str(e)\nexcept RecursionError: print(\"recursion\")\n",
+      "stdout": "recursion\n"
+    },
+    {
+      "id": "translate-display-native-string-subtypes",
+      "stage": "LA30",
+      "source": "class S(str):\n def __str__(self): print(\"reason callback\"); return \"changed\"\ne=UnicodeTranslateError(S(\"\u96ea\"),0,1,S(\"native\"))\nprint(str(e))\n",
+      "stdout": "reason callback\ncan't translate character '\\u96ea' in position 0: changed\n"
+    },
+    {
+      "id": "translate-display-reason-returns-subtype",
+      "stage": "LA30",
+      "source": "class S(str): pass\nclass R:\n def __str__(self): return S(\"changed\")\ne=UnicodeTranslateError(\"x\",0,1,\"bad\")\ne.reason=R()\ns=str(e)\nprint(s,type(s) is str)\n",
+      "stdout": "can't translate character '\\x78' in position 0: changed True\n"
+    },
+    {
+      "id": "translate-display-encoding-ignored",
+      "stage": "LA30",
+      "source": "class M:\n def __str__(self): print(\"unexpected\"); return \"ignored\"\ne=UnicodeTranslateError(\"x\",0,1,\"bad\")\ne.encoding=M()\nprint(str(e))\n",
+      "stdout": "can't translate character '\\x78' in position 0: bad\n"
+    },
+    {
+      "id": "translate-display-native-fields-bypass-properties",
+      "stage": "LA30",
+      "source": "class E(UnicodeTranslateError):\n @property\n def object(self): print(\"unexpected\"); return \"changed\"\n @property\n def start(self): print(\"unexpected\"); return 9\n @property\n def end(self): print(\"unexpected\"); return 9\n @property\n def reason(self): print(\"unexpected\"); return \"changed\"\ne=E(\"x\",0,1,\"bad\")\nprint(str(e))\nprint(UnicodeTranslateError.__str__(e))\n",
+      "stdout": "can't translate character '\\x78' in position 0: bad\ncan't translate character '\\x78' in position 0: bad\n"
+    },
+    {
+      "id": "translate-display-subclass-override",
+      "stage": "LA30",
+      "source": "class E(UnicodeTranslateError):\n def __str__(self): return \"owned\"\ne=E(\"x\",0,1,\"bad\")\nprint(str(e))\nprint(UnicodeTranslateError.__str__(e))\n",
+      "stdout": "owned\ncan't translate character '\\x78' in position 0: bad\n"
+    },
+    {
+      "id": "translate-display-mixed-mro-display",
+      "stage": "LA30",
+      "source": "class G(Exception):\n def __str__(self): return \"generic\"\nclass E(G,UnicodeTranslateError): pass\ne=E(\"x\",0,1,\"bad\")\nprint(str(e))\nprint(UnicodeTranslateError.__str__(e))\n",
+      "stdout": "generic\ncan't translate character '\\x78' in position 0: bad\n"
+    },
+    {
+      "id": "translate-display-unbound-invalid-receiver",
+      "stage": "LA30",
+      "source": "UnicodeTranslateError.__str__(ValueError())\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "translate-display-unbound-keywords",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"x\",0,1,\"bad\")\nUnicodeTranslateError.__str__(e,extra=1)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "translate-display-unbound-extra-argument",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"x\",0,1,\"bad\")\nUnicodeTranslateError.__str__(e,7)\n",
+      "stdout": "",
+      "error_type": "TypeError"
+    },
+    {
+      "id": "translate-display-native-print",
+      "stage": "LA30",
+      "source": "e=UnicodeTranslateError(\"x\",0,1,\"bad\")\nprint(e)\n",
+      "stdout": "can't translate character '\\x78' in position 0: bad\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "translate-display-native-uninitialized-subclass",
+      "stage": "LA30",
+      "source": "class E(UnicodeTranslateError):\n def __init__(self): pass\ne=E()\nprint(len(str(e)))\ne.object=\"z\"\nprint(str(e))\n",
+      "stdout": "0\ncan't translate characters in position 0--1: <NULL>\n"
     }
   ],
   "reference_boundaries": [
