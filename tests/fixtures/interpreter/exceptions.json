@@ -20,7 +20,8 @@
     "LA20A",
     "LA20",
     "LA21",
-    "LA21A"
+    "LA21A",
+    "LA22"
   ],
   "cases": [
     {
@@ -2177,6 +2178,89 @@
       "stage": "LA21A",
       "source": "class E(StopIteration):\n @property\n def value(self):\n  print(\"wrong\")\n  return 9\nclass I:\n def __iter__(self): return self\n def __next__(self): raise E(7)\ndef work():\n value=yield from I()\n print(value)\ntry: next(work())\nexcept StopIteration: pass\n",
       "stdout": "7\n"
+    },
+    {
+      "id": "native-exceptions-record-source",
+      "stage": "LA22",
+      "source": "class SourceError(ImportError):\n def __init__(self,key): super().__init__(\"source unavailable\",name=key,path=\"local\",name_from=\"records\")\nclass Done(StopIteration): pass\nclass Records:\n def __init__(self,rows): self.rows=rows; self.index=0\n def __iter__(self): return self\n def __next__(self):\n  if self.index==len(self.rows): raise Done(self.index)\n  row=self.rows[self.index]\n  self.index+=1\n  return row\ndef load(registry,key):\n try: return Records(registry[key])\n except KeyError as cause: raise SourceError(key) from cause\nregistry={\"ready\":[7,8]}\ni=load(registry,\"ready\")\nprint(next(i),next(i))\ntry: next(i)\nexcept Done as e: print(e.value)\nkey=\"missing\"\ntry: load(registry,key)\nexcept SourceError as e: print(e.name is key,e.path,e.name_from,e.__cause__.args[0] is key,str(e))\n",
+      "stdout": "7 8\n2\nTrue local records True source unavailable\n"
+    },
+    {
+      "id": "native-exceptions-dynamic-source",
+      "stage": "LA22",
+      "source": "ns={}\nexec(\"class E(ImportError): pass\\ne=E('original',name=[],path={})\\ne.msg='selected'\\ne.args=('changed',)\",ns)\ne=ns[\"e\"]\nprint(str(e),e.args[0],len(e.name),len(e.path))\n",
+      "stdout": "selected changed 0 0\n"
+    },
+    {
+      "id": "native-exceptions-dynamic-failure",
+      "stage": "LA22",
+      "source": "exec(compile(\"class E(ImportError): pass\\ndef fail():\\n e=E('missing',name='records',path='local')\\n e.add_note('check the registry')\\n raise e\\nfail()\",\"native-exceptions-original.py\",\"exec\"),{})\n",
+      "stdout": "",
+      "error_type": "E"
+    },
+    {
+      "id": "native-exceptions-suspended-cleanup",
+      "stage": "LA22",
+      "source": "class Done(StopIteration): pass\ndef work():\n try: raise ImportError(\"missing\",name=[7],path={})\n except ImportError as e:\n  e.add_note(\"saved\")\n  try: yield Done(e)\n  finally: print(e.name[0],e.__notes__[0])\ni=work()\ne=next(i)\nprint(e.value.name[0],e.value.msg)\ni.close()\n",
+      "stdout": "7 missing\n7 saved\n"
+    },
+    {
+      "id": "native-exceptions-pep479-cause-identity",
+      "stage": "LA22",
+      "source": "class Done(StopIteration): pass\ne=ImportError(\"missing\",name=[],path={})\ndef work():\n raise Done(e)\n yield\ntry: next(work())\nexcept RuntimeError as x: print(x.__cause__.value is e,x.__cause__.value.name is e.name,str(x))\n",
+      "stdout": "True True generator raised StopIteration\n"
+    },
+    {
+      "id": "native-exceptions-delegated-record-value",
+      "stage": "LA22",
+      "source": "class Done(StopIteration): pass\nclass I:\n def __iter__(self): return self\n def __next__(self):\n  e=Done(7)\n  e.value=ImportError(\"missing\",name=\"source\",path=\"local\")\n  raise e\ndef work():\n result=yield from I()\n print(result.name,result.path,str(result))\ntry: next(work())\nexcept StopIteration: pass\n",
+      "stdout": "source local missing\n"
+    },
+    {
+      "id": "native-exceptions-constructor-failure",
+      "stage": "LA22",
+      "source": "class E(ImportError):\n def __init__(self):\n  super().__init__(\"missing\",name=[],path=self)\n  raise NameError(\"bad schema\",name=self)\ntry: raise E\nexcept NameError as e: print(e.name.msg,e.name.path is e.name,len(e.name.name))\n",
+      "stdout": "missing True 0\n"
+    },
+    {
+      "id": "native-exceptions-string-subclass-failure",
+      "stage": "LA22",
+      "source": "class S(str):\n def __str__(self): raise ValueError(\"owned\")\ne=ImportError(S(\"native\"))\nprint(str(e),type(str(e)) is str)\ntry: BaseException.__str__(e)\nexcept ValueError as x: print(str(x))\n",
+      "stdout": "",
+      "error_type": "ValueError"
+    },
+    {
+      "id": "native-exceptions-shared-handling",
+      "stage": "LA22",
+      "source": "key=[]\npath={}\ntry: raise ImportError(\"missing\",name=key,path=path,name_from=7)\nexcept ImportError as e: print(e.name is key,e.path is path,e.name_from,str(e))\n",
+      "stdout": "True True 7 missing\n",
+      "profiles": [
+        "classes-source/1",
+        "core-source/1"
+      ]
+    },
+    {
+      "id": "native-exceptions-delegated-explicit-none",
+      "stage": "LA22",
+      "source": "class Done(StopIteration): pass\nclass I:\n def __iter__(self): return self\n def __next__(self):\n  e=Done(ImportError(\"old\"))\n  e.value=None\n  raise e\ndef work():\n result=yield from I()\n print(result is None)\ntry: next(work())\nexcept StopIteration: pass\n",
+      "stdout": "True\n"
+    },
+    {
+      "id": "native-exceptions-module-identity",
+      "stage": "LA22",
+      "source": "from errors import SourceError,Done,make_error\nx=[]\ne=make_error(x)\ntry: raise Done(e)\nexcept StopIteration as stop: print(stop.value is e,type(e) is SourceError,e.name is x,e.__notes__[0])\n",
+      "stdout": "True True True helper\n",
+      "imports": [
+        "errors"
+      ],
+      "modules": [
+        {
+          "name": "errors",
+          "package": false,
+          "imports": [],
+          "source": "class SourceError(ModuleNotFoundError): pass\nclass Done(StopIteration): pass\ndef make_error(key):\n e=SourceError(\"missing\",name=key,path=\"local\")\n e.add_note(\"helper\")\n return e\n"
+        }
+      ]
     },
     {
       "id": "import-error-string-subclass-uses-args",
