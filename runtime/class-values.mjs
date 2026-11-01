@@ -1760,7 +1760,7 @@ export class ClassRuntime {
   }
   exceptionArgs(receiver) {
     if (receiver.argsTuple === undefined) {
-      const args = receiver.messageArgs ? [this.values.string(Array.from(receiver.message, char => char.codePointAt(0)))] : receiver.args;
+      const args = receiver.messageArgs ? [receiver.nativeFields?.get("msg") ?? this.values.string(Array.from(receiver.message, char => char.codePointAt(0)))] : receiver.args;
       const tuple = this.values.tuple(args), before = [receiver.args, receiver.messageArgs];
       receiver.args = tuple.items; receiver.messageArgs = false;
       try { this.functionMetadata(receiver, "argsTuple", tuple); }

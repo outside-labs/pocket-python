@@ -446,3 +446,15 @@ root traversal and shared work budget. One existing observation adds 14
 work units; instructions, allocations, byte counts and final owners remain
 unchanged in all eight observations. Revision 20 counters are retained in
 `accounting_20_cases`. Quotas, cancellation and teardown rules are unchanged.
+
+## Import provenance accounting revision 22
+
+LA-24 retains the original source filename through an eight-byte registry-module
+edge. Resizing and tracing that edge adds one collection per initialized module
+and bounded work. Across the eight existing observations, work increases by
+272–2,893 units, retained bytes by zero to 16, and peak bytes by 8–24. Instructions,
+allocations, object counts and final owner counts remain unchanged. Revision 21
+counters remain in `accounting_21_cases`; quotas and teardown rules are unchanged.
+The native rebinding work-limit probe reserves 11,000 rather than 10,000 work
+units so charged module setup completes before its target callback prints.
+It still exhausts the shared budget inside that callback and releases all owners.

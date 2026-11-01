@@ -1573,7 +1573,7 @@ export function valueLayout(value) {
     {bytes: 72 + (value.dictionaryIdentity ? 8 : 0) + [...value.cells.keys()].reduce((sum, key) => sum + 32 + 2 * key.length, 0), children: [value.dictionary, ...(value.dictionaryIdentity ? [value.dictionaryIdentity] : []), ...value.cells.values()]};
   if (value instanceof CodePool) return {bytes: value.bytes + (value.source === null ? 0 : 32 + 2 * value.source.source.length) + (value.codeObjects === null ? 0 : 8 + 8 * value.codeObjects.size), children: [...value.code.constants, ...(value.module ? [value.module] : []), ...(value.codeObjects?.values() ?? [])]};
   if (value instanceof CodeValue) return {bytes: 56 + 24 * value.metadata.size, children: [value.pool, ...value.metadata.values()]};
-  if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length + (value.type ? 8 : 0), children: [value.environment, value.pool, ...(value.type ? [value.type] : [])]};
+  if (value instanceof ModuleValue) return {bytes: 112 + 2 * value.name.length + (value.type ? 8 : 0) + (value.origin ? 8 : 0), children: [value.environment, value.pool, ...(value.type ? [value.type] : []), ...(value.origin ? [value.origin] : [])]};
   if (value instanceof CallArguments) return {bytes: 80 + (value.keywordMap === null ? 0 : 8) + 8 * value.args.length + value.keywords.reduce((sum, key) => sum + 24 + 2 * key.length, 0),
     children: [value.callable, ...value.args, ...value.keywordValues, ...(value.keywordMap === null ? [] : [value.keywordMap])]};
   if (value instanceof FunctionValue) {

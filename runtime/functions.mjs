@@ -76,7 +76,43 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       if (state.current) error.traceback.push(Object.freeze({function: state.current.function, location: state.current.location}));
       return () => { error.context = null; error.traceback = []; };
     });
+    if (args === null && verified.code.version >= 4 && matchesException(name, "ImportError")) {
+      state.temporaries.push(error);
+      const text = values.string(Array.from(message, char => char.codePointAt(0)));
+      mutate(error, () => {
+        const boundaries = error.nativeFieldBoundaries;
+        error.nativeFields.set("msg", text); error.nativeFieldBoundaries = undefined;
+        return () => { error.nativeFields.set("msg", null); error.nativeFieldBoundaries = boundaries; };
+      });
+    }
     return error;
+  };
+  const registryException = error => {
+    const value = exception(error.name, error.message), context = error.importContext;
+    if (!context || verified.code.version < 4) return value;
+    state.temporaries.push(value, context.module);
+    const string = text => { const result = values.string(Array.from(text, char => char.codePointAt(0))); state.temporaries.push(result); return result; };
+    let name = context.name ? string(context.name) : null, path = null, nameFrom = null;
+    if (context.module) {
+      const module = context.module, environment = module.environment;
+      if (module.type || environment.dictionary?.ownedKeys || environmentCell(environment, "__spec__")?.bound ||
+          !environmentCell(environment, "__name__")?.bound && environmentCell(environment, "__getattr__")?.bound) {
+        mutate(value, () => {
+          value.nativeFieldBoundaries = new Set(["name", "path", "name_from"]);
+          return () => { value.nativeFieldBoundaries = undefined; };
+        });
+        return value;
+      }
+      const item = environmentCell(environment, "__name__");
+      name = item?.bound && values.isString(classes.payload(item.value)) ? item.value : null;
+      path = module.origin ?? null; nameFrom = string(context.member);
+    }
+    mutate(value, () => {
+      const before = new Map(value.nativeFields);
+      value.nativeFields.set("name", name); value.nativeFields.set("path", path); value.nativeFields.set("name_from", nameFrom);
+      return () => { value.nativeFields = before; };
+    });
+    return value;
   };
   const python = (name, message, args = null) => { throw new Raised(exception(name, message, args)); };
   const nameError = (message, key) => {
@@ -454,7 +490,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     } finally { leave(); }
   };
   const {dispatch, call, deliver, notifyNext, recover, attributeFailure, argumentOwner, appendArgument, appendKeyword, expandArguments, keywordArgument, expandMapping, finishArguments, expandDisplay, expandUnpack, resolveClassBases, prepareClass, importStatement} = operationRuntime({state, memory, values, classes,
-    moduleContext, maxDepth, allocate, mutate, python, nameError, addTrace, hard, charge, enter, bind, block, store, onOutput,
+    moduleContext, maxDepth, allocate, mutate, python, nameError, addTrace, registryException, hard, charge, enter, bind, block, store, onOutput,
     setCell, load, loadName, builtinLookup, reflectFrame, generatorFrame, visibleFrame, classNamespace, classFallback, classModule, beginClass, enterClass, classQualification, classFirstline, classEnd, handlerType, raiseException, settle: signal => settle(signal), resumeGenerator: (...args) => resumeGenerator(...args), yieldGenerator: value => yieldGenerator(value),
     delegateResult: (...args) => delegateResult(...args), injectGenerator: value => injectGenerator(value)});
   const leaveGenerator = (frame, status) => {
@@ -1112,7 +1148,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
     }
   };
   const handle = error => {
-    if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(exception(error.name, error.message));
+    if (error instanceof RegistryError && error.code === "IMPORT") error = new Raised(registryException(error));
     else if (error instanceof RegistryError && error.code === "UNSUPPORTED") hard(error.code, error.name, error.message);
     if (!(error instanceof Raised)) throw error;
     // Handler matching or iterator setup can itself raise while unwinding.
