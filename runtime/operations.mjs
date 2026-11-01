@@ -280,6 +280,9 @@ export function completion(kind, fields = {}) {
     case "raise-value": record = {kind, cause: fields.cause, explicit: fields.explicit}; break;
     case "raise-cause": record = {kind, receiver: fields.receiver}; break;
     case "exception-args": record = {kind, receiver: fields.receiver, after}; break;
+    case "exception-note-get": case "exception-note-store":
+      record = {kind, receiver: fields.receiver, note: fields.note, result: fields.result ?? null, depth: fields.depth, after};
+      depthCheck(record.depth); break;
     case "format-result": record = {kind, receiver: fields.receiver, slot: fields.slot, after}; break;
     case "print-argument":
       record = {kind, args: operands(fields.args), index: fields.index, depth: fields.depth, after};
@@ -428,6 +431,7 @@ function visit(record) {
     case "raise-value": return [record.cause];
     case "raise-cause": return [record.receiver];
     case "exception-args": return [record.receiver, ...completionRoots(record.after)];
+    case "exception-note-get": case "exception-note-store": return [record.receiver, record.note, record.result, ...completionRoots(record.after)];
     case "print-argument": return [...record.args, ...completionRoots(record.after)];
     case "arithmetic-result": case "arithmetic-index": return [...record.args, ...completionRoots(record.after)];
     case "attribute-write": return [record.receiver, ...completionRoots(record.after)];

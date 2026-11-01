@@ -131,3 +131,21 @@ test('handler expression blocks require modern bytecode and a verified expressio
     assert.throws(() => verifyFunctions(program), {code: 'BYTECODE'});
   }
 });
+
+test('note getters retain the note and exception through park/cancel/close', async () => {
+  await lifetime('notes=[]\nclass E(Exception):\n @property\n def __notes__(self):\n  print("entered")\n  return notes\ne=E()\ne.add_note("detail")\nprint(notes[0])\n', 'entered\ndetail\n');
+});
+
+test('lazy note creation retains the new list across owned setters', async () => {
+  await lifetime('class E(Exception):\n @property\n def __notes__(self): raise AttributeError()\n @__notes__.setter\n def __notes__(self,value):\n  print("entered")\n  self.saved=value\ne=E()\ne.add_note("detail")\nprint(e.saved[0])\n', 'entered\ndetail\n');
+});
+
+test('cyclic note dictionaries survive collection and release together', async () => {
+  await lifetime('e=Exception()\ne.__notes__=[e]\ne.add_note("detail")\nprint("entered")\nprint(e.__notes__[0] is e,e.__notes__[1])\n', 'entered\nTrue detail\n');
+});
+
+test('growing note graphs use the shared allocation budget', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True:\n e=Exception()\n e.add_note("detail")\n held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 24000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
