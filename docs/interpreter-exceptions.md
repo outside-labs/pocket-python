@@ -469,3 +469,19 @@ keys remain reachable through the error independently of args and release on
 cancellation/close. This mutation contract does not admit reading a dictionary
 subclass view's mapping proxy, view set operations or populated dictionary
 constructors; those retain #116.
+
+LA-52 accepts callable/view failures across modules, dynamic source, causes,
+notes, retained owner cycles and suspended cleanup. Run
+`examples/interpreter_callable_view_failures.py` unchanged on the pinned
+reference or in the offline console. Installed acceptance adds original
+callable/view failure frames, Stop/Restart in function dictionary comparisons
+and view-error cleanup, and fresh callable/view owners after restart.
+The complete exception corpus has 1,222 cases: 1,211 supported semantic/error
+comparisons, 11 explicit refusals and 267 explicitly shared core-source/1 cases.
+The six host/crash/cache qualifications remain separately recorded. These are
+finite corpus/API observations, not an overall compatibility percentage.
+The eight deterministic execution resource observations retain revision 22.
+Groups/except*, tracebacks, note export, original-instance shared-key deletion,
+other native attribute/import/parser metadata and the declared qualifications
+keep #124 and A2 open. Wider representation/formatting, container APIs and
+library/package/candidate gates retain their existing owners.

@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43', 'LA46', 'LA49'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43', 'LA46', 'LA49', 'LA52'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -99,6 +99,9 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             assert 'fail at mutation-delete-original.py:3' in page.locator('#diagnostic').inner_text()
                         if case['id'] == 'namespace-mutations-class-dynamic-failure':
                             assert 'fail at class-mutation-original.py:3' in page.locator('#diagnostic').inner_text()
+                        if case['id'] in {'callable-views-native-dynamic-failure', 'callable-views-view-dynamic-failure'}:
+                            filename = 'callable' if 'native' in case['id'] else 'view'
+                            assert f'fail at {filename}-mutation-original.py:2' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     if exceptions:
                         for case in corpus.get('reference_boundaries', []):
@@ -140,6 +143,10 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         namespaces_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', namespaces], text=True, encoding='utf-8')
                         run(namespaces, namespaces_expected)
                         records.append({'id': 'namespace-mutation-example', 'status': 'pass'})
+                        callable_views = (ROOT / 'examples/interpreter_callable_view_failures.py').read_text(encoding='utf-8')
+                        callable_views_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', callable_views], text=True, encoding='utf-8')
+                        run(callable_views, callable_views_expected)
+                        records.append({'id': 'callable-view-mutation-example', 'status': 'pass'})
                         mutations = (ROOT / 'examples/interpreter_attribute_mutations.py').read_text(encoding='utf-8')
                         mutations_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', mutations], text=True, encoding='utf-8')
                         run(mutations, mutations_expected)
@@ -173,6 +180,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             'try: b"A\\xe1\\x80".decode()\nexcept UnicodeDecodeError as error: e=error\nclass Reason:\n def __str__(self):\n  print("entered")\n  while True: pass\ne.reason=Reason()\nprint(str(e))\n',
                             'class Record:\n __slots__=()\n def __setattr__(self,key,value):\n  print("entered")\n  while True: pass\nRecord().field=7\n',
                             'class Meta(type):\n def __delattr__(self,key):\n  print("entered")\n  while True: pass\nclass Record(metaclass=Meta): pass\ndel Record.field\n',
+                            'def f(): pass\nclass Key:\n def __hash__(self): return hash("field")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nf.__dict__[Key()]=7\nf.field=8\n',
+                            'def work():\n try: {}.keys().missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   while True: pass\ni=work()\ne=next(i)\ni.close()\n',
                             'class Key:\n def __hash__(self): return hash("field")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nclass Record: pass\nr=Record()\nr.__dict__[Key()]=7\ndel r.field\n',
                         ]
                     for source in busy_sources:
@@ -187,6 +196,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         page.click('#restart')
                         ready()
                         run(example, expected)
+                        if exceptions:
+                            run(callable_views, callable_views_expected)
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/console')
                     shutil.copytree(root / 'reduced', root / 'site/console')
@@ -253,6 +264,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                   'stop-during-runtime-decoding-reason', 'core-runtime-decoding-fields',
                   'stop-during-generic-setter', 'stop-during-delete-comparison', 'core-attribute-mutation-boundary',
                   'stop-during-metaclass-deletion', 'class-mutation-original-diagnostics',
+                  'stop-during-function-dictionary-comparison', 'stop-during-view-cleanup',
+                  'callable-view-original-diagnostics', 'callable-view-fresh-restart',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',

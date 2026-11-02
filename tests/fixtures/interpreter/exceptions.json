@@ -51,7 +51,8 @@
     "LA48",
     "LA49",
     "LA50",
-    "LA51"
+    "LA51",
+    "LA52"
   ],
   "cases": [
     {
@@ -9290,6 +9291,79 @@
       "stage": "LA51",
       "source": "d={\"first\":[]}\nview=d.keys()\nproxy=view.mapping\ntry: view.missing=7\nexcept AttributeError as error: e=error\nd[\"next\"]=8\nprint(len(e.obj),len(proxy),e.obj is view,e.name)\n",
       "stdout": "2 2 True missing\n"
+    },
+    {
+      "id": "callable-views-runnable-example",
+      "stage": "LA52",
+      "source": "\"\"\"Keep failed callable/view mutations available for a later cleanup pass.\"\"\"\n\nclass FieldName(str):\n    pass\n\n\nfailures = []\n\n\ndef remember(receiver, name):\n    try:\n        setattr(receiver, name, 7)\n    except AttributeError as error:\n        error.add_note(\"receiver retained for cleanup\")\n        error.args = ()\n        failures.append(error)\n\n\nrecord = {\"field\": []}\nview = record.values()\nname = FieldName(\"missing\")\nremember(view, name)\nremember([7].append, name)\nrecord[\"next\"] = []\nprint(failures[0].name is name, failures[0].obj is view, len(view))\nprint(failures[1].name is name, failures[1].obj.__self__[0])\nprint(failures[0].__notes__[0], len(failures[1].args))\n",
+      "stdout": "True True 2\nTrue 7\nreceiver retained for cleanup 0\n"
+    },
+    {
+      "id": "callable-views-function-cycles",
+      "stage": "LA52",
+      "source": "class Key(str): pass\ndef f(): pass\nkey=Key(\"missing\")\ntry: delattr(f,key)\nexcept AttributeError as error: e=error\nkey.error=e\nf.error=e\ne.args=()\nf=None\nkey=None\nprint(e.name.error is e,e.obj.error is e)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-views-bound-generator",
+      "stage": "LA52",
+      "source": "def work():\n try: [7].append.missing=8\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,e.obj.__self__[0],len(e.args))\ni=work()\ne=next(i)\ne.args=()\ni.close()\n",
+      "stdout": "missing 7 0\n"
+    },
+    {
+      "id": "callable-views-live-cycle",
+      "stage": "LA52",
+      "source": "d={}\nview=d.values()\ntry: view.missing=7\nexcept AttributeError as error: e=error\nd[\"error\"]=e\ne.args=()\nd=None\nview=None\nprint(list(e.obj)[0] is e,e.name,len(e.obj))\n",
+      "stdout": "True missing 1\n"
+    },
+    {
+      "id": "callable-views-proxy-cycle",
+      "stage": "LA52",
+      "source": "class A: pass\ntry: A.__dict__.missing=7\nexcept AttributeError as error: e=error\nA.error=e\ne.args=()\nA=None\nprint(e.obj[\"error\"] is e,e.name)\n",
+      "stdout": "True missing\n"
+    },
+    {
+      "id": "callable-views-native-dynamic-failure",
+      "stage": "LA52",
+      "source": "exec(compile(\"def fail():\\n [7].append.missing=8\\nfail()\\n\",\"callable-mutation-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "callable-views-view-dynamic-failure",
+      "stage": "LA52",
+      "source": "exec(compile(\"def fail():\\n {}.keys().missing=8\\nfail()\\n\",\"view-mutation-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "callable-views-view-generator",
+      "stage": "LA52",
+      "source": "def work():\n try: {}.keys().missing=7\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,len(e.obj),len(e.args))\ni=work()\ne=next(i)\ne.args=()\ni.close()\n",
+      "stdout": "missing 0 0\n"
+    },
+    {
+      "id": "callable-views-readonly-cause",
+      "stage": "LA52",
+      "source": "def f(): pass\ntry:\n try: f.__globals__={}\n except AttributeError as cause:\n  cause.add_note(\"readonly\")\n  raise LookupError(\"outer\") from cause\nexcept LookupError as e: print(e.__cause__.name is None,e.__cause__.obj is None,e.__cause__.__notes__[0])\n",
+      "stdout": "True True readonly\n"
+    },
+    {
+      "id": "callable-views-module-record",
+      "stage": "LA52",
+      "source": "import helper\ntry: helper.fail()\nexcept AttributeError as e:\n e.args=()\n print(e.name,e.record[0] is e,e.record[1] is e.obj,e.obj.__self__[0])\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def fail():\n receiver=[7].append\n try: receiver.missing=8\n except AttributeError as e:\n  e.record=[e,receiver]\n  raise e\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "missing True True 7\n"
     }
   ],
   "reference_boundaries": [
