@@ -58,6 +58,8 @@ terminates the active pool before the browser closes. Set
 the complete exceptions corpus and requires identical ordered results, including
 resource/teardown observations. Use `--corpus PATH` for another corpus. It writes
 timings and host/corpus identities to `build/browser-worker-benchmark.json`.
+Oracle validation/cache warming runs once before the timed samples and appears
+separately as `reference_setup`, so a cold cache cannot bias the serial sample.
 
 The classes console compares its bulk successful language programs through two
 installed console host/worker sessions. Each run still creates its own module
