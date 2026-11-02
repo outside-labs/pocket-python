@@ -77,6 +77,22 @@ test('retained class mutation graphs share the allocation limit', async () => {
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+for (const mode of ['module', 'class']) test(mode + ' mutation failures preserve original dynamic frames', async () => {
+  const item = corpus.cases.find(item => item.id === 'namespace-mutations-' + mode + '-dynamic-failure');
+  const result = await runSourceRequest({modules: [{...unit(item.source), imports: item.imports ?? []},
+    ...(item.modules ?? []).map(module => ({...module, notice: 'Synthetic namespace mutation helper'}))], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'AttributeError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', mode === 'module' ? 2 : 1], ['<module>', mode + '-mutation-original.py', mode === 'module' ? 3 : 4],
+    ['fail', mode + '-mutation-original.py', mode === 'module' ? 2 : 3]]);
+  closed(result.closed);
+});
+
+test('module mutation metadata survives suspended generator cleanup', async () => {
+  const helper = {name: 'helper', source: 'marker=[]\n'};
+  await lifetime('import helper\ndef work():\n try: del helper.missing\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,e.obj is helper)\ni=work()\ne=next(i)\ne.args=()\nprint("entered")\ni.close()\n', 'entered\nmissing True\n', [helper]);
+});
+
 test('failed generic writes retain temporary receivers through parked collection', async () => {
   await lifetime('class A: __slots__=()\ntry: A().missing=7\nexcept AttributeError as error: e=error\ne.args=()\nprint("entered")\nprint(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
 });

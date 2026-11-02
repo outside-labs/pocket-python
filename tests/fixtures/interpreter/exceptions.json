@@ -48,7 +48,8 @@
     "LA45",
     "LA46",
     "LA47",
-    "LA48"
+    "LA48",
+    "LA49"
   ],
   "cases": [
     {
@@ -8028,6 +8029,89 @@
       "stage": "LA48",
       "source": "class A: pass\nitem=[]\ntype.__setattr__(A,\"field\",item)\nprint(A.field is item)\ntype.__delattr__(A,\"field\")\nprint(\"field\" in A.__dict__)\n",
       "stdout": "True\nFalse\n"
+    },
+    {
+      "id": "namespace-mutations-runnable-example",
+      "stage": "LA49",
+      "source": "\"\"\"Retain a class and its failed field name while reporting cleanup errors.\"\"\"\n\nclass FieldName(str):\n    pass\n\n\nclass Record:\n    active = [\"pending\"]\n\n\ndef discard(owner, name):\n    try:\n        delattr(owner, name)\n    except AttributeError as cause:\n        error = LookupError(\"field already removed\")\n        error.owner = owner\n        error.add_note(\"cleanup can be retried\")\n        raise error from cause\n\n\ndiscard(Record, \"active\")\ntry:\n    discard(Record, FieldName(\"active\"))\nexcept LookupError as error:\n    cause = error.__cause__\n    print(str(error), cause.name)\n    print(cause.obj is Record, error.owner is Record)\n    print(type(cause.name) is str, error.__notes__[0])\n",
+      "stdout": "field already removed active\nTrue True\nTrue cleanup can be retried\n"
+    },
+    {
+      "id": "namespace-mutations-module-cycle",
+      "stage": "LA49",
+      "source": "import helper\nclass Key(str): pass\nkey=Key(\"missing\")\ntry: delattr(helper,key)\nexcept AttributeError as error: e=error\nkey.error=e\nhelper.error=e\ne.args=()\ne.add_note(\"cleanup\")\nprint(e.name is key,e.obj is helper,e.obj.error is e,e.name.error is e,e.__notes__[0])\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=[]\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True True True cleanup\n"
+    },
+    {
+      "id": "namespace-mutations-class-cycle",
+      "stage": "LA49",
+      "source": "class Key(str): pass\nclass A: pass\nkey=Key(\"missing\")\ntry: delattr(A,key)\nexcept AttributeError as error: e=error\nA.error=e\ne.args=()\nprint(type(e.name) is str,e.name == key,e.name is key,e.obj.error is e)\n",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "namespace-mutations-module-generator",
+      "stage": "LA49",
+      "source": "import helper\ndef work():\n try: del helper.missing\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,e.obj is helper,e.obj.marker is helper.marker)\ni=work()\ne=next(i)\ne.args=()\ni.close()\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=[]\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "missing True True\n"
+    },
+    {
+      "id": "namespace-mutations-class-generator",
+      "stage": "LA49",
+      "source": "class A: pass\ndef work():\n try: del A.missing\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,e.obj is A,len(e.args))\ni=work()\ne=next(i)\ne.args=()\ni.close()\n",
+      "stdout": "missing True 0\n"
+    },
+    {
+      "id": "namespace-mutations-module-dynamic-failure",
+      "stage": "LA49",
+      "source": "import helper\nexec(compile(\"def fail():\\n del helper.missing\\nfail()\\n\",\"module-mutation-original.py\",\"exec\"))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=[]\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "namespace-mutations-class-dynamic-failure",
+      "stage": "LA49",
+      "source": "exec(compile(\"class A: pass\\ndef fail():\\n del A.missing\\nfail()\\n\",\"class-mutation-original.py\",\"exec\"))\n",
+      "stdout": "",
+      "error_type": "AttributeError"
+    },
+    {
+      "id": "namespace-mutations-owned-metaclass-cause",
+      "stage": "LA49",
+      "source": "cause=AttributeError(\"owned\",name=\"inner\",obj=[])\nclass Meta(type):\n def __delattr__(self,key): raise cause\nclass A(metaclass=Meta): pass\ntry:\n try: del A.field\n except AttributeError as error:\n  error.add_note(\"kept\")\n  raise LookupError(\"outer\") from error\nexcept LookupError as e: print(e.__cause__ is cause,e.__cause__.name,e.__cause__.__notes__[0])\n",
+      "stdout": "True inner kept\n"
     }
   ],
   "reference_boundaries": [
