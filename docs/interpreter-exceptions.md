@@ -522,3 +522,15 @@ cases. The six existing qualifications remain outside those counts. These
 finite observations do not measure overall Python completion. Generator and
 iterator mutation metadata follow separately; other #124 and candidate gates
 remain open.
+
+LA-56 adopts generator mutation failure metadata for created, suspended and
+closed generators and generator expressions. Missing names retain the original
+key and generator; read-only state attributes and native descriptors leave
+fields absent. Generator name/qualname replacement accepts and retains string
+subtypes without formatting callbacks; invalid values/deletion preserve the
+previous name. The 57 reference cases include native object wrappers and direct
+state descriptors. Suspended sources and cyclic replacement names share the
+ordinary ownership/allocation rules. Frame tracing/jumping and wider generator
+throw remain separately gated. The pinned
+[generator implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/genobject.c)
+defines the native state and name descriptors.

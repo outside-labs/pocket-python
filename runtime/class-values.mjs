@@ -1101,11 +1101,13 @@ export class ClassRuntime {
     if (this.containerDirectoryNames(receiver) !== null || this.values.isRange(receiver) || this.values.isSlice(receiver))
       this.fixedMutationFailure(receiver, name, key, "Container attributes are read-only");
     if (receiver instanceof GeneratorValue && ["__name__", "__qualname__"].includes(name)) {
-      if (remove || !this.values.isString(value)) this.fail("TypeError", name + " must be a string");
+      if (remove || !this.values.isString(this.payload(value))) this.fail("TypeError", name + " must be a string");
       return {kind: "value", value: this.functionMetadata(receiver, name === "__name__" ? "identityName" : "identityQualname", value)};
     }
-    if (receiver instanceof GeneratorValue || receiver instanceof FrameValue || receiver instanceof FrameLocalsValue)
-      this.fail(receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UnsupportedOperationError" : "AttributeError", "Frame/generator metadata is read-only; tracing and jumping are separate", receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UNSUPPORTED" : "PYTHON");
+    if (receiver instanceof GeneratorValue)
+      this.fixedMutationFailure(receiver, name, key, "Generator state is read-only");
+    if (receiver instanceof FrameValue || receiver instanceof FrameLocalsValue)
+      this.fail(receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UnsupportedOperationError" : "AttributeError", "Frame metadata is read-only; tracing and jumping are separate", receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UNSUPPORTED" : "PYTHON");
     if (receiver instanceof Cell) {
       if (name !== "cell_contents") this.fail("AttributeError", "Cell attributes are read-only");
       const before = [receiver.bound, receiver.value]; receiver.bound = !remove; receiver.value = remove ? null : value;

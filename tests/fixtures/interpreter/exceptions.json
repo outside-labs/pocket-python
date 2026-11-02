@@ -56,7 +56,8 @@
     "LA53",
     "LA54",
     "LA54A",
-    "LA55"
+    "LA55",
+    "LA56"
   ],
   "cases": [
     {
@@ -10797,6 +10798,348 @@
       "source": "try:\n try: (2+3j).missing=7\n except AttributeError as e:\n  e.add_note(\"retained\")\n  raise e from ValueError(8)\nexcept AttributeError as e:\n e.args=()\n print(e.name,e.obj==2+3j,e.__cause__.args[0],e.__notes__[0],e.__suppress_context__)\n",
       "stage": "LA55",
       "stdout": "missing True 8 retained True\n"
+    },
+    {
+      "id": "la56-created-write-missing-builtin",
+      "source": "def work():\n yield [7]\nobj=work()\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-created-write-missing-native",
+      "source": "def work():\n yield [7]\nobj=work()\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-created-write-gi_code-builtin",
+      "source": "def work():\n yield [7]\nobj=work()\nkey=\"gi_code\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-created-write-gi_code-native",
+      "source": "def work():\n yield [7]\nobj=work()\nkey=\"gi_code\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-created-write-subtype-key",
+      "source": "def work():\n yield [7]\nclass Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=work()\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la56-created-delete-missing-builtin",
+      "source": "def work():\n yield [7]\nobj=work()\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-created-delete-missing-native",
+      "source": "def work():\n yield [7]\nobj=work()\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-created-delete-gi_code-builtin",
+      "source": "def work():\n yield [7]\nobj=work()\nkey=\"gi_code\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-created-delete-gi_code-native",
+      "source": "def work():\n yield [7]\nobj=work()\nkey=\"gi_code\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-created-delete-subtype-key",
+      "source": "def work():\n yield [7]\nclass Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=work()\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la56-suspended-write-missing-builtin",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nobj=g\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-suspended-write-missing-native",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nobj=g\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-suspended-write-gi_frame-builtin",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nobj=g\nkey=\"gi_frame\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-suspended-write-gi_frame-native",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nobj=g\nkey=\"gi_frame\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-suspended-write-subtype-key",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nclass Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=g\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la56-suspended-delete-missing-builtin",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nobj=g\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-suspended-delete-missing-native",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nobj=g\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-suspended-delete-gi_frame-builtin",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nobj=g\nkey=\"gi_frame\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-suspended-delete-gi_frame-native",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nobj=g\nkey=\"gi_frame\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-suspended-delete-subtype-key",
+      "source": "def work():\n yield [7]\ng=work()\nnext(g)\nclass Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=g\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la56-closed-write-missing-builtin",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nobj=g\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-closed-write-missing-native",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nobj=g\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-closed-write-gi_suspended-builtin",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nobj=g\nkey=\"gi_suspended\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-closed-write-gi_suspended-native",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nobj=g\nkey=\"gi_suspended\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-closed-write-subtype-key",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nclass Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=g\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la56-closed-delete-missing-builtin",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nobj=g\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-closed-delete-missing-native",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nobj=g\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-closed-delete-gi_suspended-builtin",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nobj=g\nkey=\"gi_suspended\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-closed-delete-gi_suspended-native",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nobj=g\nkey=\"gi_suspended\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-closed-delete-subtype-key",
+      "source": "def work():\n yield [7]\ng=work()\ng.close()\nclass Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=g\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la56-expression-write-missing-builtin",
+      "source": "obj=(x for x in [7])\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-expression-write-missing-native",
+      "source": "obj=(x for x in [7])\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-expression-write-gi_running-builtin",
+      "source": "obj=(x for x in [7])\nkey=\"gi_running\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-expression-write-gi_running-native",
+      "source": "obj=(x for x in [7])\nkey=\"gi_running\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-expression-write-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=(x for x in [7])\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la56-expression-delete-missing-builtin",
+      "source": "obj=(x for x in [7])\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-expression-delete-missing-native",
+      "source": "obj=(x for x in [7])\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la56-expression-delete-gi_running-builtin",
+      "source": "obj=(x for x in [7])\nkey=\"gi_running\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-expression-delete-gi_running-native",
+      "source": "obj=(x for x in [7])\nkey=\"gi_running\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la56-expression-delete-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=(x for x in [7])\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_code-write",
+      "source": "def work():\n yield [7]\ng=work()\ntry: g.gi_code=[]\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_code-delete",
+      "source": "def work():\n yield [7]\ng=work()\ntry: del g.gi_code\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_frame-write",
+      "source": "def work():\n yield [7]\ng=work()\ntry: g.gi_frame=[]\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_frame-delete",
+      "source": "def work():\n yield [7]\ng=work()\ntry: del g.gi_frame\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_suspended-write",
+      "source": "def work():\n yield [7]\ng=work()\ntry: g.gi_suspended=[]\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_suspended-delete",
+      "source": "def work():\n yield [7]\ng=work()\ntry: del g.gi_suspended\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_running-write",
+      "source": "def work():\n yield [7]\ng=work()\ntry: g.gi_running=[]\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_running-delete",
+      "source": "def work():\n yield [7]\ng=work()\ntry: del g.gi_running\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_yieldfrom-write",
+      "source": "def work():\n yield [7]\ng=work()\ntry: g.gi_yieldfrom=[]\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-direct-gi_yieldfrom-delete",
+      "source": "def work():\n yield [7]\ng=work()\ntry: del g.gi_yieldfrom\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "generator-__name__-subtype-name-builtin",
+      "source": "def work():\n yield [7]\nclass Name(str):\n def __str__(self): raise ValueError(\"unexpected\")\ng=work()\nname=Name(\"renamed\")\nsetattr(g,\"__name__\",name)\nprint(getattr(g,\"__name__\") is name,next(g)[0])\n",
+      "stage": "LA56",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "generator-__name__-subtype-name-native",
+      "source": "def work():\n yield [7]\nclass Name(str):\n def __str__(self): raise ValueError(\"unexpected\")\ng=work()\nname=Name(\"renamed\")\nobject.__setattr__(g,\"__name__\",name)\nprint(getattr(g,\"__name__\") is name,next(g)[0])\n",
+      "stage": "LA56",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "generator-__name__-validation",
+      "source": "def work():\n yield [7]\ng=work()\noriginal=getattr(g,\"__name__\")\nfor value in [None,7,[]]:\n try: setattr(g,\"__name__\",value)\n except TypeError: print(getattr(g,\"__name__\") is original)\ntry: delattr(g,\"__name__\")\nexcept TypeError: print(getattr(g,\"__name__\") is original)\n",
+      "stage": "LA56",
+      "stdout": "True\nTrue\nTrue\nTrue\n"
+    },
+    {
+      "id": "generator-__qualname__-subtype-name-builtin",
+      "source": "def work():\n yield [7]\nclass Name(str):\n def __str__(self): raise ValueError(\"unexpected\")\ng=work()\nname=Name(\"renamed\")\nsetattr(g,\"__qualname__\",name)\nprint(getattr(g,\"__qualname__\") is name,next(g)[0])\n",
+      "stage": "LA56",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "generator-__qualname__-subtype-name-native",
+      "source": "def work():\n yield [7]\nclass Name(str):\n def __str__(self): raise ValueError(\"unexpected\")\ng=work()\nname=Name(\"renamed\")\nobject.__setattr__(g,\"__qualname__\",name)\nprint(getattr(g,\"__qualname__\") is name,next(g)[0])\n",
+      "stage": "LA56",
+      "stdout": "True 7\n"
+    },
+    {
+      "id": "generator-__qualname__-validation",
+      "source": "def work():\n yield [7]\ng=work()\noriginal=getattr(g,\"__qualname__\")\nfor value in [None,7,[]]:\n try: setattr(g,\"__qualname__\",value)\n except TypeError: print(getattr(g,\"__qualname__\") is original)\ntry: delattr(g,\"__qualname__\")\nexcept TypeError: print(getattr(g,\"__qualname__\") is original)\n",
+      "stage": "LA56",
+      "stdout": "True\nTrue\nTrue\nTrue\n"
+    },
+    {
+      "id": "generator-direct-native-descriptor",
+      "source": "def work():\n yield [7]\ng=work()\nfor name in [\"gi_frame\",\"gi_code\",\"gi_running\"]:\n descriptor=type(g).__dict__[name]\n for remove in [False,True]:\n  try:\n   if remove: descriptor.__delete__(g)\n   else: descriptor.__set__(g,[])\n  except AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stage": "LA56",
+      "stdout": "True True\nTrue True\nTrue True\nTrue True\nTrue True\nTrue True\n"
     }
   ],
   "reference_boundaries": [

@@ -83,6 +83,20 @@ test('value mutation errors survive interrupted suspended buffer cleanup', async
   await lifetime('def work():\n try: memoryview(bytearray(b"abc")).missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   print(e.name,e.obj[0],len(e.args))\ni=work()\ne=next(i)\ne.args=()\ni.close()\n', 'entered\nmissing 97 0\n');
 });
 
+test('generator mutation errors retain suspended sources and cyclic subtype keys', async () => {
+  await lifetime('class Key(str): pass\nkey=Key("missing")\ndef work(value):\n yield value\ntry: setattr(work([7]),key,[])\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nkey=None\nprint("entered")\nprint(e.name.error is e,next(e.obj)[0])\ne.obj.close()\n', 'entered\nTrue 7\n');
+});
+
+test('generator name replacement retains cyclic string subclasses through collection', async () => {
+  await lifetime('class Name(str): pass\ndef work(): yield 7\ng=work()\nname=Name("renamed")\nname.owner=g\ng.__name__=name\nname=None\nprint("entered")\nprint(g.__name__.owner is g,next(g))\n', 'entered\nTrue 7\n');
+});
+
+test('retained generator mutation graphs share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('def work(value): yield value\nheld=[]\nprint("ready")\nwhile True:\n try: work([7]).missing=[]\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 48000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('module mutation errors retain cyclic keys and the module after args replacement', async () => {
   await lifetime('import helper\nclass Key(str): pass\nkey=Key("missing")\ntry: delattr(helper,key)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nhelper=None\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj.marker)\n',
     'entered\nTrue 7\n', [{name: 'helper', source: 'marker=7\n'}]);
