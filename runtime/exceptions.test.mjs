@@ -117,6 +117,25 @@ test('retained iterator mutation graphs share the allocation limit', async () =>
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+for (const mode of ['generator', 'iterator']) test(mode + ' mutation failures preserve original dynamic frames', async () => {
+  const item = corpus.cases.find(item => item.id === 'iterators-' + mode + '-dynamic-failure');
+  const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'AttributeError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', mode + '-failure-original.py', 7], ['fail', mode + '-failure-original.py', 3]]);
+  closed(result.closed);
+});
+
+test('self-retained generator mutation errors survive interrupted cleanup', async () => {
+  await lifetime('def work():\n try: g.missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   print(e.name,e.obj is g,e.obj.gi_running)\ng=work()\ne=next(g)\ne.args=()\ng.close()\n', 'entered\nmissing True True\n');
+});
+
+test('retained iterator callbacks share execution limits', async () => {
+  const result = await runSourceRequest({modules: [unit('class Source:\n def __getitem__(self,index):\n  print("entered")\n  while True: pass\ntry: iter(Source()).missing=7\nexcept AttributeError as e: next(e.obj)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 1000}});
+  assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+});
+
 test('module mutation errors retain cyclic keys and the module after args replacement', async () => {
   await lifetime('import helper\nclass Key(str): pass\nkey=Key("missing")\ntry: delattr(helper,key)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nhelper=None\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj.marker)\n',
     'entered\nTrue 7\n', [{name: 'helper', source: 'marker=7\n'}]);

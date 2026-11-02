@@ -544,3 +544,18 @@ layouts. Retained errors keep detached dictionary subtype owners, memoryview
 storage and indexed/callable sources alive and release cycles on close or
 interruption. New iterator APIs and protocols remain under their existing
 owners; core mutation admission stays unchanged.
+
+LA-58 accepts generator/iterator mutation failures across modules, dynamic
+source, causes/notes, running generators, exhaustion, owner cycles and
+suspended cleanup. Run `examples/interpreter_iterator_failures.py` unchanged
+on the pinned reference or offline console. Installed acceptance checks original
+failure locations, Stop/Restart during generator cleanup and retained indexed
+callbacks, and fresh targets after restart. The corpus has 1,741 cases: 1,730
+supported semantic/error comparisons, 11 explicit refusals and 267 explicitly
+shared core-source/1 cases. Six host/crash/cache qualifications remain separate;
+these finite observations are not an overall Python-completion percentage.
+Frame/code/cell/property/super mutation layouts, direct scalar storage
+descriptors, original-instance shared-key deletion, other native/import/parser
+metadata, groups/except*, tracebacks and note export keep #124/A2 open. Broader
+formatting, iterator/container/codec APIs and library/package/candidate gates
+retain their existing owners.
