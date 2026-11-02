@@ -979,7 +979,7 @@ function activation(program, {maxSteps = 10_000, maxWork = 1_000_000, maxDepth =
       } else if (["attribute-set", "attribute-delete"].includes(op)) {
         const value = op === "attribute-set" ? stack.pop() : null;
         const receiver = stack.pop();
-        if (arg !== "__class__" && (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver))) python("AttributeError", "Value attributes are read-only");
+        if (verified.code.version < 4 && arg !== "__class__" && (values.isView(receiver) || values.isBinary(receiver) || values.isSet(receiver) || values.isSlice(receiver) || values.isComplex(receiver) || values.isRange(receiver))) python("AttributeError", "Value attributes are read-only");
         if (receiver instanceof ModuleValue || classes.lookupMayCallback(receiver) || classes.hasAttributeHook(receiver, op === "attribute-set" ? "__setattr__" : "__delattr__") ||
             userProtocol(receiver) && arg === "__class__" && classes.hasSlot(classes.checkingType(receiver), "__class__")) {
           dispatch(attributeTask(receiver, arg, summary(frame, cursor), null, 0, op === "attribute-set" ? "set" : "delete", null, null, value)); return;
