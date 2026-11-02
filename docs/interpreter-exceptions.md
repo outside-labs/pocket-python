@@ -566,3 +566,11 @@ count divided by ten, matching the shared validation inventory's cost basis.
 Small selections retain the existing bound; semantic execution, work/allocation
 limits and timeout/failure diagnostics are unchanged. This addresses the two
 fixed-deadline Linux CI failures in the first batch's stepped/parked matrix.
+
+LA-58B retains the complete browser matrix with a finite 20-minute conformance
+job bound; integration jobs keep their 15-minute limit. Two 15-minute CI
+attempts reached the final compatibility check after their preceding checks
+passed. The identical complete 44-check shard passes locally in 485.824 seconds.
+All six conformance and three integration shards, reports and semantic/resource
+limits are retained; the deterministic partition test uses the actual six
+conformance shards. Interpreter/package/offline acceptance evidence is reused.
