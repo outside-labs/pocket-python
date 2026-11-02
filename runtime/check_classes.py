@@ -88,8 +88,11 @@ def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, 
         'options': {'maxSteps': 50000, 'maxWork': 20000000}, **({'parked': True} if parked else {})} for case in cases]
     stepped = stepped or parked
     if target == 'node':
+        # Match the shared inventory's case-count cost estimate while retaining
+        # the small-corpus bound and a finite deadline for the complete request.
+        timeout = max(30, len(requests) / 10)
         response = json.loads(subprocess.check_output(['node', str(ROOT / ('execution-runner.mjs' if stepped else 'source-runner.mjs'))],
-            input=json.dumps(requests), text=True, encoding='utf-8', timeout=30))
+            input=json.dumps(requests), text=True, encoding='utf-8', timeout=timeout))
         host, results = response['host'], response['results']
     else:
         host, results = run_browser({'worker': 'execution-worker.mjs' if stepped else 'source-worker.mjs'}, requests, channel)
