@@ -59,6 +59,15 @@ the complete exceptions corpus and requires identical ordered results, including
 resource/teardown observations. Use `--corpus PATH` for another corpus. It writes
 timings and host/corpus identities to `build/browser-worker-benchmark.json`.
 
+The classes console compares its bulk successful language programs through two
+installed console host/worker sessions. Each run still creates its own module
+session with the shipped profile, libraries, output grant and resource limits.
+Corpus stdout comes from the same committed expectations checked independently
+by the differential matrix; standalone examples still run isolated CPython.
+Representative form submissions, all source-error/diagnostic checks, offline
+reloads, service-worker/profile updates and every Stop/Restart cycle retain
+their UI paths. The console report records UI/worker counts and elapsed time.
+
 ## Fast development and merge policy
 
 Run the smallest meaningful local checks for the behavior being changed. A

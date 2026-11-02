@@ -15,6 +15,7 @@ import time
 from playwright.sync_api import sync_playwright
 
 from interpreter_browser_smoke import EXAMPLE, Handler, Server
+from console_cases import program_expectations
 from pocket_python.interpreter import build_interpreter, read_interpreter
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -109,6 +110,8 @@ print(d is vars(module),module.marker)
 
 def smoke(channel=None):
     checks, cases = [], []
+    started = time.perf_counter()
+    transport = {'ui': 0, 'worker': 0}
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         source = EXAMPLE.write_source(root / 'source', source=SOURCE)
@@ -140,6 +143,7 @@ def smoke(channel=None):
                         page.wait_for_function('()=>navigator.serviceWorker.controller!==null')
 
                     def run(source, expected):
+                        transport['ui'] += 1
                         page.fill('#input', source)
                         assert page.locator('#run').is_enabled()
                         # Repeated corpus runs need the normal click handler,
@@ -150,6 +154,7 @@ def smoke(channel=None):
                         assert page.locator('#result').inner_text() == expected
 
                     def refused(source, prefix):
+                        transport['ui'] += 1
                         page.fill('#input', source)
                         assert page.locator('#run').is_enabled()
                         page.locator('#run').dispatch_event('click')
@@ -365,10 +370,45 @@ def smoke(channel=None):
                     programs.append(PROPERTY_NAMES_SOURCE)
                     programs.append(ABSTRACT_FLAGS_SOURCE)
                     programs.append(DOCUMENTATION_SOURCE)
-                    for program in programs:
-                        expected = subprocess.check_output([sys.executable, '-I', '-S', '-X', 'utf8', '-c', program],
-                                                           text=True, encoding='utf-8', timeout=5)
-                        run(program, expected)
+                    expectations = program_expectations(programs)
+                    # Keep a representative real form submission before the bulk
+                    # comparisons; error, offline/update and Stop/Restart checks
+                    # below continue through their existing UI paths.
+                    run(programs[0], expectations[0])
+                    config = json.loads((root / 'site/nested/classes' / selected['configuration']).read_bytes())
+                    config['library_sources'] = [{**{key: module[key] for key in ('name', 'package', 'imports')},
+                        **{key: (root / 'site/nested/classes' / module[key]['path']).read_text(encoding='utf-8')
+                           for key in ('source', 'notice')}} for module in config['libraries']]
+                    results = page.evaluate('''async ({host,config,programs})=>{
+                      const {mountInterpreter}=await import('./'+host);
+                      const results=new Array(programs.length),active=new Set();let next=0,failed=false;
+                      try{
+                        await Promise.all(Array.from({length:Math.min(2,programs.length)},async()=>{
+                          let output='';
+                          const app=mountInterpreter({application:config.application,capabilities:config.capabilities,
+                            limits:config.limits,libraryProfile:config.library_profile,libraries:config.library_sources,
+                            hostProfile:config.host_profile,onOutput:text=>{output+=text;}});
+                          active.add(app);
+                          try{
+                            await app.ready;
+                            while(!failed&&next<programs.length){
+                              const index=next++;output='';
+                              await app.run(programs[index]);results[index]=output;
+                            }
+                          }catch(error){failed=true;throw error;}
+                          finally{app.stop('completed');active.delete(app);
+                            const stats=app.stats();
+                            if(stats.pending||stats.listeners||stats.handles||stats.subscriptions)
+                              throw new Error('Bulk console worker retained resources.');}
+                        }));
+                        return results;
+                      }finally{failed=true;for(const app of active)app.stop('error');}
+                    }''', {'host': selected['engine']['entrypoint'].replace('interpreter-worker.mjs', 'interpreter-host.mjs'),
+                           'config': config, 'programs': programs})
+                    assert len(results) == len(programs)
+                    transport['worker'] += len(results)
+                    for program, expected, actual in zip(programs, expectations, results, strict=True):
+                        assert actual == expected, (program, expected, actual)
                         cases.append({'source_sha256': hashlib.sha256(program.encode()).hexdigest(), 'stdout': expected, 'status': 'pass'})
                     for corpus in [native_directory_closure, wrapper_super_directories, advertised_directories, integer_identity, native_namespaces, class_mapping_proxies]:
                         for case in corpus['cases']:
@@ -1434,7 +1474,8 @@ def smoke(channel=None):
     return {'schema_version': 1, 'suite': 'class-console-browser/1', 'source_execution': True,
             'language_profile': 'classes-source/1', 'browser': browser_version, 'engine': selected['engine'],
             'script_sha256': hashlib.sha256(Path(__file__).read_bytes().replace(b'\r\n', b'\n')).hexdigest(),
-            'cases': cases, 'checks': checks, 'stop_ms': stopped,
+            'cases': cases, 'checks': checks, 'stop_ms': stopped, 'transport': transport,
+            'seconds': round(time.perf_counter() - started, 3),
             'summary': {'pass': len(cases) + len(checks), 'fail': 0}}
 
 
