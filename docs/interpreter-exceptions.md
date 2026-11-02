@@ -445,3 +445,16 @@ checked independently with parked collection and interrupted cleanup. Source
 profile boundaries and the eight revision-22 resource observations remain
 unchanged. A2, groups/except*, tracebacks, note export, remaining native metadata
 and library/package/candidate gates remain open.
+
+LA-50 adopts source/native callable mutation failures. Missing source function
+and wrapper dictionary entries retain their key and receiver; source bound
+methods, builtin functions/methods and native callable descriptors distinguish
+missing names from existing read-only type attributes. Function closure/global/
+builtin descriptors and wrapper storage leave both native fields absent.
+Function dictionary KeyError subclasses follow generic native conversion, while
+other callback errors preserve identity. Native object wrappers preserve the
+same selection. The 109 pinned-reference cases include subtype names, direct
+storage descriptors and native directory methods. Temporary bound receivers,
+cyclic keys, interrupted comparisons and retained errors share the existing
+ownership and allocation limits. Annotation and broader callable metadata
+contracts retain their existing owners.
