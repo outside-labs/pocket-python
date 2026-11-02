@@ -121,6 +121,20 @@ test('retained dictionary view mutation graphs share the allocation limit', asyn
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+for (const mode of ['native', 'view']) test(mode + ' callable/view mutations preserve original dynamic frames', async () => {
+  const item = corpus.cases.find(item => item.id === 'callable-views-' + mode + '-dynamic-failure');
+  const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'AttributeError');
+  const filename = (mode === 'native' ? 'callable' : 'view') + '-mutation-original.py';
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', filename, 3], ['fail', filename, 2]]);
+  closed(result.closed);
+});
+
+test('retained view errors survive interrupted suspended-generator cleanup', async () => {
+  await lifetime('def work():\n try: {}.keys().missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   print(e.name,len(e.obj),len(e.args))\ni=work()\ne=next(i)\ne.args=()\ni.close()\n', 'entered\nmissing 0 0\n');
+});
+
 test('failed generic writes retain temporary receivers through parked collection', async () => {
   await lifetime('class A: __slots__=()\ntry: A().missing=7\nexcept AttributeError as error: e=error\ne.args=()\nprint("entered")\nprint(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
 });
