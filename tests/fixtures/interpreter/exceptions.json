@@ -58,7 +58,8 @@
     "LA54A",
     "LA55",
     "LA56",
-    "LA57"
+    "LA57",
+    "LA58"
   ],
   "cases": [
     {
@@ -12437,6 +12438,79 @@
       "source": "obj=iter({\"field\":7})\nnext(obj)\nnext(obj,None)\nobj=obj\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name,e.obj is obj)\n",
       "stage": "LA57",
       "stdout": "missing True\n"
+    },
+    {
+      "id": "iterators-composed-example",
+      "source": "\"\"\"Keep rejected iterator targets available for recovery.\"\"\"\n\n\ndef retain_failure(target):\n    try:\n        target.missing = 7\n    except AttributeError as error:\n        error.args = ()\n        error.add_note(\"the original iterator is still available\")\n        return error\n\n\ndef records(value):\n    yield value\n\n\nfor target in [records([7]), iter([[8]]), iter({\"record\": [9]}.values())]:\n    error = retain_failure(target)\n    print(error.name, error.obj is target, next(error.obj)[0])\n    print(error.__notes__[0])\n\nerror = retain_failure(iter(memoryview(bytearray(b\"abc\"))))\nprint(error.name, next(error.obj))\n",
+      "stage": "LA58",
+      "stdout": "missing True 7\nthe original iterator is still available\nmissing True 8\nthe original iterator is still available\nmissing True 9\nthe original iterator is still available\nmissing 97\n"
+    },
+    {
+      "id": "iterators-composed-module",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def fail(target):\n try: target.missing=7\n except AttributeError as e:\n  e.add_note(\"retained iterator\")\n  raise e from ValueError(8)\n"
+        }
+      ],
+      "source": "import helper\ntarget=(x for x in [[7]])\ntry: helper.fail(target)\nexcept AttributeError as e:\n e.args=()\n print(e.name,e.obj is target,next(e.obj)[0],e.__cause__.args[0],e.__notes__[0])\n",
+      "stage": "LA58",
+      "stdout": "missing True 7 8 retained iterator\n"
+    },
+    {
+      "id": "iterators-generator-dynamic-failure",
+      "source": "exec(compile('def fail():\\n target=(x for x in [7])\\n try: target.missing=7\\n except AttributeError as e:\\n  print(e.name,e.obj is target)\\n  raise\\nfail()',\"generator-failure-original.py\",\"exec\"))\n",
+      "error_type": "AttributeError",
+      "stage": "LA58",
+      "stdout": "missing True\n"
+    },
+    {
+      "id": "iterators-iterator-dynamic-failure",
+      "source": "exec(compile('def fail():\\n target=iter([7])\\n try: target.missing=7\\n except AttributeError as e:\\n  print(e.name,e.obj is target)\\n  raise\\nfail()',\"iterator-failure-original.py\",\"exec\"))\n",
+      "error_type": "AttributeError",
+      "stage": "LA58",
+      "stdout": "missing True\n"
+    },
+    {
+      "id": "iterators-running-generator",
+      "source": "def work():\n try: g.missing=7\n except AttributeError as e:\n  print(e.name,e.obj is g,e.obj.gi_running)\n  yield e\ng=work()\ne=next(g)\ne.args=()\nprint(e.obj is g,g.gi_suspended)\ng.close()\n",
+      "stage": "LA58",
+      "stdout": "missing True True\nTrue True\n"
+    },
+    {
+      "id": "iterators-suspended-cleanup",
+      "source": "def target(): yield [7]\ndef work():\n try: target().missing=7\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,next(e.obj)[0],len(e.args))\ni=work()\ne=next(i)\ne.args=()\ni.close()\n",
+      "stage": "LA58",
+      "stdout": "missing 7 0\n"
+    },
+    {
+      "id": "iterators-dictionary-owner-cycle",
+      "source": "class D(dict): pass\nd=D()\nd[\"record\"]=d\ntry: iter(d.values()).missing=7\nexcept AttributeError as error: e=error\nd.error=e\ne.args=()\nd=None\nprint(e.name,next(e.obj).error is e)\n",
+      "stage": "LA58",
+      "stdout": "missing True\n"
+    },
+    {
+      "id": "iterators-indexed-source-cycle",
+      "source": "class Source:\n def __getitem__(self,index): return self\nsource=Source()\ntry: iter(source).missing=7\nexcept AttributeError as error: e=error\nsource.error=e\ne.args=()\nsource=None\nprint(e.name,next(e.obj).error is e)\n",
+      "stage": "LA58",
+      "stdout": "missing True\n"
+    },
+    {
+      "id": "iterators-callable-source-cycle",
+      "source": "class Source:\n def __call__(self): return self\nsource=Source()\ntry: iter(source,None).missing=7\nexcept AttributeError as error: e=error\nsource.error=e\ne.args=()\nsource=None\nprint(e.name,next(e.obj).error is e)\n",
+      "stage": "LA58",
+      "stdout": "missing True\n"
+    },
+    {
+      "id": "iterators-exhaustion-control",
+      "source": "target=iter([7])\ntry: target.missing=8\nexcept AttributeError as error: e=error\ne.args=()\nprint(next(e.obj),next(e.obj,None) is None,e.obj is target)\ntry: del target.missing\nexcept AttributeError as other: print(other.name,other.obj is e.obj,next(other.obj,None) is None)\n",
+      "stage": "LA58",
+      "stdout": "7 True True\nmissing True True\n"
     }
   ],
   "reference_boundaries": [
