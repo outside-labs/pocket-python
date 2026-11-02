@@ -458,3 +458,14 @@ storage descriptors and native directory methods. Temporary bound receivers,
 cyclic keys, interrupted comparisons and retained errors share the existing
 ownership and allocation limits. Annotation and broader callable metadata
 contracts retain their existing owners.
+
+LA-51 adopts mutation metadata for class/dictionary mapping proxies and live
+dictionary keys/values/items views. Missing names retain the original key and
+view/proxy; existing native names, including `mapping`, leave fields absent.
+Native object mutation wrappers and direct mapping descriptors use the same
+selection. The 87 reference cases include exact/subtype keys, subtype dictionary
+owners and live-owner controls. Temporary proxies, detached owners and cyclic
+keys remain reachable through the error independently of args and release on
+cancellation/close. This mutation contract does not admit reading a dictionary
+subclass view's mapping proxy, view set operations or populated dictionary
+constructors; those retain #116.

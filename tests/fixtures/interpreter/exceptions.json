@@ -50,7 +50,8 @@
     "LA47",
     "LA48",
     "LA49",
-    "LA50"
+    "LA50",
+    "LA51"
   ],
   "cases": [
     {
@@ -8767,6 +8768,528 @@
       "stage": "LA50",
       "source": "receiver=object().__str__\ntry: del receiver.__dir__\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
       "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-missing-set-exact",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-missing-set-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-missing-delete-exact",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-missing-delete-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-__doc__-set-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-__doc__-delete-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-__dict__-set-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-__dict__-delete-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-__dir__-set-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-__dir__-delete-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-mapping-set-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-class-proxy-mapping-delete-subtype",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-missing-set-exact",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-missing-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-missing-delete-exact",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-missing-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-__doc__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-__doc__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-__dict__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-__dict__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-__dir__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-__dir__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-mapping-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-dictionary-proxy-mapping-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys().mapping\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-keys-missing-set-exact",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-keys-missing-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-keys-missing-delete-exact",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-keys-missing-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-keys-__doc__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-keys-__doc__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-keys-__dict__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-keys-__dict__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-keys-__dir__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-keys-__dir__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-keys-mapping-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-keys-mapping-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-values-missing-set-exact",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-values-missing-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-values-missing-delete-exact",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-values-missing-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-values-__doc__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-values-__doc__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-values-__dict__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-values-__dict__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-values-__dir__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-values-__dir__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-values-mapping-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-values-mapping-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-items-missing-set-exact",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-items-missing-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-items-missing-delete-exact",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-items-missing-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-items-__doc__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-items-__doc__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-items-__dict__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-items-__dict__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-items-__dir__-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-items-__dir__-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-items-mapping-set-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-items-mapping-delete-subtype",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-missing-set-exact",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-missing-set-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-missing-delete-exact",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey='missing'\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-missing-delete-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-__doc__-set-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-__doc__-delete-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-__dict__-set-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-__dict__-delete-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-__dir__-set-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-__dir__-delete-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dir__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-mapping-set-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-subtype-keys-mapping-delete-subtype",
+      "stage": "LA51",
+      "source": "class D(dict): pass\nd=D()\nd[\"field\"]=[]\nreceiver=d.keys()\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('mapping')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "view-mutation-native-wrapper-class-proxy-set",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nkey=\"missing\"\ntry: object.__setattr__(receiver,key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-native-wrapper-class-proxy-delete",
+      "stage": "LA51",
+      "source": "class A: field=[]\nreceiver=A.__dict__\nkey=\"missing\"\ntry: object.__delattr__(receiver,key)\nexcept AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-native-wrapper-keys-set",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nkey=\"missing\"\ntry: object.__setattr__(receiver,key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-native-wrapper-keys-delete",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\nkey=\"missing\"\ntry: object.__delattr__(receiver,key)\nexcept AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-native-wrapper-values-set",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nkey=\"missing\"\ntry: object.__setattr__(receiver,key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-native-wrapper-values-delete",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\nkey=\"missing\"\ntry: object.__delattr__(receiver,key)\nexcept AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-native-wrapper-items-set",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nkey=\"missing\"\ntry: object.__setattr__(receiver,key,7)\nexcept AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-native-wrapper-items-delete",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\nkey=\"missing\"\ntry: object.__delattr__(receiver,key)\nexcept AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-descriptor-keys-set",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\ntry: type(receiver).__dict__[\"mapping\"].__set__(receiver,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-descriptor-keys-delete",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.keys()\ntry: type(receiver).__dict__[\"mapping\"].__delete__(receiver)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-descriptor-values-set",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\ntry: type(receiver).__dict__[\"mapping\"].__set__(receiver,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-descriptor-values-delete",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.values()\ntry: type(receiver).__dict__[\"mapping\"].__delete__(receiver)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-descriptor-items-set",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\ntry: type(receiver).__dict__[\"mapping\"].__set__(receiver,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-descriptor-items-delete",
+      "stage": "LA51",
+      "source": "receiver={\"field\":[]}.items()\ntry: type(receiver).__dict__[\"mapping\"].__delete__(receiver)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "view-mutation-live-owner-controls",
+      "stage": "LA51",
+      "source": "d={\"first\":[]}\nview=d.keys()\nproxy=view.mapping\ntry: view.missing=7\nexcept AttributeError as error: e=error\nd[\"next\"]=8\nprint(len(e.obj),len(proxy),e.obj is view,e.name)\n",
+      "stdout": "2 2 True missing\n"
     }
   ],
   "reference_boundaries": [
