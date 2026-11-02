@@ -1421,7 +1421,7 @@ export class ClassRuntime {
         return {kind: "value", value: this.replaceInstanceDictionary(receiver, operation === "delete" ? new Map() : item)};
       }
       if (owner instanceof BuiltinValue && owner.name === "type") {
-        if (operation !== "get") this.fail("AttributeError", "Type __dict__ is read-only");
+        if (operation !== "get") this.attributeMutationFailure(receiver, name, null, false, "Type __dict__ is read-only");
         this.namespaceDictionary(receiver); return {kind: "value", value: this.make(ClassNamespaceValue, receiver)};
       }
       if (receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue) return operation === "get" ? {kind: "value", value: this.functionDictionary(receiver)} : this.write(receiver, name, item, operation === "delete");
@@ -1894,8 +1894,8 @@ export class ClassRuntime {
     if (!(receiver instanceof ClassValue || this.isInstance(receiver)))
       this.fail("UnsupportedOperationError", "Attribute mutation requires a class or instance.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && receiver.root) this.fail("TypeError", "Cannot mutate the immutable object type.");
-    if (receiver instanceof ClassValue && name === "__dict__" && !namespaceShadow) this.fail("AttributeError", "Class namespace views cannot be replaced or deleted.");
-    if (receiver instanceof ClassValue && name === "__base__") this.fail("AttributeError", "Primary base metadata is read-only.");
+    if (receiver instanceof ClassValue && name === "__dict__" && !namespaceShadow) this.attributeMutationFailure(receiver, name, null, false, "Class namespace views cannot be replaced or deleted.");
+    if (receiver instanceof ClassValue && ["__base__", "__mro__"].includes(name)) this.attributeMutationFailure(receiver, name, null, false, "Primary base metadata is read-only.");
     if (receiver instanceof ClassValue && name === "__bases__") this.fail("UnsupportedOperationError", "Type base reassignment requires owned hierarchy execution.", "UNSUPPORTED");
     if (receiver instanceof ClassValue && this.isMetaclass(receiver) && isSpecialName(name) && !META_SPECIALS.has(name))
       this.fail("UnsupportedOperationError", "Further metaclass special protocols require a separate stage", "UNSUPPORTED");
@@ -1922,7 +1922,7 @@ export class ClassRuntime {
     const present = mapPresent || position >= 0;
     if (remove && !present) {
       if (this.isInstance(receiver)) this.instanceMutationFailure(receiver, name, key, true);
-      this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
+      this.attributeMutationFailure(receiver, name, this.values.isString(key) ? key : null, true, "Class/instance has no attribute '" + name + "'.");
     }
     this.bounded(remove || present || map.size < CLASS_LIMITS.attributes, "Class/instance attribute budget exceeded.");
     const initialCount = receiver instanceof ClassValue ? receiver.directoryInitialCount : null;
