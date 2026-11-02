@@ -432,3 +432,16 @@ order. Immutable native types continue to raise TypeError. This follows the
 pinned [type mutation implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
 Subtype-key publication and original-instance shared-key deletion retain their
 separate boundaries.
+
+LA-49 accepts the module/class mutation slice across registry modules, dynamic
+source, causes/notes and suspended cleanup. The runnable
+`examples/interpreter_namespace_failures.py` retains the original class while
+reporting a failed cleanup. The exception corpus records 1,016 cases: 1,005
+supported semantic/error comparisons and 11 explicit refusals, with 267 shared
+core-source/1 cases. Six existing qualifications remain outside those counts.
+Installed offline acceptance adds original class-deletion diagnostics and
+Stop/Restart in metaclass deletion. Module registry/callback ownership is also
+checked independently with parked collection and interrupted cleanup. Source
+profile boundaries and the eight revision-22 resource observations remain
+unchanged. A2, groups/except*, tracebacks, note export, remaining native metadata
+and library/package/candidate gates remain open.
