@@ -1092,9 +1092,13 @@ export class ClassRuntime {
     return receiver instanceof FrameValue || receiver instanceof FrameLocalsValue || receiver instanceof Cell ||
       receiver instanceof CodeValue || receiver instanceof PropertyValue || receiver instanceof SuperValue;
   }
+  mutationKeyNeedsLookup(receiver, key) {
+    return !this.isType(receiver) && key instanceof InstanceValue &&
+      ["__hash__", "__eq__"].some(slot => this.hasSlot(key.type, slot));
+  }
   write(receiver, name, value, remove = false, key = null) {
-    if (this.isReflectiveValue(receiver) && key instanceof InstanceValue && ["__hash__", "__eq__"].some(slot => this.hasSlot(key.type, slot)))
-      this.fail("UnsupportedOperationError", "Reflective mutation with callback-bearing attribute keys remains under #124", "UNSUPPORTED");
+    if (this.mutationKeyNeedsLookup(receiver, key))
+      return {kind: "call", callable: this.builtin("native-key-mutation"), args: [receiver, key, value, remove]};
     if (receiver instanceof ExceptionValue && !receiver.type) {
       const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
       if (entry.found && ["getset_descriptor", "member_descriptor"].includes(entry.value?.nativeKind))
@@ -1189,6 +1193,29 @@ export class ClassRuntime {
       return this.instanceEntry(receiver, name, remove ? "delete" : "set", value, key);
     if (receiver instanceof ClassValue && name === "__bases__") return {kind: "call", callable: this.builtin("assign-bases"), args: [receiver, value, remove]};
     return {kind: "value", value: this.mutate(receiver, name, value, remove, key)};
+  }
+  keyedMutation(receiver, name, key, value, remove, found, descriptor) {
+    if (found && descriptor instanceof BuiltinValue && ["getset_descriptor", "member_descriptor"].includes(descriptor.nativeKind))
+      return this.namespaceGetset(descriptor, receiver, remove ? "delete" : "set", value);
+    if (found && descriptor instanceof PropertyValue) {
+      const callable = descriptor[remove ? "fdel" : "fset"];
+      if (callable === null) return this.missingPropertyAccessor(descriptor, remove ? "deleter" : "setter", receiver);
+      return {kind: "call", callable, args: remove ? [receiver] : [receiver, value]};
+    }
+    const hooks = found ? this.descriptor(descriptor) : null;
+    if (hooks && (hooks.set.found || hooks.delete.found)) {
+      const hook = remove ? "__delete__" : "__set__";
+      if (!hooks[remove ? "delete" : "set"].found) this.fail("AttributeError", "Descriptor has no " + hook + " operation.");
+      return this.boundHook(descriptor, hook, remove ? [receiver] : [receiver, value]);
+    }
+    if (this.isInstance(receiver)) {
+      if (!receiver.type.root && (!receiver.type.storage || receiver.type.storage.dict))
+        return this.instanceEntry(receiver, name, remove ? "delete" : "set", value, key);
+    } else if (receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof ExceptionValue) {
+      const dictionary = this.functionDictionary(receiver);
+      return {kind: "call", callable: this.builtin("function-dictionary-" + (remove ? "delete" : "set")), args: [receiver, dictionary, key, value]};
+    }
+    this.attributeMutationFailure(receiver, name, key, !found);
   }
   nativeInvocationOwner(callable) {
     const name = callable.name, owner = name.slice(0, name.indexOf(".")), key = name.slice(name.indexOf(".") + 1);
@@ -1477,7 +1504,7 @@ export class ClassRuntime {
       if (operation !== "get") return {kind: "value", value: this.reassignClass(receiver, item, operation === "delete")};
       return {kind: "value", value: this.typeOf(receiver)};
     }
-    if (operation !== "get") this.fail("AttributeError", "Native storage is read-only");
+    if (operation !== "get") this.attributeMutationFailure(receiver, name, null, false, "Native storage is read-only");
     receiver = this.payload(receiver);
     if (owner instanceof BuiltinValue && ["int", "float"].includes(owner.name) && ["real", "imag", "numerator", "denominator"].includes(name))
       return {kind: "value", value: ["real", "numerator"].includes(name) ? typeof receiver === "boolean" ? this.values.int(BigInt(receiver)) : receiver : owner.name === "float" ? this.values.float(0) : name === "denominator" ? 1n : 0n};
@@ -1902,7 +1929,7 @@ export class ClassRuntime {
       return this.replaceInstanceDictionary(receiver, remove ? new Map() : value);
     }
     if (receiver instanceof FunctionValue && ["__name__", "__qualname__", "__module__"].includes(name)) {
-      if (name !== "__module__" && (remove || !this.values.isString(value)))
+      if (name !== "__module__" && (remove || !this.values.isString(this.payload(value))))
         this.fail("TypeError", "Function " + name + " must be set to a string.");
       return this.functionMetadata(receiver, name === "__name__" ? "identityName" : name === "__qualname__" ? "identityQualname" : "identityModule", remove ? null : value);
     }

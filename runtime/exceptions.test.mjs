@@ -46,6 +46,45 @@ async function lifetime(source, expected, helpers = []) {
   } } finally { registry.close(); }
 }
 
+for (const phase of ['hash', 'equal', 'truth']) test('native key ' + phase + ' retains detached mutation operands across parked collection and interruption', async () => {
+  const setup = 'def make():\n value=[7]\n return lambda:value\ntarget=make().__closure__[0]\n';
+  const source = phase === 'hash' ? setup + 'class Key(str):\n def __hash__(self):\n  global target\n  target=None\n  print("entered")\n  raise ValueError("suppressed")\nkey=Key("cell_contents")\ntry: setattr(target,key,[9])\nexcept AttributeError as e:\n key.error=e\n e.obj.cell_contents.append(e)\n e.args=()\n print(e.name is key,e.obj.cell_contents[0],e.obj.cell_contents[1] is e,e.__context__ is None)\n' :
+    setup + (phase === 'truth' ? 'class Truth:\n def __bool__(self):\n  global target\n  target=None\n  print("entered")\n  return True\n' : '') +
+    'class Key(str):\n def __hash__(self): return hash("cell_contents")\n def __eq__(self,other):\n' +
+    (phase === 'truth' ? '  return Truth()\n' : '  global target\n  target=None\n  print("entered")\n  return True\n') +
+    'value=[9]\nprint(setattr(target,Key("alias"),value),value[0])\n';
+  await lifetime(source, phase === 'hash' ? 'entered\nTrue 7 True True\n' : 'entered\nNone 9\n');
+});
+
+for (const phase of ['hash', 'equal', 'truth']) test('native key ' + phase + ' cannot suppress execution or allocation limits', async () => {
+  for (const allocation of [false, true]) {
+    const body = '  print("entered")\n  held=[]\n  while True:' + (allocation ? ' held.append([7])\n' : ' pass\n');
+    const source = (phase === 'truth' ? 'class Truth:\n def __bool__(self):\n' + body : '') +
+      'class Key(str):\n def __hash__(self):\n' + (phase === 'hash' ? body : '  return hash("__doc__")\n') +
+      (phase === 'hash' ? '' : ' def __eq__(self,other):\n' + (phase === 'equal' ? body : '  return Truth()\n')) +
+      'setattr([7],Key("__doc__"),[9])\n';
+    const result = await runSourceRequest({modules: [unit(source)], compileOptions: {languageProfile: corpus.profile},
+      options: {maxSteps: allocation ? 100000 : 1000, maxWork: 20000000}, memoryLimits: {maxBytes: 100000}});
+    assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, allocation ? 'OOM' : 'BUDGET'); closed(result.closed);
+  }
+});
+
+test('rejected native key comparisons refuse after their first visible side effect', async () => {
+  for (const item of corpus.cases.filter(item => item.id.startsWith('native-key-') && item.stage === 'Future')) {
+    const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
+    assert.equal(result.error?.code, 'UNSUPPORTED', item.id); closed(result.closed);
+  }
+});
+
+test('native key lookup failures retain original dynamic mutation frames', async () => {
+  const item = corpus.cases.find(item => item.id === 'native-key-composed-dynamic-failure');
+  const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}});
+  assert.equal(result.error?.type, 'AttributeError'); assert.equal(result.error.context, null);
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', 'native-key-original.py', 5], ['fail', 'native-key-original.py', 4]]);
+  closed(result.closed);
+});
+
 const reflectiveOwners = [
   ['frame', 'def work(value): yield value\ng=work([7])\ntarget=g.gi_frame\n',
     'e.obj.f_locals["error"]=e\ng=None\ntarget=None\n', 'print(e.obj.f_locals["value"][0],e.obj.f_locals["error"] is e)\n', '7 True\n'],
@@ -834,7 +873,8 @@ test('delegated native values retain temporary graphs through parked collection 
 
 for (const item of corpus.reference_boundaries ?? []) test('safe retained reference limitation: ' + item.id, async () => {
   const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
-  assert.equal(result.error, undefined); assert.equal(result.stdout, item.interpreter_stdout); closed(result.closed);
+  assert.equal(result.error?.type, item.interpreter_error_type); assert.equal(result.error?.code, item.interpreter_error_code);
+  assert.equal(result.stdout, item.interpreter_stdout); closed(result.closed);
 });
 
 test('composed import/exhaustion cycles retain native fields through generator cleanup', async () => {

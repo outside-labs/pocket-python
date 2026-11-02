@@ -587,16 +587,10 @@ The selection follows the pinned
 [frame descriptors](https://github.com/python/cpython/blob/v3.14.7/Objects/frameobject.c#L1800-L1812)
 and [property members](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c#L1470-L1475).
 
-Attribute keys with owned hash/equality overrides keep an explicit refusal for
-these reflective layouts. CPython's native type lookup can invoke those callbacks
-and suppress a lookup error before selecting missing-attribute metadata. This
-requires a separately qualified lookup contract under
-[#757](https://github.com/outside-labs/pocket-python/issues/757) / #124, including
-reconciliation of the other native mutation layouts. The earlier raising-hash
-missing-name cases do not certify callback ordering or absence of callbacks.
-Ordinary string
-subtypes and owned string-formatting overrides remain adopted without running
-formatting callbacks. Frame tracing/jumping, including trace flags, also retain
+LA-62 adds owned attribute-key lookup for these layouts and the other native
+mutation layouts, as specified below. Ordinary string subtypes and owned
+string-formatting overrides remain adopted without running formatting
+callbacks. Frame tracing/jumping, including trace flags, retain
 an explicit refusal; read-only frame fields can fail without reading their
 unadopted tracing or bytecode-position values.
 
@@ -616,3 +610,40 @@ Six existing host/crash/cache qualifications remain separate; these finite
 observations do not measure overall Python completion. Core mutation admission,
 the eight revision-22 execution resource observations, library/package and
 candidate/release gates remain unchanged.
+
+LA-62 adopts callback-bearing string keys for native attribute writes and
+deletions. One owned hash precedes MRO dictionary lookup; matching equality,
+NotImplemented fallback and result truth conversion select the actual stored
+descriptor, including aliases whose text differs from that descriptor's name.
+Lookup hash/equality/truth errors are suppressed before storage or missing-name
+selection. Descriptor and instance-dictionary errors preserve their ordinary
+behavior. Dictionary-backed receivers hash again for storage, even on deletion
+from a previously empty function dictionary. Writable cell/property/generator/
+function fields, native receiver validation and original key/receiver identity
+follow the same selection. Function names retain string-subtype values.
+This follows pinned
+[type lookup](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c#L5342-L5397)
+and [generic mutation](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c#L1820-L1917).
+
+A false equality result during type-key lookup remains an explicit refusal
+after the first rejected comparison and its visible effects. CPython's sparse
+dictionary probing can revisit that candidate a hash-seed-dependent number of
+times: isolated int `__doc__` probes produced two and three comparisons with the
+same final metadata. The raw input is a separate qualification; its callback
+count earns no successful differential credit. The 42 named refusals retain
+[#759](https://github.com/outside-labs/pocket-python/issues/759) / #124. Ordinary
+dictionary mutation keeps its existing contract. No refusal is introduced for
+missing keys that never call equality or for successful/erroring comparisons.
+
+The complete corpus has 2,443 cases: 2,387 supported semantic/error comparisons
+and 56 explicit refusals, with 267 shared core-source/1 cases. Seven host/crash/
+cache qualifications remain outside those counts. The native-key slice includes
+repeated attempts, callback-visible partial mutations, owned source descriptors
+and hooks, subtype dictionaries, modules, dynamic source and suspended cleanup.
+Run `examples/interpreter_native_keys.py` unchanged on the pinned reference or
+offline console. Parked collection, cancellation/close, shared limits, original
+dynamic frames and installed offline Stop/Restart cover its retained graphs.
+Core admission and the eight revision-22 resource observations remain unchanged.
+Groups/except*, tracebacks, note export, remaining metadata and library/package/
+candidate gates retain their existing owners; these finite observations do not
+measure overall Python completion.

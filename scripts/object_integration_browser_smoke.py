@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43', 'LA46', 'LA49', 'LA52', 'LA55', 'LA58', 'LA61'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43', 'LA46', 'LA49', 'LA52', 'LA55', 'LA58', 'LA61', 'LA62C'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -111,10 +111,12 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         if case['id'].startswith('reflective-composed-') and case['id'].endswith('-dynamic-failure'):
                             filename = case['id'].replace('reflective-composed-', 'reflective-').replace('-dynamic-failure', '-original.py')
                             assert f'fail at {filename}:' in page.locator('#diagnostic').inner_text()
+                        if case['id'] == 'native-key-composed-dynamic-failure':
+                            assert 'fail at native-key-original.py:4' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     if exceptions:
                         for case in corpus.get('reference_boundaries', []):
-                            run(case['source'], case['interpreter_stdout'])
+                            run(case['source'], case['interpreter_stdout'], case.get('interpreter_error_type'))
                             records.append({'id': case['id'], 'status': 'pass', 'classification': case['classification']})
                         ordinary = (ROOT / 'examples/interpreter_exceptions.py').read_text(encoding='utf-8')
                         ordinary_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', ordinary], text=True, encoding='utf-8')
@@ -168,6 +170,10 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         reflective_failures_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', reflective_failures], text=True, encoding='utf-8')
                         run(reflective_failures, reflective_failures_expected)
                         records.append({'id': 'reflective-mutation-example', 'status': 'pass'})
+                        native_keys = (ROOT / 'examples/interpreter_native_keys.py').read_text(encoding='utf-8')
+                        native_keys_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', native_keys], text=True, encoding='utf-8')
+                        run(native_keys, native_keys_expected)
+                        records.append({'id': 'native-key-mutation-example', 'status': 'pass'})
                         mutations = (ROOT / 'examples/interpreter_attribute_mutations.py').read_text(encoding='utf-8')
                         mutations_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', mutations], text=True, encoding='utf-8')
                         run(mutations, mutations_expected)
@@ -213,6 +219,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             'class Source:\n def __getitem__(self,index):\n  print("entered")\n  while True: pass\ntry: iter(Source()).missing=7\nexcept AttributeError as e:\n e.args=()\n next(e.obj)\n',
                             'def target(value): yield value\ng=target([7])\ndef work():\n try: g.gi_frame.missing=7\n except AttributeError as e:\n  e.obj.f_locals["error"]=e\n  try: yield e\n  finally:\n   print("entered")\n   while True: e.obj.f_locals["error"]\ni=work()\ne=next(i)\ne.args=()\ni.close()\n',
                             'def make():\n value=[]\n return lambda:value\nf=make()\ntry: f.__closure__[0].missing=7\nexcept AttributeError as e:\n e.obj.cell_contents.append(e)\n e.args=()\n print("entered")\n while True: e.obj.cell_contents[0]\n',
+                            'class Key(str):\n def __hash__(self):\n  print("entered")\n  while True: pass\nsetattr(memoryview(bytearray(b"ab")),Key("missing"),[9])\n',
+                            'class Key(str):\n def __hash__(self): return hash("__doc__")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nsetattr([7],Key("__doc__"),[9])\n',
                         ]
                     for source in busy_sources:
                         page.fill('#input', source)
@@ -231,6 +239,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             run(value_failures, value_failures_expected)
                             run(iterator_failures, iterator_failures_expected)
                             run(reflective_failures, reflective_failures_expected)
+                            run(native_keys, native_keys_expected)
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/console')
                     shutil.copytree(root / 'reduced', root / 'site/console')
@@ -305,6 +314,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                   'iterator-mutation-original-diagnostics', 'iterator-mutation-fresh-restart',
                   'stop-during-reflective-frame-cleanup', 'stop-during-retained-cell-cycle',
                   'reflective-mutation-original-diagnostics', 'reflective-mutation-fresh-restart',
+                  'stop-during-native-key-hash', 'stop-during-native-key-equality',
+                  'native-key-original-diagnostics', 'native-key-fresh-restart',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',

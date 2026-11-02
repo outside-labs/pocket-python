@@ -432,6 +432,41 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (name.length > 256) hard("BUDGET", "ExecutionLimitError", "Attribute name budget exceeded.");
     return name;
   };
+  const moduleMutation = (receiver, name, key, item, remove, site, after, depth) => {
+    const environment = receiver.environment;
+    if (environment.dictionary !== null)
+      return dictionaryTask(environment.dictionary, key, site,
+        continuation("module-mutate", {receiver, name, key, remove, after}), depth, remove ? "remove-probe" : "set", item);
+    if (remove) {
+      const cell = environment.cells.get(name);
+      if (!cell?.bound) classes.attributeMutationFailure(receiver, name, key, true, "module has no attribute " + name);
+      setCell(cell, null, false); environment.order.delete(name);
+    } else moduleContext.binding(environment, name, item);
+    return valueTask(null, site, after);
+  };
+  const nativeMutationResult = (record, site, found = false, descriptor = null) => {
+    return callTask(classes.builtin("native-key-mutation-result"),
+      [record.receiver, record.key, record.item, record.remove, found, descriptor], [], [], site, record.after, record.depth);
+  };
+  const finishNativeMutation = (record, site, found, descriptor) => {
+    const {receiver, key, item, remove, depth, after} = record, name = nativeAttributeName(key);
+    if (receiver instanceof ModuleValue && !receiver.type &&
+        !(found && ["getset_descriptor", "member_descriptor"].includes(descriptor?.nativeKind))) {
+      // Subtype keys force real dictionary storage, even for a cells-backed module.
+      values.environmentDictionary(receiver.environment);
+      return moduleMutation(receiver, name, key, item, remove, site, after, depth);
+    }
+    const plan = classes.keyedMutation(receiver, name, key, item, remove, found, descriptor);
+    return plan.kind === "value" ? valueTask(plan.value, site, after) : callTask(plan.callable, plan.args, [], [], site,
+      plan.kind === "bind-call" ? continuation("invoke", {args: plan.invokeArgs, keywords: [], keywordValues: [], after, depth}) : after, depth);
+  };
+  const nativeMutationNext = (record, site) => {
+    if (record.position === record.types.length) return nativeMutationResult(record, site);
+    const dictionary = classes.namespaceDictionary(record.types[record.position]);
+    state.temporaries.push(dictionary);
+    return dictionaryTask(dictionary, record.key, site, continuation("native-mutation-lookup", record),
+      record.depth, "native-probe", null, record.hash);
+  };
   const bindingRecovery = (value, completion, site) => {
     while (["init", "relay"].includes(completion?.kind)) completion = completion.after;
     if (value.name !== "AttributeError" || !completion?.fallback) return null;
@@ -837,6 +872,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     const binding = bindingRecovery(value, completion, site);
     if (binding) return binding;
     for (let current = completion; current; current = current.after) {
+      if (["native-mutation-hash", "native-mutation-lookup"].includes(current.kind))
+        return nativeMutationResult(current, site);
       if (current.kind === "attribute-context") {
         const enriched = attributeFailure(value, current.receiver, current.key, site, current.after, trace);
         if (enriched) return enriched;
@@ -1631,12 +1668,21 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       return numericTask(name,converted,site,after,depth,["complex", "range"].includes(name) ? position+1 : 0);
     }
     if (completion?.kind === "hash-result") return valueTask(values.hashResult(value), site, completion.after);
+    if (completion?.kind === "native-mutation-hash")
+      return nativeMutationNext({...completion, hash: value, types: classes.mro(completion.types[0])}, site);
+    if (completion?.kind === "native-mutation-lookup") {
+      const [found, descriptor] = values.comparisonSequence(value);
+      return found ? nativeMutationResult(completion, site, true, descriptor) :
+        nativeMutationNext({...completion, position: completion.position + 1}, site);
+    }
     if (completion?.kind === "sequence-hash") return hashNext(completion.receiver, completion.position + 1,
       values.combineHash(completion.hash, value), site, completion.after, completion.depth);
     if (completion?.kind === "dict-hash") return dictionaryTask(completion.receiver, completion.key, site, completion.after,
       completion.depth, completion.operation, completion.item, value);
     if (completion?.kind === "dict-key") return unaryTask("truth", value, site, continuation("dict-truth", completion), completion.depth);
     if (completion?.kind === "dict-truth") {
+      if (completion.operation === "native-probe" && !value)
+        hard("UNSUPPORTED", "UnsupportedOperationError", "Rejected native attribute key comparisons require the #124 sparse-probe contract.");
       if (completion.receiver.namespace && (completion.receiver.version !== completion.version ||
           completion.receiver.entries[completion.position]?.key !== completion.candidate))
         return dictionaryTask(completion.receiver, completion.key, site, completion.after, completion.depth,
@@ -1912,7 +1958,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (operation === "probe-entry") return valueTask(values.tuple([found, found ? receiver.entries[position].key : null]), site, after);
     if (operation === "set-default") return valueTask(found ? receiver.entries[position].value : (values.commitDictionary(receiver, key, item, hash, position), item), site, after);
-    if (operation === "probe") return valueTask(values.tuple([found, found ? receiver.entries[position].value : null]), site, after);
+    if (["probe", "native-probe"].includes(operation)) return valueTask(values.tuple([found, found ? receiver.entries[position].value : null]), site, after);
     if (operation === "set") return valueTask(values.commitDictionary(receiver, key, item, hash, position), site, after);
     if (operation === "discard" && !found) return valueTask(null, site, after);
     if (!found) python("KeyError", "Dictionary key not found", [key]);
@@ -2085,6 +2131,9 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             state.temporaries = operationRoots(task);
             const {receiver, name, operation} = task, environment = receiver.environment;
             const writing = ["set", "delete", "native-set", "native-delete"].includes(operation);
+            if (writing && classes.mutationKeyNeedsLookup(receiver, task.key)) {
+              task = callTask(classes.builtin("native-key-mutation"), [receiver, task.key, task.item, operation.endsWith("delete")], [], [], site, completion, depth); continue;
+            }
             if (name === "__dict__") {
               if (writing) classes.attributeMutationFailure(receiver, name, task.key, false, "readonly attribute");
               task = valueTask(values.environmentDictionary(environment), site, completion); continue;
@@ -2095,17 +2144,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             }
             const key = task.key || values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
             if (writing) {
-              if (environment.dictionary !== null) {
-                task = dictionaryTask(environment.dictionary, key, site,
-                  continuation("module-mutate", {receiver, name, key, remove: operation.includes("delete"), after: completion}), depth,
-                  operation.includes("delete") ? "remove-probe" : "set", task.item); continue;
-              }
-              if (operation.includes("delete")) {
-                const cell = environment.cells.get(name);
-                if (!cell?.bound) classes.attributeMutationFailure(receiver, name, key, true, "module has no attribute " + name);
-                setCell(cell, null, false); environment.order.delete(name);
-              } else moduleContext.binding(environment, name, task.item);
-              task = valueTask(null, site, completion); continue;
+              task = moduleMutation(receiver, name, key, task.item, operation.endsWith("delete"), site, completion, depth); continue;
             }
             const record = {receiver, key, name, mode: operation === "import" ? "import" : operation === "native-get" ? "native-get" : "get", depth, after: completion};
             if (environment.dictionary !== null) { task = dictionaryTask(environment.dictionary, key, site, continuation("module-entry", record), depth, "probe"); continue; }
@@ -2379,6 +2418,11 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
           const candidates = reflected ? [[right, left, 1], [left, right, 0]] : [[left, right, 0], [right, left, 1]];
           if (position >= candidates.length) {
             if (ordering) python("TypeError", "Ordering is not supported between these values");
+            if (left instanceof StringValue && classes.payload(right) instanceof StringValue ||
+                right instanceof StringValue && classes.payload(left) instanceof StringValue) {
+              const equal = values.equal(classes.payload(left), classes.payload(right));
+              task = deliver(operation === "equal" ? equal : !equal, completion, site); continue;
+            }
             task = deliver(operation === "equal" ? left === right : left !== right, completion, site); continue;
           }
           const [receiver, other, direction] = candidates[position];
@@ -3385,6 +3429,15 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (!(args[0] instanceof PropertyValue)) python("TypeError", "Native property notification requires a property receiver");
             if (keywords.length || args.length !== 3) python("TypeError", "Native property notification requires two positional arguments");
             task = valueTask(classes.mutate(args[0], "__name__", args[2]), site, completion); continue;
+          }
+          if (callable.name === "native-key-mutation") {
+            const [receiver, key, item, remove] = args;
+            task = unaryTask("hash", key, site,
+              continuation("native-mutation-hash", {receiver, key, item, remove, types: [classes.typeOf(receiver)], depth, after: completion}), depth); continue;
+          }
+          if (callable.name === "native-key-mutation-result") {
+            const [receiver, key, item, remove, found, descriptor] = args;
+            task = finishNativeMutation({receiver, key, item, remove, depth, after: completion}, site, found, descriptor); continue;
           }
           if (callable.name.startsWith("function-dictionary-")) {
             const [receiver, dictionary, key, item] = args, operation = callable.name.slice("function-dictionary-".length);

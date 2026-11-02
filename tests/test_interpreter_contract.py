@@ -52,3 +52,23 @@ class InterpreterContractTests(unittest.TestCase):
                 self.assertNotEqual(process.returncode, 0)
                 self.assertEqual(process.stdout, case["stdout"])
                 self.assertTrue(process.stderr.splitlines()[-1].startswith(case["error_type"] + ":"), process.stderr)
+
+    def test_native_mutation_key_lookup_is_independent_of_hash_seed(self):
+        corpus = json.loads(CORPUS.with_name("exceptions.json").read_text(encoding="utf-8"))
+        selected = {
+            "native-key-int-doc-set-eq-true", "native-key-property-doc-delete-eq-error",
+            "native-key-cell-cell_contents-set-eq-true", "native-key-generator-alias-set",
+            "native-key-function-doc-delete-hash-error", "native-key-cell-alias-delete",
+        }
+        cases = [case for case in corpus["cases"] if case["id"] in selected]
+        self.assertEqual(len(cases), len(selected))
+        for case in cases:
+            for seed in range(8):
+                with self.subTest(case=case["id"], seed=seed):
+                    process = subprocess.run(
+                        [sys.executable, "-X", "utf8", "-S", "-c", case["source"]],
+                        env={**os.environ, "PYTHONHASHSEED": str(seed)},
+                        capture_output=True, text=True, encoding="utf-8", timeout=5,
+                    )
+                    self.assertEqual(process.returncode, 0, process.stderr)
+                    self.assertEqual(process.stdout.replace("\r\n", "\n"), case["stdout"])

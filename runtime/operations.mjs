@@ -7,7 +7,7 @@ const itemOperation = value => {
   return value;
 };
 const dictionaryOperation = value => {
-  if (!["get", "set", "set-default", "delete", "discard", "contains", "probe", "probe-entry", "remove-probe", "pop-probe"].includes(value)) throw new TypeError("Invalid dictionary operation.");
+  if (!["get", "set", "set-default", "delete", "discard", "contains", "probe", "native-probe", "probe-entry", "remove-probe", "pop-probe"].includes(value)) throw new TypeError("Invalid dictionary operation.");
   return value;
 };
 const operands = values => {
@@ -220,6 +220,14 @@ export function completion(kind, fields = {}) {
       if (record.args.length > 3 || record.position >= record.args.length || kind === "numeric-result" &&
           !["__int__","__float__","__complex__","__index__","__abs__","__round__"].includes(record.slot)) throw new TypeError("Invalid numeric continuation.");
       break;
+    case "native-mutation-hash": case "native-mutation-lookup":
+      record = {kind, receiver: fields.receiver, key: fields.key, item: fields.item, remove: fields.remove,
+        types: operands(fields.types ?? []), position: fields.position ?? 0, hash: fields.hash ?? null, depth: fields.depth, after};
+      depthCheck(record.depth);
+      if (typeof record.remove !== "boolean" || !Number.isSafeInteger(record.position) || record.position < 0 ||
+          record.position > record.types.length || record.hash !== null && typeof record.hash !== "bigint")
+        throw new TypeError("Invalid native mutation lookup phase.");
+      break;
     case "dict-hash": case "dict-key": case "dict-truth":
       record = {kind, receiver: fields.receiver, key: fields.key, item: fields.item, operation: dictionaryOperation(fields.operation), depth: fields.depth, after,
         hash: fields.hash ?? null, position: fields.position ?? 0, version: fields.version ?? 0, candidate: fields.candidate ?? null};
@@ -427,6 +435,8 @@ function visit(record) {
       return [record.receiver, record.iterator, ...completionRoots(record.after)];
     case "sequence-hash": return [record.receiver, record.hash, ...completionRoots(record.after)];
     case "numeric-result": case "numeric-index": return [...record.args, ...completionRoots(record.after)];
+    case "native-mutation-hash": case "native-mutation-lookup":
+      return [record.receiver, record.key, record.item, ...record.types, ...completionRoots(record.after)];
     case "dict-hash": case "dict-key": case "dict-truth": return [record.receiver, record.key, record.hash, record.candidate,
       ...(["set", "set-default"].includes(record.operation) ? [record.item] : []), ...completionRoots(record.after)];
     case "dict-build": return [record.receiver, ...record.parts, ...completionRoots(record.after)];
