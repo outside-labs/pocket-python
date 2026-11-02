@@ -264,6 +264,10 @@ offline cases cover callback failures, original frames and interruption. Run
 `examples/interpreter_translation_exceptions.py` for a record validation example.
 Selective generic attribute mutation fields retain the original receiver/key;
 `examples/interpreter_attribute_mutations.py` reports rejected record updates.
+Reflective frame/code/cell/property/super failures use the same selective fields;
+`examples/interpreter_reflective_failures.py` retains rejected targets across
+closure edits and generator execution. Native read-only descriptors leave those
+fields empty. Tracing/jumping and custom key hash/equality remain separately gated.
 Groups, traceback objects, remaining structured families and formatting retain
 their gates.
 

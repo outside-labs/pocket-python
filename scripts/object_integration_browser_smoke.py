@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43', 'LA46', 'LA49', 'LA52', 'LA55', 'LA58'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43', 'LA46', 'LA49', 'LA52', 'LA55', 'LA58', 'LA61'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -108,6 +108,9 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         if case['id'] in {'iterators-generator-dynamic-failure', 'iterators-iterator-dynamic-failure'}:
                             filename = 'generator' if 'generator' in case['id'] else 'iterator'
                             assert f'fail at {filename}-failure-original.py:3' in page.locator('#diagnostic').inner_text()
+                        if case['id'].startswith('reflective-composed-') and case['id'].endswith('-dynamic-failure'):
+                            filename = case['id'].replace('reflective-composed-', 'reflective-').replace('-dynamic-failure', '-original.py')
+                            assert f'fail at {filename}:' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     if exceptions:
                         for case in corpus.get('reference_boundaries', []):
@@ -161,6 +164,10 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         iterator_failures_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', iterator_failures], text=True, encoding='utf-8')
                         run(iterator_failures, iterator_failures_expected)
                         records.append({'id': 'iterator-mutation-example', 'status': 'pass'})
+                        reflective_failures = (ROOT / 'examples/interpreter_reflective_failures.py').read_text(encoding='utf-8')
+                        reflective_failures_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', reflective_failures], text=True, encoding='utf-8')
+                        run(reflective_failures, reflective_failures_expected)
+                        records.append({'id': 'reflective-mutation-example', 'status': 'pass'})
                         mutations = (ROOT / 'examples/interpreter_attribute_mutations.py').read_text(encoding='utf-8')
                         mutations_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', mutations], text=True, encoding='utf-8')
                         run(mutations, mutations_expected)
@@ -204,6 +211,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             'def work():\n try: memoryview(bytearray(b"abc")).missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   while True: e.obj[0]\ni=work()\ne=next(i)\ne.args=()\ni.close()\n',
                             'def target(): yield [7]\ndef work():\n try: target().missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   while True: e.obj\ni=work()\ne=next(i)\ne.args=()\ni.close()\n',
                             'class Source:\n def __getitem__(self,index):\n  print("entered")\n  while True: pass\ntry: iter(Source()).missing=7\nexcept AttributeError as e:\n e.args=()\n next(e.obj)\n',
+                            'def target(value): yield value\ng=target([7])\ndef work():\n try: g.gi_frame.missing=7\n except AttributeError as e:\n  e.obj.f_locals["error"]=e\n  try: yield e\n  finally:\n   print("entered")\n   while True: e.obj.f_locals["error"]\ni=work()\ne=next(i)\ne.args=()\ni.close()\n',
+                            'def make():\n value=[]\n return lambda:value\nf=make()\ntry: f.__closure__[0].missing=7\nexcept AttributeError as e:\n e.obj.cell_contents.append(e)\n e.args=()\n print("entered")\n while True: e.obj.cell_contents[0]\n',
                         ]
                     for source in busy_sources:
                         page.fill('#input', source)
@@ -221,6 +230,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             run(callable_views, callable_views_expected)
                             run(value_failures, value_failures_expected)
                             run(iterator_failures, iterator_failures_expected)
+                            run(reflective_failures, reflective_failures_expected)
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/console')
                     shutil.copytree(root / 'reduced', root / 'site/console')
@@ -293,6 +303,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                   'value-mutation-original-diagnostics', 'value-mutation-fresh-restart',
                   'stop-during-generator-error-cleanup', 'stop-during-retained-iterator-callback',
                   'iterator-mutation-original-diagnostics', 'iterator-mutation-fresh-restart',
+                  'stop-during-reflective-frame-cleanup', 'stop-during-retained-cell-cycle',
+                  'reflective-mutation-original-diagnostics', 'reflective-mutation-fresh-restart',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',

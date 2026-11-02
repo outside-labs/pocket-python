@@ -1088,7 +1088,13 @@ export class ClassRuntime {
     if (result.kind !== "value") this.fail("UnsupportedOperationError", "Descriptor calls require VM execution frames.", "UNSUPPORTED");
     return result.value;
   }
+  isReflectiveValue(receiver) {
+    return receiver instanceof FrameValue || receiver instanceof FrameLocalsValue || receiver instanceof Cell ||
+      receiver instanceof CodeValue || receiver instanceof PropertyValue || receiver instanceof SuperValue;
+  }
   write(receiver, name, value, remove = false, key = null) {
+    if (this.isReflectiveValue(receiver) && key instanceof InstanceValue && ["__hash__", "__eq__"].some(slot => this.hasSlot(key.type, slot)))
+      this.fail("UnsupportedOperationError", "Reflective mutation with callback-bearing attribute keys remains under #124", "UNSUPPORTED");
     if (receiver instanceof ExceptionValue && !receiver.type) {
       const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
       if (entry.found && ["getset_descriptor", "member_descriptor"].includes(entry.value?.nativeKind))
@@ -1108,16 +1114,23 @@ export class ClassRuntime {
       this.fixedMutationFailure(receiver, name, key, "Generator state is read-only");
     if (receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind))
       this.fixedMutationFailure(receiver, name, key, "Iterator attributes are read-only");
+    if (receiver instanceof FrameValue && ["f_lineno", "f_trace", "f_trace_lines", "f_trace_opcodes"].includes(name))
+      this.fail("UnsupportedOperationError", "Frame tracing and jumping require a separate contract", "UNSUPPORTED");
     if (receiver instanceof FrameValue || receiver instanceof FrameLocalsValue)
-      this.fail(receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UnsupportedOperationError" : "AttributeError", "Frame metadata is read-only; tracing and jumping are separate", receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UNSUPPORTED" : "PYTHON");
+      this.fixedMutationFailure(receiver, name, key, "Frame metadata is read-only");
     if (receiver instanceof Cell) {
-      if (name !== "cell_contents") this.fail("AttributeError", "Cell attributes are read-only");
+      if (name !== "cell_contents") this.fixedMutationFailure(receiver, name, key, "Cell attributes are read-only");
       const before = [receiver.bound, receiver.value]; receiver.bound = !remove; receiver.value = remove ? null : value;
       try { const layout = valueLayout(receiver); this.memory?.resize(receiver, layout.bytes, layout.children); }
       catch (error) { [receiver.bound, receiver.value] = before; throw error; }
       return {kind: "value", value: null};
     }
-    if (receiver instanceof CodeValue) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Code metadata is read-only");
+    if (receiver instanceof CodeValue)
+      this.fixedMutationFailure(receiver, name, key, "Code metadata is read-only");
+    if (receiver instanceof SuperValue)
+      this.fixedMutationFailure(receiver, name, key, "super attributes are read-only");
+    if (receiver instanceof PropertyValue && !["__name__", "__doc__"].includes(name))
+      this.fixedMutationFailure(receiver, name, key, "Property attributes are read-only");
     if (receiver instanceof BuiltinValue && !this.isType(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Native callable/descriptor attributes are read-only");
       this.fixedMutationFailure(receiver, name, key, "Native callable/descriptor attributes are read-only");
@@ -1153,7 +1166,6 @@ export class ClassRuntime {
         (receiver.pythonMethod || receiver.callable instanceof BuiltinValue &&
           (nativeWrapper(receiver.callable.name) || NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name)))))
       this.fixedMutationFailure(receiver, name, key, "Native descriptor owner metadata is read-only.");
-    if (receiver instanceof SuperValue) this.fail("AttributeError", "super attributes are read-only");
     if (this.isInstance(receiver) && receiver.type.root && name === "__dict__")
       this.fail("AttributeError", "Object instance has no dictionary.");
     if (this.isInstance(receiver) && name === "__dict__" && this.instanceDictionarySlot(receiver.type))
@@ -1428,11 +1440,12 @@ export class ClassRuntime {
     }
     if (operation !== "get" && name !== "__class__" && (this.containerDirectoryNames(this.payload(receiver)) !== null || this.values.isRange(receiver) || this.values.isSlice(receiver)))
       this.attributeMutationFailure(receiver, name, null, false, "Container storage is read-only");
+    if (operation !== "get" && owner instanceof BuiltinValue && ["int", "float", "complex"].includes(owner.name))
+      this.attributeMutationFailure(receiver, name, null, false, "Scalar storage is read-only");
     const fieldOwner = this.nativeFieldOwner(name);
     if (fieldOwner && !(receiver instanceof FunctionValue && ["O72", "O73"].includes(fieldOwner) || receiver instanceof Cell && fieldOwner === "O73" || (receiver instanceof FrameValue || receiver instanceof GeneratorValue) && fieldOwner === "O74")) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
     if (operation !== "get" && receiver instanceof MethodWrapperValue && ["__func__", "__wrapped__"].includes(name))
       this.attributeMutationFailure(receiver, name, null, false, "Native storage is read-only");
-    if (operation !== "get" && receiver instanceof PropertyValue && ["fget", "fset", "fdel"].includes(name)) this.fail("AttributeError", "Native storage is read-only");
     if (name === "__dict__") {
       if (owner instanceof ClassValue && !owner.root && !this.isMetaclass(owner)) {
         if (operation === "get") return {kind: "value", value: this.instanceDictionary(receiver)};

@@ -401,9 +401,9 @@
     },
     {
       "path": "runtime/class-values.mjs",
-      "site": "this.fail(receiver instanceof FrameValue && [\"f_lineno\", \"f_trace\"].includes(name) ? \"UnsupportedOperationError\" : \"AttributeError\", \"Frame metadata is read-only; tracing and jumping are separate\", receiver instanceof FrameValue && [\"f_lineno\", \"f_trace\"].includes(name) ? \"UNSUPPORTED\" : \"PYTHON\");",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Frame tracing and jumping require a separate contract\", \"UNSUPPORTED\");",
       "owner": "boundary:source-interface",
-      "boundary": "Finite source code/frame interface excludes raw backend code constructors, native layouts and frame debugging."
+      "boundary": "Frame tracing and jumping require a separately qualified protocol contract."
     },
     {
       "path": "runtime/class-values.mjs",
@@ -1142,6 +1142,12 @@
       "site": "if (receiver.nativeFieldBoundaries?.has(name)) this.fail(\"UnsupportedOperationError\", \"Automatic native exception metadata remains under #124\", \"UNSUPPORTED\");",
       "owner": "#124",
       "boundary": "Automatic lookup/import metadata enrichment remains separate from explicit native exception construction/storage"
+    },
+    {
+      "path": "runtime/class-values.mjs",
+      "site": "this.fail(\"UnsupportedOperationError\", \"Reflective mutation with callback-bearing attribute keys remains under #124\", \"UNSUPPORTED\");",
+      "owner": "#124",
+      "boundary": "Custom attribute-key hashing/equality during reflective native mutation requires a separately qualified lookup contract."
     }
   ],
   "native_tables": {

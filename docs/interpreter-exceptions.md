@@ -490,7 +490,7 @@ LA-53 adopts failed attribute writes and deletions on None, NotImplemented,
 bool, int, float and complex. Missing names retain the original receiver and
 name, including string-subtype keys, independently of args. Existing native
 attributes leave both native fields absent. Native object mutation wrappers
-use the same selection and do not invoke key formatting or hashing callbacks.
+use the same selection and do not invoke key formatting callbacks.
 Scalar subclasses keep their ordinary instance dictionaries. The 65 pinned
 reference cases cover both mutation directions, native wrappers, subtype keys,
 evaluation order and successful subclass controls. This follows the pinned
@@ -554,9 +554,9 @@ callbacks, and fresh targets after restart. The corpus has 1,741 cases: 1,730
 supported semantic/error comparisons, 11 explicit refusals and 267 explicitly
 shared core-source/1 cases. Six host/crash/cache qualifications remain separate;
 these finite observations are not an overall Python-completion percentage.
-Frame/code/cell/property/super mutation layouts, direct scalar storage
-descriptors, original-instance shared-key deletion, other native/import/parser
-metadata, groups/except*, tracebacks and note export keep #124/A2 open. Broader
+LA-59–LA-61 adopt the remaining reflective mutation layouts and direct scalar
+storage descriptors below. Original-instance shared-key deletion, other
+native/import/parser metadata, groups/except*, tracebacks and note export keep #124/A2 open. Broader
 formatting, iterator/container/codec APIs and library/package/candidate gates
 retain their existing owners.
 
@@ -574,3 +574,45 @@ passed. The identical complete 44-check shard passes locally in 485.824 seconds.
 All six conformance and three integration shards, reports and semantic/resource
 limits are retained; the deterministic partition test uses the actual six
 conformance shards. Interpreter/package/offline acceptance evidence is reused.
+
+LA-59 adopts mutation failure metadata for frames, frame locals proxies, code
+objects, cells, properties and super objects. Missing names retain the original
+receiver and reflected string-subtype key independently of args. Existing
+read-only attributes leave both native fields absent; forwarded super attributes
+do not become writable super storage. Native object wrappers, direct source
+syntax and native storage descriptors agree. Cell contents and property
+name/documentation retain their writable behavior, including cyclic values.
+The selection follows the pinned
+[generic mutation implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c#L1820-L1917),
+[frame descriptors](https://github.com/python/cpython/blob/v3.14.7/Objects/frameobject.c#L1800-L1812)
+and [property members](https://github.com/python/cpython/blob/v3.14.7/Objects/descrobject.c#L1470-L1475).
+
+Attribute keys with owned hash/equality overrides keep an explicit refusal for
+these reflective layouts. CPython's native type lookup can invoke those callbacks
+and suppress a lookup error before selecting missing-attribute metadata. This
+requires a separately qualified lookup contract under
+[#757](https://github.com/outside-labs/pocket-python/issues/757) / #124, including
+reconciliation of the other native mutation layouts. The earlier raising-hash
+missing-name cases do not certify callback ordering or absence of callbacks.
+Ordinary string
+subtypes and owned string-formatting overrides remain adopted without running
+formatting callbacks. Frame tracing/jumping, including trace flags, also retain
+an explicit refusal; read-only frame fields can fail without reading their
+unadopted tracing or bytecode-position values.
+
+LA-60 adopts direct int/float/complex native storage descriptor mutation failures,
+including bool and compatible numeric subclasses. Both native AttributeError
+fields remain absent; receiver validation precedes this selection. No numeric
+conversion, formatting or owned attribute hook runs during these native failures.
+
+LA-61 accepts this surface across modules, dynamic source, active and closed
+generator frames, owner cycles, causes/notes and suspended cleanup. Run
+`examples/interpreter_reflective_failures.py` unchanged on CPython or in the
+offline console. Parked collection, cancellation/close, shared allocation limits,
+original dynamic-source diagnostics and installed offline Stop/Restart cover the
+retained graphs. The exception corpus has 1,828 cases: 1,808 supported semantic/
+error comparisons and 20 explicit refusals, with 267 shared core-source/1 cases.
+Six existing host/crash/cache qualifications remain separate; these finite
+observations do not measure overall Python completion. Core mutation admission,
+the eight revision-22 execution resource observations, library/package and
+candidate/release gates remain unchanged.
