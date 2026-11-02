@@ -1110,7 +1110,14 @@ export class ClassRuntime {
       return {kind: "value", value: null};
     }
     if (receiver instanceof CodeValue) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Code metadata is read-only");
-    if (receiver instanceof BuiltinValue && !this.isType(receiver)) this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Native callable/descriptor attributes are read-only");
+    if (receiver instanceof BuiltinValue && !this.isType(receiver)) {
+      if (name === "__class__") this.fail("TypeError", "Native callable/descriptor attributes are read-only");
+      this.fixedMutationFailure(receiver, name, key, "Native callable/descriptor attributes are read-only");
+    }
+    if (receiver instanceof BoundMethodValue && !this.isPythonMethod(receiver)) {
+      if (name === "__class__") this.fail("TypeError", "Native callable metadata is read-only");
+      this.fixedMutationFailure(receiver, name, key, "Native callable metadata is read-only");
+    }
     this.key(name); this.touch(receiver);
     if (name === "__dir__" && this.hasFixedDirectory(receiver) && !(receiver instanceof MethodWrapperValue)) this.fail("AttributeError", "Native directory attributes are read-only.");
     if (["__name__", "__qualname__", "__self__", "__objclass__"].includes(name) &&
@@ -1121,10 +1128,10 @@ export class ClassRuntime {
     if (receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue) this.fail("AttributeError", "Dictionary view attributes are read-only.");
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
-      this.fail("AttributeError", "Method attributes are read-only.");
+      this.fixedMutationFailure(receiver, name, key, "Method attributes are read-only.");
     }
     if (receiver instanceof MethodWrapperValue) {
-      if (["__func__", "__wrapped__", "__isabstractmethod__"].includes(name)) this.fail("AttributeError", "Wrapper storage is read-only");
+      if (["__func__", "__wrapped__", "__isabstractmethod__"].includes(name)) this.attributeMutationFailure(receiver, name, key, false, "Wrapper storage is read-only");
       if (name === "__class__") this.fail("TypeError", "Wrapper type cannot be changed");
       if (name === "__dict__") {
         if (remove || !this.values.isDict(value)) this.fail("TypeError", "Wrapper __dict__ must be set to a dictionary");
@@ -1136,7 +1143,7 @@ export class ClassRuntime {
     if (name === "__objclass__" && (this.nativeDescriptorKind(receiver) || receiver instanceof BoundMethodValue &&
         (receiver.pythonMethod || receiver.callable instanceof BuiltinValue &&
           (nativeWrapper(receiver.callable.name) || NATIVE_METHOD_DESCRIPTORS.has(receiver.callable.name)))))
-      this.fail("AttributeError", "Native descriptor owner metadata is read-only.");
+      this.fixedMutationFailure(receiver, name, key, "Native descriptor owner metadata is read-only.");
     if (receiver instanceof SuperValue) this.fail("AttributeError", "super attributes are read-only");
     if (this.isInstance(receiver) && receiver.type.root && name === "__dict__")
       this.fail("AttributeError", "Object instance has no dictionary.");
@@ -1412,8 +1419,9 @@ export class ClassRuntime {
     }
     const fieldOwner = this.nativeFieldOwner(name);
     if (fieldOwner && !(receiver instanceof FunctionValue && ["O72", "O73"].includes(fieldOwner) || receiver instanceof Cell && fieldOwner === "O73" || (receiver instanceof FrameValue || receiver instanceof GeneratorValue) && fieldOwner === "O74")) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
-    if (operation !== "get" && (receiver instanceof PropertyValue && ["fget", "fset", "fdel"].includes(name) ||
-        receiver instanceof MethodWrapperValue && ["__func__", "__wrapped__"].includes(name))) this.fail("AttributeError", "Native storage is read-only");
+    if (operation !== "get" && receiver instanceof MethodWrapperValue && ["__func__", "__wrapped__"].includes(name))
+      this.attributeMutationFailure(receiver, name, null, false, "Native storage is read-only");
+    if (operation !== "get" && receiver instanceof PropertyValue && ["fget", "fset", "fdel"].includes(name)) this.fail("AttributeError", "Native storage is read-only");
     if (name === "__dict__") {
       if (owner instanceof ClassValue && !owner.root && !this.isMetaclass(owner)) {
         if (operation === "get") return {kind: "value", value: this.instanceDictionary(receiver)};
@@ -1510,6 +1518,10 @@ export class ClassRuntime {
   }
   attributeMutationFailure(receiver, name, key = null, enriched = false, message = "Attribute mutation failed") {
     this.fail("AttributeError", message, "PYTHON", null, null, {receiver, key: key ?? name, enriched});
+  }
+  fixedMutationFailure(receiver, name, key = null, message = "Attribute mutation failed") {
+    const found = this.nativeProtocolEntry(this.typeOf(receiver), name).found;
+    this.attributeMutationFailure(receiver, name, key, !found, message);
   }
   instanceEntry(receiver, name, operation = "get", item = null, key = null, fallback = {found: false}) {
     const value = value => ({kind: "value", value});
@@ -1764,7 +1776,8 @@ export class ClassRuntime {
     if (receiver.attributes === null) this.functionMetadata(receiver, "attributes", this.values.dict([]));
     return receiver.attributes;
   }
-  functionMissing(receiver, name, operation = "get") {
+  functionMissing(receiver, name, operation = "get", key = null) {
+    if (operation !== "get") this.attributeMutationFailure(receiver, name, key, true, "Function has no attribute '" + name + "'.");
     if (operation === "get" && NATIVE_PROTOCOL_KEYS.includes(name)) {
       const entry = this.nativeProtocolEntry(this.typeOf(receiver), name);
       if (entry.found) return this.make(BoundMethodValue, entry.value, receiver);
@@ -1783,13 +1796,13 @@ export class ClassRuntime {
       this.fail("UnsupportedOperationError", "Native function metadata requires its own contract.", "UNSUPPORTED");
     const value = value => ({kind: "value", value});
     const dictionary = operation === "set" ? this.functionDictionary(receiver) : receiver.attributes;
-    if (dictionary === null) return value(this.functionMissing(receiver, name, operation));
+    if (dictionary === null) return value(this.functionMissing(receiver, name, operation, key));
     key ??= this.values.string(Array.from(name, char => char.codePointAt(0)));
     if (this.values.dictionaryNeedsProtocol(dictionary, key)) return {kind: "call",
       callable: this.builtin("function-dictionary-" + operation), args: [receiver, dictionary, key, item]};
     if (operation === "set") return value(this.values.set(dictionary, key, item));
     const position = this.values.find(dictionary, key);
-    if (position < 0) return value(this.functionMissing(receiver, name, operation));
+    if (position < 0) return value(this.functionMissing(receiver, name, operation, key));
     return value(operation === "get" ? dictionary.entries[position].value : this.values.remove(dictionary, key));
   }
   exceptionArgs(receiver) {
@@ -1815,8 +1828,10 @@ export class ClassRuntime {
   }
   mutate(receiver, name, value, remove = false, key = null, namespaceShadow = false) {
     this.key(name); this.touch(receiver);
-    if (receiver instanceof BoundMethodValue && !this.isPythonMethod(receiver))
-      this.fail(name === "__class__" ? "TypeError" : "AttributeError", "Native callable metadata is read-only");
+    if (receiver instanceof BoundMethodValue && !this.isPythonMethod(receiver)) {
+      if (name === "__class__") this.fail("TypeError", "Native callable metadata is read-only");
+      this.fixedMutationFailure(receiver, name, key, "Native callable metadata is read-only");
+    }
     if (receiver instanceof ClassValue && receiver.root || receiver instanceof BuiltinValue && this.isType(receiver)) this.fail("TypeError", "Cannot mutate an immutable native type");
     if (name === "__class__" && (this.isInstance(receiver) || receiver instanceof ClassValue)) return this.reassignClass(receiver, value, remove);
     if (receiver instanceof ClassValue && !receiver.root && ["__name__", "__qualname__"].includes(name)) {
@@ -1842,12 +1857,12 @@ export class ClassRuntime {
       if (item.found && !(item.value instanceof PropertyValue) && !(descriptor && (descriptor.set.found || descriptor.delete.found)))
         return this.mutate(receiver, name, value, remove, key, true);
     }
-    if (receiver instanceof FunctionValue && name === "__closure__") this.fail("AttributeError", "Function closure is read-only");
+    if (receiver instanceof FunctionValue && name === "__closure__") this.attributeMutationFailure(receiver, name, key, false, "Function closure is read-only");
     if (receiver instanceof FunctionValue && name === "__code__") {
       if (remove) this.fail("TypeError", "__code__ cannot be deleted");
       return this.replaceCode(receiver, value);
     }
-    if (receiver instanceof FunctionValue && ["__globals__", "__builtins__"].includes(name)) this.fail("AttributeError", "Function defining namespaces are read-only");
+    if (receiver instanceof FunctionValue && ["__globals__", "__builtins__"].includes(name)) this.attributeMutationFailure(receiver, name, key, false, "Function defining namespaces are read-only");
     if (receiver instanceof FunctionValue && ["__defaults__", "__kwdefaults__"].includes(name)) {
       if (!remove && value !== null && !(name === "__defaults__" ? this.values.isSequenceType(value, "tuple") : this.values.isDict(value)))
         this.fail("TypeError", name + " must be set to " + (name === "__defaults__" ? "a tuple" : "a dict") + " or None");

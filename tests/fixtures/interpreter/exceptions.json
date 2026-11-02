@@ -49,7 +49,8 @@
     "LA46",
     "LA47",
     "LA48",
-    "LA49"
+    "LA49",
+    "LA50"
   ],
   "cases": [
     {
@@ -8112,6 +8113,660 @@
       "stage": "LA49",
       "source": "cause=AttributeError(\"owned\",name=\"inner\",obj=[])\nclass Meta(type):\n def __delattr__(self,key): raise cause\nclass A(metaclass=Meta): pass\ntry:\n try: del A.field\n except AttributeError as error:\n  error.add_note(\"kept\")\n  raise LookupError(\"outer\") from error\nexcept LookupError as e: print(e.__cause__ is cause,e.__cause__.name,e.__cause__.__notes__[0])\n",
       "stdout": "True inner kept\n"
+    },
+    {
+      "id": "callable-mutation-function-missing-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-staticmethod-missing-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-classmethod-missing-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-missing-set",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-missing-delete",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-__doc__-set",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-__doc__-delete",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-__name__-set",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-__name__-delete",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-__dict__-set",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-__dict__-delete",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-__objclass__-set",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-__objclass__-delete",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-__repr__-set",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-__repr__-delete",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-missing-set",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-missing-delete",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__doc__-set",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__doc__-delete",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__name__-set",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__name__-delete",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__dict__-set",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__dict__-delete",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__objclass__-set",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__objclass__-delete",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__repr__-set",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-function-__repr__-delete",
+      "stage": "LA50",
+      "source": "receiver=len\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-missing-set",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-missing-delete",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__doc__-set",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__doc__-delete",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__name__-set",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__name__-delete",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__dict__-set",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__dict__-delete",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__objclass__-set",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__objclass__-delete",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__repr__-set",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-builtin-method-__repr__-delete",
+      "stage": "LA50",
+      "source": "receiver=[].append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-missing-set",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-missing-delete",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__doc__-set",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__doc__-delete",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__name__-set",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__name__-delete",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__dict__-set",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__dict__-delete",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__objclass__-set",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__objclass__-delete",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__repr__-set",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-method-descriptor-__repr__-delete",
+      "stage": "LA50",
+      "source": "receiver=list.append\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-missing-set",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-missing-delete",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__doc__-set",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__doc__-delete",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__name__-set",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__name__-delete",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__dict__-set",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__dict__-delete",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__objclass__-set",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__objclass__-delete",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__repr__-set",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-slot-descriptor-__repr__-delete",
+      "stage": "LA50",
+      "source": "receiver=object.__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-missing-set",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-missing-delete",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('missing')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__doc__-set",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__doc__-delete",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__doc__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__name__-set",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__name__-delete",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__name__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__dict__-set",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__dict__-delete",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__dict__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__objclass__-set",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__objclass__-delete",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__objclass__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__repr__-set",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: setattr(receiver,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-bound-slot-__repr__-delete",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key('__repr__')\ntry: delattr(receiver,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is receiver,e.name is None,e.obj is None)\n",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "callable-mutation-function-readonly-__closure__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\ntry: setattr(f,'__closure__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-function-readonly-__closure__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\ntry: delattr(f,'__closure__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-function-readonly-__globals__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\ntry: setattr(f,'__globals__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-function-readonly-__globals__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\ntry: delattr(f,'__globals__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-function-readonly-__builtins__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\ntry: setattr(f,'__builtins__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-function-readonly-__builtins__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\ntry: delattr(f,'__builtins__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-method-__func__-set",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\ntry: setattr(receiver,'__func__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-method-__func__-delete",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\ntry: delattr(receiver,'__func__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-staticmethod-__func__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\ntry: setattr(receiver,'__func__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-staticmethod-__func__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\ntry: delattr(receiver,'__func__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-classmethod-__func__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\ntry: setattr(receiver,'__func__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-classmethod-__func__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\ntry: delattr(receiver,'__func__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-method-__self__-set",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\ntry: setattr(receiver,'__self__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-method-__self__-delete",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\ntry: delattr(receiver,'__self__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-staticmethod-__wrapped__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\ntry: setattr(receiver,'__wrapped__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-staticmethod-__wrapped__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\ntry: delattr(receiver,'__wrapped__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-classmethod-__wrapped__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\ntry: setattr(receiver,'__wrapped__',None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-storage-classmethod-__wrapped__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\ntry: delattr(receiver,'__wrapped__')\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-dictionary-set-KeyError",
+      "stage": "LA50",
+      "source": "def f(): pass\nclass E(KeyError): pass\nsentinel=E(\"owned\")\nclass Key:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\",other)\n  raise sentinel\nf.__dict__[Key()]=7\ntry: f.field=8\nexcept AttributeError as e: print(e.name,e.obj is f,e.__context__ is None)\nexcept E as e: print(e is sentinel)\n",
+      "stdout": "compare field\nfield True True\n"
+    },
+    {
+      "id": "callable-mutation-dictionary-set-ValueError",
+      "stage": "LA50",
+      "source": "def f(): pass\nclass E(ValueError): pass\nsentinel=E(\"owned\")\nclass Key:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\",other)\n  raise sentinel\nf.__dict__[Key()]=7\ntry: f.field=8\nexcept AttributeError as e: print(e.name,e.obj is f,e.__context__ is None)\nexcept E as e: print(e is sentinel)\n",
+      "stdout": "compare field\nTrue\n"
+    },
+    {
+      "id": "callable-mutation-dictionary-delete-KeyError",
+      "stage": "LA50",
+      "source": "def f(): pass\nclass E(KeyError): pass\nsentinel=E(\"owned\")\nclass Key:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\",other)\n  raise sentinel\nf.__dict__[Key()]=7\ntry: del f.field\nexcept AttributeError as e: print(e.name,e.obj is f,e.__context__ is None)\nexcept E as e: print(e is sentinel)\n",
+      "stdout": "compare field\nfield True True\n"
+    },
+    {
+      "id": "callable-mutation-dictionary-delete-ValueError",
+      "stage": "LA50",
+      "source": "def f(): pass\nclass E(ValueError): pass\nsentinel=E(\"owned\")\nclass Key:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\",other)\n  raise sentinel\nf.__dict__[Key()]=7\ntry: del f.field\nexcept AttributeError as e: print(e.name,e.obj is f,e.__context__ is None)\nexcept E as e: print(e is sentinel)\n",
+      "stdout": "compare field\nTrue\n"
+    },
+    {
+      "id": "callable-mutation-native-object-wrappers",
+      "stage": "LA50",
+      "source": "class A:\n def f(self): pass\nreceiver=A().f\nkey=\"missing\"\nfor op in [object.__setattr__,object.__delattr__]:\n try:\n  if op is object.__setattr__: op(receiver,key,7)\n  else: op(receiver,key)\n except AttributeError as e: print(e.name is key,e.obj is receiver)\n",
+      "stdout": "True True\nTrue True\n"
+    },
+    {
+      "id": "callable-mutation-native-storage-staticmethod-__func__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\ntry: staticmethod.__dict__['__func__'].__set__(receiver,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-native-storage-staticmethod-__func__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\ntry: staticmethod.__dict__['__func__'].__delete__(receiver)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-native-storage-staticmethod-__wrapped__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\ntry: staticmethod.__dict__['__wrapped__'].__set__(receiver,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-native-storage-staticmethod-__wrapped__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=staticmethod(f)\ntry: staticmethod.__dict__['__wrapped__'].__delete__(receiver)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-native-storage-classmethod-__func__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\ntry: classmethod.__dict__['__func__'].__set__(receiver,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-native-storage-classmethod-__func__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\ntry: classmethod.__dict__['__func__'].__delete__(receiver)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-native-storage-classmethod-__wrapped__-set",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\ntry: classmethod.__dict__['__wrapped__'].__set__(receiver,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-native-storage-classmethod-__wrapped__-delete",
+      "stage": "LA50",
+      "source": "def f(): pass\nreceiver=classmethod(f)\ntry: classmethod.__dict__['__wrapped__'].__delete__(receiver)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-directory-8",
+      "stage": "LA50",
+      "source": "receiver=len\ntry: del receiver.__dir__\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-directory-9",
+      "stage": "LA50",
+      "source": "receiver=[7].append\ntry: del receiver.__dir__\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "callable-mutation-directory-10",
+      "stage": "LA50",
+      "source": "receiver=object().__str__\ntry: del receiver.__dir__\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
     }
   ],
   "reference_boundaries": [

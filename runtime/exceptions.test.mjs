@@ -93,6 +93,20 @@ test('module mutation metadata survives suspended generator cleanup', async () =
   await lifetime('import helper\ndef work():\n try: del helper.missing\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,e.obj is helper)\ni=work()\ne=next(i)\ne.args=()\nprint("entered")\ni.close()\n', 'entered\nmissing True\n', [helper]);
 });
 
+test('callable mutation errors retain temporary bound receivers and cyclic subtype keys', async () => {
+  await lifetime('class Key(str): pass\nkey=Key("missing")\ntry: setattr([7].append,key,8)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj.__self__[0])\n', 'entered\nTrue 7\n');
+});
+
+test('function dictionary mutation callbacks survive parked interruption', async () => {
+  await lifetime('def f(): pass\nclass Key:\n def __hash__(self): return hash("field")\n def __eq__(self,other):\n  print("entered")\n  raise KeyError("owned")\nf.__dict__[Key()]=7\ntry: f.field=8\nexcept AttributeError as e: print(e.name,e.obj is f,e.__context__ is None)\n', 'entered\nfield True True\n');
+});
+
+test('retained native callable mutation errors share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True:\n try: [7].append.missing=8\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 48000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('failed generic writes retain temporary receivers through parked collection', async () => {
   await lifetime('class A: __slots__=()\ntry: A().missing=7\nexcept AttributeError as error: e=error\ne.args=()\nprint("entered")\nprint(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
 });
