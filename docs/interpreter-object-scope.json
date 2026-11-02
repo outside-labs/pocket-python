@@ -401,7 +401,7 @@
     },
     {
       "path": "runtime/class-values.mjs",
-      "site": "this.fail(receiver instanceof FrameValue && [\"f_lineno\", \"f_trace\"].includes(name) ? \"UnsupportedOperationError\" : \"AttributeError\", \"Frame/generator metadata is read-only; tracing and jumping are separate\", receiver instanceof FrameValue && [\"f_lineno\", \"f_trace\"].includes(name) ? \"UNSUPPORTED\" : \"PYTHON\");",
+      "site": "this.fail(receiver instanceof FrameValue && [\"f_lineno\", \"f_trace\"].includes(name) ? \"UnsupportedOperationError\" : \"AttributeError\", \"Frame metadata is read-only; tracing and jumping are separate\", receiver instanceof FrameValue && [\"f_lineno\", \"f_trace\"].includes(name) ? \"UNSUPPORTED\" : \"PYTHON\");",
       "owner": "boundary:source-interface",
       "boundary": "Finite source code/frame interface excludes raw backend code constructors, native layouts and frame debugging."
     },
