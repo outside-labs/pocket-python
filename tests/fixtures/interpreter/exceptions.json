@@ -54,7 +54,8 @@
     "LA51",
     "LA52",
     "LA53",
-    "LA54"
+    "LA54",
+    "LA54A"
   ],
   "cases": [
     {
@@ -10530,6 +10531,198 @@
       "source": "view=memoryview(b\"abc\")\nfor name in [\"readonly\",\"nbytes\"]:\n descriptor=memoryview.__dict__[name]\n for remove in [False,True]:\n  try:\n   if remove: descriptor.__delete__(view)\n   else: descriptor.__set__(view,7)\n  except AttributeError as e: print(e.name is None,e.obj is None)\n",
       "stage": "LA54",
       "stdout": "True True\nTrue True\nTrue True\nTrue True\n"
+    },
+    {
+      "id": "direct-values-complex-missing-write",
+      "source": "obj=2+3j\ntry: obj.missing=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-complex-missing-delete",
+      "source": "obj=2+3j\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-complex-imag-write",
+      "source": "obj=2+3j\ntry: obj.imag=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"imag\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-complex-imag-delete",
+      "source": "obj=2+3j\ntry: del obj.imag\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"imag\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-range-missing-write",
+      "source": "obj=range(3)\ntry: obj.missing=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-range-missing-delete",
+      "source": "obj=range(3)\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-range-start-write",
+      "source": "obj=range(3)\ntry: obj.start=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"start\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-range-start-delete",
+      "source": "obj=range(3)\ntry: del obj.start\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"start\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-slice-missing-write",
+      "source": "obj=slice(1,3)\ntry: obj.missing=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-slice-missing-delete",
+      "source": "obj=slice(1,3)\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-slice-stop-write",
+      "source": "obj=slice(1,3)\ntry: obj.stop=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"stop\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-slice-stop-delete",
+      "source": "obj=slice(1,3)\ntry: del obj.stop\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"stop\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-set-missing-write",
+      "source": "obj={7}\ntry: obj.missing=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-set-missing-delete",
+      "source": "obj={7}\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-set-add-write",
+      "source": "obj={7}\ntry: obj.add=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"add\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-set-add-delete",
+      "source": "obj={7}\ntry: del obj.add\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"add\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-frozenset-missing-write",
+      "source": "obj=frozenset([7])\ntry: obj.missing=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-frozenset-missing-delete",
+      "source": "obj=frozenset([7])\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-frozenset-union-write",
+      "source": "obj=frozenset([7])\ntry: obj.union=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"union\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-frozenset-union-delete",
+      "source": "obj=frozenset([7])\ntry: del obj.union\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"union\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-bytes-missing-write",
+      "source": "obj=b\"abc\"\ntry: obj.missing=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-bytes-missing-delete",
+      "source": "obj=b\"abc\"\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-bytes-decode-write",
+      "source": "obj=b\"abc\"\ntry: obj.decode=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"decode\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-bytes-decode-delete",
+      "source": "obj=b\"abc\"\ntry: del obj.decode\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"decode\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-bytearray-missing-write",
+      "source": "obj=bytearray(b\"abc\")\ntry: obj.missing=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-bytearray-missing-delete",
+      "source": "obj=bytearray(b\"abc\")\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-bytearray-append-write",
+      "source": "obj=bytearray(b\"abc\")\ntry: obj.append=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"append\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-bytearray-append-delete",
+      "source": "obj=bytearray(b\"abc\")\ntry: del obj.append\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"append\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-memoryview-missing-write",
+      "source": "obj=memoryview(b\"abc\")\ntry: obj.missing=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-memoryview-missing-delete",
+      "source": "obj=memoryview(b\"abc\")\ntry: del obj.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"missing\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "direct-values-memoryview-readonly-write",
+      "source": "obj=memoryview(b\"abc\")\ntry: obj.readonly=7\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"readonly\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "direct-values-memoryview-readonly-delete",
+      "source": "obj=memoryview(b\"abc\")\ntry: del obj.readonly\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"readonly\",e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA54A",
+      "stdout": "False False True True\n"
     }
   ],
   "reference_boundaries": [
