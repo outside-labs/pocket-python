@@ -1118,6 +1118,8 @@ export class ClassRuntime {
       if (name === "__class__") this.fail("TypeError", "Native callable metadata is read-only");
       this.fixedMutationFailure(receiver, name, key, "Native callable metadata is read-only");
     }
+    if (receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue)
+      this.fixedMutationFailure(receiver, name, key, "Dictionary view attributes are read-only.");
     this.key(name); this.touch(receiver);
     if (name === "__dir__" && this.hasFixedDirectory(receiver) && !(receiver instanceof MethodWrapperValue)) this.fail("AttributeError", "Native directory attributes are read-only.");
     if (["__name__", "__qualname__", "__self__", "__objclass__"].includes(name) &&
@@ -1125,7 +1127,6 @@ export class ClassRuntime {
          receiver instanceof BoundMethodValue && receiver.callable instanceof BuiltinValue && receiver.callable.name === "type.__dir__"))
       this.fail("AttributeError", "Native directory method metadata is read-only.");
 
-    if (receiver instanceof ClassNamespaceValue || receiver instanceof DictionaryViewValue) this.fail("AttributeError", "Dictionary view attributes are read-only.");
     if (this.isPythonMethod(receiver)) {
       if (name === "__class__") this.fail("TypeError", "Method type cannot be changed.");
       this.fixedMutationFailure(receiver, name, key, "Method attributes are read-only.");
@@ -1413,7 +1414,7 @@ export class ClassRuntime {
       return this.read(receiver, name, true);
     }
     if (receiver instanceof DictionaryViewValue && name === "mapping") {
-      if (operation !== "get") this.fail("AttributeError", "Dictionary view mapping is read-only");
+      if (operation !== "get") this.attributeMutationFailure(receiver, name, null, false, "Dictionary view mapping is read-only");
       if (receiver.owner !== undefined) this.fail("UnsupportedOperationError", "Dictionary subclass view mappings require the #116 proxy contract", "UNSUPPORTED");
       return {kind: "value", value: this.make(ClassNamespaceValue, receiver.dictionary)};
     }

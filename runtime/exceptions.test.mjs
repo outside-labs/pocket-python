@@ -107,6 +107,20 @@ test('retained native callable mutation errors share the allocation limit', asyn
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+test('namespace mutation errors retain the temporary proxy and class cycle', async () => {
+  await lifetime('def fail():\n class A: pass\n try: A.__dict__.missing=7\n except AttributeError as e:\n  A.error=e\n  return e\ne=fail()\ne.args=()\nprint("entered")\nprint(e.name,e.obj["error"] is e)\n', 'entered\nmissing True\n');
+});
+
+test('dictionary view mutation errors retain detached subtype owners and cyclic keys', async () => {
+  await lifetime('class D(dict): pass\nclass Key(str): pass\nd=D()\nkey=Key("missing")\ntry: setattr(d.values(),key,7)\nexcept AttributeError as error: e=error\nkey.error=e\nd["error"]=e\ne.args=()\nd=None\nkey=None\nprint("entered")\nprint(e.name.error is e,list(e.obj)[0] is e)\n', 'entered\nTrue True\n');
+});
+
+test('retained dictionary view mutation graphs share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True:\n try: {"field":[]}.keys().missing=7\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 48000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('failed generic writes retain temporary receivers through parked collection', async () => {
   await lifetime('class A: __slots__=()\ntry: A().missing=7\nexcept AttributeError as error: e=error\ne.args=()\nprint("entered")\nprint(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
 });
