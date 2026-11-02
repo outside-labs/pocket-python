@@ -3,9 +3,11 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import platform
 import subprocess
+import sys
 import tempfile
 
 from check_conformance import run_browser
@@ -65,8 +67,52 @@ def references(corpus_path=CORPUS):
                                         for status in ['pass', 'fail']}}
 
 
-def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, profile=None, parked=False):
+def cached_references(corpus_path, cache_dir=None):
+    """Reuse only successful, intact reports for these exact oracle inputs."""
+    cache_dir = Path(cache_dir or os.environ.get('POCKET_PYTHON_REFERENCE_CACHE',
+                                                ROOT.parent / 'build/reference-cache'))
+    identity = {
+        'corpus': hashlib.sha256(corpus_path.read_bytes()).hexdigest(),
+        'python': sys.version, 'implementation': platform.python_implementation(),
+        'host': platform.platform(),
+        'harness': {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                    for path in (Path(__file__), ROOT / 'check_functions.py')},
+    }
+    def digest(value):
+        return hashlib.sha256(json.dumps(value, sort_keys=True).encode('utf-8')).hexdigest()
+
+    key = digest(identity)
+    path = cache_dir / f'{corpus_path.stem}-{key}.json'
+    try:
+        saved = json.loads(path.read_bytes())
+        report = saved['report']
+        if (saved['identity'] == identity and saved['report_sha256'] == digest(report) and
+                report['corpus_sha256'] == identity['corpus'] and
+                report['summary'] == {'pass': len(report['cases']), 'fail': 0} and
+                all(case['reference_status'] == 'pass' for case in report['cases'])):
+            return {**report, 'reference_cache': {'key': key, 'hit': True}}
+    except (FileNotFoundError, ValueError, KeyError, TypeError):
+        pass
     report = references(corpus_path)
+    if not report['summary']['fail']:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        # Atomic replacement also permits independent processes to share a cache.
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=cache_dir,
+                                         delete=False) as output:
+            json.dump({'identity': identity, 'report_sha256': digest(report), 'report': report}, output)
+            temporary = Path(output.name)
+        try:
+            temporary.replace(path)
+        finally:
+            temporary.unlink(missing_ok=True)
+        for previous in cache_dir.glob(corpus_path.stem + '-*.json'):
+            if previous != path:
+                previous.unlink(missing_ok=True)
+    return {**report, 'reference_cache': {'key': key, 'hit': False}}
+
+
+def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, profile=None, parked=False):
+    report = cached_references(corpus_path)
     if report['summary']['fail']:
         raise AssertionError('The class reference corpus differs from its recorded expectations.')
     corpus = json.loads(corpus_path.read_bytes())
@@ -130,6 +176,7 @@ def check(target, channel=None, corpus_path=CORPUS, stages=None, stepped=False, 
             'omitted_stages': sorted(available - {case['stage'] for case in cases}),
             'omitted_profile_cases': [case['id'] for case in corpus['cases'] if selected_profile not in case.get('profiles', [corpus['profile']])],
             'reference_summary': report['summary'],
+            'reference_cache': report['reference_cache'],
             'implementation_status': 'Implemented stages: ' + ', '.join(adopted) + '. Other recorded stages must refuse.',
             'comparison': 'Adopted stdout and error types match CPython; messages/repr identity are not compared. Later stages must refuse explicitly.',
             'inputs_sha256': {p.name: hashlib.sha256(p.read_bytes().replace(b'\r\n', b'\n')).hexdigest()

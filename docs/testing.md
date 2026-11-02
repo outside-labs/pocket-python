@@ -41,6 +41,15 @@ selected suites/features, command results and durations. Use `--report PATH` for
 a separate report location. Failures print the end of their log and return a
 nonzero exit status after the remaining selected checks finish.
 
+Class-corpus differential checks reuse validated CPython reports under
+`build/reference-cache` (override with `POCKET_PYTHON_REFERENCE_CACHE`). Cache
+identity includes the complete corpus, Python build/host and both reference
+drivers; failed or damaged entries are recomputed. Reports record cache hits.
+CI restores each shard's cache across PR updates, including unchanged corpora
+when another corpus changes. Standalone `--reference-only` checks always execute
+CPython again, so nightly/manual/release validation independently verifies the
+recorded expectations. Remove the directory to benchmark a cold run.
+
 ## Fast development and merge policy
 
 Run the smallest meaningful local checks for the behavior being changed. A

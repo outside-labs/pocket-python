@@ -86,6 +86,11 @@ jobs:
           version: "0.12.19"
           enable-cache: true
       - run: uv sync --locked
+      - uses: actions/cache@v5
+        with:
+          path: build/reference-cache
+          key: oracle-v1-${{ runner.os }}-node-${{ matrix.shard }}-${{ hashFiles('tests/fixtures/interpreter/*.json', 'runtime/check_classes.py', 'runtime/check_functions.py') }}
+          restore-keys: oracle-v1-${{ runner.os }}-node-${{ matrix.shard }}-
       - run: uv run --no-sync python scripts/run_tests.py interpreter --shard ${{ matrix.shard }} --shards 4
       - uses: actions/upload-artifact@v5
         if: always()
@@ -128,6 +133,12 @@ jobs:
       - run: uv run --no-sync python scripts/run_tests.py prepare-browser
       - if: matrix.suite == 'browser-integration'
         run: uv run --no-sync python scripts/prepare_runtime.py
+      - uses: actions/cache@v5
+        if: matrix.suite == 'browser-conformance'
+        with:
+          path: build/reference-cache
+          key: oracle-v1-${{ runner.os }}-browser-${{ matrix.shard }}-${{ hashFiles('tests/fixtures/interpreter/*.json', 'runtime/check_classes.py', 'runtime/check_functions.py') }}
+          restore-keys: oracle-v1-${{ runner.os }}-browser-${{ matrix.shard }}-
       - run: uv run --no-sync python scripts/run_tests.py ${{ matrix.suite }} --shard ${{ matrix.shard }} --shards ${{ matrix.shards }}
       - uses: actions/upload-artifact@v5
         if: always()
