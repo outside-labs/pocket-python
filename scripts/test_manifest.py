@@ -1,7 +1,8 @@
 """Shared validation inventory; commands run from the repository root."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
+import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -124,7 +125,19 @@ STAGES = {'numeric': ('N1', 'N2', 'N3', 'N4', 'N5', 'Future'),
           'sequences': ('Q1', 'Q2', 'Q3', 'Hints')}
 
 
-def checks():
+def measured_costs(path):
+    if not path.exists():
+        return {}
+    inventory = json.loads(path.read_bytes())
+    costs = inventory['seconds']
+    if (inventory['schema_version'] != 1 or not isinstance(costs, dict) or
+            any(isinstance(value, bool) or not isinstance(value, (int, float)) or
+                not math.isfinite(value) or value <= 0 for value in costs.values())):
+        raise ValueError('Invalid measured validation costs')
+    return costs
+
+
+def checks(costs_path=None):
     """Expand profile/driver matrices once for local and CI callers."""
     result = []
 
@@ -216,4 +229,5 @@ def checks():
     add('smoke-build-wheel', 'smoke', 'uv', 'build', '--wheel')
     add('smoke-installed-cli', 'smoke', 'python', 'scripts/smoke_install.py')
     add('smoke-interpreter-startup', 'smoke', 'node', 'scripts/startup_smoke.mjs')
-    return result
+    costs = measured_costs(costs_path or ROOT / 'scripts/test_costs.json')
+    return [replace(check, seconds=costs.get(check.id, check.seconds)) for check in result]
