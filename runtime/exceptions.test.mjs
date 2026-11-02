@@ -70,6 +70,19 @@ test('retained buffer mutation graphs share the allocation limit', async () => {
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+for (const mode of ['scalar', 'buffer']) test(mode + ' value mutation failures preserve original dynamic frames', async () => {
+  const item = corpus.cases.find(item => item.id === 'values-' + mode + '-dynamic-failure');
+  const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
+  assert.equal(result.error.type, 'AttributeError');
+  assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]), [
+    ['<module>', 'sources/app.py', 1], ['<module>', mode + '-value-original.py', 7], ['fail', mode + '-value-original.py', 3]]);
+  closed(result.closed);
+});
+
+test('value mutation errors survive interrupted suspended buffer cleanup', async () => {
+  await lifetime('def work():\n try: memoryview(bytearray(b"abc")).missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   print(e.name,e.obj[0],len(e.args))\ni=work()\ne=next(i)\ne.args=()\ni.close()\n', 'entered\nmissing 97 0\n');
+});
+
 test('module mutation errors retain cyclic keys and the module after args replacement', async () => {
   await lifetime('import helper\nclass Key(str): pass\nkey=Key("missing")\ntry: delattr(helper,key)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nhelper=None\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj.marker)\n',
     'entered\nTrue 7\n', [{name: 'helper', source: 'marker=7\n'}]);

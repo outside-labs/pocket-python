@@ -66,7 +66,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                     for case in corpus['cases']:
                         if (case.get('modules') or
                             containers and case['stage'] not in {'LA-7', 'LA-6A'} or
-                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43', 'LA46', 'LA49', 'LA52'}):
+                            exceptions and case['stage'] not in {'LA13', 'LA16', 'LA19', 'LA22', 'LA25', 'LA28', 'LA31', 'LA34', 'LA37', 'LA40', 'LA43', 'LA46', 'LA49', 'LA52', 'LA55'}):
                             continue
                         run(case['source'], case['stdout'], case.get('error_type'))
                         if case['id'] == 'dynamic-original-source-failure':
@@ -102,6 +102,9 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         if case['id'] in {'callable-views-native-dynamic-failure', 'callable-views-view-dynamic-failure'}:
                             filename = 'callable' if 'native' in case['id'] else 'view'
                             assert f'fail at {filename}-mutation-original.py:2' in page.locator('#diagnostic').inner_text()
+                        if case['id'] in {'values-scalar-dynamic-failure', 'values-buffer-dynamic-failure'}:
+                            filename = 'scalar' if 'scalar' in case['id'] else 'buffer'
+                            assert f'fail at {filename}-value-original.py:3' in page.locator('#diagnostic').inner_text()
                         records.append({'id': case['id'], 'status': 'pass'})
                     if exceptions:
                         for case in corpus.get('reference_boundaries', []):
@@ -147,6 +150,10 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         callable_views_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', callable_views], text=True, encoding='utf-8')
                         run(callable_views, callable_views_expected)
                         records.append({'id': 'callable-view-mutation-example', 'status': 'pass'})
+                        value_failures = (ROOT / 'examples/interpreter_value_failures.py').read_text(encoding='utf-8')
+                        value_failures_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', value_failures], text=True, encoding='utf-8')
+                        run(value_failures, value_failures_expected)
+                        records.append({'id': 'value-mutation-example', 'status': 'pass'})
                         mutations = (ROOT / 'examples/interpreter_attribute_mutations.py').read_text(encoding='utf-8')
                         mutations_expected = subprocess.check_output([sys.executable, '-I', '-S', '-c', mutations], text=True, encoding='utf-8')
                         run(mutations, mutations_expected)
@@ -184,6 +191,11 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                             'def work():\n try: {}.keys().missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   while True: pass\ni=work()\ne=next(i)\ni.close()\n',
                             'class Key:\n def __hash__(self): return hash("field")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nclass Record: pass\nr=Record()\nr.__dict__[Key()]=7\ndel r.field\n',
                         ]
+                    if exceptions:
+                        busy_sources += [
+                            'try: (1.25).missing=7\nexcept AttributeError as e:\n e.args=()\n print("entered")\n while True: e.obj\n',
+                            'def work():\n try: memoryview(bytearray(b"abc")).missing=7\n except AttributeError as e:\n  try: yield e\n  finally:\n   print("entered")\n   while True: e.obj[0]\ni=work()\ne=next(i)\ne.args=()\ni.close()\n',
+                        ]
                     for source in busy_sources:
                         page.fill('#input', source)
                         page.click('#run')
@@ -198,6 +210,7 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                         run(example, expected)
                         if exceptions:
                             run(callable_views, callable_views_expected)
+                            run(value_failures, value_failures_expected)
                     context.set_offline(False)
                     shutil.rmtree(root / 'site/console')
                     shutil.copytree(root / 'reduced', root / 'site/console')
@@ -266,6 +279,8 @@ def smoke(require_installed=False, containers=False, exceptions=False):
                   'stop-during-metaclass-deletion', 'class-mutation-original-diagnostics',
                   'stop-during-function-dictionary-comparison', 'stop-during-view-cleanup',
                   'callable-view-original-diagnostics', 'callable-view-fresh-restart',
+                  'stop-during-scalar-error-retention', 'stop-during-buffer-error-cleanup',
+                  'value-mutation-original-diagnostics', 'value-mutation-fresh-restart',
                   'restart-fresh-owner', 'reduced-profile-update',
                   'old-cache-removed', 'core-error-arguments', 'core-source-boundary']
     return {'schema_version': 1, 'suite': 'interpreter-exceptions-offline/1' if exceptions else 'interpreter-containers-offline/1' if containers else 'interpreter-object-offline/1',
