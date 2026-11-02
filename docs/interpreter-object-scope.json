@@ -1144,10 +1144,10 @@
       "boundary": "Automatic lookup/import metadata enrichment remains separate from explicit native exception construction/storage"
     },
     {
-      "path": "runtime/class-values.mjs",
-      "site": "this.fail(\"UnsupportedOperationError\", \"Reflective mutation with callback-bearing attribute keys remains under #124\", \"UNSUPPORTED\");",
+      "path": "runtime/operation-runtime.mjs",
+      "site": "hard(\"UNSUPPORTED\", \"UnsupportedOperationError\", \"Rejected native attribute key comparisons require the #124 sparse-probe contract.\");",
       "owner": "#124",
-      "boundary": "Custom attribute-key hashing/equality during reflective native mutation requires a separately qualified lookup contract."
+      "boundary": "A false native type-key equality result retains the separately qualified hash-seed-dependent sparse dictionary probe sequence."
     }
   ],
   "native_tables": {

@@ -267,7 +267,11 @@ Selective generic attribute mutation fields retain the original receiver/key;
 Reflective frame/code/cell/property/super failures use the same selective fields;
 `examples/interpreter_reflective_failures.py` retains rejected targets across
 closure edits and generator execution. Native read-only descriptors leave those
-fields empty. Tracing/jumping and custom key hash/equality remain separately gated.
+fields empty. Native mutation keys run owned hash/equality/truth callbacks and
+suppress lookup errors before selecting storage or failure metadata. Run
+`examples/interpreter_native_keys.py` for recovery after a failed native lookup.
+Rejected comparisons retain a named sparse-probe boundary; tracing/jumping is
+separately gated.
 Groups, traceback objects, remaining structured families and formatting retain
 their gates.
 
