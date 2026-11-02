@@ -496,3 +496,12 @@ reference cases cover both mutation directions, native wrappers, subtype keys,
 evaluation order and successful subclass controls. This follows the pinned
 [generic mutation implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c#L1820-L1917).
 The existing core attribute-mutation boundary remains explicit.
+
+LA-54 applies the same selection to str, list, tuple, dict, range, slice, set,
+frozenset, bytes, bytearray and memoryview. Missing names preserve the original
+key and receiver; existing native attributes and direct read-only storage
+descriptors leave both fields absent. Released memoryviews still select the
+attribute failure without reading their released storage. Native object
+wrappers, temporary buffers and detached owners follow the same ownership
+rules. The 129 reference cases include writable subclass-dictionary controls;
+broader constructors, view APIs and codecs keep their existing gates.
