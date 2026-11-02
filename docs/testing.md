@@ -13,7 +13,7 @@ uv run --no-sync python scripts/run_tests.py focused --feature native-descriptor
 # The same suites and shard assignments used in CI.
 uv run --no-sync python scripts/run_tests.py interpreter --shard 1 --shards 4
 uv run --no-sync python scripts/run_tests.py prepare-browser
-uv run --no-sync python scripts/run_tests.py browser-conformance --shard 1 --shards 4
+uv run --no-sync python scripts/run_tests.py browser-conformance --shard 1 --shards 6
 uv run --no-sync python scripts/run_tests.py browser-integration --shard 1 --shards 3
 uv run --no-sync python scripts/run_tests.py python
 ```
@@ -67,6 +67,25 @@ by the differential matrix; standalone examples still run isolated CPython.
 Representative form submissions, all source-error/diagnostic checks, offline
 reloads, service-worker/profile updates and every Stop/Restart cycle retain
 their UI paths. The console report records UI/worker counts and elapsed time.
+
+Shard weights prefer the checked-in `scripts/test_costs.json` inventory of
+successful command timings. New checks retain the manifest's fallback estimate;
+costs affect assignments only, never selection or preparation/packaging order.
+To refresh from a passing Linux CI run, download its `interpreter-*`,
+`browser-conformance-*` and `browser-integration-*` artifacts under one directory,
+then run:
+
+```sh
+uv run --no-sync python scripts/update_test_costs.py build/ci-timings \
+  --source https://github.com/outside-labs/pocket-python/actions/runs/RUN_ID
+```
+
+The importer records report hashes/revisions, ignores removed IDs, deduplicates
+reports and takes the median for repeated samples. Failed, incomplete or invalid
+timings are rejected. Review the generated inventory before committing it; do
+not mix different platforms or worker configurations. Runner reports now record
+the host and worker configuration. The inventory is a scheduling estimate,
+never a performance assertion or a substitute for running the complete gate.
 
 ## Fast development and merge policy
 

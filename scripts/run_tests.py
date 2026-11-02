@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
+import platform
 import shlex
 import subprocess
 import sys
@@ -53,6 +54,9 @@ def run(selected, report_path, metadata):
     report = {
         'schema_version': 1, 'revision': git_output('rev-parse', 'HEAD'),
         'working_tree_modified': bool(git_output('status', '--porcelain')),
+        'host': {'os': platform.system(), 'machine': platform.machine(),
+                 'python': platform.python_version(),
+                 'browser_workers': env.get('POCKET_PYTHON_BROWSER_WORKERS', '2')},
         'started_at': datetime.now(UTC).isoformat(), **metadata, 'checks': [],
     }
     try:
