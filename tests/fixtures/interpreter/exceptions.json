@@ -55,7 +55,8 @@
     "LA52",
     "LA53",
     "LA54",
-    "LA54A"
+    "LA54A",
+    "LA55"
   ],
   "cases": [
     {
@@ -10723,6 +10724,79 @@
       "source": "obj=memoryview(b\"abc\")\ntry: del obj.readonly\nexcept AttributeError as e:\n e.args=()\n print(e.name==\"readonly\",e.obj is obj,e.name is None,e.obj is None)\n",
       "stage": "LA54A",
       "stdout": "False False True True\n"
+    },
+    {
+      "id": "values-composed-example",
+      "source": "\"\"\"Retain rejected update targets for a useful cleanup report.\"\"\"\n\n\ndef update(record):\n    try:\n        setattr(record[\"target\"], record[\"field\"], record[\"value\"])\n    except AttributeError as error:\n        error.add_note(\"check the target before retrying\")\n        raise error from ValueError(record[\"id\"])\n\n\nfor target in [1.25, [7], memoryview(bytearray(b\"abc\"))]:\n    record = {\"id\": 7, \"target\": target, \"field\": \"missing\", \"value\": []}\n    try:\n        update(record)\n    except AttributeError as error:\n        error.args = ()\n        print(error.name, error.obj is target, error.__cause__.args[0])\n        print(error.__notes__[0])\n",
+      "stage": "LA55",
+      "stdout": "missing True 7\ncheck the target before retrying\nmissing True 7\ncheck the target before retrying\nmissing True 7\ncheck the target before retrying\n"
+    },
+    {
+      "id": "values-composed-module",
+      "source": "import helper\nobj=memoryview(bytearray(b\"abc\"))\nkey=\"missing\"\ntry: helper.fail(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.obj[0],e.__cause__.args[0],e.__notes__[0])\n",
+      "imports": [
+        "helper"
+      ],
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "def fail(obj,key):\n try: delattr(obj,key)\n except AttributeError as e:\n  e.add_note(\"cleanup failed\")\n  raise e from ValueError(7)\n"
+        }
+      ],
+      "stage": "LA55",
+      "stdout": "True True 97 7 cleanup failed\n"
+    },
+    {
+      "id": "values-scalar-dynamic-failure",
+      "source": "exec(compile('def fail():\\n obj=1.25\\n try: obj.missing=7\\n except AttributeError as e:\\n  print(e.name,e.obj is obj)\\n  raise\\nfail()',\"scalar-value-original.py\",\"exec\"))\n",
+      "error_type": "AttributeError",
+      "stage": "LA55",
+      "stdout": "missing True\n"
+    },
+    {
+      "id": "values-buffer-dynamic-failure",
+      "source": "exec(compile('def fail():\\n obj=memoryview(b\"abc\")\\n try: obj.missing=7\\n except AttributeError as e:\\n  print(e.name,e.obj is obj)\\n  raise\\nfail()',\"buffer-value-original.py\",\"exec\"))\n",
+      "error_type": "AttributeError",
+      "stage": "LA55",
+      "stdout": "missing True\n"
+    },
+    {
+      "id": "values-suspended-cleanup",
+      "source": "def work():\n try: [7].missing=[]\n except AttributeError as e:\n  try: yield e\n  finally: print(e.name,e.obj[0],e.__notes__[0])\ni=work()\ne=next(i)\ne.args=()\ne.add_note(\"retained\")\ni.close()\n",
+      "stage": "LA55",
+      "stdout": "missing 7 retained\n"
+    },
+    {
+      "id": "values-retained-owner-cycle",
+      "source": "class Key(str): pass\nkey=Key(\"missing\")\ntry: setattr([7],key,[])\nexcept AttributeError as error: e=error\ne.obj.append(e)\nkey.error=e\ne.args=()\nkey=None\nprint(e.name.error is e,e.obj[1] is e,e.obj[0])\n",
+      "stage": "LA55",
+      "stdout": "True True 7\n"
+    },
+    {
+      "id": "values-released-buffer-cleanup",
+      "source": "view=memoryview(bytearray(b\"abc\"))\nview.release()\ntry: del view.missing\nexcept AttributeError as e:\n e.args=()\n print(e.name,e.obj is view)\ntry: view[0]\nexcept ValueError: print(\"released\")\n",
+      "stage": "LA55",
+      "stdout": "missing True\nreleased\n"
+    },
+    {
+      "id": "values-readonly-storage-cleanup",
+      "source": "obj=range(1,7,2)\ntry: obj.start=9\nexcept AttributeError as e: print(e.name is None,e.obj is None,obj.start)\ntry: del obj.missing\nexcept AttributeError as e: print(e.name,e.obj is obj)\n",
+      "stage": "LA55",
+      "stdout": "True True 1\nmissing True\n"
+    },
+    {
+      "id": "values-owned-setter-control",
+      "source": "owned=AttributeError(\"owned\",name=\"custom\",obj=[7])\nclass A(list):\n def __setattr__(self,key,value): raise owned\na=A([8])\ntry: a.missing=9\nexcept AttributeError as e: print(e is owned,e.name,e.obj[0],a[0])\n",
+      "stage": "LA55",
+      "stdout": "True custom 7 8\n"
+    },
+    {
+      "id": "values-cause-notes-rethrow",
+      "source": "try:\n try: (2+3j).missing=7\n except AttributeError as e:\n  e.add_note(\"retained\")\n  raise e from ValueError(8)\nexcept AttributeError as e:\n e.args=()\n print(e.name,e.obj==2+3j,e.__cause__.args[0],e.__notes__[0],e.__suppress_context__)\n",
+      "stage": "LA55",
+      "stdout": "missing True 8 retained True\n"
     }
   ],
   "reference_boundaries": [

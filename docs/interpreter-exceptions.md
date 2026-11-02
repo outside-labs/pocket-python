@@ -505,3 +505,20 @@ attribute failure without reading their released storage. Native object
 wrappers, temporary buffers and detached owners follow the same ownership
 rules. The 129 reference cases include writable subclass-dictionary controls;
 broader constructors, view APIs and codecs keep their existing gates.
+
+LA-54A routes direct assignment/deletion bytecode through the same owned
+mutation implementation for complex, range, slice, set and binary/buffer values.
+The 32 direct-syntax reference cases complement the reflection/wrapper cases;
+legacy version-3 scalar error behavior is retained.
+
+LA-55 accepts scalar/container/buffer mutation failures across registry modules,
+dynamic source, causes, notes, owner cycles and suspended cleanup. Run
+`examples/interpreter_value_failures.py` unchanged on the pinned reference or
+in the offline console. Installed acceptance checks original scalar/buffer
+failure locations, Stop/Restart while errors retain their owners and fresh
+targets after restart. The exception corpus now has 1,458 cases: 1,447 supported
+semantic/error comparisons and 11 explicit refusals, with 267 shared core
+cases. The six existing qualifications remain outside those counts. These
+finite observations do not measure overall Python completion. Generator and
+iterator mutation metadata follow separately; other #124 and candidate gates
+remain open.
