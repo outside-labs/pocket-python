@@ -89,12 +89,13 @@ export function completion(kind, fields = {}) {
     case "handler-type": record = {kind, position: fields.position, names: operands(fields.names), after}; break;
     case "class-mapping-dir-call": case "class-mapping-dir-result":
       record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
-    case "global-mapping-name": case "builtin-mapping-name": case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name":
+    case "global-mapping-name": case "builtin-mapping-name": case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "global-name": case "global-delete": case "builtin-name":
       record = {kind, receiver: fields.receiver, name: fields.name, after}; break;
     case "store-body": record = {kind, body: fields.body, after}; break;
     case "resume-control": record = {kind, signal: fields.signal, value: fields.value, after}; break;
     case "module-entry": case "module-hook":
       record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, mode: fields.mode, depth: fields.depth, after}; break;
+    case "module-mutate": record = {kind, receiver: fields.receiver, key: fields.key, name: fields.name, remove: fields.remove, after}; break;
     case "module-native-dir": case "module-dir": record = {kind, receiver: fields.receiver, depth: fields.depth, after}; break;
     case "module-missing": record = {kind, receiver: fields.receiver, name: fields.name, mode: fields.mode, skipNamespace: fields.skipNamespace ?? false, after}; break;
     case "class": record = {kind, nameValue: fields.nameValue, basesTuple: fields.basesTuple, originalBases: fields.originalBases, bases: operands(fields.bases), module: fields.module,
@@ -361,7 +362,7 @@ function visit(record) {
     case "namespace-build": return operationRoots(record.task);
     case "namespace-lookup": return [record.cache, record.owner, record.dictionary, ...operationRoots(record.task)];
     case "class-mapping-dir-call": case "class-mapping-dir-result":
-    case "global-mapping-name": case "builtin-mapping-name": case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "module-delete": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-native-dir": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
+    case "global-mapping-name": case "builtin-mapping-name": case "class-mapping-fallback": case "class-mapping-name": case "class-mapping-delete": case "class-name": case "global-name": case "global-delete": case "builtin-name": case "module-missing": case "module-native-dir": case "module-dir": return [record.receiver, ...completionRoots(record.after)];
     case "class-end": return [...record.items, record.value];
     case "class-body-module": case "class-firstline": case "class-qualname": return [];
     case "class-prepare-lookup": case "class-prepare-result": return [record.callable, ...record.bases, record.originalBases ?? null, record.metaclass, ...record.keywordValues, record.rawModule, record.nameValue, record.basesTuple];
@@ -371,6 +372,7 @@ function visit(record) {
     case "store-body": return completionRoots(record.after);
     case "resume-control": return [record.value, ...completionRoots(record.after)];
     case "module-entry": case "module-hook": return [record.receiver, record.key, ...completionRoots(record.after)];
+    case "module-mutate": return [record.receiver, record.key, ...completionRoots(record.after)];
     case "class": case "condition": case "name-stored": case "discard": case "for-iter": case "for-next": case "for-exhausted": return [];
     case "init": return [record.instance, ...completionRoots(record.after)];
     case "hierarchy-result": case "hierarchy-iter": case "hierarchy-sequence": return [record.transaction, record.type, ...record.before, ...record.pending, ...completionRoots(record.after)];

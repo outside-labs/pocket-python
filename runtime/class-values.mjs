@@ -1426,7 +1426,7 @@ export class ClassRuntime {
       }
       if (receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue) return operation === "get" ? {kind: "value", value: this.functionDictionary(receiver)} : this.write(receiver, name, item, operation === "delete");
       if (receiver instanceof ModuleValue) {
-        if (operation !== "get") this.fail("AttributeError", "Module __dict__ is read-only");
+        if (operation !== "get") this.attributeMutationFailure(receiver, name, null, false, "Module __dict__ is read-only");
         return {kind: "value", value: this.values.environmentDictionary(receiver.environment)};
       }
     }
@@ -1502,11 +1502,14 @@ export class ClassRuntime {
     // Original storage needs native shared-key state before exact-name failures
     // can expose metadata. Replaced dictionaries and subtype names use dict errors.
     if (dictionary && !convertedKeyError && (key === null || this.values.isString(key)) &&
-        !receiver.mutationDictionary)
+        !receiver.mutationDictionary && !this.nativeModule(receiver))
       this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.");
     const enriched = dictionary || !this.lookup(receiver.type, name).found;
     this.fail("AttributeError", "Class/instance has no attribute '" + name + "'.", "PYTHON", null, null,
       {receiver, key: key ?? name, enriched});
+  }
+  attributeMutationFailure(receiver, name, key = null, enriched = false, message = "Attribute mutation failed") {
+    this.fail("AttributeError", message, "PYTHON", null, null, {receiver, key: key ?? name, enriched});
   }
   instanceEntry(receiver, name, operation = "get", item = null, key = null, fallback = {found: false}) {
     const value = value => ({kind: "value", value});
