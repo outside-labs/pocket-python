@@ -559,3 +559,10 @@ descriptors, original-instance shared-key deletion, other native/import/parser
 metadata, groups/except*, tracebacks and note export keep #124/A2 open. Broader
 formatting, iterator/container/codec APIs and library/package/candidate gates
 retain their existing owners.
+
+LA-58A keeps the complete differential Node request bounded as the corpus
+grows: its process deadline is the larger of 30 seconds and the selected case
+count divided by ten, matching the shared validation inventory's cost basis.
+Small selections retain the existing bound; semantic execution, work/allocation
+limits and timeout/failure diagnostics are unchanged. This addresses the two
+fixed-deadline Linux CI failures in the first batch's stepped/parked matrix.
