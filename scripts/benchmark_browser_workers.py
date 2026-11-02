@@ -11,7 +11,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'runtime'))
-from check_classes import check
+from check_classes import cached_references, check
 
 
 def main():
@@ -23,6 +23,11 @@ def main():
     args = parser.parse_args()
     if args.repeats < 1:
         parser.error('--repeats must be positive')
+    reference_start = time.monotonic()
+    reference = cached_references(args.corpus)
+    if reference['summary']['fail']:
+        raise AssertionError(reference['summary'])
+    reference_seconds = round(time.monotonic() - reference_start, 3)
     baseline, measurements = None, []
     original = os.environ.get('POCKET_PYTHON_BROWSER_WORKERS')
     try:
@@ -53,6 +58,8 @@ def main():
     args.report.write_text(json.dumps({'schema_version': 1, 'python': platform.python_version(),
         'host': platform.platform(), 'browser': report['host_version'],
         'corpus_sha256': report['corpus_sha256'], 'repeats': args.repeats,
+        'reference_setup': {'seconds': reference_seconds, 'summary': reference['summary'],
+                            'cache': reference['reference_cache']},
         'measurements': measurements}, indent=2) + '\n', encoding='utf-8')
 
 
