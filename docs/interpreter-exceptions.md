@@ -485,3 +485,14 @@ Groups/except*, tracebacks, note export, original-instance shared-key deletion,
 other native attribute/import/parser metadata and the declared qualifications
 keep #124 and A2 open. Wider representation/formatting, container APIs and
 library/package/candidate gates retain their existing owners.
+
+LA-53 adopts failed attribute writes and deletions on None, NotImplemented,
+bool, int, float and complex. Missing names retain the original receiver and
+name, including string-subtype keys, independently of args. Existing native
+attributes leave both native fields absent. Native object mutation wrappers
+use the same selection and do not invoke key formatting or hashing callbacks.
+Scalar subclasses keep their ordinary instance dictionaries. The 65 pinned
+reference cases cover both mutation directions, native wrappers, subtype keys,
+evaluation order and successful subclass controls. This follows the pinned
+[generic mutation implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c#L1820-L1917).
+The existing core attribute-mutation boundary remains explicit.

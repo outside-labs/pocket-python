@@ -1096,6 +1096,8 @@ export class ClassRuntime {
       return this.functionEntry(receiver, name, remove ? "delete" : "set", value, key);
     }
     if (name === "__class__" && !this.protocolObject(receiver) && !(receiver instanceof ClassValue)) return {kind: "value", value: this.reassignClass(receiver, value, remove)};
+    if (this.numericDirectoryNames(receiver) !== null)
+      this.fixedMutationFailure(receiver, name, key, "Scalar attributes are read-only");
     if (receiver instanceof GeneratorValue && ["__name__", "__qualname__"].includes(name)) {
       if (remove || !this.values.isString(value)) this.fail("TypeError", name + " must be a string");
       return {kind: "value", value: this.functionMetadata(receiver, name === "__name__" ? "identityName" : "identityQualname", value)};
