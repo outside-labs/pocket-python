@@ -534,3 +534,13 @@ ordinary ownership/allocation rules. Frame tracing/jumping and wider generator
 throw remain separately gated. The pinned
 [generator implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/genobject.c)
 defines the native state and name descriptors.
+
+LA-57 adopts mutation failure metadata for native list/tuple/text/range,
+dictionary/set/binary/buffer, indexed and callable iterators. Missing names
+retain the original iterator/key; existing native attributes leave fields
+absent. Native object wrappers and direct syntax agree before and after
+exhaustion. The 216 reference cases include both text layouts and both range
+layouts. Retained errors keep detached dictionary subtype owners, memoryview
+storage and indexed/callable sources alive and release cycles on close or
+interruption. New iterator APIs and protocols remain under their existing
+owners; core mutation admission stays unchanged.
