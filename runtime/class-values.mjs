@@ -1098,6 +1098,8 @@ export class ClassRuntime {
     if (name === "__class__" && !this.protocolObject(receiver) && !(receiver instanceof ClassValue)) return {kind: "value", value: this.reassignClass(receiver, value, remove)};
     if (this.numericDirectoryNames(receiver) !== null)
       this.fixedMutationFailure(receiver, name, key, "Scalar attributes are read-only");
+    if (this.containerDirectoryNames(receiver) !== null || this.values.isRange(receiver) || this.values.isSlice(receiver))
+      this.fixedMutationFailure(receiver, name, key, "Container attributes are read-only");
     if (receiver instanceof GeneratorValue && ["__name__", "__qualname__"].includes(name)) {
       if (remove || !this.values.isString(value)) this.fail("TypeError", name + " must be a string");
       return {kind: "value", value: this.functionMetadata(receiver, name === "__name__" ? "identityName" : "identityQualname", value)};
@@ -1420,6 +1422,8 @@ export class ClassRuntime {
       if (receiver.owner !== undefined) this.fail("UnsupportedOperationError", "Dictionary subclass view mappings require the #116 proxy contract", "UNSUPPORTED");
       return {kind: "value", value: this.make(ClassNamespaceValue, receiver.dictionary)};
     }
+    if (operation !== "get" && name !== "__class__" && (this.containerDirectoryNames(this.payload(receiver)) !== null || this.values.isRange(receiver) || this.values.isSlice(receiver)))
+      this.attributeMutationFailure(receiver, name, null, false, "Container storage is read-only");
     const fieldOwner = this.nativeFieldOwner(name);
     if (fieldOwner && !(receiver instanceof FunctionValue && ["O72", "O73"].includes(fieldOwner) || receiver instanceof Cell && fieldOwner === "O73" || (receiver instanceof FrameValue || receiver instanceof GeneratorValue) && fieldOwner === "O74")) this.fail("UnsupportedOperationError", "Native field " + descriptor.name + " is owned by " + fieldOwner + ".", "UNSUPPORTED");
     if (operation !== "get" && receiver instanceof MethodWrapperValue && ["__func__", "__wrapped__"].includes(name))
