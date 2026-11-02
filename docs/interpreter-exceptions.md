@@ -421,3 +421,14 @@ AttributeError; other callback errors keep their identity. The pinned
 defines this selection. Direct construction of the reflected module type retains
 its existing boundary; registry modules and adopted module subclasses supply
 the tested receivers. Other native mutation layouts remain separately gated.
+
+LA-48 adopts heap-class mutation fields. Missing own-key deletion, including an
+inherited attribute or a removed override, records the class and an exact-string
+name. String-subtype input is copied without invoking its hash or formatting
+methods; exact-string input retains identity. Native type wrappers and direct
+read-only `__dict__`, `__base__` and `__mro__` descriptors leave fields absent.
+Owned metaclass hooks/descriptors preserve their original errors and callback
+order. Immutable native types continue to raise TypeError. This follows the
+pinned [type mutation implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/typeobject.c).
+Subtype-key publication and original-instance shared-key deletion retain their
+separate boundaries.

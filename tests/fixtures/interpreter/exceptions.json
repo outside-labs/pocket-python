@@ -47,7 +47,8 @@
     "LA44A",
     "LA45",
     "LA46",
-    "LA47"
+    "LA47",
+    "LA48"
   ],
   "cases": [
     {
@@ -7793,6 +7794,240 @@
         "helper"
       ],
       "stdout": "True\nFalse\nfield True\n"
+    },
+    {
+      "id": "class-mutation-delete-missing-exact-builtin",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey='missing'\ntry: delattr(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True True True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-missing-exact-native",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey='missing'\ntry: type.__delattr__(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True True True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-inherited-exact-builtin",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey='field'\ntry: delattr(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True True True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-inherited-exact-native",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey='field'\ntry: type.__delattr__(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True True True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-removed-exact-builtin",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey='field'\nA.field=8\ndel A.field\ntry: delattr(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True True True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-removed-exact-native",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey='field'\nA.field=8\ndel A.field\ntry: type.__delattr__(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True True True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-missing-subtype-builtin",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey=Key('missing')\ntry: delattr(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True False True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-missing-subtype-native",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey=Key('missing')\ntry: type.__delattr__(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True False True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-inherited-subtype-builtin",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey=Key('field')\ntry: delattr(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True False True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-inherited-subtype-native",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey=Key('field')\ntry: type.__delattr__(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True False True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-removed-subtype-builtin",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey=Key('field')\nA.field=8\ndel A.field\ntry: delattr(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True False True 0\n"
+    },
+    {
+      "id": "class-mutation-delete-removed-subtype-native",
+      "stage": "LA48",
+      "source": "class Base: field=7\nclass A(Base): pass\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\n def __hash__(self): raise ValueError(\"hash\")\nkey=Key('field')\nA.field=8\ndel A.field\ntry: type.__delattr__(A,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name == key,type(e.name) is str,e.name is key,e.obj is A,len(e.args))\n",
+      "stdout": "True True False True 0\n"
+    },
+    {
+      "id": "class-mutation-readonly-__dict__-set-builtin",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__dict__'\ntry: setattr(A,key,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__dict__-set-native",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__dict__'\ntry: type.__setattr__(A,key,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__dict__-set-descriptor",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__dict__'\ntry: type.__dict__[key].__set__(A,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__dict__-delete-builtin",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__dict__'\ntry: delattr(A,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__dict__-delete-native",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__dict__'\ntry: type.__delattr__(A,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__dict__-delete-descriptor",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__dict__'\ntry: type.__dict__[key].__delete__(A)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__base__-set-builtin",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__base__'\ntry: setattr(A,key,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__base__-set-native",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__base__'\ntry: type.__setattr__(A,key,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__base__-set-descriptor",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__base__'\ntry: type.__dict__[key].__set__(A,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__base__-delete-builtin",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__base__'\ntry: delattr(A,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__base__-delete-native",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__base__'\ntry: type.__delattr__(A,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__base__-delete-descriptor",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__base__'\ntry: type.__dict__[key].__delete__(A)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__mro__-set-builtin",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__mro__'\ntry: setattr(A,key,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__mro__-set-native",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__mro__'\ntry: type.__setattr__(A,key,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__mro__-set-descriptor",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__mro__'\ntry: type.__dict__[key].__set__(A,None)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__mro__-delete-builtin",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__mro__'\ntry: delattr(A,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__mro__-delete-native",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__mro__'\ntry: type.__delattr__(A,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-readonly-__mro__-delete-descriptor",
+      "stage": "LA48",
+      "source": "class A: pass\nkey='__mro__'\ntry: type.__dict__[key].__delete__(A)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-metaclass-hook-set",
+      "stage": "LA48",
+      "source": "sentinel=AttributeError(\"owned\",name=\"inner\",obj=[])\nclass Meta(type):\n def __setattr__(self,key,value):\n  print(key)\n  raise sentinel\nclass A(metaclass=Meta): pass\ntry: A.field=7\nexcept AttributeError as e: print(e is sentinel,e.name,e.obj is sentinel.obj)\n",
+      "stdout": "field\nTrue inner True\n"
+    },
+    {
+      "id": "class-mutation-metaclass-property-set",
+      "stage": "LA48",
+      "source": "class Meta(type):\n @property\n def field(self): return 7\nclass A(metaclass=Meta): pass\ntry: A.field=7\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-metaclass-forward-set",
+      "stage": "LA48",
+      "source": "class Meta(type):\n def __setattr__(self,key,value):\n  return type.__setattr__(self,key,value)\nclass A(metaclass=Meta): pass\nA.field=[]\nprint(A.field is A.__dict__[\"field\"])\ntry: del A.missing\nexcept AttributeError as e: print(e.name,e.obj is A)\n",
+      "stdout": "True\nmissing True\n"
+    },
+    {
+      "id": "class-mutation-metaclass-hook-delete",
+      "stage": "LA48",
+      "source": "sentinel=AttributeError(\"owned\",name=\"inner\",obj=[])\nclass Meta(type):\n def __delattr__(self,key):\n  print(key)\n  raise sentinel\nclass A(metaclass=Meta): pass\ntry: del A.field\nexcept AttributeError as e: print(e is sentinel,e.name,e.obj is sentinel.obj)\n",
+      "stdout": "field\nTrue inner True\n"
+    },
+    {
+      "id": "class-mutation-metaclass-property-delete",
+      "stage": "LA48",
+      "source": "class Meta(type):\n @property\n def field(self): return 7\nclass A(metaclass=Meta): pass\ntry: del A.field\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "class-mutation-metaclass-forward-delete",
+      "stage": "LA48",
+      "source": "class Meta(type):\n def __delattr__(self,key):\n  return type.__delattr__(self,key)\nclass A(metaclass=Meta): pass\ntry: del A.missing\nexcept AttributeError as e: print(e.name,e.obj is A)\n",
+      "stdout": "missing True\n"
+    },
+    {
+      "id": "class-mutation-native-immutable-set",
+      "stage": "LA48",
+      "source": "try: int.field=7\nexcept TypeError: print(\"immutable\")\n",
+      "stdout": "immutable\n"
+    },
+    {
+      "id": "class-mutation-native-immutable-delete",
+      "stage": "LA48",
+      "source": "try: del int.field\nexcept TypeError: print(\"immutable\")\n",
+      "stdout": "immutable\n"
+    },
+    {
+      "id": "class-mutation-success-controls",
+      "stage": "LA48",
+      "source": "class A: pass\nitem=[]\ntype.__setattr__(A,\"field\",item)\nprint(A.field is item)\ntype.__delattr__(A,\"field\")\nprint(\"field\" in A.__dict__)\n",
+      "stdout": "True\nFalse\n"
     }
   ],
   "reference_boundaries": [

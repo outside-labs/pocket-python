@@ -63,6 +63,20 @@ test('module mutation callback loops share execution limits', async () => {
   assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
 });
 
+test('class mutation errors retain temporary class owners independently of args', async () => {
+  await lifetime('def fail():\n class A: pass\n try: del A.missing\n except AttributeError as e: return e\ne=fail()\ne.obj.error=e\ne.args=()\nprint("entered")\nprint(e.name,e.obj.error is e)\n', 'entered\nmissing True\n');
+});
+
+test('class mutation metaclass hooks survive parked interruption', async () => {
+  await lifetime('class Meta(type):\n def __delattr__(self,key):\n  print("entered")\n  return type.__delattr__(self,key)\nclass A(metaclass=Meta): pass\ntry: del A.missing\nexcept AttributeError as e: print(e.name,e.obj is A)\n', 'entered\nmissing True\n');
+});
+
+test('retained class mutation graphs share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('class A: pass\nheld=[]\nprint("ready")\nwhile True:\n try: del A.missing\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 48000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('failed generic writes retain temporary receivers through parked collection', async () => {
   await lifetime('class A: __slots__=()\ntry: A().missing=7\nexcept AttributeError as error: e=error\ne.args=()\nprint("entered")\nprint(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
 });
