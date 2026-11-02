@@ -1106,6 +1106,8 @@ export class ClassRuntime {
     }
     if (receiver instanceof GeneratorValue)
       this.fixedMutationFailure(receiver, name, key, "Generator state is read-only");
+    if (receiver instanceof IteratorValue || receiver instanceof ProtocolIteratorValue && ["indexed", "callable"].includes(receiver.kind))
+      this.fixedMutationFailure(receiver, name, key, "Iterator attributes are read-only");
     if (receiver instanceof FrameValue || receiver instanceof FrameLocalsValue)
       this.fail(receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UnsupportedOperationError" : "AttributeError", "Frame metadata is read-only; tracing and jumping are separate", receiver instanceof FrameValue && ["f_lineno", "f_trace"].includes(name) ? "UNSUPPORTED" : "PYTHON");
     if (receiver instanceof Cell) {

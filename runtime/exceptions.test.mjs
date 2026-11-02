@@ -97,6 +97,26 @@ test('retained generator mutation graphs share the allocation limit', async () =
   assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
 });
 
+test('iterator mutation errors retain detached dictionary subtype owners and cycles', async () => {
+  await lifetime('class D(dict): pass\nclass Key(str): pass\nd=D()\nd["value"]=d\nkey=Key("missing")\ntry: setattr(iter(d.values()),key,[])\nexcept AttributeError as error: e=error\nd.error=e\nkey.error=e\ne.args=()\nd=None\nkey=None\nprint("entered")\nprint(e.name.error is e,next(e.obj).error is e)\n', 'entered\nTrue True\n');
+});
+
+for (const kind of ['indexed', 'callable']) test(kind + ' iterator mutation errors retain source objects and cycles', async () => {
+  const setup = kind === 'indexed' ? 'class Source:\n def __getitem__(self,i): return self\nsource=Source()\niterator=iter(source)\n' :
+    'class Source:\n def __call__(self): return self\nsource=Source()\niterator=iter(source,None)\n';
+  await lifetime(setup + 'try: iterator.missing=7\nexcept AttributeError as error: e=error\nsource.error=e\ne.args=()\nsource=None\niterator=None\nprint("entered")\nprint(e.name,next(e.obj).error is e)\n', 'entered\nmissing True\n');
+});
+
+test('iterator mutation errors retain temporary memoryview backing storage', async () => {
+  await lifetime('try: iter(memoryview(bytearray(b"abc"))).missing=7\nexcept AttributeError as error: e=error\ne.args=()\nprint("entered")\nprint(e.name,next(e.obj))\n', 'entered\nmissing 97\n');
+});
+
+test('retained iterator mutation graphs share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True:\n try: iter([7]).missing=[]\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 48000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('module mutation errors retain cyclic keys and the module after args replacement', async () => {
   await lifetime('import helper\nclass Key(str): pass\nkey=Key("missing")\ntry: delattr(helper,key)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nhelper=None\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj.marker)\n',
     'entered\nTrue 7\n', [{name: 'helper', source: 'marker=7\n'}]);
