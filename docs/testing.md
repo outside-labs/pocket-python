@@ -50,6 +50,15 @@ when another corpus changes. Standalone `--reference-only` checks always execute
 CPython again, so nightly/manual/release validation independently verifies the
 recorded expectations. Remove the directory to benchmark a cold run.
 
+Browser differential requests use two concurrent fresh workers, with the same
+10-second per-case deadline and results retained in input order. A failure
+terminates the active pool before the browser closes. Set
+`POCKET_PYTHON_BROWSER_WORKERS=1` for a serial comparison (accepted range: 1–8).
+`scripts/benchmark_browser_workers.py --repeats 3` compares 1/2/4/8 workers on
+the complete exceptions corpus and requires identical ordered results, including
+resource/teardown observations. Use `--corpus PATH` for another corpus. It writes
+timings and host/corpus identities to `build/browser-worker-benchmark.json`.
+
 ## Fast development and merge policy
 
 Run the smallest meaningful local checks for the behavior being changed. A

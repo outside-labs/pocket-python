@@ -5,6 +5,7 @@ from functools import partial
 import hashlib
 from http.server import ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import platform
 import random
@@ -54,10 +55,13 @@ def run_node(engine, requests):
     return response["host"], response["results"]
 
 
-def run_browser(engine, requests, channel):
+def run_browser(engine, requests, channel, concurrency=None):
     from browser_smoke import Handler
     from playwright.sync_api import sync_playwright
 
+    concurrency = int(os.environ.get('POCKET_PYTHON_BROWSER_WORKERS', '2')) if concurrency is None else concurrency
+    if not 1 <= concurrency <= 8:
+        raise ValueError('Browser concurrency must be between 1 and 8.')
     server = ThreadingHTTPServer(("127.0.0.1", 0), partial(Handler, directory=str(ROOT)))
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -68,26 +72,11 @@ def run_browser(engine, requests, channel):
             try:
                 page = browser.new_page()
                 page.goto(origin)
-                responses = page.evaluate("""async ({workerPath, requests}) => {
-                  const results = [];
-                  for (const request of requests) {
-                    const result = await new Promise((resolve, reject) => {
-                      const worker = new Worker(workerPath, {type: 'module'});
-                      const timer = setTimeout(() => {
-                        worker.terminate(); reject(new Error('Conformance worker timed out.'));
-                      }, 10000);
-                      worker.onmessage = event => {
-                        clearTimeout(timer); worker.terminate(); resolve(event.data);
-                      };
-                      worker.onerror = event => {
-                        clearTimeout(timer); worker.terminate(); reject(new Error(event.message));
-                      };
-                      worker.postMessage(request);
-                    });
-                    results.push({id: request.id, ...result});
-                  }
-                  return results;
-                }""", {"workerPath": "/" + engine["worker"], "requests": requests})
+                responses = page.evaluate("""async ({workerPath, requests, concurrency}) => {
+                  const {runWorkerRequests} = await import('/browser-pool.mjs');
+                  return runWorkerRequests(workerPath, requests, {concurrency});
+                }""", {"workerPath": "/" + engine["worker"], "requests": requests,
+                       "concurrency": concurrency})
                 return browser.version, responses
             finally:
                 browser.close()
