@@ -886,6 +886,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       if (current.kind === "vars-result" && value.name === "AttributeError") return unaryTask("vars-missing", current.receiver, site, current.after);
       if (current.kind === "instance-entry" && current.operation !== "get" && isException(value, "KeyError"))
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
+      if (current.kind === "module-mutate" && isException(value, "KeyError"))
+        return callTask(classes.builtin("module-attribute-missing"), [current.receiver, current.key], [], [], site, current.after);
       if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
       if (current.kind === "frame-update-boundary" && !value.frameUpdateFailure) {
         const failure = allocate(ExceptionValue, current.inplace ? "SystemError" : "TypeError", [], current.inplace ? "Native frame locals in-place union returned a result with an exception set" : "update() argument must be dict or another FrameLocalsProxy"); state.temporaries.push(failure);
@@ -1127,8 +1129,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     if (completion?.kind === "class-firstline") return classFirstline();
     if (completion?.kind === "class-end") return classEnd({...completion});
     if (completion?.kind === "handler-type") return handlerType(completion, value, site);
-    if (completion?.kind === "module-delete") {
-      if (!value.items[0]) python("AttributeError", "module has no attribute " + completion.name);
+    if (completion?.kind === "module-mutate") {
+      if (completion.remove && !value.items[0]) classes.attributeMutationFailure(completion.receiver, completion.name, completion.key, true, "module has no attribute " + completion.name);
       return valueTask(null, site, completion.after);
     }
     if (completion?.kind === "class-name") {
@@ -1379,7 +1381,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
       const message = "property " + (completion.found ? values.text(completion.renderedName) + " " : "") +
         "of " + values.text(rendered) + " object has no " + completion.operation;
       const owned = values.string(Array.from(message, char => char.codePointAt(0))); state.temporaries.push(owned);
-      python("AttributeError", values.text(owned));
+      python("AttributeError", values.text(owned), null, null,
+        completion.operation === "getter" ? null : {receiver: completion.target, key: "", enriched: false});
     }
     if (completion?.kind === "native-new") {
       if (!(completion.type instanceof ClassValue)) return valueTask(value, site, completion.after);
@@ -2080,7 +2083,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const {receiver, name, operation} = task, environment = receiver.environment;
             const writing = ["set", "delete", "native-set", "native-delete"].includes(operation);
             if (name === "__dict__") {
-              if (writing) python("AttributeError", "readonly attribute");
+              if (writing) classes.attributeMutationFailure(receiver, name, task.key, false, "readonly attribute");
               task = valueTask(values.environmentDictionary(environment), site, completion); continue;
             }
             if (name === "__class__") {
@@ -2090,13 +2093,13 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             const key = task.key || values.string(Array.from(name, char => char.codePointAt(0))); state.temporaries.push(key);
             if (writing) {
               if (environment.dictionary !== null) {
-                task = dictionaryTask(environment.dictionary, key, site, operation.includes("delete") ?
-                  continuation("module-delete", {receiver, name, after: completion}) : completion, depth,
+                task = dictionaryTask(environment.dictionary, key, site,
+                  continuation("module-mutate", {receiver, name, key, remove: operation.includes("delete"), after: completion}), depth,
                   operation.includes("delete") ? "remove-probe" : "set", task.item); continue;
               }
               if (operation.includes("delete")) {
                 const cell = environment.cells.get(name);
-                if (!cell?.bound) python("AttributeError", "module has no attribute " + name);
+                if (!cell?.bound) classes.attributeMutationFailure(receiver, name, key, true, "module has no attribute " + name);
                 setCell(cell, null, false); environment.order.delete(name);
               } else moduleContext.binding(environment, name, task.item);
               task = valueTask(null, site, completion); continue;
@@ -3400,6 +3403,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (!classes.isInstance(args[0]) || !values.isString(classes.payload(args[1])) || args.length !== 2 || keywords.length)
               throw new TypeError("Invalid instance attribute failure.");
             classes.instanceMutationFailure(args[0], values.text(classes.payload(args[1])), args[1], true, true);
+          }
+          if (callable.name === "module-attribute-missing") {
+            const name = values.text(classes.payload(args[1]));
+            if (!(args[0] instanceof ModuleValue) || name === null || args.length !== 2 || keywords.length)
+              throw new TypeError("Invalid module attribute failure.");
+            classes.attributeMutationFailure(args[0], name, args[1], true, "module has no attribute " + name);
           }
           if (callable.name === "method-attribute") {
             const [receiver, key] = args;

@@ -46,7 +46,8 @@
     "LA44",
     "LA44A",
     "LA45",
-    "LA46"
+    "LA46",
+    "LA47"
   ],
   "cases": [
     {
@@ -7299,6 +7300,499 @@
       "stage": "LA46",
       "source": "class Record: __slots__=()\nfirst=Record()\nsecond=Record()\ntry: first.field=7\nexcept AttributeError as error: saved=error\ntry: del second.field\nexcept AttributeError as e: print(saved.obj is first,e.obj is second,saved is e)\n",
       "stdout": "True True False\n"
+    },
+    {
+      "id": "module-mutation-missing-cells-exact-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=\"missing\"\ntry: delattr(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-cells-exact-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=\"missing\"\ntry: Module.__delattr__(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-cells-subtype-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"missing\")\ntry: delattr(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-cells-subtype-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"missing\")\ntry: Module.__delattr__(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-dictionary-exact-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nd=m.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=\"missing\"\ntry: delattr(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-dictionary-exact-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nd=m.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=\"missing\"\ntry: Module.__delattr__(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-dictionary-subtype-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nd=m.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"missing\")\ntry: delattr(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-dictionary-subtype-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nd=m.__dict__\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"missing\")\ntry: Module.__delattr__(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-subclass-exact-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nm=M(\"local\")\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=\"missing\"\ntry: delattr(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-subclass-exact-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nm=M(\"local\")\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=\"missing\"\ntry: Module.__delattr__(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-subclass-subtype-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nm=M(\"local\")\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"missing\")\ntry: delattr(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-missing-subclass-subtype-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nclass M(Module): pass\nm=M(\"local\")\nclass Key(str):\n def __str__(self): raise ValueError(\"unexpected\")\nkey=Key(\"missing\")\ntry: Module.__delattr__(m,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is m,len(e.args))\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True 0\n"
+    },
+    {
+      "id": "module-mutation-readonly-exact-set-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str): pass\nkey=\"__dict__\"\ntry: setattr(m,key,{})\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-readonly-exact-set-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str): pass\nkey=\"__dict__\"\ntry: Module.__setattr__(m,key,{})\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-readonly-exact-delete-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str): pass\nkey=\"__dict__\"\ntry: delattr(m,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-readonly-exact-delete-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str): pass\nkey=\"__dict__\"\ntry: Module.__delattr__(m,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-readonly-subtype-set-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str): pass\nkey=Key(\"__dict__\")\ntry: setattr(m,key,{})\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-readonly-subtype-set-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str): pass\nkey=Key(\"__dict__\")\ntry: Module.__setattr__(m,key,{})\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-readonly-subtype-delete-builtin",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str): pass\nkey=Key(\"__dict__\")\ntry: delattr(m,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-readonly-subtype-delete-native",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass Key(str): pass\nkey=Key(\"__dict__\")\ntry: Module.__delattr__(m,key)\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-owned-hook-set",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nsentinel=AttributeError(\"owned\",name=\"inner\",obj=[])\nclass M(Module):\n def __setattr__(self,key,value):\n  raise sentinel\nm=M(\"local\")\ntry: m.field=7\nexcept AttributeError as e: print(e is sentinel,e.name,e.obj is sentinel.obj)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True inner True\n"
+    },
+    {
+      "id": "module-mutation-owned-hook-delete",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nsentinel=AttributeError(\"owned\",name=\"inner\",obj=[])\nclass M(Module):\n def __delattr__(self,key):\n  raise sentinel\nm=M(\"local\")\ntry: del m.field\nexcept AttributeError as e: print(e is sentinel,e.name,e.obj is sentinel.obj)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True inner True\n"
+    },
+    {
+      "id": "module-mutation-property-set",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nclass M(Module):\n @property\n def field(self): return 7\nm=M(\"local\")\ntry: m.field=7\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-property-delete",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nclass M(Module):\n @property\n def field(self): return 7\nm=M(\"local\")\ntry: del m.field\nexcept AttributeError as e: print(e.name is None,e.obj is None)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True True\n"
+    },
+    {
+      "id": "module-mutation-dictionary-set-KeyError",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass E(KeyError): pass\nsentinel=E(\"owned\")\nclass Key:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\",other)\n  raise sentinel\nm.__dict__[Key()]=7\ntry: m.field=8\nexcept AttributeError as e: print(e.name,e.obj is m,e.__context__ is None)\nexcept E as e: print(e is sentinel)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "compare field\nfield True True\n"
+    },
+    {
+      "id": "module-mutation-dictionary-set-ValueError",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass E(ValueError): pass\nsentinel=E(\"owned\")\nclass Key:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\",other)\n  raise sentinel\nm.__dict__[Key()]=7\ntry: m.field=8\nexcept AttributeError as e: print(e.name,e.obj is m,e.__context__ is None)\nexcept E as e: print(e is sentinel)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "compare field\nTrue\n"
+    },
+    {
+      "id": "module-mutation-dictionary-delete-KeyError",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass E(KeyError): pass\nsentinel=E(\"owned\")\nclass Key:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\",other)\n  raise sentinel\nm.__dict__[Key()]=7\ntry: del m.field\nexcept AttributeError as e: print(e.name,e.obj is m,e.__context__ is None)\nexcept E as e: print(e is sentinel)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "compare field\nfield True True\n"
+    },
+    {
+      "id": "module-mutation-dictionary-delete-ValueError",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nclass E(ValueError): pass\nsentinel=E(\"owned\")\nclass Key:\n def __hash__(self): return hash(\"field\")\n def __eq__(self,other):\n  print(\"compare\",other)\n  raise sentinel\nm.__dict__[Key()]=7\ntry: del m.field\nexcept AttributeError as e: print(e.name,e.obj is m,e.__context__ is None)\nexcept E as e: print(e is sentinel)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "compare field\nTrue\n"
+    },
+    {
+      "id": "module-mutation-success-controls",
+      "stage": "LA47",
+      "source": "import helper\nModule=type(helper)\nm=helper\nkey=\"field\"\nsetattr(m,key,[])\nprint(m.field is m.__dict__[key])\nModule.__delattr__(m,key)\nprint(key in m.__dict__)\ntry: del m.field\nexcept AttributeError as e: print(e.name,e.obj is m)\n",
+      "modules": [
+        {
+          "name": "helper",
+          "package": false,
+          "imports": [],
+          "source": "marker=7\n"
+        }
+      ],
+      "imports": [
+        "helper"
+      ],
+      "stdout": "True\nFalse\nfield True\n"
     }
   ],
   "reference_boundaries": [

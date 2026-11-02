@@ -408,3 +408,16 @@ runs exclude it. The pinned [borrowed dictionary path](https://github.com/python
 is consistent with a lifetime problem across that callback, but does not by
 itself establish the root cause. Failed reference subprocesses now identify
 the corpus input and exit code or timeout, preserving the original failure.
+
+LA-47 adopts module mutation failures. Missing deletions preserve the original
+module and string key, including string subtypes, independently of args.
+Read-only module dictionaries and missing property setters/deleters leave both
+native fields absent. Source module subclasses use their ordinary dictionary
+storage without the original-instance shared-key qualification. Native module
+wrappers and owned hooks/descriptors retain their existing dispatch order.
+Dictionary comparison KeyError subclasses become a fresh populated
+AttributeError; other callback errors keep their identity. The pinned
+[generic mutation implementation](https://github.com/python/cpython/blob/v3.14.7/Objects/object.c#L1820-L1917)
+defines this selection. Direct construction of the reflected module type retains
+its existing boundary; registry modules and adopted module subclasses supply
+the tested receivers. Other native mutation layouts remain separately gated.

@@ -46,6 +46,23 @@ async function lifetime(source, expected, helpers = []) {
   } } finally { registry.close(); }
 }
 
+test('module mutation errors retain cyclic keys and the module after args replacement', async () => {
+  await lifetime('import helper\nclass Key(str): pass\nkey=Key("missing")\ntry: delattr(helper,key)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nhelper=None\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj.marker)\n',
+    'entered\nTrue 7\n', [{name: 'helper', source: 'marker=7\n'}]);
+});
+
+test('module mutation dictionary callbacks survive collection and interruption', async () => {
+  await lifetime('import helper\nclass Key:\n def __hash__(self): return hash("field")\n def __eq__(self,other):\n  print("entered")\n  raise KeyError("owned")\nhelper.__dict__[Key()]=7\ntry: del helper.field\nexcept AttributeError as e: print(e.name,e.obj is helper,e.__context__ is None)\n',
+    'entered\nfield True True\n', [{name: 'helper', source: ''}]);
+});
+
+test('module mutation callback loops share execution limits', async () => {
+  const helper = {name: 'helper', source: '', imports: [], package: false, notice: 'Synthetic module mutation fixture'};
+  const result = await runSourceRequest({modules: [{...unit('import helper\nclass Key:\n def __hash__(self): return hash("field")\n def __eq__(self,other):\n  print("entered")\n  while True: pass\nhelper.__dict__[Key()]=7\nhelper.field=8\n'), imports: ['helper']}, helper],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 1000}});
+  assert.equal(result.stdout, 'entered\n'); assert.equal(result.error?.code, 'BUDGET'); closed(result.closed);
+});
+
 test('failed generic writes retain temporary receivers through parked collection', async () => {
   await lifetime('class A: __slots__=()\ntry: A().missing=7\nexcept AttributeError as error: e=error\ne.args=()\nprint("entered")\nprint(e.name,type(e.obj) is A)\n', 'entered\nmissing True\n');
 });
