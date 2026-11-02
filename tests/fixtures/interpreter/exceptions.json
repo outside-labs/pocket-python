@@ -52,7 +52,8 @@
     "LA49",
     "LA50",
     "LA51",
-    "LA52"
+    "LA52",
+    "LA53"
   ],
   "cases": [
     {
@@ -9364,6 +9365,396 @@
         "helper"
       ],
       "stdout": "missing True True 7\n"
+    },
+    {
+      "id": "la53-none-write-missing-builtin",
+      "source": "obj=None\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "la53-none-write-missing-native",
+      "source": "obj=None\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "la53-none-write-__doc__-builtin",
+      "source": "obj=None\nkey=\"__doc__\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "la53-none-write-__doc__-native",
+      "source": "obj=None\nkey=\"__doc__\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "la53-none-write-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=None\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-none-delete-missing-builtin",
+      "source": "obj=None\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "la53-none-delete-missing-native",
+      "source": "obj=None\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False True\n"
+    },
+    {
+      "id": "la53-none-delete-__doc__-builtin",
+      "source": "obj=None\nkey=\"__doc__\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "la53-none-delete-__doc__-native",
+      "source": "obj=None\nkey=\"__doc__\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False True True True\n"
+    },
+    {
+      "id": "la53-none-delete-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=None\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-notimplemented-write-missing-builtin",
+      "source": "obj=NotImplemented\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-notimplemented-write-missing-native",
+      "source": "obj=NotImplemented\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-notimplemented-write-__doc__-builtin",
+      "source": "obj=NotImplemented\nkey=\"__doc__\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-notimplemented-write-__doc__-native",
+      "source": "obj=NotImplemented\nkey=\"__doc__\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-notimplemented-write-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=NotImplemented\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-notimplemented-delete-missing-builtin",
+      "source": "obj=NotImplemented\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-notimplemented-delete-missing-native",
+      "source": "obj=NotImplemented\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-notimplemented-delete-__doc__-builtin",
+      "source": "obj=NotImplemented\nkey=\"__doc__\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-notimplemented-delete-__doc__-native",
+      "source": "obj=NotImplemented\nkey=\"__doc__\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-notimplemented-delete-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=NotImplemented\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-bool-write-missing-builtin",
+      "source": "obj=True\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-bool-write-missing-native",
+      "source": "obj=True\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-bool-write-real-builtin",
+      "source": "obj=True\nkey=\"real\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-bool-write-real-native",
+      "source": "obj=True\nkey=\"real\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-bool-write-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=True\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-bool-delete-missing-builtin",
+      "source": "obj=True\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-bool-delete-missing-native",
+      "source": "obj=True\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-bool-delete-real-builtin",
+      "source": "obj=True\nkey=\"real\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-bool-delete-real-native",
+      "source": "obj=True\nkey=\"real\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-bool-delete-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=True\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-int-write-missing-builtin",
+      "source": "obj=12345678901234567890\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-int-write-missing-native",
+      "source": "obj=12345678901234567890\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-int-write-numerator-builtin",
+      "source": "obj=12345678901234567890\nkey=\"numerator\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-int-write-numerator-native",
+      "source": "obj=12345678901234567890\nkey=\"numerator\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-int-write-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=12345678901234567890\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-int-delete-missing-builtin",
+      "source": "obj=12345678901234567890\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-int-delete-missing-native",
+      "source": "obj=12345678901234567890\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-int-delete-numerator-builtin",
+      "source": "obj=12345678901234567890\nkey=\"numerator\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-int-delete-numerator-native",
+      "source": "obj=12345678901234567890\nkey=\"numerator\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-int-delete-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=12345678901234567890\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-float-write-missing-builtin",
+      "source": "obj=1.25\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-float-write-missing-native",
+      "source": "obj=1.25\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-float-write-real-builtin",
+      "source": "obj=1.25\nkey=\"real\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-float-write-real-native",
+      "source": "obj=1.25\nkey=\"real\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-float-write-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=1.25\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-float-delete-missing-builtin",
+      "source": "obj=1.25\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-float-delete-missing-native",
+      "source": "obj=1.25\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-float-delete-real-builtin",
+      "source": "obj=1.25\nkey=\"real\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-float-delete-real-native",
+      "source": "obj=1.25\nkey=\"real\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-float-delete-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=1.25\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-complex-write-missing-builtin",
+      "source": "obj=2+3j\nkey=\"missing\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-complex-write-missing-native",
+      "source": "obj=2+3j\nkey=\"missing\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-complex-write-imag-builtin",
+      "source": "obj=2+3j\nkey=\"imag\"\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-complex-write-imag-native",
+      "source": "obj=2+3j\nkey=\"imag\"\ntry: object.__setattr__(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-complex-write-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=2+3j\nkey=Key(\"missing\")\ntry: setattr(obj,key,7)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-complex-delete-missing-builtin",
+      "source": "obj=2+3j\nkey=\"missing\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-complex-delete-missing-native",
+      "source": "obj=2+3j\nkey=\"missing\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "True True False False\n"
+    },
+    {
+      "id": "la53-complex-delete-imag-builtin",
+      "source": "obj=2+3j\nkey=\"imag\"\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-complex-delete-imag-native",
+      "source": "obj=2+3j\nkey=\"imag\"\ntry: object.__delattr__(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj,e.name is None,e.obj is None)\n",
+      "stage": "LA53",
+      "stdout": "False False True True\n"
+    },
+    {
+      "id": "la53-complex-delete-subtype-key",
+      "source": "class Key(str):\n def __hash__(self): raise ValueError(\"unexpected hash\")\n def __str__(self): raise ValueError(\"unexpected string\")\nobj=2+3j\nkey=Key(\"missing\")\ntry: delattr(obj,key)\nexcept AttributeError as e:\n e.args=()\n print(e.name is key,e.obj is obj)\n",
+      "stage": "LA53",
+      "stdout": "True True\n"
+    },
+    {
+      "id": "la53-int-subclass-storage-control",
+      "source": "class A(int): pass\na=A(7)\na.field=[7]\nprint(a.field[0])\ndel a.field\nprint(hasattr(a,\"field\"))\n",
+      "stage": "LA53",
+      "stdout": "7\nFalse\n"
+    },
+    {
+      "id": "la53-float-subclass-storage-control",
+      "source": "class A(float): pass\na=A(1.25)\na.field=[7]\nprint(a.field[0])\ndel a.field\nprint(hasattr(a,\"field\"))\n",
+      "stage": "LA53",
+      "stdout": "7\nFalse\n"
+    },
+    {
+      "id": "la53-complex-subclass-storage-control",
+      "source": "class A(complex): pass\na=A(2+3j)\na.field=[7]\nprint(a.field[0])\ndel a.field\nprint(hasattr(a,\"field\"))\n",
+      "stage": "LA53",
+      "stdout": "7\nFalse\n"
+    },
+    {
+      "id": "la53-evaluation-order-write",
+      "source": "def obj():\n print(\"receiver\")\n return 7\ndef key():\n print(\"key\")\n return \"missing\"\ndef value():\n print(\"value\")\n return []\ntry: setattr(obj(),key(),value())\nexcept AttributeError as e: print(e.name,e.obj)\n",
+      "stage": "LA53",
+      "stdout": "receiver\nkey\nvalue\nmissing 7\n"
+    },
+    {
+      "id": "la53-evaluation-order-delete",
+      "source": "def obj():\n print(\"receiver\")\n return 7\ndef key():\n print(\"key\")\n return \"missing\"\ndef value():\n print(\"value\")\n return []\ntry: delattr(obj(),key())\nexcept AttributeError as e: print(e.name,e.obj)\n",
+      "stage": "LA53",
+      "stdout": "receiver\nkey\nmissing 7\n"
     }
   ],
   "reference_boundaries": [

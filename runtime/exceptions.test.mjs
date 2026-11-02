@@ -46,6 +46,16 @@ async function lifetime(source, expected, helpers = []) {
   } } finally { registry.close(); }
 }
 
+test('scalar mutation errors retain cyclic keys and temporary numeric receivers', async () => {
+  await lifetime('class Key(str): pass\nkey=Key("missing")\ntry: setattr(1.25,key,[])\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj==1.25)\n', 'entered\nTrue True\n');
+});
+
+test('retained scalar mutation graphs share the allocation limit', async () => {
+  const result = await runSourceRequest({modules: [unit('held=[]\nprint("ready")\nwhile True:\n try: (1.25).missing=[]\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxWork: 20000000}, memoryLimits: {maxBytes: 48000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError'); closed(result.closed);
+});
+
 test('module mutation errors retain cyclic keys and the module after args replacement', async () => {
   await lifetime('import helper\nclass Key(str): pass\nkey=Key("missing")\ntry: delattr(helper,key)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nhelper=None\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj.marker)\n',
     'entered\nTrue 7\n', [{name: 'helper', source: 'marker=7\n'}]);
