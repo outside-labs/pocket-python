@@ -46,6 +46,52 @@ async function lifetime(source, expected, helpers = []) {
   } } finally { registry.close(); }
 }
 
+const reflectiveOwners = [
+  ['frame', 'def work(value): yield value\ng=work([7])\ntarget=g.gi_frame\n',
+    'e.obj.f_locals["error"]=e\ng=None\ntarget=None\n', 'print(e.obj.f_locals["value"][0],e.obj.f_locals["error"] is e)\n', '7 True\n'],
+  ['locals', 'def work(value): yield value\ng=work([7])\ntarget=g.gi_frame.f_locals\n',
+    'e.obj["error"]=e\ng.close()\ng=None\ntarget=None\n', 'print(e.obj["value"][0],e.obj["error"] is e)\n', '7 True\n'],
+  ['cell', 'def make():\n value=[7]\n return lambda:value\nf=make()\ntarget=f.__closure__[0]\n',
+    'e.obj.cell_contents.append(e)\nf=None\ntarget=None\n', 'print(e.obj.cell_contents[0],e.obj.cell_contents[1] is e)\n', '7 True\n'],
+  ['code', 'def work(): return 7\ntarget=work.__code__\n',
+    'def replacement(): return 9\nwork.__code__=replacement.__code__\ntarget=None\n', 'print(e.obj.co_name,work())\n', 'work 9\n'],
+  ['property', 'def make():\n value=[7]\n return property(lambda self:value[0])\ntarget=make()\n',
+    'e.obj.__doc__=e\ntarget=None\n', 'print(e.obj.fget(None),e.obj.__doc__ is e)\n', '7 True\n'],
+  ['super', 'class Base: value=7\nclass Child(Base): pass\ntarget=super(Child,Child())\n',
+    'e.obj.__self__.error=e\ntarget=None\n', 'print(e.obj.value,e.obj.__self__.error is e)\n', '7 True\n'],
+];
+for (const [name, setup, detach, inspect, expected] of reflectiveOwners) test('reflective ' + name + ' failures retain cyclic keys and detached owners', async () => {
+  await lifetime(setup + 'class Key(str): pass\nkey=Key("missing")\ntry: delattr(target,key)\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\n' + detach +
+    'key=None\nprint("entered")\nprint(e.name.error is e,len(e.args))\n' + inspect, 'entered\nTrue 0\n' + expected);
+});
+
+for (const [name, setup] of reflectiveOwners) test('retained reflective ' + name + ' failures share allocation limits', async () => {
+  const result = await runSourceRequest({modules: [unit(setup + 'held=[]\nprint("ready")\nwhile True:\n try: target.missing=7\n except AttributeError as e: held.append(e)\n')],
+    compileOptions: {languageProfile: corpus.profile}, options: {maxSteps: 50000, maxWork: 20000000}, memoryLimits: {maxBytes: 80000}});
+  assert.equal(result.stdout, 'ready\n'); assert.equal(result.error?.type, 'MemoryError', JSON.stringify(result.error)); closed(result.closed);
+});
+
+for (const item of corpus.cases.filter(item => item.id.startsWith('reflective-composed-') && item.id.endsWith('-dynamic-failure')))
+  test(item.id + ' preserves original source frames', async () => {
+    const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
+    assert.equal(result.error?.type, 'AttributeError');
+    const filename = item.id.replace('reflective-composed-', 'reflective-').replace('-dynamic-failure', '-original.py');
+    const line = {frame: 5, code: 4, cell: 7, property: 3, super: 7, locals: 5}[item.id.split('-')[2]];
+    assert.deepEqual(result.error.traceback.map(frame => [frame.function, frame.location.filename, frame.location.span[0]]),
+      [['<module>', 'sources/app.py', 1], ['<module>', filename, line + 1], ['fail', filename, line]]);
+    closed(result.closed);
+  });
+
+for (const item of corpus.cases.filter(item => item.id.startsWith('reflective-') && item.stage === 'Future'))
+  test(item.id + ' remains an explicit source boundary', async () => {
+    const result = await runSourceRequest({modules: [unit(item.source)], compileOptions: {languageProfile: corpus.profile}});
+    assert.equal(result.stdout, ''); assert.equal(result.error?.code, 'UNSUPPORTED'); closed(result.closed);
+  });
+
+test('reflective failure metadata survives interrupted generator cleanup', async () => {
+  await lifetime('def target(value): yield value\ng=target([7])\ndef work():\n try: g.gi_frame.missing=7\n except AttributeError as e:\n  e.obj.f_locals["error"]=e\n  try: yield e\n  finally:\n   print("entered")\n   print(e.name,e.obj.f_locals["value"][0],e.obj.f_locals["error"] is e)\ni=work()\ne=next(i)\ne.args=()\ni.close()\ng.close()\n', 'entered\nmissing 7 True\n');
+});
+
 test('scalar mutation errors retain cyclic keys and temporary numeric receivers', async () => {
   await lifetime('class Key(str): pass\nkey=Key("missing")\ntry: setattr(1.25,key,[])\nexcept AttributeError as error: e=error\nkey.error=e\ne.args=()\nkey=None\nprint("entered")\nprint(e.name.error is e,e.obj==1.25)\n', 'entered\nTrue True\n');
 });
