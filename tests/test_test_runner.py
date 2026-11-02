@@ -18,7 +18,7 @@ class TestRunnerTests(unittest.TestCase):
         self.assertEqual({check.suite for check in selected}, {'node-unit', 'node-conformance'})
 
     def test_shards_are_complete_disjoint_balanced_and_deterministic(self):
-        for suite, count in [('interpreter', 4), ('browser-conformance', 4), ('browser-integration', 3)]:
+        for suite, count in [('interpreter', 4), ('browser-conformance', 6), ('browser-integration', 3)]:
             with self.subTest(suite=suite):
                 selected = run_tests.select_checks([suite])
                 groups = run_tests.shards(selected, count)
