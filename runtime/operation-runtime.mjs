@@ -888,6 +888,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
         return callTask(classes.builtin("instance-attribute-missing"), [current.receiver, current.key], [], [], site, current.after, current.depth);
       if (current.kind === "module-mutate" && isException(value, "KeyError"))
         return callTask(classes.builtin("module-attribute-missing"), [current.receiver, current.key], [], [], site, current.after);
+      if (current.kind === "function-entry" && current.operation !== "get" && isException(value, "KeyError"))
+        return callTask(classes.builtin("function-attribute-missing"), [current.receiver, current.key], [], [], site, current.after);
       if (current.kind === "property-name" && value.name === "AttributeError") return unaryTask("property-name-missing", current.receiver, site, current.after);
       if (current.kind === "frame-update-boundary" && !value.frameUpdateFailure) {
         const failure = allocate(ExceptionValue, current.inplace ? "SystemError" : "TypeError", [], current.inplace ? "Native frame locals in-place union returned a result with an exception set" : "update() argument must be dict or another FrameLocalsProxy"); state.temporaries.push(failure);
@@ -1432,7 +1434,8 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
     }
     if (completion?.kind === "attribute-write") return valueTask(null, site, completion.after);
     if (completion?.kind === "function-entry") {
-      const result = value.items[0] ? value.items[1] : classes.functionMissing(completion.receiver, values.text(classes.payload(completion.key)), completion.operation);
+      if (completion.operation === "set") return valueTask(null, site, completion.after);
+      const result = value.items[0] ? value.items[1] : classes.functionMissing(completion.receiver, values.text(classes.payload(completion.key)), completion.operation, completion.key);
       return valueTask(result, site, completion.after);
     }
     if (completion?.kind === "instance-entry") {
@@ -3388,7 +3391,7 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (!(receiver instanceof FunctionValue || receiver instanceof MethodWrapperValue || receiver instanceof ExceptionValue) || !values.isDict(dictionary) || !values.isString(classes.payload(key)) || args.length !== 4 || keywords.length)
               throw new TypeError("Invalid function dictionary operation.");
             const after = continuation("function-entry", {receiver, key, operation, after: completion});
-            task = dictionaryTask(dictionary, key, site, operation === "set" ? continuation("relay", {receiver, after: completion}) : after,
+            task = dictionaryTask(dictionary, key, site, after,
               depth, operation === "get" ? "probe" : operation === "delete" ? "remove-probe" : "set", item); continue;
           }
           if (callable.name.startsWith("instance-dictionary-")) {
@@ -3409,6 +3412,12 @@ export function operationRuntime({state, memory, values, classes, moduleContext,
             if (!(args[0] instanceof ModuleValue) || name === null || args.length !== 2 || keywords.length)
               throw new TypeError("Invalid module attribute failure.");
             classes.attributeMutationFailure(args[0], name, args[1], true, "module has no attribute " + name);
+          }
+          if (callable.name === "function-attribute-missing") {
+            const name = values.text(classes.payload(args[1]));
+            if (!(args[0] instanceof FunctionValue || args[0] instanceof MethodWrapperValue || args[0] instanceof ExceptionValue) || name === null || args.length !== 2 || keywords.length)
+              throw new TypeError("Invalid function attribute failure.");
+            classes.functionMissing(args[0], name, "delete", args[1]);
           }
           if (callable.name === "method-attribute") {
             const [receiver, key] = args;
