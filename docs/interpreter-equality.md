@@ -101,12 +101,12 @@ idempotent close and zero logical teardown. Keep source admission, bytecode
 4/5, core defaults and host grants explicit. Existing composed-resource changes
 need exact explanation and evidence rather than silently replacing baselines.
 
-- [Contract #157](https://github.com/outside-labs/pocket-python/issues/157).
-- [Owned equality #158](https://github.com/outside-labs/pocket-python/issues/158).
-- [Hashing/dictionaries #159](https://github.com/outside-labs/pocket-python/issues/159).
-- [Offline acceptance #160](https://github.com/outside-labs/pocket-python/issues/160).
+- [Contract #157](https://github.com/wispsy/pocket-python/issues/157).
+- [Owned equality #158](https://github.com/wispsy/pocket-python/issues/158).
+- [Hashing/dictionaries #159](https://github.com/wispsy/pocket-python/issues/159).
+- [Offline acceptance #160](https://github.com/wispsy/pocket-python/issues/160).
 
-These refine [INT-EQ-01/#114](https://github.com/outside-labs/pocket-python/issues/114).
+These refine [INT-EQ-01/#114](https://github.com/wispsy/pocket-python/issues/114).
 See the [data model](https://docs.python.org/3.14/reference/datamodel.html#object.__eq__)
 and [NotImplemented rules](https://docs.python.org/3.14/library/constants.html#NotImplemented).
 Live documentation maintenance releases do not change the pinned oracle.

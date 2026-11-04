@@ -1,7 +1,7 @@
 # Practical container APIs
 
-Track A [#600](https://github.com/outside-labs/pocket-python/issues/600) adopts
-focused language slices under [#116](https://github.com/outside-labs/pocket-python/issues/116).
+Track A [#600](https://github.com/wispsy/pocket-python/issues/600) adopts
+focused language slices under [#116](https://github.com/wispsy/pocket-python/issues/116).
 The independent source corpus uses CPython 3.14.7, with separate observations
 for classes-source/1 and explicitly shared core-source/1 cases. Bytecode versions
 4 and 5 retain their existing meanings. Defining `__missing__` remains an

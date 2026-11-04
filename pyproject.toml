@@ -20,8 +20,8 @@ dependencies = []
 pocket-python = "pocket_python.cli:main"
 
 [project.urls]
-Repository = "https://github.com/outside-labs/pocket-python"
-Issues = "https://github.com/outside-labs/pocket-python/issues"
+Repository = "https://github.com/wispsy/pocket-python"
+Issues = "https://github.com/wispsy/pocket-python/issues"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]

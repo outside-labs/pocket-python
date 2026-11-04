@@ -57,10 +57,10 @@
   "engine_fingerprint": "dc0286bba0d2284af2a4e87284a22038eee1b069cfcbd807f96acf02d7e4ce14",
   "engine_files": 33,
   "ci": {
-    "run": "https://github.com/outside-labs/pocket-python/actions/runs/41241336439",
+    "run": "https://github.com/wispsy/pocket-python/actions/runs/41241336439",
     "head": "d17d61cedf26f5eb67dfeca128f8c34e5874c133",
     "relevant_jobs_passed": 16,
-    "offline_artifact": "https://github.com/outside-labs/pocket-python/actions/runs/41241336439/artifacts/13058190778",
+    "offline_artifact": "https://github.com/wispsy/pocket-python/actions/runs/41241336439/artifacts/13058190778",
     "coverage": [
       "three-platform package checks",
       "four interpreter shards",

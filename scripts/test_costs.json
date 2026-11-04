@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source": "Optimized Linux CI: https://github.com/outside-labs/pocket-python/actions/runs/41423024431 (interpreter/conformance); https://github.com/outside-labs/pocket-python/actions/runs/41424015512 (integration)",
+  "source": "Optimized Linux CI: https://github.com/wispsy/pocket-python/actions/runs/41423024431 (interpreter/conformance); https://github.com/wispsy/pocket-python/actions/runs/41424015512 (integration)",
   "reports": [
     {
       "sha256": "cbbf03f727700cb44ecc1cfd9cd3c764b3a678fe1cff91b9afde6d4077e840df",

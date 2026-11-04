@@ -80,12 +80,12 @@ async scheduling and release/deployment are separate milestones.
 
 ## Ordered delivery
 
-- [Contract #135](https://github.com/outside-labs/pocket-python/issues/135).
-- [Owned conversion/read #136](https://github.com/outside-labs/pocket-python/issues/136).
-- [Mutation/slice #137](https://github.com/outside-labs/pocket-python/issues/137).
-- [Offline acceptance #138](https://github.com/outside-labs/pocket-python/issues/138).
+- [Contract #135](https://github.com/wispsy/pocket-python/issues/135).
+- [Owned conversion/read #136](https://github.com/wispsy/pocket-python/issues/136).
+- [Mutation/slice #137](https://github.com/wispsy/pocket-python/issues/137).
+- [Offline acceptance #138](https://github.com/wispsy/pocket-python/issues/138).
 
-These refine [INT-INDEX-01/#112](https://github.com/outside-labs/pocket-python/issues/112).
+These refine [INT-INDEX-01/#112](https://github.com/wispsy/pocket-python/issues/112).
 The parent class milestone stays open for iteration, comparison/hashing and later
 protocols. See the [data model](https://docs.python.org/3.14/reference/datamodel.html#object.__index__),
 [subscription rules](https://docs.python.org/3.14/reference/expressions.html#subscriptions),

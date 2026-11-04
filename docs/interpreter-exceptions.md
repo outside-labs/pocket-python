@@ -1,7 +1,7 @@
 # Ordinary exception semantics
 
-Track A [#600](https://github.com/outside-labs/pocket-python/issues/600) adopts
-focused exception slices under [#124](https://github.com/outside-labs/pocket-python/issues/124),
+Track A [#600](https://github.com/wispsy/pocket-python/issues/600) adopts
+focused exception slices under [#124](https://github.com/wispsy/pocket-python/issues/124),
 using CPython 3.14.7 as the semantic oracle. Bytecode 4/5 retain their existing
 profile identities; legacy bytecode 2/3 keeps its earlier constructor boundary.
 LA-28B preserves version-3 scalar SyntaxError-family message rendering rather
@@ -631,7 +631,7 @@ dictionary probing can revisit that candidate a hash-seed-dependent number of
 times: isolated int `__doc__` probes produced two and three comparisons with the
 same final metadata. The raw input is a separate qualification; its callback
 count earns no successful differential credit. The 42 named refusals retain
-[#759](https://github.com/outside-labs/pocket-python/issues/759) / #124. Ordinary
+[#759](https://github.com/wispsy/pocket-python/issues/759) / #124. Ordinary
 dictionary mutation keeps its existing contract. No refusal is introduced for
 missing keys that never call equality or for successful/erroring comparisons.
 

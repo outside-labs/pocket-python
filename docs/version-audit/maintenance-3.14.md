@@ -1,7 +1,7 @@
 # Python 3.14 maintenance audit
 
-INT-VERSION-01A, for [#122](https://github.com/outside-labs/pocket-python/issues/122)
-in [Pocket Python](https://github.com/orgs/outside-labs/projects/13).
+INT-VERSION-01A, for [#122](https://github.com/wispsy/pocket-python/issues/122)
+in [Pocket Python](https://github.com/orgs/wispsy/projects/13).
 Reviewed 2026-10-23 against engine source commit
 `266c4fcc94773f2bae180d026d374bb035729d33`.
 

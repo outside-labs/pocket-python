@@ -49,13 +49,13 @@ cover the owned instruction/module driver and unchanged composed resource
 baselines. The existing JavaScript VM, front end, values, bytecode 4/5,
 capability model, synchronous facade and fresh-run console remain the baseline.
 
-- [INT-EXEC-01](https://github.com/outside-labs/pocket-python/issues/94): Adopt the consolidated execution and ownership contract.
-- [INT-EXEC-02](https://github.com/outside-labs/pocket-python/issues/95): Centralize pending operation ownership.
-- [INT-EXEC-03](https://github.com/outside-labs/pocket-python/issues/96): Extract owned execution state with safe-boundary stepping.
-- [INT-EXEC-04](https://github.com/outside-labs/pocket-python/issues/97): Share operation phases and builtin dispatch.
-- [INT-EXEC-05](https://github.com/outside-labs/pocket-python/issues/98): Schedule module initialization on the execution machine.
+- [INT-EXEC-01](https://github.com/wispsy/pocket-python/issues/94): Adopt the consolidated execution and ownership contract.
+- [INT-EXEC-02](https://github.com/wispsy/pocket-python/issues/95): Centralize pending operation ownership.
+- [INT-EXEC-03](https://github.com/wispsy/pocket-python/issues/96): Extract owned execution state with safe-boundary stepping.
+- [INT-EXEC-04](https://github.com/wispsy/pocket-python/issues/97): Share operation phases and builtin dispatch.
+- [INT-EXEC-05](https://github.com/wispsy/pocket-python/issues/98): Schedule module initialization on the execution machine.
 
-[INT-COMPAT-01](https://github.com/outside-labs/pocket-python/issues/99) tracks broad language/library
+[INT-COMPAT-01](https://github.com/wispsy/pocket-python/issues/99) tracks broad language/library
 coverage independently of game requirements. The delivered
 [inventory](docs/interpreter-compatibility.md) records 30 feature surfaces, all
 71 builtin-function names and 26 finite linked work packages, including functions/scopes, ordinary
@@ -72,7 +72,7 @@ The [finite numeric contract](docs/interpreter-numeric.md) adds exact integer
 operators/helpers, real constructors, owned complex values and selected numeric
 conversion callbacks, with independently compiled Node/Chromium and offline
 acceptance. Remaining numeric methods and complex recovery families are tracked
-in [INT-NUM-02](https://github.com/outside-labs/pocket-python/issues/184).
+in [INT-NUM-02](https://github.com/wispsy/pocket-python/issues/184).
 The first finite [sequence slice](docs/interpreter-sequences.md) adds bounded range,
 list/tuple construction and owned all/any consumers, with both source profiles and
 offline acceptance. Other sequence APIs and user length hints remain open under #116.
@@ -81,7 +81,7 @@ persistent-session/host program advances through its own contracts. INT-09 and
 INT-10 stay open; the execution foundation is delivered, while their remaining
 protocols, parked ownership, events and host/async behavior still require
 implementation. The mobile
-inference/animation [feasibility task](https://github.com/outside-labs/pocket-python/issues/100) is a
+inference/animation [feasibility task](https://github.com/wispsy/pocket-python/issues/100) is a
 separate Triage track with minimum devices, assets and budgets still to select.
 Spatial UI browser adaptation, optional expose_api services, Shimify reduction and
 AOT compilation remain explicit cooperating boundaries. Their product milestones
@@ -181,20 +181,20 @@ Select version numbers and publication separately from this roadmap.
 
 | Task | Scope | Depends on | Readiness at adoption |
 | --- | --- | --- | --- |
-| [pocket/INT-01](https://github.com/outside-labs/pocket-python/issues/23) | Specify independent interpreter language stages and compatibility | Released foundation | Ready |
-| [pocket/INT-02](https://github.com/outside-labs/pocket-python/issues/24) | Establish the selected JavaScript VM architecture and prototype | [pocket/INT-01](https://github.com/outside-labs/pocket-python/issues/23) | Blocked |
-| [pocket/INT-QA-01](https://github.com/outside-labs/pocket-python/issues/25) | Establish interpreter differential and negative conformance | [pocket/INT-02](https://github.com/outside-labs/pocket-python/issues/24) | Blocked |
-| [pocket/INT-03](https://github.com/outside-labs/pocket-python/issues/26) | Implement versioned bytecode, validation and the execution loop | [pocket/INT-QA-01](https://github.com/outside-labs/pocket-python/issues/25) | Blocked |
-| [pocket/INT-04](https://github.com/outside-labs/pocket-python/issues/27) | Implement core Python values and container semantics | [pocket/INT-03](https://github.com/outside-labs/pocket-python/issues/26) | Blocked |
-| [pocket/INT-05](https://github.com/outside-labs/pocket-python/issues/28) | Implement memory lifetime, execution budgets and host handles | [pocket/INT-04](https://github.com/outside-labs/pocket-python/issues/27) | Blocked |
-| [pocket/INT-06](https://github.com/outside-labs/pocket-python/issues/29) | Implement functions, scopes, closures and exceptions | [pocket/INT-05](https://github.com/outside-labs/pocket-python/issues/28) | Blocked |
-| [pocket/INT-07](https://github.com/outside-labs/pocket-python/issues/30) | Implement explicit module loading and a small standard library | [pocket/INT-06](https://github.com/outside-labs/pocket-python/issues/29) | Blocked |
-| [pocket/INT-08](https://github.com/outside-labs/pocket-python/issues/31) | Implement an independent source parser and bytecode compiler | [pocket/INT-07](https://github.com/outside-labs/pocket-python/issues/30) | Blocked |
-| [pocket/INT-WEB-01](https://github.com/outside-labs/pocket-python/issues/32) | Deliver an offline browser interpreter console and application profile | [pocket/INT-08](https://github.com/outside-labs/pocket-python/issues/31), [pocket/HOST-01](https://github.com/outside-labs/pocket-python/issues/17) | Blocked |
-| [pocket/INT-09](https://github.com/outside-labs/pocket-python/issues/33) | Extend class, descriptor and decorator semantics | [pocket/INT-WEB-01](https://github.com/outside-labs/pocket-python/issues/32) | Blocked |
-| [pocket/INT-10](https://github.com/outside-labs/pocket-python/issues/34) | Implement asynchronous execution and browser host adapters | [pocket/INT-WEB-01](https://github.com/outside-labs/pocket-python/issues/32) | Blocked |
-| [pocket/INT-11](https://github.com/outside-labs/pocket-python/issues/35) | Measure interpreter profiles and bounded component inclusion | [pocket/INT-WEB-01](https://github.com/outside-labs/pocket-python/issues/32) | Blocked |
-| [pocket/INT-REL-01](https://github.com/outside-labs/pocket-python/issues/36) | Validate an independent interpreter alpha candidate | [pocket/INT-09](https://github.com/outside-labs/pocket-python/issues/33), [pocket/INT-10](https://github.com/outside-labs/pocket-python/issues/34), [pocket/INT-11](https://github.com/outside-labs/pocket-python/issues/35), [pocket/MEASURE-01](https://github.com/outside-labs/pocket-python/issues/20) | Blocked |
+| [pocket/INT-01](https://github.com/wispsy/pocket-python/issues/23) | Specify independent interpreter language stages and compatibility | Released foundation | Ready |
+| [pocket/INT-02](https://github.com/wispsy/pocket-python/issues/24) | Establish the selected JavaScript VM architecture and prototype | [pocket/INT-01](https://github.com/wispsy/pocket-python/issues/23) | Blocked |
+| [pocket/INT-QA-01](https://github.com/wispsy/pocket-python/issues/25) | Establish interpreter differential and negative conformance | [pocket/INT-02](https://github.com/wispsy/pocket-python/issues/24) | Blocked |
+| [pocket/INT-03](https://github.com/wispsy/pocket-python/issues/26) | Implement versioned bytecode, validation and the execution loop | [pocket/INT-QA-01](https://github.com/wispsy/pocket-python/issues/25) | Blocked |
+| [pocket/INT-04](https://github.com/wispsy/pocket-python/issues/27) | Implement core Python values and container semantics | [pocket/INT-03](https://github.com/wispsy/pocket-python/issues/26) | Blocked |
+| [pocket/INT-05](https://github.com/wispsy/pocket-python/issues/28) | Implement memory lifetime, execution budgets and host handles | [pocket/INT-04](https://github.com/wispsy/pocket-python/issues/27) | Blocked |
+| [pocket/INT-06](https://github.com/wispsy/pocket-python/issues/29) | Implement functions, scopes, closures and exceptions | [pocket/INT-05](https://github.com/wispsy/pocket-python/issues/28) | Blocked |
+| [pocket/INT-07](https://github.com/wispsy/pocket-python/issues/30) | Implement explicit module loading and a small standard library | [pocket/INT-06](https://github.com/wispsy/pocket-python/issues/29) | Blocked |
+| [pocket/INT-08](https://github.com/wispsy/pocket-python/issues/31) | Implement an independent source parser and bytecode compiler | [pocket/INT-07](https://github.com/wispsy/pocket-python/issues/30) | Blocked |
+| [pocket/INT-WEB-01](https://github.com/wispsy/pocket-python/issues/32) | Deliver an offline browser interpreter console and application profile | [pocket/INT-08](https://github.com/wispsy/pocket-python/issues/31), [pocket/HOST-01](https://github.com/wispsy/pocket-python/issues/17) | Blocked |
+| [pocket/INT-09](https://github.com/wispsy/pocket-python/issues/33) | Extend class, descriptor and decorator semantics | [pocket/INT-WEB-01](https://github.com/wispsy/pocket-python/issues/32) | Blocked |
+| [pocket/INT-10](https://github.com/wispsy/pocket-python/issues/34) | Implement asynchronous execution and browser host adapters | [pocket/INT-WEB-01](https://github.com/wispsy/pocket-python/issues/32) | Blocked |
+| [pocket/INT-11](https://github.com/wispsy/pocket-python/issues/35) | Measure interpreter profiles and bounded component inclusion | [pocket/INT-WEB-01](https://github.com/wispsy/pocket-python/issues/32) | Blocked |
+| [pocket/INT-REL-01](https://github.com/wispsy/pocket-python/issues/36) | Validate an independent interpreter alpha candidate | [pocket/INT-09](https://github.com/wispsy/pocket-python/issues/33), [pocket/INT-10](https://github.com/wispsy/pocket-python/issues/34), [pocket/INT-11](https://github.com/wispsy/pocket-python/issues/35), [pocket/MEASURE-01](https://github.com/wispsy/pocket-python/issues/20) | Blocked |
 
 At adoption INT-01 was Ready; INT-02 followed its language contract. INT-QA-01 establishes
 the harness before VM implementation and grows with every feature. INT-WEB-01
@@ -209,9 +209,9 @@ work, with separate toolchain/ABI, implementation and integration gates:
 
 | Task | Deliverable | Depends on |
 | --- | --- | --- |
-| [INT-WASM-01](https://github.com/outside-labs/pocket-python/issues/40) | Specify the later C/Rust WebAssembly backend | pocket/INT-11 |
-| [INT-WASM-02](https://github.com/outside-labs/pocket-python/issues/41) | Implement the C/Rust native and WebAssembly engine | pocket/INT-WASM-01 |
-| [INT-WASM-03](https://github.com/outside-labs/pocket-python/issues/42) | Integrate and compare JavaScript and WebAssembly interpreter backends | pocket/INT-WASM-02, pocket/MEASURE-01 |
+| [INT-WASM-01](https://github.com/wispsy/pocket-python/issues/40) | Specify the later C/Rust WebAssembly backend | pocket/INT-11 |
+| [INT-WASM-02](https://github.com/wispsy/pocket-python/issues/41) | Implement the C/Rust native and WebAssembly engine | pocket/INT-WASM-01 |
+| [INT-WASM-03](https://github.com/wispsy/pocket-python/issues/42) | Integrate and compare JavaScript and WebAssembly interpreter backends | pocket/INT-WASM-02, pocket/MEASURE-01 |
 
 Both backends use the adopted Python corpus and host protocol; bytecode/ABI
 compatibility needs explicit proof or versioned translation. C/Rust owns its
@@ -270,8 +270,8 @@ and publishes no package.
 ## Related plans and specifications
 
 - [Application assembly](IMPLEMENTATION_PLAN.md)
-- [Source reduction](https://github.com/outside-labs/shimify/blob/main/IMPLEMENTATION_PLAN03.md)
-- [Compiler/browser target](https://github.com/outside-labs/Python-JavaScript/blob/main/IMPLEMENTATION_PLAN.md)
+- [Source reduction](https://github.com/wispsy/shimify/blob/main/IMPLEMENTATION_PLAN03.md)
+- [Compiler/browser target](https://github.com/wispsy/Python-JavaScript/blob/main/IMPLEMENTATION_PLAN.md)
 - [Python 3.14 language reference](https://docs.python.org/3.14/reference/)
 - [Python 3.14 data model](https://docs.python.org/3.14/reference/datamodel.html)
 - [Python WebAssembly availability](https://docs.python.org/3.14/library/intro.html#webassembly-platforms)
@@ -326,7 +326,7 @@ source parsing is next in INT-08; published artifacts remain unchanged.
 The authorized pocket-python 0.2.0 publication includes the compiled and supplied
 MicroPython assemblers. Independent `runtime/` prototypes remain outside its
 wheel/sdist; source parsing, browser-console adoption and INT-REL-01 are separate
-interpreter gates. [REL-02](https://github.com/outside-labs/pocket-python/issues/56)
+interpreter gates. [REL-02](https://github.com/wispsy/pocket-python/issues/56)
 records publication verification. INT-08 remains next and is not a release claim.
 
 ## Independent source tokenizer
@@ -704,10 +704,10 @@ observations keep positive source comparisons, known diagnostic divergences,
 deferred APIs and host restrictions separate. CPython 3.14.7 and Unicode 16.0.0
 remain pinned; live documentation 3.14.9 does not upgrade language support.
 
-[INT-STR-01](https://github.com/outside-labs/pocket-python/issues/107) fixes str(s)
-identity. [INT-REPR-01](https://github.com/outside-labs/pocket-python/issues/108),
-[INT-REPR-02](https://github.com/outside-labs/pocket-python/issues/109) and
-[INT-REPR-03](https://github.com/outside-labs/pocket-python/issues/110) deliver the
+[INT-STR-01](https://github.com/wispsy/pocket-python/issues/107) fixes str(s)
+identity. [INT-REPR-01](https://github.com/wispsy/pocket-python/issues/108),
+[INT-REPR-02](https://github.com/wispsy/pocket-python/issues/109) and
+[INT-REPR-03](https://github.com/wispsy/pocket-python/issues/110) deliver the
 bounded contract, owned VM execution and offline-console acceptance. Primitive
 repr/str() work in core source; custom __repr__/__str__ require the explicit class
 profile. Strict result checks, MRO/descriptor lookup, nested output ordering,
@@ -727,9 +727,9 @@ The prior consolidation record uses a different fixture and remains unchanged.
 The existing eight composed resource baselines are unchanged. The engine closure
 now includes 25 modules and both notices; independent-engine assets remain outside
 released distributions until INT-REL-01. Next, classify recognized unsupported
-syntax in [INT-DIAG-01](https://github.com/outside-labs/pocket-python/issues/111)
+syntax in [INT-DIAG-01](https://github.com/wispsy/pocket-python/issues/111)
 and adopt indexed-object protocols in
-[INT-INDEX-01](https://github.com/outside-labs/pocket-python/issues/112).
+[INT-INDEX-01](https://github.com/wispsy/pocket-python/issues/112).
 General function/value/library work remains ordered in the inventory. INT-09,
 INT-10, the mobile feasibility decision and the later C/Rust/Wasm path stay open.
 
@@ -756,7 +756,7 @@ observations, no known diagnostic divergences and four host restrictions. These
 counts are not a percentage of Python coverage.
 
 The [indexing contract](docs/interpreter-indexing.md) implements INT-INDEX-01
-through focused steps [#135–138](https://github.com/outside-labs/pocket-python/issues/135):
+through focused steps [#135–138](https://github.com/wispsy/pocket-python/issues/135):
 current type-slot lookup, __index__/__getitem__/__setitem__/__delitem__, raw slice
 keys, builtin sequence conversion, __len__ index results and bounded list/tuple
 RHS slice mutation. Python hooks use owned operations and ordinary frames. A
@@ -770,7 +770,7 @@ groups and 15 Stop/Restart cycles. The [complete artifact measurement](docs/meas
 keeps the prior source fixed: 354,868 to 371,597 bytes; the expanded example adds
 560 bytes, yielding 372,157 bytes. No startup/speed improvement is claimed.
 
-Next is [INT-ITER-01/#113](https://github.com/outside-labs/pocket-python/issues/113),
+Next is [INT-ITER-01/#113](https://github.com/wispsy/pocket-python/issues/113),
 followed by equality/hashing and broader numeric/sequence/function/value work in
 the compatibility inventory. Other iterable slice RHS forms, slice reflection
 and formatting, builtin subclasses and further protocols remain deferred.

@@ -140,7 +140,7 @@ timing/heap samples; deterministic application bytes can be checked exactly.
 [The 2026-10-20 application report](measurements/2026-10-20-applications.json)
 records CPython 3.14.7, Chromium 156.0.8078.4 and five samples per condition on one
 Darwin arm64 host. The compiler component evidence is retained separately in
-[Python-JavaScript](https://github.com/outside-labs/Python-JavaScript/blob/804a70fa37ef4ca126519c7222d1862966a63d0c/docs/measurements/2026-10-20-compiler.json).
+[Python-JavaScript](https://github.com/wispsy/Python-JavaScript/blob/804a70fa37ef4ca126519c7222d1862966a63d0c/docs/measurements/2026-10-20-compiler.json).
 The compared PWAs each select 757 input-source bytes, including the same
 581-byte computation. No source-reduction statistic is used as an interpreter
 startup or memory result.

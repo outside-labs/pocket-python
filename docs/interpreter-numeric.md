@@ -193,7 +193,7 @@ checkpoint and +37,964 from the prior iteration/equality build. Per-file hashes
 and deterministic gzip totals are retained. No speed, startup, device or package
 coverage claim follows.
 
-[INT-NUM-02](https://github.com/outside-labs/pocket-python/issues/184) tracks
+[INT-NUM-02](https://github.com/wispsy/pocket-python/issues/184) tracks
 remaining numeric methods and complex power/non-finite recovery families. Bytes
 remain under INT-VALUES-01, formatting under INT-TEXT-01, and builtin subclasses
 and general arithmetic/reflected hooks under INT-OBJECT-01. The class/async

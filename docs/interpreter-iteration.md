@@ -72,12 +72,12 @@ callback errors, pending-hook Stop/Restart and waiting reduced-profile updates.
 
 ## Delivery
 
-- [Contract #147](https://github.com/outside-labs/pocket-python/issues/147).
-- [Owned iteration #148](https://github.com/outside-labs/pocket-python/issues/148).
-- [Containment #149](https://github.com/outside-labs/pocket-python/issues/149).
-- [Offline acceptance #150](https://github.com/outside-labs/pocket-python/issues/150).
+- [Contract #147](https://github.com/wispsy/pocket-python/issues/147).
+- [Owned iteration #148](https://github.com/wispsy/pocket-python/issues/148).
+- [Containment #149](https://github.com/wispsy/pocket-python/issues/149).
+- [Offline acceptance #150](https://github.com/wispsy/pocket-python/issues/150).
 
-These refine [INT-ITER-01/#113](https://github.com/outside-labs/pocket-python/issues/113).
+These refine [INT-ITER-01/#113](https://github.com/wispsy/pocket-python/issues/113).
 The parent class milestone remains open for later object protocols and async.
 The [builtin signatures](https://docs.python.org/3.14/library/functions.html#iter)
 and [data model](https://docs.python.org/3.14/reference/datamodel.html#object.__iter__)

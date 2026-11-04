@@ -51,4 +51,4 @@ verify source/wheel allowlists plus isolated default and compiler-enabled
 installed artifacts. Require package/browser/VM CI and final main, then publish
 immutable `v0.2.0` using the existing `pypi` Trusted Publisher. Compare PyPI hashes
 with workflow artifacts and verify a fresh installation before closing
-[REL-02](https://github.com/outside-labs/pocket-python/issues/56).
+[REL-02](https://github.com/wispsy/pocket-python/issues/56).
