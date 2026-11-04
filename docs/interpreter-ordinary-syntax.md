@@ -4,7 +4,7 @@ Current scope and boundary owners are consolidated in the
 [O95 reconciliation](interpreter-object-scope.md). Earlier delivery counts and
 remaining-work statements below describe their recorded checkpoint.
 
-INT-SYNTAX-01 is tracked by [#119](https://github.com/outside-labs/pocket-python/issues/119)
+INT-SYNTAX-01 is tracked by [#119](https://github.com/wispsy/pocket-python/issues/119)
 and focused children #215–218. CPython 3.14.7 is the semantic reference. Both
 source selections use the shared owned execution machine; class callbacks still
 require the explicit class selection.

@@ -220,12 +220,12 @@
     }
   },
   "ci": {
-    "run": "https://github.com/outside-labs/pocket-python/actions/runs/41246137534",
+    "run": "https://github.com/wispsy/pocket-python/actions/runs/41246137534",
     "head": "d088e825f1ad91fb1b69e067a35ab2fa77e897ed",
     "relevant_jobs_required": 16,
     "status": "success",
     "relevant_jobs_passed": 16,
-    "offline_artifact": "https://github.com/outside-labs/pocket-python/actions/runs/41246137534/artifacts/13059805894"
+    "offline_artifact": "https://github.com/wispsy/pocket-python/actions/runs/41246137534/artifacts/13059805894"
   },
   "pull_requests": [
     595,
@@ -233,7 +233,7 @@
     597,
     598
   ],
-  "prior_stage_acceptance": "https://github.com/outside-labs/pocket-python/issues/123",
+  "prior_stage_acceptance": "https://github.com/wispsy/pocket-python/issues/123",
   "remaining_neighbor_milestones": [
     33,
     34,

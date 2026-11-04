@@ -169,7 +169,7 @@ jobs:
       - run: uv run --no-sync python scripts/run_tests.py prepare-browser
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: outside-labs/Python-JavaScript
+          repository: wispsy/Python-JavaScript
           ref: 804a70fa37ef4ca126519c7222d1862966a63d0c
           path: build/compiler-reference
           persist-credentials: false

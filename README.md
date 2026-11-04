@@ -6,9 +6,9 @@ The finite O1–O96 object, construction and reflection contract has
 owners for retained boundaries. Earlier delivery notes below retain their
 checkpoint context; broad Python and package compatibility continue separately.
 
-[Track A](https://github.com/outside-labs/pocket-python/issues/600) maps full
+[Track A](https://github.com/wispsy/pocket-python/issues/600) maps full
 Python 3.14 compatibility and a useful language/library profile.
-[Track B](https://github.com/outside-labs/pocket-python/issues/601) maps the
+[Track B](https://github.com/wispsy/pocket-python/issues/601) maps the
 application engine, consuming that useful profile while language work continues.
 The first language batches adopt [practical container APIs](docs/interpreter-practical-containers.md).
 
@@ -46,7 +46,7 @@ See [0.2.0 release notes](docs/release-0.2.0.md) for the published scope.
 ## Build a supplied MicroPython application
 
 First create a portable source bundle with
-[Shimify](https://github.com/outside-labs/shimify). Supply a MicroPython
+[Shimify](https://github.com/wispsy/shimify). Supply a MicroPython
 WebAssembly distribution containing `micropython.mjs`, `micropython.wasm` and
 its license text; use the official
 [WebAssembly port](https://github.com/micropython/micropython/tree/master/ports/webassembly)
@@ -137,7 +137,7 @@ PyScript remain optional profiles with separate compatibility/test gates.
 
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md),
 [release notes](docs/release-0.2.0.md), and the
-[GitHub Project](https://github.com/orgs/outside-labs/projects/13).
+[GitHub Project](https://github.com/orgs/wispsy/projects/13).
 Runtime and dependency licenses remain applicable; preserve and review their
 upstream notices before distributing generated applications.
 

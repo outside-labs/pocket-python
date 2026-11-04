@@ -5388,7 +5388,7 @@
   "work_packages": [
     {
       "id": "INT-STR-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/107",
+      "issue": "https://github.com/wispsy/pocket-python/issues/107",
       "scope": [
         "Return an existing Python string unchanged from str(s), including closure-held and container-held aliases.",
         "Compare source behavior with CPython 3.14.7 in Node and Chromium; cover rooting, resource failure and zero teardown. Update the compatibility observation and asset locks."
@@ -5400,7 +5400,7 @@
     },
     {
       "id": "INT-DIAG-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/111",
+      "issue": "https://github.com/wispsy/pocket-python/issues/111",
       "scope": [
         "Recognize assignment expressions and type aliases as valid but unadopted forms, with UNSUPPORTED diagnostics and source spans.",
         "Preserve SyntaxError for malformed source, no partial execution, all existing parser checks and a pinned source/refusal comparison for each form."
@@ -5412,7 +5412,7 @@
     },
     {
       "id": "INT-VERSION-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/122",
+      "issue": "https://github.com/wispsy/pocket-python/issues/122",
       "scope": [
         "Compare current 3.14 maintenance documentation/changes with pinned CPython 3.14.7 and record relevant semantic deltas as executable cases.",
         "Keep the existing oracle/profile until an explicit tested decision. Later Python minor versions require their own syntax, behavior, Unicode and profile decisions; documentation availability alone never upgrades support."
@@ -5424,7 +5424,7 @@
     },
     {
       "id": "INT-REPR-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/108",
+      "issue": "https://github.com/wispsy/pocket-python/issues/108",
       "scope": [
         "Specify type-slot lookup, descriptor binding, fallback precedence, actual-string return validation, print sequencing and nested output/error effects.",
         "Author executable CPython 3.14.7 cases and explicit deferred cases for default object displays, float/container formatting and format specifications. Reference-only success must not claim engine support."
@@ -5436,7 +5436,7 @@
     },
     {
       "id": "INT-REPR-02",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/109",
+      "issue": "https://github.com/wispsy/pocket-python/issues/109",
       "scope": [
         "Adopt __repr__/__str__ for user instances, repr(None/bool/int/str), str() and the existing scalar str forms; retain explicit refusals for unadopted value families.",
         "Use the owned operation machine, ordinary callback frames and exhaustive roots. Preserve print argument order and callback output, Python exceptions/source frames, stepping, cancellation, OOM and zero teardown.",
@@ -5449,7 +5449,7 @@
     },
     {
       "id": "INT-REPR-03",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/110",
+      "issue": "https://github.com/wispsy/pocket-python/issues/110",
       "scope": [
         "Add newly entered formatting source after offline reload, binding/body/result failures, pending-hook Stop/Restart and profile-update acceptance.",
         "Update the compatibility inventory, source matrices, engine/asset locks, payload evidence and implementation plans. Keep the parent class milestone open for later protocols."
@@ -5461,7 +5461,7 @@
     },
     {
       "id": "INT-INDEX-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/112",
+      "issue": "https://github.com/wispsy/pocket-python/issues/112",
       "scope": [
         "Specify and implement __index__, __getitem__, __setitem__ and __delitem__ through type lookup and owned continuations, including slice operands.",
         "Test single evaluation, strict index results, mutation/alias effects, callback failures, resource interruption and teardown. Keep unadopted arithmetic slots refused."
@@ -5473,25 +5473,25 @@
       "implementation_steps": [
         {
           "id": "INT-INDEX-02",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/135"
+          "issue": "https://github.com/wispsy/pocket-python/issues/135"
         },
         {
           "id": "INT-INDEX-03",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/136"
+          "issue": "https://github.com/wispsy/pocket-python/issues/136"
         },
         {
           "id": "INT-INDEX-04",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/137"
+          "issue": "https://github.com/wispsy/pocket-python/issues/137"
         },
         {
           "id": "INT-INDEX-05",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/138"
+          "issue": "https://github.com/wispsy/pocket-python/issues/138"
         }
       ]
     },
     {
       "id": "INT-ITER-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/113",
+      "issue": "https://github.com/wispsy/pocket-python/issues/113",
       "scope": [
         "Adopt __iter__, __next__, __contains__, StopIteration, iter(x), next(it, default), iter(callable, sentinel), for loops and indexed iteration fallback in a finite reference matrix.",
         "Specify dispatch/fallback order and exception boundaries; verify paused loops, early exits, cancellation and roots. Async iteration is a separate milestone."
@@ -5503,7 +5503,7 @@
     },
     {
       "id": "INT-NUM-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/115",
+      "issue": "https://github.com/wispsy/pocket-python/issues/115",
       "scope": [
         "Specify int/float/complex constructors and complex arithmetic, integer true division, power and bitwise operators; abs, divmod, pow, round, bin, oct, hex, chr and ord with explicit supported signatures.",
         "Adopt each API only with overflow, rounding, mixed-value, invalid-input and Node/browser source evidence. Arbitrary integers must not silently pass through lossy JavaScript numbers."
@@ -5515,7 +5515,7 @@
     },
     {
       "id": "INT-EQ-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/114",
+      "issue": "https://github.com/wispsy/pocket-python/issues/114",
       "scope": [
         "Adopt __eq__, __ne__, __hash__, NotImplemented and hash(), including subtype priority, hash disabling and dictionary invariants.",
         "Separate identity hashing from serialized values; verify mutation, recursive callbacks, failed comparisons and resource teardown."
@@ -5527,7 +5527,7 @@
     },
     {
       "id": "INT-FUNC-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/118",
+      "issue": "https://github.com/wispsy/pocket-python/issues/118",
       "scope": [
         "Adopt definition-time computed/mutable defaults, global/nonlocal writes, *args/**kwargs parameters and starred calls.",
         "Preserve default identity, closure cells, single evaluation/order, duplicate keyword/binding errors and exception cleanup; record every supported signature with source cases."
@@ -5539,7 +5539,7 @@
     },
     {
       "id": "INT-SEQ-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/116",
+      "issue": "https://github.com/wispsy/pocket-python/issues/116",
       "scope": [
         "Inventory and adopt exact signatures for list, tuple, dict, range, slice, enumerate, zip, reversed, all, any, sum, min, max, sorted, map and filter.",
         "Add an explicit API table for string split/join/strip/replace/find, list append/extend/pop, tuple count/index and dict get/keys/values/items/update. Preserve aliasing, iteration order, callbacks and bounded work; anything outside that table remains deferred."
@@ -5552,61 +5552,61 @@
       "implementation_steps": [
         {
           "id": "INT-SEQ-01A",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/186"
+          "issue": "https://github.com/wispsy/pocket-python/issues/186"
         },
         {
           "id": "INT-SEQ-01B",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/187"
+          "issue": "https://github.com/wispsy/pocket-python/issues/187"
         },
         {
           "id": "INT-SEQ-01C",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/188"
+          "issue": "https://github.com/wispsy/pocket-python/issues/188"
         },
         {
           "id": "INT-SEQ-01D",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/189"
+          "issue": "https://github.com/wispsy/pocket-python/issues/189"
         },
         {
           "id": "INT-SEQ-01E",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/190"
+          "issue": "https://github.com/wispsy/pocket-python/issues/190"
         },
         {
           "id": "LA-1",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/602"
+          "issue": "https://github.com/wispsy/pocket-python/issues/602"
         },
         {
           "id": "LA-2",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/603"
+          "issue": "https://github.com/wispsy/pocket-python/issues/603"
         },
         {
           "id": "LA-3",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/604"
+          "issue": "https://github.com/wispsy/pocket-python/issues/604"
         },
         {
           "id": "LA-4",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/605"
+          "issue": "https://github.com/wispsy/pocket-python/issues/605"
         },
         {
           "id": "LA-5",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/606"
+          "issue": "https://github.com/wispsy/pocket-python/issues/606"
         },
         {
           "id": "LA-6",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/607"
+          "issue": "https://github.com/wispsy/pocket-python/issues/607"
         },
         {
           "id": "LA-7",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/608"
+          "issue": "https://github.com/wispsy/pocket-python/issues/608"
         },
         {
           "id": "LA-6A",
-          "issue": "https://github.com/outside-labs/pocket-python/issues/616"
+          "issue": "https://github.com/wispsy/pocket-python/issues/616"
         }
       ]
     },
     {
       "id": "INT-VALUES-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/117",
+      "issue": "https://github.com/wispsy/pocket-python/issues/117",
       "scope": [
         "Specify set/frozenset and bytes/bytearray construction, literals and membership/index/slice behavior; explicitly scope memoryview to owned logical buffers.",
         "Keep native memory addresses, process buffers and arbitrary host object access outside the value contract. Cover hashing, Unicode encoding errors, alias mutation and quotas."
@@ -5619,7 +5619,7 @@
     },
     {
       "id": "INT-SYNTAX-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/119",
+      "issue": "https://github.com/wispsy/pocket-python/issues/119",
       "scope": [
         "Adopt assert, lambda, assignment expressions, tuple/list/starred assignment unpacking and starred collection displays.",
         "Specify binding/evaluation order, short circuit behavior and malformed-versus-unsupported diagnostics; test actual source rather than fixture-only bytecode."
@@ -5632,7 +5632,7 @@
     },
     {
       "id": "INT-GEN-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/120",
+      "issue": "https://github.com/wispsy/pocket-python/issues/120",
       "scope": [
         "Specify generator construction, yield/yield from, send/throw/close and suspended ownership before admitting the syntax.",
         "Adopt list/dict/set/generator comprehensions with Python scope and evaluation order. Cover finally, exhaustion, exceptions and cancellation. Coordinate parked ownership with #34 without requiring the full async application milestone."
@@ -5645,7 +5645,7 @@
     },
     {
       "id": "INT-WITH-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/121",
+      "issue": "https://github.com/wispsy/pocket-python/issues/121",
       "scope": [
         "Adopt with/__enter__/__exit__, multi-item and nested contexts with suppression/unwinding cases.",
         "Separately adopt literal/capture/sequence/mapping/class/OR patterns, guards and bindings. Async context managers remain under #34."
@@ -5659,7 +5659,7 @@
     },
     {
       "id": "INT-OBJECT-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/123",
+      "issue": "https://github.com/wispsy/pocket-python/issues/123",
       "scope": [
         "Specify __new__, super, richer type/isinstance/issubclass, builtin subclassing and metaclass construction as separate reviewed protocol slices.",
         "Adopt getattr/setattr/delattr/hasattr, dir/vars/globals/locals/id and arithmetic/reflected/in-place slots only through explicit type/identity/mutation contracts. Separate dynamic exec/eval/compile/__import__ source admission from host grants."
@@ -5672,7 +5672,7 @@
     },
     {
       "id": "INT-ERROR-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/124",
+      "issue": "https://github.com/wispsy/pocket-python/issues/124",
       "scope": [
         "Adopt exception subclasses, raise-from, cause/context/suppression metadata and bare reraises; preserve original source tracebacks.",
         "Adopt ExceptionGroup/BaseExceptionGroup and except* splitting/merging only after a reference matrix, including finally interactions and resource interruption."
@@ -5684,7 +5684,7 @@
     },
     {
       "id": "INT-ANNOT-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/125",
+      "issue": "https://github.com/wispsy/pocket-python/issues/125",
       "scope": [
         "Adopt annotated assignments/functions, lazy annotation evaluation, type parameters, type aliases and required generic-alias behavior against CPython 3.14.7.",
         "Specify namespace timing, errors and introspection; coordinate typing library APIs separately. Preserve deliberate version/profile decisions."
@@ -5697,7 +5697,7 @@
     },
     {
       "id": "INT-LIB-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/126",
+      "issue": "https://github.com/wispsy/pocket-python/issues/126",
       "scope": [
         "Create separate API profiles for json loads/dumps (basic JSON values and error behavior), math sqrt/floor/ceil/isfinite and random.Random seeded random/randrange/choice; do not imply whole-module support.",
         "Evaluate licensed CPython colorsys rgb_to_hsv/hsv_to_rgb as a small pure-Python reuse pilot after its measured syntax/API prerequisites pass. Preserve source provenance/notices and run unreduced/reduced source independently.",
@@ -5712,7 +5712,7 @@
     },
     {
       "id": "INT-TEXT-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/127",
+      "issue": "https://github.com/wispsy/pocket-python/issues/127",
       "scope": [
         "Adopt Python float and recursive container repr/str, object defaults, ascii, format/__format__, f-strings and explicit format-spec grammar with exact API cases.",
         "Adopt t-string Template/Interpolation values and string.templatelib APIs with interpolation evaluation/order/escaping cases. Link the spatial_ui browser pilot only after its actual syntax/API prerequisites pass."
@@ -5726,7 +5726,7 @@
     },
     {
       "id": "INT-PKG-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/128",
+      "issue": "https://github.com/wispsy/pocket-python/issues/128",
       "scope": [
         "Select one small package/use and a pinned source/license only after a prerequisite probe; record exact entry points, dependency/source/resource closure and omitted APIs.",
         "Execute the original and Shimify-reduced use on the independent engine in Node/Chromium, including offline behavior and complete notices. Keep spatial_ui, expose_api and Python-JavaScript integration claims separate until their consumer contracts pass."
@@ -5738,7 +5738,7 @@
     },
     {
       "id": "INT-10",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/34",
+      "issue": "https://github.com/wispsy/pocket-python/issues/34",
       "scope": [
         "Parked ownership/quanta; persistent callbacks/events; one awaited host capability; offline view/save application; native coroutine/async iterator/generator/context syntax through their own reference cases."
       ],
@@ -5747,7 +5747,7 @@
     },
     {
       "id": "INT-WASM-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/40",
+      "issue": "https://github.com/wispsy/pocket-python/issues/40",
       "scope": [
         "Specify the later C/Rust-to-Wasm backend. No CPython ABI support is implied."
       ],
@@ -5756,7 +5756,7 @@
     },
     {
       "id": "APP-MODEL-01",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/100",
+      "issue": "https://github.com/wispsy/pocket-python/issues/100",
       "scope": [
         "Separate mobile inference/animation feasibility prototype with explicit device/assets/budget selection."
       ],
@@ -5765,7 +5765,7 @@
     },
     {
       "id": "INT-NUM-02",
-      "issue": "https://github.com/outside-labs/pocket-python/issues/184",
+      "issue": "https://github.com/wispsy/pocket-python/issues/184",
       "scope": [
         "Adopt remaining numeric methods, general complex powers, non-real results from real power and non-finite complex arithmetic/intermediate recovery as separate reference-backed families.",
         "Select explicit precision/libm, signed-zero, overflow and bounded ownership expectations; retain refusals until independently compiled Node/Chromium and offline cases pass."

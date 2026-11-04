@@ -9,7 +9,7 @@ interpreters. The forward program adds our compiler-produced JavaScript profile
 and a separately staged independent interpreter.
 
 Distribution name: `pocket-python`. Python import: `pocket_python`. CLI:
-`pocket-python`. Local project: `Projects/pocket_python`. The outside-labs
+`pocket-python`. Local project: `Projects/pocket_python`. The wispsy
 repository and its GitHub Project track the canonical issue queue. Requires
 Python 3.14+ to build artifacts; browser application syntax must independently
 match the chosen interpreter. No runtime dependencies in the packaging tool.
@@ -52,10 +52,10 @@ package compatibility is implied.
 
 Related plans:
 
-- [Source reduction](https://github.com/outside-labs/shimify/blob/main/IMPLEMENTATION_PLAN03.md)
-- [Compiler/browser target](https://github.com/outside-labs/Python-JavaScript/blob/main/IMPLEMENTATION_PLAN.md)
-- [Application assembly](https://github.com/outside-labs/pocket-python/blob/main/IMPLEMENTATION_PLAN.md)
-- [Independent interpreter](https://github.com/outside-labs/pocket-python/blob/main/IMPLEMENTATION_PLAN_INTERPRETER.md)
+- [Source reduction](https://github.com/wispsy/shimify/blob/main/IMPLEMENTATION_PLAN03.md)
+- [Compiler/browser target](https://github.com/wispsy/Python-JavaScript/blob/main/IMPLEMENTATION_PLAN.md)
+- [Application assembly](https://github.com/wispsy/pocket-python/blob/main/IMPLEMENTATION_PLAN.md)
+- [Independent interpreter](https://github.com/wispsy/pocket-python/blob/main/IMPLEMENTATION_PLAN_INTERPRETER.md)
 
 The compiler repository became public on 2026-10-20. Project visibility remains
 separate; application artifacts still include only explicitly selected files.
@@ -232,17 +232,17 @@ server/client boundary. Its schema is a future implementation contract.
 
 | Task | Scope | Depends on | Readiness |
 | --- | --- | --- | --- |
-| [pocket/PROFILE-01](https://github.com/outside-labs/pocket-python/issues/16) | Define versioned compiled and interpreter application profiles | Released foundation | Ready |
-| [pocket/HOST-01](https://github.com/outside-labs/pocket-python/issues/17) | Specify the browser host and worker bridge | [pocket/PROFILE-01](https://github.com/outside-labs/pocket-python/issues/16), [js/PARSE-01](https://github.com/outside-labs/Python-JavaScript/issues/11) | Blocked |
-| [pocket/WEB-03](https://github.com/outside-labs/pocket-python/issues/18) | Assemble compiler-produced offline browser applications | [pocket/PROFILE-01](https://github.com/outside-labs/pocket-python/issues/16), [pocket/HOST-01](https://github.com/outside-labs/pocket-python/issues/17), [js/QA-03](https://github.com/outside-labs/Python-JavaScript/issues/25) | Blocked |
-| [pocket/E2E-01](https://github.com/outside-labs/pocket-python/issues/19) | Verify shared server and client Python application logic | [pocket/WEB-03](https://github.com/outside-labs/pocket-python/issues/18), [js/QA-03](https://github.com/outside-labs/Python-JavaScript/issues/25) | Blocked |
-| [pocket/MEASURE-01](https://github.com/outside-labs/pocket-python/issues/20) | Report comparable source, compiler and interpreter footprints | [pocket/E2E-01](https://github.com/outside-labs/pocket-python/issues/19), [js/PERF-01](https://github.com/outside-labs/Python-JavaScript/issues/26) | Blocked |
-| [pocket/CPY-WASM-01](https://github.com/outside-labs/pocket-python/issues/21) | Evaluate an independently built upstream CPython browser profile | [pocket/PROFILE-01](https://github.com/outside-labs/pocket-python/issues/16) | Triage |
-| [pocket/NATIVE-01](https://github.com/outside-labs/pocket-python/issues/5) | Select and assemble a supplied relocatable CPython runtime | Released foundation | Triage |
-| [pocket/TRIM-01](https://github.com/outside-labs/pocket-python/issues/6) | Prove bounded optional-runtime trimming | [pocket/NATIVE-01](https://github.com/outside-labs/pocket-python/issues/5) | Triage |
-| [pocket/PYODIDE-01](https://github.com/outside-labs/pocket-python/issues/7) | Define an optional broader CPython browser profile | Released foundation | Triage |
-| [pocket/PYSCRIPT-01](https://github.com/outside-labs/pocket-python/issues/8) | Define an optional PyScript integration profile | [pocket/HOST-01](https://github.com/outside-labs/pocket-python/issues/17) | Triage |
-| [pocket/TRACE-01](https://github.com/outside-labs/pocket-python/issues/22) | Collect native runtime evidence and budgets | [pocket/NATIVE-01](https://github.com/outside-labs/pocket-python/issues/5) | Triage |
+| [pocket/PROFILE-01](https://github.com/wispsy/pocket-python/issues/16) | Define versioned compiled and interpreter application profiles | Released foundation | Ready |
+| [pocket/HOST-01](https://github.com/wispsy/pocket-python/issues/17) | Specify the browser host and worker bridge | [pocket/PROFILE-01](https://github.com/wispsy/pocket-python/issues/16), [js/PARSE-01](https://github.com/wispsy/Python-JavaScript/issues/11) | Blocked |
+| [pocket/WEB-03](https://github.com/wispsy/pocket-python/issues/18) | Assemble compiler-produced offline browser applications | [pocket/PROFILE-01](https://github.com/wispsy/pocket-python/issues/16), [pocket/HOST-01](https://github.com/wispsy/pocket-python/issues/17), [js/QA-03](https://github.com/wispsy/Python-JavaScript/issues/25) | Blocked |
+| [pocket/E2E-01](https://github.com/wispsy/pocket-python/issues/19) | Verify shared server and client Python application logic | [pocket/WEB-03](https://github.com/wispsy/pocket-python/issues/18), [js/QA-03](https://github.com/wispsy/Python-JavaScript/issues/25) | Blocked |
+| [pocket/MEASURE-01](https://github.com/wispsy/pocket-python/issues/20) | Report comparable source, compiler and interpreter footprints | [pocket/E2E-01](https://github.com/wispsy/pocket-python/issues/19), [js/PERF-01](https://github.com/wispsy/Python-JavaScript/issues/26) | Blocked |
+| [pocket/CPY-WASM-01](https://github.com/wispsy/pocket-python/issues/21) | Evaluate an independently built upstream CPython browser profile | [pocket/PROFILE-01](https://github.com/wispsy/pocket-python/issues/16) | Triage |
+| [pocket/NATIVE-01](https://github.com/wispsy/pocket-python/issues/5) | Select and assemble a supplied relocatable CPython runtime | Released foundation | Triage |
+| [pocket/TRIM-01](https://github.com/wispsy/pocket-python/issues/6) | Prove bounded optional-runtime trimming | [pocket/NATIVE-01](https://github.com/wispsy/pocket-python/issues/5) | Triage |
+| [pocket/PYODIDE-01](https://github.com/wispsy/pocket-python/issues/7) | Define an optional broader CPython browser profile | Released foundation | Triage |
+| [pocket/PYSCRIPT-01](https://github.com/wispsy/pocket-python/issues/8) | Define an optional PyScript integration profile | [pocket/HOST-01](https://github.com/wispsy/pocket-python/issues/17) | Triage |
+| [pocket/TRACE-01](https://github.com/wispsy/pocket-python/issues/22) | Collect native runtime evidence and budgets | [pocket/NATIVE-01](https://github.com/wispsy/pocket-python/issues/5) | Triage |
 
 PROFILE-01 and the interpreter language contract INT-01 are Ready design tasks.
 HOST-01 follows PROFILE-01 and the compiler language contract. Compiled artifacts
@@ -333,7 +333,7 @@ publication blocker; never claim an unpublished package is available.
 
 ## Reference basis (reviewed 2026-10-18)
 
-- [Shimify 0.2 plan](https://github.com/outside-labs/shimify/blob/main/IMPLEMENTATION_PLAN02.md)
+- [Shimify 0.2 plan](https://github.com/wispsy/shimify/blob/main/IMPLEMENTATION_PLAN02.md)
 - [MicroPython WebAssembly embedding API](https://github.com/micropython/micropython/blob/master/ports/webassembly/README.md)
 - [MicroPython library subsets](https://docs.micropython.org/en/latest/library/index.html)
 - [Pyodide compatibility constraints](https://pyodide.org/en/stable/usage/wasm-constraints.html)
@@ -382,7 +382,7 @@ measurements.
 
 ## 0.2.0 publication plan
 
-[REL-02](https://github.com/outside-labs/pocket-python/issues/56) publishes the
+[REL-02](https://github.com/wispsy/pocket-python/issues/56) publishes the
 merged compiled offline assembler after Python-JavaScript 0.2.0 publication.
 The build-only compiler pin adopts that published version, exact source identity
 and release provenance. The [release contract](docs/release-0.2.0.md) covers both
@@ -457,11 +457,11 @@ INT-09 open; async, WebAssembly and alpha publication retain their separate gate
 
 ### Public demonstration hosting requested (2026-10-21)
 
-[DEMO-01](https://github.com/outside-labs/pocket-python/issues/78) tracks hosting the
+[DEMO-01](https://github.com/wispsy/pocket-python/issues/78) tracks hosting the
 current independent console: select an HTTPS destination/subpath, build from a
 verified revision, and validate offline installation, new source, Stop/Restart,
 waiting updates and rollback. This is a static application with an output-only
-worker boundary. The [spatial_ui dashboard hosting task](https://github.com/outside-labs/spatial_ui/issues/11)
+worker boundary. The [spatial_ui dashboard hosting task](https://github.com/wispsy/spatial_ui/issues/11)
 separately needs a production Python transport/session/concurrency contract.
 Destinations remain to be selected; no demo deployment or package release is
 implied by this roadmap checkpoint.
@@ -511,7 +511,7 @@ observations, no known diagnostic divergences and four host restrictions. These
 counts are not a percentage of Python coverage.
 
 The [indexing contract](docs/interpreter-indexing.md) implements INT-INDEX-01
-through focused steps [#135–138](https://github.com/outside-labs/pocket-python/issues/135):
+through focused steps [#135–138](https://github.com/wispsy/pocket-python/issues/135):
 current type-slot lookup, __index__/__getitem__/__setitem__/__delitem__, raw slice
 keys, builtin sequence conversion, __len__ index results and bounded list/tuple
 RHS slice mutation. Python hooks use owned operations and ordinary frames. A
@@ -525,7 +525,7 @@ groups and 15 Stop/Restart cycles. The [complete artifact measurement](docs/meas
 keeps the prior source fixed: 354,868 to 371,597 bytes; the expanded example adds
 560 bytes, yielding 372,157 bytes. No startup/speed improvement is claimed.
 
-Next is [INT-ITER-01/#113](https://github.com/outside-labs/pocket-python/issues/113),
+Next is [INT-ITER-01/#113](https://github.com/wispsy/pocket-python/issues/113),
 followed by equality/hashing and broader numeric/sequence/function/value work in
 the compatibility inventory. Other iterable slice RHS forms, slice reflection
 and formatting, builtin subclasses and further protocols remain deferred.

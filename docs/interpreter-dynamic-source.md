@@ -193,7 +193,7 @@ classes-source/1 with operator/1.
 
 O91–O94 have 208 pinned source cases across all six Node/Chromium drivers
 (1,248 observations). All 16 relevant jobs pass in the
-[corrected batch CI](https://github.com/outside-labs/pocket-python/actions/runs/41241336439),
+[corrected batch CI](https://github.com/wispsy/pocket-python/actions/runs/41241336439),
 including installed offline console execution, profile updates and Stop/Restart.
 The [versioned acceptance record](measurements/2026-10-31-dynamic-source.json)
 links the seven focused feature/correction PRs, source manifests, exact engine

@@ -2,10 +2,10 @@
 
 ## Language and application tracks
 
-[Track A #600](https://github.com/outside-labs/pocket-python/issues/600) maps
+[Track A #600](https://github.com/wispsy/pocket-python/issues/600) maps
 full Python 3.14 language/builtin support, explicit standard-library coverage
 and real package qualification. Its useful A+ profile is an intermediate
-milestone for [Track B #601](https://github.com/outside-labs/pocket-python/issues/601),
+milestone for [Track B #601](https://github.com/wispsy/pocket-python/issues/601),
 which maps native await, typed browser capabilities and durable offline
 application acceptance under #34. Both tracks keep existing scope owners and
 can progress independently. The later C/Rust/Wasm backend is not a prerequisite.
@@ -35,7 +35,7 @@ delivery sections retain their checkpoint context. Broader language, API,
 package and async work continue under their named issues.
 
 Adopted direction: 2026-10-21. Runtime baseline:
-[`56b99ff08b469eae38d023d8bee9b9f8bbd9877a`](https://github.com/outside-labs/pocket-python/commit/56b99ff08b469eae38d023d8bee9b9f8bbd9877a).
+[`56b99ff08b469eae38d023d8bee9b9f8bbd9877a`](https://github.com/wispsy/pocket-python/commit/56b99ff08b469eae38d023d8bee9b9f8bbd9877a).
 Issues and Project fields record current delivery state. The execution
 consolidation below is implemented; the linked baseline records the preceding
 engine used for compatibility comparisons.
@@ -65,7 +65,7 @@ different promise from the Python syntax and behavior the client can execute.
 Retain the JavaScript VM, independent parser/compiler, verified bytecode, Python
 values, class model, explicit capabilities and offline assembly. The iterative
 dispatcher now runs as an owned execution machine. The C/Rust-to-Wasm path remains
-separately planned in [INT-WASM-01 #40](https://github.com/outside-labs/pocket-python/issues/40)
+separately planned in [INT-WASM-01 #40](https://github.com/wispsy/pocket-python/issues/40)
 and its implementation/integration tasks.
 
 An execution owns frames, block/loop/try state, pending operation records, source
@@ -95,11 +95,11 @@ transitions; its composed fixtures pin the initial accounting rules.
 
 | Task | Reviewable result | Dependency |
 | --- | --- | --- |
-| [INT-EXEC-01](https://github.com/outside-labs/pocket-python/issues/94) | Execution/control/operation/suspension contract, root-owner map and missing composed characterization cases. | Existing source engine. |
-| [INT-EXEC-02](https://github.com/outside-labs/pocket-python/issues/95) | Bounded pending-operation construction and exhaustive roots, preserving the initial root multiset and cost rules. | INT-EXEC-01. |
-| [INT-EXEC-03](https://github.com/outside-labs/pocket-python/issues/96) | Owned Execution and synchronous facade; test-only safe-boundary stepping and idempotent close. | INT-EXEC-02. |
-| [INT-EXEC-04](https://github.com/outside-labs/pocket-python/issues/97) | Shared call/unary/builtin phases and destinations on the same machine and unwinder. | INT-EXEC-03. |
-| [INT-EXEC-05](https://github.com/outside-labs/pocket-python/issues/98) | Module initialization scheduled as owned records/frames; existing import/cache/cycle behavior retained. | INT-EXEC-04. |
+| [INT-EXEC-01](https://github.com/wispsy/pocket-python/issues/94) | Execution/control/operation/suspension contract, root-owner map and missing composed characterization cases. | Existing source engine. |
+| [INT-EXEC-02](https://github.com/wispsy/pocket-python/issues/95) | Bounded pending-operation construction and exhaustive roots, preserving the initial root multiset and cost rules. | INT-EXEC-01. |
+| [INT-EXEC-03](https://github.com/wispsy/pocket-python/issues/96) | Owned Execution and synchronous facade; test-only safe-boundary stepping and idempotent close. | INT-EXEC-02. |
+| [INT-EXEC-04](https://github.com/wispsy/pocket-python/issues/97) | Shared call/unary/builtin phases and destinations on the same machine and unwinder. | INT-EXEC-03. |
+| [INT-EXEC-05](https://github.com/wispsy/pocket-python/issues/98) | Module initialization scheduled as owned records/frames; existing import/cache/cycle behavior retained. | INT-EXEC-04. |
 
 The batch implements all five tasks. The [execution contract](execution-contract.md#owned-module-initialization)
 and [compatibility/payload record](measurements/2026-10-22-execution-consolidation.json)
@@ -115,16 +115,16 @@ teardown with uninterrupted execution. Cover nested protocols, imports and
 finally together, including OOM/cancellation during ownership transfer. Fix any
 unexplained semantic or accounting change before broadening the migration.
 
-The parent [INT-09 #33](https://github.com/outside-labs/pocket-python/issues/33)
+The parent [INT-09 #33](https://github.com/wispsy/pocket-python/issues/33)
 retains its delivered class/call/length/truth checkpoints. Remaining protocol
-implementation and [INT-10 #34](https://github.com/outside-labs/pocket-python/issues/34)
+implementation and [INT-10 #34](https://github.com/wispsy/pocket-python/issues/34)
 use the shared foundation. The completed consolidation does not complete either
 parent milestone; repr/str and the remaining protocol slices, persistent events,
 parked ownership and host/async work retain their own acceptance criteria.
 
 ## Broader language and library program
 
-[INT-COMPAT-01](https://github.com/outside-labs/pocket-python/issues/99) delivers the
+[INT-COMPAT-01](https://github.com/wispsy/pocket-python/issues/99) delivers the
 [versioned inventory](interpreter-compatibility.md), its
 [machine-readable API boundaries](interpreter-compatibility.json) and 118
 independent source/availability observations against
@@ -177,16 +177,16 @@ to start fresh sessions.
 | expose_api | Optional CPython services for saves/content/synchronization or inference, with a separately adopted application protocol, persistence/auth and offline failure policy. |
 | Browser adapters | Native rendering/animation, durable storage and optimized inference behind bounded value/capability contracts. |
 
-Start spatial_ui integration with its [input](https://github.com/outside-labs/spatial_ui/issues/7),
-[motion](https://github.com/outside-labs/spatial_ui/issues/6) and
-[world](https://github.com/outside-labs/spatial_ui/issues/9) contracts. A small
+Start spatial_ui integration with its [input](https://github.com/wispsy/spatial_ui/issues/7),
+[motion](https://github.com/wispsy/spatial_ui/issues/6) and
+[world](https://github.com/wispsy/spatial_ui/issues/9) contracts. A small
 browser facade permits an early pilot; eventual t-string and library coverage
 remain language work. Its current server callback route is not an offline
 browser callback implementation. expose_api's server API and the client host
 protocol need an explicit transport/capability contract; credentials stay with
 the server or their declared owner.
 
-[APP-MODEL-01](https://github.com/outside-labs/pocket-python/issues/100) tracks an independent mobile inference/animation
+[APP-MODEL-01](https://github.com/wispsy/pocket-python/issues/100) tracks an independent mobile inference/animation
 feasibility prototype. Exact devices, model/runtime assets and measured budgets
 remain to be selected. A useful on-device experience on actual iPhone/iPad is an
 evidence gate; desktop or emulated-browser execution cannot certify it. The
@@ -222,7 +222,7 @@ closure. Add device coverage where a product makes a device promise. Keep
 structural consolidation, accounting optimization, language expansion and product
 performance evidence distinguishable.
 
-[INT-REL-01 #36](https://github.com/outside-labs/pocket-python/issues/36) remains
+[INT-REL-01 #36](https://github.com/wispsy/pocket-python/issues/36) remains
 the independent-engine alpha gate. Application alpha is a finite supported
 release, followed by continuing broad compatibility work. Package publication,
 hosting, model selection/downloads and new services retain their own concrete

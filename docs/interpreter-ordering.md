@@ -85,13 +85,13 @@ unchanged. Primitive core-source/1 behavior, bytecode 4/5 and output-only host
 grants retain their current contracts. Sorting/min/max, user-key set ordering,
 namespace/identity reflection and async remain separate work.
 
-- [Contract #279](https://github.com/outside-labs/pocket-python/issues/279).
-- [Ordering methods #280](https://github.com/outside-labs/pocket-python/issues/280).
-- [List/tuple ordering #281](https://github.com/outside-labs/pocket-python/issues/281).
-- [Slice comparisons #282](https://github.com/outside-labs/pocket-python/issues/282).
-- [Offline acceptance #283](https://github.com/outside-labs/pocket-python/issues/283).
+- [Contract #279](https://github.com/wispsy/pocket-python/issues/279).
+- [Ordering methods #280](https://github.com/wispsy/pocket-python/issues/280).
+- [List/tuple ordering #281](https://github.com/wispsy/pocket-python/issues/281).
+- [Slice comparisons #282](https://github.com/wispsy/pocket-python/issues/282).
+- [Offline acceptance #283](https://github.com/wispsy/pocket-python/issues/283).
 
-These refine [#123](https://github.com/outside-labs/pocket-python/issues/123).
+These refine [#123](https://github.com/wispsy/pocket-python/issues/123).
 See the [rich comparison data model](https://docs.python.org/3.14/reference/datamodel.html#object.__lt__)
 and [sequence comparison rules](https://docs.python.org/3.14/library/stdtypes.html#comparisons).
 Live documentation revisions do not change the pinned oracle.

@@ -1,8 +1,8 @@
 # Expanded function binding
 
 INT-FUNC-01 adopts ordinary function binding in seven focused steps, tracked by
-[#199–205](https://github.com/outside-labs/pocket-python/issues/199) under
-[#118](https://github.com/outside-labs/pocket-python/issues/118). The reference is
+[#199–205](https://github.com/wispsy/pocket-python/issues/199) under
+[#118](https://github.com/wispsy/pocket-python/issues/118). The reference is
 CPython 3.14.7; the initial 94-program matrix records expected stdout and error
 types. A reference-only result certifies the matrix, not engine execution.
 

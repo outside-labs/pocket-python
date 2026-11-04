@@ -79,7 +79,7 @@ then run:
 
 ```sh
 uv run --no-sync python scripts/update_test_costs.py build/ci-timings \
-  --source https://github.com/outside-labs/pocket-python/actions/runs/RUN_ID
+  --source https://github.com/wispsy/pocket-python/actions/runs/RUN_ID
 ```
 
 The importer records report hashes/revisions, ignores removed IDs, deduplicates

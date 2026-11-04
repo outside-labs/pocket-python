@@ -1,6 +1,6 @@
 """Build the shared text-metrics computation as a local compiled offline PWA.
 
-Computation: outside-labs/shimify tests/fixtures/text_metrics at
+Computation: wispsy/shimify tests/fixtures/text_metrics at
 b48ed1778270508007d75b861dc117ad4ddc4f2b; MIT notice preserved in LICENSES/.
 """
 

@@ -96,7 +96,7 @@ memory bound. Compare repeat observations only within their recorded scopes.
 ## Recorded baseline: 2026-10-21
 
 The [complete report](measurements/2026-10-21-interpreter.json) was collected from
-clean commit [0ac0cbe](https://github.com/outside-labs/pocket-python/commit/0ac0cbe7144cff85ccbc485ce4feda323666bc10),
+clean commit [0ac0cbe](https://github.com/wispsy/pocket-python/commit/0ac0cbe7144cff85ccbc485ce4feda323666bc10),
 using Python 3.14.7, Node 24.19.0, Playwright 1.64.0 and Chromium 156.0.8078.4 on
 Darwin 27.0.0 arm64. Each condition has five observations, with nested Node warm
 runs summarized per process. The supplied MicroPython identity and compiled
